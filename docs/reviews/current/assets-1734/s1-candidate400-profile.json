@@ -1,0 +1,338 @@
+{
+  "argv": [
+    "render",
+    "/tmp/chrona-1734-evidence.qW1pl7/b400.yaml",
+    "--preset",
+    "chrona-default-draft",
+    "--progress",
+    "--output",
+    "/tmp/chrona-1734-evidence.qW1pl7/s1-candidate400-profile.svg",
+    "--emit-scene",
+    "/tmp/chrona-1734-evidence.qW1pl7/s1-candidate400-profile.scene.json"
+  ],
+  "argv_paths_sha256": "6ffd13ed5c09369e7e8aca8f82e8a08e322cfaf49d6865e2f08a915b22d0a9d5",
+  "exclusive_total_seconds": 1208.7203845423646,
+  "git_dirty": false,
+  "git_head": "7421b458712e37bad85f8ffc84228f7358796393",
+  "patch_alias_counts": {
+    "graph.envelope": 1,
+    "graph.reverse_bounds": 1,
+    "graph.sparse_graph": 1,
+    "graph.visibility_base": 1,
+    "labels.member": 2,
+    "labels.preparation": 1,
+    "labels.relation": 2,
+    "labels.span_paint": 1,
+    "routing.compose_surface_routes": 2,
+    "routing.label_trial_other": 1,
+    "routing.resolution": 2,
+    "routing.selection_other": 2
+  },
+  "phases": {
+    "route-label-baseline/label-visuals/graph.envelope": {
+      "calls": 38400,
+      "exclusive_seconds": 0.007494507357478142
+    },
+    "route-label-baseline/label-visuals/graph.reverse_bounds": {
+      "calls": 24,
+      "exclusive_seconds": 2.3340397072024643
+    },
+    "route-label-baseline/label-visuals/graph.sparse_graph": {
+      "calls": 48,
+      "exclusive_seconds": 7.132378501817584
+    },
+    "route-label-baseline/label-visuals/graph.visibility_base": {
+      "calls": 2,
+      "exclusive_seconds": 0.254356290679425
+    },
+    "route-label-baseline/label-visuals/routing.resolution_attempt_other": {
+      "calls": 2,
+      "exclusive_seconds": 0.005408833734691143
+    },
+    "route-label-baseline/label-visuals/routing.selection_other": {
+      "calls": 2,
+      "exclusive_seconds": 0.7200035769492388
+    },
+    "route-label-baseline/marks/candidate.accept": {
+      "calls": 2,
+      "exclusive_seconds": 0.000374459195882082
+    },
+    "route-label-baseline/marks/candidate.prepare": {
+      "calls": 2,
+      "exclusive_seconds": 0.0004915841855108738
+    },
+    "route-label-baseline/marks/routing.resolution_attempt_other": {
+      "calls": 2,
+      "exclusive_seconds": 0.0031182500533759594
+    },
+    "route-label-baseline/marks/routing.selection_other": {
+      "calls": 2,
+      "exclusive_seconds": 0.00018270686268806458
+    },
+    "route-label-baseline/normal/candidate.accept": {
+      "calls": 958,
+      "exclusive_seconds": 0.39530746173113585
+    },
+    "route-label-baseline/normal/candidate.prepare": {
+      "calls": 710,
+      "exclusive_seconds": 0.05159971909597516
+    },
+    "route-label-baseline/normal/candidate.rank": {
+      "calls": 109,
+      "exclusive_seconds": 0.00328016746789217
+    },
+    "route-label-baseline/normal/graph.envelope": {
+      "calls": 286400,
+      "exclusive_seconds": 0.058214517775923014
+    },
+    "route-label-baseline/normal/graph.reverse_bounds": {
+      "calls": 171,
+      "exclusive_seconds": 15.25113862985745
+    },
+    "route-label-baseline/normal/graph.sparse_graph": {
+      "calls": 358,
+      "exclusive_seconds": 47.33528770087287
+    },
+    "route-label-baseline/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.11877754190936685
+    },
+    "route-label-baseline/normal/routing.resolution_attempt_other": {
+      "calls": 578,
+      "exclusive_seconds": 0.006683292333036661
+    },
+    "route-label-baseline/normal/routing.selection_other": {
+      "calls": 578,
+      "exclusive_seconds": 4.557681470178068
+    },
+    "route-label-baseline/text/graph.envelope": {
+      "calls": 38400,
+      "exclusive_seconds": 0.006197717040777206
+    },
+    "route-label-baseline/text/graph.reverse_bounds": {
+      "calls": 24,
+      "exclusive_seconds": 2.44530524732545
+    },
+    "route-label-baseline/text/graph.sparse_graph": {
+      "calls": 48,
+      "exclusive_seconds": 7.069496168754995
+    },
+    "route-label-baseline/text/graph.visibility_base": {
+      "calls": 2,
+      "exclusive_seconds": 0.24800358433276415
+    },
+    "route-label-baseline/text/routing.resolution_attempt_other": {
+      "calls": 2,
+      "exclusive_seconds": 0.0028284606523811817
+    },
+    "route-label-baseline/text/routing.selection_other": {
+      "calls": 2,
+      "exclusive_seconds": 0.6529831560328603
+    },
+    "route-label-baseline/unspecified/labels.member": {
+      "calls": 471,
+      "exclusive_seconds": 52.51998145878315
+    },
+    "route-label-baseline/unspecified/labels.preparation": {
+      "calls": 1,
+      "exclusive_seconds": 0.0008733086287975311
+    },
+    "route-label-baseline/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 0.0001054159365594387
+    },
+    "route-label-baseline/unspecified/labels.span_paint": {
+      "calls": 400,
+      "exclusive_seconds": 0.0023644412867724895
+    },
+    "route-label-baseline/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 0.8449577162973583
+    },
+    "route-label-baseline/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.00013525038957595825
+    },
+    "route-label-baseline/unspecified/routing.resolution": {
+      "calls": 578,
+      "exclusive_seconds": 0.016470905393362045
+    },
+    "route-label-recovery/label-visuals/graph.envelope": {
+      "calls": 752700,
+      "exclusive_seconds": 0.21251367684453726
+    },
+    "route-label-recovery/label-visuals/graph.reverse_bounds": {
+      "calls": 195,
+      "exclusive_seconds": 32.186716785188764
+    },
+    "route-label-recovery/label-visuals/graph.sparse_graph": {
+      "calls": 390,
+      "exclusive_seconds": 232.55602758657187
+    },
+    "route-label-recovery/label-visuals/graph.visibility_base": {
+      "calls": 18,
+      "exclusive_seconds": 11.326261835172772
+    },
+    "route-label-recovery/label-visuals/routing.resolution_attempt_other": {
+      "calls": 18,
+      "exclusive_seconds": 0.06879833480343223
+    },
+    "route-label-recovery/label-visuals/routing.selection_other": {
+      "calls": 18,
+      "exclusive_seconds": 136.95850394759327
+    },
+    "route-label-recovery/marks/candidate.accept": {
+      "calls": 7,
+      "exclusive_seconds": 0.001539833378046751
+    },
+    "route-label-recovery/marks/candidate.prepare": {
+      "calls": 15,
+      "exclusive_seconds": 0.012216958682984114
+    },
+    "route-label-recovery/marks/candidate.rank": {
+      "calls": 4,
+      "exclusive_seconds": 0.00010154163464903831
+    },
+    "route-label-recovery/marks/graph.envelope": {
+      "calls": 15936,
+      "exclusive_seconds": 0.030622340738773346
+    },
+    "route-label-recovery/marks/graph.reverse_bounds": {
+      "calls": 12,
+      "exclusive_seconds": 0.7062438325956464
+    },
+    "route-label-recovery/marks/graph.sparse_graph": {
+      "calls": 24,
+      "exclusive_seconds": 5.04613083275035
+    },
+    "route-label-recovery/marks/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 0.13046291703358293
+    },
+    "route-label-recovery/marks/routing.resolution_attempt_other": {
+      "calls": 4,
+      "exclusive_seconds": 0.01067812368273735
+    },
+    "route-label-recovery/marks/routing.selection_other": {
+      "calls": 4,
+      "exclusive_seconds": 0.5578582021407783
+    },
+    "route-label-recovery/normal/candidate.accept": {
+      "calls": 771,
+      "exclusive_seconds": 0.38722965447232127
+    },
+    "route-label-recovery/normal/candidate.prepare": {
+      "calls": 651,
+      "exclusive_seconds": 0.24754914222285151
+    },
+    "route-label-recovery/normal/graph.envelope": {
+      "calls": 974400,
+      "exclusive_seconds": 0.28476123977452517
+    },
+    "route-label-recovery/normal/graph.reverse_bounds": {
+      "calls": 195,
+      "exclusive_seconds": 34.67681879317388
+    },
+    "route-label-recovery/normal/graph.sparse_graph": {
+      "calls": 406,
+      "exclusive_seconds": 283.02780158724636
+    },
+    "route-label-recovery/normal/graph.visibility_base": {
+      "calls": 1,
+      "exclusive_seconds": 1.742214750032872
+    },
+    "route-label-recovery/normal/routing.resolution_attempt_other": {
+      "calls": 578,
+      "exclusive_seconds": 0.010660571046173573
+    },
+    "route-label-recovery/normal/routing.selection_other": {
+      "calls": 578,
+      "exclusive_seconds": 189.95107236737385
+    },
+    "route-label-recovery/text/candidate.accept": {
+      "calls": 49,
+      "exclusive_seconds": 0.058142124209553
+    },
+    "route-label-recovery/text/candidate.prepare": {
+      "calls": 51,
+      "exclusive_seconds": 0.02882099850103259
+    },
+    "route-label-recovery/text/candidate.rank": {
+      "calls": 40,
+      "exclusive_seconds": 0.0013036634773015976
+    },
+    "route-label-recovery/text/graph.envelope": {
+      "calls": 293460,
+      "exclusive_seconds": 0.06051525380462408
+    },
+    "route-label-recovery/text/graph.reverse_bounds": {
+      "calls": 99,
+      "exclusive_seconds": 14.784514659550041
+    },
+    "route-label-recovery/text/graph.sparse_graph": {
+      "calls": 201,
+      "exclusive_seconds": 75.58925804914907
+    },
+    "route-label-recovery/text/graph.visibility_base": {
+      "calls": 12,
+      "exclusive_seconds": 4.2264655833132565
+    },
+    "route-label-recovery/text/routing.resolution_attempt_other": {
+      "calls": 18,
+      "exclusive_seconds": 0.05087412614375353
+    },
+    "route-label-recovery/text/routing.selection_other": {
+      "calls": 18,
+      "exclusive_seconds": 3.8196985432878137
+    },
+    "route-label-recovery/unspecified/labels.member": {
+      "calls": 285,
+      "exclusive_seconds": 36.225547042209655
+    },
+    "route-label-recovery/unspecified/labels.preparation": {
+      "calls": 1,
+      "exclusive_seconds": 0.0005051246844232082
+    },
+    "route-label-recovery/unspecified/labels.relation": {
+      "calls": 1,
+      "exclusive_seconds": 4.283292219042778e-05
+    },
+    "route-label-recovery/unspecified/labels.span_paint": {
+      "calls": 400,
+      "exclusive_seconds": 0.001603875309228897
+    },
+    "route-label-recovery/unspecified/routing.compose_surface_routes": {
+      "calls": 1,
+      "exclusive_seconds": 1.2820215760730207
+    },
+    "route-label-recovery/unspecified/routing.label_trial_other": {
+      "calls": 1,
+      "exclusive_seconds": 0.3004371249116957
+    },
+    "route-label-recovery/unspecified/routing.resolution": {
+      "calls": 578,
+      "exclusive_seconds": 0.11018140148371458
+    },
+    "unclassified/unspecified/labels.member": {
+      "calls": 1,
+      "exclusive_seconds": 6.979191675782204e-05
+    },
+    "unclassified/unspecified/labels.preparation": {
+      "calls": 1,
+      "exclusive_seconds": 0.0005107116885483265
+    },
+    "unclassified/unspecified/labels.span_paint": {
+      "calls": 400,
+      "exclusive_seconds": 0.0015654554590582848
+    }
+  },
+  "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+  "probe_sha256": "3e7afce19863aa6e5d1529c2dc6764118738e934cce65d4c5b30dbdc2d50bc50",
+  "process_outcome": "returned",
+  "python": "3.13.7 (main, Sep  6 2025, 01:18:26) [Clang 13.1.6 (clang-1316.0.21.2)]",
+  "residual_category": "unwrapped CLI/projection/other runtime",
+  "residual_seconds": 14.19098191568628,
+  "return_code": 0,
+  "source_root": "/private/tmp/chrona-1715-auto-warning.TW0LNy",
+  "wall_seconds": 1222.911366458051
+}

@@ -51,7 +51,15 @@ derived-ready failed downstream of that test. Its snapshot's 50 SVGs and
 50 Scenes were byte-identical; only diagnostic inventory source positions
 changed. This initial old-base run is not final release evidence.
 
-Pending: exact-head PR CI, one official SVG/Scene/report delta audit, then
-exact-main three-OS full pytest/conformance/wheel, MCP floor and newest-Python
-public reproduction. Local literal evidence is not release acceptance;
-keep issue1715 open until these gates complete.
+Final head `20a54dbc2166e2bd1cf41172bb746385828ee700` passed
+[PR CI39153184816](https://github.com/tya5/chrona/actions/runs/39153184816).
+[Official artifact12146280959 audit](https://github.com/tya5/chrona/pull/1735#issuecomment-6253444867)
+confirms all50 SVGs and50 Scenes byte-identical; only diagnostic inventory
+source positions move. PR1735 merged at `12b5adb22`.
+
+Exact review-containing ready main
+`ee4f8593854f569f45d9b419c0aaceafead5a635` passed
+[release39155086049](https://github.com/tya5/chrona/actions/runs/39155086049):
+Windows/Linux/macOS full pytest, conformance and wheel/smoke, MCP floor and
+newest-Python public reproduction all succeed. The issue is
+[closed with all three literal rows accepted](https://github.com/tya5/chrona/issues/1715#issuecomment-6254134683).

@@ -11,11 +11,11 @@
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | not met | [Exclusive240 ledger](assets-1734/profile.json) below; candidate400 attribution is running and must be added before acceptance. | — |
+| 1 | A phase table for 240 tasks (and for 400 if run) on one machine, with how it was measured. | met | Exclusive240 and400 tables below; [240 control ledger](assets-1734/profile.json), [400 candidate ledger](assets-1734/s1-candidate400-profile.json), exact methods and caveats. | — |
 | 2 | A recommendation, or a documented stop, if no phase offers a worthwhile intervention. | met | Recommendation below follows the [measured phase costs](assets-1734/profile.json): investigate member-label probes before choosing an algorithm change; use existing explicit hints for the measured edit case. No unmeasured speedup claim or product change. | — |
 | 3 | These are pure speed changes, so SVG and Scene stay byte-identical on the 50 public slides and on b240. | not met | Six240 outputs match complete control bytes; [candidate plan/evidence](https://github.com/tya5/chrona/issues/1734#issuecomment-6253883958). Final published disposition and official50-slide snapshot remain pending. | — |
-| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | not met | [Unprofiled240 controls](assets-1734/s1-control240.stderr) and candidate timings below; [required400 candidate](https://github.com/tya5/chrona/issues/1734#issuecomment-6253883958) is running. | — |
-| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | not met | [Public WIP and adoption boundary](https://github.com/tya5/chrona/issues/1734#issuecomment-6253433414); no product optimizer merged. Finish400, publish measured disposition and revert an unworthy candidate. | — |
+| 4 | Measure end-to-end on 240 and once on 400 after each change, on the same machine. | met | [Unprofiled240 controls](assets-1734/s1-control240.stderr), candidate timings below and [required400 candidate](assets-1734/s1-candidate400-profile.stderr) completed. Instrumented400 is not treated as a causal speedup. Any graph product candidate needs its own240/400 gate. | — |
+| 5 | Keep a change only if its end-to-end gain is worth its added complexity, and say why in the PR. Revert it otherwise; that is the stop condition. | not met | Member candidate reverted publicly at [cd8ac0983](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096); product tree equals measured ready main. Final graph disposition and PR publication remain pending. | — |
 | 6 | Do not touch the algorithm, defaults or acceptance rules here. | met | [Approved scope](https://github.com/tya5/chrona/issues/1734#issuecomment-6253352192); candidate diff only prepares immutable private Layout facts and focused tests; collision checks/order/recovery remain fresh. No graph change proposed. | — |
 
 ## Measurement
@@ -115,7 +115,9 @@ Member candidate `bbb25d2e3fbc17ed2837388816e13852a866a2ec`, measured head
 `7421b458712e37bad85f8ffc84228f7358796393`, shares row/mark maps and
 originally admitted span footprints within one top-level placement call.
 Each probe still filters current index membership and performs fresh
-collision checks. The candidate is public WIP, not merged or accepted.
+collision checks. It was rejected and [reverted publicly](https://github.com/tya5/chrona/commit/cd8ac098358ed4a0ba3072e58b7bba468d4eb096).
+The reverted tree is identical to ready main `ee4f85938`; the original18
+focused obstruction tests pass. No experimental optimizer reached main.
 Control `c30a2d58db114394e42688520972f8528c26a2f2` and candidate have the
 same relevant resources, Python and non-editable package versions.
 
@@ -146,11 +148,44 @@ SHA256 `b892b08c30c638edc8327fb26c76151dd10c41e613ee3e2599faa54e829062db`:
 400 tasks,10 groups,578 relations. Its successful uninstrumented control
 takes1589.33 wall/954.33 user CPU seconds
 ([receipt](assets-1734/b400-baseline.stdout), [time](assets-1734/b400-baseline.stderr)).
-Candidate400 runs with external time and v2 attribution in the same run.
-That instrumented/uninstrumented pair cannot establish a causal speedup;
-report the completed400 ledger before disposition, without extrapolation.
+Candidate400 completed successfully in1223.92 wall/941.73 user CPU seconds
+with external time and v2 attribution in the same run
+([receipt](assets-1734/s1-candidate400-profile.stdout),
+[time](assets-1734/s1-candidate400-profile.stderr)). The
+instrumented/uninstrumented pair cannot establish a causal speedup; wall time
+differs substantially while CPU is close. Together with repeated240 results,
+it does not establish an end-to-end gain worth extra prepared state/plumbing.
+Reject and revert rather than retain speculative complexity. Complete400
+SVG/Scene bytes also equal the control:
+`1f0e7ef4be727eedeae139fbc8e00ee5773f8ee5c1441576fb882f9563ba3787` /
+`4feadfafdd03ba8b12f185f5685e0217a91c977704c4e68f1d1f10ba8fb4b7a9`.
 
-### Graph reuse: structural stopping point
+### Disjoint400 candidate phase ledger (seconds)
+
+This is experimental7421 source, not an accepted optimizer or an
+uninstrumented control phase table. Graph includes v2 envelope conversion;
+member placement includes preparation/span conversion. All rows are exclusive.
+
+| Owner/category | Baseline pass | Recovery pass |
+| --- | ---: | ---: |
+| Graph: envelopes / visibility / sparse / reverse bounds | 82.260690 | 696.587330 |
+| Candidate completion | 0.052091 | 0.288587 |
+| Candidate validation | 0.395682 | 0.446912 |
+| Candidate ranking | 0.003280 | 0.001405 |
+| Selection remainder | 5.930851 | 331.287133 |
+| Resolution/attempt remainder | 0.034510 | 0.251193 |
+| Member-label placement/probes | 52.523219 | 36.227656 |
+| Relation-label placement | 0.000105 | 0.000043 |
+| Route composition/trial remainder | 0.845093 | 1.582459 |
+| Pass subtotal | 142.045522 | 1066.672717 |
+
+Outside passes: member work0.002146s and unwrapped CLI/projection/other
+14.190982s; total1222.911366s inside CLI. Stage attempts are normal578/578,
+label-visuals2/18, text2/18, marks2/4. Recovery1066.672717s already includes
+its graph and selection rows: never add these twice. Unlike240,400 repeatedly
+enters fallback stages; the raw ledger retains each stage separately.
+
+### Graph reuse: decision still under measurement
 
 `SurfaceObstacleIndex.route_memo_scope` already keys pure graph results by
 exact selected content; `route_visibility_scope` retains selected-port and
@@ -161,16 +196,18 @@ remaining `_build_sparse_graph` overlays depend on start/end points and
 identical inputs/hits, not just a shared routing pass.
 
 The control v2 ledger attributes only0.017979s to uncached envelope conversion,
-versus seconds in endpoint-specific sparse/reverse construction. No measured
-benefit justifies another cache or relaxed graph/invalidation scheme here.
-Independent source/ownership review agrees: stop rather than add complexity
-without evidence. No graph product change is proposed, so there is no second
-changed product to benchmark. Algorithm changes need a separately approved
-design; do not change bounds, defaults, candidate order or acceptance rules.
-Existing explicit hints help the measured edit case but remain opt-in.
+versus seconds in sparse/reverse construction. Existing cache presence does
+not prove reuse: whole-graph admission is bounded to4096 retained records,
+and first-fit versus exact-bound calls differ only in reverse completion.
+Before stopping, measure identical geometry inputs across those modes and
+cache admission on240. Reuse may be possible within one relation attempt
+without a wider cache; no product change follows from that possibility alone.
+A graph candidate still needs its own end-to-end240/400 and byte gates. Do
+not change algorithms, bounds, defaults, candidate order or acceptance rules.
+Existing hints remain explicitly opt-in.
 
 ## Programme-level criteria (optional)
 
-Pending: completed400 attribution and measured member-candidate disposition,
-literal review of the four additional reviewer rules, publication and required
-exact-main release evidence. No experimental optimizer has reached main.
+Member measurements/disposition are complete; graph identity/admission evidence,
+final graph disposition, official public snapshot and exact-main release
+remain pending. No experimental optimizer has reached main.
