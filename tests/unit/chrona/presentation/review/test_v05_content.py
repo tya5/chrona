@@ -428,7 +428,8 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
          "format": {"kind": "presence", "whenTrue": "Missing", "whenFalse": "Recorded"}, "missing": "em-dash"},
         {"id": "Title", "source": "title", "missing": "em-dash"},
     ), "visibility": {"relations": "none", "annotations": "none"}}}
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
+                                          summary=EMPTY_SUMMARY, actual_set={"body": {"observations": []}})
     selected = {(cell.object_id, cell.column_id): cell.semantic_id for cell in value.table_cells}
     assert [selected[(item, "Delta")] for item in ("ahead", "plan", "behind", "unknown")] == ["tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "tableCell"]
     assert selected[("missing", "Missing")] == "missingActualCell"
@@ -1123,6 +1124,69 @@ def test_completed_forecast_delta_is_still_required_without_estimated_marker():
     ], "visibility": {}}})
     cell, = normalize_v05_table_content(projection, {}, view).cells
     assert (cell.content, cell.required) == ("+2d", True)
+
+
+def test_table_columns_and_cells_omit_only_comparison_sources_absent_from_context():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      None, None, (), item_id="a")
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Planned", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"},
+        {"id": "Actual", "source": {"facet": "actual"}, "format": "dateRange", "missing": "em-dash"},
+        {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+        {"id": "Progress", "source": {"comparisonFacet": "progress"}, "format": "text", "missing": "blank"},
+        {"id": "Missing", "source": {"comparisonFacet": "missingActual"},
+         "format": {"whenTrue": "yes", "whenFalse": "no"}, "missing": "blank"},
+    ], "visibility": {}}})
+    original_columns = view.table_columns
+
+    absent = normalize_v05_table_content(projection, {}, view)
+    supplied_empty = normalize_v05_table_content(projection, {}, view,
+                                                  actual_set={"body": {"observations": []}})
+
+    assert [column.column_id for column in absent.columns] == ["Planned"]
+    assert [cell.column_id for cell in absent.cells] == ["Planned"]
+    assert [column.column_id for column in supplied_empty.columns] == [
+        "Planned", "Actual", "Delta", "Progress", "Missing"]
+    assert [cell.column_id for cell in supplied_empty.cells] == [
+        "Planned", "Actual", "Delta", "Progress", "Missing"]
+    assert view.table_columns == original_columns  # normalization does not rewrite authored View input
+
+
+def test_forecast_fact_supplies_finish_delta_without_actual_but_snapshot_alone_does_not():
+    primary = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                         None, None, (), item_id="a")
+    forecast = replace(primary, forecast=ForecastComparisonFact(
+        ForecastItem({"start": date(2026, 1, 1), "end": date(2026, 1, 7)}, completed=False), 2))
+    snapshot = replace(primary, source_kind="snapshot", item_id="snapshot:a")
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "blank"},
+    ], "visibility": {}}})
+
+    forecast_table = normalize_v05_table_content(
+        ReviewProjection((forecast,), (date(2026, 1, 1), date(2026, 1, 7)), (), ()), {}, view)
+    snapshot_table = normalize_v05_table_content(
+        ReviewProjection((snapshot,), (date(2026, 1, 1), date(2026, 1, 5)), (), ()), {}, view)
+
+    assert [cell.content for cell in forecast_table.cells] == ["+2d*"]
+    assert [column.column_id for column in snapshot_table.columns] == []
+    assert snapshot_table.cells == ()
+
+
+def test_scenario_column_requires_a_projected_scenario_table_subject():
+    primary = ReviewItem("a", "A", "span", {}, None, None, (), item_id="a")
+    scenario = replace(primary, item_id="scenario:a", source_kind="scenario", scenario_id="risk")
+    view = typed_view({"body": {"tableColumns": [
+        {"id": "Scenario", "source": {"scenario": "title"}, "format": "text", "missing": "blank"},
+    ], "visibility": {}}})
+
+    absent = normalize_v05_table_content(ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                                         {"scenarios": {"risk": {"title": "Risk case"}}}, view)
+    bound = normalize_v05_table_content(ReviewProjection((scenario,), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                                        {"scenarios": {"risk": {"title": "Risk case"}}}, view)
+
+    assert absent.columns == () and absent.cells == ()
+    assert [cell.content for cell in bound.cells] == ["Risk case"]
 
 
 def test_forecast_legend_replaces_planned_key_or_adds_it_and_accepts_wording():
