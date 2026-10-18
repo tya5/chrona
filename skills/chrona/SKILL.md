@@ -5,8 +5,7 @@ description: Plan a project timeline, Gantt chart, roadmap slide, milestone sche
 
 # chrona
 
-Chrona turns a YAML plan into a computed schedule and picture. Edit the plan; `chrona`
-computes every date and draws it consistently, so a changed picture means a changed plan.
+Chrona computes a schedule and picture from YAML. Edit the plan, never the generated picture.
 
 ## When to use it
 
@@ -105,13 +104,14 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
 | `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
-| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an authoring command file to a guided workspace; requires `--allow-write`. |
+| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an inline authoring command or contained command file; requires `--allow-write`. |
+| `create_workspace` | Library entry (no CLI equivalent) | Creates a new workspace directory from a builtin preset and compact project; requires `--allow-write`. |
+| `validate_workspace` | Library entry (no CLI equivalent) | Validates a workspace and its complete preset/resource closure; returns its revision. |
+| `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
+| `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; writes no output file. |
 
-Edit standalone `project.yaml` directly; use `apply_authoring_command` with workspace
-and command paths for guided workspaces, and `apply_command` for Stores, never standalone plans.
-Apply only the user's request; writers have no approval step. Get `baseRevision` with
-`chrona workspace revision`. Stale bases and IDs reused for different requests are rejected;
-an exact accepted `commandId` retry returns its durable result without writing.
+Edit standalone `project.yaml` directly; use `apply_command` for Stores.
+For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
 
 ## The model in five lines
 
@@ -193,8 +193,7 @@ states it with a last clause, `deadline 2027-06-30`.
 
 ## Install, refresh, and where the rules live
 
-This skill ships inside the chrona package, so it matches the installed command. `chrona skill copy DIR`
-copies it into an empty or absent directory (point it at the skills directory your agent host reads, for
-example `.claude/skills/chrona`) and never overwrites; `E_SKILL_OUTPUT_EXISTS` means the directory is not
-empty. After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one. The
-rules are in Spec 05 (project format), Spec 04 (scheduling) and Specs 06, 07 and 33 (view, theme, layout).
+This skill ships with chrona. `chrona skill copy DIR` writes into an empty or absent directory,
+such as `.claude/skills/chrona`; `E_SKILL_OUTPUT_EXISTS` refuses a nonempty destination.
+After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one.
+Rules: Spec 05 (Project), Spec 04 (scheduling), and Specs 06, 07 and 33 (View, Theme, Layout).

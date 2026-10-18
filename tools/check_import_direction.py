@@ -51,11 +51,13 @@ ALLOWED: dict[str, set[str]] = {
 # read side (#812): `chrona.operational.store_reads` (choose the reader of the Store a reference names, with the
 # configured integrity; compare a baseline), shared with the command line for the same reason; the Render Context
 # closure it cannot hold (`operational` may not import `presentation`) is a use case, `usecases.context_review`.
-# Guided authoring (#902) similarly shares only `operational.authoring_commands`; the SDK binding gains no edge.
+# Guided authoring shares `operational.authoring_commands` and the opaque, exclusive new-directory publisher
+# `operational.workspace_initialization` (#1725); the SDK binding gains no edge.
 MODULE_RULES: dict[str, dict[str, set[str]]] = {
     "chrona.app.agent_": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"},
                           "modules": {"chrona.operational.store_commands", "chrona.operational.store_reads",
-                                      "chrona.operational.authoring_commands"}},
+                                      "chrona.operational.authoring_commands",
+                                      "chrona.operational.workspace_initialization"}},
     "chrona.app.mcp_server": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
 }
 

@@ -298,7 +298,7 @@ draw the same slide in several color schemes for comparison
 
 draw a slide from a guided authoring workspace (a draft)
 
-`chrona render-workspace --forecast --format --locale --output --provenance --store-config --typesetter-adapter-grammar --typesetter-engine --typesetter-version --viewport --visual-profile -o`
+`chrona render-workspace --forecast --format --locale --output --progress --provenance --store-config --typesetter-adapter-grammar --typesetter-engine --typesetter-version --viewport --visual-profile -o`
 
 - `workspace`: guided authoring workspace YAML path
 - `--forecast`: derive the explicit forecast from the workspace Actual input
@@ -310,6 +310,7 @@ draw a slide from a guided authoring workspace (a draft)
 - `--typesetter-engine`: the engine that will compile the output: typst (for .typ) or tectonic (for .tex); defaults from the output target
 - `--typesetter-version`: the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; optional, recorded as unspecified when absent
 - `--typesetter-adapter-grammar`: the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; defaults from the output target
+- `--progress`: report render phases and routing counts on stderr (automatic for terminal stderr)
 - `--provenance`: write a JSON record of which inputs the render used
 - `--output, -o`: where to write the result; an existing file is not replaced
 

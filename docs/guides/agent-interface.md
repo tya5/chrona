@@ -120,16 +120,25 @@ reference that has none, and no argument lowers either. That setting is its owne
 
 ### What the server offers
 
-| Tool | Same as | What it returns |
+The following table is checked directly against the server registry.
+
+<!-- chrona:agent-tool-table -->
+| Tool | Purpose | Writes |
 | --- | --- | --- |
-| `validate_project` | `chrona validate` | `ok`, or typed diagnostics, including a dependency cycle (the objects on it, and the relation that closes it). It computes no dates. |
-| `schedule_project` | `chrona schedule` | The computed placements, the critical path and any `W_DEADLINE` warnings; a fixed date or bound the dependencies contradict is rejected here, and a cycle as in `validate_project`. |
-| `render_draft` | `chrona render` | A PNG preview (or the SVG text with `inline: svg`), the content identity and any warnings. It writes no file. |
-| `list_presets` | `chrona preset list` | The builtin preset ids `render_draft` accepts. |
-| `render_review` | `chrona render-review` | The pinned picture of an immutable Render Context from a Store: its format, content identity, warnings and the SVG or PNG inline. Read-only. |
-| `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store. Read-only. |
-| `check_command` | `chrona command-check` | Previews an Actual intake or baseline capture command against its Store; writes nothing. |
-| `apply_command` | `chrona command-apply` | Applies it. Refused unless the server was started with `--allow-write`; no approval step. |
+| `validate_project` | Validate a Project | no |
+| `schedule_project` | Compute a Project's schedule | no |
+| `render_draft` | Render a draft picture of a Project | no |
+| `list_presets` | List builtin presets | no |
+| `render_review` | Render pinned evidence from a Store | no |
+| `compare_baseline` | Compare a named baseline with a candidate | no |
+| `check_command` | Preview a Store command | no |
+| `apply_command` | Apply a Store command | yes |
+| `apply_authoring_command` | Apply a guided workspace command | yes |
+| `create_workspace` | Create a guided workspace from a builtin preset | yes |
+| `validate_workspace` | Validate a guided workspace and its pinned resources | no |
+| `workspace_revision` | Read the current guided workspace revision | no |
+| `render_workspace` | Render a guided workspace | no |
+<!-- /chrona:agent-tool-table -->
 
 Every result carries a `status`: `ok`, `rejected` (the plan is refused: read each diagnostic's `code` and
 `sourceRef`) or `failed` (the call could not run, for example a path outside the workspace). A rejection is a
@@ -145,21 +154,46 @@ belong to a zero-float driving path to the one project finish; an isolated
 fixed date is not critical. [Spec 57](../specification/57-public-schedule-analysis.md)
 owns these rules; the MCP tool does not repeat scheduling analysis.
 
+### Guided authoring without a shell
+
+With writes enabled, call `create_workspace` using a builtin ID from
+`list_presets` (omitting `preset` selects the default):
+
+```json
+{"directory":"plan","preset":"target-b","project":{"id":"launch","title":"公開計画","tasks":[{"id":"review","title":"レビュー","planned":{"start":"2026-01-05","finish":"2026-01-09"}}]}}
+```
+
+The result supplies `workspace` (`plan/workspace.yaml`) and `workspaceRevision`.
+Pass that path to `validate_workspace`, `workspace_revision` or `render_workspace`;
+the latter takes the same viewport/locale/format/inline options as `render_draft`.
+It resolves the local copied preset exactly as the CLI does, including Theme
+expressions. Japanese source text and author key order stay readable after edits.
+
+`apply_authoring_command` accepts the workspace path and an inline command (or
+a contained command file). The command carries `version`, `commandId`, `type`,
+`target: {kind: "authoring-workspace", path: "workspace.yaml"}`, `baseRevision`
+and `payload`. Its registry schema and description give the five operations:
+`setWorkspaceTask`, `setWorkspaceActual`, `selectPresentationPreset`,
+`setPresentationOverride` and `materializePresentationPreset`.
+Use creation/query `workspaceRevision` as the first base, then carry each
+accepted `authoringResult.resultRevision` into the next command. Revert a source
+edit with its inverse command at the current revision. No CLI call, manual file
+read or deliberately stale command is needed to discover a revision.
+
 ### Limits
 
-- Every path is relative to the workspace and must name an existing file inside it: no `..`, no absolute path,
-  no symlink that leaves the workspace, no input over 2 MiB. A Store root named by a configuration is held to the same
-  rule. The only file the server writes is the Store that
-  `apply_command` changes, and only with `--allow-write`; it never writes a plan, a picture or a path you name.
-- `apply_command` takes an Actual intake batch and a baseline capture only. It has no authoring command, no resolve
-  command and no revert command. Use the command line for those.
-- One writer per Store: the server handles its own calls one at a time, but a command line and a server writing one
-  Store at the same moment are not guaranteed to be safe.
-- A `compare_baseline` result over 1 MiB is refused (`E_MCP_RESULT_TOO_LARGE`) and `chrona baseline-compare` writes it to a
-  file; `render_review` has the same inline caps as `render_draft`, and reading a Store has no cap of its own (a Store's
-  content is pinned by identity and may hold large assets such as fonts). `render_review` offers no `--format`,
-  `--reject-unused-closure-inputs` or `--emit-scene` and no snapshot-root mode: use the command line for those.
-- A render cannot be cancelled and takes a few seconds for a large plan; calls are handled one at a time. An inline
-  image over 1.5 MiB (SVG over 1 MiB) is refused: lower the viewport or render to a file with `chrona render`.
+- Read paths name existing files inside the server workspace: no `..`, absolute
+  paths, escaping symlinks or inputs over2 MiB. Only `create_workspace` accepts a
+  new directory, under an existing real parent; it never overwrites a destination.
+- The three writing tools require `--allow-write`. Initialization copies a local
+  bundle; authoring edits use durable CAS/replay; Store commands support Actual
+  intake, snapshot capture, `revertActualCommand` and `redoActualCommand` through
+  the same locked transaction as the CLI. No tool writes a rendered picture.
+- Calls are serial and a render cannot be cancelled. Large dependency plans can
+  take minutes when routing dominates; there is no fixed completion-time promise.
+- An inline image over1.5 MiB or SVG over1 MiB is refused: lower the viewport or
+  use `inline: none`. A `compare_baseline` result over1 MiB is refused too.
+  Immutable Store assets themselves have no read-size cap. A pinned Context
+  determines its own format and viewport; Draft tools offer SVG and PNG.
 - PNG needs the `render` extra. Without it `render_draft` still answers and reports `pngAvailable: false`.
 - The contract of the tools and their results is [Spec 66](../specification/66-agent-interface.md).

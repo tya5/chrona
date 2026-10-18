@@ -71,7 +71,7 @@ def prepare_authoring_command(
         candidate = deepcopy(current)
         _apply(candidate, command)
         parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate)), candidate)
-        payload = yaml.safe_dump(candidate, sort_keys=False).encode("utf-8")
+        payload = yaml.safe_dump(candidate, allow_unicode=True, sort_keys=False).encode("utf-8")
         next_revision = content_identity(candidate)
         result = _accepted(command, base, next_revision)
         return PreparedFileMutation(files={canonical_path.name: payload}, result_revision=next_revision, result=result)
@@ -148,8 +148,8 @@ def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "") -
         diagnostic |= {
             "expectedRevision": base, "receivedRevision": command.get("baseRevision"),
             "detail": (f"workspace revision expected {base}; command declared "
-                       f"{command.get('baseRevision')}; run `chrona workspace revision "
-                       f"{command['target']['path']}` and retry"),
+                       f"{command.get('baseRevision')}; query workspace_revision for "
+                       f"{command['target']['path']!r} and retry"),
         }
     return {
         "version": "chrona/authoring-command-result/v0.1", "status": "rejected",

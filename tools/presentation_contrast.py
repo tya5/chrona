@@ -11,6 +11,7 @@ from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
 from chrona.usecases.diagnostic_messages import encoding_contrast_detail
+from chrona.usecases.contrast_grouping import group_contrast_findings
 
 from chrona.presentation.scene.contrast_policy import (
     DEFAULT_POLICY,
@@ -101,40 +102,63 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tu
                 "groundKind": None,
             }})
             continue
-        records.extend({"scene": relative, "theme": theme, "optedIn": held, "finding": finding.as_mapping()}
-                       for finding in findings)
+        for group in group_contrast_findings(findings):
+            representative = group[0]
+            record = {"scene": relative, "theme": theme, "optedIn": held,
+                      "finding": representative.as_mapping()}
+            if (representative.code == "W_SCENE_ENCODING_CONTRAST"
+                    and representative.severity == "warning"
+                    and representative.encoding is not None
+                    and representative.encoding_pair is not None):
+                record.update({
+                    "occurrenceCount": len(group),
+                    "primitiveIds": [finding.primitive_id for finding in group
+                                     if finding.primitive_id is not None],
+                    "groundIds": list(dict.fromkeys(finding.ground_id for finding in group
+                                                    if finding.ground_id is not None)),
+                })
+                # Only grouped pairs need an extra observation inventory;
+                # ordinary findings already retain their complete single record.
+                record["observations"] = [finding.as_mapping() for finding in group]
+            records.append(record)
     return tuple(records)
 
 
 def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate the report's deterministic per-purpose, role, and disposition rows."""
-    grouped: dict[tuple[str, str, str, float | None], list[dict[str, Any]]] = {}
     ordered = tuple(records)
-    for record in ordered:
-        finding = record["finding"]
-        key = (finding["purpose"], finding["visualRole"], finding["disposition"], finding["floor"])
-        grouped.setdefault(key, []).append(record)
+    grouped: dict[tuple[str, str, str, float | None], list[tuple[int, dict[str, Any], dict[str, Any]]]] = {}
+    for group_index, record in enumerate(ordered):
+        for observation in record.get("observations", (record["finding"],)):
+            key = (observation["purpose"], observation["visualRole"],
+                   observation["disposition"], observation["floor"])
+            grouped.setdefault(key, []).append((group_index, record, observation))
     rows: list[dict[str, Any]] = []
     for key in sorted(grouped):
         values = grouped[key]
-        ratios = sorted(item["finding"]["contrastRatio"] for item in values if item["finding"]["contrastRatio"] is not None)
+        observations = [observation for _, _, observation in values]
+        ratios = sorted(item["contrastRatio"] for item in observations if item["contrastRatio"] is not None)
+        warning_groups = {group_index for group_index, record, _ in values
+                          if record["finding"]["severity"] == "warning"}
+        error_groups = {group_index for group_index, record, _ in values
+                        if record["finding"]["severity"] == "error"}
         rows.append({
             "purpose": key[0], "visualRole": key[1], "disposition": key[2], "floor": key[3],
-            "slideCount": len({item["scene"] for item in values}),
-            "primitiveCount": sum(item["finding"]["primitiveId"] is not None for item in values),
+            "slideCount": len({record["scene"] for _, record, _ in values}),
+            "primitiveCount": sum(item["primitiveId"] is not None for item in observations),
             "minimumContrast": min(ratios) if ratios else None,
             "medianContrast": statistics.median(ratios) if ratios else None,
-            "errorCount": sum(item["finding"]["severity"] == "error" for item in values),
-            "warningCount": sum(item["finding"]["severity"] == "warning" for item in values),
+            "errorCount": len(error_groups),
+            "warningCount": len(warning_groups),
         })
     decoration_roles = {binding.scene_role for binding in contrast_bindings(ContrastClass.DECORATION)}
     by_scene: dict[str, set[str]] = {}
     corpus_roles: set[str] = set()
     for record in ordered:
-        finding = record["finding"]
-        if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
-            by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
-            corpus_roles.add(finding["visualRole"])
+        for finding in record.get("observations", (record["finding"],)):
+            if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
+                by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
+                corpus_roles.add(finding["visualRole"])
     # Coverage is corpus-wide. Members of a shared decoration concept may
     # coexist; every emitted role is still evaluated and reported separately.
     coverage_concepts = (
@@ -169,7 +193,8 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
             "errorCount": sum(item["finding"]["severity"] == "error" for item in ordered) + len(corpus_errors),
             # A decoration below its floor is a warning (#995): counted and listed, never a failure.
             "warningCount": sum(item["finding"]["severity"] == "warning" for item in ordered),
-            "findingCount": len(ordered)}
+            "findingCount": len(ordered),
+            "observationCount": sum(len(item.get("observations", (item["finding"],))) for item in ordered)}
 
 
 def render_markdown(report: Mapping[str, Any]) -> str:
@@ -182,6 +207,7 @@ def render_markdown(report: Mapping[str, Any]) -> str:
              "decoration below its floor (or on a ground that cannot be read) is a warning. For any other Theme every "
              "miss is a warning: it is listed and counted, and fails nothing. Independent encoded-fill misses are "
              "reported as warnings; authored Theme enforcement is checked by the render before Scene output.", "",
+             "A grouped encoded-fill warning may contribute to multiple purpose/role summary rows; row warning counts are not additive.", "",
              "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |",
              "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:
@@ -201,10 +227,17 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                   if finding.get("sampleInline") is not None and finding.get("sampleBlock") is not None else "—")
         encoded = (encoding_contrast_detail({**finding, "encoding": finding["encoding"]})
                    .replace("|", "\\|") if isinstance(finding.get("encoding"), Mapping) else "—")
+        primitive_ids = record.get("primitiveIds")
+        ground_ids = record.get("groundIds")
+        primitive_display = ", ".join(primitive_ids) if primitive_ids else finding["primitiveId"]
+        ground_display = ", ".join(ground_ids) if ground_ids else finding.get("groundId")
+        count = record.get("occurrenceCount")
+        if count is not None:
+            sample = f"{count} occurrences"
         lines.append("| `{scene}` | `{primitive}` | `{role}` | {sample} | `{ground}` | {ground_kind} | `{color}` | {channel} | {encoded} | {ratio} | {floor} | {severity} |".format(
-            scene=record["scene"], primitive=finding["primitiveId"], role=finding["visualRole"],
+            scene=record["scene"], primitive=primitive_display, role=finding["visualRole"],
             sample=sample,
-            ground=finding.get("groundId") or "—", color=finding.get("groundColor") or "—",
+            ground=ground_display or "—", color=finding.get("groundColor") or "—",
             ground_kind=finding.get("groundKind") or "—",
             channel=finding.get("paintChannel") or "—", encoded=encoded,
             ratio=number(finding["contrastRatio"]),
@@ -224,7 +257,7 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                     + ", ".join(f"`{test}`" for test in item["tests"])
                     for item in report["syntheticCoverage"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),
-                  "", f"Findings: {report['findingCount']}; errors: {report['errorCount']}; "
+                  "", f"Findings: {report['findingCount']}; observations: {report['observationCount']}; errors: {report['errorCount']}; "
                       f"warnings: {report['warningCount']}.", ""))
     return "\n".join(lines)
 

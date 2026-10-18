@@ -547,6 +547,15 @@ shape's best-part reduction must not discard these data-channel findings.
 Observe completed paint/provenance only: do not reload Project/Style resources,
 infer encoding from colours or preset IDs, or repaint the mark.
 
+Warning presentation groups computable encoded-fill misses per surface by the
+completed encoding identity and value, fill colour/opacity and resolved ground
+colour. Different measured ratios or exception dispositions remain separate;
+row/ground IDs alone do not split an otherwise identical realised pair. One
+warning retains the occurrence count, every primitive/ground ID and diagnostic
+subject. Its identity depends on the pair, not its occurrence count. Per-mark
+Scene encoding witnesses and observer findings remain intact; unknown-ground
+warnings, ordinary contrast warnings and blocking-error enforcement are unchanged.
+
 The repository registry above preserves its pre-existing figure-visibility
 guarantee; it does not author Theme enforcement for this new data-channel
 obligation. Scene-only corpus analysis explicitly requests warning policy for
