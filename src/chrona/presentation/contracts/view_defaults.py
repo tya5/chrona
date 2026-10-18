@@ -19,6 +19,7 @@ from dataclasses import replace
 from typing import Any
 
 from chrona.presentation.contracts.diagnostics import PresentationDiagnostic, PresentationResourceSource
+from chrona.presentation.contracts.resources import DesignMergedView
 
 WHOLE_MEMBERS = ("visibility", "axis", "deadlines", "shading", "timePresentation", "annotationPresentation",
                  "backgroundDecoration", "progressFill", "annotationPlacement", "figureFormats", "heading")
@@ -85,21 +86,24 @@ def _column_source_kind(source: object) -> str | None:
 
 def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) -> dict[str, Any]:
     """The View with the design's defaults filled in under it (the View's own members win)."""
-    merged = deepcopy(dict(view))
+    merged = DesignMergedView(deepcopy(dict(view)))
     body = merged.get("body")
     if not isinstance(body, dict):
         return merged
+    supplied: set[str] = set()
     for name in WHOLE_MEMBERS:
         if name in defaults and name not in body:
             body[name] = deepcopy(defaults[name])
+            supplied.add(name)
     for name, members in SPLIT_MEMBERS.items():
         declared, offered = body.get(name), defaults.get(name)
         if not isinstance(offered, Mapping):
             continue
         if name not in body:
-            supplied = {member: deepcopy(offered[member]) for member in members if member in offered}
-            if supplied:
-                body[name] = supplied
+            fragment = {member: deepcopy(offered[member]) for member in members if member in offered}
+            if fragment:
+                body[name] = fragment
+                supplied.add(name)
         elif isinstance(declared, dict):
             for member in members:
                 if member in offered and member not in declared:
@@ -115,6 +119,7 @@ def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) ->
             if isinstance(style, Mapping):
                 _fill_presentation(column, style, COLUMN_PRESENTATION_MEMBERS)
     _close_array_presentation(body, defaults)
+    merged.design_supplied = frozenset(supplied)
     return merged
 
 
