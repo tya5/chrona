@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import replace
 from datetime import date
 from types import SimpleNamespace
 
@@ -64,11 +65,52 @@ def test_snapshot_is_forecast_basis_and_ghost_even_with_primary_view_comparison(
     assert projected.rows[1].items[1].forecast is None
 
 
-def test_missing_snapshot_item_is_not_a_zero_or_primary_fallback():
+def _added_removed():
     project, actual, view, ordinary, forecast = inputs()
-    with pytest.raises(ValueError, match="E_FORECAST_BASELINE_UNAVAILABLE: b"):
+    snapshot = {"version": "timeline/v0.7", "project": {"id": "forecast"}, "objects": {
+        "a": project["objects"]["a"],
+        "r": {"type": "task", "title": "Gone", "schedule": {"mode": "fixed-span", "start": "2026-01-05", "end": "2026-01-06"}}}}
+    placements = ReferenceScheduler().schedule(snapshot).placements
+    return project, actual, view, ordinary, forecast, snapshot, placements
+
+
+def test_added_object_is_new_without_baseline_distance_and_removed_object_is_a_ghost_row():
+    project, actual, view, ordinary, forecast, snapshot, placements = _added_removed()
+    projected = build_review_projection(project, ordinary.placements, view, actual, snapshot_project=snapshot,
+                                        snapshot_placements=placements, forecast=forecast)
+    a, b = projected.items
+    assert b.new_vs_baseline and not a.new_vs_baseline
+    assert display_finish_delta(b) is None and finish_delta_text(b) == "new"
+    assert finish_delta_text(a) == "+1d"
+    assert active_placement(b) == {"start": date(2026, 1, 9), "end": date(2026, 1, 11)}
+    ghost = projected.rows[-1]
+    assert [(i.source_kind, i.object_id, i.title) for i in ghost.items] == [("snapshot", "r", "Gone (removed)")]
+    assert projected.removed_objects == ()
+
+
+def test_baseline_compare_without_forecast_marks_new_and_ghosts_removed_when_ghosts_are_on():
+    project, actual, view, ordinary, _, snapshot, placements = _added_removed()
+    view = replace(view, comparison=ViewComparison("snapshot", "optional", None, None, (), baseline_marks="ghost"))
+    projected = build_review_projection(project, ordinary.placements, view, actual, snapshot_project=snapshot,
+                                        snapshot_placements=placements)
+    assert projected.items[1].new_vs_baseline
+    assert [i.object_id for i in projected.rows[-1].items] == ["r"]
+
+
+def test_removed_object_is_listed_when_the_view_hides_ghosts():
+    project, actual, view, ordinary, _, snapshot, placements = _added_removed()
+    projected = build_review_projection(project, ordinary.placements, view, actual, snapshot_project=snapshot,
+                                        snapshot_placements=placements)
+    assert [row.row_id for row in projected.rows] == ["a", "b"]
+    assert projected.removed_objects == (("r", "Gone"),)
+
+
+def test_forecast_without_a_schedule_for_a_displayed_object_still_refuses_with_a_hint():
+    project, actual, view, ordinary, forecast = inputs()
+    forecast = replace(forecast, items={"a": forecast.items["a"]})
+    with pytest.raises(ValueError, match="E_FORECAST_BASELINE_UNAVAILABLE: b: the forecast has no schedule"):
         build_review_projection(project, ordinary.placements, view, actual,
-                                snapshot_project=project, snapshot_placements={"a": ordinary.placements["a"]}, forecast=forecast)
+                                snapshot_project=project, snapshot_placements=ordinary.placements, forecast=forecast)
 
 
 def test_no_forecast_keeps_original_facets_and_values():
