@@ -285,7 +285,8 @@ in help and the first-project guide.
 
 Where a View addresses an object field, it MAY use `{fieldRole: responsible}` or
 `{fieldRole: phase}` instead of the direct field key. This applies to table and
-lane-table column sources, color sources, icon encodings and `rows.laneKeys`.
+lane-table column sources, color sources, icon encodings, `rows.laneKeys` and
+network node label sources.
 Grouping declares `by: {fieldRole: responsible}`, `fallback: objectType|none|hierarchy`
 and its ordinary `missing` label. The Project declares the role-to-field map
 (Spec 05 §10.1); entity fields and built-in/derived projection sources are not
@@ -293,7 +294,8 @@ role targets. Role columns use the design's existing `field` column style.
 
 The primary Project's role declarations determine View policy. An undeclared
 role selects grouping's explicit fallback, omits its columns/optional color or
-icon encoding, or removes the role lane-key component (retaining `byObject`).
+icon encoding, removes the role lane-key component (retaining `byObject`), or
+uses the Project title for a network node label.
 Evaluation emits one `I_VIEW_FIELD_ROLE_UNBOUND` per role, with `count` and
 `sourceRefs` counting affected declarations, not rows. Ordinary tables with no
 remaining column reject with `E_VIEW_TABLE_COLUMNS_EMPTY`; an omitted

@@ -97,6 +97,8 @@ Add optional `body.network.nodeLabel: {source: ...}` to the latest live View
 schema without a version bump. `source` is `title`, `id`, or the existing shared
 Project field-reference object (`{field}` / `{fieldRole}`). An omitted or null
 source uses `title`; an omitted node-label override has the same default.
+An unbound node-label role retains the existing per-role
+`I_VIEW_FIELD_ROLE_UNBOUND` declaration diagnostic while falling back to title.
 The ordinary title is the Project title, not a plot/path label. Field reads use
 the existing binding/default resolver: absent, null or unbound role falls back
 to that object's title; present strings are used verbatim. A non-string field
