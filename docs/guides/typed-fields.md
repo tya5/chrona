@@ -118,6 +118,7 @@ version: chrona/view/v0.28
 kind: view
 id: risk-view
 body:
+  heading: {title: '{project}: delivery risk', subtitle: 'Bars coloured by risk'}
   surface: table-timeline
   selection:
     include: {types: [span, point]}
@@ -126,7 +127,7 @@ body:
     target: planned
     source: {field: risk}
     domain: [low, medium, high]
-  grouping: {by: none}
+  grouping: {by: field, field: team, missing: Unset}
   ordering: {by: plannedStart, direction: ascending, tieBreak: id}
   window: {mode: selected-planned}
   comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: working-days, facets: [planned]}
@@ -157,6 +158,178 @@ chrona render typed-plan.yaml --preset wallboard-dark --view typed-risk-view.yam
 Each bar now carries the colour of its `risk` value, the axis labels the months and the legend names
 `low`, `medium` and `high`. To change a colour, edit `fields` in the plan; never edit the picture.
 
+## 3a. Colour by field on a preset with no `series` scale
+
+`executive-light`, `target-b` and `marquee` declare no Theme colour scale called `series`, so the
+View above fails on them with `E_PRESENTATION_SCALE_MAPPING ... slots=None`. The bundled presets are
+not edited; you declare the scale in your own files and pass them over the preset. Two steps:
+
+1. **Scheme categories.** A Scheme names colours; add one category per domain value (`risk-low`,
+   `risk-medium`, `risk-high`) to a copy of the preset's Color Scheme. Choose colours that keep a
+   3:1 contrast against the page, or the render warns `W_SCENE_ENCODING_CONTRAST`.
+2. **A derived Theme.** `chrona/theme/v0.16` names its base Theme (`extends`: the base's `id` and a `path`
+   below the Theme file, with no `..`; no hash is needed) and declares only what it adds. `colorScales.series.slots` maps each domain value to a Scheme category.
+   `chrona preset copy` writes the base files first.
+
+The `executive-light` pair, with the Scheme file shown whole:
+
+<!-- chrona:doc-check file: typed-executive-scheme.yaml -->
+```yaml
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: executive-risk
+body:
+  colors:
+    surface: "#FFFFFF"
+    surfaceRaised: "#EAF0F8"
+    text: "#172033"
+    textMuted: "#4B5563"
+    accent: "#3986E6"
+    positive: "#269D79"
+    negative: "#B91C1C"
+    warning: "#8D530F"
+    neutral: "#C9CED8"
+    insideLabelPlanned: "#000000"
+    insideLabelActual: "#000000"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona executive-light example
+    license: project-pending
+  categories:
+    default: "#EEF3F8"
+    capabilities-band: "#D8DDE6"
+    risk-low: "#2E7D5B"
+    risk-medium: "#B7791F"
+    risk-high: "#B91C1C"
+```
+
+<!-- chrona:doc-check file: typed-executive-theme.yaml -->
+```yaml
+version: chrona/theme/v0.16
+kind: theme
+id: executive-risk
+body:
+  extends:
+    id: chrona-builtin-executive-light
+    path: looks/executive-light/theme.yaml
+  roles:
+    subtitle:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+  colorBindings:
+    subtitle.fill: textMuted
+  colorScales:
+    series:
+      slots: {low: risk-low, medium: risk-medium, high: risk-high}
+```
+
+The same extension on `target-b` (its Scheme already has `series-1` to `series-6` for the owner
+scale; the three `risk-*` categories are added after them):
+
+<!-- chrona:doc-check file: typed-target-b-scheme.yaml -->
+```yaml
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: target-b-risk
+body:
+  colors:
+    surface: "#FFFFFF"
+    surfaceRaised: "#EEF2F7"
+    text: "#101828"
+    textMuted: "#5B6B7F"
+    accent: "#1D5FD1"
+    positive: "#0E8A6C"
+    negative: "#C0392B"
+    warning: "#C77A12"
+    neutral: "#C6CFDA"
+    rule: "#D5DCE6"
+    insideLabelPlanned: "#101828"
+    insideLabelActual: "#FFFFFF"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: print-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, mission-light
+    license: MIT
+  categories:
+    default: "#E8EFFA"
+    period: "#1D5FD1"
+    exception: "#F8E4C9"
+    bar: "#C7D6F3"
+    barEdge: "#3F6FD0"
+    actualInk: "#101828"
+    asofChip: "#B8761F"
+    asofInk: "#FFFFFF"
+    relationInk: "#7C8999"
+    closed: "#F4F6F9"
+    series-1: "#E8EFFA"
+    series-2: "#E4F4EE"
+    series-3: "#FBF0E1"
+    series-4: "#F1E9F8"
+    series-5: "#FDEBEA"
+    series-6: "#D2E9F2"
+    risk-low: "#2E7D5B"
+    risk-medium: "#B7791F"
+    risk-high: "#B91C1C"
+```
+
+<!-- chrona:doc-check file: typed-target-b-theme.yaml -->
+```yaml
+version: chrona/theme/v0.16
+kind: theme
+id: target-b-risk
+body:
+  extends:
+    id: target-b
+    path: looks/target-b/theme.yaml
+  colorScales:
+    series:
+      slots: {low: risk-low, medium: risk-medium, high: risk-high}
+```
+
+```sh
+chrona preset copy executive-light --output looks/executive-light
+chrona preset copy target-b --output looks/target-b
+chrona render typed-plan.yaml --preset executive-light --view typed-risk-view.yaml --theme typed-executive-theme.yaml --scheme typed-executive-scheme.yaml --output typed-risk-executive.svg
+chrona render typed-plan.yaml --preset target-b --view typed-risk-view.yaml --theme typed-target-b-theme.yaml --scheme typed-target-b-scheme.yaml --output typed-risk-target-b.svg
+```
+
+Both pictures colour the bars green, amber and red and name `low`, `medium` and `high` in the legend.
+`marquee` follows the same two steps with its own Scheme copy (not shown). The View
+groups by `team` because `target-b`'s Layout tints its group bands and refuses `grouping: none`;
+`executive-light` ignores the grouping.
+
+### Title and subtitle
+
+The View's `heading` sets the slide title and an optional subtitle (Spec 06): `title` and `subtitle`
+are literal text with the placeholders `{project}`, `{asOf}` and `{calendar}`. The View above
+declares `heading: {title: '{project}: delivery risk', subtitle: 'Bars coloured by risk'}`, and the
+renders show both lines. The title works on every preset. The subtitle needs a Theme `subtitle`
+typography role: `wallboard-dark` and `target-b` declare it, `executive-light` does not and fails
+with `E_THEME_ROLE_REQUIRED` (`role='subtitle'`). The derived Theme above adds the role to
+`executive-light` (`roles.subtitle`, built from tokens the base already defines, and the
+`subtitle.fill` colour binding), so the same View renders there too. Drop `subtitle` from the View to
+keep a bundled preset's Theme untouched.
+
 ## 4. Colour only some objects with a Style
 
 A **Style** rule scopes an encoding to the objects whose field matches (`fields` predicates need the
@@ -171,6 +344,7 @@ Three rules to know:
 - The preset's Theme must declare the scale. On `target-b` the render fails with
   `E_PRESENTATION_SCALE_MAPPING ... slots=None` and the message names what to declare:
   `colorScales.series.slots` (one Scheme category per domain value) or `colorScales.series.palette`.
+  Section 3a shows how, with `--theme` and `--scheme`; those flags work with `--style` too.
 
 <!-- chrona:doc-check file: typed-style.yaml -->
 ```yaml

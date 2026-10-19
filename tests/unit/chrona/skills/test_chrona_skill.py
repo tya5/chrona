@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 
 import pytest
 import yaml
@@ -154,7 +155,8 @@ def test_typed_fields_fences_equal_their_example_files_and_the_example_runs(tmp_
 
     assert set(shown) == {"examples/typed-fields/team.yaml", "examples/typed-fields/plan.yaml",
                           "examples/typed-fields/risk-view.yaml",
-                          "examples/typed-fields/style.yaml"}
+                          "examples/typed-fields/style.yaml", "examples/typed-fields/executive-scheme.yaml",
+                          "examples/typed-fields/executive-theme.yaml"}
     for path, body in shown.items():
         assert body == (SKILL_DIR / path).read_text(encoding="utf-8"), path
     plan = str(SKILL_DIR / "examples" / "typed-fields" / "plan.yaml")
@@ -174,6 +176,30 @@ def test_typed_fields_fences_equal_their_example_files_and_the_example_runs(tmp_
                                 str(examples / "style.yaml"), "--output", str(styled))
     assert status == 0 and json.loads(out)["status"] == "ok"
     assert "Platform risk: low" in styled.read_text(encoding="utf-8")
+
+
+def test_typed_fields_colour_recipe_works_on_executive_light_and_target_b(tmp_path, monkeypatch, capsys):
+    """#1756 row 3: user Scheme + derived Theme add the `series` scale; heading title and subtitle render."""
+    examples = SKILL_DIR / "examples" / "typed-fields"
+    plan, view = str(examples / "plan.yaml"), str(examples / "risk-view.yaml")
+    for preset, stem in (("executive-light", "executive"), ("target-b", "target-b")):
+        bare = tmp_path / f"{stem}-bare.svg"
+        status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", preset, "--view", view, "--output", str(bare))
+        assert status == 1 and json.loads(out)["diagnostics"][0]["code"] == "E_PRESENTATION_SCALE_MAPPING"
+        # the derived Theme's `extends.path` is relative to the Theme file, so the copied preset sits beside it
+        status, _out, _err = run_cli(monkeypatch, capsys, "preset", "copy", preset, "--output", str(tmp_path / "looks" / preset))
+        assert status == 0
+        for name in ("theme", "scheme"):
+            shutil.copy(examples / f"{stem}-{name}.yaml", tmp_path / f"{stem}-{name}.yaml")
+        output = tmp_path / f"{stem}.svg"
+        status, out, _err = run_cli(monkeypatch, capsys, "render", plan, "--preset", preset, "--view", view, "--theme",
+                                    str(tmp_path / f"{stem}-theme.yaml"), "--scheme", str(tmp_path / f"{stem}-scheme.yaml"),
+                                    "--output", str(output))
+        assert status == 0 and json.loads(out)["status"] == "ok", out
+        painted = output.read_text(encoding="utf-8")
+        assert all(colour in painted.upper() for colour in ("#2E7D5B", "#B7791F", "#B91C1C"))
+        assert all(f">{value}<" in painted for value in ("low", "medium", "high"))
+        assert "Typed fields demo: delivery risk" in painted and "Bars coloured by risk" in painted
 
 
 def test_style_example_failures_name_what_to_change(tmp_path, monkeypatch, capsys):
