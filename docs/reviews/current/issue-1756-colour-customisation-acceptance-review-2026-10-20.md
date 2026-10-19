@@ -12,8 +12,8 @@ correction `b9c9e0b41`, published before the affected implementation.
 | 1 | An encoding whose realized slot colours are indistinct from each other, or from another legend key's colour, gets a warning naming both, using Spec 60's existing distinctness measure. Show it on a synthetic case. | Met locally; release pending. `test_legend_colour_warning_render.py` checks real View/semantic and same-scale/same-value distinct Style meanings, both warning subjects/names and their actual Scene/SVG ink. Near values within one scale retain the existing domain warning only when typed collision facts cover that exact pair. Layout unit tests cover declared vision simulations, hidden keys, completed multipart/stroke/transparent/gradient behavior and uncovered measurements. |
 | 2 | Find whether this is intended; make both modes consistent or state the rule, and add a synthetic test. | Met locally; release pending. Spec 28 states the canonical point semantic rule. `test_gate_encoding_modes.py` proves ordinary Theme-gate points are outside View `target: planned`, forecast points are eligible, and omitting the optional Theme gate role makes both use the planned fallback. It checks real SVG and serialized Scene encoding; no project exception or unsupported Style gate encoding is added. |
 | 3 | The guide shows the colour-by-field recipe working on at least two bundled presets, plus title and subtitle customisation, checked by the docs tests. | Deferred to dev B's [PR1765](https://github.com/tya5/chrona/pull/1765); not accepted by this A-only review. |
-| 4 | The message names the role and what to declare, or the preset declares the role (reviewer YAML). | Deferred to dev B/reviewer; not accepted by this A-only review. |
-| 5 | The error says that a parent path is not permitted and names the allowed form; the guide states it. | Deferred to dev B; not accepted by this A-only review. |
+| 4 | The message names the role and what to declare, or the preset declares the role (reviewer YAML). | Met on published main: PR1762's `test_a_subtitle_without_a_theme_subtitle_role_names_the_role_and_what_to_declare` verifies `E_THEME_ROLE_REQUIRED` explicitly names `subtitle`, required typography and `roles.subtitle`. Source is included in successful release39256723703 on 9dca9c55a. |
+| 5 | The error says that a parent path is not permitted and names the allowed form; the guide states it. | Met on published main: PR1762's `test_an_extension_path_with_a_parent_directory_says_so_and_names_the_allowed_form` checks the parent-directory refusal and permitted `folder/file.yaml` form; the typed-fields guide states the restriction and `extensions/typed-team.yaml`. Source is included in successful release39256723703 on 9dca9c55a. |
 
 ## Actual output and architecture
 
@@ -45,6 +45,10 @@ found no blocker; `git diff --check` is clean.
 The combined 1756/416 candidate passes **452 focused tests**. Their independent
 source commits and literal reviews share one upcoming integration PR/release
 after the active 1754 follow-up; no design or acceptance criterion changes.
+Independent B-row evidence review and both direct error-message regression
+tests pass. PR1762 merge `578d90b09` is an ancestor of the successful
+[three-OS release39256723703](https://github.com/tya5/chrona/actions/runs/39256723703).
+Row 3 still awaits PR1765 and its release; A rows 1–2 await this integration's gates.
 
 Local `conformance/run_conformance.py`: every check passes except
 `diagnostic-inventory`, which reports `E_DIAGNOSTIC_INVENTORY_STALE` for source
