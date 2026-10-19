@@ -4,6 +4,8 @@ Candidate, not release acceptance. Design/architecture/implementation plan:
 [issue Status](https://github.com/tya5/chrona/issues/1763#issuecomment-6256782022),
 published before code; normative clarification `a37a5393b` in Spec 50.
 Implementation `eb89d2a58`, normally merged ready main `8087e95c5` at `efbaa3a99`.
+Phase-wiring test correction `3965766f4` retains inventory/isolation guards and
+asserts terminal labels → member labels → ordinary labels in every route trial.
 
 | Literal acceptance | Status | Direct evidence |
 | --- | --- | --- |
@@ -34,3 +36,15 @@ Focused batch: `test_presentation_labels`, `test_surface_relation_label_search`,
 `test_member_label_route_obstruction`, `test_revision_launch_trial`,
 `test_revision_route_corridor`, and `test_stub_member_reservations` (119 passed).
 Full local pytest is not duplicated; CI owns the planned full release gates.
+
+The two previously unchanged integration phase spies assumed one relation-label
+call. [CI 39179414698](https://github.com/tya5/chrona/actions/runs/39179414698)
+failed those two tests (shards 2/3); `derived-ready` consequently failed.
+They now forward/assert the explicit phase selector and exact approved order;
+both modules pass all three tests (6.38 s). Product code is unchanged by this
+correction. A new exact-head CI run is required; the failed gate is not waived.
+
+[Official snapshot audit](https://github.com/tya5/chrona/pull/1772#issuecomment-6256965807),
+artifact `12156105597` on `fa9918e51`: all 50 SVGs/50 Scenes are byte-identical;
+no route/label/primitive changes or retirements in 109 declared paths. Only
+the diagnostic inventory's source locations and typed error entry change.
