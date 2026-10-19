@@ -111,7 +111,7 @@ body:
   markers:
   - kind: asOf
     source: actual
-    label: Today
+    label: {wording: legend.asOf}
   shading:
     nonWorking: true
     exceptions: true
