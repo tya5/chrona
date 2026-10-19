@@ -5,7 +5,9 @@ optional Theme metric beside the existing network metrics; when absent it
 falls back to `network.rank.gap`. This supersedes the temporary Layout Profile
 proposal in [review 6257221150](https://github.com/tya5/chrona/issues/416#issuecomment-6257221150),
 per [reviewer disposition 6267457613](https://github.com/tya5/chrona/issues/416#issuecomment-6267457613).
-No product code yet. Current published baseline: ready `d0dc06f6bc17227cda31cb9df8fbd7dc2dc3077c`.
+Implementation `8240e85c0` passes 266 combined focused tests and the unchanged
+HALCYON05 materializer. PR/public snapshot and exact-main release are pending.
+Implementation baseline: ready `d0dc06f6bc17227cda31cb9df8fbd7dc2dc3077c`.
 Authority: [issue and latest scope](https://github.com/tya5/chrona/issues/416#issuecomment-6256891542),
 [design approval and spacing correction](https://github.com/tya5/chrona/issues/416#issuecomment-6267457613).
 
@@ -156,3 +158,8 @@ adjust a network-render integration test for actual SVG/PNG if current fixtures
 do not prove source text and spacing. No corpus YAML is edited to obtain the
 unchanged HALCYON05 result. Publish the spec/work-record update before product
 code; B1766/1767's shared files have landed on the current baseline.
+
+Current evidence and all six literal rows are in the
+[acceptance review](../../reviews/current/issue-416-network-view-acceptance-review-2026-10-20.md).
+No further product slice is planned before PR/official public-output review;
+fix any discovered contract gap through design before extending code.
