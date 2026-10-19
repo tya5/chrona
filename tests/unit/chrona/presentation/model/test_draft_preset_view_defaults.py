@@ -38,7 +38,7 @@ def test_declared_thin_view_uses_its_design_without_rewriting_raw_identity(input
 
     draft = resolve_draft_render(project_path=project, preset_path=preset)
 
-    assert draft.closure.view.view.markers[0]["label"] == {"wording": "marker.asOf"}
+    assert draft.closure.view.view.markers[0]["label"] == "as of"
     assert draft.closure.view.identity.content_identity == "sha256:" + sha256(original).hexdigest()
     assert view.read_bytes() == original
 

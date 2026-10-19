@@ -780,7 +780,7 @@ body:
       fontSize: size.asof
       lineHeight: leading.tight
       letterSpacing: letter-spacing
-      textTransform: text-transform-lower
+      textTransform: text-transform
       numericSpacing: numeric-spacing
     annotation-kind-label:
       contrastTreatment: required
