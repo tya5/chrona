@@ -251,7 +251,9 @@ carry `timeout-minutes` bounds (`synchronize` 20, `derived-main` 10,
 `derived-ready` 5; the PR-side `derived-ready` poller 45). A timed-out sync
 publishes nothing, like a failed one. If a sync exceeds its bound or stalls,
 dispatch `derived-sync` on main (`gh workflow run derived-sync.yml --ref main`);
-never patch generated output. After publication the
+never patch generated output. The sync awaits the gate run id returned by
+its own dispatch (`tools/derived_gate_await.py`) and logs one line per poll,
+so a stall is diagnosable from the log. After publication the
 sync dispatches the full three-OS pytest/conformance/wheel-smoke run on the
 same immutable ref and SHA. Main pushes do not run that matrix on the stale
 pre-sync source SHA. No-op syncs use the existing main SHA for both checks.

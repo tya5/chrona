@@ -78,40 +78,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ steps.candidate.outputs.candidate_sha }}
-          REF: derived-gate/${{ steps.candidate.outputs.candidate_sha }}
-        run: |
-          workflow="repos/$GITHUB_REPOSITORY/actions/workflows/derived-main.yml"
-          prior_run="$(gh api --method GET "$workflow/runs" -f event=workflow_dispatch -f "branch=$REF" -f per_page=100 \
-            --jq "[.workflow_runs[] | select(.head_sha == \"$SHA\")] | map(.run_number) | max // 0")"
-          jq -n --arg ref "$REF" --arg sha "$SHA" \
-            '{ref:$ref,inputs:{expected_sha:$sha}}' |
-            gh api --method POST "$workflow/dispatches" --input -
-          run_id=""
-          for attempt in $(seq 1 60); do
-            run_id="$(gh api --method GET "$workflow/runs" -f event=workflow_dispatch -f "branch=$REF" -f per_page=100 \
-              --jq "[.workflow_runs[] | select(.head_sha == \"$SHA\" and .run_number > $prior_run)] | sort_by(.run_number) | last | .id // empty")"
-            [[ -n "$run_id" ]] && break
-            sleep 10
-          done
-          test -n "$run_id"
-          gate_state=""
-          gate_run_status=""
-          for attempt in $(seq 1 120); do
-            gate_state="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs" \
-              --jq '[.jobs[] | select(.name == "derived-main" or .name == "derived-ready") | .name + ":" + .status + ":" + (.conclusion // "")] | sort | join(",")')"
-            if [[ "$gate_state" == *":completed:"* ]]; then
-              gate_run_status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" --jq .status)"
-            fi
-            if [[ "$gate_run_status" == completed && (("$gate_state" == *"derived-main:completed:"* && "$gate_state" != *"derived-main:completed:success"*) || ("$gate_state" == *"derived-ready:completed:"* && "$gate_state" != *"derived-ready:completed:success"*)) ]]; then
-              echo "Trusted gate failed: $gate_state"; exit 1
-            fi
-            if [[ "$gate_run_status" == completed && "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]; then
-              break
-            fi
-            sleep 15
-          done
-          test "$gate_run_status" = completed
-          [[ "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]
+        run: python -m tools.derived_gate_await --repo "$GITHUB_REPOSITORY" --sha "$SHA"
       - name: Fast-forward main only if the source tip is unchanged
         if: ${{ steps.candidate.outputs.changed == 'true' }}
         env:
