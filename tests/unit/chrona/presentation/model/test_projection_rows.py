@@ -59,13 +59,13 @@ def test_network_projection_closes_selected_project_containers_and_preserves_gro
     ]
     edge, = network.edges
     assert (edge.relation_id, edge.source_id, edge.source_endpoint, edge.target_id, edge.target_endpoint) == (
-        "relation:0:group-port", "inner", "start", "task", "finish")
+        "relation:id:group-port", "inner", "start", "task", "finish")
 
 
 @pytest.mark.parametrize(("mode", "expected_ids"), [
     ("none", ()),
-    ("semantic", ("relation:0:driving-critical", "relation:2:driving-noncritical", "relation:1:not-driving")),
-    ("critical", ("relation:0:driving-critical",)),
+    ("semantic", ("relation:id:driving-critical", "relation:id:driving-noncritical", "relation:id:not-driving")),
+    ("critical", ("relation:id:driving-critical",)),
 ])
 def test_network_projection_closes_edges_to_view_relation_visibility(mode, expected_ids):
     project = {"objects": {
@@ -94,15 +94,15 @@ def test_network_projection_closes_edges_to_view_relation_visibility(mode, expec
 
     network = _dependency_network_projection(
         project, selected, view, hierarchy_entries,
-        frozenset({"relation:0:driving-critical", "relation:2:driving-noncritical"}))
+        frozenset({"relation:id:driving-critical", "relation:id:driving-noncritical"}))
 
     assert network is not None
     assert tuple(edge.relation_id for edge in network.edges) == expected_ids
     if mode == "semantic":
         assert {edge.relation_id: edge.critical for edge in network.edges} == {
-            "relation:0:driving-critical": True,
-            "relation:1:not-driving": False,
-            "relation:2:driving-noncritical": False,
+            "relation:id:driving-critical": True,
+            "relation:id:not-driving": False,
+            "relation:id:driving-noncritical": False,
         }
 
 
@@ -366,7 +366,7 @@ def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry
 
 
 @pytest.mark.parametrize("surface", ("table-timeline", "dependency-network"))
-def test_selected_dependency_identity_keeps_its_full_project_index(surface):
+def test_selected_dependency_identity_uses_project_identity_not_filtered_order(surface):
     from tests.support import synthetic_review as sr
 
     source = sr.with_calendar(sr.project({
@@ -396,10 +396,70 @@ def test_selected_dependency_identity_keeps_its_full_project_index(surface):
         membership = projection.lane_membership
         assert membership.assignment_for("a").lane_id == membership.assignment_for("b").lane_id
         assert membership.assignment_for("b").rule == "chain"
-        assert membership.assignment_for("b").source_id == "relation:1"
+        assert membership.assignment_for("b").source_id == "relation:id:relation%3A1"
     else:
-        assert tuple(edge.relation_id for edge in projection.network.edges) == (
-            "relation:1", "relation:2:relation:1")
+        assert {edge.relation_id for edge in projection.network.edges} == {
+            "relation:edge:dependency:a:end:b:start", "relation:id:relation%3A1",
+        }
+
+
+def test_removing_and_appending_unrelated_relations_preserves_driving_and_projection_identity():
+    from tests.support import synthetic_review as sr
+
+    objects = {
+        "a": sr.span("A", date(2026, 2, 2), 2),
+        "b": {"type": "task", "title": "B", "schedule": {"mode": "scheduled", "amount": "2d"}},
+        "c": {"type": "task", "title": "C", "schedule": {"mode": "scheduled", "amount": "2d"}},
+        "x": sr.span("X", date(2026, 1, 2), 2),
+        "y": sr.span("Y", date(2026, 1, 5), 2),
+        "p": sr.span("P", date(2026, 3, 2), 2),
+        "q": sr.span("Q", date(2026, 3, 5), 2),
+    }
+    removed = {"id": "remove-me", "type": "dependency",
+               "from": {"object": "x", "endpoint": "end"},
+               "to": {"object": "y", "endpoint": "start"}, "lag": "0d"}
+    chain = [
+        {"type": "dependency", "from": {"object": "a", "endpoint": "end"},
+         "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+        {"type": "dependency", "from": {"object": "b", "endpoint": "end"},
+         "to": {"object": "c", "endpoint": "start"}, "lag": "0d"},
+    ]
+    appended = {"id": "append-me", "type": "dependency",
+                "from": {"object": "p", "endpoint": "end"},
+                "to": {"object": "q", "endpoint": "start"}, "lag": "0d"}
+    before = sr.with_calendar(sr.project(objects, [removed, *chain]))
+    after = sr.with_calendar(sr.project(objects, [*chain, appended]))
+    expected_chain_ids = (
+        "relation:edge:dependency:a:end:b:start",
+        "relation:edge:dependency:b:end:c:start",
+    )
+
+    view_source = typed_view({"body": {
+        "selection": {"include": {"ids": ["a", "b", "c"]}},
+        "rows": {"mode": "lanes"},
+        "window": {"mode": "selected-planned"},
+        "comparison": {"actual": "optional"},
+        "visibility": {"relations": "semantic"},
+    }})
+    view_source = replace(view_source, rows=replace(view_source.rows, packing=("chain",)))
+    network_view = replace(
+        view_source, surface="dependency-network",
+        rows=replace(view_source.rows, mode="automatic"),
+    )
+
+    results = [schedule(project) for project in (before, after)]
+    assert all(result.ok and result.analysis is not None for result in results)
+    for result in results:
+        assert set(expected_chain_ids) <= result.analysis.driving_relations
+
+    for project, result in zip((before, after), results):
+        network_projection = build_review_projection(project, result.placements, network_view, None)
+        assert tuple(edge.relation_id for edge in network_projection.network.edges) == expected_chain_ids
+        lane_projection = build_review_projection(project, result.placements, view_source, None)
+        membership = lane_projection.lane_membership
+        assert membership is not None
+        assert membership.assignment_for("b").source_id == expected_chain_ids[0]
+        assert membership.assignment_for("c").source_id == expected_chain_ids[1]
 
 
 @pytest.mark.parametrize("declared_id", (None, "", "r", "relation:0"))
@@ -422,7 +482,7 @@ def test_a_valid_project_with_optional_relation_id_renders_through_real_ingress(
 
 def test_distinct_relation_sources_remain_opaque_in_scene_and_svg(tmp_path):
     from xml.etree import ElementTree
-    from chrona.core.relation_identity import relation_identity
+    from chrona.core.relation_identity import relation_identities
     from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
     from chrona.presentation.scene.serialization import scene_document
     from tests.support import synthetic_review as sr
@@ -437,7 +497,7 @@ def test_distinct_relation_sources_remain_opaque_in_scene_and_svg(tmp_path):
         for index, key in enumerate(("a", "b", "c"))
     }, relations))
     rendered = sr.render(tmp_path, source)
-    expected = {relation_identity(index, declaration) for index, declaration in enumerate(relations)}
+    expected = set(relation_identities(relations))
     paths = [item for item in rendered.surface.primitives
              if item.source_kind == "relation" and item.scene_id.startswith("relation:")]
     assert len(paths) == 2

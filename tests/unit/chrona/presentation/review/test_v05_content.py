@@ -409,7 +409,7 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
         "a", "Name", "A", "tableCell",
         style_key=StyleOccurrenceKey("a", "primary", "tableCell", "a", "a", "Name", "table-cell"),
     ),)
-    assert value.relations[0].relation_id == "relation:0:r"
+    assert value.relations[0].relation_id == "relation:id:r"
     assert value.notes == (("n", "note"),)
 
 
@@ -421,10 +421,11 @@ def test_relation_identity_is_closed_before_filtering_and_cannot_alias_an_author
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
         ReviewItem("b", "B", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, ()),
     ), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
-        driving_relations=frozenset({"relation:2:r", "relation:3:relation:0"}))
+        driving_relations=frozenset({"relation:edge:dependency:a:end:b:start:occurrence:3", "relation:id:relation%3A0"}))
     relations = []
     for declared in (None, "", "r", "relation:0", "r"):
-        relation = {"from": {"object": "a"}, "to": {"object": "b"}}
+        relation = {"type": "dependency", "from": {"object": "a", "endpoint": "end"},
+                    "to": {"object": "b", "endpoint": "start"}}
         if declared is not None:
             relation["id"] = declared
         relations.append(relation)
@@ -434,7 +435,9 @@ def test_relation_identity_is_closed_before_filtering_and_cannot_alias_an_author
 
     content = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
 
-    expected = ("relation:0", "relation:1", "relation:2:r", "relation:3:relation:0", "relation:4:r")
+    base = "relation:edge:dependency:a:end:b:start"
+    expected = (f"{base}:occurrence:1", f"{base}:occurrence:2", f"{base}:occurrence:3",
+                "relation:id:relation%3A0", f"{base}:occurrence:4")
     if mode == "critical":
         expected = expected[2:4]
     assert tuple(item.relation_id for item in content.relations) == expected
@@ -541,13 +544,13 @@ def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
         {"id": "selected", "from": {"object": "a"}, "to": {"object": "b"}},
     )}
     projection = ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 3)), (), (),
-                                  driving_relations=frozenset({"relation:1:selected"}) if driving else frozenset())
+                                  driving_relations=frozenset({"relation:id:selected"}) if driving else frozenset())
     view = typed_view({"body": {"tableColumns": (), "visibility": {
         "relations": {"mode": mode}, "annotations": "none"}}})
     content = normalize_v05_surface_content(
         projection, project, view, summary=EMPTY_SUMMARY,
         dependency_critical_role_available=critical_role_available)
-    selected = [fact for fact in content.relations if fact.relation_id == "relation:1:selected"]
+    selected = [fact for fact in content.relations if fact.relation_id == "relation:id:selected"]
     if mode == "critical" and not driving:
         assert selected == []
     else:
@@ -558,7 +561,7 @@ def test_relation_critical_fact_is_scheduler_membership_not_selected_paint(
             if mode == "critical" or (mode == "semantic" and critical_role_available
                                        and driving and source_critical and target_critical)
             else "dependency")
-    assert all(not fact.critical for fact in content.relations if fact.relation_id == "relation:0:preceding")
+    assert all(not fact.critical for fact in content.relations if fact.relation_id == "relation:id:preceding")
 
 
 def test_network_critical_legend_key_uses_visible_critical_edge_and_honors_authorship():
@@ -574,10 +577,10 @@ def test_network_critical_legend_key_uses_visible_critical_edge_and_honors_autho
         DependencyNetworkNode("a", "A", (), True, "primary"),
         DependencyNetworkNode("b", "B", (), True, "primary"),
     ), (
-        DependencyNetworkEdge("relation:0:drive", "a", "b", "end", "start", True),
+        DependencyNetworkEdge("relation:id:drive", "a", "b", "end", "start", True),
     ))
     projection = ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 3)), (), (),
-                                  network=network, driving_relations=frozenset({"relation:0:drive"}))
+                                  network=network, driving_relations=frozenset({"relation:id:drive"}))
     project = {"relations": ({"id": "drive", "from": {"object": "a", "endpoint": "end"},
                               "to": {"object": "b", "endpoint": "start"}},)}
     view = replace(typed_view({"body": {"tableColumns": (), "visibility": {
@@ -605,7 +608,7 @@ def test_network_critical_legend_key_uses_visible_critical_edge_and_honors_autho
     assert not any(entry.role == "critical-edge" for entry in no_edge.legend_entries)
 
     nondriving = replace(projection, network=DependencyNetworkProjection((), (
-        DependencyNetworkEdge("relation:0:drive", "a", "b", "end", "start", False),
+        DependencyNetworkEdge("relation:id:drive", "a", "b", "end", "start", False),
     )))
     no_critical_edge = normalize_v05_surface_content(nondriving, project, view, summary=EMPTY_SUMMARY)
     assert not any(entry.role == "critical-edge" for entry in no_critical_edge.legend_entries)
@@ -616,14 +619,14 @@ def test_critical_relation_mode_uses_only_scheduler_driving_relations():
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), critical=True),
         ReviewItem("b", "B", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, (), critical=True),
         ReviewItem("c", "C", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, (), critical=False),
-    ), (date(2026, 1, 1), date(2026, 1, 3)), (), (), driving_relations=frozenset({"relation:0:critical"}))
+    ), (date(2026, 1, 1), date(2026, 1, 3)), (), (), driving_relations=frozenset({"relation:id:critical"}))
     project = {"relations": (
         {"id": "critical", "from": {"object": "a"}, "to": {"object": "b"}},
         {"id": "slack", "from": {"object": "a"}, "to": {"object": "c"}},
     ), "annotations": {}}
     view = {"body": {"tableColumns": (), "visibility": {"relations": "critical", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.relations[0].relation_id == "relation:0:critical"
+    assert value.relations[0].relation_id == "relation:id:critical"
     assert value.relations[0].semantic_id == "dependency-critical"
     assert value.relations[0].source_endpoint == "end"
     assert value.relations[0].target_endpoint == "start"
@@ -651,7 +654,7 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
     }
     scheduled = schedule(project)
     assert scheduled.ok and scheduled.analysis is not None
-    assert "relation:1:start-short" in scheduled.analysis.driving_relations
+    assert "relation:id:start-short" in scheduled.analysis.driving_relations
     assert "short" not in scheduled.analysis.critical
     view = replace(typed_view({"body": {"tableColumns": (), "visibility": {
         "relations": {"mode": "semantic"}, "annotations": "none"}}}), surface="dependency-network")
@@ -663,21 +666,21 @@ def test_critical_relation_fact_closes_real_scheduler_analysis_through_projectio
         dependency_critical_role_available=False)
     assert disabled == content
     assert {fact.relation_id: fact.critical for fact in content.relations} == {
-        "relation:0:start-long": True, "relation:1:start-short": False,
-        "relation:2:long-finish": True, "relation:3:short-finish": False}
+        "relation:id:start-long": True, "relation:id:start-short": False,
+        "relation:id:long-finish": True, "relation:id:short-finish": False}
     assert all(fact.semantic_id == "dependency" for fact in content.relations)
     themed = normalize_v05_surface_content(
         projection, project, view, summary=EMPTY_SUMMARY,
         dependency_critical_role_available=True)
     assert {fact.relation_id: fact.semantic_id for fact in themed.relations} == {
-        "relation:0:start-long": "dependency-critical", "relation:1:start-short": "dependency",
-        "relation:2:long-finish": "dependency-critical", "relation:3:short-finish": "dependency"}
+        "relation:id:start-long": "dependency-critical", "relation:id:start-short": "dependency",
+        "relation:id:long-finish": "dependency-critical", "relation:id:short-finish": "dependency"}
     assert {edge.relation_id: edge.critical for edge in projection.network.edges} == {
-        "relation:0:start-long": True, "relation:1:start-short": False,
-        "relation:2:long-finish": True, "relation:3:short-finish": False}
+        "relation:id:start-long": True, "relation:id:start-short": False,
+        "relation:id:long-finish": True, "relation:id:short-finish": False}
     assert {fact.relation_id: fact.critical for fact in themed.relations} == {
-        "relation:0:start-long": True, "relation:1:start-short": False,
-        "relation:2:long-finish": True, "relation:3:short-finish": False}
+        "relation:id:start-long": True, "relation:id:start-short": False,
+        "relation:id:long-finish": True, "relation:id:short-finish": False}
 
 
 def test_calendar_closures_come_only_from_project_calendar_exceptions():

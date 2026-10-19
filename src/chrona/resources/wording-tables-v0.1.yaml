@@ -3,6 +3,8 @@ tables:
   en-US:
     column.task: Task
     column.plan: Plan
+    column.lane: Lane
+    column.items: Items
     marker.today: TODAY
     marker.asOf: As of
     legend.planned: Task duration
@@ -14,13 +16,37 @@ tables:
     legend.critical-edge: Critical dependency
     legend.forecast: Forecast (* estimated)
     legend.progressFill: Progress
+    legend.actual-ahead: Ahead
+    legend.actual-on-track: On track
+    legend.actual-behind: Behind
     legend.snapshot: Baseline
     legend.deadlineMark: Deadline
     missing.unknown: unknown
     missing.inProgress: in progress
+    legend.planned-plain: Planned
+    legend.baseline: baseline
+    legend.current-plan: current plan
+    legend.gate: gate
+    legend.holiday: holiday
+    column.owner: Owner
+    column.number: "No."
+    column.phase: Phase
+    column.finishDelta: "Δ finish"
+    summary.days: DAYS
+    legend.plan: Plan
+    legend.missing-actual: Not yet observed
+    legend.missing-actual-in-progress: In progress, not yet observed
+    legend.in-the-wings: In the wings
+    legend.calendar-exception: Calendar exception
+    legend.period: Period
+    legend.depends-on: Depends on
+    legend.other: Other
+    column.no: "No"
   ja-JP:
     column.task: タスク
     column.plan: 計画
+    column.lane: レーン
+    column.items: 件数
     marker.today: 本日
     marker.asOf: 基準日
     legend.planned: 計画期間
@@ -32,7 +58,29 @@ tables:
     legend.critical-edge: クリティカルな依存関係
     legend.forecast: 予測（*は推定）
     legend.progressFill: 進捗
+    legend.actual-ahead: 前倒し
+    legend.actual-on-track: 予定どおり
+    legend.actual-behind: 遅れ
     legend.snapshot: 基準計画
     legend.deadlineMark: 期限
     missing.unknown: 不明
     missing.inProgress: 進行中
+    legend.planned-plain: 予定
+    legend.baseline: 基準計画
+    legend.current-plan: 現行計画
+    legend.gate: ゲート
+    legend.holiday: 祝日
+    column.owner: 担当
+    column.number: 番号
+    column.phase: フェーズ
+    column.finishDelta: Δ完了
+    summary.days: 日
+    legend.plan: 計画
+    legend.missing-actual: 未観測
+    legend.missing-actual-in-progress: 進行中・未観測
+    legend.in-the-wings: 出番待ち
+    legend.calendar-exception: カレンダー例外
+    legend.period: 期間
+    legend.depends-on: 依存先
+    legend.other: その他
+    column.no: 番号

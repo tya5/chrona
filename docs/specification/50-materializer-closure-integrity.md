@@ -16,7 +16,8 @@ exact bytes using the complete Store/address/revision/content-identity key, with
 inventing a resource ID/kind or reserializing JSON. Preserve the authored pin in the
 Context and isolate its overlay from canonical Store paths. Rendering validates
 Scene/schema/project provenance after integrity verification; closure read-ledger
-accounting includes this artifact even when `best` does not consume route hints.
+accounting includes this artifact even when a routing mode cannot consume its
+hints. Both search policies revalidate supported hints (Specification 50 §3.3).
 
 For each referenced resource, the materializer MUST:
 

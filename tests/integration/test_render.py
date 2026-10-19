@@ -18,7 +18,7 @@ import yaml
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.operational.store_config import load_store_config
 from chrona.operational.store_reads import DraftExtensionPackageReader
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -362,8 +362,8 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     assert not any(item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics)
     labels = {item.scene_id for item in rendered.surface.primitives}
     project = yaml.safe_load((_root() / "tests/fixtures/controller-z/project.yaml").read_bytes())
-    identities = {relation["id"]: relation_identity(index, relation)
-                  for index, relation in enumerate(project["relations"])}
+    identities = {relation["id"]: identity
+                  for relation, identity in zip(project["relations"], relation_identities(project["relations"]))}
     assert {
         f"relation-label:{identities['evb-to-bringup']}:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
         f"relation-label:{identities['bringup-to-performance']}:silicon-bringup:silicon-bringup:performance:performance",

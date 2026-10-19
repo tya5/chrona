@@ -90,7 +90,8 @@ def lex_line(number: int, text: str) -> SourceLine:
             tokens.append(Token("comma", ",", number, i + 1, i + 2))
             i += 1
         elif char == '"':
-            if previous_end == i:
+            assignment_quote = bool(tokens and tokens[-1].kind == "word" and tokens[-1].text.endswith("="))
+            if previous_end == i and not assignment_quote:
                 problems.append(_problem("E_TERSE_TOKEN_UNEXPECTED", "a string must be separated from the previous word by a space",
                                          number, i + 1, i + 2, "write a space before the opening quote"))
                 break

@@ -76,6 +76,7 @@ body:
     groups: all
   tableColumns:
   - id: Task
+    header: {wording: column.task}
     text: {wrap: allow}
     source: title
     missing: em-dash
@@ -83,6 +84,7 @@ body:
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Owner
+    header: {wording: column.owner}
     text: {wrap: allow}
     source: {fieldRole: responsible}
     missing: em-dash
@@ -94,7 +96,7 @@ body:
   markers:
   - kind: asOf
     source: actual
-    label: TODAY
+    label: {wording: marker.today}
   shading:
     nonWorking: true
     exceptions: true

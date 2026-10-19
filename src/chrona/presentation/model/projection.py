@@ -13,7 +13,7 @@ from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.forecast import ForecastItem, ForecastOutcome
 from chrona.core.observations import latest_observations
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
@@ -56,7 +56,8 @@ def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, i
 @dataclass(frozen=True)
 class ForecastComparisonFact:
     schedule: ForecastItem
-    finish_delta: int
+    # None for an object with no Snapshot counterpart: it is new, so there is no baseline distance (#1755).
+    finish_delta: int | None
 
 
 def active_placement(item: Any) -> Mapping[str, date]:
@@ -70,10 +71,19 @@ def display_finish_delta(item: Any) -> int | None:
     return forecast.finish_delta if forecast is not None else item.finish_delta
 
 
+NEW_MARKER = "new"
+REMOVED_MARKER = "removed"
+
+
+def is_new_against_baseline(item: Any) -> bool:
+    """True for a primary object the supplied Snapshot does not contain (#1755)."""
+    return bool(getattr(item, "new_vs_baseline", False))
+
+
 def finish_delta_text(item: Any) -> str | None:
     value = display_finish_delta(item)
     if value is None:
-        return None
+        return NEW_MARKER if is_new_against_baseline(item) else None
     forecast = getattr(item, "forecast", None)
     return f"{value:+d}d" + ("*" if forecast is not None and not forecast.schedule.completed else "")
 
@@ -135,6 +145,8 @@ class ReviewItem:
     hierarchy_titles: tuple[str, ...] = ()
     # View's finite-depth row owner; never a Project parent or attachment.
     collapsed_row_id: str | None = None
+    # The supplied Snapshot has no counterpart of this primary object: it is new, its baseline delta is empty (#1755).
+    new_vs_baseline: bool = False
 
     @property
     def at_delta(self) -> int | None:
@@ -285,6 +297,8 @@ class ReviewProjection:
     window_mode: WindowMode = WindowMode.SELECTED_PLANNED
     forecast_findings: tuple[Diagnostic, ...] = ()
     omitted_group_summary_count: int = 0
+    # (id, title) of Snapshot objects with no current counterpart that no ghost row shows (#1755).
+    removed_objects: tuple[tuple[str, str], ...] = ()
     forecast_warnings: tuple[Diagnostic, ...] = ()
     # True when View folding has resolved the ordinary row set, so an empty `rows` means "no ordinary rows" rather than
     # "no row input". Legacy projections that carry only `items` leave it False (#1660).
@@ -470,7 +484,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             planned_progress=project["objects"][object_id].get("plannedProgress"),
             observation_state=observation_state, source_index=declared.get(object_id, 0),
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
-            date_basis=date_basis, comparison_delta_unit=view.comparison.delta_unit or "calendar-days"))
+            date_basis=date_basis, comparison_delta_unit=view.comparison.delta_unit or "calendar-days",
+            new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
+                             and object_id not in snapshot_placements)))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if forecast is not None:
@@ -485,8 +501,16 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             predicted = forecast.items.get(item.object_id)
             reference = (baseline or {}).get(item.object_id)
             endpoint = "at" if item.source_type == "point" else "end"
-            if predicted is None or reference is None or endpoint not in reference or endpoint not in predicted.placement:
-                raise ValueError(f"E_FORECAST_BASELINE_UNAVAILABLE: {item.object_id}")
+            if predicted is None or endpoint not in predicted.placement:
+                raise ValueError(f"E_FORECAST_BASELINE_UNAVAILABLE: {item.object_id}: the forecast has no schedule for this "
+                                 "displayed object; check that it is a schedulable span or point of the Project")
+            if reference is None and item.new_vs_baseline:
+                # New since the Snapshot: it draws normally and skips the baseline comparison (#1755).
+                projected.append(replace(item, forecast=ForecastComparisonFact(predicted, None)))
+                continue
+            if reference is None or endpoint not in reference:
+                raise ValueError(f"E_FORECAST_BASELINE_UNAVAILABLE: {item.object_id}: the baseline has no {endpoint!r} "
+                                 "placement for this object (its kind changed); compare against a Snapshot of the same kind")
             delta = endpoint_distance(reference[endpoint], predicted.placement[endpoint],
                                       item.date_basis, item.comparison_delta_unit)
             projected.append(replace(item, forecast=ForecastComparisonFact(predicted, delta)))
@@ -503,6 +527,13 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         _order(selected, view, project)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis,
                                 field_bindings=snapshot_field_bindings)
+    removed_ids = _removed_baseline_ids(snapshot_project, snapshots, placements, view, ids, types, object_types,
+                                        excluded_object_types)
+    ghosts_shown = bool(removed_ids) and not explicit and (
+        forecast is not None or (view.comparison.baseline == "snapshot"
+                                 and view.comparison.baseline_marks in {"ghost", "ghost-when-changed"}))
+    removed_items = [_removed_ghost(snapshots[object_id]) for object_id in removed_ids] if ghosts_shown else []
+    hidden_removed = tuple((object_id, snapshots[object_id].title) for object_id in removed_ids) if not ghosts_shown else ()
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
     if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
         raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks needs comparison.baseline snapshot "
@@ -512,7 +543,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                       for scenario_id, value in (scenarios or {}).items()}
     if view.comparison.missing_actual_scope == "in-progress":
         selected = [replace(item, missing_actual_mark=_missing_actual_scope_mark(item)) for item in selected]
-    rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
+    rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project, removed_items)
     group_order = _group_order(selected, rows) if folded_points else ()
     if forecast is not None and explicit and snapshot_project is not None:
         for row in rows:
@@ -560,6 +591,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         forecast_findings=forecast.findings if forecast is not None else (),
         forecast_warnings=forecast.warnings if forecast is not None else (),
         omitted_group_summary_count=omitted_group_summary_count,
+        removed_objects=hidden_removed,
         rows_resolved=True, group_order=group_order,
         bound_comparison_sources=frozenset(
             ("snapshot",) if snapshot_project is not None else ()
@@ -637,7 +669,7 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         placement = active_placement(item)
         planned = (PlannedPoint(placement["at"]) if item.source_type == "point" else
                    PlannedSpan(placement["start"], placement["end"]))
-        host_id = project["objects"][item.object_id].get("attachesTo")
+        host_id = item.declared_attaches_to
         selected_host = primary.get(host_id) if item.source_type == "point" else None
         if selected_host is not None and selected_host.source_type != "span":
             selected_host = None
@@ -652,10 +684,11 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         if key is not None and (not isinstance(key, str) or not key):
             raise ValueError(f"E_REVIEW_LANE_KEY: the lane key of object {item.object_id!r} must be a non-empty string, got {key!r}")
         items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
-    relations = tuple(SelectedFSRelation(relation_identity(index, relation), str(relation["from"]["object"]),
+    project_relations = project.get("relations", ())
+    relations = tuple(SelectedFSRelation(identity, str(relation["from"]["object"]),
                                          str(relation["to"]["object"]),
-                                         relation.get("id") or relation_identity(index, relation))
-                      for index, relation in enumerate(project.get("relations", ()))
+                                         relation.get("id") or identity)
+                      for identity, relation in zip(relation_identities(project_relations), project_relations)
                       if relation.get("type") == "dependency"
                       and relation.get("from", {}).get("endpoint") == "end"
                       and relation.get("to", {}).get("endpoint") == "start"
@@ -692,7 +725,8 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
                                         container_id=selected_container_parent(item))
                   for item in selected)
     edges = []
-    for index, relation in enumerate(project.get("relations", ())):
+    project_relations = project.get("relations", ())
+    for identity, relation in zip(relation_identities(project_relations), project_relations):
         if relation_mode == "none":
             continue
         source = relation.get("from", {})
@@ -700,7 +734,6 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
         source_id, target_id = source.get("object"), target.get("object")
         if source_id not in selected_ids or target_id not in selected_ids:
             continue
-        identity = relation_identity(index, relation)
         critical = (identity in driving_relations
                     and source_id in critical_ids and target_id in critical_ids)
         if relation_mode == "critical" and not critical:
@@ -734,7 +767,8 @@ def _missing_actual_scope_mark(item: ReviewItem) -> str:
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
-                  scenarios: dict[str, dict[str, ReviewItem]], project: dict[str, Any]) -> tuple[tuple[ReviewRowProjection, ...], tuple[FoldedPointProjection, ...]]:
+                  scenarios: dict[str, dict[str, ReviewItem]], project: dict[str, Any],
+                  removed: list[ReviewItem] | None = None) -> tuple[tuple[ReviewRowProjection, ...], tuple[FoldedPointProjection, ...]]:
     if view.rows.mode != "explicit":
         def scenario_ghost(item: ReviewItem) -> bool:
             return (view.comparison.baseline == "scenario" and view.comparison.scenario_id in scenarios
@@ -768,7 +802,12 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
             rollup_presentation=(view.grouping.rollup or "none"
                                 if item.is_rollup and view.grouping is not None else "none"))
-            for item in selected)
+            for item in selected) + tuple(
+                # A Snapshot object with no current counterpart is a removed baseline ghost row (#1755).
+                ReviewRowProjection(item.object_id, item.title, "", f"snapshot:{item.object_id}",
+                                    (replace(item, item_id=f"snapshot:{item.object_id}", source_kind="snapshot",
+                                             track="shared"),))
+                for item in (removed or ()))
         collapsed: dict[str, list[ReviewItem]] = {}
         for row in rows:
             target = row.items[0].collapsed_row_id
@@ -827,6 +866,32 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
     return _forecast_member_label_ownership(tuple(output)), ()
+
+
+def _removed_ghost(item: ReviewItem) -> ReviewItem:
+    """The removed marker rides on the title and on the path title a `path` name source reads (#1755)."""
+    marked = f"{item.title} ({REMOVED_MARKER})"
+    titles = item.hierarchy_titles
+    if item.hierarchy_path and item.hierarchy_path[-1] == item.object_id and len(titles) == len(item.hierarchy_path):
+        titles = titles[:-1] + (marked,)
+    return replace(item, title=marked, hierarchy_titles=titles)
+
+
+def _removed_baseline_ids(snapshot_project: dict[str, Any] | None, snapshots: dict[str, ReviewItem],
+                          placements: dict[str, dict[str, date]], view: ViewInput, ids: set[str], types: set[str],
+                          object_types: set[str], excluded_object_types: set[str]) -> list[str]:
+    """Snapshot objects the View would select but the current Project no longer has (#1755)."""
+    if snapshot_project is None:
+        return []
+    result = []
+    for object_id, item in snapshots.items():
+        project_type = str(snapshot_project["objects"][object_id].get("type", ""))
+        if (object_id in placements or project_type == "group" or object_id not in ids and view.selection and view.selection.ids
+                or item.source_type not in types or (object_types and project_type not in object_types)
+                or project_type in excluded_object_types):
+            continue
+        result.append(object_id)
+    return result
 
 
 def _forecast_member_label_ownership(rows: tuple[ReviewRowProjection, ...]) -> tuple[ReviewRowProjection, ...]:

@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from tests.support import synthetic_review as sr
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 
 
 def _source():
@@ -125,8 +125,8 @@ def test_relations_use_only_original_visible_endpoints(tmp_path, lanes):
         {"id": "inside", "type": "dependency", "lag": "0d", "from": {"object": "a", "endpoint": "end"},
          "to": {"object": "b", "endpoint": "start"}}])
     rendered = sr.render(tmp_path, source, presentation=parts)
-    identities = {relation["id"]: relation_identity(index, relation)
-                  for index, relation in enumerate(source["relations"])}
+    identities = {relation["id"]: identity
+                  for relation, identity in zip(source["relations"], relation_identities(source["relations"]))}
     relations = [p for p in rendered.surface.primitives if p.source_ref in set(identities.values())]
     assert {p.source_ref for p in relations} == {identities["inside"]}
     assert all(p.paint_clip is not None for p in relations)

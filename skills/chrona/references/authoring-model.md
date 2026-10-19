@@ -19,6 +19,8 @@ A preset (see `chrona preset list`) supplies View, Theme, Color Scheme and Layou
 so the draft path needs only a Project (and an optional Actual Set for progress). A
 renderer never writes anything back into the Project.
 
+`render --locale ja-JP` localizes dates and axis names; built-in texts (`Task`, `TODAY`, legend labels) change only where a View or Detail Profile says `{wording: column.task}`, and a View `wording.keys` overrides any key (the chrona repository's locale-and-wording guide has a runnable example).
+
 ## A worked plan
 
 `examples/launch.yaml` is a real plan: a kickoff gate, two tasks scheduled in working

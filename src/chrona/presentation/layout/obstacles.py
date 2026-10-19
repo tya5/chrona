@@ -360,28 +360,34 @@ class SurfaceObstacleIndex:
                   if self._matches_selection(obstacle, *key) else prepared)
             for key, prepared in self._prepared.items()}
 
-    def copy(self, *, geometry_overrides: Mapping[str, ObstacleGeometry] | None = None) -> "SurfaceObstacleIndex":
+    def copy(self, *, geometry_overrides: Mapping[str, ObstacleGeometry] | None = None,
+             excluded_ids: Iterable[str] = ()) -> "SurfaceObstacleIndex":
         """An independent query snapshot, optionally using completed paint footprints.
 
         Accepted placements remain in the original inventory. Memoization reads
-        exact obstacle content, including any substituted geometry.
+        exact obstacle content, including any substituted geometry or omitted
+        identity. Exclusions affect this query snapshot only; absent IDs are
+        harmless and cannot remove a later registration from its owner.
         """
         if geometry_overrides is not None and any(key not in self._by_id for key in geometry_overrides):
             raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "geometry override",
                                   unknown_placement_ids=tuple(key for key in geometry_overrides
                                                               if key not in self._by_id))
         clone = SurfaceObstacleIndex()
-        clone._by_id = (dict(self._by_id) if not geometry_overrides else
+        excluded = frozenset(excluded_ids).intersection(self._by_id)
+        changed = excluded.union(geometry_overrides or ())
+        clone._by_id = (dict(self._by_id) if not changed else
                         {key: replace(item, geometry=geometry_overrides[key])
-                         if key in geometry_overrides else item for key, item in self._by_id.items()})
-        clone._ordered = self._ordered if not geometry_overrides else None
+                         if geometry_overrides and key in geometry_overrides else item
+                         for key, item in self._by_id.items() if key not in excluded})
+        clone._ordered = self._ordered if not changed else None
         # Query preparation is shared even when a filter is first read after
         # the copy. add() replaces this dictionary instead of mutating it;
         # overrides detach and retain only unaffected immutable selections.
-        clone._prepared = (self._prepared if not geometry_overrides else {
+        clone._prepared = (self._prepared if not changed else {
             key: prepared for key, prepared in self._prepared.items()
             if not any(self._matches_selection(self._by_id[identity], *key)
-                       for identity in geometry_overrides)})
+                       for identity in changed)})
         clone._route_memo = self._route_memo  # value-keyed results of pure searches, valid for any lineage member
         return clone
 

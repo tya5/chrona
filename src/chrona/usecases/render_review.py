@@ -41,7 +41,7 @@ from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
-    ForecastInfo, FieldGroupingSummariesOmitted,
+    ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved,
 )
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
@@ -335,6 +335,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler, request.extension_diagnostics,
                                                                               request.snapshot_extension_manifests)
     profile_info += tuple(ForecastInfo(item) for item in projection.forecast_findings)
+    if projection.removed_objects:
+        profile_info += (BaselineObjectsRemoved(projection.removed_objects),)
     if projection.omitted_group_summary_count:
         profile_info += (FieldGroupingSummariesOmitted(projection.omitted_group_summary_count),)
     unavailable = {item.details["figure"]: item.id for item in projection.unavailable_figures}
@@ -382,7 +384,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project, omitted_metrics=omitted_metrics,
                                         summary_wording=(view.wording or {}).get("summary", {}),
-                                        unknown_text=wording_resolver(environment.locale, view.wording).text("missing.unknown"))
+                                        unknown_text=wording_resolver(environment.locale, view.wording).text("missing.unknown"),
+                                        resolver=wording_resolver(environment.locale, view.wording))
     summary = replace(summary, absent=bool(omitted_metrics) and not summary.panels)
     if render_closure.summary_profile is not None:
         ledger.summary()
@@ -652,6 +655,9 @@ def _scene_contrast_warnings(
     """
     declared = dict(theme["body"].get("contrastPolicy", {}))
     exceptions = declared.pop("exceptions", ())
+    # Ground participation is already completed onto the cone in Scene. It
+    # is not a severity class or a runtime-only observation override.
+    declared.pop("asOfConeGround", None)
     findings = evaluate_scene_contrast(scene_document(scene), policy={**DEFAULT_POLICY, **declared},
                                        exceptions=exceptions)
     blocking = [item for item in findings if item.severity == "error" and item.code in BLOCKING_CODES]

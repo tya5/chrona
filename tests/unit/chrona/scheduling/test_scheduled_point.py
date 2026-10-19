@@ -85,7 +85,7 @@ def test_g2_two_predecessors_take_the_latest_and_the_driving_relation_is_that_on
                    relations[::-1] if reverse else relations)
     result = schedule(project)
     assert result.ok and result.placements["g"] == {"at": date(2027, 5, 14)}
-    assert result.analysis.driving_relations == frozenset({"relation:%d:b-g" % (0 if reverse else 1)})
+    assert result.analysis.driving_relations == frozenset({"relation:id:b-g"})
 
 
 @pytest.mark.parametrize("lag,expected", [("3wd", date(2027, 5, 12)), ({"value": "3wd", "calendar": "six"}, date(2027, 5, 11))])
@@ -98,7 +98,7 @@ def test_g3_a_lag_is_read_on_its_own_calendar(lag, expected):
 
 @pytest.mark.parametrize("fields,expected,driving", [
     (floor("2027-05-21"), date(2027, 5, 21), frozenset()),
-    (floor("2027-05-08"), date(2027, 5, 12), frozenset({"relation:0:a-g"})),
+    (floor("2027-05-08"), date(2027, 5, 12), frozenset({"relation:id:a-g"})),
 ])
 def test_g4_the_floor_raises_the_date_only_when_it_is_later(fields, expected, driving):
     project = proj({"a": span("2027-05-03", "2027-05-07"), "g": gate(**fields)}, [rel("a-g", "a", "end", "g", "at", "3wd")])

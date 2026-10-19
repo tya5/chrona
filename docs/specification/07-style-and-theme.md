@@ -867,6 +867,20 @@ This document does not define:
 
 ## 9. Boundary to Scene and Rendering
 
+**Moving-cone contrast ground (#1754).** Optional
+`contrastPolicy.asOfConeGround` is a boolean, default `false`, independent of
+class severity and exceptions. By default, classified MARK contrast observes
+the mark's own grounds without the moving as-of cone; `true` explicitly
+includes that cone's composite. Text contrast still observes the cone. Theme
+resolution validates the boolean (`E_THEME_CONTRAST_POLICY` at its member
+pointer) and carries it in the resolved Theme. Scene paint completion writes
+`markGround: true` on an emitted `as-of-cone` Symbol only when opted in;
+absence means false. This is completed contrast metadata, not an adapter paint
+instruction. Theme v0.15 widens in place; derived Themes inherit their base's
+policy. Existing omitted policies intentionally adopt the corrected mark-ground
+rule; floors, severity defaults, exception matching and actual cone paint do
+not otherwise change. Spec 46 owns the observation contract.
+
 **Title and subtitle ink (#1164).** The `heading` and `subtitle` typography roles
 MAY bind `fill` and optional `opacity` for their own title line. A fill activates
 that line's paint role; without a fill, even an opacity-only declaration keeps

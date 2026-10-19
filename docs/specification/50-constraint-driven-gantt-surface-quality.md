@@ -447,8 +447,9 @@ Layout checks completed reduced and terminal-adjusted route
 stroke against retained text/label-visual footprints, not just its centreline;
 staged recovery still removes only the obstacle classes its contract permits.
 Initial as-of/deadline rule obstacles likewise carry the exact stroke width
-resolved from their semantic Theme role, so labels avoid painted rule ink
-rather than only the centreline.
+resolved from their semantic Theme role, so consumers that avoid a rule use
+painted ink rather than only the centreline. Member names are the as-of-line
+exception specified below (#1754).
 First-fit fallback uses an obstacle-independent Manhattan/minimum-turn lower
 bound instead of preparing the exact reverse bound. It retains canonical
 prefix histories and existing expansion quotas; it does not collapse different
@@ -481,7 +482,12 @@ corridor planner remains a preflight; under `first-fit`, optional names follow
 routes. The on-demand pass does not change those initial phases or search
 proposals and replaces the former post-route lost-name retry, not the lane
 preflight. It adds at most one post-route repair, never another recovery loop. The
-as-of line and other `rule` geometry obstruct member names.
+as-of line does not obstruct member names (#1754). Their candidate contact
+generation, final placement and provisional route-blocked reservations ignore
+only that named line, preserving the normal halo/chip treatment. Other `rule`
+geometry, including deadline ticks, remains an obstacle. The shared inventory
+retains the as-of line for its own label host and annotation/connector policy;
+the as-of label/chip remains a separate real text/visual obstacle.
 
 Reserve on demand only for an initially suppressed optional member name when
 completed route paint blocked an otherwise legal declared candidate. Do not
@@ -541,15 +547,18 @@ The five approved HALCYON targets explicitly declare `best` before
 this default changes. No authored example is edited by dev A.
 
 **Previous-Scene reuse (#1300).** With an explicit previous-Scene input,
-`first-fit` may try one uniquely reconstructed prior route before its ordinary
-normal-domain proposals. Match surface, source identity and both endpoint instance
+both `first-fit` and `best` try uniquely reconstructed prior routes before their
+ordinary normal-domain proposals. Match surface, source identity and both endpoint instance
 identities exactly; decoration paths and paired stubs are not route hints. Recover
 the semantic endpoint coordinates from old host geometry and terminal semantics
 only when unique. Scene does not record selected egress-side IDs; a tangent is
 not proof of that identity. Preserve the point/body boundary choice when uniquely
 identified, then try currently admitted egress pairs in existing first-fit order.
 The first fully accepted compatible proposal wins before ordinary proposals or
-search. Unsupported geometry or incompatible terminal evidence is a hint miss.
+search, including under `best` (#1754): a valid prior corridor takes priority
+over ranking a fresh route. Ranking and quotas for ordinary best search remain
+unchanged after a miss. A later optional side-entry/rank improvement MUST NOT
+replace a fully validated hint. Unsupported geometry or incompatible terminal evidence is a hint miss.
 No nearest-point guess or serialized Scene mutation is permitted.
 
 Reanchoring preserves semantic endpoints, shape family and interior channels:
@@ -559,10 +568,13 @@ or degenerate results. Hints use the same completed-candidate preparation and
 terminal, corner, window, obstacle, primary-mark, self-overlap and quality checks
 as ordinary normal routes. An unsafe recovered route is not an accepted hint;
 failed hints continue through ordinary search and the declared recovery policy.
-`best` ignores hint geometry and emits no hint diagnostics, preserving its existing
-finite-quota selection and receipts. Omission preserves all prior output bytes.
+Hints are offered only in the normal obstacle domain, never replayed after
+relaxing the obstacle that invalidated them. Ordinary normal/label/text detours
+precede mark relaxation; no hint bypasses a primary-mark validator. This does
+not turn bounded search exhaustion into proof that no detour exists.
+Omitting the previous-Scene input preserves ordinary policy selection.
 
-For a supplied input under `first-fit`, Layout emits typed per-instance hint facts
+For a supplied input under either search policy, Layout emits typed per-instance hint facts
 and `I_LAYOUT_RELATION_HINT_SUMMARY` with accepted, invalidated, unusable and absent
 counts, plus ordinary-selection and actual-search instance counts. A supported
 document without endpoint evidence counts as unusable; otherwise no exact key is
@@ -573,7 +585,10 @@ absence remains separate. Every nonaccepted hint enters ordinary selection;
 finite proposals may win without bounded search. Actual-search counts only
 instances entering a search iterator. Receipts count processed expansions, not hint
 validation. A changed obstacle, policy, terminal or host is changed routing input,
-even when endpoint dates stay equal. Under first-fit with a previous Scene, a
+even when endpoint dates stay equal. Modes that bypass normal routing, including
+explicit overlap and stub, report `I_LAYOUT_RELATION_HINT` with disposition
+`unusable` and reason `mode-bypasses-normal`, plus the summary; they do not
+silently ignore the input. Under either policy with a previous Scene, a
 revalidated route retains its reanchored shape. Without that input, bounded
 search does not promise revision independence: unrelated obstacles can add
 global event contacts and change which candidate fits the quota. This is a
@@ -651,6 +666,20 @@ Layout measures and places these with the existing terminal/text primitives;
 it does not present the pair as a connected safe route. Both fragments belong
 to one resolved relation instance and are counted once. Terminal labels must
 not silently disappear; their declared visible-overflow treatment is inspectable.
+The route/member-label coordinator owns their reservation (#1763). In each
+trial, complete and reserve required terminal text against existing completed
+text before optional member names; place ordinary relation labels afterward.
+All names and terminal labels use that same measured obstacle inventory.
+Visible overflow permits leaving the plot, not crossing completed text or
+label visuals. A caller's hard candidate filter also constrains visible
+fallbacks in the existing side order, without extra search passes or quotas.
+When no terminal candidate clears those reservations, report
+`E_PRESENTATION_LABEL_UNPLACEABLE` with the label identity, never suppression
+or an overlap-assertion exemption. If only the private repair trial fails this
+terminal-placement check, retain the valid completed first trial and append
+every routing/search-budget receipt from the attempted repair; do not replay
+either trial or discard its evidence. An unplaceable first trial reports the
+failure. This does not change the declared unsafe route-ink policy.
 Stub geometry also uses visible overflow: once both semantic endpoints are
 admitted, insufficient plot-edge clearance must not silently erase a fragment
 or its terminal. Layout completes each endpoint independently against its own
@@ -1281,7 +1310,8 @@ block allocation, together with its existing mark/title/delta extent. Shared
 and repeated occurrences retain their own placement identities and subjects;
 no deadline date or lateness verdict is inferred from compact-header geometry.
 The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
-avoid the as-of rule. Member names also avoid these `rule` obstacles (#1610);
+avoid the as-of rule. Member names also avoid deadline and other `rule` obstacles
+(#1610), but not the moving as-of line (#1754);
 relation routes retain their existing rule-crossing policy.
 Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
 With the optional Spec07 `outlineWidth`, Layout also completes a

@@ -6,7 +6,7 @@ import yaml
 import xml.etree.ElementTree as ET
 
 from chrona.presentation.layout.obstacles import ObstacleSegment, obstacles_intersect
-from chrona.core.relation_identity import relation_identity
+from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
@@ -32,8 +32,8 @@ def test_controller_baseline_ghosts_emits_start_start_label_without_shared_node_
     rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
     svg = ET.fromstring(rendered.artifact.content)
     project = yaml.safe_load((fixture / "project.yaml").read_bytes())
-    identities = {relation["id"]: relation_identity(index, relation)
-                  for index, relation in enumerate(project["relations"])}
+    identities = {relation["id"]: identity
+                  for relation, identity in zip(project["relations"], relation_identities(project["relations"]))}
     incoming_id = identities["evb-to-bringup"]
     outgoing_id = identities["bringup-to-performance"]
 

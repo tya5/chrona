@@ -90,18 +90,21 @@ body:
       text: {wrap: allow}
       columns:
       - id: 'No'
+        header: {wording: column.no}
         source: rowIndex
         suffix: .
       - id: Task
+        header: {wording: column.task}
         source: label
       - id: Owner
+        header: {wording: column.owner}
         source: {fieldRole: responsible}
         transform: initials
         textRole: tableCellMono
   markers:
   - kind: asOf
     source: actual
-    label: Today
+    label: {wording: legend.asOf}
   shading:
     nonWorking: true
     exceptions: true

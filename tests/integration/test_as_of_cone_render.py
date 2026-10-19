@@ -45,7 +45,8 @@ def _source() -> dict:
 
 
 def _presentation(cone: bool = True, *, fidelity: str | None = None, spread: float = 1.0, extent: float = 1.0,
-                  strength: float = 0.7, role: dict | None = None, bindings: dict | None = None) -> dict:
+                  strength: float = 0.7, role: dict | None = None, bindings: dict | None = None,
+                  mark_ground: bool | None = None) -> dict:
     parts = sr.bundle("executive-light")
     if cone:
         body = parts["theme"]["body"]
@@ -58,6 +59,8 @@ def _presentation(cone: bool = True, *, fidelity: str | None = None, spread: flo
             declared["gradientFidelity"] = "cone.fidelity"
         body["roles"]["as-of-cone"] = role if role is not None else declared
         body["colorBindings"].update({"as-of-cone.fill": "warning"} if bindings is None else bindings)
+    if mark_ground is not None:
+        parts["theme"]["body"]["contrastPolicy"] = {"asOfConeGround": mark_ground}
     return parts
 
 
@@ -196,6 +199,18 @@ def test_the_serialized_scene_is_v07_carries_the_stop_opacity_and_validates(tmp_
     assert json.dumps(primitive["symbol"]["outline"])
 
 
+def test_default_cone_ground_policy_omits_scene_metadata_and_keeps_text_on_the_cone(tmp_path) -> None:
+    review = _render(tmp_path, _presentation(strength=0.9), RICH)
+    document = scene_document(review.scene)
+    cone = next(item for surface in document["surfaces"] for item in surface["primitives"]
+                if item.get("visualRole") == "as-of-cone")
+    findings = [item for item in evaluate_scene_contrast(document) if item.ground_id == "as-of-cone"]
+
+    assert "markGround" not in cone
+    assert not [item for item in findings if item.visual_role in {"planned", "actual"}]
+    assert [item for item in findings if item.visual_role == "text"]
+
+
 def test_a_decorative_optional_cone_is_omitted_whole_under_the_baseline_with_the_painting_profile(tmp_path) -> None:
     review = _render(tmp_path, _presentation(fidelity="decorative-optional"), BASELINE)
     omissions = [item for item in review.info_diagnostics if item.code == "I_VISUAL_TREATMENT_OMITTED"]
@@ -256,10 +271,14 @@ def test_a_malformed_cone_role_fails_before_layout_at_its_exact_pointer(tmp_path
 
 
 def test_the_gate_judges_a_bar_in_the_cone_on_the_composited_ground(tmp_path) -> None:
-    review = _render(tmp_path, _presentation(strength=0.9), RICH)
-    findings = [item for item in evaluate_scene_contrast(scene_document(review.scene))
+    review = _render(tmp_path, _presentation(strength=0.9, mark_ground=True), RICH)
+    document = scene_document(review.scene)
+    cone = next(item for surface in document["surfaces"] for item in surface["primitives"]
+                if item.get("visualRole") == "as-of-cone")
+    findings = [item for item in evaluate_scene_contrast(document)
                 if item.ground_id == "as-of-cone"]
 
+    assert cone["markGround"] is True
     assert findings and {item.ground_kind for item in findings} == {"cone-blend"}
     marks = [item for item in findings if item.visual_role == "planned"]
     assert marks and all(item.code == "E_SCENE_MARK_CONTRAST" for item in marks)

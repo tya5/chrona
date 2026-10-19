@@ -24,6 +24,9 @@ normative specification.
 For keeping a plan current (actuals, `asOf`, re-plan, compare with the saved plan), see the
 [update-a-plan guide](guides/update-a-plan.md).
 
+For rendering with `--locale ja-JP` and overriding built-in wording, see the
+[locale and wording guide](guides/locale-and-wording.md).
+
 For the current immutable review entry and its reusable resource split, see the
 [render-review YAML layout guide](guides/render-review-yaml-layout.md).
 

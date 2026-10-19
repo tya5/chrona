@@ -19,6 +19,8 @@ TABLE_IDS = frozenset({"en-US", "ja-JP"})
 DEFAULT_LOCALE = "en-US"
 _ERROR = "E_WORDING_TABLE_RESOURCE"
 _LEGEND_PREFIX = "legend."
+# Legend roles whose default label Layout (not the content builder) picks; carried as locale text (#1724).
+LAYOUT_DEFAULT_LEGEND_ROLES = ("progressFill", "actual-ahead", "actual-on-track", "actual-behind")
 
 
 def _invalid(location: str, actual: str, expected: str) -> ValueError:

@@ -67,6 +67,76 @@ def test_paint_geometry_query_copy_preserves_logical_inventory_and_memo_scope() 
     assert logical_scope[1] != painted_scope[1]
 
 
+def test_exclusion_copy_detaches_only_affected_selection_and_additions_stay_local() -> None:
+    index = SurfaceObstacleIndex()
+    index.extend((
+        SurfaceObstacle("mark:a", "mark", "timeline", ObstacleRect(0, 0, 10, 10)),
+        SurfaceObstacle("mark:b", "mark", "timeline", ObstacleRect(20, 0, 30, 10)),
+        SurfaceObstacle("text:c", "text", "timeline", ObstacleRect(0, 20, 10, 30)),
+    ))
+    original_marks = index._selection(("mark",), ("timeline",))
+    original_text = index._selection(("text",), ("timeline",))
+
+    snapshot = index.copy(excluded_ids=("mark:a",))
+
+    assert index.has("mark:a")
+    assert tuple(item.placement_id for item in index.select(classes=("mark",))) == ("mark:a", "mark:b")
+    snapshot_marks = snapshot._selection(("mark",), ("timeline",))
+    assert snapshot_marks is not original_marks
+    assert tuple(item.placement_id for item in snapshot_marks.items) == ("mark:b",)
+    assert snapshot._selection(("text",), ("timeline",)) is original_text
+
+    snapshot.add(SurfaceObstacle("mark:d", "mark", "timeline", ObstacleRect(40, 0, 50, 10)))
+
+    assert index._selection(("mark",), ("timeline",)) is original_marks
+    assert tuple(item.placement_id for item in original_marks.items) == ("mark:a", "mark:b")
+    assert tuple(item.placement_id for item in snapshot.select(classes=("mark",))) == ("mark:b", "mark:d")
+    assert snapshot._selection(("text",), ("timeline",)) is original_text
+    assert not index.has("mark:d")
+
+
+def test_copy_exclusions_compose_with_same_and_different_geometry_overrides() -> None:
+    index = SurfaceObstacleIndex()
+    index.extend((
+        SurfaceObstacle("mark:excluded", "mark", "timeline", ObstacleRect(0, 0, 10, 10)),
+        SurfaceObstacle("mark:kept", "mark", "timeline", ObstacleRect(20, 0, 30, 10)),
+    ))
+    original_scope = index.route_memo_scope(("mark",), ("timeline",), ())
+
+    snapshot = index.copy(
+        excluded_ids=("mark:excluded",),
+        geometry_overrides={
+            "mark:excluded": ObstacleRect(-10, -10, 0, 0),
+            "mark:kept": ObstacleRect(19, -1, 31, 11),
+        },
+    )
+
+    assert tuple(item.placement_id for item in snapshot.all()) == ("mark:kept",)
+    assert snapshot.get("mark:kept").geometry == ObstacleRect(19, -1, 31, 11)
+    assert index.get("mark:excluded").geometry == ObstacleRect(0, 0, 10, 10)
+    assert index.get("mark:kept").geometry == ObstacleRect(20, 0, 30, 10)
+    copied_scope = snapshot.route_memo_scope(("mark",), ("timeline",), ())
+    assert original_scope is not None and copied_scope is not None
+    assert original_scope[0] is copied_scope[0]
+    assert original_scope[1] != copied_scope[1]
+
+
+def test_absent_exclusions_are_harmless_and_do_not_mask_later_snapshot_additions() -> None:
+    index = SurfaceObstacleIndex()
+    existing = SurfaceObstacle("mark:existing", "mark", "timeline", ObstacleRect(0, 0, 10, 10))
+    index.add(existing)
+    original_selection = index._selection(("mark",), ("timeline",))
+
+    snapshot = index.copy(excluded_ids=("not-present",))
+
+    assert snapshot._selection(("mark",), ("timeline",)) is original_selection
+    assert snapshot.all() == index.all() == (existing,)
+    new = SurfaceObstacle("mark:later", "mark", "timeline", ObstacleRect(20, 0, 30, 10))
+    snapshot.add(new)
+    assert snapshot.all() == (existing, new)
+    assert index.all() == (existing,)
+
+
 def test_route_owner_is_separate_from_host_and_survives_obstacle_copy():
     index = SurfaceObstacleIndex()
     route = SurfaceObstacle("relation:one:segment:0", "dependency-route", "timeline",

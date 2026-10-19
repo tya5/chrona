@@ -89,6 +89,7 @@ body:
     groups: all
   tableColumns:
   - id: No.
+    header: {wording: column.number}
     text: {wrap: allow}
     source: rowIndex
     missing: em-dash
@@ -96,6 +97,7 @@ body:
     width: content
     headerOrientation: horizontal
   - id: Task
+    header: {wording: column.task}
     text: {wrap: allow}
     source: path
     missing: em-dash
@@ -103,6 +105,7 @@ body:
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Owner
+    header: {wording: column.owner}
     text: {wrap: allow}
     source: {fieldRole: responsible}
     missing: em-dash
@@ -114,7 +117,7 @@ body:
   markers:
   - kind: asOf
     source: actual
-    label: Today
+    label: {wording: legend.asOf}
   shading:
     nonWorking: true
     exceptions: true

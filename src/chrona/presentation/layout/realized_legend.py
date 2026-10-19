@@ -130,7 +130,7 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
                 selected = replace(_final_actual_representative(key, realized), base_label=key.base_label)
                 result.append(replace(entry, realized_key=selected,
                     label=actual_key_label(key.base_label, selected, multiple=len(actual) > 1,
-                                           wording=dict(content.legend_wording))))
+                                           wording={**dict(content.legend_defaults), **dict(content.legend_wording)})))
             elif (progress_shapes and key.paint.effective_channels.opacity != 0
                   and _progress_adds_actual_ink(key, progress_shapes, drawn_marks,
                                                 content, tokens, capabilities)):

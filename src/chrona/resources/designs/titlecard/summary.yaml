@@ -8,4 +8,4 @@ body:
       presentation: figures
       arrangement: inline
       metrics:
-        - {id: countdown, source: {slot: countdown}, label: DAYS, format: count}
+        - {id: countdown, source: {slot: countdown}, label: {wording: summary.days}, format: count}

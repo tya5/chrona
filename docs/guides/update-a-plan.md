@@ -126,6 +126,12 @@ Reading `update-after.svg`:
   because it has no finish yet. Moving the plan to match an actual makes its delta `+0d`, so
   the ghost, not the delta, shows how far the plan moved.
 
+To retain valid relation corridors across revisions, save the previous render
+with `--emit-scene` and pass that JSON to the next render with
+[`--previous-scene`](cli-reference.md#chrona-render). Both `first-fit` and `best`
+revalidate it against the current marks, obstacles and routing policy before
+reuse; an invalid route is searched again, never forced through a new obstacle.
+
 `render` replaces an existing `--output` file without asking (`--output` says "an existing file
 is replaced"). To keep the picture of an earlier update, choose a new name for each update, for
 example `plan-2026-11-16.svg`. Warnings (`W_...`) arrive as JSON lines on standard error with

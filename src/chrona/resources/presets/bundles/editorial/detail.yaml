@@ -2,9 +2,9 @@ version: chrona/review-detail-profile/v0.1
 id: chrona-builtin-editorial-detail
 body:
   legend:
-    - {role: planned, label: Task duration}
-    - {role: actual, label: Actual}
-    - {role: milestone, label: Milestone}
-    - {role: dependency, label: Dependency}
-    - {role: asOf, label: Today}
-    - {role: calendar-closed, label: Weekend}
+    - {role: planned, label: {wording: legend.planned}}
+    - {role: actual, label: {wording: legend.actual}}
+    - {role: milestone, label: {wording: legend.milestone}}
+    - {role: dependency, label: {wording: legend.dependency}}
+    - {role: asOf, label: {wording: legend.asOf}}
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}

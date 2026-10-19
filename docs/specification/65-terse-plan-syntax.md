@@ -1,6 +1,7 @@
 # Terse Plan Syntax
 
 **Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4), the derived gate of S3 and section 4 (#788, slice 2) and the `deadline` clause of S3 and section 4 (#822, I822-1).
+Section 12 specifies the selected design for #806; its implementation is not yet released.
 **Owns:** the grammar of the terse plan (`terse 0.1`), its mapping to a `timeline/v0.7` Project, the id rules for
 compiled objects and relations, the compiler diagnostic fields and codes, the stream and exit-code rules of
 `chrona compile`, and the determinism contract of the compiler's YAML.
@@ -18,7 +19,8 @@ hierarchy, schedule, constraints, calendars, dependencies and a deadline. It **c
 one. The compiler is a pure function from text to either a Project (as deterministic YAML bytes) or a list of
 positioned diagnostics. It does not read files, schedule, or know about presentation, and it repeats no Core
 rule: Core validation is the only owner of Project meaning, and a plan the compiler accepts is validated by Core
-before any YAML is produced.
+before any YAML is produced. Application-level compilation also resolves explicitly declared profile packages and
+uses the shared profile validator (section 12); the pure syntax/compiler package itself performs no I/O.
 
 Compilation is one-way. `chrona compile plan.chrona -o project.yaml` writes a Project; from then on the YAML is
 the only authority and the terse file is retired. There is no decompiler, no regeneration, no id map and no
@@ -35,8 +37,9 @@ A construct belongs in the grammar if and only if (1) it determines identity, hi
 or is the title of the thing it names, or is a date the plan states about the thing it names (a deadline, which
 determines no placement); (2) its value is a scalar, a date, an amount or a short list, never a
 free-form map, prose or a reference to another top-level section; and (3) it has one unambiguous one-line
-spelling that maps to exactly one Project construct. Everything else (`fields`, `entities`, `annotations`,
-`scenarios`, `extensions`, `link`, `wbsCode`, `plannedProgress`, `attachesTo`, `fiscalStartMonth`,
+spelling that maps to exactly one Project construct. Section 12 additionally admits scalar field assignments with
+explicit profile declarations, mapped to existing Project `fields`, `type` and local `extensions` references.
+Everything else (`entities`, `annotations`, `scenarios`, other extension forms, `link`, `wbsCode`, `plannedProgress`, `attachesTo`, `fiscalStartMonth`,
 endpoints other than `start`/`at` on the successor, `mo`/`y` lags) stays in YAML.
 
 `chrona.terse.ledger.LEDGER` classifies every authorable property path of `schemas/project-v0.7.schema.yaml`
@@ -59,8 +62,9 @@ forces a decision; it does not force a construct.
   and outside a string; it runs to the end of the line. `a#b` is one word. A blank or comment-only line is ignored.
 - **L6 Strings.** `"` ... `"` with the escapes `\"` and `\\` only (`E_TERSE_STRING_ESCAPE`), no raw newline
   (`E_TERSE_STRING_UNTERMINATED` at the opening quote), any other non-control Unicode allowed. A string must be
-  preceded and followed by a space or comma. An empty title is `E_TERSE_TITLE_EMPTY`. A string is the only way to
-  write a space, a `#`, a comma or non-ASCII text.
+  preceded and followed by a space or comma, except that an assignment's `KEY=` may directly precede its quoted
+  value (section 12). An empty title is `E_TERSE_TITLE_EMPTY`. Quote a field value to force a string or include
+  spaces, commas or a token-initial `#`; the existing escape and separator rules otherwise remain unchanged.
 - **L7 Words and commas.** A word is a maximal run of characters other than space, `"` and `,`. `,` is its own
   token, so `after a,b` and `after a, b` are the same.
 - **L8 Case.** Keywords are lower case and case-sensitive.
@@ -78,13 +82,15 @@ line        = indent statement ;
 statement   = terse | project | calendar | object ;
 
 terse       = "terse" VERSION ;              (optional; if present it is the first statement; VERSION = 0.1)
-project     = "project" ID [ STRING ] [ "calendar" CAL ] ;
+project     = "project" ID [ STRING ] [ "calendar" CAL ] { extension } ;
+extension   = "extension" PACKAGE STRING REVISION ;
 calendar    = "calendar" CAL days [ off ] [ on ] | "calendar" CAL days [ on ] [ off ] ;
 days        = dayitem { "," dayitem } ;      (dayitem = DAY | DAY "-" DAY, e.g. mon-fri, mon-wed,fri)
 off         = "except" date { [ "," ] date } ;
 on          = "work"   date { [ "," ] date } ;
 
-object      = NAME [ STRING ] KIND [ schedule ] [ "calendar" CAL ] [ after ] [ deadline ] ;
+object      = NAME [ STRING ] KIND [ "profile" PROFILE ] [ schedule ] [ "calendar" CAL ] [ after ] [ deadline ] { field } ;
+field       = KEY "=" VALUE ;                (one assignment, optionally ending in a quoted string; section 12)
 schedule    = DATE                           (fixed point)
             | DATE ".." DATE                 (fixed span, no spaces around "..", end exclusive)
             | AMOUNT [ anchor ] { bound }    (scheduled span)
@@ -94,13 +100,16 @@ anchor      = "from" DATE | "until" DATE ;
 bound       = ( "start" | "end" ) ( ">=" | "<=" ) DATE ;   (each of the four at most once)
 pointbound  = "at" ( ">=" | "<=" ) DATE ;                  (each of the two at most once)
 after       = "after" dep { "," dep } ;
-deadline    = "deadline" DATE ;                (the last clause of an object line, every kind; a promise, never a bound)
+deadline    = "deadline" DATE ;                (the last non-field clause, every kind; a promise, never a bound)
 dep         = REF [ LAG [ "in" CAL ] ] ;
 REF         = NAME [ "." ENDPOINT ] ;        (ENDPOINT = start | end | at)
 
 NAME, CAL   : slug  = [a-z][a-z0-9-]*
 ID          : any word that is not a reserved word (a slug such as halcyon-1, or HALCYON-1)
 KIND        : task | gate | group
+PACKAGE, PROFILE : nonempty words, interpreted by the existing profile contracts
+REVISION    : a pinned Project Git revision (the shared Project schema owns its spelling)
+KEY, VALUE  : field spelling and scalar rules of section 12
 DATE        : [0-9]{4}-[0-9]{2}-[0-9]{2}, and a real calendar date
 AMOUNT      : [1-9][0-9]*(d|w|wd)
 LAG         : [+-]?(0|[1-9][0-9]*)(d|w|wd)   (the sign is attached: "+1wd", never "+ 1wd")
@@ -151,7 +160,7 @@ DAY         : mon | tue | wed | thu | fri | sat | sun
 - **S9 References.** Names resolve over the whole file after it is read, so forward references are legal
   (`E_TERSE_REFERENCE_UNKNOWN` for a name defined nowhere). The compiler never computes a date, a cycle or a float.
   A cycle is `E_UNSUPPORTED_CYCLE`, reported by `validate` and `schedule`.
-- **S10 Deadline.** `deadline D` is the last clause of an object line, after `calendar` and `after`, on a task, a gate or a
+- **S10 Deadline.** `deadline D` is the last non-field clause of an object line, after `calendar` and `after`, on a task, a gate or a
   group (a rollup is judged by its `end`). It is the Project's `deadline` (Spec 05 section 9): a promise the scheduler
   never reads, so it moves no placement and changes no verdict, and `chrona schedule` lists a `W_DEADLINE` for an
   object planned to finish after it (Spec 04 section 10). A second `deadline` is `E_TERSE_CLAUSE_DUPLICATE`, a missing
@@ -175,8 +184,9 @@ The successor endpoint is `start` for a span or `at` for a fixed or derived poin
 
 ### 3.4 Kinds
 
-`KIND` is the Project `type` verbatim, restricted to `task`, `gate` and `group`. An unknown kind is
-`E_TERSE_KIND_UNKNOWN` with the nearest kind in the hint; other types are written in YAML.
+`KIND` selects the existing syntax/schedule form, restricted to `task`, `gate` and `group`. Without a profile clause
+it is also the Project `type` verbatim. An unknown kind is `E_TERSE_KIND_UNKNOWN` with the nearest kind in the hint.
+An explicit `profile PROFILE` replaces only the emitted type, not the kind's schedule or hierarchy behavior (section 12).
 
 ## 4. Mapping
 
@@ -186,10 +196,12 @@ The successor endpoint is `start` for a span or `at` for a fixed or derived poin
 | `project ID` | `version: timeline/v0.7`; `project.id: ID` |
 | `"Title"` on `project` | `project.title` |
 | `project ... calendar C` | `project.calendar: C` |
+| `project ... extension P "file.yaml" REV` | one `extensions[]` entry `{packageId: P, path: file.yaml, revision: REV}` |
 | `calendar C days` | `calendars.C.working_days` (mon..sun order) |
 | `except D ...` | one `calendars.C.exceptions[]` `{date: D, working: false}` per date |
 | `work D ...` | one `calendars.C.exceptions[]` `{date: D, working: true}` per date |
 | `NAME ... KIND` | key `objects.NAME`, `type: KIND` |
+| `KIND profile P` | `objects.NAME.type: P`; KIND still selects its syntax/schedule form |
 | `"Title"` after the name | `objects.NAME.title` |
 | indentation under a `group` | `objects.NAME.parent: <group>` |
 | `group` | `type: group`, `schedule: {mode: rollup}` |
@@ -201,7 +213,8 @@ The successor endpoint is `start` for a span or `at` for a fixed or derived poin
 | `AMOUNT from D` / `until D` | `schedule.anchor: {start: D}` / `{end: D}` |
 | `start >= D`, `start <= D`, `end >= D`, `end <= D` | `schedule.constraints.start.min`, `.start.max`, `.end.min`, `.end.max` |
 | `calendar C` on an object | `objects.NAME.calendar: C` |
-| `deadline D` | `objects.NAME.deadline: D` (the last key of the object) |
+| `deadline D` | `objects.NAME.deadline: D` (before any fields) |
+| trailing `KEY=VALUE` | `objects.NAME.fields.KEY: <typed scalar>` (section 12) |
 | `after X` (each comma item) | one `relations[]` entry `{id, type: dependency, from, to, lag}` |
 | `X`, `X.start`, `X.end`, `X.at` | `from: {object: X, endpoint: ...}` (section 3.3) |
 | the dependent object | `to: {object: NAME, endpoint: start or at}` |
@@ -214,8 +227,8 @@ Normalisations (the only implicit steps): **N1** single-calendar project default
 calendars and relations; **N6** a leading `+` on a lag is dropped; **N7** a schedule-less `gate` with `after` is a
 `scheduled-point` (the kind selects the form, S3). The `deadline` clause adds no normalisation: its date is emitted verbatim (S10).
 
-The compiler emits no `entities`, `annotations`, `scenarios`, `extensions`, `fields`, `wbsCode`,
-`plannedProgress`, `attachesTo` or `link`, and never an empty section; it emits `deadline` only for a `deadline` clause.
+The compiler emits no `entities`, `annotations`, `scenarios`, `wbsCode`, `plannedProgress`, `attachesTo` or `link`,
+and never an empty section. It emits `deadline`, local `extensions` and `fields` only for their explicit clauses.
 
 ## 5. Identity
 
@@ -273,6 +286,8 @@ change. No terse diagnostic is a bare code. In code, `chrona.terse.TerseDiagnost
   `E_TERSE_REFERENCE_UNKNOWN`, `E_TERSE_CALENDAR_UNKNOWN`.
 - Values: `E_TERSE_DATE_INVALID`, `E_TERSE_AMOUNT_INVALID`, `E_TERSE_LAG_INVALID`, `E_TERSE_DAYS_INVALID`,
   `E_TERSE_SCHEDULE_REQUIRED`, `E_TERSE_CLAUSE_DUPLICATE`.
+- Inline fields/profile binding (section 12): `E_TERSE_FIELD_KEY`, `E_TERSE_FIELD_VALUE`,
+  `E_TERSE_PROFILE_REQUIRED`, `E_TERSE_PROFILE_UNKNOWN`.
 - CLI and I/O: `E_TERSE_OUTPUT_EXISTS`, `E_TERSE_INPUT_IO`.
 - Defect: `E_TERSE_COMPILER_DEFECT` (the emitted Project failed structural validation; exit 2; a property test
   asserts it is unreachable).
@@ -317,7 +332,7 @@ is on the terminal.
 **Exit codes.** 0 success (nothing on standard error); 1 rejected (diagnostics); 2 command syntax, unreadable
 input (`E_TERSE_INPUT_IO`), an existing output (`E_TERSE_OUTPUT_EXISTS`), or a compiler defect.
 
-`compile` validates through Core only; it does not schedule. Run `chrona validate` and `chrona schedule` on the
+`compile` validates through Core and, for explicit profiles, the shared package/field validator; it does not schedule. Run `chrona validate` and `chrona schedule` on the
 result, or on the plan itself (section 7.1).
 
 ### 7.1 Draft dispatch: `render`, `validate`, `schedule`
@@ -329,8 +344,9 @@ dispatched (it is read as YAML). The adapter compiles through the use case, then
 
 - `validate` and `schedule` load the compiler's YAML bytes exactly as they would load that file, so their output equals
   `compile` followed by the same command.
-- `render` writes the compiler's bytes as `project.yaml` into a temporary directory (the pattern `--preset <builtin id>`
-  uses), renders that file with every other flag unchanged and removes the directory on every exit path. The draft
+- `render` writes the compiler's bytes as `project.yaml` into a private temporary directory (the pattern `--preset <builtin id>`
+  uses), stages any already-validated profile-package bytes under their declared relative addresses (section 12),
+  renders that file with every other flag unchanged and removes the directory on every exit path. The draft
   closure's Project is therefore the compile output, and rendering `plan.chrona` is byte-identical to compiling and
   then rendering the YAML. No temporary path appears in any output.
 - A plan that does not compile is reported with the compiler's diagnostics (the shape of section 6.1, with `source`,
@@ -349,14 +365,16 @@ compiler, and a Render Context references YAML.
 
 ## 8. Determinism and the emitter
 
-The result is a pure function of the source bytes and the grammar version: no clock, locale, environment, host
+The syntactic Project mapping and emitted YAML are pure functions of the source bytes and grammar version: no clock, locale, environment, host
 path, hash seed or random source, and nothing about the source (path or hash) in the output beyond a fixed header
-comment (`# generated by chrona compile (terse 0.1); once edited, this file is the authority`).
+comment (`# generated by chrona compile (terse 0.1); once edited, this file is the authority`). Profile-validation
+success additionally depends on the explicitly resolved package bytes; these never inject defaults or other
+derived values into the emitted Project.
 
 The YAML is written by a hand-written emitter, not `yaml.safe_dump`, so the bytes cannot move with a PyYAML
 release. Format: LF only, UTF-8 without BOM, a final newline, two-space block mappings, one-line flow `schedule`,
-weekday list and relation entries, fixed key order (`version`, `project`, `calendars`, `objects`, `relations`;
-per object `type`, `title`, `parent`, `calendar`, `schedule`, `deadline`; per relation `id`, `type`, `from`, `to`, `lag`).
+weekday list and relation entries, fixed key order (`version`, `project`, optional `extensions`, `calendars`, `objects`, `relations`;
+per object `type`, `title`, `parent`, `calendar`, `schedule`, `deadline`, optional `fields`; per relation `id`, `type`, `from`, `to`, `lag`).
 Dates are always single quoted. A scalar is plain only when it matches `[A-Za-z][A-Za-z0-9 _-]*` (no trailing
 space) and is not a YAML 1.1 special word (`y n yes no true false on off null`, any case), or is an amount or lag
 (`-?(0|[1-9][0-9]*)(d|w|wd)`) or the Project version; every other scalar is single quoted with `''` escaping and
@@ -367,6 +385,8 @@ mapping keys: an object named `on`, `no`, `yes`, `off`, `true`, `false` or `null
 
 **Round-trip contract:** `safe_load(emitted)` equals the in-memory Project for every Project the compiler can
 produce. A test enforces it on every fixture and on the seeded fuzz.
+Scalar null is emitted as `null`; finite numbers retain their numeric type, including exponent spellings
+with a decimal mantissa accepted by the repository YAML reader. Quoted strings never become booleans/numbers/null.
 
 ## 9. Proof obligations
 
@@ -409,3 +429,82 @@ the table has them. Every finding of the compiler or of Core validation, and the
 `E_IMPORT_COLUMN_DUPLICATE`, `E_IMPORT_COLUMN_CONFLICT`, `E_IMPORT_ROW_TOO_LONG`, `E_IMPORT_DATE_INVALID`,
 `E_IMPORT_PROGRESS_INVALID`), is reported in one run with `cell: {row, column, header}` (row 1 is the header), exit code 1;
 an unreadable table or an existing output is exit code 2, and nothing is overwritten.
+
+## 12. Inline typed fields and declared profiles (#806)
+
+This is option B, not an overlay. It maps only existing Project extensions,
+object types and scalar fields. No `--with`, new source map, schema version,
+presentation construct or file scan is introduced. Older accepted plans retain
+their emitted YAML bytes; the grammar remains `terse 0.1`.
+
+### 12.1 Declarations and identity
+
+`extension PACKAGE "path.yaml" REVISION` clauses finish the project line.
+Each emits one local extension reference in declaration order. Package IDs are
+unique in that line; a second declaration is `E_TERSE_CLAUSE_DUPLICATE`.
+The shared Project schema owns safe relative paths and pinned revisions;
+the existing extension resolver owns containment, supplied content identity,
+package validity and profile ambiguity. The compiler does not reproduce those
+rules. Other extension forms remain YAML-only.
+
+`profile PROFILE` follows an object's kind. The kind still owns the existing
+task/gate/group schedule and parent behavior; the profile is emitted verbatim
+as `type`. The application checks every explicit profile binding against the
+valid, unambiguous catalogue of declared/resolved packages, even without field
+assignments. An unknown binding is `E_TERSE_PROFILE_UNKNOWN` at the profile
+token. Ambiguous package definitions retain `E_PROFILE_ID_DUPLICATE`; invalid
+packages do not cause misleading secondary unknown-profile findings. Ordinary
+YAML Project types remain open. Neither `extension` nor `profile` becomes a
+new globally reserved object name.
+
+### 12.2 Assignment values and validation
+
+Zero or more `KEY=VALUE` assignments finish any object line, after its optional
+deadline. A key is the nonempty word before the first equals sign. Values with
+spaces/commas or string-like typed words use the existing quoted string syntax:
+`risk="high"`, `note="two words"`, `flag="true"`. Only an assignment's `KEY=`
+may directly precede a quote; all other string separator/escape rules remain.
+An empty key is `E_TERSE_FIELD_KEY`; an absent value or nonfinite numeric
+literal is `E_TERSE_FIELD_VALUE`; `note=""` is an explicit empty string.
+Repeated keys reject at the second assignment with `E_TERSE_CLAUSE_DUPLICATE`.
+Assignments before another ordinary clause are rejected, not reordered.
+
+Unquoted `true`, `false`, `null` and finite JSON-number spellings produce
+boolean, null and numeric values. Other words are strings, including dates;
+quoted values always remain strings. There is no YAML implicit coercion or
+array/map syntax. Fields preserve assignment order and follow the object's
+existing keys. They require an explicit profile clause
+(`E_TERSE_PROFILE_REQUIRED` at the first assignment otherwise).
+
+The same shared validator as YAML `validate` checks unknown keys, types,
+enum values and required fields (`E_PROFILE_FIELD_UNKNOWN`,
+`E_PROFILE_FIELD_TYPE`, `E_PROFILE_FIELD_ENUM`, `E_PROFILE_FIELD_REQUIRED`).
+Defaults are not materialized by compilation. Each field's escaped Project
+pointer maps to the complete assignment span in the existing source map;
+type/package pointers map to their authored tokens. Missing required fields
+point to the profile/fields context. Every rejection follows section 7's
+stream/exit/no-partial-output rules. Schema errors in authored extension
+values are positioned input findings, not `E_TERSE_COMPILER_DEFECT`; impossible
+compiler-owned structural output remains a defect.
+
+### 12.3 Resource origin and completed input snapshot
+
+For `compile -o FILE`, extension paths resolve relative to FILE's parent, the
+intended Project directory. Packages must already exist there at their declared
+addresses; failure rejects before creating the Project. For stdout compilation
+they resolve beside the source plan, or cwd for stdin. Redirected output has
+the ordinary YAML relocation obligation: move its referenced packages with it.
+There is no implicit copying, path rewriting, source hash or absolute path in
+the emitted YAML. Direct `render`, `validate` and `schedule` use the source
+plan's directory as the Project resource origin.
+
+Application resolution acquires one byte snapshot of each declared package,
+performs the shared containment/optional identity checks, and uses its decoded
+manifest for shared profile validation. A Git revision string does not itself
+prove the identity of local bytes. Direct `.chrona` render stages exactly those
+validated bytes under the same relative addresses beside its temporary Project;
+it never reads the source package again or writes beside the source plan.
+Temporary closure reads may read the staged bytes. Cleanup applies on every
+exit path. The pure `chrona.terse` package performs no I/O or profile semantics;
+only application code resolves resources. Contexts, Stores and presentation
+continue to consume ordinary YAML and existing extension references only.

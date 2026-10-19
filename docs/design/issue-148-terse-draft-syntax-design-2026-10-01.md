@@ -8,6 +8,11 @@
 (landed with slice 1). Section 3 and the mapping table of section 4 are a pointer here (AGENTS.md: normative
 behaviour lives in one living specification); this document keeps the rationale, measurements and alternatives.
 
+The original option-B deferral/string-only proposal below is superseded by the
+owner's #806 decision and [Spec 65 §12](../specification/65-terse-plan-syntax.md#12-inline-typed-fields-and-declared-profiles-806).
+The overlay remains deferred; the current inline-profile/field contract is not
+duplicated in this historical rationale.
+
 ## 1. Decision summary
 
 Chrona gets a small, line-oriented text syntax (the "terse plan", file suffix `.chrona`, fence info string
