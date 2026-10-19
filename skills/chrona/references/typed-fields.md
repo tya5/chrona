@@ -88,6 +88,7 @@ version: chrona/view/v0.28
 kind: view
 id: risk-view
 body:
+  heading: {title: '{project}: delivery risk', subtitle: 'Bars coloured by risk'}
   surface: table-timeline
   selection:
     include: {types: [span, point]}
@@ -96,7 +97,7 @@ body:
     target: planned
     source: {field: risk}
     domain: [low, medium, high]
-  grouping: {by: none}
+  grouping: {by: field, field: team, missing: Unset}
   ordering: {by: plannedStart, direction: ascending, tieBreak: id}
   window: {mode: selected-planned}
   comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: working-days, facets: [planned]}
@@ -126,6 +127,91 @@ chrona render examples/typed-fields/plan.yaml --preset wallboard-dark --view exa
 
 Each bar takes the colour of its `risk` value, the axis shows the months and the legend names
 `low`, `medium` and `high`. Edit `fields` in the plan, not the picture, and render again.
+
+## 3a. A preset with no `series` scale (executive-light, target-b, marquee)
+
+Those presets fail with `E_PRESENTATION_SCALE_MAPPING ... slots=None`. Do not edit the preset; give your own
+Scheme (a category per domain value, 3:1 contrast against the page) and a derived Theme (`chrona/theme/v0.16`:
+`extends` names the copied base by `id` and a `path` below the Theme file, here `looks/`, no `..`; no hash)
+whose `colorScales.series.slots` maps each value to a category. `executive-light`:
+
+```yaml examples/typed-fields/executive-scheme.yaml
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: executive-risk
+body:
+  colors:
+    surface: "#FFFFFF"
+    surfaceRaised: "#EAF0F8"
+    text: "#172033"
+    textMuted: "#4B5563"
+    accent: "#3986E6"
+    positive: "#269D79"
+    negative: "#B91C1C"
+    warning: "#8D530F"
+    neutral: "#C9CED8"
+    insideLabelPlanned: "#000000"
+    insideLabelActual: "#000000"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona executive-light example
+    license: project-pending
+  categories:
+    default: "#EEF3F8"
+    capabilities-band: "#D8DDE6"
+    risk-low: "#2E7D5B"
+    risk-medium: "#B7791F"
+    risk-high: "#B91C1C"
+```
+
+```yaml examples/typed-fields/executive-theme.yaml
+version: chrona/theme/v0.16
+kind: theme
+id: executive-risk
+body:
+  extends:
+    id: chrona-builtin-executive-light
+    path: looks/executive-light/theme.yaml
+  roles:
+    subtitle:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+  colorBindings:
+    subtitle.fill: textMuted
+  colorScales:
+    series:
+      slots: {low: risk-low, medium: risk-medium, high: risk-high}
+```
+
+`examples/typed-fields/target-b-scheme.yaml` and `target-b-theme.yaml` do the same for `target-b` (its Scheme is
+a copy with the same three `risk-*` categories added; its Theme adds only `colorScales`). The View groups by
+`team` because target-b's Layout tints group bands and refuses `grouping: none`.
+
+```bash
+chrona preset copy executive-light --output ./examples/typed-fields/looks/executive-light
+chrona preset copy target-b --output ./examples/typed-fields/looks/target-b
+chrona render examples/typed-fields/plan.yaml --preset executive-light --view examples/typed-fields/risk-view.yaml --theme examples/typed-fields/executive-theme.yaml --scheme examples/typed-fields/executive-scheme.yaml --output risk-executive.svg
+chrona render examples/typed-fields/plan.yaml --preset target-b --view examples/typed-fields/risk-view.yaml --theme examples/typed-fields/target-b-theme.yaml --scheme examples/typed-fields/target-b-scheme.yaml --output risk-target-b.svg
+```
+
+Title and subtitle: the View's `heading: {title: ..., subtitle: ...}` (placeholders `{project}`, `{asOf}`,
+`{calendar}`; Spec 06). The title works on every preset. The subtitle needs a Theme `subtitle` typography role:
+`wallboard-dark` and `target-b` have it; `executive-light` does not (`E_THEME_ROLE_REQUIRED`), which is why
+`executive-theme.yaml` adds `roles.subtitle` and the `subtitle.fill` binding. Drop `subtitle` to keep a bundled Theme.
 
 ## 4. Colour only some objects with a Style
 
