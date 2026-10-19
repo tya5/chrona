@@ -25,6 +25,7 @@ class CompileResult:
     project: dict[str, Any] | None
     diagnostics: tuple[TerseDiagnostic, ...]
     source_map: SourceMap = field(default_factory=dict)
+    profile_bindings: tuple[str, ...] = ()
 
     @property
     def ok(self) -> bool:
@@ -49,7 +50,7 @@ def compile_terse(text: str, source: str | None = None) -> CompileResult:
     if problems:
         return CompileResult(None, _finish(problems, source))
     project, source_map = _build(parsed)
-    return CompileResult(project, (), source_map)
+    return CompileResult(project, (), source_map, tuple(item.name.value for item in parsed.objects if item.profile is not None))
 
 
 def _finish(problems: list[TerseDiagnostic], source: str | None) -> tuple[TerseDiagnostic, ...]:
@@ -105,6 +106,16 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
         project["calendar"] = parsed.calendars[0].name.value
     result: dict[str, Any] = {"version": PROJECT_VERSION, "project": project}
 
+    if statement.extensions:
+        result["extensions"] = []
+        for index, (package, path, revision) in enumerate(statement.extensions):
+            result["extensions"].append({"packageId": package.value, "path": path.value, "revision": revision.value})
+            base = f"/extensions/{index}"
+            smap[base] = package.range.through(revision.range)
+            smap[base + "/packageId"] = package.range
+            smap[base + "/path"] = path.range
+            smap[base + "/revision"] = revision.range
+
     if parsed.calendars:
         calendars: dict[str, Any] = {}
         for item in parsed.calendars:
@@ -124,9 +135,11 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
     objects: dict[str, Any] = {}
     for item in parsed.objects:
         base = f"/objects/{item.name.value}"
-        entry: dict[str, Any] = {"type": item.kind.value}
+        entry: dict[str, Any] = {"type": item.profile.value if item.profile is not None else item.kind.value}
         smap[base] = item.name.range
-        smap[base + "/type"] = item.kind.range
+        smap[base + "/type"] = item.profile.range if item.profile is not None else item.kind.range
+        if item.profile is not None:
+            smap[base + "/fields"] = item.profile.range
         if item.title is not None:
             entry["title"] = item.title.value
             smap[base + "/title"] = item.title.range
@@ -139,6 +152,12 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
         if item.deadline is not None:  # #822: the date verbatim; Core validates it and `W_DEADLINE` judges it
             entry["deadline"] = item.deadline.value
             smap[base + "/deadline"] = item.deadline.range
+        if item.fields:
+            entry["fields"] = {}
+            for key, value, field_range in item.fields:
+                entry["fields"][key] = value
+                escaped = key.replace("~", "~0").replace("/", "~1")
+                smap[f"{base}/fields/{escaped}"] = field_range
         objects[item.name.value] = entry
     if objects:
         result["objects"] = objects

@@ -6,6 +6,16 @@ to override any of them from a View. Every file below is written by the document
 every command runs, so the page cannot drift from the tool. The rules are Spec 06 section 9.3 (wording
 precedence), Spec 24 (table headers), Spec 45 (legend vocabulary) and Spec 63 (the wording tables).
 
+**Prerequisite: a CJK font.** Japanese text uses fonts installed in the environment; the product bundles none
+(font policy, #1281). Before the Japanese example below, install a CJK font (on Ubuntu, `sudo apt-get install -y
+fonts-noto-cjk`; macOS and Windows ship one) or the optional provider with
+`pip install -e packages/chrona-fonts-noto-cjk` from a clone (the provider is not published; a wheel user follows
+the OS-installed route). Without one, rendering Japanese fails with `E_FONT_GLYPH_UNAVAILABLE`. The repository's
+wheel check exercises the clone route: it installs `packages/chrona-fonts-noto-cjk` into its clean environment
+before running the Japanese block.
+
+<!-- chrona:doc-check prerequisite: cjk-font -->
+
 ## 1. What `--locale` changes by itself
 
 `--locale en-US` is the default; `ja-JP` is the other supported value. The locale selects the language of
@@ -14,9 +24,11 @@ selects the **wording table**, a bundled, closed list of built-in texts, one com
 
 A table entry is used only where a file asks for it with a **wording reference**, `{wording: <key>}`. A
 text written as a plain string in a preset, View or Detail Profile is authored text and is never translated.
-The bundled presets still author their column headers (`Task`, `Plan`), the `TODAY` marker label and
-the legend labels as plain strings, so with a bundled preset `--locale ja-JP` localizes the dates and axis
-and leaves those English. To localize them, reference the keys (section 3).
+The bundled presets reference the keys for the words they share with the table: with the
+default preset `--locale ja-JP` reads `タスク`, `計画`, `本日`, `計画期間`, `実績`, `マイルストーン` and `依存関係`, and the bundled
+legends read `予定`, `基準計画`, `現行計画`, `ゲート`, `祝日` and `休業日` (the closed-day key reads `Non-working day`, no longer
+`Weekend`). A bundled design's own voice (a title such as `THE KEY`, a marker such as `現在 NOW`, a subtitle) is authored text and is not translated.
+To localize any other label, reference a key or override it in your own copy of the preset (sections 3 and 4).
 
 The keys, with their `en-US` and `ja-JP` text:
 
@@ -31,16 +43,37 @@ The keys, with their `en-US` and `ja-JP` text:
 | `legend.critical-edge` | Critical dependency | クリティカルな依存関係 |
 | `legend.forecast`, `legend.progressFill`, `legend.snapshot`, `legend.deadlineMark` | Forecast (* estimated), Progress, Baseline, Deadline | 予測（*は推定）, 進捗, 基準計画, 期限 |
 | `missing.unknown`, `missing.inProgress` | unknown, in progress | 不明, 進行中 |
+| `column.lane`, `column.items` | Lane, Items | レーン, 件数 |
+| `column.owner`, `column.number`, `column.phase`, `column.finishDelta` | Owner, No., Phase, Δ finish | 担当, 番号, フェーズ, Δ完了 |
+| `legend.actual-ahead`, `legend.actual-on-track`, `legend.actual-behind` | Ahead, On track, Behind | 前倒し, 予定どおり, 遅れ |
+| `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, baseline, current plan | 予定, 基準計画, 現行計画 |
+| `legend.gate`, `legend.holiday` | gate, holiday | ゲート, 祝日 |
+| `summary.days` | DAYS | 日 |
+| `legend.plan`, `legend.period`, `legend.depends-on` | Plan, Period, Depends on | 計画, 期間, 依存先 |
+| `legend.missing-actual`, `legend.missing-actual-in-progress` | Not yet observed, In progress, not yet observed | 未観測, 進行中・未観測 |
+| `legend.in-the-wings`, `legend.calendar-exception` | In the wings, Calendar exception | 出番待ち, カレンダー例外 |
+| `legend.other` | Other | その他 |
+| `column.no` | No | 番号 |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
-The legend draws labels in capitals in English (`TASK DURATION`); that is a typography choice, not part of
-the key's text.
+`column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
+(section 4), so a design that wants the shorter header in English and Japanese needs its own key. `legend.other` is the
+folded entry that a colour scale draws when there are more values than colours; the code names it, so it follows the locale
+and can be overridden with `wording.keys` or `wording.legend.other`.
 
-**Still English.** Some built-in texts are not table keys yet, so `--locale ja-JP` does not translate them:
-the default `Progress` label of the progress fill (it appears as `PROGRESS`), the default lane-table
-headers (`Lane`, `Items`) and the Actual qualifiers (`Ahead`, `On track`, `Behind`). Override them with
-`wording.legend` (section 4). A later change may move them into the table; this page describes the tool
-as it is now.
+**Case belongs to the design, not to the key.** Every table value is neutral sentence case (`Today`, `Non-working day`).
+A design that draws `as of`, `actual` or `non-working day` in lower case, or `TODAY` in capitals, sets the existing
+typography `textTransform` token (`lowercase`, `uppercase`) on the role that draws the text (`legend` for the legend, `as-of-label`
+for the as-of marker) and references the same key; it does not need a key of its own. The legend draws
+`TASK DURATION` this way. A transform belongs to a role, so it applies to every entry of that legend and, for the as-of marker, to the
+date after the label too (`as of 20 feb`). Japanese has no case and is unchanged by a transform.
+
+**A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
+`label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
+
+**Still English.** A text a preset author wrote as a plain string stays as written (titles, a design's marker text, panel
+titles). Reference a key or override it in your own copy of the preset (sections 3 and 4). The Titlecard's secondary axis
+names its month table (`nameTable: en-US`) on purpose, so it stays English next to the Japanese months. This page describes the tool as it is now.
 
 ## 2. A small plan that crosses a year
 
@@ -239,7 +272,7 @@ chrona render locale-plan.yaml --view locale-view.yaml --detail locale-detail.ya
 In the Japanese picture the headers read `タスク` and `予定`, the marker and the `legend.asOf` entry read
 `本日`, and the legend reads `計画期間`, `実績`, `マイルストーン`, `依存関係` and the override
 `休日`. The English picture is the same file set without the flag: `Task`, `TODAY`, `TASK DURATION` and so on.
-`PROGRESS` stays English in both (section 1).
+The progress fill reads `進捗` in Japanese and `PROGRESS` in English.
 
 ## 4. Override any key from a View
 

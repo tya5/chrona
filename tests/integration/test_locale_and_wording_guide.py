@@ -65,8 +65,8 @@ def test_guide_renders_japanese_headers_marker_legend_override_and_years(tmp_pat
     assert {"本日", "計画期間", "実績", "マイルストーン", "依存関係", "休日"} <= set(japanese)
     assert {"TODAY", "TASK DURATION", "ACTUAL", "MILESTONE", "DEPENDENCY", "休日"} <= set(english)
     assert "WEEKEND" not in english and "休業日" not in japanese
-    # honest limits: the default Progress label is still English under ja-JP
-    assert "PROGRESS" in japanese
+    # the default Progress label is a table key too
+    assert "進捗" in japanese and "PROGRESS" in english
     # years in multi-year table dates, and the axis
     assert "2026年12月14日 – 2026年12月24日" in japanese and "2026年12月25日 – 2027年1月14日" in japanese
     assert "2027年1月15日" in japanese and "2026年12月" in japanese and "2027年1月" in japanese

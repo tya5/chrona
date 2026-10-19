@@ -18,12 +18,17 @@ from tests.support import synthetic_review as sr
 # Acceptance 2 of #1724: this is the list of every built-in wording key. A new key is a row here and an entry in
 # every locale; `--locale ja-JP` then has no English built-in wording for it.
 BUILT_IN_WORDING_KEYS = (
-    "column.task", "column.plan",
+    "column.task", "column.plan", "column.lane", "column.items",
     "marker.today", "marker.asOf",
     "legend.planned", "legend.actual", "legend.milestone", "legend.dependency", "legend.asOf",
     "legend.calendar-closed", "legend.critical-edge", "legend.forecast", "legend.progressFill",
+    "legend.actual-ahead", "legend.actual-on-track", "legend.actual-behind",
     "legend.snapshot", "legend.deadlineMark",
     "missing.unknown", "missing.inProgress",
+    "legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate", "legend.holiday",
+    "column.owner", "column.number", "column.phase", "column.finishDelta", "summary.days",
+    "legend.plan", "legend.missing-actual", "legend.missing-actual-in-progress", "legend.in-the-wings",
+    "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
 )
 LOCALES = ("en-US", "ja-JP")
 
@@ -54,6 +59,14 @@ def test_the_en_us_entries_are_the_literals_the_code_and_presets_used_before():
     assert (table["column.task"], table["column.plan"], table["marker.today"], table["legend.critical-edge"],
             table["missing.unknown"], table["missing.inProgress"]) == (
         "Task", "Plan", "TODAY", "Critical dependency", "unknown", "in progress")
+    # P4c: the literals Layout and the lane table held before the table owned them.
+    assert (table["column.lane"], table["column.items"], table["legend.progressFill"], table["legend.actual-ahead"],
+            table["legend.actual-on-track"], table["legend.actual-behind"]) == (
+        "Lane", "Items", "Progress", "Ahead", "On track", "Behind")
+    ja = wording_catalog()["ja-JP"]
+    assert (ja["column.lane"], ja["column.items"], ja["legend.progressFill"], ja["legend.actual-ahead"],
+            ja["legend.actual-on-track"], ja["legend.actual-behind"]) == (
+        "レーン", "件数", "進捗", "前倒し", "予定どおり", "遅れ")
 
 
 @pytest.mark.parametrize("mutation", [
@@ -223,11 +236,68 @@ def test_missing_words_come_from_the_caller_and_default_to_the_english_literals(
         "不明", "進行中", "—", "TBD")
 
 
-def test_a_declared_progress_entry_resolves_its_reference_and_the_layout_default_keeps_its_literal(tmp_path):
-    # Layout still holds the English literal of the undeclared Progress key and the Actual qualifiers (see Spec 63);
-    # a Detail entry that declares `progressFill` resolves like any other legend entry.
+def test_a_declared_progress_entry_resolves_its_reference_and_layout_defaults_follow_the_locale():
+    # A Detail entry that declares `progressFill` resolves like any other legend entry; the undeclared Progress key
+    # and the Actual qualifiers are Layout defaults that now come from the same table (#1724 P4c).
     from chrona.presentation.contracts.resources import LegendEntry
     from chrona.presentation.review.profile_connections import _legend_label
     entry = LegendEntry("progressFill", {"wording": "legend.progressFill"})
     assert _legend_label(entry, wording_resolver("ja-JP", None), frozenset(wording_keys())) == "進捗"
     assert _legend_label(entry, wording_resolver("ja-JP", {"legend": {"progressFill": "完了"}}), frozenset(wording_keys())) == "完了"
+    for role, ja_text in (("actual-ahead", "前倒し"), ("actual-on-track", "予定どおり"), ("actual-behind", "遅れ")):
+        assert wording_resolver("ja-JP", None).legend_text(role) == ja_text
+        assert wording_resolver("ja-JP", {"legend": {role: "X"}}).legend_text(role) == "X"
+        assert wording_resolver("ja-JP", {"keys": {f"legend.{role}": "Y"}}).legend_text(role) == "Y"
+
+
+# --- P4c follow-up: preset literals as keys, and the two new schema places -----------------------------------
+
+def test_the_keys_that_replace_preset_literals_read_as_the_literal_in_en_us_and_in_japanese_otherwise():
+    en, ja = wording_catalog()["en-US"], wording_catalog()["ja-JP"]
+    assert {key: en[key] for key in ("legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate",
+                                      "legend.holiday", "column.owner", "column.number", "column.phase",
+                                      "column.finishDelta", "summary.days")} == {
+        "legend.planned-plain": "Planned", "legend.baseline": "baseline", "legend.current-plan": "current plan",
+        "legend.gate": "gate", "legend.holiday": "holiday", "column.owner": "Owner", "column.number": "No.",
+        "column.phase": "Phase", "column.finishDelta": "Δ finish", "summary.days": "DAYS"}
+    assert en["legend.planned-plain"] != en["legend.planned"]  # `Planned` is not `Task duration`
+    assert all(re.search(r"[぀-ヿ一-鿿]", ja[key]) for key in en)
+
+
+def test_the_layout_marker_label_and_the_lane_table_header_accept_a_reference_and_reject_an_unknown_key():
+    layout = schema_validator("layout-profile-v0.10.schema.yaml")
+    probe = deepcopy(sr.bundle("editorial")["layout"])
+    probe.setdefault("viewDefaults", {})["markerPresentation"] = {"kind": "asOf", "label": {"wording": "marker.asOf"}}
+    assert not list(layout.iter_errors(probe))
+    probe["viewDefaults"]["markerPresentation"]["label"] = {"wording": "marker.nope"}
+    assert list(layout.iter_errors(probe))
+    view = schema_validator("view-v0.28.schema.yaml")
+    lane = sr.lane_view(sr.bundle("editorial")["view"])
+    lane["body"]["rows"]["laneTable"]["columns"] = [
+        {"id": "Task", "source": "label", "header": {"wording": "column.task"}},
+        {"id": "Owner", "source": {"field": "owner"}, "header": "Resp."}]
+    assert not list(view.iter_errors(lane))
+    lane["body"]["rows"]["laneTable"]["columns"][0]["header"] = {"wording": "column.nope"}
+    assert list(view.iter_errors(lane))
+
+
+def _lane_parts():
+    parts = sr.bundle("editorial")
+    parts["view"] = sr.lane_view(parts["view"])
+    parts["view"]["body"]["rows"]["laneTable"]["columns"] = [
+        {"id": "Task", "source": "label", "header": {"wording": "column.task"}},
+        {"id": "Owner", "source": {"field": "owner"}, "header": {"wording": "column.owner"}},
+    ]
+    parts["view"]["body"]["rows"]["laneTable"]["count"] = False
+    for marker in parts["view"]["body"]["markers"]:
+        marker.pop("label", None)
+    parts["layout"].setdefault("viewDefaults", {})["markerPresentation"] = {"kind": "asOf", "label": {"wording": "marker.asOf"}}
+    return parts
+
+
+@pytest.mark.parametrize("locale, expected", [("en-US", {"Task", "Owner", "As of"}), ("ja-JP", {"タスク", "担当", "基準日"})])
+def test_the_lane_table_header_and_the_layout_marker_label_resolve_per_locale(tmp_path, locale, expected):
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 1, 5), 20)}))
+    texts = {text.strip() for text in _texts(sr.render(tmp_path, source, presentation=_lane_parts(), actual=_ACTUAL,
+                                                       locale=locale))}
+    assert expected <= texts, (expected, texts)

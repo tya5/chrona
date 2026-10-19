@@ -89,6 +89,7 @@ body:
     groups: all
   tableColumns:
   - id: No.
+    header: {wording: column.number}
     text: {wrap: allow}
     source: rowIndex
     missing: em-dash
@@ -104,6 +105,7 @@ body:
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Owner
+    header: {wording: column.owner}
     text: {wrap: allow}
     source: {fieldRole: responsible}
     missing: em-dash

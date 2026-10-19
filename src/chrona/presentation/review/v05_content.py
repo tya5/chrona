@@ -10,8 +10,8 @@ from typing import Any, Mapping
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
-from chrona.presentation.model.wording_tables import WordingResolver, wording_resolver
-from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta
+from chrona.presentation.model.wording_tables import LAYOUT_DEFAULT_LEGEND_ROLES, WordingResolver, wording_resolver
+from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta, is_new_against_baseline, NEW_MARKER
 from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, entity_title_or_value, initials, table_value,
@@ -134,8 +134,10 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
             core += column.suffix  # a literal after the row number, measured with it (#1545)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         prefix, suffix = (affix.prefix, affix.suffix) if affix is not None else ("", "")
-        if _is_estimated_forecast_delta(item, column.source):
+        if _is_estimated_forecast_delta(item, column.source) and display_finish_delta(item) is not None:
             suffix += "*"
+        if value is None and is_new_against_baseline(item) and _is_finish_delta_source(column.source):
+            core = NEW_MARKER
         return prefix, core, suffix
 
     def cell(item: Any, column: Any, row_index: int, container_id: str = "") -> str:
@@ -268,7 +270,7 @@ def _indents_under_headers(view: ViewInput) -> bool:
             and not any(row.depth > 0 or row.parent_row is not None for row in view.rows.items))
 
 
-def _default_lane_header(projection: ReviewProjection, lane_table: Any) -> str:
+def _default_lane_header(projection: ReviewProjection, lane_table: Any, resolver: WordingResolver) -> str:
     """Header of the default (no `columns`) lane column (#1633).
 
     `Task` when every lane is generated, one per object, and the cell names that object; `Lane` otherwise
@@ -277,8 +279,8 @@ def _default_lane_header(projection: ReviewProjection, lane_table: Any) -> str:
     membership = projection.lane_membership
     if (lane_table.label.value != "group" and membership is not None and membership.lanes
             and all(lane.explicit_key is None and len(lane.member_item_ids) == 1 for lane in membership.lanes)):
-        return "Task"
-    return "Lane"
+        return resolver.text("column.task")
+    return resolver.text("column.lane")
 
 
 def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
@@ -288,16 +290,17 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     declared = lane_table.columns  # #1517: empty keeps the single `Lane` column byte-for-byte
-    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
+    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id,
+                                       resolver.resolve(column.header) if column.header is not None else column.id, column.align,
                                        TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap,
                                        column_source=column.source if isinstance(column.source, Mapping) else None)
                     for column in declared) or (
-        TableColumnContent("Lane", _default_lane_header(projection, lane_table), "start",
+        TableColumnContent("Lane", _default_lane_header(projection, lane_table, resolver), "start",
                            TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
     show_count = (lane_table.count is True or (lane_table.count == "auto"
                   and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
     if show_count:
-        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"),
+        columns += (TableColumnContent("Items", resolver.text("column.items"), "end", TableColumnWidth("content", "content"),
                                        text_wrap=lane_table.text_wrap),)
     entities = project.get("entities", {})
     cells = []
@@ -401,7 +404,7 @@ def _is_estimated_forecast_delta(item: Any, source: Any) -> bool:
 
 def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any], projection: ReviewProjection,
                    color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool,
-                   forecast_label: str | None = None) -> tuple[SurfaceLegendEntry, ...]:
+                   forecast_label: str | None = None, other_label: str | None = None) -> tuple[SurfaceLegendEntry, ...]:
     """Return typed legend entries exactly as Layout measures and draws them (#497, #871).
 
     The Detail Profile's own entries come first; a colour scale then adds one entry per
@@ -429,7 +432,7 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
     used = _used_scale_values(color_scale, projection)
     entities = project.get("entities", {})
     return entries + tuple(
-        SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else label)
+        SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else (other_label or label))
         for ref, label, _color in color_scale.legend_items(used))
 
 
@@ -473,7 +476,7 @@ def _default_legend_entries(entries: tuple[SurfaceLegendEntry, ...],
 
 def _style_legend_entries(
     rules: tuple[StyleRule, ...], intents: OccurrenceStyleIndex,
-    occurrences: tuple[Any, ...], style_fills: Any,
+    occurrences: tuple[Any, ...], style_fills: Any, other_label: str | None = None,
 ) -> tuple[tuple[SurfaceLegendEntry, ...], tuple[tuple[str, str], ...]]:
     """Build potential authored Style keys from evaluated occurrences and completed scales."""
     authored = tuple(rule for rule in rules
@@ -535,7 +538,7 @@ def _style_legend_entries(
             )
             identity = "scale:style:" + sha256(identity_payload.encode("utf-8")).hexdigest()
             entries.append(SurfaceLegendEntry(
-                identity, value_label, source_ref=identity, style_scope=scope,
+                identity, (other_label or value_label) if is_other else value_label, source_ref=identity, style_scope=scope,
                 style_value=value_label, style_occurrences=value_keys,
             ))
             paints.append((identity, color))
@@ -708,7 +711,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     resolver = wording_resolver(locale, view.wording)
     forecast_label = resolver.legend_text("forecast")
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
-                            forecast_label=forecast_label)
+                            forecast_label=forecast_label, other_label=resolver.legend_text("other"))
     if view.surface == "dependency-network" and projection.network is not None:
         visible_relation_ids = {fact.relation_id for fact in relations}
         selected_network_ids = {node.object_id for node in projection.network.nodes}
@@ -810,7 +813,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             reserved=scale_reserved, other_color=scale_other_color,
             encoding_sources=encoding_sources)
         style_legend, style_legend_paints = _style_legend_entries(
-            style_rules, intents, facts.occurrences, style_fills)
+            style_rules, intents, facts.occurrences, style_fills, resolver.legend_text("other"))
         content = replace(content, style_intents=intents,
                           style_matches=_style_match_index(intents, style_rules),
                           style_fills=style_fills,
@@ -824,6 +827,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     content = bind_view_legend_witnesses(content, facts.occurrences if facts else (), encoding_rules, color_scale)
     return replace(content,
         legend_wording=tuple(sorted(resolver.legend.items())),
+        legend_defaults=tuple((role, resolver.legend_text(role)) for role in LAYOUT_DEFAULT_LEGEND_ROLES),
         legend_mark_occurrences=tuple(item for item in (facts.occurrences if facts else ())
                                       if item.primitive_family == "mark"),
         legend_progress_possible=_positive_legend_progress(projection, view.progress_fill))
@@ -1127,7 +1131,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                               project: Mapping[str, Any] | None = None, *,
                               omitted_metrics: frozenset[tuple[int, int]] = frozenset(),
                               summary_wording: Mapping[str, str] | None = None,
-                              unknown_text: str = "unknown") -> SummaryContent:
+                              unknown_text: str = "unknown",
+                              resolver: WordingResolver | None = None) -> SummaryContent:
     """Resolve summary-profile facts once, before source measurement and Layout."""
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
@@ -1189,7 +1194,9 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                     else f"{raw:+d}d" if formatter == "signedDays" and isinstance(raw, int)
                     else str(raw)
                 )
-                label = (summary_wording or {}).get(f"{panel.id}.{metric_id}", definition.label)
+                label = (summary_wording or {}).get(f"{panel.id}.{metric_id}")
+                if label is None:
+                    label = (resolver or wording_resolver("en-US", None)).resolve(definition.label)
                 if panel.presentation == "figures":
                     if inline:
                         runs.extend((

@@ -56,7 +56,7 @@ viewDefaults:
         label: {form: short-month, align: center, overflow: visible-overflow, orientation: horizontal}
         typographyRole: axisMonth
       - {unit: month, every: 1, role: grid-minor}
-  markerPresentation: {kind: asOf, label: AS OF, placement: below-plot, date: {form: day-month}}
+  markerPresentation: {kind: asOf, label: {wording: marker.asOf}, placement: below-plot, date: {form: day-month}}
   periodLabelPresentation: {placement: top}
   shading: {nonWorking: true, exceptions: true}
   backgroundDecoration: {rows: rules, groups: all}

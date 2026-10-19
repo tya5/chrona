@@ -1,10 +1,6 @@
 from pathlib import Path
-import os
-import subprocess
 
-import pytest
 import yaml
-from tests.support.workflow_shell import workflow_bash
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -40,8 +36,7 @@ def test_candidate_cleanup_is_after_consumption_and_release_dispatch() -> None:
     assert steps[cleanup]["env"]["SHA"] == "${{ steps.candidate.outputs.candidate_sha }}"
     assert 'candidate --sha "$SHA"' in steps[cleanup]["run"]
     # Terminal failure cleanup does not weaken the original gate or fast-forward checks.
-    assert "Trusted gate failed:" in steps[gate]["run"]
-    assert 'test "$gate_run_status" = completed' in steps[gate]["run"]
+    assert steps[gate]["run"] == 'python -m tools.derived_gate_await --repo "$GITHUB_REPOSITORY" --sha "$SHA"'
     assert 'test "$current" = "$SOURCE_SHA"' in steps[forward]["run"]
 
 
@@ -57,33 +52,3 @@ def test_release_matrix_checks_out_sha_not_retired_gate_branch() -> None:
     verify = next(step for step in full["steps"] if step.get("name") == "Verify exact full-CI SHA when supplied")
     assert 'test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"' in verify["run"]
     assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in verify["run"]
-
-
-@pytest.mark.parametrize("failure,terminal,expected", [(False, True, 0), (True, True, 1), (False, False, 1)])
-def test_gate_consumption_waits_for_terminal_workflow_without_weakening_result(tmp_path, failure, terminal, expected) -> None:
-    steps = workflow("derived-sync.yml")["jobs"]["synchronize"]["steps"]
-    script = next(step["run"] for step in steps if step.get("id") == "gate")
-    script = script[script.index('gate_state=""'):]
-    prefix = '''
-    run_id=123
-    GITHUB_REPOSITORY=owner/repo
-    gh() {
-      if [[ "$2" == */jobs ]]; then
-        printf '%s\\n' "$CHRONATEST_JOB_STATE"
-      elif [[ "$CHRONATEST_TERMINAL" == yes && -f "$CHRONATEST_SEEN" ]]; then
-        printf 'completed\\n'
-      else
-        touch "$CHRONATEST_SEEN"
-        printf 'in_progress\\n'
-      fi
-    }
-    sleep() { :; }
-    seq() { printf '1\\n2\\n'; }
-    '''
-    state = "derived-main:completed:failure,derived-ready:completed:failure" if failure else "derived-main:completed:success,derived-ready:completed:success"
-    marker = tmp_path / "run-observed"
-    result = subprocess.run([workflow_bash(), "-e", "-c", prefix + script], text=True, capture_output=True,
-                            env={**os.environ, "CHRONATEST_JOB_STATE": state,
-                                 "CHRONATEST_TERMINAL": "yes" if terminal else "no", "CHRONATEST_SEEN": marker.as_posix()})
-    assert result.returncode == expected, result.stderr
-    assert marker.exists()
