@@ -145,6 +145,16 @@ class SurfaceRelationLabelsBatch:
     visible_label_overflows: tuple[tuple[TextPlacement, LabelRect], ...]
 
 
+class TerminalLabelPlacementError(LayoutError):
+    """A required stub terminal could not be placed without crossing text."""
+
+    def __init__(self, placement_id: str, routes: SurfaceRoutesBatch):
+        super().__init__("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}",
+                         detail=f"terminal label has no collision-free candidate: {placement_id}")
+        self.placement_id = placement_id
+        self.routes = routes
+
+
 def relation_label_content(relation: Any) -> str:
     """Format selected non-zero relation facts without changing their provenance."""
     parts: list[str] = []
@@ -1044,14 +1054,17 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
 
 def place_relation_labels(context: SurfaceRoutesContext,
-                          routes: SurfaceRoutesBatch) -> SurfaceRelationLabelsBatch:
-    """Place relation labels only after post-route optional labels have joined the index."""
+                          routes: SurfaceRoutesBatch, *,
+                          terminal: bool | None = None) -> SurfaceRelationLabelsBatch:
+    """Place selected relation labels against the current shared Layout inventory."""
     request, obstacles = context.request, context.obstacles
     timeline_rect = LabelRect(*context.timeline_bounds)
     relation_text: list[TextPlacement] = []
     diagnostics: list[str] = []
     visible_overflows: list[tuple[TextPlacement, LabelRect]] = []
     for placed_relation in routes.relations:
+        if terminal is not None and placed_relation.terminal_label is not terminal:
+            continue
         if placed_relation.suppressed:
             continue
         content = placed_relation.label_content
@@ -1064,12 +1077,25 @@ def place_relation_labels(context: SurfaceRoutesContext,
             letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform),
             float(font_size) * float(line_height))
         text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
-        candidate = place_label(relation_label_anchor(placed_relation.points), size,
-            ("above", "below", "start", "end"), bounds=timeline_rect, obstacles=obstacles,
-            gap=max(1.0, float(font_size) * 0.25), required=placed_relation.terminal_label,
-            overflow="visible-overflow" if placed_relation.terminal_label else request.surface_content.relation_overflow,
-            search_side_neighborhood=True,
-            classes=("mark", "text", "label-visual", "dependency-route"))
+        def avoids_completed_text(candidate: LabelRect) -> bool:
+            return not obstacles.collisions(ObstacleRect(
+                candidate.x, candidate.y, candidate.right, candidate.bottom),
+                classes=("text", "label-visual"))
+        try:
+            candidate = place_label(relation_label_anchor(placed_relation.points), size,
+                ("above", "below", "start", "end"), bounds=timeline_rect, obstacles=obstacles,
+                gap=max(1.0, float(font_size) * 0.25), required=placed_relation.terminal_label,
+                overflow="visible-overflow" if placed_relation.terminal_label else request.surface_content.relation_overflow,
+                search_side_neighborhood=True,
+                candidate_filter=avoids_completed_text if placed_relation.terminal_label else None,
+                classes=("mark", "text", "label-visual", "dependency-route"))
+        except ValueError as exc:
+            if (placed_relation.terminal_label
+                    and str(exc).split(":", 1)[0] == "E_PRESENTATION_LABEL_UNPLACEABLE"):
+                raise TerminalLabelPlacementError(text_id, routes) from exc
+            raise
+        if placed_relation.terminal_label and candidate is None:
+            raise TerminalLabelPlacementError(text_id, routes)
         if candidate is None:
             diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")
             continue
