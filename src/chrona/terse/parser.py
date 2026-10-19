@@ -5,6 +5,8 @@ Core rule (design 3.6, F8).
 """
 from __future__ import annotations
 
+import json
+import math
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -25,6 +27,30 @@ AMOUNT = re.compile(r"[1-9][0-9]*(?:d|w|wd)", re.ASCII)
 AMOUNT_LIKE = re.compile(r"[0-9]+[a-z]*", re.ASCII)
 LAG = re.compile(r"[+-]?(?:0|[1-9][0-9]*)(?:d|w|wd)", re.ASCII)
 LAG_LIKE = re.compile(r"[+-]|[+-]?[0-9].*", re.ASCII)
+JSON_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\Z", re.ASCII)
+
+
+def _field_scalar(raw: str, token: Token, parser: "_Parser") -> object:
+    if raw == "true":
+        return True
+    if raw == "false":
+        return False
+    if raw == "null":
+        return None
+    if JSON_NUMBER.fullmatch(raw):
+        try:
+            value = json.loads(raw)
+        except (ValueError, OverflowError):
+            value = None
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and (not isinstance(value, float) or math.isfinite(value)):
+            return value
+        raise parser.fail("E_TERSE_FIELD_VALUE", f"field value {describe(raw)} is not a finite JSON number", token.range,
+                          "use a finite JSON number")
+    # JSON's non-finite extensions are not values in this grammar.
+    if raw in {"NaN", "Infinity", "-Infinity"}:
+        raise parser.fail("E_TERSE_FIELD_VALUE", f"field value {describe(raw)} is not a finite JSON number", token.range,
+                          "use a finite JSON number")
+    return raw
 
 
 @dataclass(frozen=True)
@@ -68,6 +94,8 @@ class ObjectStatement:
     deps: list[Dep]
     parent: str | None
     deadline: Item | None = None  # the `deadline D` clause: the date, ranged over the keyword and the date (#822)
+    profile: Item | None = None
+    fields: list[tuple[str, object, SourceRange]] = field(default_factory=list)
 
 
 @dataclass
@@ -86,6 +114,7 @@ class ProjectStatement:
     id: Item
     title: Item | None
     calendar: Item | None
+    extensions: list[tuple[Item, Item, Item]] = field(default_factory=list)
 
 
 @dataclass
@@ -319,8 +348,26 @@ class _Parser:
         if cursor.is_word("calendar"):
             cursor.take()
             calendar = self.calendar_ref(self.expect_word(cursor, "a calendar name"))
+        extensions: list[tuple[Item, Item, Item]] = []
+        packages: set[str] = set()
+        while cursor.is_word("extension"):
+            keyword = cursor.take()
+            package = self.expect_word(cursor, "a package id")
+            path = cursor.peek()
+            if path is None:
+                raise self.fail("E_TERSE_LINE_INCOMPLETE", "the extension declaration needs a path and revision", cursor.end_range())
+            if path.kind != "string":
+                raise self.fail("E_TERSE_TOKEN_UNEXPECTED", "an extension path is a quoted string", path.range,
+                                'write `extension package-id "package.yaml" revision`')
+            cursor.take()
+            revision = self.expect_word(cursor, "a pinned revision")
+            if package.text in packages:
+                raise self.fail("E_TERSE_CLAUSE_DUPLICATE", f"extension package '{package.text}' is given twice", package.range,
+                                "declare each package once")
+            packages.add(package.text)
+            extensions.append((Item(package.text, package.range), Item(path.text, path.range), Item(revision.text, revision.range)))
         self.finish(cursor)
-        self.project = ProjectStatement(line.number, Item(token.text, token.range), title, calendar)
+        self.project = ProjectStatement(line.number, Item(token.text, token.range), title, calendar, extensions)
         self.project_line = line.number
 
     def title(self, token: Token) -> Item:
@@ -449,9 +496,15 @@ class _Parser:
         kind = kind_token.text
         self.previous = (line.indent, name, kind)
         deadline: Item | None = None
+        profile: Item | None = None
+        if cursor.is_word("profile"):
+            cursor.take()
+            profile_token = self.expect_word(cursor, "a profile id")
+            profile = Item(profile_token.text, profile_token.range)
         if kind == "group":
             self.open_groups.append((line.indent, name))
             deadline = self.deadline(cursor) if cursor.is_word("deadline") else None
+            fields = self.fields(cursor, profile)
             leftover = cursor.peek()
             if leftover is not None:
                 what = {"after": "a group takes no `after`; it may be a predecessor", "calendar": "a group takes no calendar"}.get(
@@ -471,9 +524,45 @@ class _Parser:
                 calendar_range = keyword.range.through(calendar.range)
             deps = self.after(cursor) if cursor.is_word("after") else []
             deadline = self.deadline(cursor) if cursor.is_word("deadline") else None
+            fields = self.fields(cursor, profile)
             self.finish(cursor, "separate dependencies with a comma" if deps else "remove it", deadline is not None)
         self.objects.append(ObjectStatement(line.number, Item(name, first.range), title, Item(kind, kind_token.range),
-                                            schedule, calendar, calendar_range, deps, parent, deadline))
+                                            schedule, calendar, calendar_range, deps, parent, deadline, profile, fields))
+
+    def fields(self, cursor: _Cursor, profile: Item | None) -> list[tuple[str, object, SourceRange]]:
+        fields: list[tuple[str, object, SourceRange]] = []
+        seen: set[str] = set()
+        while not cursor.at_end():
+            token = cursor.peek()
+            assert token is not None
+            if token.kind != "word" or "=" not in token.text:
+                break
+            cursor.take()
+            key, sep, raw = token.text.partition("=")
+            value_token: Token | None = None
+            value_range = token.range
+            if raw == "" and cursor.peek() is not None and cursor.peek().kind == "string" and token.end == cursor.peek().column:
+                value_token = cursor.take()
+                value_range = token.range.through(value_token.range)
+            if not key:
+                raise self.fail("E_TERSE_FIELD_KEY", "a field assignment needs a nonempty key", token.range,
+                                "write `risk=high`")
+            if key in seen:
+                raise self.fail("E_TERSE_CLAUSE_DUPLICATE", f"field '{key}' is assigned twice", token.range,
+                                "keep one assignment for each field")
+            seen.add(key)
+            if not sep or (not raw and value_token is None):
+                raise self.fail("E_TERSE_FIELD_VALUE", f"field '{key}' needs a value", token.range,
+                                "write `key=value` or `key=\"text value\"`")
+            if profile is None:
+                raise self.fail("E_TERSE_PROFILE_REQUIRED", "field assignments require an explicit profile", token.range,
+                                "add `profile profile-id` after the object kind")
+            if value_token is not None:
+                value: object = value_token.text
+            else:
+                value = _field_scalar(raw, token, self)
+            fields.append((key, value, value_range))
+        return fields
 
     def place(self, line: SourceLine, name: str) -> str | None:
         """S2: the parent of this line from its indentation. Raises through `fail` for an impossible indent."""
