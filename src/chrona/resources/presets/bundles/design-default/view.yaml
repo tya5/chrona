@@ -72,8 +72,10 @@ body:
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Phase
+    header: {wording: column.phase}
     source: {fieldRole: phase}
   - id: Δ finish
+    header: {wording: column.finishDelta}
     source:
       facet: finishDelta
     missing: blank

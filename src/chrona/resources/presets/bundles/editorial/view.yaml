@@ -84,6 +84,7 @@ body:
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   - id: Owner
+    header: {wording: column.owner}
     text: {wrap: allow}
     source: {fieldRole: responsible}
     missing: em-dash

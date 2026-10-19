@@ -93,8 +93,10 @@ body:
         source: rowIndex
         suffix: .
       - id: Task
+        header: {wording: column.task}
         source: label
       - id: Owner
+        header: {wording: column.owner}
         source: {fieldRole: responsible}
         transform: initials
         textRole: tableCellMono
