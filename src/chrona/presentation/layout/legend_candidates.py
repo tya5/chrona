@@ -8,18 +8,16 @@ from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.surface_content import SurfaceContentInput, SurfaceLegendEntry
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.wording_tables import WordingResolver
 
 
 _VARIANCE_ORDER = ("ahead", "on-track", "behind")
-_VARIANCE_LABELS = {
-    "ahead": ("actual-ahead", "Ahead"),
-    "on-track": ("actual-on-track", "On track"),
-    "behind": ("actual-behind", "Behind"),
-}
+_VARIANCE_ROLES = {"ahead": "actual-ahead", "on-track": "actual-on-track", "behind": "actual-behind"}
 
 
 def _wording(content: SurfaceContentInput) -> dict[str, str]:
-    return dict(content.legend_wording)
+    """Authored `wording.legend` overrides over the locale defaults the content builder carried (#1724)."""
+    return {**dict(content.legend_defaults), **dict(content.legend_wording)}
 
 
 def _ordered_classes(keys: tuple[RealizedLegendKey, ...]) -> tuple[str, ...]:
@@ -54,7 +52,8 @@ def actual_key_label(base: str, key: RealizedLegendKey, *, multiple: bool,
     if len(classes) != 1:
         return base
     category = classes[0]
-    return wording.get(_VARIANCE_LABELS[category][0], _VARIANCE_LABELS[category][1])
+    role = _VARIANCE_ROLES[category]
+    return wording.get(role) or WordingResolver().legend_text(role)
 
 
 def prepare_realized_legend_candidates(
@@ -72,6 +71,7 @@ def prepare_realized_legend_candidates(
     """
     entries = content.legend_entries
     wording = _wording(content)
+    legend_overrides = dict(content.legend_wording)
     has_actual_candidate = any(entry.role == "actual" for entry in entries)
     actual_keys = (coalesce_actual_keys(source_actual_keys(
         content, tokens, mark_block_size=mark_block_size,
@@ -84,11 +84,11 @@ def prepare_realized_legend_candidates(
         progress_key = progress_ink_key(tokens, paint_capabilities)
         progress_entry = replace(
             explicit_progress,
-            label=wording.get("progressFill", explicit_progress.label),
+            label=legend_overrides.get("progressFill", explicit_progress.label),
             source_ref=None,
             realized_key=progress_key,
         ) if explicit_progress is not None else SurfaceLegendEntry(
-            "progressFill", wording.get("progressFill", "Progress"), realized_key=progress_key)
+            "progressFill", wording.get("progressFill") or WordingResolver().legend_text("progressFill"), realized_key=progress_key)
     progress_written = False
 
     for entry in entries:

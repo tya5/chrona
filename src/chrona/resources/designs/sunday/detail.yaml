@@ -3,18 +3,18 @@ id: halcyon-sunday-legend
 body:
   legend:
   - role: snapshot
-    label: baseline
+    label: {wording: legend.baseline}
   - role: planned
-    label: plan
+    label: {wording: legend.plan}
   - role: actual
-    label: actual
+    label: {wording: legend.actual}
   - role: missing-actual
-    label: not yet observed
+    label: {wording: legend.missing-actual}
   - role: milestone
-    label: gate
+    label: {wording: legend.gate}
   - role: calendar-exception
-    label: holiday
+    label: {wording: legend.holiday}
   - role: period-band
-    label: period
+    label: {wording: legend.period}
   - role: dependency
-    label: depends on
+    label: {wording: legend.depends-on}

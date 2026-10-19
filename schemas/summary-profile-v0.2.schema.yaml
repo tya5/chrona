@@ -62,7 +62,12 @@ $defs:
     additionalProperties: false
     properties:
       id: {description: "Optional stable metric identifier.", type: string, minLength: 1}
-      label: {description: "Optional human-readable metric label.", type: string}
+      label:
+        description: "Optional human-readable metric label: a literal shown exactly, or a `{wording: <key>}` reference resolved per Render Context locale from the built-in wording table (#1724)."
+        examples: [DAYS, {wording: summary.days}]
+        oneOf:
+          - {description: "An authored literal, shown exactly.", type: string}
+          - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
       scope: {description: "Optional aggregation scope.", enum: [subtree]}
       source:
         description: "Built-in, actual, count, scenario, object-facet, derived-figure, or profile-slot metric source."
