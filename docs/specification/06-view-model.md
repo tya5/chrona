@@ -206,6 +206,26 @@ Selected relations retain their endpoint identity, including group endpoints.
 Critical edges use the existing scheduler-derived driving-relation and
 critical-endpoint facts, never paint or mere proximity to a critical node.
 
+For a `dependency-network` surface (#416), the existing View `selection`
+selects the node objects and the existing global `ordering` supplies their
+ordinal order. Projection preserves the resolved order, including direction
+and tie-break, independently of the timeline's `rows` mode; timeline explicit
+row order is unchanged. Rank layout groups those ordinals without a second network
+selector or order declaration. `body.network.nodeLabel.source` optionally
+selects `title`, `id`, or the shared Project field-reference object
+(`{field: ...}` / `{fieldRole: ...}`). The `network` member is refused on a
+`table-timeline` View, even when empty, as `E_RESOURCE_SCHEMA` at
+`/body/network`; it requires `surface: dependency-network`.
+
+With no `network.nodeLabel` override, or with its `source` omitted or null,
+the node label is its Project title. A field reference uses the existing field binding/default
+resolution: a missing, null or unbound field falls back to that object's
+title. A present string is used verbatim, including the empty string. A
+present non-string value is refused as `E_VIEW_NETWORK_LABEL_SOURCE` at the
+label source pointer with the affected object subject; it is not implicitly
+formatted. This is node content, not timeline label placement, and Layout
+measures and places the completed text.
+
 A grouping with `presentation: header` may declare `header`, a text template for each
 group header (literal text, an ordinal in a declared form, the entity title and an entity
 field as a secondary title; a first-group variant). The text is View content; its
@@ -265,7 +285,8 @@ in help and the first-project guide.
 
 Where a View addresses an object field, it MAY use `{fieldRole: responsible}` or
 `{fieldRole: phase}` instead of the direct field key. This applies to table and
-lane-table column sources, color sources, icon encodings and `rows.laneKeys`.
+lane-table column sources, color sources, icon encodings, `rows.laneKeys` and
+network node label sources.
 Grouping declares `by: {fieldRole: responsible}`, `fallback: objectType|none|hierarchy`
 and its ordinary `missing` label. The Project declares the role-to-field map
 (Spec 05 §10.1); entity fields and built-in/derived projection sources are not
@@ -273,7 +294,8 @@ role targets. Role columns use the design's existing `field` column style.
 
 The primary Project's role declarations determine View policy. An undeclared
 role selects grouping's explicit fallback, omits its columns/optional color or
-icon encoding, or removes the role lane-key component (retaining `byObject`).
+icon encoding, removes the role lane-key component (retaining `byObject`), or
+uses the Project title for a network node label.
 Evaluation emits one `I_VIEW_FIELD_ROLE_UNBOUND` per role, with `count` and
 `sourceRefs` counting affected declarations, not rows. Ordinary tables with no
 remaining column reject with `E_VIEW_TABLE_COLUMNS_EMPTY`; an omitted

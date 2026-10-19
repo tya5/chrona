@@ -1415,6 +1415,21 @@ their existing behavior and identity.
 
 #### Dependency-network composition (#1727)
 
+For #416, Projection supplies each selected network node's completed label
+source text and ordinal from the existing View selection/global ordering
+(Specification 06). Layout measures the text and groups nodes by graph rank;
+it does not re-resolve selection, direction or tie-break. A missing/null/unbound
+label field has already fallen back to the Project title, and explicit strings,
+including empty strings, remain verbatim. A non-string field is refused by
+View projection with `E_VIEW_NETWORK_LABEL_SOURCE`; Scene does not recover or
+format it.
+
+`network.member.gap` is an optional Theme metric (Specification 07), finite and
+nonnegative. Layout uses it for within-rank member spacing in both flow
+directions, separately from `network.rank.gap`; when absent it uses the resolved
+rank gap so existing Theme and View output is preserved. This value is a
+placement input, not a second Layout Profile channel or a new packing policy.
+
 Model closes selected Project containment separately from View lane grouping
 (Spec06). Layout uses the existing completed group/header geometry to enclose
 selected descendants; group objects are not emitted as orphan task nodes.

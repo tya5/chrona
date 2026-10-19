@@ -40,6 +40,14 @@ obstacles are closed. They are not annotation-container padding or Layout
 Profile page padding. Existing Themes need no new required token; explicit
 bindings override the derived defaults.
 
+`network.member.gap` (#416) is an optional finite nonnegative Theme metric in
+the same channel as `network.rank.gap` and `network.node.minInlineSize` /
+`network.node.minBlockSize`. It controls spacing between members within one
+rank, independently of rank progression, in either flow direction. An explicit
+zero is valid. When absent, Layout uses the resolved `network.rank.gap`, which
+preserves the previous shared-gap behavior. It is not a Layout Profile
+property, and does not migrate or override the existing network metrics.
+
 The **Style** layer maps the semantic objects and comparison facets emitted by the View Model to named visual roles. The **Theme** layer supplies concrete visual tokens for those roles. Together they make the same Project and View usable in a compact engineering review, a plan-versus-actual review, or a presentation-oriented timeline while preserving a small, reviewable semantic source.
 
 Neither layer is a scheduling engine, a second project model, or an editable drawing canvas.

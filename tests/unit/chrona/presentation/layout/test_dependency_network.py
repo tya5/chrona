@@ -8,7 +8,7 @@ import pytest
 from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
 from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, SlotHeading
-from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
+from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, resolve_theme_metrics
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.layout.test_sources import theme as _text_theme
@@ -44,10 +44,15 @@ def _network(nodes, edges):
                                        for relation, source, target in edges))
 
 
-def _measured(*ids):
-    return MeasuredSources({}, {}, {
+def _measured(*ids, member_gap=None):
+    metric_values = {
         "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30),
         "network.rank.gap": Decimal(12),
+    }
+    if member_gap is not None:
+        metric_values["network.member.gap"] = Decimal(member_gap)
+    return MeasuredSources({}, {}, {
+        **metric_values,
     }, {"title": (MeasuredTextRun(None, "Network", "heading", Decimal(80), Decimal(24), Decimal(20),
                                    "Test Sans", 700, 20.0, 1.2, "sha256:test"),),
         "network": tuple(MeasuredTextRun(item, item, "text", Decimal(20), Decimal(14), Decimal(11),
@@ -171,6 +176,69 @@ def test_network_layout_advances_ranks_in_block_direction_for_vertical_writing()
     assert first.bounds.block < second.bounds.block
     assert first.output_port[1] == float(first.bounds.block + first.bounds.block_size)
     assert second.input_port[1] == float(second.bounds.block)
+
+
+@pytest.mark.parametrize("flow", ("horizontal", "vertical-lr"))
+def test_network_member_gap_is_independent_and_omission_preserves_legacy_geometry(flow):
+    kwargs = dict(title_bounds=Rect(Decimal(0), Decimal(0), Decimal(240), Decimal(40)),
+                  bounds=Rect(Decimal(0), Decimal(0), Decimal(240), Decimal(240)),
+                  flow_direction=flow)
+    network = _network(("a", "b", "c"), (("ab", "a", "b"), ("ac", "a", "c")))
+    legacy = compose_dependency_network_layout(network, measured_sources=_measured("a", "b", "c"), **kwargs)
+    same = compose_dependency_network_layout(network, measured_sources=_measured("a", "b", "c", member_gap=12), **kwargs)
+    compact = compose_dependency_network_layout(network, measured_sources=_measured("a", "b", "c", member_gap=0), **kwargs)
+    assert same.nodes == legacy.nodes
+    by_id = {node.object_id: node.bounds for node in compact.nodes}
+    old = {node.object_id: node.bounds for node in legacy.nodes}
+    if flow == "horizontal":
+        assert by_id["b"].inline == old["b"].inline
+        assert by_id["b"].block < old["b"].block
+        assert by_id["b"].block_size + by_id["b"].block == by_id["c"].block
+    else:
+        assert by_id["b"].block == old["b"].block
+        assert by_id["b"].inline < old["b"].inline
+        assert by_id["b"].inline_size + by_id["b"].inline == by_id["c"].inline
+
+
+@pytest.mark.parametrize("flow", ("horizontal", "vertical-lr"))
+def test_network_member_gap_omission_preserves_group_and_header_geometry(flow):
+    nodes = (
+        SimpleNamespace(object_id="group", title="group", order_key=("group",), critical=False,
+                        source_kind="primary", is_container=True, container_id=None),
+        SimpleNamespace(object_id="a", title="a", order_key=("a",), critical=False,
+                        source_kind="primary", is_container=False, container_id="group"),
+        SimpleNamespace(object_id="b", title="b", order_key=("b",), critical=False,
+                        source_kind="primary", is_container=False, container_id="group"),
+        SimpleNamespace(object_id="empty", title="empty", order_key=("empty",), critical=False,
+                        source_kind="primary", is_container=True, container_id=None),
+    )
+    network = SimpleNamespace(
+        nodes=nodes,
+        edges=(SimpleNamespace(relation_id="ab", source_id="a", target_id="b",
+                               source_endpoint="end", target_endpoint="start", critical=False),),
+    )
+    kwargs = dict(title_bounds=Rect(Decimal(0), Decimal(0), Decimal(240), Decimal(40)),
+                  bounds=Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(400)),
+                  flow_direction=flow)
+    omitted = compose_dependency_network_layout(
+        network, measured_sources=_measured("group", "a", "b", "empty"), **kwargs)
+    explicit = compose_dependency_network_layout(
+        network, measured_sources=_measured("group", "a", "b", "empty", member_gap=12), **kwargs)
+    assert explicit.nodes == omitted.nodes
+    assert explicit.groups == omitted.groups
+    assert {group.group_id for group in omitted.groups} == {"group", "empty"}
+
+
+def test_network_member_gap_metric_is_optional_finite_nonnegative_and_zero_is_explicit():
+    value = theme()
+    assert "network.member.gap" not in resolve_theme_metrics(value)
+    value["body"]["metrics"]["network.member.gap"] = "member-gap"
+    value["body"]["values"]["member-gap"] = {"type": "number", "value": 0}
+    assert resolve_theme_metrics(value)["network.member.gap"] == Decimal(0)
+    for invalid in (-1, float("inf")):
+        value["body"]["values"]["member-gap"]["value"] = invalid
+        with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_TYPE"):
+            resolve_theme_metrics(value)
 
 
 def test_network_layout_rejects_cycle_and_missing_measurement_before_geometry():

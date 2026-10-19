@@ -16,6 +16,22 @@ allOf:
         additionalProperties: false
         properties:
           surface: {description: "Review surface family.", enum: [table-timeline, dependency-network]}
+          network:
+            description: "Dependency-network node content; valid only on a dependency-network surface."
+            type: object
+            additionalProperties: false
+            properties:
+              nodeLabel:
+                description: "Optional node label source; omission uses the Project title."
+                type: object
+                additionalProperties: false
+                properties:
+                  source:
+                    description: "Project title, object id, or the shared Project field reference; null uses the Project title."
+                    anyOf:
+                      - {enum: [title, id]}
+                      - {$ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
+                      - {type: "null"}
           colorEncoding:
             type: object
             description: "One closed field-to-colour encoding for eligible planned marks."
@@ -736,6 +752,15 @@ allOf:
                         not: {required: [candidates]}
                       - required: [candidates]
                         not: {required: [placement]}
+        if:
+          properties:
+            surface: {const: table-timeline}
+          required: [surface, network]
+        then:
+          properties:
+            network:
+              description: "The network member requires surface: dependency-network."
+              not: {}
 $defs:
   axisBandFillScale:
     description: "Optional Theme colour scale used to fill a fixed-unit band tier."

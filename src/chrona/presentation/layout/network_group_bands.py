@@ -14,7 +14,7 @@ def place_network_bands(
     nodes: Sequence[DependencyNetworkNode], *, ranks: Mapping[str, int],
     sizes: Mapping[str, tuple[Decimal, Decimal]],
     insets: Mapping[str, tuple[Decimal, Decimal]], bounds: Rect,
-    gap: Decimal, horizontal: bool,
+    gap: Decimal, member_gap: Decimal, horizontal: bool,
 ) -> tuple[dict[str, Rect], tuple[GroupPlacement, ...]]:
     """Keep unrelated containers disjoint without reranking semantic edges.
 
@@ -55,7 +55,7 @@ def place_network_bands(
     def ordinary_demand(parent: str | None) -> Decimal:
         largest = Decimal(0)
         for siblings in ordinary(parent).values():
-            size = gap * (len(siblings) - 1)
+            size = member_gap * (len(siblings) - 1)
             for node in siblings:
                 size += sizes[node.object_id][cross]
             largest = max(largest, size)
@@ -67,7 +67,7 @@ def place_network_bands(
         parts = [ordinary_demand(parent)]
         parts.extend(group_demand(node) for node in children[parent] if node.is_container)
         occupied = [part for part in parts if part > 0]
-        size = gap * max(0, len(occupied) - 1)
+        size = member_gap * max(0, len(occupied) - 1)
         for part in occupied:
             size += part
         return size
@@ -94,9 +94,9 @@ def place_network_bands(
                 main = starts[rank] + primary_inset
                 boxes[node.object_id] = (Rect(main, cursor, width, height) if horizontal
                                          else Rect(cursor, main, width, height))
-                cursor += sizes[node.object_id][cross] + gap
+                cursor += sizes[node.object_id][cross] + member_gap
         used = ordinary_demand(parent)
-        cursor = cross_start + used + (gap if used > 0 else 0)
+        cursor = cross_start + used + (member_gap if used > 0 else 0)
         for node in children[parent]:
             if not node.is_container:
                 continue
@@ -128,9 +128,9 @@ def place_network_bands(
                             outer.inline_size - 2 * inline_pad, bottom - top - header_height - block_pad)
             boxes[node.object_id] = outer
             groups.append(GroupPlacement(node.object_id, area, header))
-            cursor += demands[node.object_id] + gap
+            cursor += demands[node.object_id] + member_gap
 
-    place_children(None, (bounds.block if horizontal else bounds.inline) + gap, Decimal(0))
+    place_children(None, (bounds.block if horizontal else bounds.inline) + member_gap, Decimal(0))
     if boxes.keys() != by_id.keys():
         raise LayoutError("E_LAYOUT_NETWORK_GRAPH", "/projection/network",
                           detail="selected containment must be acyclic and rooted")

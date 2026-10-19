@@ -373,3 +373,36 @@ def test_dependency_network_keeps_common_window_and_rejects_timeline_authoring()
         candidate = deepcopy(value)
         candidate["body"][name] = item
         assert next(_validator().iter_errors(_json_value(candidate)), None) is not None, name
+
+
+def _network_view_v028():
+    value = deepcopy(yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")))
+    value["version"] = "chrona/view/v0.28"
+    body = value["body"]
+    body["surface"] = "dependency-network"
+    body["rows"] = {"mode": "automatic"}
+    for name in ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers",
+                 "periods", "shading", "timePresentation", "annotations", "annotationPresentation",
+                 "annotationBindings", "annotationPlacement"):
+        body.pop(name, None)
+    return value
+
+
+@pytest.mark.parametrize("source", ["title", "id", {"field": "phase"}, {"fieldRole": "responsible"}, None])
+def test_v028_network_node_label_accepts_shared_sources_and_nullable_fallback(source):
+    value = _network_view_v028()
+    value["body"]["network"] = {"nodeLabel": {"source": source}}
+
+    assert next(_validator_v028().iter_errors(_json_value(value)), None) is None
+
+
+def test_v028_network_is_closed_and_refused_on_timeline_at_member_pointer():
+    network_view = _network_view_v028()
+    network_view["body"]["network"] = {"nodeLabel": {"source": {"field": "phase"}, "extra": True}}
+    assert next(_validator_v028().iter_errors(_json_value(network_view)), None) is not None
+
+    timeline = deepcopy(yaml.safe_load((ROOT / "tests/fixtures/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")))
+    timeline["version"] = "chrona/view/v0.28"
+    timeline["body"]["network"] = {}
+    errors = tuple(_validator_v028().iter_errors(_json_value(timeline)))
+    assert any(tuple(error.absolute_path) == ("body", "network") for error in errors)
