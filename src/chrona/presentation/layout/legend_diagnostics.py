@@ -6,6 +6,9 @@ from decimal import Decimal
 from itertools import combinations
 
 from chrona.presentation.layout.legend_ink import mark_ink_keys, pattern_ink_identity
+from chrona.presentation.model.color_separability import (
+    MINIMUM_CATEGORY_DELTA_E, SIMULATED_VISIONS, delta_e_2000,
+)
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.theme_paint import (
     PaintFamily, mark_paint_family, resolve_legend_shape_ink, resolve_theme_paint_witness,
@@ -169,6 +172,61 @@ def _figure_signature(request, entry, marks, shapes, relations):
     if not figures:
         return None
     return tuple(figures)
+
+
+def _figure_ink_colours(figure):
+    """Return the concrete visible inks for a completed figure, in paint order.
+
+    ``_figure_signature`` contains completed paint identities.  These
+    retain the completed fill/stroke channels, while the corresponding part
+    mode tells us which channel was actually emitted for that component.
+    Gradients count as visible fill, but are not sampled as a representative
+    colour.
+    """
+    if figure is None:
+        return ()
+    fills: list[str] = []
+    strokes: list[str] = []
+    has_visible_fill = False
+
+    for signature in figure:
+        parts, paints = signature[0], signature[1]
+        for index, paint in enumerate(paints):
+            if not isinstance(paint, tuple) or len(paint) != 5:
+                continue
+            fill, stroke, stroke_width, _dash, opacity = paint
+            if opacity is not None and opacity <= 0:
+                continue
+            mode = parts[index][0] if index < len(parts) and parts[index] else None
+            permits_fill = mode != "stroke"
+            permits_stroke = mode != "fill"
+
+            if permits_fill and fill is not None:
+                has_visible_fill = True
+                if (isinstance(fill, tuple) and len(fill) == 2 and fill[0] == "solid"
+                        and isinstance(fill[1], str) and fill[1].startswith("#")):
+                    fills.append(fill[1].upper())
+            if (permits_stroke and isinstance(stroke, str) and stroke.startswith("#")
+                    and stroke_width is not None and stroke_width > 0):
+                strokes.append(stroke.upper())
+
+    selected = fills if has_visible_fill else strokes
+    return tuple(dict.fromkeys(selected))
+
+
+def _palette_separation_failures(first_figure, second_figure, color_vision=()):
+    """Return the minimum below-floor distance once per affected vision."""
+    first, second = _figure_ink_colours(first_figure), _figure_ink_colours(second_figure)
+    if not first or not second:
+        return ()
+    visions = ("normal", *(vision for vision in SIMULATED_VISIONS if vision in color_vision))
+    failures = []
+    for vision in visions:
+        distance = min(delta_e_2000(left, right, vision=vision)
+                       for left in first for right in second)
+        if distance < MINIMUM_CATEGORY_DELTA_E:
+            failures.append((vision, round(distance, 3)))
+    return tuple(failures)
 
 
 def _subject(entry):
