@@ -234,6 +234,25 @@ def _subject(entry):
     return DiagnosticSubject(f"legend-key:{key_id}", f"{entry.label} ({entry.role})")
 
 
+def _colour_pair_diagnostics(encoded_entries, figures, color_vision=()):
+    """Compare completed legend ink across distinct encoded and semantic meanings."""
+    diagnostics: list[str] = []
+    provenance: list[DiagnosticProvenance] = []
+    for (left, left_scale), (right, right_scale) in combinations(tuple(encoded_entries), 2):
+        if left.source_identity == right.source_identity:
+            continue
+        if left_scale is None and right_scale is None:
+            continue
+        if left_scale and right_scale and left_scale == right_scale:
+            continue  # The domain owns same-scale pairs through its existing warning.
+        for vision, min_delta in _palette_separation_failures(
+                figures.get(left.source_identity), figures.get(right.source_identity), color_vision):
+            identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{min_delta}"
+            diagnostics.append(identity)
+            provenance.append(DiagnosticProvenance(identity, (_subject(left), _subject(right))))
+    return tuple(diagnostics), tuple(provenance)
+
+
 def completed_legend_diagnostics(request, entries, marks, shapes, relations, text):
     """Compare only final labels and swatches, with source identities kept as subjects."""
     texts = {item.placement_id: item for item in text}
