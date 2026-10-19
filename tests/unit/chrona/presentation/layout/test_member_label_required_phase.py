@@ -205,6 +205,44 @@ def test_final_ordinary_member_label_crosses_asof_rule():
     assert [item.placement_id for item in index.collisions(footprint.geometry, classes=("rule",))] == ["as-of"]
 
 
+@pytest.mark.parametrize("required,reserve_only", ((False, False), (True, False), (False, True)))
+@pytest.mark.parametrize("route_blocks_end", (False, True))
+def test_moving_only_asof_line_preserves_completed_member_label(required, reserve_only, route_blocks_end):
+    context = _placement_context()
+    request = replace(LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
+        ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
+        "suppress", semantic_id="memberLabel"), required_before_routes=required)
+    route = (ObstacleSegment((105, 0), (105, 100)) if route_blocks_end
+             else ObstacleSegment((0, 85), (200, 85)))
+    fixed = (
+        SurfaceObstacle("a", "mark", "timeline", ObstacleRect(80, 40, 90, 50)),
+        SurfaceObstacle("fixed-route", "dependency-route", "timeline", route,
+                        route_owner_id="relation:fixed"),
+        SurfaceObstacle("deadlineMark:fixed", "rule", "timeline", ObstacleSegment((180, 0), (180, 100))),
+    )
+    baseline_index = SurfaceObstacleIndex()
+    baseline_index.extend(fixed)
+    baseline = place_member_labels(context, (request,), baseline_index, reserve_only=reserve_only)
+    assert len(baseline.text) == 1
+    # A route-free reservation deliberately ignores completed routes; final
+    # labels retain them as hard obstacles. Neither mode may depend on as-of.
+    assert baseline.text[0].selected_rung == ("start" if route_blocks_end and not reserve_only else "end")
+    crossed = set()
+    for position in (20, 60, 95, 105, 145, 190):
+        line = SurfaceObstacle("as-of", "rule", "timeline",
+                               ObstacleSegment((position, 0), (position, 100)))
+        index = SurfaceObstacleIndex()
+        index.extend((*fixed, line))
+        actual = place_member_labels(context, (request,), index, reserve_only=reserve_only)
+        assert actual == baseline  # Text, geometry, decisions, diagnostics and reservation facts.
+        assert line in index.all()  # The exception never removes the shared route/annotation obstacle.
+        assert tuple(item for item in index.all() if item.placement_id != "as-of") == baseline_index.all()
+        footprint = next(item for item in index.all() if item.placement_id == "label-footprint:member-label:a")
+        crossed.add(any(item.placement_id == "as-of"
+                        for item in index.collisions(footprint.geometry, classes=("rule",))))
+    assert crossed == {False, True}, "the control must move the line into and out of the actual footprint"
+
+
 def test_member_name_still_avoids_deadline_rule_while_crossing_asof():
     context = _placement_context()
     request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
