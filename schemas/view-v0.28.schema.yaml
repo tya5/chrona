@@ -305,9 +305,7 @@ allOf:
                 label:
                   description: "The marker label: a literal rendered exactly as written unless a date form is declared, or a `{wording: <key>}` reference resolved per Render Context locale."
                   examples: ["TODAY", {wording: marker.today}]
-                  oneOf:
-                    - {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/label"}
-                    - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
+                  $ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/label"
                 date: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/date"}
                 placement: {$ref: "urn:chrona:common-v0.1#/$defs/markerPresentation/properties/placement"}
           periods:
@@ -576,7 +574,12 @@ allOf:
                       required: [id, source]
                       additionalProperties: false
                       properties:
-                        id: {description: "The header text; unique within the lane table.", type: string, minLength: 1}
+                        id: {description: "The header text unless `header` is declared; unique within the lane table.", type: string, minLength: 1}
+                        header:
+                          description: "Optional header text: a literal or a `{wording: key}` reference to the built-in wording table (#1724). Absent, the header is `id`."
+                          oneOf:
+                            - {type: string, minLength: 1}
+                            - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
                         source:
                           oneOf:
                             - {enum: [label, rowIndex]}

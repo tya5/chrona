@@ -666,6 +666,20 @@ Layout measures and places these with the existing terminal/text primitives;
 it does not present the pair as a connected safe route. Both fragments belong
 to one resolved relation instance and are counted once. Terminal labels must
 not silently disappear; their declared visible-overflow treatment is inspectable.
+The route/member-label coordinator owns their reservation (#1763). In each
+trial, complete and reserve required terminal text against existing completed
+text before optional member names; place ordinary relation labels afterward.
+All names and terminal labels use that same measured obstacle inventory.
+Visible overflow permits leaving the plot, not crossing completed text or
+label visuals. A caller's hard candidate filter also constrains visible
+fallbacks in the existing side order, without extra search passes or quotas.
+When no terminal candidate clears those reservations, report
+`E_PRESENTATION_LABEL_UNPLACEABLE` with the label identity, never suppression
+or an overlap-assertion exemption. If only the private repair trial fails this
+terminal-placement check, retain the valid completed first trial and append
+every routing/search-budget receipt from the attempted repair; do not replay
+either trial or discard its evidence. An unplaceable first trial reports the
+failure. This does not change the declared unsafe route-ink policy.
 Stub geometry also uses visible overflow: once both semantic endpoints are
 admitted, insufficient plot-edge clearance must not silently erase a fragment
 or its terminal. Layout completes each endpoint independently against its own

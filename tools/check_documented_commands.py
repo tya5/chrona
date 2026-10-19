@@ -54,6 +54,10 @@ REQUIRES_PREFIX = "requires: clone "
 # `<!-- chrona:doc-check file: NAME -->` before a fence: the fence body is a file the later commands of the checked
 # document read. It is written into the execution workspace, never executed (#1307).
 FILE = re.compile(r"^<!-- chrona:doc-check file: (?P<name>[A-Za-z0-9._-]+) -->$")
+# `<!-- chrona:doc-check prerequisite: cjk-font -->` on its own line before the prose that tells the reader to install it
+# (#1724): the document's commands need that setup, which a clean wheel install lacks. `tools/wheel_doc_check.py` runs the
+# documented setup for each declared name; the repository check ignores the line (a clone has the provider installed).
+PREREQUISITE = re.compile(r"^<!-- chrona:doc-check prerequisite: (?P<name>[a-z][a-z0-9-]*) -->$")
 CLONE_ONLY_ROOTS = ("examples/",)
 # The skill's own commands name paths inside the copy `chrona skill copy` writes (`examples/launch.yaml`); they run in the
 # clone workspace with the skill directory as the working directory, and a command naming such a path is skipped in the
@@ -113,6 +117,9 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
         pending_file: int | None = None
         while index < len(lines):
             line = lines[index]
+            if PREREQUISITE.fullmatch(line) is not None:
+                index += 1
+                continue
             if FILE.fullmatch(line) is not None:
                 if pending_skip is not None or pending_file is not None:
                     raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, index + 1)
@@ -166,6 +173,13 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
         if pending_skip is not None:
             raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, pending_skip[1])
     return tuple(result)
+
+
+def discover_prerequisites(root: Path) -> frozenset[str]:
+    """The names declared by `prerequisite:` markers in the checked documents."""
+    return frozenset(match["name"] for path in documents(root)
+                     for match in map(PREREQUISITE.fullmatch, path.read_text(encoding="utf-8").splitlines())
+                     if match is not None)
 
 
 def discover_files(root: Path) -> tuple[tuple[Path, int, str, str], ...]:

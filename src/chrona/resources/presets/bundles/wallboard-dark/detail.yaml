@@ -2,7 +2,7 @@ version: chrona/review-detail-profile/v0.1
 id: chrona-builtin-wallboard-dark-detail
 body:
   legend:
-    - {role: planned, label: Planned, swatchShape: circle}
+    - {role: planned, label: {wording: legend.planned-plain}, swatchShape: circle}
     - {role: milestone, label: {wording: legend.milestone}, swatchShape: circle}
     - {role: dependency, label: {wording: legend.dependency}, swatchShape: circle}
     - {role: asOf, label: {wording: legend.asOf}, swatchShape: circle}

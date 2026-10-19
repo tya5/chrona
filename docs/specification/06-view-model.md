@@ -656,8 +656,18 @@ Critical/float/driving decoration may use computed forecast analysis only; absen
 analysis is not borrowed from the original plan.
 
 Forecast comparison uses the supplied Snapshot, or the original primary plan if
-none was supplied. A selected item missing a same-kind baseline placement is
-`E_FORECAST_BASELINE_UNAVAILABLE`, not zero variance or an invented baseline.
+none was supplied. A selected item the supplied Snapshot does not contain is
+**new** (#1755): it draws normally, its baseline distance is absent (not zero
+and not invented), its delta cell and label read `new` without `*` or variance
+paint, and the forecast skips its baseline comparison. A Snapshot object with no
+current counterpart that the View's selection would show is **removed**: in an
+automatic-row View whose ghosts are shown (always in forecast mode;
+`comparison.baselineMarks` `ghost` or `ghost-when-changed` otherwise) it draws
+as a baseline ghost row whose title ends `(removed)`; otherwise
+(hidden ghosts or explicit rows) one `I_BASELINE_OBJECT_REMOVED` information
+diagnostic lists it. The same new/removed rule applies to ordinary Snapshot
+comparison. `E_FORECAST_BASELINE_UNAVAILABLE` remains only for a displayed item
+without a forecast schedule or whose baseline kind differs (span versus point).
 For this explicit mode, `finishDelta` presentation consumers select the separate
 forecast comparison fact: forecast exclusive `end` minus baseline `end`, or `at`
 minus baseline `at` for points, using the View's `deltaUnit`. Both table source
@@ -889,7 +899,7 @@ and `actual-behind` address qualifier fragments appended to the authored
 Actual label. These are wording targets, not new paint or registry roles.
 
 **Built-in wording keys (#1724).** Built-in text (table headers, the as-of marker,
-legend labels, the Forecast and Critical dependency keys, absent-value words) is
+legend labels, the Forecast, Progress, Actual-qualifier and Critical dependency keys, the default lane-table headers, absent-value words) is
 looked up by a closed key in the bundled wording table of
 [Axis Name Tables](63-axis-name-tables.md#built-in-wording-tables), one complete
 table per supported locale (`en-US`, `ja-JP`), selected by the Render Context locale

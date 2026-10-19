@@ -12,7 +12,7 @@ from chrona.presentation.layout.surface_member_labels import (
 )
 from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.layout.surface_routes import (
-    SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext,
+    SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext, TerminalLabelPlacementError,
     compose_surface_routes, place_relation_labels,
 )
 from chrona.presentation.model.info_diagnostics import RelationResolutionInfo, RelationResolutionStage
@@ -94,10 +94,18 @@ def _run_trial(context: RouteLabelPlanContext, reservations: tuple[MemberLabelRe
     if provisional_ids:
         final_index = SurfaceObstacleIndex()
         final_index.extend(item for item in index.all() if item.placement_id not in provisional_ids)
+    label_context = replace(route_context, obstacles=final_index, text=context.base_text)
+    # Required paired-stub titles own the first reservation. Optional member
+    # names then use the same completed text/visual inventory.
+    terminal_labels = place_relation_labels(label_context, routes, terminal=True)
     members = (place_member_labels(context.member_labels, requests, final_index)
                if requests else _empty_members())
-    relation_labels = place_relation_labels(replace(route_context, obstacles=final_index,
-        text=(*context.base_text, *members.text)), routes)
+    ordinary_labels = place_relation_labels(replace(label_context,
+        text=(*context.base_text, *terminal_labels.text, *members.text)), routes, terminal=False)
+    relation_labels = SurfaceRelationLabelsBatch(
+        (*terminal_labels.text, *ordinary_labels.text),
+        (*terminal_labels.diagnostics, *ordinary_labels.diagnostics),
+        (*terminal_labels.visible_label_overflows, *ordinary_labels.visible_label_overflows))
     return RouteLabelPlan(routes, members, relation_labels, final_index)
 
 
@@ -158,8 +166,15 @@ def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLab
                              if item.placement_id in initially_visible)
     suppressed_requests = tuple(item for item in context.post_route_requests
                                 if item.placement_id not in initially_visible)
-    retry = _run_trial(context, reserves, (*visible_requests, *suppressed_requests),
-                       progress_pass="route-label-recovery", preserve=first)
+    try:
+        retry = _run_trial(context, reserves, (*visible_requests, *suppressed_requests),
+                           progress_pass="route-label-recovery", preserve=first)
+    except TerminalLabelPlacementError as exc:
+        # The retry has already consumed its declared routing budget. Keep its
+        # receipts without replacing a valid completed baseline or replaying.
+        first = replace(first, routes=replace(first.routes,
+            routing_info=(*first.routes.routing_info, *exc.routes.routing_info)))
+        return RouteLabelOptions(first)
     return RouteLabelOptions(first, retry)
 
 

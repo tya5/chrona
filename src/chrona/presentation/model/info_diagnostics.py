@@ -442,6 +442,27 @@ class FieldGroupingSummariesOmitted:
 
 
 @dataclass(frozen=True)
+class BaselineObjectsRemoved:
+    """Snapshot objects with no current counterpart that no ghost row shows (#1755)."""
+
+    objects: tuple[tuple[str, str], ...]
+
+    def __post_init__(self) -> None:
+        if not self.objects:
+            raise _diagnostic_error("BaselineObjectsRemoved requires at least one object")
+
+    @property
+    def code(self) -> str:
+        return "I_BASELINE_OBJECT_REMOVED"
+
+    def payload(self) -> dict[str, object]:
+        return {"count": len(self.objects), "objects": [{"id": i, "title": t} for i, t in self.objects]}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
 class FontGlyphFallback:
     """Automatically covered glyphs of one script with their exact measured face: a count and the first sample (#1724)."""
 

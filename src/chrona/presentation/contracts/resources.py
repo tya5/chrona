@@ -246,6 +246,7 @@ class ViewLaneColumn:
     text_role: str | None = None
     transform: str | None = None
     suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
+    header: str | FrozenDict | None = None  # a literal or `{wording: key}`; absent, the header is the id (#1724)
 
 
 @dataclass(frozen=True)
@@ -490,7 +491,7 @@ class ViewProfileBinding:
 @dataclass(frozen=True)
 class SummaryMetric:
     id: str
-    label: str
+    label: str | FrozenDict  # a literal, or a `{wording: key}` reference until the render resolves it (#1724)
     source: str | FrozenDict
     format: str
     scope: str | None
@@ -1514,7 +1515,9 @@ def _lane_table_columns(raw: Any) -> tuple[ViewLaneColumn, ...]:
                                    str(column.get("align", "start")),
                                    str(column["textRole"]) if "textRole" in column else None,
                                    str(column["transform"]) if "transform" in column else None,
-                                   str(column["suffix"]) if "suffix" in column else None)
+                                   str(column["suffix"]) if "suffix" in column else None,
+                                   (freeze(column["header"]) if isinstance(column["header"], Mapping) else str(column["header"]))
+                                   if "header" in column else None)
                     for column in raw)
     if not columns:
         return columns
@@ -1639,6 +1642,10 @@ def _validate_view_fallback(raw_fallback: Any) -> None:
             raise ValueError(f"E_VIEW_FALLBACK_INVALID:{name}")
 
 
+def _summary_label(value: Any) -> str | FrozenDict:
+    return value if isinstance(value, FrozenDict) else str(value)
+
+
 def _summary_input(body: FrozenDict) -> SummaryProfileInput:
     panels: list[SummaryPanelInput] = []
     for panel_index, panel in enumerate(body["panels"]):
@@ -1649,7 +1656,7 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
             if isinstance(definition, FrozenDict):
                 token = _pointer_token(str(metric_id)) if isinstance(declared, FrozenDict) else str(metric_index)
                 path = f"/body/panels/{panel_index}/metrics/{token}"
-                metrics.append(SummaryMetric(str(metric_id), str(definition.get("label", metric_id)), definition["source"],
+                metrics.append(SummaryMetric(str(metric_id), _summary_label(definition.get("label", metric_id)), definition["source"],
                                              str(definition["format"]), str(definition["scope"]) if "scope" in definition else None,
                                              declaration_path=path))
             else:
