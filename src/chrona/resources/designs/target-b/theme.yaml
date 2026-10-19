@@ -492,7 +492,7 @@ body:
       fontSize: size.asof
       lineHeight: leading.tight
       letterSpacing: letter-spacing
-      textTransform: text-transform
+      textTransform: text-transform-lower
       numericSpacing: numeric-spacing
     legend:
       fontFamily: editorial

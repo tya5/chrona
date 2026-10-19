@@ -90,6 +90,7 @@ body:
       text: {wrap: allow}
       columns:
       - id: 'No'
+        header: {wording: column.no}
         source: rowIndex
         suffix: .
       - id: Task

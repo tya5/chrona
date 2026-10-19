@@ -3,9 +3,9 @@ id: halcyon-marquee-legend
 body:
   legend:
     - {role: snapshot, label: {wording: legend.baseline}}
-    - {role: planned, label: plan}
+    - {role: planned, label: {wording: legend.plan}}
     - {role: actual, label: {wording: legend.actual}}
-    - {role: missing-actual, label: in the wings}
+    - {role: missing-actual, label: {wording: legend.in-the-wings}}
     - {role: milestone, label: {wording: legend.gate}}
     - {role: calendar-exception, label: {wording: legend.holiday}}
     - {role: dependency, label: {wording: legend.dependency}}
