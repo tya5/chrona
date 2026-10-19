@@ -182,6 +182,9 @@ body:
     small-caps:
       type: textTransform
       value: small-caps
+    text-transform-lower:
+      type: textTransform
+      value: lowercase
     small-caps-scale:
       type: number
       value: 0.8
@@ -612,7 +615,7 @@ body:
       fontSize: size.legend
       lineHeight: leading.body
       letterSpacing: letter-spacing
-      textTransform: text-transform
+      textTransform: text-transform-lower
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
