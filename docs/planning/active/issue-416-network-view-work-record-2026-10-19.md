@@ -1,6 +1,6 @@
 # #416 Network View — work record
 
-Status: design plan; no selected contract or implementation approval yet.
+Status: selected design for reviewer approval; implementation is not approved.
 Baseline: published ready `8087e95c59fda483457eefda20a0177d94dbf798`.
 Authority: [issue and latest scope](https://github.com/tya5/chrona/issues/416#issuecomment-6256891542).
 
@@ -66,3 +66,58 @@ Acceptance evidence must include opted-in selection/labels/order/spacing and
 invalid-surface tests, unopted actual SVG/Scene comparison and count table,
 focused tests, CI full/reproduction gates and the review-containing exact-main
 three-OS release. The implementation plan must map every row above to evidence.
+
+## Selected design and architecture review
+
+Reuse top-level `selection` and `ordering`. A View has one surface, so a second
+network selector/order object would duplicate intent, not enable a second
+surface. Selection already closes node membership and retains only edges with
+both endpoints selected; no invented bridge edges or implicit ancestors.
+Selected Project group containment, existing `deadlines` and
+`visibility.relations: semantic|critical|none` remain their current contracts.
+The deadline producer is `usecases/render_review.py::_network_deadline_projection`;
+its placement support is live, not an unfinished feature.
+
+Add optional `body.network.nodeLabel: {source: ...}` to the latest live View
+schema without a version bump. `source` is `title`, `id`, or the existing shared
+Project field-reference object (`{field}` / `{fieldRole}`). Absent, use `title`.
+The ordinary title is the Project title, not a plot/path label. Field reads use
+the existing binding/default resolver: absent, null or unbound role falls back
+to that object's title; present strings are used verbatim. A non-string field
+fails with `E_VIEW_NETWORK_LABEL_SOURCE`, the source pointer and object subject;
+no implicit map/boolean/number formatting or second template language. Empty
+strings are explicit empty labels; node minima/ports/relations still apply.
+No new paint, font, size or positioning properties belong in this member.
+
+The entire `network` member is refused on table-timeline, including an empty
+object, with `E_RESOURCE_SCHEMA` pointing to `/body/network` and explaining that
+`surface: dependency-network` is required. This reuses Spec56's structured
+schema diagnostic rather than adding a second surface-dispatch error system.
+Existing timeline member-label placement/content is not reinterpreted for nodes.
+
+Within each graph-derived rank, consume the already ordered selected items as
+ordinal intent. Remove the parallel `_network_order_key` resolver: it currently
+loses direction/tie-break behavior. Layout retains rank calculation, containment
+and deterministic object-ID ties; ordering changes neither edges nor ranks.
+HALCYON05's existing ascending planned-start/id order must remain unchanged.
+
+Retain `network.rank.gap` and add optional Theme metric `network.member.gap` in
+the same named-number channel as node padding. Unbound means the rank gap,
+preserving current output. Rank progression uses the former; secondary-axis
+sibling/container separation and its existing leading inset use the latter,
+in both flow directions. Values are finite nonnegative px, including zero;
+no new packing algorithm or port policy. The original issue's Layout Profile
+ownership assumption is outdated: current network metrics are Theme-bound.
+
+Architecture disposition: consistent with Specs06/07/09/13/50/56 and #1727.
+Projection closes selected label text and ordinal intent; Layout measures that
+text, closes both spacings and all geometry; Scene/adapters remain unchanged.
+Core/scheduler and authored corpus stay unchanged. Shared schema references
+must not be copied. Update Specs06/07/50 before implementation; the issue record
+is the review proposal, not a replacement normative authority.
+
+Review requested on label-field missing/type rules, independent spacing scope,
+and explicit timeline refusal. Ports and new algorithms are out of scope.
+Implementation plan is not final until that review is resolved. Intended slices
+are (1) schema/typed intent and projection plus tests; (2) optional metric/layout
+closure plus tests; (3) SVG/PNG, HALCYON05 counts, literal review and release.
