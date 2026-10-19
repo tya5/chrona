@@ -213,4 +213,3 @@ def test_view_and_style_scale_identities_cannot_be_ambiguous():
     with pytest.raises(ValueError, match="both View and Style"):
         SurfaceLegendEntry("style:key", "High", style_scope=scope, style_value="high",
                            view_scale_id="risk", view_scale_domain_value="high")
-
