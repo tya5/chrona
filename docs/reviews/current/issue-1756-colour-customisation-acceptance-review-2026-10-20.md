@@ -42,6 +42,9 @@ Combined focused batch: **184 passed** (colour scale/arithmetic, Theme tokens,
 diagnostic messages, Style/View legend content, final handoff/diagnostics and
 both real-render integration modules). Independent source/contract review
 found no blocker; `git diff --check` is clean.
+The combined 1756/416 candidate passes **452 focused tests**. Their independent
+source commits and literal reviews share one upcoming integration PR/release
+after the active 1754 follow-up; no design or acceptance criterion changes.
 
 Local `conformance/run_conformance.py`: every check passes except
 `diagnostic-inventory`, which reports `E_DIAGNOSTIC_INVENTORY_STALE` for source

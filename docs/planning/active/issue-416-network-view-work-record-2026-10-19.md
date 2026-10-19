@@ -161,5 +161,11 @@ code; B1766/1767's shared files have landed on the current baseline.
 
 Current evidence and all six literal rows are in the
 [acceptance review](../../reviews/current/issue-416-network-view-acceptance-review-2026-10-20.md).
+Publication is batched with the independently reviewed 1756 rows 1–2 after
+1754's active PR. Each issue keeps its source commits and literal review;
+one combined ready-tip CI/snapshot/release avoids an extra serial landing.
+The combined focused batch passes 452 tests, including the two additional
+primary-descending ordering cases in `ffb5f6ef4`. This changes publication
+granularity only, not either issue's design, ownership or acceptance gates.
 No further product slice is planned before PR/official public-output review;
 fix any discovered contract gap through design before extending code.
