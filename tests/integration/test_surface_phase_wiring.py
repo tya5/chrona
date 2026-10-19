@@ -49,10 +49,12 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
         trial_final_ids[identity] = {item.placement_id for item in context.obstacles.all()}
         return result
 
-    def relation_labels(context, batch):
-        identity = record("relation-labels", context.obstacles)
-        route_trial_phases[-1].append("relation-labels")
-        result = relation_label_owner(context, batch)
+    def relation_labels(context, batch, *, terminal):
+        assert isinstance(terminal, bool)
+        phase = "terminal-labels" if terminal else "ordinary-relation-labels"
+        identity = record(phase, context.obstacles)
+        route_trial_phases[-1].append(phase)
+        result = relation_label_owner(context, batch, terminal=terminal)
         trial_final_ids[identity] = {item.placement_id for item in context.obstacles.all()}
         return result
 
@@ -109,7 +111,8 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
     assert seen["selected_index_id"] in final_label_ids
     assert "as-of-label" in pre_requests
     assert set(pre_requests).isdisjoint(seen["post_request_ids"])
-    assert route_trial_phases == [["routes", "member-labels", "relation-labels"]] * len(route_ids)
+    assert route_trial_phases == [["routes", "terminal-labels", "member-labels",
+                                   "ordinary-relation-labels"]] * len(route_ids)
     for identity in final_label_ids:
         assert len(requested.get(identity, ())) == len(set(requested.get(identity, ())))
         assert seen["pre_index_ids"] <= trial_initial_ids[identity]

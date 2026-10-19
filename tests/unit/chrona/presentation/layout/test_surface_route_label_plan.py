@@ -12,7 +12,9 @@ from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, 
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationBatch
 from chrona.presentation.layout.surface_member_labels import MemberLabelReservation, SurfaceMemberLabelsBatch
 from chrona.presentation.layout.surface_quality import CollisionDomain, PathCommand, TextPlacement
-from chrona.presentation.layout.surface_routes import SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext
+from chrona.presentation.layout.surface_routes import (
+    SurfaceRelationLabelsBatch, SurfaceRoutesBatch, SurfaceRoutesContext, TerminalLabelPlacementError,
+)
 from chrona.presentation.layout import surface_route_label_plan as plan
 from chrona.presentation.model.info_diagnostics import RelationSearchBudgetHit, RelationResolutionInfo, RelationResolutionStage
 
@@ -122,7 +124,9 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
         resolution = (RelationResolutionInfo("table-timeline", "relation:r", RelationResolutionStage.TEXT, False),) if suppressed else ()
         return SurfaceRoutesBatch((relation,), (), {}, {}, {}, (), (fact,), resolution)
 
-    def relation_labels(context, _routes):
+    def relation_labels(context, _routes, *, terminal=None):
+        if terminal:
+            return SurfaceRelationLabelsBatch((), (), ())
         if lose_relation_label and context.progress_pass == "route-label-recovery":
             return SurfaceRelationLabelsBatch((), (), ())
         text = replace(_text("relation-label:r"), semantic_id="relationLabel")
@@ -148,6 +152,87 @@ def test_unblocked_baseline_needs_one_trial_and_emits_no_ghosts(monkeypatch):
     _assert_selected_inventory(result, options.first, facts)
     assert result.obstacles.has("a") and not context.clean_obstacles.has("a")
     assert annotations == _empty_annotations()
+
+
+def test_terminal_stub_text_is_reserved_before_names_and_ordinary_labels_follow(monkeypatch):
+    context, _calls, _facts, _name_calls = _install(monkeypatch)
+    events = []
+
+    def terminal_labels(route_context, _routes, *, terminal=None):
+        if terminal:
+            events.append("terminal")
+            text = replace(_text("relation-label:stub"), semantic_id="relationLabel")
+            route_context.obstacles.add(SurfaceObstacle("relation-label:stub", "text", "timeline",
+                ObstacleRect(35, 10, 55, 20)))
+            route_context.obstacles.add(SurfaceObstacle("label-footprint:relation-label:stub",
+                "label-visual", "timeline", ObstacleRect(35, 10, 55, 20)))
+            return SurfaceRelationLabelsBatch((text,), (), ())
+        events.append("ordinary")
+        assert route_context.obstacles.has("a")
+        return SurfaceRelationLabelsBatch((), (), ())
+
+    original_names = plan.place_member_labels
+
+    def names(label_context, requests, obstacles, *, reserve_only=False):
+        events.append("members")
+        assert obstacles.has("relation-label:stub")
+        assert obstacles.has("label-footprint:relation-label:stub")
+        return original_names(label_context, requests, obstacles, reserve_only=reserve_only)
+
+    monkeypatch.setattr(plan, "place_relation_labels", terminal_labels)
+    monkeypatch.setattr(plan, "place_member_labels", names)
+    result = plan._trial(context, (), context.post_route_requests)
+
+    assert events == ["terminal", "members", "ordinary"]
+    assert any(item.placement_id == "relation-label:stub" for item in result.relation_labels.text)
+    assert result.obstacles.has("a")
+
+
+def test_retry_terminal_label_failure_keeps_baseline_and_all_route_receipts(monkeypatch):
+    context, calls, facts, _name_calls = _install(monkeypatch, repair=True)
+    original = plan.place_relation_labels
+
+    def fail_retry_terminal(route_context, routes, *, terminal=None):
+        if terminal and route_context.progress_pass == "route-label-recovery":
+            raise TerminalLabelPlacementError("relation-label:stub-source", routes)
+        return original(route_context, routes, terminal=terminal)
+
+    monkeypatch.setattr(plan, "place_relation_labels", fail_retry_terminal)
+    options = plan.compose_routes_and_member_labels(context)
+
+    assert calls == ["route-label-baseline", "route-label-recovery"]
+    assert options.retry is None
+    assert options.first.routes.routing_info == tuple(facts)
+    selected, _annotations = plan.select_completed_route_label_plan(options, _empty_annotations())
+    assert selected is options.first
+
+
+def test_baseline_terminal_failure_is_not_suppressed_or_retried(monkeypatch):
+    context, calls, _facts, _name_calls = _install(monkeypatch, repair=True)
+
+    def fail_terminal(_context, routes, *, terminal=None):
+        raise TerminalLabelPlacementError("relation-label:blocked-terminal", routes)
+
+    monkeypatch.setattr(plan, "place_relation_labels", fail_terminal)
+    with pytest.raises(TerminalLabelPlacementError) as caught:
+        plan.compose_routes_and_member_labels(context)
+    assert caught.value.placement_id == "relation-label:blocked-terminal"
+    assert calls == ["route-label-baseline"]
+
+
+def test_unrelated_retry_errors_are_not_hidden(monkeypatch):
+    context, calls, _facts, _name_calls = _install(monkeypatch, repair=True)
+    original = plan.place_relation_labels
+
+    def fail_retry(route_context, routes, *, terminal=None):
+        if terminal and route_context.progress_pass == "route-label-recovery":
+            raise ValueError("unrelated broken geometry")
+        return original(route_context, routes, terminal=terminal)
+
+    monkeypatch.setattr(plan, "place_relation_labels", fail_retry)
+    with pytest.raises(ValueError, match="unrelated broken geometry"):
+        plan.compose_routes_and_member_labels(context)
+    assert calls == ["route-label-baseline", "route-label-recovery"]
 
 
 def test_one_recovery_reserves_only_the_route_blocked_candidate_and_emits_no_ghosts(monkeypatch):

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleSegment,
@@ -12,7 +14,7 @@ from chrona.presentation.layout.obstacles import (
 from chrona.presentation.layout.labels import LabelRect, place_label
 from chrona.presentation.layout.surface_quality import RelationPlacement
 from chrona.presentation.layout.surface_routes import (
-    SurfaceRelationLabelsBatch,
+    SurfaceRelationLabelsBatch, TerminalLabelPlacementError,
     SurfaceRoutesBatch,
     place_relation_labels,
 )
@@ -121,3 +123,49 @@ def test_relation_label_search_preserves_canonical_first_and_suppresses_determin
     assert first == second
     assert first.text == ()
     assert first.diagnostics == ("W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:a-to-b",)
+
+
+def test_terminal_label_overflow_cannot_cross_completed_text():
+    obstacles = SurfaceObstacleIndex()
+    routes, relation = _routes()
+    terminal = RelationPlacement(relation.relation_id, relation.source_port_id, relation.target_port_id,
+        points=relation.points, label_content="-> Target", source_ref=relation.source_ref,
+        terminal_label=True, fragment_endpoint="source", from_instance_id="source")
+    # Force every bounded side into the same shared text inventory; the visible
+    # fallback may leave the plot but cannot cross this completed label.
+    obstacles.add(SurfaceObstacle("member-label:a", "text", "timeline",
+        ObstacleRect(-1000, -1000, 1000, 1000)))
+    context = _context(obstacles)
+    route_batch = SurfaceRoutesBatch((terminal,), (), {}, {}, {}, ())
+    with pytest.raises(TerminalLabelPlacementError, match="E_PRESENTATION_LABEL_UNPLACEABLE") as caught:
+        place_relation_labels(context, route_batch, terminal=True)
+    assert caught.value.placement_id == "relation-label:a-to-b"
+    assert caught.value.routes is route_batch
+
+
+def test_terminal_fallback_filter_includes_group_header_text():
+    obstacles = SurfaceObstacleIndex()
+    _routes_batch, relation = _routes()
+    terminal = RelationPlacement(relation.relation_id, relation.source_port_id, relation.target_port_id,
+        points=relation.points, label_content="-> Target", source_ref=relation.source_ref,
+        terminal_label=True, fragment_endpoint="source", from_instance_id="source")
+    obstacles.add(SurfaceObstacle("group-header:required-title", "text", "group-header",
+        ObstacleRect(-1000, -1000, 1000, 1000)))
+    routes = SurfaceRoutesBatch((terminal,), (), {}, {}, {}, ())
+    with pytest.raises(TerminalLabelPlacementError, match="E_PRESENTATION_LABEL_UNPLACEABLE") as caught:
+        place_relation_labels(_context(obstacles), routes, terminal=True)
+    assert caught.value.routes is routes
+
+
+def test_terminal_label_visible_overflow_may_cross_unsafe_mark_but_not_text():
+    obstacles = SurfaceObstacleIndex()
+    routes, relation = _routes()
+    terminal = RelationPlacement(relation.relation_id, relation.source_port_id, relation.target_port_id,
+        points=relation.points, label_content="-> Target", source_ref=relation.source_ref,
+        terminal_label=True, fragment_endpoint="source", from_instance_id="source")
+    obstacles.add(SurfaceObstacle("mark:block", "mark", "timeline",
+        ObstacleRect(-1000, -1000, 1000, 1000)))
+    result = place_relation_labels(_context(obstacles), SurfaceRoutesBatch((terminal,), (), {}, {}, {}, ()),
+                                   terminal=True)
+    assert len(result.text) == 1
+    assert result.visible_label_overflows
