@@ -40,9 +40,9 @@ passes (L1: one changed schema, 42 equal; three precise expected pointers;
 L2/L3 preserve the existing recorded invalid fixtures). Schema annotations,
 shared references, import direction, View dispatch and Scene delivery checks
 pass. No full local pytest or repeated full public corpus run is needed.
-The combined 416/1756 candidate passes **452 focused tests**, including two
-additional primary-descending order regressions (`ffb5f6ef4`); one integration
-PR will preserve both issues' source commits and separate literal reviews.
+The combined 1754/1756/416 candidate passes **532 focused tests**, including two
+additional primary-descending order regressions (`ffb5f6ef4`); PR1786 preserves
+all three issues' source commits and separate literal reviews.
 
 View carries closed content intent; Projection reads source-local field/default
 bindings and closes selected labels/order; Layout alone measures and completes

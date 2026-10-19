@@ -291,6 +291,9 @@ pass 38 tests on the rerun base. No additional product policy, budget,
 validator, preset or trial input change is needed.
 
 Next publication: controlled tests plus the updated acceptance evidence,
-batched with already-closed 806/1763 archival records. CI supplies full pytest
+batched with already-closed 806/1763 archival records and the independently
+reviewed 1756/416 slices in PR1786. Each issue retains its own commits and
+literal review; one shared final snapshot/release establishes acceptance.
+CI supplies full pytest
 and release evidence; close 1754 only after the exact published main containing
 this follow-up passes three-OS/conformance/wheel/newest-Python gates.

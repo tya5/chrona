@@ -43,9 +43,9 @@ Combined focused batch: **184 passed** (colour scale/arithmetic, Theme tokens,
 diagnostic messages, Style/View legend content, final handoff/diagnostics and
 both real-render integration modules). Independent source/contract review
 found no blocker; `git diff --check` is clean.
-The combined 1756/416 candidate passes **452 focused tests**. Their independent
-source commits and literal reviews share one upcoming integration PR/release
-after the active 1754 follow-up; no design or acceptance criterion changes.
+The combined 1754/1756/416 candidate passes **532 focused tests**. Their independent
+source commits and literal reviews share PR1786/release with the approved
+1754 follow-up; no design or acceptance criterion changes.
 Independent B-row evidence review and both direct error-message regression
 tests pass. PR1762 merge `578d90b09` is an ancestor of the successful
 [three-OS release39256723703](https://github.com/tya5/chrona/actions/runs/39256723703).

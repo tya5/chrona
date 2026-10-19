@@ -74,8 +74,13 @@ not waived by this acceptance.
 
 Core owns canonical relation identity; Layout owns validated hint reuse and
 the exact as-of exclusion for member labels; Scene transports completed
-cone-ground policy; adapters infer none of these. This follow-up changes no
-product policy, schema, preset or generated public output.
+cone-ground policy; adapters infer none of these. The 1754 follow-up itself
+changes no product policy, schema, preset or generated public output.
+PR1786 also carries the independently reviewed
+[1756 colour checks](issue-1756-colour-customisation-acceptance-review-2026-10-20.md)
+and [416 network intent](issue-416-network-view-acceptance-review-2026-10-20.md);
+their contracts and combined snapshot are reviewed separately. The zero-change
+snapshot below proves the 1754 slice, not every later integrated change.
 
 Follow-up official snapshot: [39339520912](https://github.com/tya5/chrona/actions/runs/39339520912),
 source `693c3eb38c5649ead1ce26091167128b291a70ea`, artifact `12227948859`, ZIP SHA256
@@ -96,4 +101,6 @@ is superseded by successful exact-main release 39256723703, not ignored.
 
 The issue remains open until this follow-up review and controlled tests land
 and the required full three-OS/conformance/wheel/newest-Python release succeeds
-on their exact published main. Full pytest is delegated to CI.
+on their exact published main. The integrated candidate passes 532 focused
+tests across all three slices, including this issue's controlled labels.
+Full pytest is delegated to CI.
