@@ -9,8 +9,10 @@ precedence), Spec 24 (table headers), Spec 45 (legend vocabulary) and Spec 63 (t
 **Prerequisite: a CJK font.** Japanese text uses fonts installed in the environment; the product bundles none
 (font policy, #1281). Before the Japanese example below, install a CJK font (on Ubuntu, `sudo apt-get install -y
 fonts-noto-cjk`; macOS and Windows ship one) or the optional provider with
-`pip install -e packages/chrona-fonts-noto-cjk` from a clone. Without one, rendering Japanese fails with
-`E_FONT_GLYPH_UNAVAILABLE`.
+`pip install -e packages/chrona-fonts-noto-cjk` from a clone (the provider is not published; a wheel user follows
+the OS-installed route). Without one, rendering Japanese fails with `E_FONT_GLYPH_UNAVAILABLE`. The repository's
+wheel check exercises the clone route: it installs `packages/chrona-fonts-noto-cjk` into its clean environment
+before running the Japanese block.
 
 <!-- chrona:doc-check prerequisite: cjk-font -->
 

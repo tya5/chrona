@@ -53,6 +53,21 @@ in the chrona repository); if you meet one, quote it to the user and do not gues
 | `E_SKILL_OUTPUT_EXISTS` | `chrona skill copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
 | `E_RESOURCE_VERSION_UNSUPPORTED` | A preset copied by an older chrona is stale for this version. | Copy the preset again into a new directory and re-apply your edits. |
 
+## Forecast and baseline comparison (`render --forecast`, `--snapshot`)
+
+Every code the forecast path can emit. An object the `--snapshot` baseline does not contain is
+new: it draws normally, its baseline delta cell reads `new`, and the forecast skips its baseline
+comparison. A baseline object the current plan no longer has is removed: it draws as a baseline
+ghost row titled `... (removed)`, or, when the View shows no ghosts, is listed by `I_BASELINE_OBJECT_REMOVED`.
+
+| Code | Severity | What it means | What to change |
+| --- | --- | --- | --- |
+| `E_FORECAST_BASELINE_UNAVAILABLE` | error (exit 1) | A displayed object has no forecast schedule, or the baseline holds it as a different kind (span versus point). An object merely missing from the baseline is new, not this error. The message names the object and the cause. | Make the object schedulable, or pass a Snapshot in which it has the same kind. |
+| `E_FORECAST_PRESENTATION_REQUIRED` | error | An explicit-rows View shows a forecast object without a Snapshot track. | Add a `snapshot` item for that object to its row. |
+| `E_FIXED_TARGET_VIOLATION` | info in a forecast | A fixed date sits before what its predecessors now allow. | Tell the user; nothing was moved. |
+| `I_FORECAST_MOVED`, `I_FORECAST_START_UNOBSERVED`, `I_FORECAST_ROLLUP_OBSERVATION_CONFLICT` | info | Counts and notes about the forecast itself. | None. |
+| `I_BASELINE_OBJECT_REMOVED` | info | Baseline objects that the current plan no longer has, and that no ghost row shows (the View hides ghosts, or its rows are explicit). `objects` lists their ids and titles. | Tell the user which tasks were removed; use `comparison.baselineMarks: ghost` to draw them. |
+
 ## Warnings and notes (render succeeded, exit 0, in stdout.warnings)
 
 A warning has a `message` (what happened, then which label or placement) and its measured

@@ -41,7 +41,7 @@ from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
-    ForecastInfo, FieldGroupingSummariesOmitted,
+    ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved,
 )
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
@@ -335,6 +335,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler, request.extension_diagnostics,
                                                                               request.snapshot_extension_manifests)
     profile_info += tuple(ForecastInfo(item) for item in projection.forecast_findings)
+    if projection.removed_objects:
+        profile_info += (BaselineObjectsRemoved(projection.removed_objects),)
     if projection.omitted_group_summary_count:
         profile_info += (FieldGroupingSummariesOmitted(projection.omitted_group_summary_count),)
     unavailable = {item.details["figure"]: item.id for item in projection.unavailable_figures}
