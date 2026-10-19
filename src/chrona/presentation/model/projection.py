@@ -29,6 +29,21 @@ from chrona.presentation.review.lane_membership import (
 _SHARED_TRACK_SOURCE_ORDER = {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}
 
 
+class NetworkLabelSourceError(ValueError):
+    """A selected node's declared label field is present but is not text."""
+
+    code = "E_VIEW_NETWORK_LABEL_SOURCE"
+    source_ref = "/body/network/nodeLabel/source"
+
+    def __init__(self, object_id: str, title: str, value_type: str) -> None:
+        self.object_id = object_id
+        self.title = title
+        self.value_type = value_type
+        self.detail = (f"Network node {object_id!r} label source must resolve to a string or null; "
+                       f"found {value_type}. Select a text field, title or id.")
+        super().__init__(f"{self.code}: {self.detail}")
+
+
 class ObservationState(StrEnum):
     """One View-owned Actual availability fact at the declared as-of date."""
 
@@ -719,11 +734,15 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
         return next((ancestor for ancestor in reversed(entry.path[:-1])
                      if ancestor in selected_containers), None)
 
-    nodes = tuple(DependencyNetworkNode(item.object_id, item.title,
-                                        _network_order_key(item, view), item.critical, item.source_kind,
+    # Explicit timeline rows do not order `selected`. A network still has the
+    # same global ViewOrdering contract, without changing timeline row order.
+    ordered = list(selected)
+    _order(ordered, view, project)
+    nodes = tuple(DependencyNetworkNode(item.object_id, _network_node_label(item, view),
+                                        (ordinal,), item.critical, item.source_kind,
                                         is_container=item.object_id in selected_containers,
                                         container_id=selected_container_parent(item))
-                  for item in selected)
+                  for ordinal, item in enumerate(ordered))
     edges = []
     project_relations = project.get("relations", ())
     for identity, relation in zip(relation_identities(project_relations), project_relations):
@@ -746,19 +765,18 @@ def _dependency_network_projection(project: dict[str, Any], selected: list[Revie
         edges, key=lambda item: (item[0], item[1].relation_id))))
 
 
-def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
-    ordering = view.ordering
-    if ordering is None or ordering.by == "id":
-        value: Any = item.object_id
-    elif ordering.by == "title":
-        value = item.title
-    elif ordering.by == "plannedEnd":
-        value = item.planned.get("at", item.planned.get("end"))
-    elif ordering.by == "source":
-        value = item.source_index
-    else:
-        value = item.planned.get("start", item.planned.get("at"))
-    return (value, item.object_id)
+def _network_node_label(item: ReviewItem, view: ViewInput) -> str:
+    source = view.network.node_label_source if view.network is not None else "title"
+    if source is None or source == "title":
+        return item.title
+    if source == "id":
+        return item.object_id
+    value = item.field_bindings.read_result(item.fields, source, object_id=item.object_id).value
+    if value is None:
+        return item.title
+    if not isinstance(value, str):
+        raise NetworkLabelSourceError(item.object_id, item.title, type(value).__name__)
+    return value
 
 
 def _missing_actual_scope_mark(item: ReviewItem) -> str:

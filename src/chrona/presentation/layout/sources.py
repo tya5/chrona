@@ -123,11 +123,13 @@ OPTIONAL_METRICS = (
     "timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth",
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
     "network.node.paddingInline", "network.node.paddingBlock",
+    "network.member.gap",
 )
 
 _NON_NEGATIVE_METRICS = frozenset((
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
     "network.node.paddingInline", "network.node.paddingBlock",
+    "network.member.gap",
 ))
 
 

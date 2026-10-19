@@ -367,6 +367,13 @@ class ViewOrdering:
 
 
 @dataclass(frozen=True)
+class ViewNetworkIntent:
+    """Node label intent for the dependency-network surface, without geometry."""
+
+    node_label_source: str | FrozenDict | None = "title"
+
+
+@dataclass(frozen=True)
 class ViewWindow:
     mode: str
     start: str | None
@@ -476,6 +483,7 @@ class ViewInput:
     figure_formats: FrozenDict = field(default_factory=FrozenDict)
     profile_bindings: tuple[ViewProfileBinding, ...] = ()
     wording: FrozenDict | None = None
+    network: ViewNetworkIntent | None = None
 
 
 @dataclass(frozen=True)
@@ -948,6 +956,12 @@ def _in_authors_words(violation: SchemaViolation, value: Mapping[str, Any]) -> S
             f"the View declares no '{name}', so the Layout profile's viewDefaults supplied one without the required "
             f"property '{missing}'; declare '{name}' with '{missing}' in the View (at /body/{name})"))
     body = value.get("body") if isinstance(value, Mapping) else None
+    if (violation.pointer == "/body/network" and violation.rule == "not"
+            and isinstance(body, Mapping) and body.get("surface") == "table-timeline"
+            and "network" in body):
+        return replace(violation, message=(
+            "the network member requires surface: dependency-network; "
+            "table-timeline does not support network node intent"))
     rows = body.get("rows") if isinstance(body, Mapping) else None
     mode = rows.get("mode") if isinstance(rows, Mapping) else None
     if violation.rule == "not" and isinstance(mode, str) and "in this form; choose another value or change the mode" in violation.message:
@@ -1131,6 +1145,13 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     _validate_header_figures(grouping, figures)
     periods = _view_periods(body.get("periods", ()))
     _validate_period_figures(periods, figures)
+    raw_network = body.get("network")
+    network = None
+    if raw_network is not None:
+        node_label = raw_network.get("nodeLabel", FrozenDict())
+        source = node_label.get("source", "title")
+        network = ViewNetworkIntent(
+            freeze(source) if isinstance(source, Mapping) else source)
     labels = visibility.labels
     if isinstance(labels, Mapping) and labels.get("placement") == "both":
         # A path name opts into its matching table carrier. Every legacy form
@@ -1181,7 +1202,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         annotation_placement=body.get("annotationPlacement"),
         figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures),
         profile_bindings=profile_bindings,
-        wording=freeze(body["wording"]) if "wording" in body else None)
+        wording=freeze(body["wording"]) if "wording" in body else None,
+        network=network)
 
 
 def _view_deadlines(raw: Mapping[str, Any] | None) -> ViewDeadlines | None:

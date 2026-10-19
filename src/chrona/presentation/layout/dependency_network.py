@@ -98,6 +98,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
         raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/network") from error
     if min_inline <= 0 or min_block <= 0 or gap < 0:
         raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
+    member_gap = metric.get("network.member.gap", gap)
     title_placement = None
     if heading_text is None:
         if title_bounds is None:
@@ -113,7 +114,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
     by_rank: dict[int, list[Any]] = {}
     for node in sorted(nodes, key=lambda item: (ranks[item.object_id], item.order_key, item.object_id)):
         by_rank.setdefault(ranks[node.object_id], []).append(node)
-    placed, groups = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
+    placed, groups = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap, member_gap,
                           flow_direction == "horizontal", deadline_measured, deadline_style,
                           padding_inline=metric.get("network.node.paddingInline"),
                           padding_block=metric.get("network.node.paddingBlock"))
@@ -358,7 +359,7 @@ def _ranks(nodes: tuple[Any, ...], edges: tuple[Any, ...]) -> Mapping[str, int]:
 
 def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
                  measured: Mapping[str, MeasuredTextRun], bounds: Rect,
-                 min_inline: Decimal, min_block: Decimal, gap: Decimal,
+                 min_inline: Decimal, min_block: Decimal, gap: Decimal, member_gap: Decimal,
                  horizontal: bool, deadline_measured: Mapping[str, MeasuredTextRun] | None = None,
                  deadline_style: DeadlineInkStyle | None = None, *,
                  padding_inline: Decimal | None = None,
@@ -373,7 +374,8 @@ def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
         Decimal(str(measured[node.object_id].font_size)) / 2 if padding_block is None else padding_block)
         for node in nodes}
     boxes, groups = place_network_bands(nodes, ranks=ranks, sizes=dimensions, insets=insets,
-                                        bounds=bounds, gap=gap, horizontal=horizontal)
+                                        bounds=bounds, gap=gap, member_gap=member_gap,
+                                        horizontal=horizontal)
     result: list[NetworkNodePlacement] = []
     for node in nodes:
         rect = boxes[node.object_id]
