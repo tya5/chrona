@@ -1,0 +1,7 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: syn-observed
+body:
+  asOf: 2027-01-06
+  observations:
+  - {id: keep-1, sequence: 1, projectObjectId: keep, actual: {start: 2027-01-04, progress: 0.5}}
