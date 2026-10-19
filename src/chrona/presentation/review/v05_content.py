@@ -404,7 +404,7 @@ def _is_estimated_forecast_delta(item: Any, source: Any) -> bool:
 
 def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any], projection: ReviewProjection,
                    color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool,
-                   forecast_label: str | None = None) -> tuple[SurfaceLegendEntry, ...]:
+                   forecast_label: str | None = None, other_label: str | None = None) -> tuple[SurfaceLegendEntry, ...]:
     """Return typed legend entries exactly as Layout measures and draws them (#497, #871).
 
     The Detail Profile's own entries come first; a colour scale then adds one entry per
@@ -432,7 +432,7 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
     used = _used_scale_values(color_scale, projection)
     entities = project.get("entities", {})
     return entries + tuple(
-        SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else label)
+        SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else (other_label or label))
         for ref, label, _color in color_scale.legend_items(used))
 
 
@@ -476,7 +476,7 @@ def _default_legend_entries(entries: tuple[SurfaceLegendEntry, ...],
 
 def _style_legend_entries(
     rules: tuple[StyleRule, ...], intents: OccurrenceStyleIndex,
-    occurrences: tuple[Any, ...], style_fills: Any,
+    occurrences: tuple[Any, ...], style_fills: Any, other_label: str | None = None,
 ) -> tuple[tuple[SurfaceLegendEntry, ...], tuple[tuple[str, str], ...]]:
     """Build potential authored Style keys from evaluated occurrences and completed scales."""
     authored = tuple(rule for rule in rules
@@ -538,7 +538,7 @@ def _style_legend_entries(
             )
             identity = "scale:style:" + sha256(identity_payload.encode("utf-8")).hexdigest()
             entries.append(SurfaceLegendEntry(
-                identity, value_label, source_ref=identity, style_scope=scope,
+                identity, (other_label or value_label) if is_other else value_label, source_ref=identity, style_scope=scope,
                 style_value=value_label, style_occurrences=value_keys,
             ))
             paints.append((identity, color))
@@ -711,7 +711,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     resolver = wording_resolver(locale, view.wording)
     forecast_label = resolver.legend_text("forecast")
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed),
-                            forecast_label=forecast_label)
+                            forecast_label=forecast_label, other_label=resolver.legend_text("other"))
     if view.surface == "dependency-network" and projection.network is not None:
         visible_relation_ids = {fact.relation_id for fact in relations}
         selected_network_ids = {node.object_id for node in projection.network.nodes}
@@ -813,7 +813,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             reserved=scale_reserved, other_color=scale_other_color,
             encoding_sources=encoding_sources)
         style_legend, style_legend_paints = _style_legend_entries(
-            style_rules, intents, facts.occurrences, style_fills)
+            style_rules, intents, facts.occurrences, style_fills, resolver.legend_text("other"))
         content = replace(content, style_intents=intents,
                           style_matches=_style_match_index(intents, style_rules),
                           style_fills=style_fills,
@@ -1131,7 +1131,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                               project: Mapping[str, Any] | None = None, *,
                               omitted_metrics: frozenset[tuple[int, int]] = frozenset(),
                               summary_wording: Mapping[str, str] | None = None,
-                              unknown_text: str = "unknown") -> SummaryContent:
+                              unknown_text: str = "unknown",
+                              resolver: WordingResolver | None = None) -> SummaryContent:
     """Resolve summary-profile facts once, before source measurement and Layout."""
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
@@ -1193,7 +1194,9 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                     else f"{raw:+d}d" if formatter == "signedDays" and isinstance(raw, int)
                     else str(raw)
                 )
-                label = (summary_wording or {}).get(f"{panel.id}.{metric_id}", definition.label)
+                label = (summary_wording or {}).get(f"{panel.id}.{metric_id}")
+                if label is None:
+                    label = (resolver or wording_resolver("en-US", None)).resolve(definition.label)
                 if panel.presentation == "figures":
                     if inline:
                         runs.extend((

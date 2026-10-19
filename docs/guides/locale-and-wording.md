@@ -24,11 +24,11 @@ selects the **wording table**, a bundled, closed list of built-in texts, one com
 
 A table entry is used only where a file asks for it with a **wording reference**, `{wording: <key>}`. A
 text written as a plain string in a preset, View or Detail Profile is authored text and is never translated.
-The bundled presets reference the keys where the key's English text equals their wording: with the
-default preset `--locale ja-JP` reads `タスク`, `計画`, `本日`, `計画期間`, `実績`, `マイルストーン` and `依存関係`. A bundled
-label whose wording differs from every key (for example `Weekend`, `Planned`, a design's lower-case
-`current plan` or `gate`, or a design's own as-of label) is still a plain string and stays English. To
-localize it, reference a key or override it in your own copy of the preset (sections 3 and 4).
+The bundled presets reference the keys for the words they share with the table: with the
+default preset `--locale ja-JP` reads `タスク`, `計画`, `本日`, `計画期間`, `実績`, `マイルストーン` and `依存関係`, and the bundled
+legends read `予定`, `基準計画`, `現行計画`, `ゲート`, `祝日` and `休業日` (the closed-day key reads `Non-working day`, no longer
+`Weekend`). A bundled design's own voice (a title such as `THE KEY`, a marker such as `現在 NOW`, a subtitle) is authored text and is not translated.
+To localize any other label, reference a key or override it in your own copy of the preset (sections 3 and 4).
 
 The keys, with their `en-US` and `ja-JP` text:
 
@@ -49,14 +49,31 @@ The keys, with their `en-US` and `ja-JP` text:
 | `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, baseline, current plan | 予定, 基準計画, 現行計画 |
 | `legend.gate`, `legend.holiday` | gate, holiday | ゲート, 祝日 |
 | `summary.days` | DAYS | 日数 |
+| `legend.plan`, `legend.period`, `legend.depends-on` | Plan, Period, Depends on | 計画, 期間, 依存先 |
+| `legend.missing-actual`, `legend.missing-actual-in-progress` | Not yet observed, In progress, not yet observed | 未観測, 進行中・未観測 |
+| `legend.in-the-wings`, `legend.calendar-exception` | In the wings, Calendar exception | 出番待ち, カレンダー例外 |
+| `legend.other` | Other | その他 |
+| `column.no` | No | 番号 |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
-The legend draws labels in capitals in English (`TASK DURATION`); that is a typography choice, not part of
-the key's text.
+`column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
+(section 4), so a design that wants the shorter header in English and Japanese needs its own key. `legend.other` is the
+folded entry that a colour scale draws when there are more values than colours; the code names it, so it follows the locale
+and can be overridden with `wording.keys` or `wording.legend.other`.
 
-**Still English.** A text a preset author wrote as a plain string stays as written, and `summary.days` is a table
-key that has no place in a Summary Profile yet. Override or reference them in your own copy of the preset
-(sections 3 and 4). This page describes the tool as it is now.
+**Case belongs to the design, not to the key.** Every table value is neutral sentence case (`Today`, `Non-working day`).
+A design that draws `as of`, `actual` or `non-working day` in lower case, or `TODAY` in capitals, sets the existing
+typography `textTransform` token (`lowercase`, `uppercase`) on the role that draws the text (`legend` for the legend, `as-of-label`
+for the as-of marker) and references the same key; it does not need a key of its own. The legend draws
+`TASK DURATION` this way. A transform belongs to a role, so it applies to every entry of that legend and, for the as-of marker, to the
+date after the label too (`as of 20 feb`). Japanese has no case and is unchanged by a transform.
+
+**A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
+`label: {wording: summary.days}` (`DAYS` / `日数`); the View `wording.summary` entry still wins over it.
+
+**Still English.** A text a preset author wrote as a plain string stays as written (titles, a design's marker text, panel
+titles). Reference a key or override it in your own copy of the preset (sections 3 and 4). The Titlecard's secondary axis
+names its month table (`nameTable: en-US`) on purpose, so it stays English next to the Japanese months. This page describes the tool as it is now.
 
 ## 2. A small plan that crosses a year
 

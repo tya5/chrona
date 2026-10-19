@@ -27,6 +27,8 @@ BUILT_IN_WORDING_KEYS = (
     "missing.unknown", "missing.inProgress",
     "legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate", "legend.holiday",
     "column.owner", "column.number", "column.phase", "column.finishDelta", "summary.days",
+    "legend.plan", "legend.missing-actual", "legend.missing-actual-in-progress", "legend.in-the-wings",
+    "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
 )
 LOCALES = ("en-US", "ja-JP")
 

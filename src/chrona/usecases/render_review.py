@@ -384,7 +384,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project, omitted_metrics=omitted_metrics,
                                         summary_wording=(view.wording or {}).get("summary", {}),
-                                        unknown_text=wording_resolver(environment.locale, view.wording).text("missing.unknown"))
+                                        unknown_text=wording_resolver(environment.locale, view.wording).text("missing.unknown"),
+                                        resolver=wording_resolver(environment.locale, view.wording))
     summary = replace(summary, absent=bool(omitted_metrics) and not summary.panels)
     if render_closure.summary_profile is not None:
         ledger.summary()
