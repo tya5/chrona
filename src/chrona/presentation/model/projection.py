@@ -532,8 +532,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     ghosts_shown = bool(removed_ids) and not explicit and (
         forecast is not None or (view.comparison.baseline == "snapshot"
                                  and view.comparison.baseline_marks in {"ghost", "ghost-when-changed"}))
-    removed_items = [replace(snapshots[object_id], title=f"{snapshots[object_id].title} ({REMOVED_MARKER})")
-                     for object_id in removed_ids] if ghosts_shown else []
+    removed_items = [_removed_ghost(snapshots[object_id]) for object_id in removed_ids] if ghosts_shown else []
     hidden_removed = tuple((object_id, snapshots[object_id].title) for object_id in removed_ids) if not ghosts_shown else ()
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
     if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
@@ -867,6 +866,15 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
     return _forecast_member_label_ownership(tuple(output)), ()
+
+
+def _removed_ghost(item: ReviewItem) -> ReviewItem:
+    """The removed marker rides on the title and on the path title a `path` name source reads (#1755)."""
+    marked = f"{item.title} ({REMOVED_MARKER})"
+    titles = item.hierarchy_titles
+    if item.hierarchy_path and item.hierarchy_path[-1] == item.object_id and len(titles) == len(item.hierarchy_path):
+        titles = titles[:-1] + (marked,)
+    return replace(item, title=marked, hierarchy_titles=titles)
 
 
 def _removed_baseline_ids(snapshot_project: dict[str, Any] | None, snapshots: dict[str, ReviewItem],

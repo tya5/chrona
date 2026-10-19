@@ -135,3 +135,17 @@ def test_layout_composes_forecast_coordinates_with_existing_planned_geometry():
     assert mark.semantic_id == "forecast" and mark.placement_id == "planned:row:b"
     assert (float(mark.bounds.inline), float(mark.bounds.inline_size)) == (80., 20.)
     assert mark.start_port[0] == 80. and mark.end_port[0] == 100.
+
+
+@pytest.mark.parametrize("source", ["title", "path"])
+def test_removed_marker_survives_every_name_source(source):
+    from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key
+    from chrona.presentation.review.v05_content import display_value  # noqa: F401  (import check only)
+    project, actual, view, ordinary, forecast, snapshot, placements = _added_removed()
+    view = replace(view, visibility=ViewVisibility({"placement": "table", "content": [source]}, "none", "none"))
+    projected = build_review_projection(project, ordinary.placements, view, actual, snapshot_project=snapshot,
+                                        snapshot_placements=placements, forecast=forecast)
+    ghost = projected.rows[-1].items[0]
+    names = close_member_names(projected, view)
+    shown = names[member_name_key(ghost)] if source == "path" else ghost.title
+    assert shown.endswith("(removed)") and "Gone" in shown
