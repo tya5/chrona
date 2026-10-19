@@ -1,6 +1,10 @@
 # #416 Network View — work record
 
-Status: selected design for reviewer approval; implementation is not approved.
+Status: View selection/labels/order approved in
+[review 6257221150](https://github.com/tya5/chrona/issues/416#issuecomment-6257221150).
+Spacing belongs in Layout Profile; its existing-input migration boundary is
+awaiting [disposition](https://github.com/tya5/chrona/issues/416#issuecomment-6257252824).
+No product code yet.
 Baseline: published ready `8087e95c59fda483457eefda20a0177d94dbf798`.
 Authority: [issue and latest scope](https://github.com/tya5/chrona/issues/416#issuecomment-6256891542).
 
@@ -101,23 +105,29 @@ loses direction/tie-break behavior. Layout retains rank calculation, containment
 and deterministic object-ID ties; ordering changes neither edges nor ranks.
 HALCYON05's existing ascending planned-start/id order must remain unchanged.
 
-Retain `network.rank.gap` and add optional Theme metric `network.member.gap` in
-the same named-number channel as node padding. Unbound means the rank gap,
-preserving current output. Rank progression uses the former; secondary-axis
-sibling/container separation and its existing leading inset use the latter,
-in both flow directions. Values are finite nonnegative px, including zero;
-no new packing algorithm or port policy. The original issue's Layout Profile
-ownership assumption is outdated: current network metrics are Theme-bound.
+Put `network.member.gap` in Layout Profile, not Theme, as required by review.
+Rank progression and secondary-axis sibling/container separation (including
+the existing leading inset) are independent in both flow directions. Values
+are finite nonnegative distances, including zero; no new packing algorithm or
+port policy. Omission must preserve current placement, not introduce a borrowed
+numeric default. Current code actually reads node minima/rank gap from Theme's
+`measured_sources.metric_values`; Layout Profile has no network metric block.
+The reviewer is deciding whether this slice adds only the new Layout-owned gap
+or migrates all existing network geometry inputs and first-party resources.
+Do not add an undocumented override/compatibility channel while this is open.
 
-Architecture disposition: consistent with Specs06/07/09/13/50/56 and #1727.
+Architecture disposition: the approved View part is consistent with
+Specs06/07/09/13/50/56 and #1727. The spacing input boundary above is unresolved.
 Projection closes selected label text and ordinal intent; Layout measures that
 text, closes both spacings and all geometry; Scene/adapters remain unchanged.
 Core/scheduler and authored corpus stay unchanged. Shared schema references
 must not be copied. Update Specs06/07/50 before implementation; the issue record
 is the review proposal, not a replacement normative authority.
 
-Review requested on label-field missing/type rules, independent spacing scope,
-and explicit timeline refusal. Ports and new algorithms are out of scope.
-Implementation plan is not final until that review is resolved. Intended slices
-are (1) schema/typed intent and projection plus tests; (2) optional metric/layout
-closure plus tests; (3) SVG/PNG, HALCYON05 counts, literal review and release.
+Label-field missing/type rules, ordinal order and explicit timeline refusal
+are approved. Ports and new algorithms are out of scope. Finalize slices after
+the spacing disposition: (1) schema/typed intent and projection plus tests;
+(2) Layout Profile spacing closure plus tests; (3) SVG/PNG, HALCYON05 counts,
+literal review and release. Publish normative changes before code. Shared
+Specs06, projection.py and render_review.py are currently owned by B1766/1767;
+coordinate and wait for those merges before editing them.
