@@ -9,6 +9,7 @@ from chrona.presentation.layout.mark_geometry import complete_point_outline, sym
 from chrona.presentation.layout.surface_legend import _completed_point_key_parts
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.model.theme_paint import (
@@ -407,3 +408,62 @@ def test_ordinary_key_still_requires_its_declared_stroke_width():
         _batch((entry,), (("shape", _box(0, 0, 10, 10), "Rect", None, None),), request=request)
     assert error.value.diagnostic_id == "E_THEME_ROLE_REQUIRED"
     assert error.value.path == "/body/roles/planned/strokeWidth"
+
+
+def test_completed_encoded_pair_warning_uses_typed_scale_and_final_visible_figures():
+    blue = _paint(fill="#0000FF")
+    near_blue = _paint(fill="#0000FE")
+    encoded = SurfaceLegendEntry("scale:risk:high", "High", view_scale_id="risk",
+        view_scale_domain_value="high",
+        scale_collisions=(ScaleCollision("risk", "high", "medium", "normal", 0.0),))
+    semantic = SurfaceLegendEntry("semantic:milestone", "Milestone")
+    request = _theme_request()
+
+    visible = _batch((encoded, semantic), (
+        ("shape", _box(0, 0, 10, 10), "Rect", blue, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", near_blue, None),
+    ), request=request)
+    assert "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.127" in visible[0]
+
+    # Same-scale values remain the scale domain's responsibility.
+    same_scale = SurfaceLegendEntry("scale:risk:medium", "Medium", view_scale_id="risk",
+        view_scale_domain_value="medium", scale_collisions=encoded.scale_collisions)
+    same_scale_result = _batch((encoded, same_scale), (
+        ("shape", _box(0, 0, 10, 10), "Rect", blue, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", blue, None),
+    ), request=request)
+    assert not any(item.startswith("W_LEGEND_COLOR_NOT_SEPARABLE:") for item in same_scale_result[0])
+
+    # A suppressed/missing final text candidate is excluded even when its figure exists.
+    marks, shapes, relations, _text = [], [], [], []
+    shapes = [
+        SimpleNamespace(source_ref=encoded.source_identity, bounds=_box(0, 0, 10, 10),
+            kind="Rect", legend_paint=blue, legend_swatch_shape=None, visual_role=encoded.role,
+            path_commands=(), points=(), corner_radius=0, paint_channels=None),
+        SimpleNamespace(source_ref=semantic.source_identity, bounds=_box(20, 30, 20, 20),
+            kind="Rect", legend_paint=near_blue, legend_swatch_shape=None, visual_role=semantic.role,
+            path_commands=(), points=(), corner_radius=0, paint_channels=None),
+    ]
+    texts = (SimpleNamespace(placement_id=encoded.text_placement_id, content="High", overflow="fit"),
+             SimpleNamespace(placement_id=semantic.text_placement_id, content="Milestone", overflow="suppressed"))
+    hidden = completed_legend_diagnostics(request, (encoded, semantic), marks, shapes, relations, texts)
+    assert hidden == ((), ())
+
+    # A present label without a completed swatch figure is likewise not compared.
+    absent_figure = completed_legend_diagnostics(request, (encoded, semantic), marks[:0], shapes[:1], (),
+        (texts[0], SimpleNamespace(placement_id=semantic.text_placement_id,
+                                   content="Milestone", overflow="fit")))
+    assert not any(item.startswith("W_LEGEND_COLOR_NOT_SEPARABLE:") for item in absent_figure[0])
+
+
+def test_completed_encoded_warning_does_not_replace_swatch_collision_warning():
+    paint = _paint(fill="#0000FF")
+    encoded = SurfaceLegendEntry("scale:risk:high", "High", view_scale_id="risk",
+                                 view_scale_domain_value="high")
+    semantic = SurfaceLegendEntry("semantic:milestone", "Milestone")
+    result = _batch((encoded, semantic), (
+        ("shape", _box(0, 0, 10, 10), "Rect", paint, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", paint, None),
+    ), request=_theme_request())
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+    assert "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0" in result[0]

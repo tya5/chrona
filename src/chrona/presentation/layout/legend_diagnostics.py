@@ -243,14 +243,29 @@ def _colour_pair_diagnostics(encoded_entries, figures, color_vision=()):
             continue
         if left_scale is None and right_scale is None:
             continue
-        if left_scale and right_scale and left_scale == right_scale:
-            continue  # The domain owns same-scale pairs through its existing warning.
         for vision, min_delta in _palette_separation_failures(
                 figures.get(left.source_identity), figures.get(right.source_identity), color_vision):
+            if _covered_by_scale_collision(left, left_scale, right, right_scale, vision, min_delta):
+                continue
             identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{min_delta}"
             diagnostics.append(identity)
             provenance.append(DiagnosticProvenance(identity, (_subject(left), _subject(right))))
     return tuple(diagnostics), tuple(provenance)
+
+
+def _covered_by_scale_collision(left, left_scale, right, right_scale, vision, min_delta):
+    """Whether an existing typed domain finding exactly covers this completed pair."""
+    left_value, right_value = left.encoding_domain_value, right.encoding_domain_value
+    if (not left_scale or left_scale != right_scale or left_value is None or right_value is None
+            or left_value == right_value):
+        return False
+    return any(
+        collision.scale_id == left_scale
+        and {collision.first, collision.second} == {left_value, right_value}
+        and collision.vision == vision
+        and collision.delta_e == min_delta
+        for collision in (*left.scale_collisions, *right.scale_collisions)
+    )
 
 
 def completed_legend_diagnostics(request, entries, marks, shapes, relations, text):
@@ -277,4 +292,10 @@ def completed_legend_diagnostics(request, entries, marks, shapes, relations, tex
         right_figure = figures[right.source_identity]
         if left_figure is not None and left_figure == right_figure:
             emit("W_LEGEND_SWATCH_COLLISION", left, right)
+    pair_diagnostics, pair_provenance = _colour_pair_diagnostics(
+        tuple((entry, entry.encoding_scale_id) for entry in visible), figures,
+        request.theme_tokens.color_vision if request.theme_tokens is not None else (),
+    )
+    diagnostics.extend(pair_diagnostics)
+    provenance.extend(pair_provenance)
     return tuple(diagnostics), tuple(provenance)

@@ -1,10 +1,14 @@
+import pytest
+
 from chrona.presentation.layout.legend_diagnostics import (
     _colour_pair_diagnostics,
     _figure_ink_colours,
     _palette_separation_failures,
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
+from chrona.presentation.style import StyleLegendScope
 
 
 def _figure(*paints, modes=None):
@@ -107,7 +111,38 @@ def test_distinct_encoded_scales_are_compared_but_one_scale_domain_pair_is_skipp
     assert _colour_pair_diagnostics(((high, "risk"), (gate, "gate")), figures)[0] == (
         "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0",
     )
+    covered_high = SurfaceLegendEntry("risk:high", "HIGH", source_ref="risk:high",
+        view_scale_id="risk", view_scale_domain_value="high",
+        scale_collisions=(ScaleCollision("risk", "high", "gate", "normal", 0.0),))
+    covered_gate = SurfaceLegendEntry("gate:gate", "GATE", source_ref="gate:gate",
+        view_scale_id="risk", view_scale_domain_value="gate",
+        scale_collisions=covered_high.scale_collisions)
+    assert _colour_pair_diagnostics(((covered_high, "risk"), (covered_gate, "risk")), figures) == ((), ())
+
+
+def test_sharing_scale_does_not_suppress_same_value_or_uncovered_delta():
+    blue = _figure(_paint(("solid", "#0000FF")))
+    high = SurfaceLegendEntry("risk:high", "HIGH", view_scale_id="risk",
+                              view_scale_domain_value="high")
+    same_value = SurfaceLegendEntry("risk:high-alt", "HIGH (alternate)", view_scale_id="risk",
+                                    view_scale_domain_value="high")
+    facts = (ScaleCollision("risk", "high", "gate", "normal", 0.0),)
+    gate = SurfaceLegendEntry("gate:gate", "GATE", view_scale_id="risk",
+                              view_scale_domain_value="gate", scale_collisions=facts)
+    figures = {entry.source_identity: blue for entry in (high, same_value, gate)}
+
+    assert _colour_pair_diagnostics(((high, "risk"), (same_value, "risk")), figures)[0] == (
+        "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0",
+    )
     assert _colour_pair_diagnostics(((high, "risk"), (gate, "risk")), figures) == ((), ())
+
+    wrong_delta = (ScaleCollision("risk", "high", "gate", "normal", 0.001),)
+    uncovered = SurfaceLegendEntry("gate:gate", "GATE", view_scale_id="risk",
+                                   view_scale_domain_value="gate", scale_collisions=wrong_delta)
+    assert _colour_pair_diagnostics(((high, "risk"), (uncovered, "risk")),
+                                    {high.source_identity: blue, uncovered.source_identity: blue})[0] == (
+        "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0",
+    )
 
 
 def test_unencoded_pairs_and_missing_or_empty_figures_do_not_emit_findings():
@@ -151,4 +186,31 @@ def test_claimed_colour_vision_is_checked_with_the_existing_minimum_palette_dist
         DiagnosticSubject("legend-key:scale:gold", "GOLD (risk)"),
         DiagnosticSubject("legend-key:semantic:olive", "OLIVE (risk)"),
     )
+
+
+def test_view_and_style_entries_expose_their_typed_encoding_scale_identity():
+    view = SurfaceLegendEntry("scale:risk:high", "HIGH", view_scale_id="risk",
+                              view_scale_domain_value="high")
+    style = SurfaceLegendEntry("style:key", "High", style_scope=StyleLegendScope(
+        "severity", "high-risk", "severity-scale", "field:risk", None, False),
+        style_value="high")
+
+    assert view.encoding_scale_id == "risk"
+    assert view.encoding_domain_value == "high"
+    assert style.view_scale_id is None
+    assert style.encoding_scale_id == "severity-scale"
+
+
+@pytest.mark.parametrize("scale_id", ["", 3])
+def test_invalid_view_scale_identity_is_rejected(scale_id):
+    with pytest.raises(ValueError, match="non-empty string"):
+        SurfaceLegendEntry("scale:risk:high", "HIGH", view_scale_id=scale_id,
+                           view_scale_domain_value="high")
+
+
+def test_view_and_style_scale_identities_cannot_be_ambiguous():
+    scope = StyleLegendScope("severity", "high-risk", "severity-scale", "field:risk", None, False)
+    with pytest.raises(ValueError, match="both View and Style"):
+        SurfaceLegendEntry("style:key", "High", style_scope=scope, style_value="high",
+                           view_scale_id="risk", view_scale_domain_value="high")
 
