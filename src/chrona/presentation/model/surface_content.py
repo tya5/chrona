@@ -15,6 +15,7 @@ from chrona.presentation.model.projection import ObservationState, ReviewItem, d
 from chrona.presentation.model.style_rules import OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey, StyleOccurrence
 from chrona.presentation.model.style_fills import StyleFillIndex
 from chrona.presentation.model.legend_paint import RealizedLegendKey
+from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.hierarchy_names import NameKey, member_name_key, source_path
 from chrona.presentation.style import StyleLegendScope
 
@@ -234,8 +235,20 @@ class SurfaceLegendEntry:
     style_value: str | None = None
     style_occurrences: tuple[StyleOccurrenceKey, ...] = ()
     realized_key: RealizedLegendKey | None = None
+    view_scale_id: str | None = None
+    view_scale_domain_value: str | None = None
+    scale_collisions: tuple[ScaleCollision, ...] = ()
 
     def __post_init__(self) -> None:
+        if self.view_scale_id is not None:
+            if not isinstance(self.view_scale_id, str) or not self.view_scale_id:
+                raise ValueError("View legend scale identity must be a non-empty string")
+            if self.style_scope is not None:
+                raise ValueError("Legend entry cannot carry both View and Style scale identities")
+            if not isinstance(self.view_scale_domain_value, str):
+                raise ValueError("View legend scale identity requires its completed domain value")
+        elif self.view_scale_domain_value is not None:
+            raise ValueError("View legend domain value requires its scale identity")
         if self.style_scope is not None:
             if not isinstance(self.style_value, str):
                 raise ValueError("Style legend scope requires its completed domain value")
@@ -243,6 +256,16 @@ class SurfaceLegendEntry:
             object.__setattr__(self, "label", f"{title}: {self.style_value}" if title else self.style_value)
         elif self.style_value is not None:
             raise ValueError("Style legend value requires its scope provenance")
+
+    @property
+    def encoding_scale_id(self) -> str | None:
+        """The explicit encoding domain that owns this legend entry, if any."""
+        return self.style_scope.scale_id if self.style_scope is not None else self.view_scale_id
+
+    @property
+    def encoding_domain_value(self) -> str | None:
+        """The normalized value represented by this encoded key, if any."""
+        return self.style_value if self.style_scope is not None else self.view_scale_domain_value
 
     @property
     def source_identity(self) -> str:

@@ -54,8 +54,8 @@ def test_network_projection_closes_selected_project_containers_and_preserves_gro
     assert set(nodes) == {"outer", "inner", "task", "leaf", "empty"}
     assert "unselected" not in nodes
     assert [(node.object_id, node.is_container, node.container_id) for node in network.nodes] == [
-        ("outer", True, None), ("inner", True, "outer"), ("task", False, "inner"),
-        ("leaf", False, "outer"), ("empty", True, "outer"),
+        ("empty", True, "outer"), ("inner", True, "outer"), ("leaf", False, "outer"),
+        ("outer", True, None), ("task", False, "inner"),
     ]
     edge, = network.edges
     assert (edge.relation_id, edge.source_id, edge.source_endpoint, edge.target_id, edge.target_endpoint) == (
@@ -854,14 +854,16 @@ def test_source_ordering_is_also_a_tie_break_and_keeps_groups_together():
     assert _ordered("source", grouping=grouping) == ["zeta", "mid", "alpha"]
 
 
-def test_the_network_order_key_reads_the_declaration_order_too():
-    from chrona.presentation.model.projection import _network_order_key
+def test_network_projection_preserves_declared_source_order_as_completed_ordinals():
     view = ViewInput(None, None, ViewOrdering("source", "ascending", "id"), ViewWindow("selected-planned", None, None, 0),
                      ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
-                     ViewRows("automatic", ()), None, (), None, None, None)
+                     ViewRows("automatic", ()), None, (), None, None, None, surface="dependency-network")
     late = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1)}, None, None, (), source_index=5)
     early = ReviewItem("b", "B", "span", {"start": date(2026, 9, 1)}, None, None, (), source_index=1)
-    assert sorted((late, early), key=lambda item: _network_order_key(item, view)) == [early, late]
+    project = {"objects": {"a": {"type": "task"}, "b": {"type": "task"}}, "relations": []}
+    network = _dependency_network_projection(project, [late, early], view, {})
+    assert [node.object_id for node in network.nodes] == ["b", "a"]
+    assert [node.order_key for node in network.nodes] == [(0,), (1,)]
 
 
 def test_ghost_when_changed_draws_a_ghost_only_where_the_baseline_moved():

@@ -37,6 +37,16 @@ require an authored scoped-legend title on the existing View input. Domain
 derivation, Theme/Scheme scale completion and missing-value diagnostics retain
 the rules below.
 
+Consequently a normal point with the declared `gate` paint role is not encoded
+by `target: planned`, while its forecast occurrence remains `forecast` and is
+eligible (#1756). This is the general semantic-target rule, not a target-b or
+Project-specific exception. A Theme that omits the optional `gate` role keeps
+ordinary points on their existing `planned` fallback, so this encoding applies
+to both ordinary and forecast points. A Theme that declares `gate` instead
+gives ordinary points its static gate paint. An explicit `gate` Style fill
+encoding is not currently admitted; do not suggest it as an author workaround.
+Forecast mode does not implicitly broaden an authored selector.
+
 Style encodings use the same scale resolver (Spec07), with eligibility already
 established by their source occurrence. The resolver's legacy `target` metadata
 is optional internally and does not select paint; View input still requires its
@@ -170,6 +180,33 @@ non-fatal `W_PRESENTATION_SCALE_NOT_SEPARABLE` naming the scale, both values,
 the vision and the difference. It is reported in the CLI and as the Scene
 diagnostic `W_PRESENTATION_SCALE_NOT_SEPARABLE:<scale>:<first>:<second>:<vision>`.
 Rendering continues. Committed evidence carries no such diagnostic.
+
+After final legend filtering and placement, an encoded key is also compared
+with each other surviving legend meaning (including a different scale).
+Use this same floor, normal vision and the Scheme's claimed simulations;
+explicit slots are not exempt. Retain a domain diagnostic instead of duplicating
+it only when its closed `ScaleCollision` covers both realized domain values,
+the same scale, vision and measured minimum difference. Sharing a scale name
+alone is not coverage: different Style scopes or field sources can have
+distinct meanings for the same value, which no distinct-domain-value check
+compares. Such surviving key pairs still receive the legend warning.
+Compare concrete effective
+fill colours, or visible stroke colours when a key has no fill; a shared border
+does not make two differently filled keys collide. Multipart keys contribute
+their visible fill colours. Do not invent a representative colour for a
+gradient or infer colours from source fields, role names or drawing IDs.
+
+A pair below the floor emits non-fatal `W_LEGEND_COLOR_NOT_SEPARABLE`, identifying
+both completed key meanings, labels and source identities, the vision and
+minimum colour difference. This is a colour warning, independent of exact
+whole-figure equality in Spec 28. Hidden candidate keys do not participate.
+It neither repaints the keys nor changes palette folding, placement or render
+success. Presentation carries explicit scale identity with encoded keys;
+Layout checks final completed ink and labels, Scene transports the diagnostics,
+and adapters do not reinterpret them. Encoded keys carry their explicit domain
+value as well as scale identity, and presentation supplies existing typed
+scale-collision facts for duplicate detection. Layout does not reconstruct
+either fact from drawing IDs or rerun source-field/scale resolution.
 
 ## 6. Non-goals
 

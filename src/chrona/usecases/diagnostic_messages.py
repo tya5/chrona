@@ -293,6 +293,14 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
         first, second = (_items(payload.get("values")) + ["?", "?"])[:2]
         return WarningText(f"two colors of scale {payload.get('scaleId')} are not separable under "
                            f"{payload.get('vision')} vision", f"{first} and {second}")
+    if code == "W_LEGEND_COLOR_NOT_SEPARABLE":
+        details = identity.removeprefix(code).removeprefix(":").split(":")
+        if len(details) == 2 and all(details):
+            vision, min_delta = details
+            return WarningText(f"two completed legend meanings are not separable under {_bounded_text(vision, 32)} vision",
+                               f"minimum colour difference ΔE={_bounded_text(min_delta, 24)}")
+        return WarningText("two completed legend meanings are not separable",
+                           "minimum colour difference unavailable")
     if code == "W_PROJECT_ATTACHED_OUTSIDE_HOST":
         return WarningText(f"an attached object is dated outside the planned span of its host {payload.get('host')}",
                            str(payload.get("sourceRef")))
