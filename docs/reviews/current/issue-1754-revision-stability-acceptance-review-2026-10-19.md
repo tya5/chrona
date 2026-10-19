@@ -77,6 +77,14 @@ the exact as-of exclusion for member labels; Scene transports completed
 cone-ground policy; adapters infer none of these. This follow-up changes no
 product policy, schema, preset or generated public output.
 
+Follow-up official snapshot: [39339520912](https://github.com/tya5/chrona/actions/runs/39339520912),
+source `693c3eb38c5649ead1ce26091167128b291a70ea`, artifact `12227948859`, ZIP SHA256
+`64ba4c09c8ae198ad13d304943faf979acc289df010d6f347335a5f6d19bcd13`.
+All 109 before/after paths are byte-identical (50 SVG, 50 Scene, 9 reports);
+zero changes or retirements. All validation/test jobs pass; only the exact-base
+gate fails after reviewer1785 advances main. That guard is retained; final CI
+must follow the next coordinated ready main before landing.
+
 The original PR's official snapshot
 [39174351117](https://github.com/tya5/chrona/actions/runs/39174351117)
 changed 50 SVG and 50 Scene files, retired none; after canonical-ID matching,
