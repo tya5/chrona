@@ -6,6 +6,10 @@ Status: implementation review, **not release accepted**. Product source
 [work record](../../planning/active/issue-1754-revision-stability-work-record-2026-10-19.md).
 Trial inputs are unchanged
 [`bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
+Implementation landed via #1769. Native release
+[39177155559](https://github.com/tya5/chrona/actions/runs/39177155559)
+on `137eed375` passed Windows/macOS but failed Ubuntu's clean-wheel Japanese
+guide command (missing optional CJK font provider); release remains unaccepted.
 
 | # | Literal acceptance criterion | Status and evidence |
 | ---: | --- | --- |
@@ -13,6 +17,15 @@ Trial inputs are unchanged
 | 2 | target-b with `--previous-scene` uses the hints (receipts show accepted hints), or reports why not. | Met in trial CLI receipts: target-b weeks 2/3/4 accept 40/13/40 hints. Nonaccepted instances have invalidated, unusable or absent receipts. No receipt-exposure change was needed. |
 | 3 | A synthetic slip that does not touch a relation's endpoints keeps that relation's route; no new through-mark crossing appears where a detour exists. | Met locally: `tests/integration/test_revision_route_corridor.py`, both policies; unchanged endpoint geometry, retained valid corridor, invalidated blocked hint and actual mark-clear replacement path, without relaxed recovery. CI/release pending. |
 | 4 | Re-running trial 8 with hints: the changed-primitive count of unchanged objects falls, and the table is posted on the issue. executive-light labels of unchanged tasks do not toggle with the as-of line. | **Not met as a whole.** Weeks 1–4 measured below; week 5 fails with `E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit`, dependent on [1755](https://github.com/tya5/chrona/issues/1755). Same-candidate raw changes do not fall overall. Label placement excludes only the as-of line, with direct synthetic negative controls; remaining route-driven changes are not claimed resolved. |
+
+Controlled S3 evidence: `7e1234689` adds six cases holding marks, routes and
+deadline geometry fixed while moving only the as-of line through six positions
+inside/outside the actual name footprint. The full placement batch and every
+other completed obstacle remain identical, including required/final and
+route-free reservation modes. Final names still avoid a fixed blocking route;
+reservations retain their existing route-free policy. Both member-label unit
+modules pass 38 tests. This proves the line-only invariant, not the outstanding
+full-trial changed-primitive improvement or the cause of every observed toggle.
 
 ## Trial comparison
 
