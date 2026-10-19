@@ -23,9 +23,17 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
             return original(*args, **kwargs)
         return wrapper
 
-    for attribute, name in (("compose_surface_routes", "routes"), ("place_relation_labels", "relation-labels")):
-        monkeypatch.setattr(surface_route_label_plan, attribute,
-                            spy(name, getattr(surface_route_label_plan, attribute)))
+    monkeypatch.setattr(surface_route_label_plan, "compose_surface_routes",
+                        spy("routes", surface_route_label_plan.compose_surface_routes))
+    relation_label_owner = surface_route_label_plan.place_relation_labels
+
+    def relation_label_spy(context, batch, *, terminal):
+        assert isinstance(terminal, bool)
+        name = "terminal-labels" if terminal else "ordinary-relation-labels"
+        events.append(name)
+        return relation_label_owner(context, batch, terminal=terminal)
+
+    monkeypatch.setattr(surface_route_label_plan, "place_relation_labels", relation_label_spy)
     for attribute, name in (("reserve_potential_legend", "legend"), ("place_notes", "notes"),
                             ("complete_footer_band", "footer"), ("place_summary", "summary"),
                             ("recompose_realized_legend", "realized-legend")):
@@ -45,11 +53,12 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
     main()
 
     # A name-recovery retry may rehearse one additional route/label trial, but
-    # each trial keeps its Layout-owned pair ordered before source-content phases.
+    # each trial keeps its Layout-owned label phases before source-content phases.
     trials = events.count("routes")
     assert trials in {1, 2}
-    assert events[:2 * trials] == ["routes", "relation-labels"] * trials
-    assert events[2 * trials:] == ["legend", "footer", "summary", "realized-legend"]
+    route_phases = ["routes", "terminal-labels", "ordinary-relation-labels"] * trials
+    assert events[:len(route_phases)] == route_phases
+    assert events[len(route_phases):] == ["legend", "footer", "summary", "realized-legend"]
 
 
 def test_source_content_phases_take_no_obstacle_index() -> None:
