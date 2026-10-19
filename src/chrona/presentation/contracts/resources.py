@@ -491,7 +491,7 @@ class ViewProfileBinding:
 @dataclass(frozen=True)
 class SummaryMetric:
     id: str
-    label: str
+    label: str | FrozenDict  # a literal, or a `{wording: key}` reference until the render resolves it (#1724)
     source: str | FrozenDict
     format: str
     scope: str | None
@@ -1642,6 +1642,10 @@ def _validate_view_fallback(raw_fallback: Any) -> None:
             raise ValueError(f"E_VIEW_FALLBACK_INVALID:{name}")
 
 
+def _summary_label(value: Any) -> str | FrozenDict:
+    return value if isinstance(value, FrozenDict) else str(value)
+
+
 def _summary_input(body: FrozenDict) -> SummaryProfileInput:
     panels: list[SummaryPanelInput] = []
     for panel_index, panel in enumerate(body["panels"]):
@@ -1652,7 +1656,7 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
             if isinstance(definition, FrozenDict):
                 token = _pointer_token(str(metric_id)) if isinstance(declared, FrozenDict) else str(metric_index)
                 path = f"/body/panels/{panel_index}/metrics/{token}"
-                metrics.append(SummaryMetric(str(metric_id), str(definition.get("label", metric_id)), definition["source"],
+                metrics.append(SummaryMetric(str(metric_id), _summary_label(definition.get("label", metric_id)), definition["source"],
                                              str(definition["format"]), str(definition["scope"]) if "scope" in definition else None,
                                              declaration_path=path))
             else:

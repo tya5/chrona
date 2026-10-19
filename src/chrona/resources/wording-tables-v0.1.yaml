@@ -33,6 +33,15 @@ tables:
     column.phase: Phase
     column.finishDelta: "Δ finish"
     summary.days: DAYS
+    legend.plan: Plan
+    legend.missing-actual: Not yet observed
+    legend.missing-actual-in-progress: In progress, not yet observed
+    legend.in-the-wings: In the wings
+    legend.calendar-exception: Calendar exception
+    legend.period: Period
+    legend.depends-on: Depends on
+    legend.other: Other
+    column.no: "No"
   ja-JP:
     column.task: タスク
     column.plan: 計画
@@ -66,3 +75,12 @@ tables:
     column.phase: フェーズ
     column.finishDelta: Δ完了
     summary.days: 日数
+    legend.plan: 計画
+    legend.missing-actual: 未観測
+    legend.missing-actual-in-progress: 進行中・未観測
+    legend.in-the-wings: 出番待ち
+    legend.calendar-exception: カレンダー例外
+    legend.period: 期間
+    legend.depends-on: 依存先
+    legend.other: その他
+    column.no: 番号
