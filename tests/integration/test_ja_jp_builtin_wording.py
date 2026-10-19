@@ -10,11 +10,13 @@ from pathlib import Path
 import re
 
 import pytest
+import yaml
 
 from chrona.presentation.model.wording_tables import wording_catalog
 from chrona.resources import safe_load
 from tests.integration import test_realized_legends as legends
 from tests.support import synthetic_review as sr
+from tests.support.text_treatments import CJK_DESCRIPTOR
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,6 +83,15 @@ def _yuya_preset():
     return parts, safe_load((YUYA / "detail.yaml").read_bytes()), ICONS
 
 
+def _font_descriptor(directory):
+    """The bundled faces plus the Noto CJK provider's, so no run depends on the faces the operating system has."""
+    descriptor = safe_load((ROOT / "src/chrona/resources/fonts/default-font-metrics.yaml").read_bytes())
+    descriptor["assets"] = [*descriptor["assets"], *safe_load(CJK_DESCRIPTOR.read_bytes())["assets"]]
+    path = directory / "font-metrics.yaml"
+    path.write_text(yaml.safe_dump(descriptor, sort_keys=False), encoding="utf-8")
+    return path
+
+
 def _render(tmp_path, preset, locale, *, lanes):
     parts, detail, icons = preset()
     if lanes:
@@ -89,7 +100,8 @@ def _render(tmp_path, preset, locale, *, lanes):
         parts["view"]["body"]["tableColumns"][0]["header"] = {"wording": "column.task"}
         parts["view"]["body"]["tableColumns"][1]["header"] = "変化"
     review = sr.render(tmp_path, _source(), presentation=parts, actual=legends.ACTUAL, detail=detail,
-                       viewport=(1800, 1000), icon_catalogs=icons, locale=locale)
+                       viewport=(1800, 1000), icon_catalogs=icons, locale=locale,
+                       font_metrics_path=_font_descriptor(tmp_path))
     return _scene_texts(review), _authored_labels(parts["view"], parts["layout"], detail)
 
 
