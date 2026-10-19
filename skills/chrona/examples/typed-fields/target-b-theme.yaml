@@ -1,0 +1,10 @@
+version: chrona/theme/v0.16
+kind: theme
+id: target-b-risk
+body:
+  extends:
+    id: target-b
+    path: looks/target-b/theme.yaml
+  colorScales:
+    series:
+      slots: {low: risk-low, medium: risk-medium, high: risk-high}
