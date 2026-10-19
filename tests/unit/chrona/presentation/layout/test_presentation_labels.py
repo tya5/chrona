@@ -139,6 +139,37 @@ def test_declared_visible_fallback_side_is_used_only_after_legal_candidates_fail
                     visible_fallback_side="above")
 
 
+def test_visible_fallback_still_obeys_hard_candidate_filter_in_declared_order():
+    obstacles = SurfaceObstacleIndex()
+    anchor = LabelRect(50, 50, 10, 10)
+    size = (5, 5)
+    for side in ("above", "below", "start", "end"):
+        candidate = {
+            "above": LabelRect(52.5, 44, 5, 5),
+            "below": LabelRect(52.5, 61, 5, 5),
+            "start": LabelRect(44, 52.5, 5, 5),
+            "end": LabelRect(61, 52.5, 5, 5),
+        }[side]
+        obstacles.add(SurfaceObstacle(f"mark:{side}", "mark", "timeline",
+            ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom)))
+
+    result = place_label(anchor, size, ("above", "below", "start", "end"),
+        bounds=LabelRect(0, 0, 100, 100), obstacles=obstacles, gap=1,
+        overflow="visible-overflow", candidate_filter=lambda candidate: candidate.x > 60,
+        classes=("mark",))
+
+    assert result.side == "end"
+    assert result.bounds == LabelRect(61, 52.5, 5, 5)
+    assert result.visible_overflow
+
+
+def test_visible_fallback_with_no_filter_legal_candidate_is_unplaceable():
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
+        place_label(LabelRect(10, 10, 5, 5), (4, 4), ("above", "below"),
+            bounds=LabelRect(0, 0, 30, 30), overflow="visible-overflow",
+            candidate_filter=lambda _candidate: False)
+
+
 def test_member_name_end_candidate_is_capped_and_uses_start_before_suppression():
     anchor = LabelRect(40, 45, 10, 10)
     bounds = LabelRect(0, 0, 100, 100)

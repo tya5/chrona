@@ -6,6 +6,14 @@ to override any of them from a View. Every file below is written by the document
 every command runs, so the page cannot drift from the tool. The rules are Spec 06 section 9.3 (wording
 precedence), Spec 24 (table headers), Spec 45 (legend vocabulary) and Spec 63 (the wording tables).
 
+**Prerequisite: a CJK font.** Japanese text uses fonts installed in the environment; the product bundles none
+(font policy, #1281). Before the Japanese example below, install a CJK font (on Ubuntu, `sudo apt-get install -y
+fonts-noto-cjk`; macOS and Windows ship one) or the optional provider with
+`pip install -e packages/chrona-fonts-noto-cjk` from a clone. Without one, rendering Japanese fails with
+`E_FONT_GLYPH_UNAVAILABLE`.
+
+<!-- chrona:doc-check prerequisite: cjk-font -->
+
 ## 1. What `--locale` changes by itself
 
 `--locale en-US` is the default; `ja-JP` is the other supported value. The locale selects the language of

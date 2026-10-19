@@ -523,7 +523,14 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             side_size = geometry.size if geometry is not None else size
             side_gap = geometry.gap if geometry is not None else gap
             try:
-                return LabelPlacement(side, _visible_candidate(anchor, side_size, side, side_gap), True,
+                candidate = _visible_candidate(anchor, side_size, side, side_gap)
+                # A visible fallback may leave its declared bounds, but a
+                # caller's hard geometric filter still applies. In particular,
+                # terminal route text may overflow the plot, never other text.
+                if candidate_filter is not None and not candidate_filter(candidate):
+                    obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
+                    continue
+                return LabelPlacement(side, candidate, True,
                                       canonical_obstructions=tuple(obstructions))
             except ValueError as exc:
                 if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
