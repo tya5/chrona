@@ -2,7 +2,7 @@ version: chrona/review-detail-profile/v0.1
 id: chrona-builtin-technical-print-detail
 body:
   legend:
-    - {role: planned, label: Planned}
+    - {role: planned, label: {wording: legend.planned-plain}}
     - {role: actual, label: {wording: legend.actual}}
     - {role: milestone, label: {wording: legend.milestone}}
     - {role: dependency, label: {wording: legend.dependency}}

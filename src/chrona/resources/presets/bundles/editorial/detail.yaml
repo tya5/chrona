@@ -7,4 +7,4 @@ body:
     - {role: milestone, label: {wording: legend.milestone}}
     - {role: dependency, label: {wording: legend.dependency}}
     - {role: asOf, label: {wording: legend.asOf}}
-    - {role: calendar-closed, label: Weekend}
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}
