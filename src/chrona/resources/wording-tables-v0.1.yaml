@@ -74,7 +74,7 @@ tables:
     column.number: 番号
     column.phase: フェーズ
     column.finishDelta: Δ完了
-    summary.days: 日数
+    summary.days: 日
     legend.plan: 計画
     legend.missing-actual: 未観測
     legend.missing-actual-in-progress: 進行中・未観測
