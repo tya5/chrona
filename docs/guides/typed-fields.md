@@ -145,11 +145,9 @@ not edited; you declare the scale in your own files and pass them over the prese
 1. **Scheme categories.** A Scheme names colours; add one category per domain value (`risk-low`,
    `risk-medium`, `risk-high`) to a copy of the preset's Color Scheme. Choose colours that keep a
    3:1 contrast against the page, or the render warns `W_SCENE_ENCODING_CONTRAST`.
-2. **A derived Theme.** `chrona/theme/v0.16` names a pinned base Theme (`extends`: its `id`, a `path`
-   below the Theme file with no `..`, and the base's `sourceContentIdentity` and `contentIdentity`) and
-   declares only what it adds. `colorScales.series.slots` maps each domain value to a Scheme category.
-   `chrona preset copy` writes the base files first; if a bundled Theme changes, the pins fail with
-   `E_THEME_INHERITANCE_SOURCE_IDENTITY` and you copy the preset again.
+2. **A derived Theme.** `chrona/theme/v0.16` names its base Theme (`extends`: the base's `id` and a `path`
+   below the Theme file, with no `..`; no hash is needed) and declares only what it adds. `colorScales.series.slots` maps each domain value to a Scheme category.
+   `chrona preset copy` writes the base files first.
 
 The `executive-light` pair, with the Scheme file shown whole:
 
@@ -199,8 +197,6 @@ body:
   extends:
     id: chrona-builtin-executive-light
     path: looks/executive-light/theme.yaml
-    sourceContentIdentity: sha256:48893d4568deb4f20998946d456c183a65a4c67e58bbcaa6bcac74918625af15
-    contentIdentity: sha256:95ebbc5bd21495822974a7f7bde5234b779941706a47b187f066a20c618dd37c
   roles:
     subtitle:
       fontFamily: editorial
@@ -283,8 +279,6 @@ body:
   extends:
     id: target-b
     path: looks/target-b/theme.yaml
-    sourceContentIdentity: sha256:f2bc4f4fd79577764a7735c6403de0a1636284c371faaf31fe26aa0cfaa9c6fe
-    contentIdentity: sha256:a9ec9667f19670527ac1e1e019f8e5a9de01b10bfbe9380e43e07310cc7d07e3
   colorScales:
     series:
       slots: {low: risk-low, medium: risk-medium, high: risk-high}
@@ -298,7 +292,7 @@ chrona render typed-plan.yaml --preset target-b --view typed-risk-view.yaml --th
 ```
 
 Both pictures colour the bars green, amber and red and name `low`, `medium` and `high` in the legend.
-`marquee` follows the same two steps with its own Scheme copy and base pins (not shown). The View
+`marquee` follows the same two steps with its own Scheme copy (not shown). The View
 groups by `team` because `target-b`'s Layout tints its group bands and refuses `grouping: none`;
 `executive-light` ignores the grouping.
 

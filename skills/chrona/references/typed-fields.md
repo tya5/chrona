@@ -132,9 +132,8 @@ Each bar takes the colour of its `risk` value, the axis shows the months and the
 
 Those presets fail with `E_PRESENTATION_SCALE_MAPPING ... slots=None`. Do not edit the preset; give your own
 Scheme (a category per domain value, 3:1 contrast against the page) and a derived Theme (`chrona/theme/v0.16`:
-`extends` pins the copied base by `path` below the Theme file (here `looks/`, no `..`), `sourceContentIdentity` and `contentIdentity`)
-whose `colorScales.series.slots` maps each value to a category. If a bundled Theme changes the pins fail with
-`E_THEME_INHERITANCE_SOURCE_IDENTITY`: copy the preset again. `executive-light`:
+`extends` names the copied base by `id` and a `path` below the Theme file, here `looks/`, no `..`; no hash)
+whose `colorScales.series.slots` maps each value to a category. `executive-light`:
 
 ```yaml examples/typed-fields/executive-scheme.yaml
 version: chrona/color-scheme/v0.2
@@ -180,8 +179,6 @@ body:
   extends:
     id: chrona-builtin-executive-light
     path: looks/executive-light/theme.yaml
-    sourceContentIdentity: sha256:48893d4568deb4f20998946d456c183a65a4c67e58bbcaa6bcac74918625af15
-    contentIdentity: sha256:95ebbc5bd21495822974a7f7bde5234b779941706a47b187f066a20c618dd37c
   roles:
     subtitle:
       fontFamily: editorial

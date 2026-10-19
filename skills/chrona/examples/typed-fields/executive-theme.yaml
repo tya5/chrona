@@ -5,8 +5,6 @@ body:
   extends:
     id: chrona-builtin-executive-light
     path: looks/executive-light/theme.yaml
-    sourceContentIdentity: sha256:48893d4568deb4f20998946d456c183a65a4c67e58bbcaa6bcac74918625af15
-    contentIdentity: sha256:95ebbc5bd21495822974a7f7bde5234b779941706a47b187f066a20c618dd37c
   roles:
     subtitle:
       fontFamily: editorial

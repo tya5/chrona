@@ -5,8 +5,6 @@ body:
   extends:
     id: target-b
     path: looks/target-b/theme.yaml
-    sourceContentIdentity: sha256:f2bc4f4fd79577764a7735c6403de0a1636284c371faaf31fe26aa0cfaa9c6fe
-    contentIdentity: sha256:a9ec9667f19670527ac1e1e019f8e5a9de01b10bfbe9380e43e07310cc7d07e3
   colorScales:
     series:
       slots: {low: risk-low, medium: risk-medium, high: risk-high}
