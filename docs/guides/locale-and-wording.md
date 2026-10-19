@@ -43,16 +43,20 @@ The keys, with their `en-US` and `ja-JP` text:
 | `legend.critical-edge` | Critical dependency | クリティカルな依存関係 |
 | `legend.forecast`, `legend.progressFill`, `legend.snapshot`, `legend.deadlineMark` | Forecast (* estimated), Progress, Baseline, Deadline | 予測（*は推定）, 進捗, 基準計画, 期限 |
 | `missing.unknown`, `missing.inProgress` | unknown, in progress | 不明, 進行中 |
+| `column.lane`, `column.items` | Lane, Items | レーン, 件数 |
+| `column.owner`, `column.number`, `column.phase`, `column.finishDelta` | Owner, No., Phase, Δ finish | 担当, 番号, フェーズ, Δ完了 |
+| `legend.actual-ahead`, `legend.actual-on-track`, `legend.actual-behind` | Ahead, On track, Behind | 前倒し, 予定どおり, 遅れ |
+| `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, baseline, current plan | 予定, 基準計画, 現行計画 |
+| `legend.gate`, `legend.holiday` | gate, holiday | ゲート, 祝日 |
+| `summary.days` | DAYS | 日数 |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 The legend draws labels in capitals in English (`TASK DURATION`); that is a typography choice, not part of
 the key's text.
 
-**Still English.** Some built-in texts are not table keys yet, so `--locale ja-JP` does not translate them:
-the default `Progress` label of the progress fill (it appears as `PROGRESS`), the default lane-table
-headers (`Lane`, `Items`) and the Actual qualifiers (`Ahead`, `On track`, `Behind`). Override them with
-`wording.legend` (section 4). A later change may move them into the table; this page describes the tool
-as it is now.
+**Still English.** A text a preset author wrote as a plain string stays as written, and `summary.days` is a table
+key that has no place in a Summary Profile yet. Override or reference them in your own copy of the preset
+(sections 3 and 4). This page describes the tool as it is now.
 
 ## 2. A small plan that crosses a year
 
@@ -251,7 +255,7 @@ chrona render locale-plan.yaml --view locale-view.yaml --detail locale-detail.ya
 In the Japanese picture the headers read `タスク` and `予定`, the marker and the `legend.asOf` entry read
 `本日`, and the legend reads `計画期間`, `実績`, `マイルストーン`, `依存関係` and the override
 `休日`. The English picture is the same file set without the flag: `Task`, `TODAY`, `TASK DURATION` and so on.
-`PROGRESS` stays English in both (section 1).
+The progress fill reads `進捗` in Japanese and `PROGRESS` in English.
 
 ## 4. Override any key from a View
 

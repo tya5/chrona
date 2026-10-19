@@ -33,7 +33,7 @@ schemas:
     state: live
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
-      markerPresentation: "sha256:a15f2f9e08b892e037e9fd75f72f443b26f26fa09ef2d653a3959701bcfd6791"
+      markerPresentation: "sha256:df0e4ab2c3ca7a70a81ad997f1046f9c2824f0d36862d57d54125753994d2401"
       periodLabelPresentation: "sha256:7bf332f1bcd2dae6c8cee3e438567a540c7e83a87f4cfbfb54e7d19ee02df7e3"
       periodLabelSelection: "sha256:276f3487e4c0d0037858a6d842789baab1e53c14833e18dcfacdd7df3d7beec7"
       visualPresentation: "sha256:9dd63598ad4a0a0fe77a4ecf066ba7a5db17bdf62859155a2e658411105a6351"
@@ -83,7 +83,7 @@ schemas:
       profileBinding: "sha256:04325918c7ff85b736bedfbaab5288f3992cda0c138b50e7da40c43cfc4a8789"
       profileBindings: "sha256:4452c5489b8d4c993c417aa2e0c89cebfc0cb56e18fb6da60debbc4a8c5d43ce"
       viewWording: "sha256:8621134f7cff3eb87910859ea16ad2db2272a75d56be1c5b767c0ff8850e5651"
-      wordingKey: "sha256:9a4635e5d1bc1bbbb088a20cb7e9a998fe6feedddae7fc53b5a54002b4d7b5e0"
+      wordingKey: "sha256:2a4e5376b13e9f4329fe67e16321e9ee20fdeb4630358e37ca5311f2bfb4f099"
       wordingRef: "sha256:aa52583b3f55a590ad8c90d8e17eecc7c51e7edec997e6f5b34d0d03b058559a"
       profileLegendLabel: "sha256:f7be3125a2038a14d7cd75b5ae3a7eeefaaf39698437bbbabfa6eb0163390469"
       profileSummaryLabel: "sha256:00404e686415370f1711c4d7acfa2905444d3cf23cef2e10c47d445ebe690f96"

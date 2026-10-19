@@ -10,7 +10,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
-from chrona.presentation.model.wording_tables import WordingResolver, wording_resolver
+from chrona.presentation.model.wording_tables import LAYOUT_DEFAULT_LEGEND_ROLES, WordingResolver, wording_resolver
 from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta, is_new_against_baseline, NEW_MARKER
 from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
@@ -270,7 +270,7 @@ def _indents_under_headers(view: ViewInput) -> bool:
             and not any(row.depth > 0 or row.parent_row is not None for row in view.rows.items))
 
 
-def _default_lane_header(projection: ReviewProjection, lane_table: Any) -> str:
+def _default_lane_header(projection: ReviewProjection, lane_table: Any, resolver: WordingResolver) -> str:
     """Header of the default (no `columns`) lane column (#1633).
 
     `Task` when every lane is generated, one per object, and the cell names that object; `Lane` otherwise
@@ -279,8 +279,8 @@ def _default_lane_header(projection: ReviewProjection, lane_table: Any) -> str:
     membership = projection.lane_membership
     if (lane_table.label.value != "group" and membership is not None and membership.lanes
             and all(lane.explicit_key is None and len(lane.member_item_ids) == 1 for lane in membership.lanes)):
-        return "Task"
-    return "Lane"
+        return resolver.text("column.task")
+    return resolver.text("column.lane")
 
 
 def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
@@ -290,16 +290,17 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
         raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     declared = lane_table.columns  # #1517: empty keeps the single `Lane` column byte-for-byte
-    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id, column.id, column.align,
+    columns = tuple(TableColumnContent("Lane" if column.source == "label" else column.id,
+                                       resolver.resolve(column.header) if column.header is not None else column.id, column.align,
                                        TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap,
                                        column_source=column.source if isinstance(column.source, Mapping) else None)
                     for column in declared) or (
-        TableColumnContent("Lane", _default_lane_header(projection, lane_table), "start",
+        TableColumnContent("Lane", _default_lane_header(projection, lane_table, resolver), "start",
                            TableColumnWidth("content", "content"), text_wrap=lane_table.text_wrap),)
     show_count = (lane_table.count is True or (lane_table.count == "auto"
                   and any(len(lane.member_item_ids) > 1 for lane in projection.lane_membership.lanes)))
     if show_count:
-        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"),
+        columns += (TableColumnContent("Items", resolver.text("column.items"), "end", TableColumnWidth("content", "content"),
                                        text_wrap=lane_table.text_wrap),)
     entities = project.get("entities", {})
     cells = []
@@ -826,6 +827,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     content = bind_view_legend_witnesses(content, facts.occurrences if facts else (), encoding_rules, color_scale)
     return replace(content,
         legend_wording=tuple(sorted(resolver.legend.items())),
+        legend_defaults=tuple((role, resolver.legend_text(role)) for role in LAYOUT_DEFAULT_LEGEND_ROLES),
         legend_mark_occurrences=tuple(item for item in (facts.occurrences if facts else ())
                                       if item.primitive_family == "mark"),
         legend_progress_possible=_positive_legend_progress(projection, view.progress_fill))
