@@ -1,10 +1,8 @@
 # Terse plan syntax: the one-page card
 
-A terse plan is a short text file (`plan.chrona`): one line per task, gate or group, dependencies as a clause on
-the line. `chrona validate`, `schedule` and `render` take it directly; `chrona compile` writes the Chrona Project
-(`project.yaml`). The compiler checks the plan, reports every error with a line and column, and hands the Project to
-the normal validator. Normative rules: [Spec 65](../specification/65-terse-plan-syntax.md); what a plan becomes in
-YAML: [terse-plan-mapping.md](terse-plan-mapping.md). A plan that already lives in a spreadsheet: [import it from CSV](csv-import.md).
+A terse plan (`plan.chrona`) has one line per task, gate or group; `validate`, `schedule`, `render` and `compile`
+accept it directly. Compilation reports positioned errors and emits a Chrona Project (`project.yaml`). See [Spec 65](../specification/65-terse-plan-syntax.md),
+[the YAML mapping](terse-plan-mapping.md) or [CSV import](csv-import.md) for the full rules and alternatives.
 
 ## The loop
 
@@ -47,12 +45,14 @@ lines, then objects (objects may refer to objects defined later).
 
 ## Statements
 
-- `project ID "Title" [calendar CAL]`: id is one word, title is optional.
+- `project ID "Title" [calendar CAL]`: id is one word, title is optional; it may end with `extension PACKAGE "PATH" REVISION`
+  (repeat for unique IDs; paths are relative to the Project directory: source for direct/stdout, output parent for `compile -o`).
 - `calendar CAL DAYS [except DATE ...] [work DATE ...]`: `DAYS` is `mon-fri`, `mon-wed,fri`, `sat,sun`. `except` lists
   non-working dates, `work` extra working dates. With exactly one calendar it is the project default; with two or
   more, say which on the project line (`project p "P" calendar standard`) or on each object.
-- `NAME ["Title"] KIND SCHEDULE [calendar CAL] [after DEP, ...] [deadline DATE]` for an object, in that order. Its `calendar CAL`
-  overrides the project default for its own `wd` amounts; `deadline DATE` moves nothing, and `schedule` lists a `W_DEADLINE` if it is missed.
+- `NAME ["Title"] KIND [profile ID] SCHEDULE [calendar CAL] [after DEP, ...] [deadline DATE] [KEY=VALUE ...]`: profile follows KIND;
+  assignments finish the line. `calendar CAL` overrides the project default for `wd` amounts; a deadline moves nothing.
+  Scalar values include `risk=high`, `flag=true` or `note="two words"`; assignments need a profile; quotes keep strings.
 
 **NAME** (and calendar names): lower-case letters, digits, hyphens, starting with a letter (`bus-test`). It is the
 id forever; invent one for every object. Not allowed as a name: `terse project calendar task gate group
@@ -101,8 +101,8 @@ launch "Launch" gate at >= 2027-05-07 after review +2d  # the floor wins: 2027-0
 
 ## What the syntax cannot say
 
-Owners, teams, phases (`fields`), planned progress, links, WBS codes, annotations, scenarios, other
-object types, presentation. When you need them: compile first, then edit `project.yaml` by hand.
+Arrays/maps, arbitrary Project extension forms, entity declarations, progress, links, WBS codes, annotations,
+scenarios, and presentation remain YAML-only. Compile first, then edit `project.yaml` by hand.
 
 ## Frequent errors
 

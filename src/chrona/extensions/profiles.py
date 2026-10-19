@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import date
 from difflib import get_close_matches
 import re
@@ -19,6 +20,16 @@ from chrona.core.ports import SnapshotReadError, SnapshotReader
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}
 ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}
+
+
+@dataclass(frozen=True)
+class LocalExtensionSnapshot:
+    """One validated local extension input, retained for validation and later staging."""
+
+    package_id: str
+    path: str
+    content: bytes
+    manifest: dict[str, Any]
 
 
 def resolve_package_manifests(project: dict[str, Any], reader: SnapshotReader) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
@@ -42,7 +53,21 @@ def resolve_local_extension_manifests(project: dict[str, Any], base_dir: Path) -
     not match the bytes is an ``E_EXTENSION_UNRESOLVED`` / ``E_CONTENT_IDENTITY`` error at ``/extensions/<i>/path``.
     ``resource`` declarations need a Store reader and are left to the Context path.
     """
-    manifests: dict[str, dict[str, Any]] = {}
+    snapshots, diagnostics = resolve_local_extension_snapshots(project, base_dir)
+    return {item.package_id: item.manifest for item in snapshots}, diagnostics
+
+
+def resolve_local_extension_snapshots(
+    project: dict[str, Any], base_dir: Path,
+) -> tuple[tuple[LocalExtensionSnapshot, ...], list[Diagnostic]]:
+    """Acquire each local extension's validated bytes and manifest once.
+
+    The declared relative ``path`` and exact source bytes are retained so an
+    application caller can stage the same validated input elsewhere without
+    reopening the source file. Containment, identity, decoding and diagnostic
+    behavior are shared with :func:`resolve_local_extension_manifests`.
+    """
+    snapshots: list[LocalExtensionSnapshot] = []
     diagnostics: list[Diagnostic] = []
     root = base_dir.resolve()
     for index, extension in enumerate(project.get("extensions", [])):
@@ -72,8 +97,11 @@ def resolve_local_extension_manifests(project: dict[str, Any], base_dir: Path) -
             continue
         # A local file's identity is its bytes: a manifest that omits the self-describing field gets the computed one.
         manifest.setdefault("contentIdentity", "sha256:" + sha256(content).hexdigest())
-        manifests[str(extension.get("packageId", manifest.get("packageId")))] = manifest
-    return manifests, diagnostics
+        snapshots.append(LocalExtensionSnapshot(
+            package_id=str(extension.get("packageId", manifest.get("packageId"))),
+            path=extension["path"], content=content, manifest=manifest,
+        ))
+    return tuple(snapshots), diagnostics
 
 
 def check_project_extensions(project: dict[str, Any], *, base_dir: Path | None = None,

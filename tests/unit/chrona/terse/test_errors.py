@@ -20,6 +20,7 @@ ELSEWHERE = {
     "E_TERSE_OUTPUT_EXISTS": "tests/cli/test_compile.py::test_compile_output_refuses_an_existing_file",
     "E_TERSE_INPUT_IO": "tests/cli/test_compile.py::test_compile_unreadable_input_is_exit_two",
     "E_TERSE_COMPILER_DEFECT": "test_a_structurally_invalid_compile_is_reported_as_a_defect",
+    "E_TERSE_PROFILE_UNKNOWN": "tests/unit/chrona/usecases/test_terse_typed_fields.py::test_unknown_explicit_profile_is_positioned_even_without_fields",
 }
 
 

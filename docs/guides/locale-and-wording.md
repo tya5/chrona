@@ -14,9 +14,11 @@ selects the **wording table**, a bundled, closed list of built-in texts, one com
 
 A table entry is used only where a file asks for it with a **wording reference**, `{wording: <key>}`. A
 text written as a plain string in a preset, View or Detail Profile is authored text and is never translated.
-The bundled presets still author their column headers (`Task`, `Plan`), the `TODAY` marker label and
-the legend labels as plain strings, so with a bundled preset `--locale ja-JP` localizes the dates and axis
-and leaves those English. To localize them, reference the keys (section 3).
+The bundled presets reference the keys where the key's English text equals their wording: with the
+default preset `--locale ja-JP` reads `タスク`, `計画`, `本日`, `計画期間`, `実績`, `マイルストーン` and `依存関係`. A bundled
+label whose wording differs from every key (for example `Weekend`, `Planned`, a design's lower-case
+`current plan` or `gate`, or a design's own as-of label) is still a plain string and stays English. To
+localize it, reference a key or override it in your own copy of the preset (sections 3 and 4).
 
 The keys, with their `en-US` and `ja-JP` text:
 
