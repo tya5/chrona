@@ -206,6 +206,26 @@ Selected relations retain their endpoint identity, including group endpoints.
 Critical edges use the existing scheduler-derived driving-relation and
 critical-endpoint facts, never paint or mere proximity to a critical node.
 
+For a `dependency-network` surface (#416), the existing View `selection`
+selects the node objects and the existing global `ordering` supplies their
+ordinal order. Projection preserves the resolved order, including direction
+and tie-break, independently of the timeline's `rows` mode; timeline explicit
+row order is unchanged. Rank layout groups those ordinals without a second network
+selector or order declaration. `body.network.nodeLabel.source` optionally
+selects `title`, `id`, or the shared Project field-reference object
+(`{field: ...}` / `{fieldRole: ...}`). The `network` member is refused on a
+`table-timeline` View, even when empty, as `E_RESOURCE_SCHEMA` at
+`/body/network`; it requires `surface: dependency-network`.
+
+With no `network.nodeLabel` override, or with its `source` omitted or null,
+the node label is its Project title. A field reference uses the existing field binding/default
+resolution: a missing, null or unbound field falls back to that object's
+title. A present string is used verbatim, including the empty string. A
+present non-string value is refused as `E_VIEW_NETWORK_LABEL_SOURCE` at the
+label source pointer with the affected object subject; it is not implicitly
+formatted. This is node content, not timeline label placement, and Layout
+measures and places the completed text.
+
 A grouping with `presentation: header` may declare `header`, a text template for each
 group header (literal text, an ordinal in a declared form, the entity title and an entity
 field as a secondary title; a first-group variant). The text is View content; its

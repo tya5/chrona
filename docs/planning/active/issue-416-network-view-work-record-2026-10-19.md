@@ -1,12 +1,13 @@
 # #416 Network View — work record
 
-Status: View selection/labels/order approved in
-[review 6257221150](https://github.com/tya5/chrona/issues/416#issuecomment-6257221150).
-Spacing belongs in Layout Profile; its existing-input migration boundary is
-awaiting [disposition](https://github.com/tya5/chrona/issues/416#issuecomment-6257252824).
-No product code yet.
-Baseline: published ready `8087e95c59fda483457eefda20a0177d94dbf798`.
-Authority: [issue and latest scope](https://github.com/tya5/chrona/issues/416#issuecomment-6256891542).
+Status: Design and normative contract approved. `network.member.gap` is an
+optional Theme metric beside the existing network metrics; when absent it
+falls back to `network.rank.gap`. This supersedes the temporary Layout Profile
+proposal in [review 6257221150](https://github.com/tya5/chrona/issues/416#issuecomment-6257221150),
+per [reviewer disposition 6267457613](https://github.com/tya5/chrona/issues/416#issuecomment-6267457613).
+No product code yet. Current published baseline: ready `d0dc06f6bc17227cda31cb9df8fbd7dc2dc3077c`.
+Authority: [issue and latest scope](https://github.com/tya5/chrona/issues/416#issuecomment-6256891542),
+[design approval and spacing correction](https://github.com/tya5/chrona/issues/416#issuecomment-6267457613).
 
 ## Published facts and limits
 
@@ -34,19 +35,22 @@ Latest reviewer scope:
    on the timeline surface where it does not apply, never silently ignored.
 3. HALCYON slide 05 is unchanged unless its View opts in (count table).
 
-Original spacing remains an explicit design/review question, not silently
-dropped by the newer scope. Port selection is a consideration, not a literal
+The original spacing criterion remains in scope and is met by the independent
+Theme metric decision below. Port selection is a consideration, not a literal
 acceptance item. No new layout algorithm is authorized.
 
-## Design plan and architecture review questions
+## Design plan and architecture review
 
-- Establish which existing selection/filter, field-reference and ordering
-  grammar is surface-neutral; reuse its definitions without copying schemas.
-- Decide node scope, label source and within-rank ordering, including absence
-  defaults, missing values, unknown references, ties and dangling edges after
-  selection. Preserve containment and existing deadlines/critical-edge rules.
-- Decide whether independent member spacing belongs in this first pass and
-  identify its existing metric owner and behavior-preserving default.
+- Reuse the existing selection/filter, field-reference and ordering grammar
+  without copying schemas. Keep selection, ordering, edge closure and tie rules
+  in their established projection owners.
+- Use `nodeLabel.source` with the existing title/id/field-reference forms and
+  title fallback for missing/null/unbound values. Preserve containment and the
+  existing deadlines/critical-edge rules.
+- Member spacing is an independent optional Theme metric beside `network.rank.gap`
+  and the two node minima. Its omission resolves to the current rank-gap value,
+  preserving prior placement without a resource migration. No Layout Profile
+  channel or broader geometry-metric migration is in scope.
 - View owns author intent; application/review projection resolves content and
   graph membership; Theme owns paint; Layout alone measures and places nodes,
   ports and routes; Scene/adapters project completed geometry. No Project or
@@ -59,12 +63,11 @@ acceptance item. No new layout algorithm is authorized.
 
 ## Publication and implementation boundary
 
-Publish this plan before choosing a contract. Next update the living normative
-specification and this record with selected design and architecture review;
-request reviewer approval before product code. Finalize implementation slices
-only then: owned schema/projection/metric files, synthetic tests, SVG/PNG,
-schema-equivalence evidence, HALCYON05 counts and release gates. Keep approval
-waiting independent of the already-started #1754/#806/#1763/#1756 work.
+The plan, approved design and whole-architecture review preceded product code.
+Normative behavior is recorded in Specs 06/07/50. This work record is now the
+current implementation plan and acceptance evidence map; do not reopen the
+resolved metric-owner decision without new evidence. #1754/#806/#1763/#1756
+remain separate work and do not change #416's ownership or acceptance scope.
 
 Acceptance evidence must include opted-in selection/labels/order/spacing and
 invalid-surface tests, unopted actual SVG/Scene comparison and count table,
@@ -77,6 +80,14 @@ Reuse top-level `selection` and `ordering`. A View has one surface, so a second
 network selector/order object would duplicate intent, not enable a second
 surface. Selection already closes node membership and retains only edges with
 both endpoints selected; no invented bridge edges or implicit ancestors.
+Projection carries each selected item's ordinal from the existing globally
+ordered selection, preserving `direction` and `tieBreak`; Layout groups by
+graph rank but does not resolve View ordering again. This replaces the private
+network ordering key that lost those two parts of the global contract.
+Network projection resolves that global order even when timeline `rows` is
+`explicit`: order a selected-node copy through the existing ordering owner,
+then project its ordinals. Do not change timeline explicit-row order or let
+Project declaration order become an accidental network-order exception.
 Selected Project group containment, existing `deadlines` and
 `visibility.relations: semantic|critical|none` remain their current contracts.
 The deadline producer is `usecases/render_review.py::_network_deadline_projection`;
@@ -84,7 +95,8 @@ its placement support is live, not an unfinished feature.
 
 Add optional `body.network.nodeLabel: {source: ...}` to the latest live View
 schema without a version bump. `source` is `title`, `id`, or the existing shared
-Project field-reference object (`{field}` / `{fieldRole}`). Absent, use `title`.
+Project field-reference object (`{field}` / `{fieldRole}`). An omitted or null
+source uses `title`; an omitted node-label override has the same default.
 The ordinary title is the Project title, not a plot/path label. Field reads use
 the existing binding/default resolver: absent, null or unbound role falls back
 to that object's title; present strings are used verbatim. A non-string field
@@ -105,29 +117,40 @@ loses direction/tie-break behavior. Layout retains rank calculation, containment
 and deterministic object-ID ties; ordering changes neither edges nor ranks.
 HALCYON05's existing ascending planned-start/id order must remain unchanged.
 
-Put `network.member.gap` in Layout Profile, not Theme, as required by review.
 Rank progression and secondary-axis sibling/container separation (including
-the existing leading inset) are independent in both flow directions. Values
-are finite nonnegative distances, including zero; no new packing algorithm or
-port policy. Omission must preserve current placement, not introduce a borrowed
-numeric default. Current code actually reads node minima/rank gap from Theme's
-`measured_sources.metric_values`; Layout Profile has no network metric block.
-The reviewer is deciding whether this slice adds only the new Layout-owned gap
-or migrates all existing network geometry inputs and first-party resources.
-Do not add an undocumented override/compatibility channel while this is open.
+the existing leading inset) are independent in both flow directions.
+`network.member.gap` is a finite nonnegative Theme distance; zero is explicit,
+and absence uses the resolved `network.rank.gap`. This is behavior-preserving
+without edits to existing Themes. Keep one metric channel beside the existing
+network minima/rank gap; do not add a Layout Profile override or migrate the
+other network geometry inputs. No new packing algorithm or port policy.
 
-Architecture disposition: the approved View part is consistent with
-Specs06/07/09/13/50/56 and #1727. The spacing input boundary above is unresolved.
-Projection closes selected label text and ordinal intent; Layout measures that
-text, closes both spacings and all geometry; Scene/adapters remain unchanged.
-Core/scheduler and authored corpus stay unchanged. Shared schema references
-must not be copied. Update Specs06/07/50 before implementation; the issue record
-is the review proposal, not a replacement normative authority.
+Architecture disposition: the approved View and Theme metric contracts are
+consistent with Specs06/07/09/13/50/56 and #1727. Projection closes selected
+label text and ordinal intent; Layout measures that text, resolves the member
+gap beside the existing Theme metrics, and closes all geometry; Scene/adapters
+remain unchanged. Core/scheduler and authored corpus stay unchanged. Shared
+schema references must not be copied. Specs06/07/50 are the normative
+authorities; this record maps implementation and acceptance evidence.
 
-Label-field missing/type rules, ordinal order and explicit timeline refusal
-are approved. Ports and new algorithms are out of scope. Finalize slices after
-the spacing disposition: (1) schema/typed intent and projection plus tests;
-(2) Layout Profile spacing closure plus tests; (3) SVG/PNG, HALCYON05 counts,
-literal review and release. Publish normative changes before code. Shared
-Specs06, projection.py and render_review.py are currently owned by B1766/1767;
-coordinate and wait for those merges before editing them.
+Label-field missing/type rules, ordinal order, explicit timeline refusal and
+the Theme metric owner are approved. Ports and new algorithms are out of scope.
+Normative clauses are recorded in Specs06/07/50. Implementation slices:
+(1) View schema/typed contract, pointed timeline refusal, selected label source
+and global-order ordinal projection, with schema-equivalence and synthetic
+projection tests, including explicit-row Views with descending/tie-break order;
+(2) Theme metric admission and Layout member-gap use/default,
+with focused Layout tests for both flow directions, zero, explicit spacing and
+omission; (3) actual dependency-network SVG/PNG evidence, exact HALCYON05
+before/after counts proving unopted output unchanged, literal acceptance
+review and exact-main release gates. Expected owners: `schemas/view-v0.28.schema.yaml`
+and its equivalence inventory; `src/chrona/presentation/contracts/resources.py`,
+`src/chrona/presentation/model/projection.py`, `src/chrona/presentation/layout/dependency_network.py`,
+and `src/chrona/presentation/layout/sources.py`; focused tests in
+`tests/integration/test_view_v01_schema.py`, projection tests under
+`tests/unit/chrona/presentation/model/`, and
+`tests/unit/chrona/presentation/layout/test_dependency_network.py`. Add or
+adjust a network-render integration test for actual SVG/PNG if current fixtures
+do not prove source text and spacing. No corpus YAML is edited to obtain the
+unchanged HALCYON05 result. Publish the spec/work-record update before product
+code; B1766/1767's shared files have landed on the current baseline.
