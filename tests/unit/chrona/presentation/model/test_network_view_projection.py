@@ -109,6 +109,27 @@ def test_network_nodes_use_global_ordering_for_each_row_mode(rows_mode):
         assert [item.object_id for item in timeline_projection.rows[0].items] == ["z", "a", "m"]
 
 
+@pytest.mark.parametrize("rows_mode", ("automatic", "explicit"))
+def test_network_global_order_uses_primary_descending_values_before_tie_break(rows_mode):
+    project = _project()
+    placements = _placements(project["objects"])
+    placements.update({
+        "z": {"start": date(2027, 1, 1), "end": date(2027, 1, 2)},
+        "a": {"start": date(2027, 1, 3), "end": date(2027, 1, 4)},
+        "m": {"start": date(2027, 1, 2), "end": date(2027, 1, 3)},
+    })
+    view = _view(
+        rows_mode=rows_mode,
+        row_order=("z", "a", "m"),
+        ordering=ViewOrdering("plannedStart", "descending", "id"),
+    )
+
+    projection = build_review_projection(project, placements, view, None)
+
+    assert projection.network is not None
+    assert [node.object_id for node in projection.network.nodes] == ["a", "m", "z"]
+
+
 def test_network_selection_closes_edges_to_selected_nodes_only():
     project = _project(relations=(
         {"id": "kept", "type": "dependency", "from": {"object": "z"}, "to": {"object": "a"}},
