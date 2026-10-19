@@ -2,8 +2,8 @@
 
 ## Published baseline and scope
 
-S1–S4 design, architecture review and implementation are complete in the issue
-branch; integrated trial evidence, public-output review and release remain open.
+S1–S4 are implemented, merged and released. Full trial evidence now covers all
+five weeks; this follow-up's publication and exact-main release remain open.
 Source: [issue 1754](https://github.com/tya5/chrona/issues/1754), including its later comments, on ready main `6c3b4e4e2d4064e924a8b9703c3f31ab7a62bc39`.
 Trial evidence is reference-only: [`reviewer/trial-8-inputs@bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
 
@@ -12,7 +12,7 @@ Layout consumes previous-Scene hints only under first-fit; Spec 50 explicitly
 excludes best and makes the as-of rule obstruct member names; Specs 08/46
 include the cone in completed contrast grounds. The selected corrections below
 were specified and published before their implementation. The pinned trial's
-measurements are reference evidence; candidate reproduction is in progress.
+measurements are reference evidence; the completed candidate rerun is below.
 
 Dev A owns this item. Dev B owns baseline/forecast 1755 and customisation
 1756 rows 3–5; dev A's 1756 rows 1–2 are a subsequent item, not this scope.
@@ -268,61 +268,29 @@ before changing that rule. Do not expand S1 into hint/routing or Theme policy.
 
 ## Current implementation evidence
 
-S1 is implemented locally; publication/public-output review and CI are pending.
-The batch helper replaces every runtime scalar caller. Scheduler passes the
-same identified tuple to its critical-path closure. Focused batches passed:
-171 scheduler/identity/lane/network/Model tests; 150 review-content, hosted-point,
-critical-role, previous-Scene and revision-regression tests; one new integrated
-remove/append test with accepted retained hints and explicit old-ID misses.
-After threading the Scheduler tuple, its identity/scheduler subset passed
-again (15 tests). Eight migrated integration modules compile and collect
-(183 cases); their expensive corpus checks remain assigned to CI. Independent
-S1 review found no remaining identity/ownership blocker; the uniqueness-change
-limitation above is explicit. No schema, preset or generated output is edited.
-S2 now validates hints under both policies and preserves an accepted hint
-before optional back-route ranking. Focused routing/hint/recovery/revision
-batch: 52 passed; previous-Scene and update-guide batch: 22 passed. These
-include best accepting retained IDs, failed hints falling through, unchanged
-old-ID miss behavior, and explicit overlap/stub unusable receipts. A default
-plot-name/stub collision reproduced on public `1de259e69` is independently
-tracked in [1763](https://github.com/tya5/chrona/issues/1763); the receipt test
-uses a valid table-label View without changing product behavior for that bug.
-The real three-row slip/detour synthetic passes under both policies (2 cases):
-an irrelevant slip keeps the validated corridor; moving a primary mark across
-it invalidates the hint and accepts a mark-clear detour in NORMAL, before mark
-relaxation. Endpoint geometry is unchanged and actual paths are compared.
+S1–S4 landed in PR1769. Rows 1–3 are released and reviewer-accepted:
+[39256723703](https://github.com/tya5/chrona/actions/runs/39256723703),
+exact `9dca9c55a8df0d1e44149a0543fe892366d39930`.
+The locale-wheel prerequisite failure is resolved by 1773.
 
-S3 exact-ID query exclusions and all placement paths are implemented. The
-obstacle/member-name/as-of-label/route-memo/annotation negative-control batch
-passes (77 cases). The original inventory and other rule obstacles remain
-intact. Public snapshot/CI and full trial-8 acceptance are still pending;
-S4 is implemented: Theme boolean, cone-only completed metadata and shared
-classified observer selection. Focused Theme/Scene/schema/real-cone-render
-batch passes (164 cases), including multipart/pattern/encoded marks, unchanged
-text, severity and exceptions, and legacy-v0.6 rejection. Independent review
-found no ownership/contract blocker. L1 schema equivalence against public
-main passes: one additive Theme widening, one explained Scene delta, 41 equal.
-The tool retired seven already-merged L1 entries and records the two precise
-Scene pointers. Full local equivalence found no L2/L3 verdict/diagnostic
-failure, but its timing guard failed (75.4s > 60s while focused render tests
-ran concurrently). The limit is unchanged; CI must supply the authoritative
-isolated conformance gate. No local full pytest is run.
+Row 4 full rerun uses product base `d0dc06f6b`, acceptance source
+`0270cddd1`, and unchanged public trial inputs `bf3940dbe`.
+All 27 PNG/Scene renders succeed, including forecast week 5 after 1766.
+Three independent design pipelines preserve sequential weekly hint chains.
+Across all 12 transitions, same-candidate raw changes fall 932 → 930;
+row-normalized changes fall 323 → 315. This is an aggregate improvement, not
+a per-design guarantee. Added/removed primitives and residual label toggles
+remain separate measures. The
+[issue table](https://github.com/tya5/chrona/issues/1754#issuecomment-6279258773)
+and [acceptance review](../../reviews/current/issue-1754-revision-stability-acceptance-review-2026-10-19.md)
+give all literal rows, source/input/output hashes, commands and inspected PNGs.
 
-Integrated source is based on ready main
-`718ed1adbfa1b7ab89cacd014be8b74d7ba849b9`. Its schema-equivalence merge
-retains B's 27 pointed-diagnostic L3 entries and this issue's two Scene L1
-entries, without resurrecting five already-merged L1 exceptions. L1 and the
-schema-diagnostic/delivery focused tests pass (27 cases). The trial batch completed weeks
-1–4 with three independent design pipelines and weekly hint chains, reusing
-identical week-1 outputs. All six week-5 commands retain forecast and fail
-`E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit`, dependent on B issue 1755.
-Same-candidate raw changed primitives total 667 plain versus 670 hinted;
-row-normalized changes total 56 versus 54. Do not claim uniform improvement or
-waive literal acceptance. Target-b has accepted hint receipts in every
-available hinted week. The issue Status publishes the comparison table.
-The [acceptance review](../../reviews/current/issue-1754-revision-stability-acceptance-review-2026-10-19.md)
-records residual route-driven label changes and through-mark findings, actual
-PNG inspection, pending public snapshot/CI, and every literal criterion.
-Publish the independent implementation as one PR; leave this issue open for
-the full trial and release gates. No trial/preset data or forecast command is
-changed to satisfy the criterion.
+The controlled line-only invariant adds six placement modes × six as-of
+positions with fixed other obstacles, marks and routes. Both label unit modules
+pass 38 tests on the rerun base. No additional product policy, budget,
+validator, preset or trial input change is needed.
+
+Next publication: controlled tests plus the updated acceptance evidence,
+batched with already-closed 806/1763 archival records. CI supplies full pytest
+and release evidence; close 1754 only after the exact published main containing
+this follow-up passes three-OS/conformance/wheel/newest-Python gates.
