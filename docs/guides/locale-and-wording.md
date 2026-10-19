@@ -48,7 +48,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | `legend.actual-ahead`, `legend.actual-on-track`, `legend.actual-behind` | Ahead, On track, Behind | 前倒し, 予定どおり, 遅れ |
 | `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, baseline, current plan | 予定, 基準計画, 現行計画 |
 | `legend.gate`, `legend.holiday` | gate, holiday | ゲート, 祝日 |
-| `summary.days` | DAYS | 日数 |
+| `summary.days` | DAYS | 日 |
 | `legend.plan`, `legend.period`, `legend.depends-on` | Plan, Period, Depends on | 計画, 期間, 依存先 |
 | `legend.missing-actual`, `legend.missing-actual-in-progress` | Not yet observed, In progress, not yet observed | 未観測, 進行中・未観測 |
 | `legend.in-the-wings`, `legend.calendar-exception` | In the wings, Calendar exception | 出番待ち, カレンダー例外 |
@@ -69,7 +69,7 @@ for the as-of marker) and references the same key; it does not need a key of its
 date after the label too (`as of 20 feb`). Japanese has no case and is unchanged by a transform.
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
-`label: {wording: summary.days}` (`DAYS` / `日数`); the View `wording.summary` entry still wins over it.
+`label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
 
 **Still English.** A text a preset author wrote as a plain string stays as written (titles, a design's marker text, panel
 titles). Reference a key or override it in your own copy of the preset (sections 3 and 4). The Titlecard's secondary axis

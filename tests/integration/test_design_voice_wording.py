@@ -42,7 +42,7 @@ def test_the_folded_other_legend_entry_is_a_table_key(tmp_path, monkeypatch, cap
 def test_a_summary_metric_label_references_a_wording_key(tmp_path):
     summary = derived._summary(derived._metric(metric_id="countdown", label=None))
     summary["body"]["panels"][0]["metrics"][0]["label"] = {"wording": "summary.days"}
-    for locale, expected in (("en-US", "DAYS"), ("ja-JP", "日数")):
+    for locale, expected in (("en-US", "DAYS"), ("ja-JP", "日")):
         directory = tmp_path / locale
         directory.mkdir()
         rendered = sr.render(directory, derived._source(), presentation=derived._parts(derived.COUNTDOWN),
