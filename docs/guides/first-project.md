@@ -57,7 +57,8 @@ Which file do I edit? Run `chrona preset copy` as above, then: the **title** is 
 **colour** of the bars is `colorEncoding` in `view.yaml` (a [recipe](csv-import.md#colour-the-bars-by-owner)); the **legend position** is
 the order of the `legend` slot (`source: legend`; `wallboard-dark` has one) among `root.children` in `layout.yaml`, so moving it before the `review` row puts
 it above the chart; and the **window**, the dates the time axis spans, is `window` in `view.yaml` (`mode`, or explicit `start`
-and `end` dates, and `marginDays`). Pass the copy with `--preset`, as above.
+and `end` dates, and `marginDays`). Pass the copy with `--preset`, as above. A legend may show keys you did not list (Baseline,
+Deadline, Forecast, Progress); [the locale guide](locale-and-wording.md) says when and how to leave one out.
 
 To draft a schedule faster than editing YAML, write a [terse plan](terse-plan.md): a `plan.chrona` file with one
 line per task, gate or group. `chrona render`, `validate` and `schedule` accept it where they accept `project.yaml`,

@@ -283,6 +283,17 @@ In the Japanese picture the headers read `タスク` and `予定`, the marker an
 `休日`. The English picture is the same file set without the flag: `Task`, `TODAY`, `TASK DURATION` and so on.
 The progress fill reads `進捗` in Japanese and `PROGRESS` in English.
 
+**The legend can show more than you list.** A Detail `legend` is the list you want first, but the renderer appends a key
+for each meaning it actually draws and you did not list: `snapshot` (Baseline) when a baseline is drawn, `deadlineMark`
+(Deadline) when a deadline is drawn, `forecast` when an item has a forecast, and `progressFill` (Progress) when a progress
+fill is drawn in an ink different from its mark (the progress fill above is why `進捗` appears without a legend entry). Colour-scale
+keys follow. To leave a key out, set `unkeyedLegendRoles` beside `legend` in the Detail Profile, for example
+`unkeyedLegendRoles: [snapshot, deadlineMark]`; it admits only those two roles, and naming a role in both `legend` and
+`unkeyedLegendRoles` is `E_DETAIL_LEGEND_POLICY`. Progress and forecast keys have no opt-out: do not draw them (omit
+`progressFill` from the View and the Layout Profile `viewDefaults`, or give the progress fill the colour of its mark, which makes
+the key redundant and omits it). An explicit `legend` entry for one of these roles replaces the default and sets its label and
+order (Spec 28, "Default comparison keys").
+
 ## 4. Override any key from a View
 
 A View's `wording.keys` maps a built-in key to your text. The View above sets
