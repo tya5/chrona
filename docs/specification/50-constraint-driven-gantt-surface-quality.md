@@ -423,10 +423,14 @@ Zero selected relations produces no advisory. Its message names
 `--relations none` and the Layout Profile's `relationRouting` as explicit user
 choices, never automatic changes.
 
-CLI observes the advisory once on stderr before expensive routing even without
-progress enabled; the same structured diagnostic remains in completed Scene
-and CLI/MCP results. Internal count-closure trials must not leak candidate
-progress or duplicate observations. This supersedes the occurrence-pair
+CLI observes the first qualifying prepared-batch advisory once on stderr before
+expensive routing even without progress enabled; the same structured diagnostic
+remains in completed Scene and CLI/MCP results, independent of external observer
+failures. This describes work about to be attempted, including a count-closure
+trial that may later be rejected, not accepted geometry. Later passes neither
+replace that first count nor duplicate the warning. Ordinary candidate phase/
+count progress remains buffered until acceptance; no candidate coordinates or
+route choices are exposed. This supersedes the occurrence-pair
 threshold of 336 and the requirement to observe before all Layout: completed
 marks are needed for the cheap port-domain preparation, not for route search.
 
