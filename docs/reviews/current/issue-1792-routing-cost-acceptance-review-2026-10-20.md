@@ -8,8 +8,8 @@ Normative authority: Spec 50 §3.3; user guidance: `skills/chrona/references/dia
 | Literal issue acceptance | Status | Direct evidence |
 | --- | --- | --- |
 | Base the threshold on the measured cost model from #1734's phase data, or on candidate work rather than pairs. State it in diagnostics.md. The 150-task input triggers the warning on target-b. | met; released | [Measurements and primary inputs](assets-1792/README.md); documented 2,370 potential normal connector-port-pair threshold; [actual 150-task render](assets-1792/target-b-receipt.md) warns at 2,388, with unchanged SVG and only one additional Scene diagnostic. Exact-main release below passed. |
-| Identity is checked at the command, and the agent-interface guide covers both flows. | deferred to dev B | [Row ownership](https://github.com/tya5/chrona/issues/1792#issuecomment-6280558672); not implemented or accepted by this slice. |
-| The guide defines depth, the recipe works on both plan shapes, and the header uses a wording key. | deferred to dev B | [Row ownership](https://github.com/tya5/chrona/issues/1792#issuecomment-6280558672); not implemented or accepted by this slice. |
+| Identity is checked at the command, and the agent-interface guide covers both flows. | met locally; release pending | [PR1805](https://github.com/tya5/chrona/pull/1805) checks an existing preset's id/version before mutation. `test_select_preset_refuses_a_binding_the_pinned_preset_cannot_render` covers both mismatches, unchanged bytes/revision, continued rendering and a matching re-pin. `docs/guides/agent-interface.md` covers switching and undoing an added task by recreating the bundle without it. |
+| The guide defines depth, the recipe works on both plan shapes, and the header uses a wording key. | met locally; release pending | Same PR: `docs/guides/executive-summary.md` defines top-level depth0, direct-child depth1 and `all`; the nested/grouped-only recipes use1/0 respectively. `test_executive_summary_guide.py` renders both shapes and en-US/ja-JP `{wording: column.task}` headers. |
 
 Architecture review: Layout prepares and consumes the same ordered candidate
 domains before expensive search. Recovery still uses live obstacles; route policy,
@@ -38,5 +38,11 @@ unchanged. The exact review-containing main
 `46f5d38daff5fdd511345b72ad0b9e959d4cdf42` passed
 [native release39357390608](https://github.com/tya5/chrona/actions/runs/39357390608):
 all three OS full pytest/conformance/wheel, MCP and newest-Python reproduction.
-Keep issue1792 open for B rows2–3 and their release evidence; this record does
-not accept those rows.
+Rows2–3 source merged in PR1805 at
+`e9aeef54e1c5f5b96d96016dafaebf20234c0d24`; its required PR checks passed.
+Independent review and the combined local authoring/lifecycle/guide batch passed
+17 tests after integration. The existing application command owner performs
+identity admission; the guide's depth and wording use existing View contracts.
+No new schema, rendering policy or layer ownership is introduced. Missing preset
+documents retain the existing render-time resolution boundary.
+Keep issue1792 open until the final review-containing main release succeeds.

@@ -9,12 +9,14 @@ Selected design and joint-budget correction were published before code resumed
 at `ad6339174` / `f8eedb05e`; the final pre-code implementation plan and
 whole-architecture review are in the
 [living Status](https://github.com/tya5/chrona/issues/1047#issuecomment-6282716395).
-Normative authority: Spec50, declared route style. Release gates remain pending.
+Normative authority: Spec50, declared route style. The implementation release
+passed. [Board454](https://github.com/tya5/chrona/issues/454) explicitly makes
+target adoption reviewer-owned and not a dev closing condition.
 
 | Literal criterion | Status | Direct evidence / remaining work |
 | --- | --- | --- |
-| Both styles are declarable. Synthetic tests show no crossing of required labels and marks, or a counted, reported fallback to orthogonal. | met locally; release pending | Profile schema/engine tests admit curved and metro. `test_relation_style_surfaces.py` renders a genuine opposite-curvature S; `test_metro_yaml_acceptance.py` renders normal YAML through actual table and nonstraight network pipelines (45° L plus Q, unchanged selected skeleton). `test_metro_route_safety.py` proves actual completion restores the selected path for diagonal-only and fillet-only required-node collisions; style receipts are typed/countable. Additional mark/text, radius and terminal controls are in `test_metro_style_surfaces.py`. |
-| The Transit target slide (when one is reproduced) uses `metro` from YAML only. | deferred | Reviewer-owned reproduction/adoption remains outstanding. The [research target](../../research/presentation/transit-target-2026-09-26/README.md) explicitly identifies hand-drawn, not Chrona, output. This review accepts no reproduced Transit adoption; do not substitute the synthetic test slide for it. |
+| Both styles are declarable. Synthetic tests show no crossing of required labels and marks, or a counted, reported fallback to orthogonal. | met; released | Profile schema/engine tests admit curved and metro. `test_relation_style_surfaces.py` renders a genuine opposite-curvature S; `test_metro_yaml_acceptance.py` renders normal YAML through actual table and nonstraight network pipelines (45° L plus Q, unchanged selected skeleton). `test_metro_route_safety.py` proves actual completion restores the selected path for diagonal-only and fillet-only required-node collisions; style receipts are typed/countable. Additional mark/text, radius and terminal controls are in `test_metro_style_surfaces.py`. Exact-main release below passed. |
+| The Transit target slide (when one is reproduced) uses `metro` from YAML only. | deferred; reviewer-owned and non-gating per board454 | The [research target](../../research/presentation/transit-target-2026-09-26/README.md) explicitly identifies hand-drawn, not Chrona, output. No reproduced Transit adoption is claimed; synthetic fixtures do not substitute for it. The YAML-only requirement applies when the reviewer reproduces that target. |
 
 Architecture review: Layout owns selected-skeleton style completion, joint
 chamfer/fillet/head allocation, conservative covers for changed Q **and L** ink,
@@ -50,5 +52,8 @@ tolerance across platform math libraries, exact topology and explicit45° checks
 Trusted review-containing main is
 `9faf700f29e6d685410a5d492fc5daab81db0637` after successful derived-sync39372770884.
 Its [native release39373223873](https://github.com/tya5/chrona/actions/runs/39373223873)
-is running; full three-OS success and reviewer-owned Transit disposition remain
-required. Keep issue1047 open.
+completed SUCCESS on Ubuntu, macOS and Windows (full pytest, conformance and
+wheel), MCP floor and newest-Python reproduction. The board's explicit
+reviewer-owned/non-gating disposition preserves the conditional target row;
+it is not marked met. Close the dev work after the exact updated-review-containing
+main release succeeds, without claiming an unperformed target reproduction.
