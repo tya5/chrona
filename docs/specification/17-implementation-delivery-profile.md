@@ -109,8 +109,14 @@ Projects resolve their own packages and descriptor catalogues.
 An `objectReference` (#344) names a target in that source Project's `entities`
 or `objects`. Resolve the effective field declaration, including its profile
 override, enumerate matching IDs, filter by exact `targetProfiles` when declared,
-then require one target. An omitted constraint is unconstrained, not a guessed
-namespace. Missing, incompatible or ambiguous targets are pointed
+then require one target. An omitted generic constraint is unconstrained, not a guessed
+namespace. A standard package's existing semantic target domain remains authoritative:
+implementation-delivery assignees resolve actor entities only, even when an object
+shares the same ID and actor profile. The owning extension normalizes profile and
+namespace constraints for both validation and detached bindings; Core applies them
+without package knowledge. Package ownership, not a matching profile-name string,
+selects standard-package semantics. No public namespace selector is introduced.
+Missing, incompatible or ambiguous generic targets are pointed
 `E_PROFILE_FIELD_TYPE` errors; `many` retains array order and per-element pointers.
 Existing required/null/cardinality rules and IDP-specific diagnostics remain.
 One semantic resolver supplies validation and detached source-local presentation
