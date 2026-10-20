@@ -605,6 +605,11 @@ search, including under `best` (#1754): a valid prior corridor takes priority
 over ranking a fresh route. Ranking and quotas for ordinary best search remain
 unchanged after a miss. A later optional side-entry/rank improvement MUST NOT
 replace a fully validated hint. Unsupported geometry or incompatible terminal evidence is a hint miss.
+Host reconstruction uses completed bounds and temporal endpoint semantics,
+not a point/span-to-primitive-kind assumption: admitted `Rect` and `Symbol`
+hosts may represent spans. Explicit primary forecast hosts retain their declared
+identity and participate through the same decoded evidence and validators
+(Spec08); neither their purpose nor symbol serialization is a reason to omit them.
 No nearest-point guess or serialized Scene mutation is permitted.
 
 Reanchoring preserves semantic endpoints, shape family and interior channels:

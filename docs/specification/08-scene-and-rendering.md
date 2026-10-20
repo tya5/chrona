@@ -266,6 +266,10 @@ edits that file or bypasses the common schema/project/integrity validation.
 Immutable `render-review` obtains the input only from its Context, not a CLI
 override. Layout alone consumes neutral decoded route evidence; Scene and adapters
 do not reanchor, search or validate routing geometry.
+Neutral host decoding includes the declared `forecast` primary purpose as well
+as planned/Actual/baseline hosts. Preserve its purpose, source and instance
+identity; do not relabel it as planned or discard it because its paint role is
+shared. Layout still decides whether that evidence reconstructs a valid route.
 
 Draft `chrona render --snapshot <project.yaml>` (#1533) accepts a baseline
 Project file as the typed Snapshot Project role. Validate it through the normal
