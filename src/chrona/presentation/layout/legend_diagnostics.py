@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from decimal import Decimal
 from itertools import combinations
 
@@ -87,7 +88,7 @@ def _shape_signature(request, entry, shape):
         ink = resolve_legend_shape_ink(request.theme_tokens, role, shape.legend_swatch_shape,
                                        fill_override=fill_override)
         fill = ("solid", _color(ink.fill)) if ink.fill is not None else None
-        paint_identity = (fill, _color(ink.stroke), ink.stroke_width, (), ink.opacity)
+        paint_identity = (fill, _color(ink.stroke), ink.stroke_width, ink.dash, ink.opacity)
         pattern = None
     elif key is not None:
         paint_identity = key.paint.identity
@@ -172,6 +173,41 @@ def _figure_signature(request, entry, marks, shapes, relations):
     if not figures:
         return None
     return tuple(figures)
+
+
+@dataclass(frozen=True)
+class CompletedKeyStroke:
+    """One visible stroke of a completed legend figure (typed; never parsed from strings)."""
+
+    colour: str | None
+    width: Decimal | float | None
+    dash: tuple[float, ...]
+    opacity: Decimal | float | None
+
+
+def completed_figure_strokes(figure) -> tuple[CompletedKeyStroke, ...]:
+    """Return the completed stroke channel of every stroke-permitting paint, in paint order.
+
+    This reads the same completed legend signature that drives the collision and
+    separability diagnostics, so the dash a rule-pair key draws is the dash a
+    consumer sees.  Fill-only parts and zero-width or fully transparent strokes are omitted.
+    """
+    if figure is None:
+        return ()
+    strokes: list[CompletedKeyStroke] = []
+    for signature in figure:
+        parts, paints = signature[0], signature[1]
+        for index, paint in enumerate(paints):
+            if not isinstance(paint, tuple) or len(paint) != 5:
+                continue
+            _fill, stroke, stroke_width, dash, opacity = paint
+            mode = parts[index][0] if index < len(parts) and parts[index] else None
+            if (mode == "fill" or stroke is None or stroke_width is None or stroke_width <= 0
+                    or (opacity is not None and opacity <= 0)):
+                continue
+            strokes.append(CompletedKeyStroke(stroke.upper() if isinstance(stroke, str) else stroke,
+                                              stroke_width, tuple(dash), opacity))
+    return tuple(strokes)
 
 
 def _figure_ink_colours(figure):

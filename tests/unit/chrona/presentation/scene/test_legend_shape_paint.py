@@ -16,8 +16,10 @@ def test_rule_pair_legend_uses_completed_category_ink_and_role_shape(role: str):
                 "base": {"type": "color", "value": "#112233"},
                 "width": {"type": "number", "value": 2.5},
                 "opacity": {"type": "number", "value": 0.6},
+                "dash": {"type": "dashPattern", "value": [4, 3]},
             },
-            "roles": {role: {"stroke": "base", "strokeWidth": "width", "opacity": "opacity"}},
+            "roles": {role: {"stroke": "base", "strokeWidth": "width", "opacity": "opacity",
+                             "dash": "dash"}},
             "metrics": {},
         },
     })
@@ -27,7 +29,11 @@ def test_rule_pair_legend_uses_completed_category_ink_and_role_shape(role: str):
     assert paint.fill is None
     assert paint.stroke == "#AA0000"
     assert paint.stroke_width == 2.5
+    assert paint.dash == (4.0, 3.0)
     assert paint.opacity == 0.6
+
+    circle = resolve_legend_shape_paint(tokens, role, "circle")
+    assert circle.dash == ()
 
 
 def test_rule_pair_without_completed_category_ink_keeps_legacy_role_stroke():
