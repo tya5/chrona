@@ -1,0 +1,31 @@
+[
+  {
+    "step": "create_workspace(target-b)",
+    "workspaceRevision": "sha256:de42f6f1f5b2de9b13cf85c4f22bc45776c1a2f599fafd415d7b9922d29863ed",
+    "workspace.yaml sha256[:16]": "6e8406249815fe1d"
+  },
+  {
+    "step": "selectPresentationPreset marquee over target-b path",
+    "status": "rejected",
+    "diagnostic": {
+      "code": "E_AUTHORING_PRESET_IDENTITY",
+      "detail": "binding id/version='marquee'/'1', but 'preset/preset.yaml' is preset 'chrona-builtin-target-b'/'1'; to use another builtin preset create a workspace with create_workspace, or point the binding at a copied preset directory whose id and version match"
+    }
+  },
+  {
+    "step": "workspace_revision after refusal",
+    "workspaceRevision": "sha256:de42f6f1f5b2de9b13cf85c4f22bc45776c1a2f599fafd415d7b9922d29863ed",
+    "unchanged": true,
+    "workspace.yaml sha256[:16]": "6e8406249815fe1d",
+    "bytes unchanged": true
+  },
+  {
+    "step": "render_workspace after refusal",
+    "status": "ok"
+  },
+  {
+    "step": "matching re-pin chrona-builtin-target-b",
+    "status": "ok",
+    "resultRevision": "sha256:de42f6f1f5b2de9b13cf85c4f22bc45776c1a2f599fafd415d7b9922d29863ed"
+  }
+]

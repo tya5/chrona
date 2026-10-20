@@ -1,0 +1,7 @@
+id,title,type,start,end,duration,parent
+design,Design,group,,,,
+research,Customer research,task,2027-01-11,,10wd,design
+design-signoff,Design sign-off,gate,2027-01-29,,,design
+delivery,Delivery,group,,,,
+build,Build,task,2027-02-01,,15wd,delivery
+launch,Public launch,gate,2027-02-26,,,delivery
