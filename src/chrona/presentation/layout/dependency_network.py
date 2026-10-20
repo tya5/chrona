@@ -77,6 +77,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
                                       flow_direction: str,
                                       max_bends: int = 4,
                                       max_detour_ratio: float = 2.0,
+                                      relation_style: str = "orthogonal",
                                       canvas_bounds: Rect | None = None,
                                       theme_tokens: Any | None = None,
                                       route_bounds: Rect | None = None,
@@ -139,7 +140,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
                                tuple(item.bounds for item in text))
     route_region = _expand_route_bounds(route_bounds, placed) if route_bounds is not None else canvas
     relations, route_warnings = _route_edges(edges, placed, route_region, max_bends, max_detour_ratio,
-                                            groups=groups, theme_tokens=theme_tokens, progress=progress)
+                                            groups=groups, theme_tokens=theme_tokens, progress=progress,
+                                            relation_style=relation_style)
     group_shapes = _network_group_shapes(groups, theme_tokens)
     occupied = network_ink_bounds(placed, text, (*group_shapes, *deadline_shapes), relations, theme_tokens)
     canvas = _completed_canvas(canvas, None, occupied, ())
@@ -186,7 +188,9 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
     strokes = complete_aligned_strokes((), stroke_shapes, (), theme_tokens)
     return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes,
                                    canvas_overlays=canvas_overlays, shapes=(*group_shapes, *deadline_shapes),
-                                   groups=groups)
+                                   groups=groups, diagnostics=tuple(
+                                       relation.style_fallback.diagnostic for relation in relations
+                                       if relation.style_fallback is not None))
 
 
 def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> DependencyNetworkLayout:
@@ -241,6 +245,7 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         flow_direction=manifest.dependency_network_flow_direction,
         max_bends=manifest.relation_max_bends,
         max_detour_ratio=manifest.relation_max_detour_ratio,
+        relation_style=manifest.relation_style,
         canvas_bounds=manifest.viewport, theme_tokens=request.theme_tokens,
         route_bounds=route_bounds,
         progress=request.progress,
@@ -291,7 +296,8 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
                                         *placed.fit_warnings),
                    diagnostics=(*headings.diagnostics,
                                 *(heading_batch.diagnostics if heading_batch is not None else ()),
-                                *(legend.diagnostics if legend is not None else ())),
+                                *(legend.diagnostics if legend is not None else ()),
+                                *placed.diagnostics),
                    canvas_warning=warning)
 
 
@@ -546,6 +552,7 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
                  max_bends: int, max_detour_ratio: float, *,
                  groups: tuple[GroupPlacement, ...] = (),
                  theme_tokens: Any | None = None,
+                 relation_style: str = "orthogonal",
                  progress: RenderProgress | None = None) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
     obstacles = {node.object_id: node.bounds for node in nodes if not node.is_container}
     obstacles.update({group.group_id: group.header_bounds for group in groups})
@@ -554,7 +561,7 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
         obstacles=obstacles,
         subjects={node.object_id: DiagnosticSubject.project_object(node.object_id) for node in nodes},
         bounds=bounds, max_bends=max_bends, max_detour_ratio=max_detour_ratio,
-        theme_tokens=theme_tokens, progress=progress)
+        theme_tokens=theme_tokens, progress=progress, relation_style=relation_style)
 
 
 def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...]) -> None:

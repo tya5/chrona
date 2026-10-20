@@ -48,6 +48,8 @@ from chrona.presentation.layout.relation_resolution import (
     relaxed_domain, search_relation_resolution,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
+from chrona.presentation.layout.relation_style import complete_relation_style, curved_path_segments
+from chrona.presentation.layout.relation_style_model import RelationStyleFallback
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 
 ROUTE_EDGE_CLEARANCE = 4.0
@@ -79,7 +81,8 @@ from chrona.presentation.model.surface_content import RelationPresentationFact
 
 def _register_route_paint(obstacles: SurfaceObstacleIndex, placement_id: str,
                           points: tuple[tuple[float, float], ...], stroke_width: float,
-                          commands: tuple[PathCommand, ...] = (), *, route_owner_id: str) -> None:
+                          commands: tuple[PathCommand, ...] = (), *, route_owner_id: str,
+                          paint_cover: tuple[ObstacleSegment, ...] = ()) -> None:
     """Register route segments and flattened painted arcs under their logical instance."""
     for index, (source, target) in enumerate(zip(points, points[1:])):
         if source != target:
@@ -87,7 +90,11 @@ def _register_route_paint(obstacles: SurfaceObstacleIndex, placement_id: str,
                 "timeline", ObstacleSegment(source, target, stroke_width), route_owner_id=route_owner_id))
     # The drawn arcs lie inside each turn: register their chords too so a label or later route
     # in the elbow keeps its distance from the ink, not only from the polyline (#1046).
-    if any(command.kind == "quadratic" for command in commands):
+    if paint_cover:
+        for index, geometry in enumerate(paint_cover):
+            obstacles.add(SurfaceObstacle(f"{placement_id}:curve:{index}", "dependency-route",
+                "timeline", geometry, route_owner_id=route_owner_id))
+    elif any(command.kind == "quadratic" for command in commands):
         drawn = flatten_path(commands)
         for index, (source, target) in enumerate(zip(drawn, drawn[1:])):
             if source != target:
@@ -1004,6 +1011,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         semantic_id=relation.semantic_id, source_ref=relation_id,
                         to_instance_id=target_id, terminal_label=True, fragment_endpoint="target"),
                 )
+                if context.layout_manifest.relation_style == "curved":
+                    receipt = RelationStyleFallback(scene_id, "recovery")
+                    fragments = (replace(fragments[0], style_fallback=receipt), fragments[1])
+                    diagnostics.append(receipt.diagnostic)
                 for fragment in fragments:
                     declared_order[fragment.relation_id] = declared_index
                     relations.append(fragment)
@@ -1086,6 +1097,31 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 marker_start=completed_start, marker_end=completed_end,
                 label_content=relation_label_content(relation), source_ref=relation_id,
                 from_instance_id=source_id, to_instance_id=target_id, paint_clip=plot_clip)
+            def reject_curve(candidate, cover):
+                if plot_clip is not None and not relation_geometry_inside_plot(
+                        plot_clip, candidate.points, path_commands=candidate.path_commands,
+                        marker_start=candidate.marker_start, marker_end=candidate.marker_end,
+                        stroke_width=dependency_stroke):
+                    return "bounds"
+                # Straight intervals are subsets of the selected safe skeleton.
+                # Only arcs change its ink; no whole-host exemption applies here.
+                classes = tuple(dict.fromkeys((*route_classes, *LABEL_INK_OBSTACLE_CLASSES)))
+                for segment in curved_path_segments(candidate.path_commands, dependency_stroke):
+                    if domain.obstacles.collisions(segment, classes=classes,
+                            regions=("timeline", "group-header")):
+                        return "clearance"
+                    if any(obstacles_intersect(segment, rect) for _, rect in
+                           required_primary_interiors(dependency_stroke,
+                                                      domain.required_primary_mark_ids)):
+                        return "clearance"
+                return None
+            placed, paint_cover = complete_relation_style(placed,
+                style=context.layout_manifest.relation_style, stroke_width=dependency_stroke,
+                start_run=terminal_run(marker_start), end_run=terminal_run(marker_end),
+                recovery=fallback or domain.stage is RelationResolutionStage.OVERLAP,
+                reject=reject_curve)
+            if placed.style_fallback is not None:
+                diagnostics.append(placed.style_fallback.diagnostic)
             if plot_clip is not None and not relation_geometry_inside_plot(plot_clip, placed.points,
                     path_commands=placed.path_commands, marker_start=placed.marker_start,
                     marker_end=placed.marker_end, stroke_width=dependency_stroke):
@@ -1116,7 +1152,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             dependency_role = semantic_binding(placed.semantic_id).theme_role
             _register_route_paint(obstacles, scene_id, placed.points,
                 float(request.theme_tokens.number(dependency_role, "strokeWidth")), placed.path_commands,
-                route_owner_id=scene_id)
+                route_owner_id=scene_id, paint_cover=paint_cover)
             if fallback:
                 route_fallbacks.append(placed)
 

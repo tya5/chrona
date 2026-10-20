@@ -147,7 +147,7 @@ properties:
     additionalProperties: {$ref: "#/$defs/override"}
   relationRouting:
     type: object
-    description: "Limits for Layout-owned orthogonal relation routing."
+    description: "Global Layout-owned relation routing and drawing policy."
     additionalProperties: false
     required: [maxBends, maxDetourRatio]
     properties:
@@ -161,6 +161,9 @@ properties:
       maxBends: {description: "Maximum bends allowed in one relation route.", type: integer, minimum: 0, maximum: 64}
       maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
       entry: {description: "Which side a relation enters a span start (or the mirrored end): side-when-free tries the horizontal entry at mid-height first when the source lies on that side and a stub of arrowhead plus clearance is free; any keeps the nearest-port order; side adds, for a target the source does not approach from the entry side (an abutting or overlapping chain), a back-route through the row gap and gives gates the same horizontal entry, and reports I_LAYOUT_RELATION_ENTRY_FALLBACK when a relation still does not enter along the bar. Absent means side-when-free (#1030, #1060).", enum: [any, side-when-free, side]}
+      style:
+        description: "Drawing style for table-timeline and dependency-network relations. Omission means orthogonal; curved smooths the already selected route without changing route search."
+        $ref: "urn:chrona:vocabulary-v0.1#/$defs/relationRouteStyle"
   root: {description: "Complete root container for a standalone Layout Profile.", $ref: "#/$defs/container"}
 description: "Choose either a standalone root or an extends-plus-overrides profile."
 examples:
