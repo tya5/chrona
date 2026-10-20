@@ -25,6 +25,26 @@ class ObjectReferenceError(ValueError):
 
 
 @dataclass(frozen=True)
+class ObjectReferenceConstraint:
+    """Semantic filters declared for one object-reference field."""
+
+    target_profiles: tuple[str, ...] = ()
+    target_namespaces: tuple[str, ...] = ("entities", "objects")
+
+    def __post_init__(self) -> None:
+        profiles = tuple(self.target_profiles)
+        namespaces = tuple(self.target_namespaces)
+        if any(not isinstance(value, str) or not value for value in profiles):
+            raise ValueError("target profiles must be non-empty strings")
+        if not namespaces or any(value not in {"entities", "objects"} for value in namespaces):
+            raise ValueError("target namespaces must select entities and/or objects")
+        if len(set(namespaces)) != len(namespaces):
+            raise ValueError("target namespaces must be unique")
+        object.__setattr__(self, "target_profiles", profiles)
+        object.__setattr__(self, "target_namespaces", namespaces)
+
+
+@dataclass(frozen=True)
 class ObjectReferenceCatalog:
     """Immutable target snapshot for a single logical Project source.
 
@@ -76,13 +96,21 @@ class ObjectReferenceCatalog:
         value: object,
         *,
         target_profiles: tuple[str, ...] | list[str] = (),
+        target_namespaces: tuple[str, ...] | list[str] = ("entities", "objects"),
     ) -> ObjectReferenceTarget:
-        """Resolve a bare ID, applying its declared profile constraint first."""
+        """Resolve a bare ID, applying declared profile and namespace filters."""
         if not isinstance(value, str) or not value:
             raise ObjectReferenceError("invalid", value)
         candidates = self._by_id.get(value, ())
         if not candidates:
             raise ObjectReferenceError("missing", value)
+
+        namespaces = tuple(target_namespaces)
+        if not namespaces or any(namespace not in {"entities", "objects"} for namespace in namespaces):
+            raise ValueError("target namespaces must select entities and/or objects")
+        candidates = tuple(target for target in candidates if target.identity[1] in namespaces)
+        if not candidates:
+            raise ObjectReferenceError("incompatible", value)
 
         if target_profiles:
             allowed = frozenset(target_profiles)

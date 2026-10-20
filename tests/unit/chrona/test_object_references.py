@@ -1,6 +1,10 @@
 import pytest
 
-from chrona.core.object_references import ObjectReferenceCatalog, ObjectReferenceError
+from chrona.core.object_references import (
+    ObjectReferenceCatalog,
+    ObjectReferenceConstraint,
+    ObjectReferenceError,
+)
 
 
 def _project():
@@ -56,3 +60,22 @@ def test_missing_incompatible_and_invalid_references_are_distinct():
         with pytest.raises(ObjectReferenceError) as caught:
             catalog.resolve(value, target_profiles=profiles)
         assert caught.value.reason == reason
+
+
+def test_namespace_constraint_filters_same_profile_identity_without_changing_default_scope():
+    project = _project()
+    project["entities"]["same-profile"] = {"type": "acme.team", "title": "Entity"}
+    project["objects"]["same-profile"] = {"type": "acme.team", "title": "Object"}
+    catalog = ObjectReferenceCatalog.from_project(project)
+
+    constraint = ObjectReferenceConstraint(
+        target_profiles=("acme.team",), target_namespaces=("entities",),
+    )
+    assert catalog.resolve(
+        "same-profile",
+        target_profiles=constraint.target_profiles,
+        target_namespaces=constraint.target_namespaces,
+    ).identity == ("demo", "entities", "same-profile")
+    with pytest.raises(ObjectReferenceError) as caught:
+        catalog.resolve("same-profile", target_profiles=("acme.team",))
+    assert caught.value.reason == "ambiguous"

@@ -1,9 +1,11 @@
 """Source-local object references reach actual table SVG and encoding legends (#344)."""
 from copy import deepcopy
 from datetime import date
+from pathlib import Path
 import xml.etree.ElementTree as ET
 
 import pytest
+import yaml
 
 from chrona.presentation.model.field_roles import FieldDescriptor, FieldRoleBindings
 from chrona.presentation.model.projection import ReviewItem
@@ -49,9 +51,9 @@ def _source(title="Payload team", *, many=False, second_title=None):
 
 
 def _render(directory, *, title="Payload team", many=False, lane=False, locale="en-US",
-            encoding=None, predicate=None):
+            encoding=None, predicate=None, source_package=None):
     directory.mkdir(parents=True, exist_ok=True)
-    source, package = _source(title, many=many, second_title=title if encoding else None)
+    source, package = source_package or _source(title, many=many, second_title=title if encoding else None)
     parts = sr.bundle()
     body = parts["view"]["body"]
     column = {"id": "Reference", "source": {"fieldRole": "responsible"},
@@ -177,3 +179,24 @@ def test_reference_legend_title_uses_first_matched_occurrence_not_title_sorting(
     assert entries[0].label == titles[0]
     assert entries[0].style_value == "target-a"
     assert entries[0].style_occurrences == tuple(occurrence.key for occurrence in occurrences)
+
+
+def test_delivery_assignee_keeps_entity_domain_when_actor_object_has_the_same_id(tmp_path):
+    package = yaml.safe_load((Path(__file__).resolve().parents[2] /
+                             "conformance/implementation-delivery-profile-v0.2.yaml").read_bytes())
+    work = sr.span("work", date(2026, 3, 2), 5)
+    work.update(type="implementation-delivery.work-item", fields={
+        "assignees": ["same"], "workflowState": "planned", "reuseClassification": "core",
+    })
+    actor = sr.span("same", date(2026, 3, 2), 5, title="Actor object")
+    actor.update(type="implementation-delivery.person", fields={})
+    source = sr.project({"work": work, "same": actor}, responsible_field_role=False)
+    source["entities"] = {"same": {"type": "implementation-delivery.person", "title": "Actor entity"}}
+    source["fieldRoles"] = {"responsible": "assignees"}
+    source["extensions"] = [{"packageId": "implementation-delivery", "path": "package.yaml",
+                             "revision": "git:" + "1" * 40}]
+    rendered = _render(tmp_path, source_package=(source, package))
+    cells = [node.text for node in rendered.surface.primitives if node.table_column_id == "Reference"]
+    assert "Actor entity" in cells
+    assert "Actor object" not in cells
+    assert "Actor entity" in _svg_texts(rendered)

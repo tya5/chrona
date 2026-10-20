@@ -26,10 +26,14 @@ class FieldDescriptor:
     # Profiles allowed by an objectReference field. Appended to preserve the
     # positional construction contract used by existing callers.
     target_profiles: tuple[str, ...] = ()
+    # Target namespaces are normalized by the owning extension declaration.
+    # Appended for the same positional-API compatibility reason.
+    target_namespaces: tuple[str, ...] = ("entities", "objects")
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "enum_values", tuple(self.enum_values))
         object.__setattr__(self, "target_profiles", tuple(self.target_profiles))
+        object.__setattr__(self, "target_namespaces", tuple(self.target_namespaces))
 
 
 @dataclass(frozen=True)
@@ -183,7 +187,11 @@ class FieldRoleBindings:
                 or self.reference_catalog is None):
             return ()
         values = value if descriptor.cardinality == "many" and isinstance(value, (list, tuple)) else (value,)
-        return tuple(self.reference_catalog.resolve(item, target_profiles=descriptor.target_profiles)
+        return tuple(self.reference_catalog.resolve(
+            item,
+            target_profiles=descriptor.target_profiles,
+            target_namespaces=descriptor.target_namespaces,
+        )
                      for item in values)
 
     def descriptor_for(self, object_id: str | None,

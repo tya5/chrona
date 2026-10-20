@@ -12,7 +12,11 @@ from hashlib import sha256
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
-from chrona.core.object_references import ObjectReferenceCatalog, ObjectReferenceError
+from chrona.core.object_references import (
+    ObjectReferenceCatalog,
+    ObjectReferenceConstraint,
+    ObjectReferenceError,
+)
 from chrona.resources import safe_load, schema_validator
 from chrona.schema_diagnostics import explain_errors
 from chrona.core.ports import SnapshotReadError, SnapshotReader
@@ -20,7 +24,7 @@ from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}
-ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}
+ACTOR_PROFILES = ("implementation-delivery.person", "implementation-delivery.team")
 
 
 @dataclass(frozen=True)
@@ -153,6 +157,7 @@ def _validate_delivery(project: dict[str, Any], package_manifests: dict[str, dic
         return [Diagnostic("IDP-PROFILE-006", f"Implementation-delivery package is invalid: {detail}", "/extensions")]
     diagnostics: list[Diagnostic] = []
     profiles = manifest.get("profiles", {})
+    reference_catalog: ObjectReferenceCatalog | None = None
     for object_id, item in project.get("objects", {}).items():
         profile_id = item.get("type")
         if profile_id not in DELIVERY_PROFILES:
@@ -168,19 +173,58 @@ def _validate_delivery(project: dict[str, Any], package_manifests: dict[str, dic
             if spec.get("required") and name not in values:
                 diagnostics.append(Diagnostic("IDP-PROFILE-001", f"Missing required field {name}", path))
             elif name in values:
-                diagnostics.extend(_validate_value(project, name, values[name], spec, f"{path}/{name}"))
+                constraint = reference_constraint_for_field(PACKAGE_ID, profile_id, name, spec)
+                if spec.get("type") == "objectReference" and reference_catalog is None:
+                    reference_catalog = ObjectReferenceCatalog.from_project(project)
+                diagnostics.extend(_validate_value(
+                    project, name, values[name], spec, f"{path}/{name}",
+                    reference_constraint=constraint,
+                    reference_catalog=reference_catalog,
+                ))
     return diagnostics
 
 
-def _validate_value(project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str) -> list[Diagnostic]:
+def reference_constraint_for_field(
+    owner_package_id: str,
+    profile_id: str,
+    field_name: str,
+    definition: dict[str, Any],
+) -> ObjectReferenceConstraint:
+    """Normalize a field's reference domain at its owning package boundary."""
+    if (owner_package_id == PACKAGE_ID and profile_id in DELIVERY_PROFILES
+            and field_name == "assignees"):
+        return ObjectReferenceConstraint(
+            target_profiles=ACTOR_PROFILES,
+            target_namespaces=("entities",),
+        )
+    targets = definition.get("targetProfiles", ())
+    profiles = tuple(targets) if isinstance(targets, (list, tuple)) else ()
+    return ObjectReferenceConstraint(target_profiles=profiles)
+
+
+def _validate_value(
+    project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str,
+    *, reference_constraint: ObjectReferenceConstraint | None = None,
+    reference_catalog: ObjectReferenceCatalog | None = None,
+) -> list[Diagnostic]:
     values = value if spec.get("cardinality") == "many" else [value]
     if spec.get("cardinality") == "many" and not isinstance(value, list):
         return [Diagnostic("IDP-PROFILE-003", f"{name} must be an array", path)]
     if spec.get("type") == "enum" and value not in spec.get("enumValues", []):
         return [Diagnostic("IDP-STATE-001", f"Invalid {name}", path)]
     if name == "assignees":
-        entities = project.get("entities", {})
-        if any(entity_id not in entities or entities[entity_id].get("type") not in ACTOR_PROFILES for entity_id in values):
+        constraint = reference_constraint or reference_constraint_for_field(
+            PACKAGE_ID, "implementation-delivery.work-item", name, spec,
+        )
+        catalog = reference_catalog or ObjectReferenceCatalog.from_project(project)
+        try:
+            for entity_id in values:
+                catalog.resolve(
+                    entity_id,
+                    target_profiles=constraint.target_profiles,
+                    target_namespaces=constraint.target_namespaces,
+                )
+        except (ObjectReferenceError, TypeError, ValueError):
             return [Diagnostic("IDP-PROFILE-003", "Invalid delivery assignee", path)]
     if spec.get("type") == "resourceReference":
         validator = schema_validator("revision-store-resource-ref-v0.1.schema.yaml")
@@ -227,15 +271,24 @@ def resolve_profile_field_catalogue(
     project: dict[str, Any],
     package_manifests: dict[str, dict[str, Any]] | None,
 ) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
+    """Compatibility wrapper returning effective fields and diagnostics."""
+    catalogue, _, diagnostics = resolve_profile_field_catalogue_with_owners(project, package_manifests)
+    return catalogue, diagnostics
+
+
+def resolve_profile_field_catalogue_with_owners(
+    project: dict[str, Any],
+    package_manifests: dict[str, dict[str, Any]] | None,
+) -> tuple[dict[str, dict[str, Any]], dict[str, str], list[Diagnostic]]:
     """Resolve this Project's effective profile fields and package diagnostics.
 
     Each source Project gets its own catalogue. Profile field merging remains
     owned by :func:`resolve_profile_field_definitions`; this function only
-    selects declarations from that Project's already-resolved manifests and
-    rejects ambiguous profile IDs across packages.
+    selects declarations and owners from that Project's already-resolved
+    manifests and rejects ambiguous profile IDs across packages.
     """
     if package_manifests is None:
-        return {}, []
+        return {}, {}, []
 
     catalogue: dict[str, dict[str, Any]] = {}
     owners: dict[str, str] = {}
@@ -298,7 +351,7 @@ def resolve_profile_field_catalogue(
             if profile_id not in conflicted:
                 catalogue[profile_id] = profile_fields
 
-    return catalogue, diagnostics
+    return catalogue, owners, diagnostics
 
 
 def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None) -> list[Diagnostic]:

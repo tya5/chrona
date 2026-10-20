@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.core.validation import validate_project
-from chrona.extensions.profiles import validate_profiles
+from chrona.extensions.profiles import PACKAGE_ID, validate_profiles
 from chrona.scheduling.scheduler import schedule
 from chrona.usecases import render_review
 
@@ -25,6 +25,29 @@ PACKAGE = {
         },
         "acme-reference.team": {"extends": "entity"},
         "acme-reference.other": {"extends": "entity"},
+    },
+}
+
+IDP_PACKAGE = {
+    "version": "chrona/profile/v0.3",
+    "packageId": PACKAGE_ID,
+    "contentIdentity": "sha256:" + "2" * 64,
+    "requires": {"projectFormat": "timeline/v0.7"},
+    "profiles": {
+        "implementation-delivery.work-item": {
+            "extends": "task",
+            "fields": {
+                "assignees": {"type": "objectReference", "cardinality": "many",
+                              "targetProfiles": ["implementation-delivery.person", "implementation-delivery.team"]},
+                "workflowState": {"type": "enum", "cardinality": "one", "required": True,
+                                  "enumValues": ["planned", "active", "blocked", "completed", "cancelled"]},
+                "reuseClassification": {"type": "enum", "cardinality": "one", "required": True,
+                                        "enumValues": ["core", "shared-service", "adapter", "experimental"]},
+            },
+        },
+        "implementation-delivery.delivery-gate": {"extends": "milestone"},
+        "implementation-delivery.person": {"extends": "entity"},
+        "implementation-delivery.team": {"extends": "entity"},
     },
 }
 
@@ -112,3 +135,44 @@ def test_valid_reference_passes_validate_schedule_and_render_source_closure(monk
     monkeypatch.setattr(render_review, "build_review_projection", reached_projection)
     with pytest.raises(_ReachedProjection):
         render_review._project_review(project, view, _Closure(), manifests, _RenderScheduler())
+
+
+def _idp_shared_id_project(*, include_actor_entity=True):
+    return {
+        "version": "timeline/v0.7",
+        "project": {"id": "idp-shared-id"},
+        "extensions": [{"packageId": PACKAGE_ID, "resource": deepcopy(IDP_PACKAGE)}],
+        "entities": ({"actor": {"type": "implementation-delivery.person", "title": "Actor"}}
+                     if include_actor_entity else {}),
+        "objects": {
+            "actor": {
+                "type": "implementation-delivery.person", "title": "Scheduled object",
+                "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-02"},
+            },
+            "work": {
+                "type": "implementation-delivery.work-item",
+                "schedule": {"mode": "fixed-span", "start": "2026-10-02", "end": "2026-10-03"},
+                "fields": {"assignees": ["actor"], "workflowState": "planned",
+                           "reuseClassification": "core"},
+            },
+        },
+    }
+
+
+def test_idp_assignee_remains_valid_when_same_id_is_an_allowed_profile_object():
+    project = _idp_shared_id_project()
+    manifests = {PACKAGE_ID: deepcopy(IDP_PACKAGE)}
+
+    profile_diagnostics = validate_profiles(project, manifests)
+    assert profile_diagnostics == []
+    assert validate_project(project, extension_diagnostics=profile_diagnostics) == []
+    assert schedule(project, extension_diagnostics=profile_diagnostics).ok
+
+
+def test_idp_assignee_still_rejects_actor_profile_object_without_entity():
+    project = _idp_shared_id_project(include_actor_entity=False)
+    diagnostics = validate_profiles(project, {PACKAGE_ID: deepcopy(IDP_PACKAGE)})
+
+    assert [(item.id, item.path) for item in diagnostics] == [
+        ("IDP-PROFILE-003", "/objects/work/fields/assignees"),
+    ]
