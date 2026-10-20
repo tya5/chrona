@@ -49,7 +49,7 @@ def _view(*, scenario=False):
     item = SimpleNamespace(source_kind="scenario", scenario_id="case-a")
     rows = (SimpleNamespace(items=(item,)),) if scenario else ()
     return SimpleNamespace(
-        comparison=SimpleNamespace(baseline="planned", scenario_id=None),
+        wording=None, comparison=SimpleNamespace(baseline="planned", scenario_id=None),
         rows=SimpleNamespace(items=rows),
     )
 
