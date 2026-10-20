@@ -35,7 +35,8 @@ The materializer MUST copy the authored context file byte-for-byte and construct
 top-level local `render-context` reference from the digest of those unchanged bytes.
 It MUST NOT serialize the parsed YAML back to the copied context path.
 
-The explicit deck-authoring form in Specification 40 section 7 first produces
+The selected deck-authoring design (#415, pending review/implementation;
+Specification 40 section 7) first produces
 a **new**, fully explicit Context with its own transient address and exact byte
 digest. That expansion precedes this immutable-copy boundary; it neither
 rewrites an authored explicit Context nor claims the fragment's identity for
