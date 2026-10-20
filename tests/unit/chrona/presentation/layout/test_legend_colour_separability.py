@@ -89,14 +89,14 @@ def test_below_floor_is_reported_once_per_vision_in_canonical_order():
         ("deuteranopia", 0.0), ("tritanopia", 0.0))
 
 
-def _glyph_figure(shape, *, canonical=False, dash=()):
+def _glyph_figure(shape, *, canonical=False, dash=(), width=1):
     from chrona.presentation.layout.mark_geometry import symbol_parts
 
     parts = tuple((part.paint_mode, part.line_cap, part.line_join,
                    tuple((command.kind, command.points) for command in part.commands))
                   for part in symbol_parts({"shape": shape}, (0, 0, 1, 1)))
     geometry = (shape, tuple((*part[:3], None, part[-1]) for part in parts)) if canonical else parts
-    return ((geometry, ((None, "#000000", 1, dash, 1),), (None,)),)
+    return ((geometry, ((None, "#000000", width, dash, 1),), (None,)),)
 
 
 def test_distinct_glyph_shapes_already_separate_identical_black_ink():
@@ -115,6 +115,13 @@ def test_dash_pattern_is_a_distinction_but_equal_patterns_still_check_colour():
     dashed = _glyph_figure("diamond", dash=(5, 3))
     assert _palette_separation_failures(solid, dashed) == ()
     assert len(_palette_separation_failures(dashed, dashed)) == 4
+
+
+def test_completed_stroke_width_is_a_distinction_but_equal_width_still_checks_colour():
+    thin = _glyph_figure("diamond", width=1)
+    thick = _glyph_figure("diamond", width=2)
+    assert _palette_separation_failures(thin, thick) == ()
+    assert len(_palette_separation_failures(thick, thick)) == 4
 
 
 def test_completed_catalogue_pattern_structure_is_a_distinction():

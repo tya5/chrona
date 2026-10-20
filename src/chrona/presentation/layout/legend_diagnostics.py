@@ -244,7 +244,7 @@ def _non_colour_figure(figure):
             stroked = mode != "fill" and stroke is not None and width is not None and width > 0
             if not filled and not stroked:
                 continue
-            visible.append((filled, stroked, geometry,
+            visible.append((filled, stroked, width if stroked else None, geometry,
                             cap if stroked else None, join if stroked else None,
                             tuple(dash) if stroked and dash else (),
                             patterns[index] if index < len(patterns) else None))
