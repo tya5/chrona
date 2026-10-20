@@ -17,6 +17,7 @@ def template(tmp_path):
         (source / "contexts" / f"{name}.yaml").write_text(name)
         (source / "generated" / f"{name}.svg").write_text(name)
         slides.append({"id": name, "context": f"contexts/{name}.yaml",
+                       "evidence": "Provider deferral fixture.",
                        "expectedSvg": f"generated/{name}.svg"})
     (source / "manifest.yaml").write_text(yaml.safe_dump({
         "version": "chrona/example-materializer/v0.1", "role": "regression-corpus",

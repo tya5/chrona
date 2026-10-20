@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import yaml
 
 from chrona.resources import safe_load
+from chrona.usecases.deck_context import load_deck_manifest, select_deck_context
 
 
 DIMENSION_OWNERS = {
@@ -31,25 +32,27 @@ def _load(path: Path) -> Any:
 def corpus(root: Path) -> dict[tuple[str, str], dict[str, Any]]:
     entries: dict[tuple[str, str], dict[str, Any]] = {}
     for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
-        manifest = _load(manifest_path)
-        if not isinstance(manifest, dict) or manifest.get("role") != "regression-corpus":
+        manifest_source = load_deck_manifest(manifest_path)
+        manifest = manifest_source.document
+        if not isinstance(manifest, Mapping) or manifest.get("role") != "regression-corpus":
             raise ExampleInventoryError(f"E_EXAMPLE_CORPUS_ROLE:{manifest_path.relative_to(root)}")
         identifier = manifest.get("id")
         slides = manifest.get("slides")
         if not isinstance(identifier, str) or not isinstance(slides, list):
             raise ExampleInventoryError(f"E_EXAMPLE_CORPUS_FORMAT:{manifest_path.relative_to(root)}")
         for slide in slides:
-            if not isinstance(slide, dict) or not isinstance(slide.get("id"), str) or not isinstance(slide.get("evidence"), str) or not slide["evidence"].strip():
+            if not isinstance(slide, Mapping) or not isinstance(slide.get("id"), str) or not isinstance(slide.get("evidence"), str) or not slide["evidence"].strip():
                 raise ExampleInventoryError(f"E_EXAMPLE_SLIDE:{manifest_path.relative_to(root)}")
             key = (identifier, slide["id"])
             if key in entries:
                 raise ExampleInventoryError(f"E_EXAMPLE_SLIDE_DUPLICATE:{identifier}:{slide['id']}")
-            context = slide.get("context", manifest.get("context"))
             expected = slide.get("expectedSvg")
-            if not isinstance(context, str) or not isinstance(expected, str):
+            if not isinstance(expected, str):
                 raise ExampleInventoryError(f"E_EXAMPLE_SLIDE:{manifest_path.relative_to(root)}")
+            selected = select_deck_context(manifest_path, manifest_source, slide["id"])
             entries[key] = {"manifest": manifest_path.relative_to(root).as_posix(), "evidence": slide["evidence"],
-                            "context": context, "expectedSvg": expected}
+                            "context": selected.address if selected.source_path is not None else None,
+                            "slideId": slide["id"], "expectedSvg": expected}
     return entries
 
 
@@ -137,9 +140,11 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
 
 
 def _context(root: Path, entry: dict[str, Any]) -> dict[str, Any]:
-    corpus = Path(entry["manifest"]).parent
-    value = _load(root / corpus / entry["context"])
-    if not isinstance(value, dict) or value.get("kind") != "render-context" or not isinstance(value.get("body"), dict):
+    manifest_path = root / entry["manifest"]
+    manifest = load_deck_manifest(manifest_path)
+    selected = select_deck_context(manifest_path, manifest, entry["slideId"])
+    value = selected.document
+    if not isinstance(value, Mapping) or value.get("kind") != "render-context" or not isinstance(value.get("body"), Mapping):
         raise ExampleInventoryError("E_DESIGN_GALLERY_CONTEXT")
     return value
 

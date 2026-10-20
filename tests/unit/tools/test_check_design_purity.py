@@ -209,7 +209,8 @@ def test_manifest_uses_slide_context_override_shared_store_and_theme_base(tmp_pa
     (example / "manifest.yaml").write_text(
         "version: chrona/example-materializer/v0.1\nid: sample\nrole: regression-corpus\n"
         "context: default.yaml\nstores: [{identity: shared-design, root: shared}]\n"
-        "slides: [{id: no-override}, {id: override, context: custom.yaml}]\n",
+        "slides: [{id: no-override, evidence: default, expectedSvg: generated/default.svg}, "
+        "{id: override, evidence: override, expectedSvg: generated/override.svg, context: custom.yaml}]\n",
         encoding="utf-8",
     )
 
@@ -236,7 +237,7 @@ def test_manifest_uses_slide_context_override_shared_store_and_theme_base(tmp_pa
     assert not any(item["resource"] == "local:example/default.yaml" for item in findings)
     assert {item["project"] for item in findings} == {"local:example/project.yaml"}
     assert {item["context"] for item in findings} == {
-        (example / "default.yaml").as_posix(), (example / "custom.yaml").as_posix()}
+        "sample/default.yaml", "sample/custom.yaml"}
 
 
 def test_empty_batch_is_an_error_not_a_clean_result(tmp_path):
@@ -298,7 +299,7 @@ def _batch_fixture(tmp_path):
     _write(example / "context.yaml", yaml.safe_dump(context))
     _write(example / "manifest.yaml", yaml.safe_dump({
         "version": "chrona/example-materializer/v0.1", "id": "sample", "role": "regression-corpus",
-        "context": "context.yaml", "slides": [{"id": "first"}]}))
+        "context": "context.yaml", "slides": [{"id": "first", "evidence": "first", "expectedSvg": "generated/first.svg"}]}))
     return example, context
 
 
@@ -338,7 +339,7 @@ def test_batch_reference_errors_are_fatal_even_in_report_mode(tmp_path, capsys, 
 def test_later_context_error_does_not_discard_earlier_findings(tmp_path, capsys):
     example, _ = _batch_fixture(tmp_path)
     manifest = safe_load((example / "manifest.yaml").read_bytes())
-    manifest["slides"].append({"id": "missing", "context": "missing.yaml"})
+    manifest["slides"].append({"id": "missing", "evidence": "missing", "expectedSvg": "generated/missing.svg", "context": "missing.yaml"})
     _write(example / "manifest.yaml", yaml.safe_dump(manifest))
     assert purity.main(["--examples-root", str(tmp_path / "examples"), "--report-only"]) == 2
     report = json.loads(capsys.readouterr().out)

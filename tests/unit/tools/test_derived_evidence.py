@@ -21,9 +21,10 @@ def _manifest(root):
     example = root / "examples/new-corpus"
     example.mkdir(parents=True)
     (example / "manifest.yaml").write_text(yaml.safe_dump({
-        "version": "chrona/example-materializer/v0.1",
+        "version": "chrona/example-materializer/v0.1", "role": "regression-corpus",
         "slides": [{"id": "new-slide", "expectedSvg": "generated/new.svg",
-                    "expectedScene": "generated/new.scene.json", "context": "new-context.yaml"}],
+                    "expectedScene": "generated/new.scene.json", "evidence": "New slide",
+                    "context": "new-context.yaml"}],
     }), encoding="utf-8")
     (example / "new-context.yaml").write_text("id: new-context\n", encoding="utf-8")
     return example / "generated/new.scene.json"
@@ -90,9 +91,12 @@ def test_undeclared_generated_scene_is_rejected(tmp_path):
 def test_duplicate_slide_ids_are_rejected_before_target_lookup(tmp_path):
     example = tmp_path / "examples/new-corpus"
     example.mkdir(parents=True)
-    slides = [{"id": "same", "expectedSvg": f"generated/{index}.svg"}
-              for index in range(2)]
-    (example / "manifest.yaml").write_text(yaml.safe_dump({"slides": slides}), encoding="utf-8")
+    (example / "manifest.yaml").write_text(yaml.safe_dump({
+        "version": "chrona/example-materializer/v0.1", "role": "regression-corpus", "slides": [
+            {"id": "same", "evidence": "same", "expectedSvg": f"generated/{index}.svg"}
+            for index in range(2)
+        ],
+    }), encoding="utf-8")
     with pytest.raises(ValueError, match="E_DERIVED_EVIDENCE_MANIFEST"):
         materializer_outputs(tmp_path)
 

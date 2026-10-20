@@ -132,9 +132,8 @@ def resolve_preset_argument(value: str | None) -> tuple[Path | None, tempfile.Te
     so `render --preset <name>` is byte-identical to `preset copy <name>` followed
     by `render --preset <path>` by construction rather than by a second code path.
     The caller owns `owned_tempdir` and must `.cleanup()` it once rendering is done
-    (a plain try/finally, not `@contextmanager`: `StableFailure` is a frozen dataclass,
-    and contextlib's generator-based `__exit__` cannot re-raise a frozen exception
-    through `gen.throw` -- it tries to stamp `__traceback__` on it and fails).
+    with its existing plain try/finally lifetime. Exceptions remain free to carry
+    their traceback through either ordinary or generator-based context managers.
     """
     if not value:
         return None, None

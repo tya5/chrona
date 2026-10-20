@@ -9,6 +9,7 @@ import subprocess
 from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
+from chrona.usecases.deck_context import load_deck_manifest, select_deck_context
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,12 +60,12 @@ def closure(root: Path) -> tuple[set[Path], dict[Path, set[Path]]]:
     manifests = sorted(root.glob("*/manifest.yaml"))
     for manifest_path in manifests:
         example = manifest_path.parent.resolve()
-        manifest = safe_load(manifest_path.read_bytes())
+        manifest_source = load_deck_manifest(manifest_path)
+        manifest = manifest_source.document
         if not isinstance(manifest, Mapping) or not isinstance(manifest.get("slides"), list):
             raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MANIFEST")
         reached.add(manifest_path.resolve())
         queue: list[Path] = []
-        default = manifest.get("context")
         for item in manifest["slides"]:
             if not isinstance(item, Mapping):
                 raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MANIFEST")
@@ -74,10 +75,22 @@ def closure(root: Path) -> tuple[set[Path], dict[Path, set[Path]]]:
                     if not target.is_file():
                         raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MISSING:" + target.relative_to(root).as_posix())
                     reached.add(target); edges.setdefault(manifest_path.resolve(), set()).add(target)
-            context = item.get("context", default)
-            if not isinstance(context, str):
-                raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MANIFEST")
-            target = _inside(example, context); queue.append(target); edges.setdefault(manifest_path.resolve(), set()).add(target)
+            selected = select_deck_context(manifest_path, manifest_source, item["id"])
+            if selected.source_path is not None:
+                target = selected.source_path.resolve()
+                queue.append(target)
+                edges.setdefault(manifest_path.resolve(), set()).add(target)
+            else:
+                # A composed Context is in-memory authoring output, not a file
+                # in the example tree. Its surviving local references are
+                # reachable from the declaring manifest without a fake path.
+                for target, required in _local_addresses(selected.document, example):
+                    if not target.is_file() and required:
+                        raise ExampleReachabilityError(
+                            "E_EXAMPLE_REACHABILITY_MISSING:" + target.relative_to(root).as_posix())
+                    if target.is_file():
+                        edges.setdefault(manifest_path.resolve(), set()).add(target)
+                        queue.append(target)
         while queue:
             path = queue.pop()
             if path in reached:

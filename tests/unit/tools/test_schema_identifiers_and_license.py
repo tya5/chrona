@@ -40,6 +40,7 @@ def _walk(node: Any) -> Iterator[Any]:
 
 # category -> why a site of that shape does not reference `common#identifier`.
 ALLOWED_SHAPES: dict[str, str] = {
+    "render-context-id": "a composed Context echoes the live immutable Render Context id grammar by reference; authoring does not independently tighten its identity",
     "host-vocabulary-id": "the wheel-owned host vocabulary has the single fixed identity chrona-core; it is not an authored free identifier",
     "non-empty-string": "an authored identifier that has only ever been `minLength: 1`: committed and user documents use spaces, punctuation and non-ASCII, "
                         "and `identifier` also refuses control characters, so referencing it would newly reject an input (N1, B5 not unified)",
@@ -65,6 +66,10 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("command-request-v0.4.schema.yaml", "non-empty-string"): 8,
     ("command-request-v0.4.schema.yaml", "store-segment"): 1,
     ("example-registry-v0.1.schema.yaml", "slug"): 1,
+    # Deck/slide ids predate this formal manifest schema; a new composed Context
+    # uses the existing immutable Context's id grammar, not a third copy.
+    ("example-materializer-v0.1.schema.yaml", "non-empty-string"): 2,
+    ("example-materializer-v0.1.schema.yaml", "render-context-id"): 1,
     ("layout-profile-v0.10.schema.yaml", "layout-profile-id"): 7,
     ("presentation-materialization-receipt-v0.1.schema.yaml", "non-empty-string"): 1,
     # Optional Summary/Style members preserve their referenced resource's opaque id grammar (#1535, #419).
@@ -100,6 +105,8 @@ def _category(node: dict[str, Any]) -> str:
         return "host-vocabulary-id"
     if shape == {"$ref": f"{COMMON_ID}#/$defs/identifier"}:
         return "identifier"
+    if shape == {"$ref": "urn:chrona:render-context-v0.17#/properties/id"}:
+        return "render-context-id"
     if shape == {"type": "string", "minLength": 1}:
         return "non-empty-string"
     if shape == {"type": "string"}:
@@ -147,6 +154,15 @@ def test_every_allowlisted_category_has_a_recorded_reason_and_no_entry_is_stale(
     assert {category for _, category in ID_SITES} <= set(ALLOWED_SHAPES)
     assert set(ALLOWED_SHAPES) == {category for _, category in ID_SITES}, "a reason without a site is stale"
     assert all(len(reason) > 40 for reason in ALLOWED_SHAPES.values())
+
+
+@pytest.mark.parametrize("value", ["context", "Work package / gate", "作業", "a\nb", "", 5, None])
+def test_composed_context_id_reuses_the_immutable_identity_grammar(value):
+    schema = _schema("example-materializer-v0.1.schema.yaml")
+    site = schema["$defs"]["contextOverride"]["properties"]["id"]
+    authoring = validator_for_schema(site)
+    canonical = validator_for_schema({"$ref": "urn:chrona:render-context-v0.17#/properties/id"})
+    assert authoring.is_valid(value) == canonical.is_valid(value)
 
 
 def test_scene_fan_in_uses_the_existing_opaque_generated_identity_contract():
