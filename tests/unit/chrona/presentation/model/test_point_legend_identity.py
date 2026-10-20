@@ -83,3 +83,17 @@ def test_legacy_nonpoint_identity_and_grouping_remain_unchanged():
 
     assert legacy.identity == another_legacy.identity
     assert legacy.grouping_identity == another_legacy.grouping_identity
+
+
+def test_final_visible_state_supplies_role_and_coverage_without_new_visual_identity():
+    from chrona.presentation.layout.realized_legend import _final_representative
+
+    candidate = replace(_key("planned"), paint_role="gate",
+                        covered_point_states=("planned", "actual"))
+    visible = replace(candidate, point_state="actual", paint_role="actual",
+                      covered_point_states=("actual",))
+    final = _final_representative(candidate, visible)
+    assert final.point_states == ("actual",)
+    assert final.paint_role == "actual"
+    assert final.glyph is candidate.glyph
+    assert final.key_id == candidate.key_id
