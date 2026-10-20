@@ -6,6 +6,12 @@ Design and plan: `cfa3e22e3837aa62842a136452b2ff9645e24aba`;
 implementation: `bf9ef2d85`. Current authority is the
 [work record](../../planning/active/issue-902-store-write-safety-work-record-2026-10-18.md)
 and [Spec66 §2.1](../../specification/66-agent-interface.md).
+Exact-main release `39458042291` succeeded on
+`073a38224718a0a17001a9bff58f3f9d95370688`, including Ubuntu, macOS, Windows,
+MCP-floor, and newest-Python materializer reproduction. The
+[official artifact audit](https://github.com/tya5/chrona/pull/1839#issuecomment-6295482682)
+records all 50 SVGs and 50 Scenes byte-identical; only five existing
+diagnostic-inventory source anchors changed.
 Independent review found no separate parser, request identity, transaction,
 write-gate or containment path. Only the tool input boundary changes; Store,
 authoring preparation/transactions and rendering owners remain unchanged.
@@ -25,9 +31,7 @@ authoring preparation/transactions and rendering owners remain unchanged.
 
 ## Programme-level criteria (optional)
 
-Local focused results (overlapping): related app/CLI/skill tests 328 passed;
-metadata 3 passed; Store command tests 74 passed; real stdio tests 4 passed.
-Import direction: 11 packages, 37 inward edges. Full local pytest is not repeated.
-Conformance, official public-artifact audit, PR CI and exact review-containing
-main three-OS release are pending; this is not release acceptance. No public
-rendered-byte change is intended. Parent902 remains open for parked #815.
+The exact-main three-OS release and required MCP/newest-Python checks passed.
+All three literal criteria are met. Parent902 remains open for parked #815;
+this review closes only item4 acceptance. No public rendered-byte change was
+observed.
