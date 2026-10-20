@@ -2,7 +2,7 @@
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
 tools, #813; the Store read tools, #812) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the agent tool set `chrona/agent-tools/v0.7`, the shape of a tool result, the workspace path rules, the
+**Owns:** the agent tool set `chrona/agent-tools/v0.8`, the shape of a tool result, the workspace path rules, the
 write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -24,7 +24,7 @@ the shared authoring transaction, and the opaque exclusive workspace initializer
 It imports no transport SDK and prints nothing. `apply_command`,
 `apply_authoring_command` and `create_workspace` write only behind the write gate (sections2.1/2.3).
 
-## 2. Tool set `chrona/agent-tools/v0.7`
+## 2. Tool set `chrona/agent-tools/v0.8`
 
 Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
 set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
@@ -34,6 +34,8 @@ Store tools; their path arguments, result envelope and write gate are unchanged.
 `v0.6` (#902 item2) adds `apply_authoring_command` for the guided workspace.
 `v0.7` (#1725) adds the workspace lifecycle below and permits an inline
 authoring-command object through the same validated mutation use case.
+`v0.8` (#902 item4) also permits inline Store command objects. Existing paths,
+command/resource versions, result envelopes and transaction guards are unchanged.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -92,8 +94,16 @@ not understate a write, whatever it overwrites); `idempotentHint: true` and `ope
 commands of Spec 10 through the one dispatch the command line uses (`operational.store_commands.run_store_command`):
 `check_command` is `chrona command-check` and writes nothing; `apply_command` is `chrona command-apply`.
 
-- `command` is a workspace path to a Command Request (`chrona/command/v0.3` or `v0.4`), parsed and validated as the command line
-  does. `storeConfig` is a workspace path to a Store configuration (`chrona/store-config/v0.1`); omitted it is
+- `command` is a workspace path to a Command Request, or an inline object with
+  `version: chrona/command/v0.3` or `version: chrona/command/v0.4`. The input schema
+  embeds the same packaged command schemas; an invalid inline object is a
+  protocol argument error, as for inline authoring commands. Both forms pass
+  through the command line's parser/normalization and shared dispatch. Source
+  filenames and input form do not enter canonical request or revision identity;
+  retrying an accepted file command inline (or conversely) uses the same replay
+  record. File size/path guards still apply to file inputs. Tool and argument
+  descriptions name both forms and both exact version literals.
+  `storeConfig` remains a workspace path to a Store configuration (`chrona/store-config/v0.1`); omitted it is
   `.chrona/store.yaml` at the workspace root (no ancestor search, no working-directory lookup). Every Store root in the
   configuration is resolved with symlinks followed and must lie strictly inside the workspace, otherwise the call is
   `failed` with `E_MCP_PATH_CONTAINMENT` (`sourceRef` `/storeConfig`) before any file is read from or written to a root.

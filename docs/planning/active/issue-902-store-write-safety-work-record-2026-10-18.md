@@ -7,13 +7,59 @@ Item2 is accepted on exact main `96bdfbb7c` by
 [release39119120797](https://github.com/tya5/chrona/actions/runs/39119120797):
 Linux pytest/conformance/probe/wheel/smoke (13,563), macOS (13,568), and Windows
 (13,560) passed, along with MCP and newest-Python public reproduction. Parent
-#902 remains open for owner-parked items4, #814 and #815; board454 is unchanged.
+#814 is also released ([host review](../../reviews/current/issue-902-agent-host-transcript-2026-10-20.md)).
+Item4 is assigned to dev A; #815 remains parked. Board454 is read-only.
+
+## Active item4: inline commands (2026-10-21)
+
+Authority: [reviewer6294800291](https://github.com/tya5/chrona/issues/902#issuecomment-6294800291).
+Baseline: published `0c84b558309aa65cb0f0090e40227f086bb48e7e`.
+Design plan: close the no-file-host input gap without another command engine,
+Store format, authoring transaction, Project syntax or transport. Verify schema
+reference resolution, normalized request identity and guards before code.
+
+| Literal acceptance | Planned evidence |
+| --- | --- |
+| An MCP stdio test where an agent with no file access validates a plan, applies an inline edit, reverts it and renders, using only tool calls. | Existing MCP-only lifecycle plus an actual returned image/resource assertion; client creates no command files. |
+| Inline and path forms produce identical revisions for the same command. | Equivalent Store and authoring fixtures; same result/revision and stored bytes; cross-form replay. |
+| The tool descriptions state both forms, with the exact version literal (as in #1807). | Registry and stdio metadata checks against the embedded schema constants. |
+
+Design: [Spec66 §2.1](../../specification/66-agent-interface.md) owns the
+additive v0.8 contract. Embed the existing v0.3/v0.4 schemas, pass JSON-encoded
+inline requests through `parse_command_request`, and use `run_store_command`.
+Keep `storeConfig` path-only, write-gate-before-open and all containment rules.
+Malformed inline objects are protocol errors, matching authoring's existing
+contract; file parse failures retain their typed result. Authoring inline is
+already implemented and must not gain a second path. No HTTP or inline Project
+text is added; the existing compact workspace initializer serves no-file hosts.
+
+Whole-architecture review: Specs09/10/35 retain command intent, opaque Store
+tokens, canonical content identity and lock/replay/CAS/exclusive publication in
+their existing owners. Spec51 authoring preparation/transaction and Layout,
+Scene and adapters are untouched. Archived813's rejected inline alternative is
+superseded only by Spec66; no duplicate validation or transaction semantics.
+Schema references resolve through the existing packaged registry. Migration is
+additive input plus tool-set v0.8; no command/Store schema migration. No open
+design blocker was found in the code and read-only independent audit.
+
+Implementation plan (one PR after this design commit is published):
+1. `app/agent_tools.py`: Store input union, shared parser branch, exact metadata
+   and v0.8; guide/skill and version-pinned tests follow the registry.
+2. App/stdio tests: v0.3/v0.4 parity, mixed-form replay, stale/reused IDs,
+   no-overwrite, disabled write gate and contained Store configuration; retain
+   path controls. Strengthen the existing MCP-only lifecycle image evidence.
+3. Focused local tests and import/conformance checks; CI full three-OS,
+   wheel/MCP/newest-Python and batched public artifacts. Publish a short literal
+   review before exact-main release acceptance. Parent902 stays open for #815.
+
+The sections below retain the accepted items5/3/2 evidence; their earlier
+parked-item statements do not supersede this active scope.
 
 ## Scope and literal acceptance
 
 [Issue902](https://github.com/tya5/chrona/issues/902), owner/reviewer order:
-item5 → item3 → item2. Items4,814 and815 remain parked; completing this lane
-does not silently close those requirements.
+item5 → item3 → item2 (released). Active item4 is defined above; #815 remains
+parked and is not silently closed by completing this lane.
 
 | Item | Requirement | Literal acceptance |
 | --- | --- | --- |

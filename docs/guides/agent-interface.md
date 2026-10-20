@@ -96,7 +96,9 @@ What protects the Store is not authorization but integrity, and it is the same a
 - nothing is overwritten: an existing baseline name and different facts for an existing external key are rejected;
 - every write is a new immutable Store revision, so an earlier one can be inspected and written back.
 
-The Command Request is a file in the workspace (`command`), the Store is named by a configuration file (`storeConfig`,
+The Command Request (`command`) is an inline object with `version: chrona/command/v0.3`
+or `version: chrona/command/v0.4`, or a path to a file in the workspace. Both forms
+use the same validation, revision and replay rules. The Store is named by a configuration file (`storeConfig`,
 default `.chrona/store.yaml`), and every Store root in that file must lie inside the workspace. The result carries the
 same Automation Result the command line writes to `--result`.
 
