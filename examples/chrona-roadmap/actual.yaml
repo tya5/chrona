@@ -2,7 +2,7 @@ version: chrona/actual-set/v0.3
 kind: actual-set
 id: chrona-roadmap-observed
 body:
-  asOf: '2026-10-15'
+  asOf: '2026-10-20'
   observations:
     - {id: tb, sequence: 1, projectObjectId: target-b, actual: {start: '2026-10-02', finish: '2026-10-06', progress: 1}}
     - {id: yy, sequence: 1, projectObjectId: yuya, actual: {start: '2026-10-03', finish: '2026-10-07', progress: 1}}
@@ -24,5 +24,6 @@ body:
     - {id: df, sequence: 1, projectObjectId: defaults, actual: {start: '2026-10-09', finish: '2026-10-12', progress: 1}}
     - {id: er, sequence: 1, projectObjectId: errors, actual: {start: '2026-10-09', finish: '2026-10-12', progress: 1}}
     - {id: m3, sequence: 1, projectObjectId: m3-gate, actual: {at: '2026-10-12'}}
-    - {id: pr, sequence: 1, projectObjectId: presets, actual: {start: '2026-10-14', progress: 0.8}}
-    - {id: io, sequence: 1, projectObjectId: io, actual: {start: '2026-10-09', progress: 0.9}}
+    - {id: pr, sequence: 1, projectObjectId: presets, actual: {start: '2026-10-14', finish: '2026-10-16', progress: 1}}
+    - {id: io, sequence: 1, projectObjectId: io, actual: {start: '2026-10-09', finish: '2026-10-15', progress: 1}}
+    - {id: rr, sequence: 1, projectObjectId: rerun, actual: {start: '2026-10-18', openUntil: asOf}}
