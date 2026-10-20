@@ -1,0 +1,6 @@
+$ chrona render plan.yaml --snapshot baseline.yaml --view view-no-format.yaml --preset mission-light --output ghost-before.svg   # before: source tree of 0f1dbe938
+{"diagnostics": [], "status": "ok", "war
+top to bottom: x (y=155.6) , Alpha (y=180.6) , y (y=205.6) , Beta (y=230.6) , Gone (removed) (y=260.6)
+$ chrona render plan.yaml --snapshot baseline.yaml --view view-no-format.yaml --preset mission-light --output ghost-after.svg    # current origin/main
+{"diagnostics": [], "status": "ok", "war
+top to bottom: x (y=155.6) , Alpha (y=180.6) , Gone (removed) (y=210.6) , y (y=235.6) , Beta (y=260.6)

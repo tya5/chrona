@@ -1,0 +1,10 @@
+version: chrona/snapshot-ref/v0.3
+kind: snapshot-ref
+id: plan-baseline
+body:
+  project:
+    id: plan
+    kind: project
+    store: {provider: local, identity: deck-demo}
+    address: deck-baseline-project.yaml
+    revision: {token: baseline}

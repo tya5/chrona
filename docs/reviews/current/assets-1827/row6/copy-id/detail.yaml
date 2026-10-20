@@ -1,0 +1,12 @@
+version: chrona/review-detail-profile/v0.1
+id: "my-look"
+body:
+  legend:
+    - {role: snapshot, label: {wording: legend.baseline}}
+    - {role: planned, label: {wording: legend.current-plan}}
+    - {role: actual, label: {wording: legend.actual}}
+    - {role: missing-actual, label: {wording: legend.missing-actual-in-progress}}
+    - {role: milestone, label: {wording: legend.gate}}
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}
+    - {role: calendar-exception, label: {wording: legend.calendar-exception}}
+    - {role: dependency, label: {wording: legend.dependency}}
