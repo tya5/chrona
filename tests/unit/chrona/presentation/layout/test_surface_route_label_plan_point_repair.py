@@ -19,7 +19,7 @@ from tests.unit.chrona.presentation.scene.test_v05_builder import (
 )
 
 
-def test_route_repair_for_span_to_point_preserves_the_at_arrival_and_optional_name(monkeypatch):
+def test_first_route_plan_keeps_safe_at_arrival_and_optional_names(monkeypatch):
     objects = {"a": PROJECT_BASE["objects"]["a"],
         "c": {"title": "Second source", "fields": {"owner": "x"}},
         "b": {**PROJECT_BASE["objects"]["b"], "type": "milestone"},
@@ -86,29 +86,20 @@ def test_route_repair_for_span_to_point_preserves_the_at_arrival_and_optional_na
 
     options = plan.compose_routes_and_member_labels(context)
 
-    assert options.retry is not None
-    # In this fixture the below rung intersects more incoming route instances;
-    # the candidate ranking must reserve the lower-disruption above rung.
-    proposals = options.first.members.route_blocked_candidates
-    assert [item.text.placement_id for item in proposals] == [
-        "member-label:neutral-b", "member-label:neutral-b"]
-    assert [item.text.selected_rung for item in proposals] == ["above", "below"]
-    admitted = plan._admissible_reservations(options.first, proposals)
-    assert len(admitted) == 1 and admitted[0].text.selected_rung == "above"
-    assert [item.overflow for item in options.retry.members.text] == ["fit", "fit"]
+    # The primary-mark contact rule now selects a safe horizontal arrival on
+    # the first pass, so these names do not need a route-repair retry.
+    assert options.retry is None
+    assert [item.overflow for item in options.first.members.text] == ["fit", "fit"]
     selected, _ = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
     assert [item.overflow for item in selected.members.text] == ["fit", "fit"]
     assert {item.content for item in selected.members.text} == {
         "A neutral milestone", "Neutral source plan"}
     routes = selected.routes.relations
     assert len(routes) == 3 and not any(item.suppressed for item in routes)
-    route = routes[0]
-    old_route = options.first.routes.relations[0]
-    assert route.points != old_route.points
-    assert route.points[0] == old_route.points[0]
-    assert route.points[-1] == old_route.points[-1]
-    # An `at` endpoint enters at the left vertex, not from the point's right.
+    # An `at` endpoint enters at the left vertex. Positive-length travel along
+    # its closed face is forbidden; the final segment only touches the vertex.
     for route in routes:
         assert route.points[-1] == (x, mark_y + mark_height / 2)
         assert route.points[-1][0] < x + mark_width
-        assert route.points[-2][0] == route.points[-1][0]
+        assert route.points[-2][1] == route.points[-1][1]
+        assert route.points[-2][0] < route.points[-1][0]

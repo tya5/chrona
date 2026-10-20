@@ -6,7 +6,6 @@ from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, 
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.model.surface_content import RelationPresentationFact
-from tests.unit.chrona.presentation.layout.test_window_lane_completion import _request
 from tests.unit.chrona.presentation.layout.test_window_relation_completion import _surviving_relation_request
 
 
@@ -43,9 +42,11 @@ def test_exact_prepared_normal_pairs_are_passed_to_the_first_route_selection(mon
 
 
 def test_suppressed_endpoint_entries_keep_their_order_and_contribute_no_pairs(monkeypatch):
-    relations = (_relation("active", "object-4", "object-4"),
+    relations = (_relation("active", "object-4", "object-6"),
                  _relation("outside", "object-1", "object-4"))
-    request = _request()
+    # Use a real, routable span-to-span active relation. A self-loop used to
+    # trigger recovery here and reached unrelated, invalid halo fixture data.
+    request = _surviving_relation_request()
     request = replace(request, surface_content=replace(request.surface_content, relations=relations))
     batches = []
     prepare = surface_routes.prepare_normal_relation_routes
@@ -66,9 +67,12 @@ def test_suppressed_endpoint_entries_keep_their_order_and_contribute_no_pairs(mo
     assert all(item.window_endpoint_absences and item.port_pairs == () for item in outside.occurrences)
     assert batch.total_potential_port_pairs == sum(
         len(item.port_pairs) for entry in batch.entries for item in entry.occurrences)
+    # The prepared search batch is reordered for routing; completed placements
+    # retain the authored relation order and the out-of-window entry is still
+    # present as a typed suppression.
     assert tuple(item.source_ref for item in placement.relations) == tuple(
-        item.relation_id for _index, item in expected)
-    assert placement.relations[-1].suppressed
+        relation.relation_id for relation in relations)
+    assert next(item for item in placement.relations if item.source_ref == "outside").suppressed
 
 
 def test_normal_candidate_pairs_ignore_later_route_and_port_obstacles(monkeypatch):
