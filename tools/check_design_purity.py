@@ -26,6 +26,8 @@ from chrona.presentation.model.theme_inheritance import (
 )
 from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS, _SCHEMAS
 from chrona.resources import safe_load
+from chrona.usecases.deck_context import load_deck_manifest, select_deck_context
+from chrona.usecases.failure_report import StableFailure
 from chrona.usecases import materialize
 
 
@@ -290,13 +292,13 @@ def _input_reference(context: Mapping[str, Any], key: str,
     return reference
 
 
-def _scan_context(example: Path, context_path: Path, stores: Mapping[str, Path], *,
+def _scan_context(example: Path, context: Mapping[str, Any], context_label: str,
+                  stores: Mapping[str, Path], *,
                   errors: list[str] | None = None) -> list[dict[str, str]]:
-    context = _load_yaml(context_path.read_bytes(), context_path.as_posix())
     if not isinstance(context, Mapping) or not isinstance(context.get("body"), Mapping):
-        raise DesignPurityError(f"E_DESIGN_PURITY_CONTEXT:{context_path}")
+        raise DesignPurityError(f"E_DESIGN_PURITY_CONTEXT:{context_label}")
     if context.get("kind") != "render-context" or context.get("version") not in RENDER_CONTEXT_VERSIONS:
-        raise DesignPurityError(f"E_DESIGN_PURITY_UNSUPPORTED_CONTEXT:{context_path}")
+        raise DesignPurityError(f"E_DESIGN_PURITY_UNSUPPORTED_CONTEXT:{context_label}")
     project_ref = _resource_reference(context, "project", "project")
     project = _load_yaml(_read_reference(example, project_ref, stores), _reference_label(project_ref))
     facts = _project_facts(project)
@@ -332,12 +334,12 @@ def _scan_context(example: Path, context_path: Path, stores: Mapping[str, Path],
                          else _resource_reference(context, key, kind))
             if reference is not None:
                 scan_reference(reference, kind)
-        except (DesignPurityError, OSError, ValueError) as error:
+        except (DesignPurityError, StableFailure, OSError, ValueError) as error:
             if errors is None:
                 raise
-            errors.append(f"{context_path}:{error}")
+            errors.append(f"{context_label}:{error}")
     return [{**finding, "project": _reference_label(project_ref),
-             "context": context_path.as_posix()} for finding in findings]
+             "context": context_label} for finding in findings]
 
 
 def _batch(examples_root: Path, *, errors: list[str] | None = None) -> list[dict[str, str]]:
@@ -350,7 +352,8 @@ def _batch(examples_root: Path, *, errors: list[str] | None = None) -> list[dict
     for manifest_path in manifests:
         example = manifest_path.parent.resolve()
         try:
-            manifest = _load_yaml(manifest_path.read_bytes(), manifest_path.as_posix())
+            manifest_source = load_deck_manifest(manifest_path)
+            manifest = manifest_source.document
             if not isinstance(manifest, Mapping) or not isinstance(manifest.get("slides"), list) or not manifest["slides"]:
                 raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}")
             stores = _stores(example, manifest.get("stores"))
@@ -359,19 +362,17 @@ def _batch(examples_root: Path, *, errors: list[str] | None = None) -> list[dict
                 raise
             errors.append(f"{manifest_path}:{error}")
             continue
-        default_context = manifest.get("context")
         for slide_index, slide in enumerate(manifest["slides"]):
             try:
                 if not isinstance(slide, Mapping):
                     raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}:slides/{slide_index}")
-                context_address = slide.get("context", default_context)
-                if not isinstance(context_address, str) or not context_address:
-                    raise DesignPurityError(f"E_DESIGN_PURITY_MANIFEST:{manifest_path}:context")
-                context_path = _inside(example, context_address)
-                if not context_path.is_file():
-                    raise DesignPurityError(f"E_DESIGN_PURITY_CONTEXT_MISSING:{context_path}")
-                findings.extend(_scan_context(example, context_path, stores, errors=errors))
-            except (DesignPurityError, OSError, ValueError) as error:
+                selected = select_deck_context(manifest_path, manifest_source, slide["id"])
+                if selected.source_path is not None:
+                    context_label = selected.source_path.relative_to(manifest_path.parents[1]).as_posix()
+                else:
+                    context_label = f"{manifest_path.relative_to(examples_root.parent).as_posix()}#slide={selected.slide_id}"
+                findings.extend(_scan_context(example, selected.document, context_label, stores, errors=errors))
+            except (DesignPurityError, StableFailure, OSError, ValueError) as error:
                 if errors is None:
                     raise
                 errors.append(f"{manifest_path}:slides/{slide_index}:{error}")

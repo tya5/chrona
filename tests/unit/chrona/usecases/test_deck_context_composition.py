@@ -9,6 +9,18 @@ from chrona.usecases.deck_context import load_deck_manifest, select_deck_context
 from chrona.usecases.failure_report import StableFailure
 
 
+def test_completed_context_error_retains_a_stable_code_not_the_message(tmp_path):
+    path = _manifest(tmp_path)
+    manifest = yaml.safe_load(path.read_bytes())
+    manifest["slides"][0]["contextOverrides"]["body"] = {"view": None}
+    path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    with pytest.raises(StableFailure) as caught:
+        select_deck_context(path, load_deck_manifest(path), "overview")
+    assert caught.value.code == "E_RESOURCE_SCHEMA"
+    assert caught.value.source_ref == "/slides/0/contextOverrides/body"
+    assert "view" in caught.value.message
+
+
 ROOT = Path(__file__).resolve().parents[4]
 CONTEXT_PATH = ROOT / "tests/fixtures/aster-ssd/contexts/01-overview.yaml"
 

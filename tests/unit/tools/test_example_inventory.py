@@ -1,8 +1,11 @@
 from pathlib import Path
+import shutil
 
 import pytest
+import yaml
 
-from tools.example_inventory import ExampleInventoryError, validate
+from tools.example_inventory import ExampleInventoryError, _context, corpus, validate
+from chrona.resources import safe_load
 
 
 def _root(tmp_path: Path) -> Path:
@@ -10,7 +13,7 @@ def _root(tmp_path: Path) -> Path:
     (tmp_path / "docs/guides").mkdir(parents=True)
     (tmp_path / "docs/gallery").mkdir(parents=True)
     (tmp_path / "examples/demo/contexts").mkdir()
-    (tmp_path / "examples/demo/manifest.yaml").write_text("id: demo\nrole: regression-corpus\ncontext: contexts/one.yaml\nslides: [{id: overview, evidence: Overview, expectedSvg: generated/one.svg}, {id: alternative, evidence: Alternative, context: contexts/two.yaml, expectedSvg: generated/two.svg}]\n")
+    (tmp_path / "examples/demo/manifest.yaml").write_text("version: chrona/example-materializer/v0.1\nid: demo\nrole: regression-corpus\ncontext: contexts/one.yaml\nslides: [{id: overview, evidence: Overview, expectedSvg: generated/one.svg}, {id: alternative, evidence: Alternative, context: contexts/two.yaml, expectedSvg: generated/two.svg}]\n")
     (tmp_path / "examples/demo/contexts/one.yaml").write_text("kind: render-context\nbody:\n  project: {id: project}\n  view: {id: view}\n  theme: {id: theme}\n  colorScheme: {id: scheme}\n  layout: {id: layout}\n  inputs: {}\n  target: {kind: svg, capabilities: []}\n")
     (tmp_path / "examples/demo/contexts/two.yaml").write_text("kind: render-context\nbody:\n  project: {id: project}\n  view: {id: alternate}\n  theme: {id: theme}\n  colorScheme: {id: scheme}\n  layout: {id: layout}\n  inputs: {}\n  target: {kind: svg, capabilities: []}\n")
     (tmp_path / "docs/guides/example-curriculum.yaml").write_text("version: chrona/example-catalog/v0.1\nentries: [{corpus: demo, slide: overview}]\n")
@@ -66,3 +69,24 @@ def test_inventory_rejects_a_mismatched_comparison_environment(tmp_path):
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_ENVIRONMENT_MISMATCH:pair"):
         validate(root)
+
+
+def test_corpus_inventory_uses_completed_composed_context_not_a_virtual_path(tmp_path):
+    root = tmp_path / "repo"
+    example = root / "examples/demo"
+    shutil.copytree(Path(__file__).resolve().parents[2] / "fixtures/aster-ssd", example)
+    authored = safe_load((example / "contexts/01-overview.yaml").read_bytes())
+    (example / "manifest.yaml").write_text(yaml.safe_dump({
+        "version": "chrona/example-materializer/v0.1", "id": "demo", "role": "regression-corpus",
+        "contextDefaults": authored["body"],
+        "slides": [{"id": "overview", "evidence": "shared context",
+                    "expectedSvg": "generated/overview.svg",
+                    "contextOverrides": {"id": authored["id"]}}],
+    }, sort_keys=False), encoding="utf-8")
+
+    entry = corpus(root)[("demo", "overview")]
+
+    assert entry["context"] is None
+    assert entry["slideId"] == "overview"
+    assert _context(root, entry)["body"] == authored["body"]
+    assert not (example / "_deck-contexts/demo/overview.yaml").exists()

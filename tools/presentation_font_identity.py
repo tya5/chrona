@@ -10,6 +10,7 @@ import sys
 from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
+from chrona.usecases.deck_context import SelectedDeckContext
 from tools.check_scene_perceptibility import committed_scene_paths
 from tools.derived_evidence import scene_contexts
 
@@ -46,8 +47,8 @@ def _primary_family(stack: str) -> str:
     return stack.split(",", 1)[0].strip().strip("'\\\"")
 
 
-def _manifest_contexts(root: Path) -> dict[Path, Path]:
-    """Map every manifest-declared Scene to its immutable Context path."""
+def _manifest_contexts(root: Path) -> dict[Path, SelectedDeckContext]:
+    """Map each manifest-declared Scene to its selected completed Context source."""
     try:
         return scene_contexts(root)
     except (OSError, ValueError) as error:
@@ -97,20 +98,20 @@ def _finding(scene: str, primitive_id: str, primitive_path: str, family: str,
 
 
 def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT,
-                              contexts: Mapping[Path, Path] | None = None) -> tuple[dict[str, Any], ...]:
+                              contexts: Mapping[Path, SelectedDeckContext] | None = None) -> tuple[dict[str, Any], ...]:
     """Audit every completed text placement from committed Scene evidence."""
     scene_contexts = contexts if contexts is not None else _manifest_contexts(root)
     findings: list[FontIdentityFinding] = []
     for path in sorted(paths):
         scene = path.resolve().relative_to(root.resolve()).as_posix()
-        context_path = scene_contexts.get(path.resolve())
-        if context_path is None:
+        selected_context = scene_contexts.get(path.resolve())
+        if selected_context is None:
             findings.append(_finding(scene, "-", "/", "", None, None, None,
                                      "E_FONT_IDENTITY_CONTEXT", "error"))
             continue
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
-            context = safe_load(context_path.read_bytes())
+            context = safe_load(selected_context.payload)
             context_id, catalog, regular_identities = _context_catalog(context)
             resources = document.get("provenance", {}).get("resources", ())
             scene_context = next((item.get("id") for item in resources

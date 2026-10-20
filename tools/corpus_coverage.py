@@ -14,6 +14,7 @@ from typing import Any, Callable, Iterable, Mapping
 import yaml
 
 from chrona.resources import resolve_schema_reference, safe_load
+from chrona.usecases.deck_context import load_deck_manifest, select_deck_context
 
 
 class CorpusCoverageError(ValueError):
@@ -84,16 +85,14 @@ def _declared_path(project_root: Path, address: Any) -> Path:
     return path
 
 
-def _context_paths(project_root: Path, manifest: Mapping[str, Any]) -> tuple[Path, ...]:
-    default, slides = manifest.get("context"), manifest.get("slides")
-    if not isinstance(default, str) or not isinstance(slides, list):
-        raise CorpusCoverageError(f"E_CORPUS_COVERAGE_MANIFEST:{project_root / 'manifest.yaml'}")
-    addresses = {default}
-    for slide in slides:
-        if not isinstance(slide, Mapping) or not isinstance(slide.get("context", default), str):
-            raise CorpusCoverageError(f"E_CORPUS_COVERAGE_MANIFEST:{project_root / 'manifest.yaml'}")
-        addresses.add(slide.get("context", default))
-    return tuple(_declared_path(project_root, address) for address in sorted(addresses))
+def _selected_contexts(manifest_path: Path) -> tuple[Any, ...]:
+    """Return the shared selector's completed Context for every declared slide."""
+    manifest = load_deck_manifest(manifest_path)
+    slides = manifest.document.get("slides")
+    if not isinstance(slides, list):
+        raise CorpusCoverageError(f"E_CORPUS_COVERAGE_MANIFEST:{manifest_path}")
+    return tuple(select_deck_context(manifest_path, manifest, slide["id"])
+                 for slide in slides if isinstance(slide, Mapping) and isinstance(slide.get("id"), str))
 
 
 def _reference_address(value: Mapping[str, Any], key: str) -> str | None:
@@ -108,19 +107,19 @@ def discover(root: Path) -> tuple[CorpusProject, ...]:
     """Discover resources named by a corpus manifest, Context, or Project."""
     result: list[CorpusProject] = []
     for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
-        manifest = _load(manifest_path)
+        manifest = load_deck_manifest(manifest_path).document
         identifier = manifest.get("id")
         if manifest.get("role") != "regression-corpus" or not isinstance(identifier, str):
             raise CorpusCoverageError(f"E_CORPUS_COVERAGE_MANIFEST:{manifest_path.relative_to(root)}")
         project_root, project_path = manifest_path.parent, manifest_path.parent / "project.yaml"
         project = _load(project_path)
         declared: dict[Path, str] = {project_path.resolve(): "project"}
-        for context_path in _context_paths(project_root, manifest):
-            context = _load(context_path)
+        for selected_context in _selected_contexts(manifest_path):
+            context = selected_context.document
             body = context.get("body")
             inputs = body.get("inputs", {}) if isinstance(body, Mapping) else None
             if not isinstance(inputs, Mapping):
-                raise CorpusCoverageError(f"E_CORPUS_COVERAGE_CONTEXT:{context_path.relative_to(root)}")
+                raise CorpusCoverageError(f"E_CORPUS_COVERAGE_CONTEXT:{manifest_path.relative_to(root)}:{selected_context.slide_id}")
             for key, kind in (("actual", "actual"), ("snapshot", "snapshot")):
                 address = _reference_address(inputs, key)
                 if address is not None:
@@ -349,8 +348,9 @@ def unreferenced_presentation_files(root: Path) -> tuple[str, ...]:
     referenced: set[Path] = set()
     for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
         project_root = manifest_path.parent
-        for context_path in _context_paths(project_root, _load(manifest_path)):
-            referenced.update((project_root / address).resolve() for address in _collect_addresses(_load(context_path)))
+        for selected_context in _selected_contexts(manifest_path):
+            referenced.update((project_root / address).resolve()
+                              for address in _collect_addresses(selected_context.document))
     presets = root / "src/chrona/resources/presets"
     for preset_path in sorted(presets.glob("*.yaml")):
         text = preset_path.read_text(encoding="utf-8")

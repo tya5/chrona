@@ -3,10 +3,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from chrona.resources import safe_load
+from chrona.usecases.deck_context import SelectedDeckContext
 from tools.presentation_font_identity import evaluate_committed_scenes, render_markdown, report_document
 
 
-def _context(path: Path) -> Path:
+def _selected_context(path: Path) -> SelectedDeckContext:
+    payload = path.read_bytes()
+    return SelectedDeckContext(safe_load(payload), payload, path.name, path.resolve(),
+                               path.parent.parent / "manifest.yaml", "slide", "explicit", {})
+
+
+def _context(path: Path) -> SelectedDeckContext:
     path.write_text(
         """
 version: chrona/render-context/v0.17
@@ -25,7 +33,7 @@ body:
 """.lstrip(),
         encoding="utf-8",
     )
-    return path
+    return _selected_context(path)
 
 
 def _scene(path: Path, *, identity: str) -> Path:
@@ -65,7 +73,7 @@ def test_completed_weight_700_cannot_claim_the_regular_face_identity(tmp_path):
     assert report["weight700RegularFaceCount"] == 1
 
 
-def _faces_context(path: Path, regular: str | None, bold: str | None) -> Path:
+def _faces_context(path: Path, regular: str | None, bold: str | None) -> SelectedDeckContext:
     def face(weight: int, identity: str | None) -> str:
         font = "{}" if identity is None else "{contentIdentity: %s}" % identity
         return f"        - family: Demo Sans\n          weight: {weight}\n          font: {font}\n"
@@ -76,7 +84,7 @@ def _faces_context(path: Path, regular: str | None, bold: str | None) -> Path:
         + face(400, regular) + face(700, bold),
         encoding="utf-8",
     )
-    return path
+    return _selected_context(path)
 
 
 def _run(tmp_path: Path, regular: str | None, bold: str | None, identity: str):

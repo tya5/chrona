@@ -380,7 +380,7 @@ def _validate_completed_context(document: Mapping[str, Any], manifest: DeckManif
     # Validate fontSet-expanded data through the live immutable Context schema;
     # the payload and identity continue to reflect authored fontSet bytes.
     from chrona.presentation.contracts.font_sets import expand_font_set
-    from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
+    from chrona.presentation.contracts.resources import ClosureIdentity, ContractError, parse_contract
 
     try:
         value = expand_font_set(document)
@@ -388,10 +388,10 @@ def _validate_completed_context(document: Mapping[str, Any], manifest: DeckManif
                                        "sha256:" + sha256(yaml.safe_dump(document, sort_keys=False,
                                                                            allow_unicode=True).encode("utf-8")).hexdigest()),
                        value)
-    except Exception as error:
+    except ContractError as error:
         source_ref = getattr(error, "source_ref", None) or "/body"
         origin = _origin_for(origins, source_ref)
         pointer = origin.source_ref if origin else f"/slides/{slide_index}/contextOverrides/body"
         detail = getattr(error, "detail", None) or str(error)
-        raise _fail(getattr(error, "diagnostic_id", "E_MATERIALIZER_CONTEXT"),
+        raise _fail(error.diagnostic_id.partition(":")[0],
                     f"slide {slide_id}: {detail}", pointer) from error

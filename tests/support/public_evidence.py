@@ -17,6 +17,7 @@ from xml.etree import ElementTree
 import yaml
 
 from chrona.resources import safe_load
+from chrona.usecases.deck_context import SelectedDeckContext, load_deck_manifest, select_deck_context
 from tools.derived_evidence import ROOT, manifest_targets
 
 LEDGER = ROOT / "tests/acceptance/output/public-slide-ledger.yaml"
@@ -30,7 +31,7 @@ class DeclaredSlide:
     key: str
     scene: Path | None
     svg: Path
-    context: Path | None
+    context: SelectedDeckContext
 
 
 @dataclass(frozen=True)
@@ -48,19 +49,18 @@ def declared_slides(root: Path = ROOT) -> tuple[DeclaredSlide, ...]:
     slides = []
     # manifest_targets validates the declaration graph. Reuse one decoded
     # document per manifest rather than reparsing it once for every slide.
-    manifests: dict[Path, Mapping[str, Any]] = {}
+    manifests = {}
     for manifest_path, slide_id in manifest_targets(root):
         if manifest_path not in manifests:
-            value = safe_load(manifest_path.read_bytes())
-            if not isinstance(value, Mapping):
-                raise ValueError(f"E_PUBLIC_EVIDENCE_MANIFEST:{manifest_path}")
-            manifests[manifest_path] = value
-        manifest = manifests[manifest_path]
+            manifests[manifest_path] = load_deck_manifest(manifest_path)
+        manifest_source = manifests[manifest_path]
+        manifest = manifest_source.document
         slide = next(item for item in manifest["slides"] if item["id"] == slide_id)
         base = manifest_path.parent
-        scene, context = slide.get("expectedScene"), slide.get("context", manifest.get("context"))
-        slides.append(DeclaredSlide(f"{base.name}/{slide_id}", base / scene if scene else None, base / slide["expectedSvg"],
-                                    base / context if context else None))
+        scene = slide.get("expectedScene")
+        context = select_deck_context(manifest_path, manifest_source, slide_id)
+        slides.append(DeclaredSlide(f"{base.name}/{slide_id}", base / scene if scene else None,
+                                    base / slide["expectedSvg"], context))
     return tuple(slides)
 
 
