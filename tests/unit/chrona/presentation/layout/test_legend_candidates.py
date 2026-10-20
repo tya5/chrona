@@ -200,8 +200,9 @@ def test_fill_palette_ignores_decorative_border_for_grouping_and_progress_suppre
 
 def test_point_states_expand_at_owner_position_without_overriding_authored_labels(monkeypatch):
     tokens = _tokens()
-    keys = tuple(replace(_key(tokens, "#123456", occurrence_id=state, family="milestone"),
-                         point_state=state) for state in ("forecast", "planned", "actual"))
+    keys = tuple(replace(_key(tokens, color, occurrence_id=state, family="milestone"),
+                         point_state=state) for state, color in (
+                             ("forecast", "#123456"), ("planned", "#654321"), ("actual", "#ABCDEF")))
     monkeypatch.setattr(legend_candidates, "source_point_keys", lambda *args, **kwargs: keys)
     content = _content((SurfaceLegendEntry("planned", "Timeline"),
                         SurfaceLegendEntry("milestone", "Review"), SurfaceLegendEntry("background", "Canvas")),
