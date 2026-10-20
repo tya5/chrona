@@ -103,15 +103,25 @@ def test_metro_path_inserts_45_degree_diagonals_and_quadratic_fillet_joins():
     assert tuple(command.kind for command in commands) == (
         "move", "line", "quadratic", "line", "quadratic", "quadratic", "line", "quadratic", "line")
     assert commands[1].points == ((10.0, 0.0),)
-    assert commands[2].points == ((10.414213562373096, 0.0), (10.707106781186548, 0.2928932188134525))
-    assert commands[4].points == ((20.0, 9.585786437626904), (20.0, 10.0))
-    assert commands[5].points == ((20.0, 10.414213562373096), (19.707106781186546, 10.707106781186548))
-    assert commands[7].points == ((10.414213562373096, 20.0), (10.0, 20.0))
+    # tan/hypot differ by an ulp between platform math libraries; geometry is
+    # constrained in coordinate units, not by one machine's float spelling.
+    expected_joins = {
+        2: ((10.414213562373096, 0.0), (10.707106781186548, 0.2928932188134525)),
+        4: ((20.0, 9.585786437626904), (20.0, 10.0)),
+        5: ((20.0, 10.414213562373096), (19.707106781186546, 10.707106781186548)),
+        7: ((10.414213562373096, 20.0), (10.0, 20.0)),
+    }
+    for index, expected_points in expected_joins.items():
+        assert len(commands[index].points) == len(expected_points)
+        for actual, expected in zip(commands[index].points, expected_points):
+            assert actual == pytest.approx(expected, rel=0, abs=1e-12)
     current = commands[0].points[0]
     diagonal_lengths = []
     for command in commands[1:]:
         endpoint = command.points[-1]
         if command.kind == "line" and endpoint[0] != current[0] and endpoint[1] != current[1]:
+            assert abs(endpoint[0] - current[0]) == pytest.approx(
+                abs(endpoint[1] - current[1]), rel=0, abs=1e-12)
             diagonal_lengths.append(((endpoint[0] - current[0]) ** 2
                                      + (endpoint[1] - current[1]) ** 2) ** 0.5)
         current = endpoint

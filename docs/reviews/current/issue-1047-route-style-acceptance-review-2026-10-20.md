@@ -38,3 +38,10 @@ Curved PR CI39367673183 passed; official artifact12240560787
 has50SVG/50Scene unchanged and only expected inventory/coverage reports.
 Metro official snapshot, exact-main full three-OS release and Transit disposition
 are still required. Keep issue1047 open.
+
+PR1803 run39370013122 found one test-only platform error: exact comparison of
+a tan/hypot-derived coordinate differed by1e-16 on Ubuntu. Join coordinates now
+use absolute1e-12 tolerance (relative0); command topology remains exact and
+diagonal runs additionally assert equal absolute axis deltas. Product geometry
+and its safety policy are unchanged. The readiness failure only propagated that
+shard failure; all other substantive jobs passed. New-head CI is required.
