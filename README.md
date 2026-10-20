@@ -133,6 +133,7 @@ skill (`chrona skill copy`).
 | make a one-page summary for a steering committee | [Executive summary](docs/guides/executive-summary.md) |
 | colour by my own typed field (risk, team) | [Typed fields](docs/guides/typed-fields.md) |
 | record progress, move `asOf` and re-plan | [Update a plan](docs/guides/update-a-plan.md) |
+| edit a Theme: which role paints what, which tokens it takes, the legend keys | [Theme roles reference](skills/chrona/references/theme-roles.md) |
 | render in Japanese or reword the built-in texts | [Locale and wording](docs/guides/locale-and-wording.md) |
 | choose and embed fonts | [Declared font assets](docs/guides/declared-font-assets.md) |
 | look up a command or option | [CLI reference](docs/guides/cli-reference.md) |

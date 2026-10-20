@@ -442,6 +442,16 @@ def _canonical_role_contract(role: str) -> RolePropertyContract | None:
     )
 
 
+def registered_role_contracts() -> dict[str, RolePropertyContract]:
+    """A copy of the finite registry of Theme roles and the properties each admits (the Theme-authoring reference)."""
+    return dict(_ROLE_PROPERTY_CONTRACTS)
+
+
+def generated_role_prefixes() -> tuple[str, ...]:
+    """The name prefixes under which a Theme may declare generated (per-group, per-period, frame) roles."""
+    return _RESERVED_GENERATED_ROLE_PREFIXES
+
+
 def theme_role_contract(role: str) -> RolePropertyContract | None:
     """Expose the finite known-role entry for structural consumer checks."""
     # The suffix is the shared common-v0.1 slug lexeme selected by frame.paint.

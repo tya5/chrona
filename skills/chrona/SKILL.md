@@ -153,7 +153,7 @@ chrona render examples/launch.yaml --preset looks/executive-light/preset.yaml --
 
 `--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`); a narrower
 one can clip or drop labels. Use explicit `--view`, `--theme`, `--scheme` or `--layout` files only
-to override one member of a preset. Contexts and Stores are the pinned-evidence path below; do not use them unless the user asks for pinned evidence.
+to override one member of a preset. To edit a copied Theme or legend, read [references/theme-roles.md](references/theme-roles.md) (roles, tokens, legend keys). Contexts and Stores are the pinned-evidence path below; do not use them unless the user asks for pinned evidence.
 
 ## Pinned evidence from a Store (only when the user asks)
 
