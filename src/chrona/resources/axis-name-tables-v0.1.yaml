@@ -32,7 +32,7 @@ tables:
       half-year: "{fiscalYear}-H{half}"
       quarter: "Q{quarter}"
       year-quarter: "{fiscalYear}年Q{quarter}"
-      quarter-year: "Q{quarter} {fiscalYear}年"
+      quarter-year: "{fiscalYear}年Q{quarter}"
       short-month: "{monthShort}"
       long-month: "{monthLong}"
       numeric-month: "{monthNumeric}"

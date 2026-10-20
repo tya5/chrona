@@ -38,7 +38,7 @@ from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
-from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text, finish_delta_semantic
+from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text, finish_delta_semantic, signed_delta_text
 
 
 @dataclass(frozen=True)
@@ -292,7 +292,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     components.append(("title", request.surface_content.member_name(item, review_row.row_id)))
                 if (attached is None and getattr(item, "forecast", None) is None
                         and "finishDelta" in contract.labels.content and item.finish_delta is not None):
-                    components.append(("finishDelta", f"{item.finish_delta:+d}d"))
+                    components.append(("finishDelta", signed_delta_text(item.finish_delta, item)))
                 if not components:
                     continue
                 occurrence, admission = admission_for(item, review_row.row_id)
@@ -388,7 +388,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 continue
             occurrence, admission = admission_for(item, review_row.row_id)
             parts = normalize(f"variance:{instance_id}", item,
-                (("finishDelta", f"{item.finish_delta:+d}d"),), occurrence, admission,
+                (("finishDelta", signed_delta_text(item.finish_delta, item)),), occurrence, admission,
                 semantic_id="finishDelta")
             if not parts:
                 continue
@@ -401,7 +401,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     coordinate_for_date(anchor_date, context.scale), track.block,
                     max(1.0, track.block_size), track.block_size)
                 requests.append(LabelRequest(f"variance:{instance_id}", item.object_id,
-                    f"{item.finish_delta:+d}d", anchor, ("end", "start", "above", "below"),
+                    signed_delta_text(item.finish_delta, item), anchor, ("end", "start", "above", "below"),
                     "summary", f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
                     request.surface_content.label_overflow, semantic_id="finishDelta",
                     # Like a forecast delta, it is placed before routes (#1702): a dependency leaving the finish edge

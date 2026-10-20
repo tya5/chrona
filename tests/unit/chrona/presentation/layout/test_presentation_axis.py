@@ -57,6 +57,19 @@ def test_compact_date_range_is_deterministic_for_each_declared_context_locale():
     assert display_value(value, "blank", "dateRange", locale="ja-JP") == "2月3日 – 2月7日"
 
 
+def test_ja_jp_quarter_year_puts_the_year_first_like_the_locale_writes_it():
+    """`2027年Q1`, not `Q1 2027年`: the year unit leads in Japanese (#1790); en-US keeps `Q1 2027`."""
+    interval = axis_intervals(date(2027, 1, 15), date(2027, 2, 1), "quarter")[0]
+    assert format_axis_tier_label(interval, "quarter-year", axis_name_table("ja-JP")) == "2027年Q1"
+    assert format_axis_tier_label(interval, "year-quarter", axis_name_table("ja-JP")) == "2027年Q1"
+
+
+def test_signed_days_cell_takes_the_locale_day_unit():
+    assert display_value(3, "blank", "signedDays") == "+3d"
+    assert display_value(3, "blank", "signedDays", day_unit="営業日") == "+3営業日"
+    assert display_value(0, "blank", "signedDays", zero="plain", day_unit="日") == "0日"
+
+
 @pytest.mark.parametrize("style,expected", [
     ("quarter-year", "Q1 2027"),
     ("year-quarter", "2027 Q1"),

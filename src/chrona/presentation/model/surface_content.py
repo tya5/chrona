@@ -456,12 +456,13 @@ def initials(text: str) -> str:
 def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str | BooleanPresencePresentation = "text", *,
                   locale: str = "en-US", zero: str = "signed", end_display: str = "exclusive",
                   transform: str | None = None, years_visible: bool = False,
-                  missing_words: Mapping[str, str] | None = None) -> str:
+                  missing_words: Mapping[str, str] | None = None, day_unit: str = "d") -> str:
     """Format a normalized table value according to its declared View contract.
 
     ``years_visible`` is true when the visible window spans more than one calendar year: every
     ``dateRange`` date then carries its year (#1724).
-    `missing_words` supplies the locale text of `unknown` and `in-progress` (#1724); this function does no lookup.
+    `missing_words` supplies the locale text of `unknown` and `in-progress` (#1724); `day_unit` the text after a
+    signed day count (#1790); this function does no lookup.
     """
     if value is None:
         if isinstance(missing, Mapping):
@@ -502,7 +503,7 @@ def display_value(value: Any, missing: str | Mapping[str, Any], formatter: str |
         if isinstance(value.get("at"), date):
             return _format_compact_date(value["at"], include_year=True, locale=locale)
     if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):
-        return f"{value:d}d" if value == 0 and zero == "plain" else f"{value:+d}d"
+        return f"{value:d}{day_unit}" if value == 0 and zero == "plain" else f"{value:+d}{day_unit}"
     if formatter == "signedNumber" and isinstance(value, int) and not isinstance(value, bool):
         return f"{value:d}" if value == 0 and zero == "plain" else f"{value:+d}"
     return str(value)

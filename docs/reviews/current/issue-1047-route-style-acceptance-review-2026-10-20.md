@@ -1,6 +1,8 @@
 # Issue 1047 — route style acceptance
 
-Metro source: `b8e737962`; integration `45d40444c` on trusted ready main
+Metro [PR1803](https://github.com/tya5/chrona/pull/1803) source
+`0e842ac5d84f4cb31bb387f6067f995fb3193d49`, merged at
+`ddbd56fb1bc20b0e5e225db4a2f37f51773c114d` on trusted ready base
 `98a8f3f83ea3c1ada559cb0617c0ca6a6dd74722`; curved PR1801 merged at
 `56719e632326fe7a4eff56e87090ad33c1a5994d`.
 Selected design and joint-budget correction were published before code resumed
@@ -36,12 +38,17 @@ The coordinator inspected actual curved and metro PNGs. Metro YAML witness SHA25
 Curved PR CI39367673183 passed; official artifact12240560787
 (`d38cb088c3e6e37b7cc45b75ef76d61bfae55438daebb878c9cb6b4c725607a3`)
 has50SVG/50Scene unchanged and only expected inventory/coverage reports.
-Metro official snapshot, exact-main full three-OS release and Transit disposition
-are still required. Keep issue1047 open.
-
-PR1803 run39370013122 found one test-only platform error: exact comparison of
-a tan/hypot-derived coordinate differed by1e-16 on Ubuntu. Join coordinates now
-use absolute1e-12 tolerance (relative0); command topology remains exact and
-diagonal runs additionally assert equal absolute axis deltas. Product geometry
-and its safety policy are unchanged. The readiness failure only propagated that
-shard failure; all other substantive jobs passed. New-head CI is required.
+Metro [CI39371460608](https://github.com/tya5/chrona/actions/runs/39371460608)
+passed all three pytest shards, conformance, newest-Python, MCP and readiness.
+Corrected-head official artifact12241582735 (SHA256
+`4aa9f867fc1a279ebe218f3bcb216207a87629069eab3b03b14b1cb9a27e644a`)
+has50SVG/50Scene unchanged. Only coverage adds metro and inventory moves one
+`E_LAYOUT_PATH_COMMAND_INVALID` site from terminal extent to shared path extrema
+(same code/message). The coordinator independently checked hash, manifest and
+the whole generated tree. Join tests use absolute1e-12/relative0 coordinate
+tolerance across platform math libraries, exact topology and explicit45° checks.
+Trusted review-containing main is
+`9faf700f29e6d685410a5d492fc5daab81db0637` after successful derived-sync39372770884.
+Its [native release39373223873](https://github.com/tya5/chrona/actions/runs/39373223873)
+is running; full three-OS success and reviewer-owned Transit disposition remain
+required. Keep issue1047 open.
