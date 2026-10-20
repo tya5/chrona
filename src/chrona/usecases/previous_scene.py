@@ -37,12 +37,24 @@ def decode_previous_scene(payload: bytes, project_id: str, *,
     theme_identity = themes[0]["contentIdentity"] if len(themes) == 1 else None
     surfaces = []
     for surface in value["surfaces"]:
+        primitives = surface["primitives"]
+        by_id = {primitive["id"]: primitive for primitive in primitives}
         relations = []
-        for primitive in surface["primitives"]:
-            if primitive.get("purpose") == "dependency" and primitive.get("fromInstanceId") and primitive.get("toInstanceId"):
-                relations.append(HintRelation(primitive["sourceRef"], primitive["fromInstanceId"],
-                    primitive["toInstanceId"], tuple(tuple(point) for point in primitive.get("points", ())),
-                    _hint_marker(primitive.get("markerStart")), _hint_marker(primitive.get("markerEnd"))))
+        for primitive in primitives:
+            if primitive.get("purpose") != "dependency" or not primitive.get("fromInstanceId") or not primitive.get("toInstanceId"):
+                continue
+            marker_end = primitive.get("markerEnd")
+            fan_in = primitive.get("fanIn")
+            if isinstance(fan_in, Mapping) and fan_in["terminalOwnerId"] != primitive["id"]:
+                # Scene validation has proved that this exact owner is a
+                # same-surface relation with the same target port. Its shared
+                # end terminal is evidence for matching the configured mark;
+                # it is not replayed into the preserved Scene or Layout.
+                owner = by_id[fan_in["terminalOwnerId"]]
+                marker_end = owner.get("markerEnd")
+            relations.append(HintRelation(primitive["sourceRef"], primitive["fromInstanceId"],
+                primitive["toInstanceId"], tuple(tuple(point) for point in primitive.get("points", ())),
+                _hint_marker(primitive.get("markerStart")), _hint_marker(marker_end)))
         surfaces.append(HintSurface(surface["id"], _hint_marks(surface["primitives"]), tuple(relations)))
     hints = PreviousRouteHints(value["version"] == "chrona/scene/v0.7", tuple(surfaces),
                                theme_identity, theme_identity is not None and theme_identity == current_theme_identity)
@@ -67,14 +79,14 @@ def _part_parent(primitive_id: str) -> tuple[str, int] | None:
 
 def _hint_marks(primitives: Sequence[Mapping[str, Any]]) -> tuple[HintMark, ...]:
     """Decode primary hosts, coalescing only exact completed Symbol siblings."""
-    groups: dict[str, list[tuple[int, object]]] = {}
+    groups: dict[str, list[tuple[int, Mapping[str, Any]]]] = {}
     by_id = {item["id"]: item for item in primitives}
     for primitive in primitives:
         parsed = _part_parent(primitive["id"])
         if parsed is not None:
             groups.setdefault(parsed[0], []).append((parsed[1], primitive))
 
-    coalesced: dict[str, object] = {}
+    coalesced: dict[str, Mapping[str, Any]] = {}
     collisions: set[str] = set()
     for base, indexed in groups.items():
         siblings = [item for _, item in indexed]
