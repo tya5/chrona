@@ -113,6 +113,11 @@ def test_milestone_owner_emits_final_actual_forecast_keys_and_svg_glyphs(tmp_pat
     assert len({item.scene_id for item in state_swatches}) == 2
     assert {_ink_signature(item) for item in state_swatches} == {_ink_signature(item) for item in point_marks}
     assert len({_ink_signature(item) for item in state_swatches}) == 2
+    for mark in point_marks:
+        matches = [swatch for swatch in state_swatches
+                   if swatch.purpose == "legend-swatch"
+                   and _ink_signature(swatch) == _ink_signature(mark)]
+        assert len(matches) == 1, f"{mark.purpose} mark must have exactly one matching state key"
 
     svg = _svg_elements(rendered)
     for swatch in state_swatches:

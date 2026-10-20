@@ -201,6 +201,10 @@ def test_real_planned_actual_legend_warning_becomes_claim_error_before_svg(monke
     from tests.integration.test_realized_legends import ACTUAL, _detail, _parts, _render, _source
 
     parts = _parts()
+    # This fixture is specifically a same-shape colour-separability proof.
+    # The preset's Actual role has a rounded mark while Planned is square;
+    # normalize their geometry so the CVD warning is attributable to colour.
+    parts["theme"]["body"]["roles"]["actual"]["markCornerRadius"] = "mark-radius-square"
     scheme = parts["scheme"]["body"]
     scheme["colors"]["accent"] = "#8957E5"
     scheme["colors"]["positive"] = "#2F81F7"
@@ -211,16 +215,24 @@ def test_real_planned_actual_legend_warning_becomes_claim_error_before_svg(monke
                              parts=parts, detail=detail)
     warnings = [item.payload for item in warning_render.warning_records
                 if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
-    assert len(warnings) == 1
-    warning = warnings[0]
-    assert warning["severity"] == "warning"
-    assert warning["diagnostic"] == "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:3.699"
-    subjects = warning["sourceSubjects"]
-    assert {item["title"] for item in subjects} == {"Planned (planned)", "On track (actual)"}
-    assert next(item for item in subjects if item["title"] == "Planned (planned)")["sourceRef"] == \
-        "legend-key:planned"
-    assert next(item for item in subjects if item["title"] == "On track (actual)")["sourceRef"].startswith(\
-        "legend-key:actual:")
+    assert len(warnings) == 2
+    assert {item["vision"] for item in warnings} == {"deuteranopia"}
+    assert {item["diagnostic"] for item in warnings} == {
+        "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:3.699",
+    }
+    warning_pairs = {
+        frozenset(subject["title"] for subject in item["sourceSubjects"])
+        for item in warnings
+    }
+    assert warning_pairs == {
+        frozenset({"Planned (planned)", "On track (actual)"}),
+        frozenset({"Planned · Milestone (planned)", "Actual · Milestone (actual)"}),
+    }
+    assert all(next(subject for subject in item["sourceSubjects"]
+                    if subject["title"].startswith("Planned"))["sourceRef"].startswith(
+                        "legend-key:planned") for item in warnings)
+    assert all(any(subject["sourceRef"].startswith("legend-key:actual:")
+                    for subject in item["sourceSubjects"]) for item in warnings)
 
     claimed_parts = deepcopy(parts)
     claimed_parts["scheme"]["body"]["suitability"]["colorVision"] = ["deuteranopia"]

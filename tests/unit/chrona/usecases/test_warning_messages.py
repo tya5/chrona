@@ -190,25 +190,43 @@ def test_legend_separability_warning_malformed_identity_keeps_pair_names_and_saf
     assert "'One' (/objects/one)" in message and "'Two' (/objects/two)" in message
 
 
-def test_collapsed_legend_pair_warnings_keep_the_first_pair_subject_and_count():
+def test_distinct_legend_pair_warnings_keep_each_pair_subject_and_measurement():
     def pair(first, second, min_delta):
         return {
             "code": "W_LEGEND_COLOR_NOT_SEPARABLE",
             "severity": "warning",
             "diagnostic": f"W_LEGEND_COLOR_NOT_SEPARABLE:normal:{min_delta}",
+            "vision": "normal",
+            "deltaE": float(min_delta),
             "sourceSubjects": [
                 {"sourceRef": f"/objects/{first.lower()}", "title": first},
                 {"sourceRef": f"/objects/{second.lower()}", "title": second},
             ],
         }
 
-    (row,) = collapse_warnings([pair("Risk", "Progress", "0.0"), pair("Gate", "Forecast", "2.0")])
-    assert row["count"] == 2
-    assert "'Risk' (/objects/risk)" in row["message"]
-    assert "'Progress' (/objects/progress)" in row["message"]
-    assert "ΔE=0.0" in row["message"]
-    assert "Gate" not in row["message"] and "Forecast" not in row["message"]
-    assert row["message"].endswith("and 1 more")
+    rows = collapse_warnings([pair("Risk", "Progress", "0.0"), pair("Gate", "Forecast", "2.0")])
+    assert len(rows) == 2
+    assert "'Risk' (/objects/risk)" in rows[0]["message"]
+    assert "'Progress' (/objects/progress)" in rows[0]["message"]
+    assert "ΔE=0.0" in rows[0]["message"]
+    assert "'Gate' (/objects/gate)" in rows[1]["message"]
+    assert "'Forecast' (/objects/forecast)" in rows[1]["message"]
+    assert "ΔE=2.0" in rows[1]["message"]
+
+
+def test_legend_pair_identity_uses_raw_measurement_when_display_delta_is_equal():
+    def pair(delta):
+        return {
+            "code": "W_LEGEND_COLOR_NOT_SEPARABLE", "severity": "warning",
+            "diagnostic": "W_LEGEND_COLOR_NOT_SEPARABLE:normal:5.0",
+            "vision": "normal", "deltaE": delta,
+            "sourceSubjects": [{"sourceRef": "/objects/a"}, {"sourceRef": "/objects/b"}],
+        }
+
+    rows = collapse_warnings([pair(4.9991), pair(4.9994)])
+    assert len(rows) == 2
+    assert [row["deltaE"] for row in rows] == [4.9991, 4.9994]
+    assert "ΔE=4.9991" in rows[0]["message"]
 
 
 def test_an_ellipsized_text_warning_says_what_was_shortened_and_by_how_much():

@@ -89,6 +89,47 @@ def test_below_floor_is_reported_once_per_vision_in_canonical_order():
         ("deuteranopia", 0.0), ("tritanopia", 0.0))
 
 
+def _glyph_figure(shape, *, canonical=False, dash=()):
+    from chrona.presentation.layout.mark_geometry import symbol_parts
+
+    parts = tuple((part.paint_mode, part.line_cap, part.line_join,
+                   tuple((command.kind, command.points) for command in part.commands))
+                  for part in symbol_parts({"shape": shape}, (0, 0, 1, 1)))
+    geometry = (shape, tuple((*part[:3], None, part[-1]) for part in parts)) if canonical else parts
+    return ((geometry, ((None, "#000000", 1, dash, 1),), (None,)),)
+
+
+def test_distinct_glyph_shapes_already_separate_identical_black_ink():
+    assert _palette_separation_failures(_glyph_figure("diamond"), _glyph_figure("square")) == ()
+
+
+def test_canonical_wrapper_is_not_a_visual_difference_from_its_raw_parts():
+    raw = _glyph_figure("diamond")
+    canonical = _glyph_figure("diamond", canonical=True)
+    assert legend_diagnostics._non_colour_figure(raw) == legend_diagnostics._non_colour_figure(canonical)
+    assert len(_palette_separation_failures(raw, canonical)) == 4
+
+
+def test_dash_pattern_is_a_distinction_but_equal_patterns_still_check_colour():
+    solid = _glyph_figure("diamond")
+    dashed = _glyph_figure("diamond", dash=(5, 3))
+    assert _palette_separation_failures(solid, dashed) == ()
+    assert len(_palette_separation_failures(dashed, dashed)) == 4
+
+
+def test_completed_catalogue_pattern_structure_is_a_distinction():
+    solid = _glyph_figure("square")
+    geometry, paints, _patterns = solid[0]
+    patterned = ((geometry, paints, (("catalog", 8, 8, 45, 5000, ("tile-path",)),)),)
+    assert _palette_separation_failures(solid, patterned) == ()
+    assert len(_palette_separation_failures(patterned, patterned)) == 4
+
+
+def test_missing_geometry_cannot_exempt_an_identical_colour_pair():
+    unknown = _figure(_paint(None, "#000000", 1))
+    assert len(_palette_separation_failures(unknown, _glyph_figure("diamond"))) == 4
+
+
 def _entry(source, label):
     return SurfaceLegendEntry(role="risk", label=label, source_ref=source)
 
