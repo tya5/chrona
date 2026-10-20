@@ -66,8 +66,9 @@ or mismatched identity fail before a usable registry or Scene is produced.
 Normal and Draft closure record the exact same vocabulary content identity;
 the render checks that the closed vocabulary is the host lookup authority.
 This is not an authored Context override or package registration extension.
-The initial117 records retain all prior values and declaration order. The
-selected examples below are explanatory; the packaged resource is exhaustive.
+Binding declaration order is retained. A corrected classification changes the
+host vocabulary identity and requires fresh closed Scene evidence; the selected
+examples below are explanatory and the packaged resource is exhaustive.
 
 | Semantic id | Primitive | Scene purpose | Canonical theme binding |
 | --- | --- | --- | --- |
@@ -87,6 +88,7 @@ selected examples below are explanatory; the packaged resource is exhaustive.
 | `groupTab` | Rect | `group-tab` | `group-tab` (contrast class `decoration`; the role is opt-in, #882) |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |
 | `periodBand` | Rect | `period-band` | `period-band` |
+| `dependencyHalo` | Path | `dependency-halo` | `dependency-halo`; a separator with `contrastClass: null`, not a figure (#1826; Spec46 §8) |
 | `periodLabel` | Text | `period-label` | `period-label` (state text: the Theme declares `contrastTreatment`; the role is opt-in) |
 | `periodLabelChip` | Rect | `label-chip` | `period-label-chip` |
 | `axisBand` | Text | `axis-band` | `axis` |
@@ -95,6 +97,16 @@ selected examples below are explanatory; the packaged resource is exhaustive.
 | `annotation` | Rect/Text/Path | `annotation-*` | `annotation` |
 
 The renderer keeps stable primitive role strings where needed for public Scene compatibility (for example `as-of`). They are declared by the registry rather than handwritten in composition. Theme lookup accepts explicitly declared ingress aliases only and resolves to the canonical binding before Scene construction.
+
+A nullable decoration classification is admitted by the completed registered
+role–purpose pair, not by the paint role alone; a mismatched/absent purpose keeps
+the conservative decoration floor (Spec46 §8). This does not change classified
+mark/state-text precedence, general Text-role reuse or legend-key dispatch.
+The vocabulary remains a wheel-owned closure input (Spec13 §5.1), not a pinned
+Context Store reference. Classification corrections require no Context pin or
+schema-version migration. Fresh closures carry the new host identity; styled
+Scenes with the old identity remain invalid until regenerated, not silently
+accepted through a compatibility alias.
 
 The registered `heading`, `subtitle`, `kicker`, `summary-caption` and
 `summary-unit` inks are general Theme text roles, not purpose-only contrast
