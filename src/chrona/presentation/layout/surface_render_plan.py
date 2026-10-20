@@ -197,18 +197,21 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
         sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
     ).to_integral_value(rounding=ROUND_CEILING))) if value.content_sized else viewport["blockSize"]
-    if value.content_sized:
-        narrowed = _narrow_wrapped_legend(
-            resolved_layout, measured_before_headings, measured, viewport_inline=viewport["inlineSize"],
-            floor=natural_block_floor, measurements=measurements,
-            sizing=sizing_context(natural_block_floor) if source_sizing.active else None)
-        if narrowed is not None:
-            # The legend is reserved the rows it wraps to at its resolved inline size (#1649); the floor follows.
-            measured = reserve_slot_heading_blocks(narrowed, resolved_layout, ThemeTokenView(theme),
-                                                   content=selected_content, font_metrics=font_metrics)
-            measurements = _slot_measurements(resolved_layout.profile["root"], measured)
-            source_sizing = SourceSizingSession(resolved_layout, measured, theme=theme,
-                                               font_metrics=font_metrics, content=selected_content)
+    completion_floor = natural_block_floor if value.content_sized else viewport["blockSize"]
+    narrowed = _complete_wrapped_legend(
+        resolved_layout, measured_before_headings, measured, viewport_inline=viewport["inlineSize"],
+        floor=completion_floor, measurements=measurements,
+        sizing=sizing_context(completion_floor) if source_sizing.active else None,
+        content_sized=value.content_sized)
+    if narrowed is not None:
+        # Complete the source measurement at the width allocated by the provisional solve. The
+        # fixed outer canvas remains fixed; only content-sized allocation follows the completed rows.
+        measured = reserve_slot_heading_blocks(narrowed, resolved_layout, ThemeTokenView(theme),
+                                               content=selected_content, font_metrics=font_metrics)
+        measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+        source_sizing = SourceSizingSession(resolved_layout, measured, theme=theme,
+                                           font_metrics=font_metrics, content=selected_content)
+        if value.content_sized:
             natural_block_floor = max(1, int(measure_natural_normal_flow_block(
                 resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
                 sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
@@ -342,9 +345,10 @@ def uses_independent_view_heading(surface: str, profile: ResolvedLayoutProfile |
     return (surface == "dependency-network" and profile is not None
             and "title" not in _layout_slot_sources(profile.profile["root"]))
 
-def _narrow_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: MeasuredSources,
+def _complete_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: MeasuredSources,
                            measured: MeasuredSources, *, viewport_inline: int, floor: int,
-                           measurements: Mapping[str, Any], sizing: Any) -> MeasuredSources | None:
+                           measurements: Mapping[str, Any], sizing: Any,
+                           content_sized: bool) -> MeasuredSources | None:
     """Return the sources with a `line` legend measured at its resolved inline size, or None to keep the stack.
 
     Which inline size the legend slot gets is known only after a solve, so the conservative stack (every entry on
@@ -357,7 +361,7 @@ def _narrow_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: Mea
         return None
     try:
         manifest = solve_layout(resolved_layout, viewport_inline=viewport_inline, viewport_block=floor,
-                                measurements=measurements, content_sized=True, sizing=sizing)
+                                measurements=measurements, content_sized=content_sized, sizing=sizing)
     except LayoutError:
         return None
     decision = next((item for item in manifest.decisions if item.node_id == node["id"]), None)
@@ -370,7 +374,7 @@ def _narrow_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: Mea
         item_min_inline=legend_arrangement(resolved_layout).item_min_inline_size,
         available_inline=decision.bounds.inline_size - caption_inline)
     current = unheaded.measurements["legend"]
-    if block >= current.preferred_block:
+    if block == current.preferred_block:
         return None
     narrowed = replace(current, preferred_block=block, max_block=block * 2)
     return replace(unheaded, measurements={**unheaded.measurements, "legend": narrowed})

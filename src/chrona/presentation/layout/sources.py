@@ -337,13 +337,22 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             text_block = text_line
         if grid_block is not None:
             text_block = grid_block
+        elif value.run_flow == "line" and measured_runs:
+            # Before a slot's inline size is resolved, every entry may occupy its own
+            # row. Taller swatches therefore enlarge the conservative stack as well
+            # as the completed single-row minimum.
+            text_block = max(text_block, value.row_block * len(measured_runs)
+                             + value.run_gap * (len(measured_runs) - 1))
         # The preferred block of a wrapping line keeps the conservative stack until its inline size is resolved, but
         # its minimum is one row: how many rows it really needs is known only once the slot's inline size is, and
         # the legend placement pass checks that and reports the true required block (#1273).
         minimum_text_block = text_block
         if value.run_flow == "line" and runs:
-            minimum_text_block = max(typography.text_treatment(run.typography_role).font_size
-                                     * typography.text_treatment(run.typography_role).line_height for run in runs)
+            minimum_text_block = max(
+                value.row_block,
+                *(typography.text_treatment(run.typography_role).font_size
+                  * typography.text_treatment(run.typography_role).line_height for run in runs),
+            )
         stack = None
         if value.run_flow == "block" and measured_runs:
             stack = measure_text_stack(measured_runs, tuple(
