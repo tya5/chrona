@@ -5,11 +5,15 @@
 [Current plan, design and architecture review](https://github.com/tya5/chrona/issues/1841#issuecomment-6295885856).
 Specs08/50 own neutral host identity and Layout validation; Spec06 owns the
 shared native-surface heading contract. No Scene/adaptor routing or title logic.
-Row4 tested tree: `8ad5bb8e8` (including straight-fit source `ba29cef7b`,
-stub normalization `87b1d5bb5` and recovery observation correction).
-Spec50 corrections `2b574fe46`, `dc72c9af6` and `3e89664f1` were published before
-their corresponding source changes. Root's command below passes 755 tests
-(3747 deselected; ten existing Pillow deprecation warnings).
+Row4 source: `e825db974`, including exact stub normalization, verified recovery
+observation, early impossible-egress rejection, minimum-lead protected search,
+completed narrow-span ports and retained provisional label footprints.
+Specs30/50 corrections were published before their corresponding source changes.
+The latest routing/Scene batch passes760 tests; impossible end-face corridors
+report actual `egress-collision` identities before search. The mark/viewport
+batch passes103 tests; narrow spans retain their1px visual floor and use its
+completed right edge for the connector, without moving Schedule dates or
+authorizing traversal inside an endpoint host. Scene/adapters do not complete ports.
 Actual synthetic curved/metro SVG/PNG output was inspected. Tests retain full
 closed-mark/text clearance, centered terminal identity and straight tangents;
 fixed blocked/over-limit cases require diagnosed suppression, not vacuous
@@ -20,31 +24,23 @@ bypass or geometry leaking beyond Layout.
 .venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout tests/unit/chrona/presentation/scene -k 'relation or route or egress' -m 'not corpus' --tb=short
 ```
 
-PR1849 run39472589340 failed in derived-preview: our universal head-length
-minimum rejected a safe short straight connector, forcing an unplaceable
-required PDR stub label; missing-artifact reproduction and derived-ready
-failures were downstream. The published correction keeps straight marker fit
-separate from bend reserves. The focused programme-board render now completes
-(write=false reaches the expected Scene-byte mismatch); all24 relations remain,
-and the PDR relation's actual SVG attributes and Scene points match the public
-base exactly, without stubs. No corpus/Theme or required-label-policy changes.
-Fresh official snapshot and exact-main release evidence remain required.
-The authored halo classification now matches existing Spec50 recovery paint;
-strict coverage validation is unchanged. [Official snapshot audit](https://github.com/tya5/chrona/pull/1849#issuecomment-6298974541)
-for CI39477068127 records48 changed visual pairs,399 route changes,72 diagnosed
-halos and the optional text suppressions. Root inspected actual before/after
-SVG rasters for HALCYON02/21/22/24 with all five bundled font faces.
-That run failed conformance: all11 mark-crossing findings were explicit
-marks/overlap recoveries, while typed-fields rejected a redundant collinear
-sub-stroke vertex. The published design correction retains normal/endpoint
-violations as errors and verifies both receipt and real halo before reporting
-declared recovery; 77 observer tests pass, and the exact50-Scene artifact now
-has zero errors and11 recovery observations, without rerendering. Shared exact
-collinear normalization preserves ports, real corners/reversals and scoped host
-validation;33 reduction/fallback tests and all11 typed-fields guide commands pass.
-The observer/tools/recovery integration batch passes107 tests (overlapping);
-starter perceptibility passes with zero errors. No corpus or golden edits.
-Fresh official snapshot, complete PR checks and exact-main release remain required.
+Release is **not accepted**. PR1849 CI39477068127 is red; shards1/3 failures
+are identified, while shard2 lost its runner before printing a failure summary.
+Current controls:77 observer tests;107 observer/tools/recovery tests (overlap);
+all11 typed-fields commands; starter0errors;28 corrected synthetic integrations;
+19 egress controls; both balloon-tail regressions. All8 Sunday cases now pass;
+the previously over-ceiling protected case uses9,743 expansions under the
+unchanged86,016 test ceiling. Completed tail edges are reserved before note indices.
+[Old-head official snapshot audit](https://github.com/tya5/chrona/pull/1849#issuecomment-6298974541)
+records48 changed visual pairs,399 route changes,72 diagnosed halos and optional
+text omissions. Actual before/after SVG rasters for HALCYON02/21/22/24 were viewed
+with bundled fonts; the PDR path is unchanged. Corrected observation of that
+same50-Scene artifact gives0errors/11 recovery infos without rerendering.
+[Optional-label disposition](https://github.com/tya5/chrona/issues/1841#issuecomment-6299771283)
+keeps quality/contact and route-preservation guards; historical name counts are
+not permission to cross a mark. Remaining render/arrival regressions, affected
+test-fixture characterizations, fresh official SVG/count review and exact-main
+three-OS release must be completed before acceptance.
 
 ## Literal issue acceptance
 
