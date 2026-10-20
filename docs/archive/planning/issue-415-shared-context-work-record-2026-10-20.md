@@ -1,7 +1,11 @@
 # Issue 415 — shared deck Context
 
-Status: design approved; feature implemented and locally verified. Required CI
-and reviewer-owned corpus migration remain pending; issue415 stays open.
+Status: complete and released. Exact review-containing main
+`37b3f5a988833b929509dfee3224e285bc2d51b2` passed native release39382911887 on
+Ubuntu/macOS/Windows (full pytest, conformance and wheel), MCP floor and newest
+Python. The reviewer migration was accepted with its stated cohort and output
+allowance; see the [archived literal acceptance review](../reviews/issue-415-shared-context-acceptance-review-2026-10-20.md)
+and [closing acceptance](https://github.com/tya5/chrona/issues/415#issuecomment-6286050198).
 Authoring boundary and migration allowance approved by
 the [reviewer](https://github.com/tya5/chrona/issues/415#issuecomment-6280957121).
 The [selected contract is approved as written](https://github.com/tya5/chrona/issues/415#issuecomment-6282070481). Current scope:
@@ -78,7 +82,9 @@ There are no open design decisions; immutable render-review remains explicit.
    local full run or authored output.
 3. Land the feature and literal review, then coordinate the reviewer migration.
    Verify its same-cohort reduction and output table, and the review-containing
-   exact-main three-OS release before closing. A pending migration keeps415 open.
+   exact-main three-OS release before closing. This gate passed on the exact
+   review-containing main above; the reviewer migration cohort is recorded in
+   the archived acceptance review.
 
 Readiness audit scope (all consume one selected-source record, not private merges):
 
@@ -120,8 +126,8 @@ private working copy. The one feature PR follows all three source slices.
 | --- | --- | --- |
 | Authoring resolution | An application-owned `usecases/deck_context.py` and `schemas/example-materializer-v0.1.schema.yaml`: strict admission, one selected-source record (bytes/body/address/origins), finite composition, explicit-byte preservation. No immutable Context widening. | New `test_deck_context.py`: precedence/null/isolation, eleven-slide shared edit, conditional manifest ID, unknown/duplicate/merge/cyclic-key pointers, atomic reference/array replacement and missing completed fields; schema equivalence. |
 | Closure and consumers | `usecases/materialize.py`, `local_authoring.py` and the complete consumer table above reuse that record. Check staging collisions before writes; retain normal pins, root bases, provider deferral and actual source links. CLI/tool keep shared typed failure transport. | Existing materializer, init/provider, failure-transport and each affected tool's unit modules; composed-source twins for enumeration/provenance/font/reachability; mismatched pin, collision and provider-negative tests. |
-| Acceptance and publication | One feature PR carries the separately reviewable source commits, specification and literal review; no authored generated output. Reviewer corpus migration is a subsequent publication and keeps415 open meanwhile. | Synthetic explicit/composed real Context/SVG/Scene equality; actual CLI and standalone pointed failures; CI's one generated snapshot, full matrix/wheel/newest materializers. After reviewer migration: all19 same-cohort line/output table, inspected adapter output and exact review-containing main release. |
+| Acceptance and publication | Feature and reviewer migration are released; the literal review, 24-row output table, exact-main release and closing acceptance are archived together. | Synthetic explicit/composed real Context/SVG/Scene equality; actual CLI and standalone pointed failures; one generated snapshot, full matrix/wheel/newest materializers; HALCYON19/roadmap5 same-cohort table and reviewer-approved Context-provenance-only Scene changes. |
 
-Publish and verify this final plan before product edits. Pause and correct the
-design first if integration exposes a contract gap. Reviewer-owned corpus
-migration follows the feature; it is not silently counted as feature evidence.
+The approved plan was implemented and released. The reviewer-owned corpus
+migration is counted only for the published HALCYON19/roadmap5 cohort; other
+explicit decks are not claimed migrated.
