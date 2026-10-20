@@ -1,7 +1,8 @@
 # Issue 415 — shared deck Context
 
-Status: design plan; no selected syntax or implementation approval yet. The
-reviewer must review the completed design before product code. Current scope:
+Status: design plan; authoring boundary and migration allowance approved by
+the [reviewer](https://github.com/tya5/chrona/issues/415#issuecomment-6280957121).
+Selected syntax and the remaining contract still require review before code. Current scope:
 [issue and reviewer assignment](https://github.com/tya5/chrona/issues/415#issuecomment-6280175603).
 
 ## Published baseline
@@ -26,10 +27,10 @@ reviewer must review the completed design before product code. Current scope:
 | --- | --- | --- |
 | Issue | A deck declares its shared presentation once, and a slide states only what differs. | Authorable deck/slide YAML, synthetic contract and render tests. |
 | Issue | Changing the theme of an eleven-slide deck is one edit. | Multi-slide fixture; one shared change reaches all intended slides without changing unrelated decks. |
-| Issue | The corpus decks are expressed this way, and their rendered output is unchanged. | Reviewer-owned examples migration after the feature; public materializer and actual adapter/Scene comparison. |
+| Issue | The corpus decks are expressed this way, and their rendered output is unchanged. | Reviewer-owned migration; 0 SVG/geometry/paint/diagnostic changes. Reviewer explicitly permits counted Context-provenance-only Scene changes. |
 | Reviewer 1 | A deck file plus slides that state only their differences render byte-identically to today's fully explicit Contexts (synthetic test). | Compare fully resolved inputs, actual output and provenance explicitly; do not silently exclude changed fields. |
 | Reviewer 2 | Override precedence and an unknown or duplicate key are pointed diagnostics. | Positive precedence and negative unknown/duplicate/invalid-reference cases with source pointers. |
-| Reviewer 3 | Measured on HALCYON-1: the reduction in Context lines once the reviewer migrates the examples, and the count table (expected 0 output changes). | Same-cohort line counts and per-slide public output counts; reviewer owns migration, dev verifies acceptance. |
+| Reviewer 3 | Measured on HALCYON-1: the reduction in Context lines once the reviewer migrates the examples, and the count table (expected 0 output changes). | Same-cohort line counts and per-slide output counts, with the approved Context-provenance-only allowance stated separately; reviewer owns migration, dev verifies acceptance. |
 
 ## Design questions and whole-architecture review
 
@@ -42,9 +43,12 @@ reviewer must review the completed design before product code. Current scope:
 3. Specify immutable loading/bootstrap, cycles, missing files, Store identity,
    revision/hash verification and address bases for inherited references and
    Context-relative font assets. Sharing cannot weaken any pin or containment.
-4. Separate authored-source identity from the fully explicit evaluated Context.
-   Verify actual closure/cache/Scene provenance owners before promising byte
-   identity; do not conceal a necessary provenance change in a comparison filter.
+4. Approved boundary: one authoring expansion owner produces a fully explicit,
+   pinned Context before copying/pinning/immutable closure; public entrypoints
+   reuse it. Existing explicit Contexts remain byte-preserving. Scene provenance
+   includes the exact Context contentIdentity; count migration-only provenance
+   changes explicitly, never hide them in a comparison filter. Do not add a
+   format-preserving YAML/CST layer just to freeze old source hashes.
 5. Check normal Store rendering, materializer copying/repinning and Draft paths
    for one composition owner. No duplicate merge implementation in CLI, tools,
    renderer or adapters. Keep scheduling and geometry unaware of composition.
@@ -67,5 +71,5 @@ reviewer must review the completed design before product code. Current scope:
    Verify its same-cohort reduction and output table, and the review-containing
    exact-main three-OS release before closing. A pending migration keeps415 open.
 
-Design and implementation decisions remain open until the evidence above is
+Syntax, override/address rules and implementation decisions remain open until
 reviewed. This branch is not a second active landing PR while1788 is in flight.
