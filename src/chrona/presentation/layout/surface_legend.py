@@ -95,7 +95,16 @@ def legend_item_gap(declared: Any, legend_size: float) -> float:
     swatch width plus a "gap" of exactly half a swatch; an unmigrated (no
     declared `gap`) legend slot reproduces that split (#427).
     """
-    return float(declared) if declared is not None else _legacy_swatch_size(legend_size) * 0.5
+    return float(_legend_item_gap_decimal(declared, legend_size))
+
+
+def _legend_item_gap_decimal(declared: Any, legend_size: float) -> Decimal:
+    if declared is not None:
+        return Decimal(str(declared))
+    # Keep the documented half-of-legacy-swatch rule in Decimal arithmetic;
+    # float 0.8 * 14 can otherwise turn the exact 5.6 gap into 5.6000000000000005.
+    size = Decimal(str(legend_size))
+    return max(Decimal("2"), size * Decimal("0.8")) / Decimal(2)
 
 
 def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: float,
@@ -281,12 +290,13 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
     """
     treatment = tokens.text_treatment("legend")
     legend_size = float(treatment.font_size)
-    gap = legend_item_gap(arrangement.gap, legend_size)
+    gap = _legend_item_gap_decimal(arrangement.gap, legend_size)
     label_gaps = tuple(entry_label_gap(entry, arrangement.gap, tokens, legend_size) for entry in entries)
     if not entries:
         return SourceInput(("legend",), typography_role="legend")
-    extents = tuple(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[0]
-                    for entry in entries)
+    entry_extents = tuple(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)
+                          for entry in entries)
+    extents = tuple(width for width, _height, _bucket in entry_extents)
     runs = tuple(SourceTextRun(entry.label, "legend", entry.role,
                                _label_reservation(extent, label_gap),
                                segments=_legend_text_segments(entry, treatment.transform) or ())
@@ -326,8 +336,16 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
         row_block = max([treatment.font_size * treatment.line_height]
                         + [Decimal(str(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[1]))
                            for entry in entries])
-    return SourceInput(runs=runs, typography_role="legend", run_flow="line" if line else "stack",
-                       run_gap=Decimal(str(gap)), min_inline=min_inline, row_block=row_block)
+    return SourceInput(
+        runs=runs,
+        typography_role="legend",
+        run_flow="line" if line else "stack",
+        run_gap=gap,
+        min_inline=min_inline,
+        row_block=row_block,
+        run_block_minima=(tuple(Decimal(str(height)) for _width, height, _bucket in entry_extents)
+                          if not line else None),
+    )
 
 
 def _legend_line_offsets(entry_inline_sizes: Sequence[Decimal], *, gap: Decimal, row_block: Decimal,
@@ -372,7 +390,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     legend_size = float(legend_treatment.font_size)
     text_line_block = legend_treatment.font_size * legend_treatment.line_height
     mark_block_size = float(metric_values["timeline.mark.blockSize"])
-    gap = Decimal(str(legend_item_gap(legend.gap, legend_size)))
+    gap = _legend_item_gap_decimal(legend.gap, legend_size)
     direction = legend.direction
     item_min_inline = legend.item_min_inline_size
 
@@ -614,8 +632,9 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             text_available = max(Decimal(0), legend.bounds.inline_size - reservations[index])
             emit_swatch(entry, float(legend.bounds.inline), float(swatch_top), width, height, bucket)
             label_end = emit_label(entry, text_inline, baseline, text_available)
-            final_legend_end = max(final_legend_end, label_end)
-            cursor += row_height + gap
+            row_end = cursor + row_height
+            final_legend_end = max(final_legend_end, label_end, row_end)
+            cursor = row_end + (gap if index + 1 < len(entries) else Decimal(0))
     final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)
     if (direction == "inline" and not legend.columns and legend.bounds.block_size >= text_line_block
             and final_legend_end - legend.bounds.block > legend.bounds.block_size + GEOMETRY_TOLERANCE):

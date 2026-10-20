@@ -224,7 +224,7 @@ copy one named builtin preset
 
 - `id`: builtin preset identifier
 - `--output, -o`: empty output directory
-- `--id`: name the copy: the preset and its View, Theme, Color Scheme, Layout and profile ids are all renamed to this (letters, digits, '.', '_', '-'); icon catalogs keep their ids
+- `--id`: name the copy: the preset and its View, Theme, Color Scheme, Layout and profile ids are all renamed to this (1-256 characters, letter first, then letters, digits, '.', '_', '-'); icon catalogs keep their ids
 
 ## chrona preset list
 
