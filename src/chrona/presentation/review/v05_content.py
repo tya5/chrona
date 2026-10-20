@@ -435,7 +435,8 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
     return entries + tuple(
         SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else (other_label or label),
                            view_scale_id=color_scale.scale_id, view_scale_domain_value=label,
-                           scale_collisions=color_scale.collisions)
+                           scale_collisions=color_scale.collisions,
+                           encoding_value_is_wording=ref == f"scale:{color_scale.scale_id}{OTHER_REF_SUFFIX}")
         for ref, label, _color in color_scale.legend_items(used))
 
 
@@ -543,6 +544,8 @@ def _style_legend_entries(
             entries.append(SurfaceLegendEntry(
                 identity, (other_label or value_label) if is_other else value_label, source_ref=identity, style_scope=scope,
                 style_value=value_label, style_occurrences=value_keys, scale_collisions=scale.collisions,
+                encoding_value_is_wording=is_other,
+                style_display_value=(other_label or value_label) if is_other else value_label,
             ))
             paints.append((identity, color))
     return tuple(entries), tuple(paints)
