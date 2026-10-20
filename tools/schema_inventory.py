@@ -13,7 +13,7 @@ from referencing import Registry, Resource
 from referencing.exceptions import Unresolvable
 from referencing.jsonschema import DRAFT202012
 
-from chrona.resources import SCHEMA_PARTS, safe_load, schema_registry
+from chrona.resources import SCHEMA_PARTS, SCHEMA_REFERENCE_TARGETS, safe_load, schema_registry
 
 
 SCHEMA_SUFFIXES = (".schema.yaml", ".schema.json")
@@ -217,7 +217,7 @@ def _version_constants(schema: Any) -> Iterator[str]:
 def validate_consumers(repo_root: Path, schema_root: Path, entries: tuple[dict[str, Any], ...]) -> None:
     """Every consumer of a live entry exists and names the schema file, its kind, a version it pins, or a part it resolves."""
     part_ids: dict[str, str] = {}
-    for name in SCHEMA_PARTS:
+    for name in (*SCHEMA_PARTS, *SCHEMA_REFERENCE_TARGETS):
         part = safe_load((schema_root / name).read_bytes())
         if isinstance(part, dict) and isinstance(part.get("$id"), str):
             part_ids[part["$id"]] = name

@@ -7,7 +7,7 @@ import pytest
 
 import chrona.resources as resources
 from chrona.resources import (
-    SCHEMA_PARTS, bundled_schema, dereferenced_schema, schema_document, schema_registry, schema_validator,
+    SCHEMA_PARTS, SCHEMA_REFERENCE_TARGETS, bundled_schema, dereferenced_schema, schema_document, schema_registry, schema_validator,
     validator_for_schema,
 )
 
@@ -16,7 +16,10 @@ FACTORY = ROOT / "src" / "chrona" / "resources" / "__init__.py"
 # The S0 equivalence gate is independent of the loader on purpose: a loader bug
 # must not be able to hide itself from the gate that checks the loader.
 INDEPENDENT = (ROOT / "tools" / "schema_equivalence.py",)
-PART_REFERENCE_SCHEMAS = ("view-v0.28.schema.yaml", "command-request-v0.3.schema.yaml", "icon-catalog-v0.5.schema.yaml")
+PART_REFERENCE_SCHEMAS = (
+    "view-v0.28.schema.yaml", "command-request-v0.3.schema.yaml", "icon-catalog-v0.5.schema.yaml",
+    "example-materializer-v0.1.schema.yaml",
+)
 
 
 def _contains_part_reference(node) -> bool:
@@ -37,12 +40,14 @@ def fresh_registry():
 
 def test_registry_holds_exactly_the_listed_parts():
     registry = schema_registry()
-    assert set(registry) == {schema_document(name)["$id"] for name in SCHEMA_PARTS}
+    assert set(registry) == {schema_document(name)["$id"]
+                             for name in (*SCHEMA_PARTS, *SCHEMA_REFERENCE_TARGETS)}
     assert all(uri.startswith("urn:chrona:") for uri in registry)
 
 
-def test_a_missing_part_raises_at_the_gate_not_at_a_document(monkeypatch, fresh_registry):
-    monkeypatch.setattr(resources, "SCHEMA_PARTS", (*SCHEMA_PARTS, "no-such-part-v0.1.schema.yaml"))
+@pytest.mark.parametrize("allowlist", ["SCHEMA_PARTS", "SCHEMA_REFERENCE_TARGETS"])
+def test_a_missing_part_raises_at_the_gate_not_at_a_document(monkeypatch, fresh_registry, allowlist):
+    monkeypatch.setattr(resources, allowlist, (*getattr(resources, allowlist), "no-such-part-v0.1.schema.yaml"))
     with pytest.raises(Exception):
         schema_registry()
 

@@ -16,6 +16,7 @@ from typing import Any, Iterable, Mapping
 
 from chrona.presentation.model.theme_role_consumers import declared_role_pointers, unread_roles
 from chrona.resources import safe_load
+from tools.derived_evidence import selected_contexts
 
 ROOT = Path(__file__).resolve().parents[1]
 _THEME_KINDS = ("chrona/theme/v0.15",)
@@ -57,11 +58,9 @@ def _context_documents(example: Path, context: Mapping[str, Any]) -> tuple[Path 
 
 
 def _closures(root: Path) -> Iterable[tuple[Path, list[Any]]]:
-    for context_path in sorted(root.glob("examples/*/contexts/*.yaml")):
-        context = _load(context_path)
-        if context is None:
-            continue
-        theme_path, documents = _context_documents(context_path.parents[1], context)
+    for manifest_path, selected in selected_contexts(root):
+        context = selected.document
+        theme_path, documents = _context_documents(manifest_path.parent, context)
         if theme_path is not None:
             yield theme_path, documents
     for bundle in sorted(root.glob("src/chrona/resources/presets/bundles/*")):

@@ -37,8 +37,6 @@ def _known():
 
 def _slides():
     for slide in declared_slides(ROOT):
-        if slide.context is None:
-            raise ValueError(f"E_PUBLIC_EVIDENCE_CONTEXT:{slide.key}")
         example = slide.svg.parent.parent
         marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
                  if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
@@ -49,18 +47,18 @@ def _slides():
 
 def pytest_generate_tests(metafunc):
     """Discover closure cases after module import, retaining each slide ID."""
-    names = {"slide", "example", "context_path"}
+    names = {"slide", "example", "context_source"}
     if names <= set(metafunc.fixturenames):
-        metafunc.parametrize("slide,example,context_path", tuple(_slides()))
+        metafunc.parametrize("slide,example,context_source", tuple(_slides()))
 
 
-def test_every_declared_closure_input_is_read(slide, example, context_path):
+def test_every_declared_closure_input_is_read(slide, example, context_source):
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"
         snapshot.mkdir()
         decoded_catalogs = {}
         overlay_builder = _OverlayBuilder(Path(temporary))
-        reference, _ = _copy_context_closure(example.resolve(), context_path, snapshot,
+        reference, _ = _copy_context_closure(example.resolve(), context_source, snapshot,
                                              decoded_catalogs=decoded_catalogs,
                                              overlay_builder=overlay_builder)
         overlay = overlay_builder.finish()
