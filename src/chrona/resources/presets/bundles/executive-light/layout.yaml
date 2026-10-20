@@ -4,6 +4,7 @@ flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [panel.minimum, spacing.l, spacing.m, spacing.none]
 reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: both, groupBand: table, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+viewDefaults: {columnStyles: {facet: {format: signedDays, missing: blank, align: end, width: content, headerOrientation: horizontal}}}
 root:
   id: page
   kind: column
