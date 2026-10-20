@@ -66,6 +66,10 @@ body:
 - A task still open has a `start`, no `finish`, `openUntil: asOf` and a `progress` below 1.
   Without `openUntil` the observation is incomplete and its bar is not drawn
   (`W_LAYOUT_ACTUAL_INCOMPLETE`).
+- An open task is drawn from its `start` up to `asOf`, and `finish` is the day after the last day worked, so a
+  task whose `start` is the `asOf` date itself has no extent yet: no bar is drawn and `render` warns
+  `W_LAYOUT_OPEN_ACTUAL_INVALID` (status stays `ok`). The bar appears at the next update, when `asOf` is later than
+  the `start`; to draw it now, move `asOf` to the next day.
 - A gate that has happened takes `at` instead of `start` and `finish`.
 - `asOf` is the date the observations are true on. Move it forward each time you update; it
   draws the TODAY marker.
@@ -118,6 +122,10 @@ Reading `update-after.svg`:
 - **Dashed outline (ghost):** where the baseline had the task or gate. Build and Launch show
   a ghost left of their current bar: they moved by the update. Design has no ghost, because
   its plan did not change.
+- **A row ending in `(removed)`:** a task the baseline had and the plan no longer has, drawn as a ghost
+  (`(削除)` in `ja-JP`). In a View grouped by a field it closes the group the task had in the baseline, so a
+  removed `mobile` task sits under `mobile` and not under the last group of the table; when no current task is in
+  that group, the group follows the others. With a hierarchy or no grouping it is the last row.
 - **Solid bar:** the current plan. **Dark line:** the actual. A striped bar is a task open
   at `asOf`.
 - **`Δ vs plan`:** the Actual finish minus the **current** plan's finish, in **working days** of
@@ -132,6 +140,16 @@ Reading `update-after.svg`:
   because it has no finish yet. Moving the plan to match an actual makes its delta `+0d`, so
   the ghost, not the delta, shows how far the plan moved. This ordinary Actual comparison is
   against the current plan; it does not use the Snapshot as its delta baseline.
+
+**A `Δ` column of your own.** The `Δ vs plan` column above is the design's: it declares its cell format. A column
+you write in a View with `source: {facet: finishDelta}` and no `format` draws the bare number (`5*` for an
+estimated forecast), without sign or unit. Add `format: signedDays` to the column to read `+5d*`; the unit text
+follows `comparison.deltaUnit` and the locale (`d`, or `日` and `営業日` in `ja-JP`; see
+[Locale and wording](locale-and-wording.md)):
+
+```yaml
+- {id: Delta, format: signedDays, header: {wording: column.finishDeltaBaseline}, source: {facet: finishDelta}, missing: blank, align: end, width: content, headerOrientation: horizontal}
+```
 
 To retain valid relation corridors across revisions, save the previous render
 with `--emit-scene` and pass that JSON to the next render with
