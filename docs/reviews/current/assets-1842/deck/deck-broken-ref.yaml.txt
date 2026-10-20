@@ -1,0 +1,3 @@
+version: chrona/snapshot-ref/v0.3
+kind: snapshot-ref
+id: plan-baseline

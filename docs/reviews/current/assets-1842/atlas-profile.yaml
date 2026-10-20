@@ -1,0 +1,24 @@
+version: chrona/profile/v0.3
+packageId: atlas-delivery
+contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  atlas.work:
+    extends: task
+    fields:
+      team:
+        type: enum
+        enumValues: [platform, payments, mobile, web, data, ops]
+        required: true
+      risk:
+        type: enum
+        enumValues: [low, medium, high]
+        required: true
+      external:
+        type: boolean
+      deliverable:
+        type: objectReference
+        targetProfiles: [atlas.deliverable]
+  atlas.deliverable:
+    extends: entity

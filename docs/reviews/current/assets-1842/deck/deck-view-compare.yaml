@@ -1,0 +1,32 @@
+version: chrona/view/v0.28
+kind: view
+id: plan-compare
+body:
+  heading: {title: '{project}: against the baseline'}
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection:
+    include: {types: [span, point]}
+  grouping: {by: {fieldRole: responsible}, missing: Unassigned, fallback: hierarchy}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  tableColumns:
+    - {id: Task, header: {wording: column.task}, source: title, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
+  window: {mode: selected-planned, marginDays: 7}
+  comparison:
+    baseline: snapshot
+    baselineMarks: ghost
+    actual: optional
+    observationSelection: latest
+    deltaUnit: working-days
+    facets: [planned]
+  visibility:
+    labels: {placement: table, content: [title], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: {mode: none, marker: none}
+  axis:
+    tiers:
+    - unit: month
+      every: 1
+      role: labels
+      label: {form: short-month-year, align: center, overflow: thin-with-record, orientation: horizontal}
+    - {unit: week, every: 1, role: grid-minor}

@@ -1,0 +1,12 @@
+# control: the unmodified copy
+$ chrona render plan.chrona --preset look-ok/preset.yaml --output out.svg
+{"diagnostics": [], "status": "ok", "war
+$ chrona render plan.chrona --preset look-a/preset.yaml --output out.svg
+  status rejected
+   E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS /requiredThemeTokens | requiredThemeTokens lists 'spacing.xs', which no layout size, padding or gap uses; remove 'spacing.xs' from requiredThemeTokens, or reference it as {token: spacing.xs} where the layout needs it (spacing.xs)
+$ chrona render plan.chrona --preset look-b/preset.yaml --output out.svg
+  status rejected
+   E_THEME_TOKEN_TYPE /body/values/milestone-symbol/value/parts/0/d | glyph path of symbol token 'milestone-symbol' (role 'milestoneSymbol', part 0) is not valid: E_ICON_SVG_UNSAFE: /path/@d length=27 does not match supported path grammar; unexpected character='A' at offset=5; arcs (A/a commands) are not supported; a glyph path accepts only M, L, H, V and Z (straight segments), so draw a circle with 'shape: circle' or approximate a curve with short L segments
+$ chrona render plan.chrona --preset look-c/preset.yaml --output out.svg
+  status rejected
+   E_THEME_TOKEN_TYPE /body/roles/planned/cornerRadius | role='planned', property='cornerRadius', token='r'; declaredType='number', expectedType='radius'; change the declared type of values.r to radius or bind cornerRadius to a token that is already a radius

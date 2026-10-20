@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="308" viewBox="0 0 1600 308" role="img">
+<rect width="1600" height="308" opacity="1" fill="#FFFFFF"/>
+<rect data-scene-id="group:x" data-source-ref="x" data-purpose="group-decoration" x="36" y="141.1" width="300" height="80" opacity="1" fill="#EEF2F7"/>
+<rect data-scene-id="group:y" data-source-ref="y" data-purpose="group-decoration" x="36" y="221.1" width="300" height="50" opacity="1" fill="#EEF2F7"/>
+<path data-scene-id="axis-separator:0" data-source-ref="timeline-axis" data-purpose="axis-cell-separator" d="M705.76 95.1L705.76 141.1" opacity="1" fill="none" stroke="#EEF2F7" stroke-width="1"/>
+<path data-scene-id="axis-separator:1" data-source-ref="timeline-axis" data-purpose="axis-cell-separator" d="M1039.52 95.1L1039.52 141.1" opacity="1" fill="none" stroke="#EEF2F7" stroke-width="1"/>
+<path data-scene-id="axis-separator:2" data-source-ref="timeline-axis" data-purpose="axis-cell-separator" d="M1373.28 95.1L1373.28 141.1" opacity="1" fill="none" stroke="#EEF2F7" stroke-width="1"/>
+<path data-scene-id="axis-rule" data-source-ref="timeline-axis" data-purpose="axis-rule" d="M372 141.1L1564 141.1" opacity="1" fill="none" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="planned:a:snapshot:a" data-source-ref="a" data-purpose="snapshot" x="705.76" y="171.1" width="190.72" height="10" opacity="1" fill="#C6CFDA" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="planned:r:snapshot:r" data-source-ref="r" data-purpose="snapshot" x="801.12" y="201.1" width="286.08" height="10" opacity="1" fill="#C6CFDA" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="planned:b:snapshot:b" data-source-ref="b" data-purpose="snapshot" x="1039.52" y="251.1" width="190.72" height="10" opacity="1" fill="#C6CFDA" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="planned:a:a" data-source-ref="a" data-purpose="planned" x="705.76" y="171.1" width="190.72" height="10" opacity="1" fill="#1D5FD1" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="planned:b:b" data-source-ref="b" data-purpose="planned" x="1039.52" y="251.1" width="190.72" height="10" opacity="1" fill="#1D5FD1" stroke="#101828" stroke-width="1"/>
+<text data-scene-id="axis-label:0:0" data-source-ref="timeline-axis" data-purpose="axis-label" x="372" y="108.1" font-family="Noto Sans, sans-serif" font-weight="700" font-size="13" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">26 Oct</text>
+<text data-scene-id="axis-label:0:1" data-source-ref="timeline-axis" data-purpose="axis-label" x="705.76" y="108.1" font-family="Noto Sans, sans-serif" font-weight="700" font-size="13" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">2 Nov</text>
+<text data-scene-id="axis-label:0:2" data-source-ref="timeline-axis" data-purpose="axis-label" x="1039.52" y="108.1" font-family="Noto Sans, sans-serif" font-weight="700" font-size="13" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">9 Nov</text>
+<text data-scene-id="axis-label:0:3" data-source-ref="timeline-axis" data-purpose="axis-label" x="1373.28" y="108.1" font-family="Noto Sans, sans-serif" font-weight="700" font-size="13" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">16 Nov</text>
+<text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="36" y="74.896" font-family="Noto Sans, sans-serif" font-weight="700" font-size="34" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Ghost demo</text>
+<text data-scene-id="column:Task" data-source-ref="view:tableColumns" data-purpose="table-column-label" x="36" y="110.1" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Task</text>
+<text data-scene-id="cell:a:Task" data-source-ref="a" data-purpose="table-cell" x="36" y="180.6" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Alpha</text>
+<text data-scene-id="cell:r:Task" data-source-ref="r" data-purpose="table-cell" x="36" y="210.6" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Gone (removed)</text>
+<text data-scene-id="cell:b:Task" data-source-ref="b" data-purpose="table-cell" x="36" y="260.6" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Beta</text>
+<text data-scene-id="group-header:x" data-source-ref="x" data-purpose="group-header" x="36" y="155.6" font-family="Noto Sans, sans-serif" font-weight="700" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">x</text>
+<text data-scene-id="group-header:y" data-source-ref="y" data-purpose="group-header" x="36" y="235.6" font-family="Noto Sans, sans-serif" font-weight="700" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">y</text>
+</svg>
