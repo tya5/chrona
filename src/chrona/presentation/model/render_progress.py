@@ -39,8 +39,12 @@ class RenderProgress:
 
     def __init__(self, observer: Callable[[RenderEvent], None]):
         self._observer: Callable[[RenderEvent], None] | None = observer
+        self._advisory_observer: Callable[[RenderEvent], None] | None = None
 
     def emit(self, event: RenderEvent) -> None:
+        if isinstance(event, RenderAdvisoryEvent) and self._advisory_observer is not None:
+            self._advisory_observer(event)
+            return
         if self._observer is not None:
             try:
                 self._observer(event)
@@ -52,6 +56,16 @@ class RenderProgress:
 
     def advisory(self, advisory: RoutingCostAdvisory) -> None:
         self.emit(RenderAdvisoryEvent(advisory))
+
+    def buffered(self, observer: Callable[[RenderEvent], None]) -> RenderProgress:
+        """Buffer candidate progress but report work advisories before its search.
+
+        A work advisory describes an attempt, not accepted candidate geometry.
+        The parent remains the best-effort sink; nested buffers preserve it.
+        """
+        child = RenderProgress(observer)
+        child._advisory_observer = self.emit
+        return child
 
     def routing(self, declarations: Sequence[T], *, pass_name: str) -> Iterator[T]:
         """Advance only after a declaration's work returns, not per instance."""
