@@ -1,0 +1,6 @@
+version: timeline/v0.7
+project: {id: syn, title: Synthetic, calendar: office}
+calendars: {office: {working_days: [mon,tue,wed,thu,fri]}}
+objects:
+  keep: {type: task, title: Kept task, schedule: {mode: fixed-span, start: 2027-01-04, end: 2027-01-08}}
+  added: {type: task, title: Added task, schedule: {mode: fixed-span, start: 2027-01-11, end: 2027-01-15}}

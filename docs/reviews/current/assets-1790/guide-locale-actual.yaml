@@ -1,0 +1,8 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: year-end-observed
+body:
+  asOf: '2026-12-28'
+  observations:
+    - {id: design-1, sequence: 1, projectObjectId: design, actual: {start: '2026-12-14', finish: '2026-12-25', progress: 1}}
+    - {id: build-1, sequence: 1, projectObjectId: build, actual: {start: '2026-12-25', openUntil: asOf, progress: 0.2}}

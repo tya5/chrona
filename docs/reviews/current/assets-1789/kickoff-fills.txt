@@ -1,0 +1,32 @@
+Fill of the `kickoff` gate and of three risk-coloured tasks, from the --emit-scene output of each trial-9 render (status ok, no diagnostics).
+
+risk-executive-light
+  kickoff: fill=#3986E6
+  schema: fill=#B7791F
+  ledger: fill=#B91C1C
+  discover: fill=#2E7D5B
+
+risk-mission-light
+  kickoff: fill=#1D5FD1
+  schema: fill=#E4F4EE
+  ledger: fill=#FBF0E1
+  discover: fill=#E8EFFA
+
+risk-target-b
+  kickoff:part:0: fill=#101828
+  kickoff:part:1: fill=None
+  schema: fill=#B7791F
+  ledger: fill=#B91C1C
+  discover: fill=#2E7D5B
+
+risk-wallboard-dark-style
+  kickoff: fill=#2F81F7
+  discover: fill=#2A9D43
+  schema: fill=#D2691E
+  ledger: fill=#8957E5
+
+risk-wallboard-dark
+  kickoff: fill=#2F81F7
+  schema: fill=#D2691E
+  ledger: fill=#8957E5
+  discover: fill=#2A9D43
