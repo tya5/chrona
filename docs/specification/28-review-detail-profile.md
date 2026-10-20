@@ -218,8 +218,10 @@ All surviving semantic and encoded keys additionally use
 [Spec 60 §5.1](60-declared-colour-scales.md#51-domain-separability-421)
 for colour separability under normal vision and all three simulated deficiencies
 (`W_LEGEND_COLOR_NOT_SEPARABLE` by default; a Scheme claim enforces that mode).
-Exact whole-figure equality and perceptual
-colour similarity are distinct findings; neither substitutes for the other.
+Exact whole-figure equality and perceptual colour similarity are distinct
+findings; neither substitutes for the other. Colour separability applies when
+the completed keys do not already differ in glyph shape or line pattern
+(Spec60); every failing pair remains individually identifiable in CLI output.
 
 Swatch comparison uses completed glyph/path geometry relative to its key box
 and the effective emitted paint, not semantic IDs, placement translation,

@@ -224,9 +224,18 @@ not measurement. Normal-vision findings remain warnings. This does not alter
 palette allocation or folding, repaint a mark, or imply that committed evidence
 must be warning-free.
 
-After final legend filtering and placement, every pair of drawn swatches with
-distinct surviving legend meanings is compared, whether either key comes from
-a colour scale or both are ordinary semantic keys (#1826).
+After final legend filtering and placement, compare drawn swatches with
+distinct surviving legend meanings that rely on colour for distinction,
+whether either key comes from a colour scale or both are ordinary semantic
+keys (#1826, #1847). Different completed glyph shapes or line patterns already
+distinguish the keys: such pairs do not produce a legend separability finding,
+including under a Scheme claim. Determine that distinction from completed
+normalized glyph/path geometry and line/pattern structure, not semantic roles,
+resource names, translated coordinates or colour values. Reuse Spec28's
+completed figure witnesses; do not add a second geometry or paint resolver.
+An unknown or absent geometry witness cannot establish a distinction.
+This legend rule does not exempt resolved scale-domain colours from their
+independent domain check above.
 Use this same floor, normal vision and all three simulations;
 explicit slots are not exempt. Retain a domain diagnostic instead of duplicating
 it only when its closed `ScaleCollision` covers both realized domain values,
@@ -242,8 +251,12 @@ gradient or infer colours from source fields, role names or drawing IDs.
 
 A pair below the floor emits `W_LEGEND_COLOR_NOT_SEPARABLE` by default, identifying
 both completed key meanings, labels and source identities, the vision and
-minimum colour difference. This is a colour warning, independent of exact
-whole-figure equality in Spec 28. Hidden candidate keys do not participate.
+minimum colour difference. Report every failing pair and vision, retaining its
+two source identities and unrounded measurement through the warning ledger
+and CLI. Do not collapse distinct pairs to the first/worst pair, union their
+subjects, or truncate the pair inventory. Normal display rounding does not
+define pair identity. This is distinct from exact whole-figure equality in
+Spec28. Hidden candidate keys do not participate.
 It neither repaints the keys nor changes palette folding or placement. A Scheme
 claim of the failing simulated vision instead requires
 `E_LEGEND_COLOR_NOT_SEPARABLE`. Presentation carries explicit scale identity with encoded keys;
