@@ -7,7 +7,7 @@ Normative authority: Spec 50 §3.3; user guidance: `skills/chrona/references/dia
 
 | Literal issue acceptance | Status | Direct evidence |
 | --- | --- | --- |
-| Base the threshold on the measured cost model from #1734's phase data, or on candidate work rather than pairs. State it in diagnostics.md. The 150-task input triggers the warning on target-b. | met locally; release pending | [Measurements and primary inputs](assets-1792/README.md); documented 2,370 potential normal connector-port-pair threshold; [actual 150-task render](assets-1792/target-b-receipt.md) warns at 2,388, with unchanged SVG and only one additional Scene diagnostic. |
+| Base the threshold on the measured cost model from #1734's phase data, or on candidate work rather than pairs. State it in diagnostics.md. The 150-task input triggers the warning on target-b. | met; released | [Measurements and primary inputs](assets-1792/README.md); documented 2,370 potential normal connector-port-pair threshold; [actual 150-task render](assets-1792/target-b-receipt.md) warns at 2,388, with unchanged SVG and only one additional Scene diagnostic. Exact-main release below passed. |
 | Identity is checked at the command, and the agent-interface guide covers both flows. | deferred to dev B | [Row ownership](https://github.com/tya5/chrona/issues/1792#issuecomment-6280558672); not implemented or accepted by this slice. |
 | The guide defines depth, the recipe works on both plan shapes, and the header uses a wording key. | deferred to dev B | [Row ownership](https://github.com/tya5/chrona/issues/1792#issuecomment-6280558672); not implemented or accepted by this slice. |
 
@@ -32,6 +32,11 @@ View-default/CLI regression batch passes **283 tests in 228.97 s**. Integration
 checkpoint `4a3fba702` includes trusted ready main `b1a3f6430`; only the generated
 inventory from that main merge is inherited, never authored by this slice.
 
-Official snapshot, PR CI and exact-main three-OS/conformance/wheel/newest-Python
-release evidence remain pending. Keep issue1792 open until all three rows and
-their release evidence are complete.
+Row1 release: PR1796 merged at `657abb77e04813f9b82d96ce5d304f27c967bd3e`;
+PR CI39355598420 passed and the official109-path snapshot kept50SVG/50Scene
+unchanged. The exact review-containing main
+`46f5d38daff5fdd511345b72ad0b9e959d4cdf42` passed
+[native release39357390608](https://github.com/tya5/chrona/actions/runs/39357390608):
+all three OS full pytest/conformance/wheel, MCP and newest-Python reproduction.
+Keep issue1792 open for B rows2–3 and their release evidence; this record does
+not accept those rows.
