@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, Mapping, TypeVar
 
 import yaml
 
@@ -19,8 +19,8 @@ from chrona.presentation.model.closure import resolve_render_context
 from chrona.resources import safe_load
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.snapshot_paths import snapshot_directory
-from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure
-from chrona.usecases.deck_context import resolve_deck_context
+from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure, materializer_store_roots
+from chrona.usecases.deck_context import load_deck_manifest, resolve_deck_context, select_deck_context
 from tools.derived_evidence import manifest_targets
 from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.usecases.failure_report import report_failure
@@ -69,12 +69,12 @@ def _content_identity(payload: bytes) -> str:
     return "sha256:" + sha256(payload).hexdigest()
 
 
-def _derive_viewport_context(context: dict[str, Any], original_reference: dict[str, Any],
+def _derive_viewport_context(context: Mapping[str, Any], original_reference: dict[str, Any],
                              context_address: str, viewport: tuple[int, int],
                              overlay_builder: _OverlayBuilder) -> tuple[dict[str, Any], bytes]:
     """Stage one immutable Context derivative, retaining every authored input reference."""
     width, height = viewport
-    derived = deepcopy(context)
+    derived = deepcopy(dict(context))
     context_id = f"{context['id']}-viewport-{width}x{height}"
     derived["id"] = context_id
     derived["body"]["environment"]["viewport"] = {
@@ -158,7 +158,8 @@ def _survey_context(task: tuple[Path, str, bool]) -> tuple[int, int, int, tuple[
     manifest_path, slide_id, use_cli = task
     expectations = _load_expectations()
     example = manifest_path.parent
-    selected = resolve_deck_context(manifest_path, slide_id)
+    manifest = load_deck_manifest(manifest_path)
+    selected = select_deck_context(manifest_path, manifest, slide_id)
     context = selected.document
     label = Path(selected.address).stem
     with TemporaryDirectory(prefix="chrona-1474-viewport-") as temporary:
@@ -171,6 +172,7 @@ def _survey_context(task: tuple[Path, str, bool]) -> tuple[int, int, int, tuple[
             original_reference, _revision = copy_context_closure(
                 example, selected, snapshot, decoded_catalogs=decoded_catalogs,
                 overlay_builder=overlay_builder,
+                stores=materializer_store_roots(example, manifest.document.get("stores")),
             )
         except Exception as error:
             failures = tuple(

@@ -10,6 +10,7 @@ import sys
 from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
+from chrona.presentation.contracts.font_sets import expand_font_set
 from chrona.usecases.deck_context import SelectedDeckContext
 from tools.check_scene_perceptibility import committed_scene_paths
 from tools.derived_evidence import scene_contexts
@@ -111,7 +112,7 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT,
             continue
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
-            context = safe_load(selected_context.payload)
+            context = expand_font_set(safe_load(selected_context.payload))
             context_id, catalog, regular_identities = _context_catalog(context)
             resources = document.get("provenance", {}).get("resources", ())
             scene_context = next((item.get("id") for item in resources

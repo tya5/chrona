@@ -6,6 +6,7 @@ import sys
 import time
 import subprocess
 import json
+from types import MappingProxyType
 
 import pytest
 import yaml
@@ -79,7 +80,8 @@ def test_viewport_targets_are_manifest_selected_composed_sources(tmp_path):
     assert identifiers == {f"demo/overview@{width}x{height}" for width, height in matrix.VIEWPORTS}
 
 
-def test_derived_context_identity_changes_only_context_id_and_viewport(tmp_path):
+@pytest.mark.parametrize("immutable", [False, True])
+def test_derived_context_identity_changes_only_context_id_and_viewport(tmp_path, immutable):
     source = {
         "version": "chrona/render-context/v0.17",
         "kind": "render-context",
@@ -101,7 +103,8 @@ def test_derived_context_identity_changes_only_context_id_and_viewport(tmp_path)
     original_overlay = builder.finish()
 
     derived_ref, payload = matrix._derive_viewport_context(
-        source, reference, Path("original.yaml"), (800, 450), builder,
+        MappingProxyType(source) if immutable else source,
+        reference, Path("original.yaml"), (800, 450), builder,
     )
     derived = yaml.safe_load(payload)
     expected = deepcopy(source)
