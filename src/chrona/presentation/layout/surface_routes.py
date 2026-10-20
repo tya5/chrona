@@ -194,7 +194,6 @@ class SurfaceRoutesContext:
     temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
     progress_pass: str = "relations"
     required_label_obstacle_ids: frozenset[str] = frozenset()
-    label_repair_obstacle_ids: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -549,6 +548,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     if advisory is not None and context.request.progress is not None:
         context.request.progress.advisory(advisory)
     request, projection, obstacles = context.request, context.projection, context.obstacles
+    hard_content = SurfaceObstacleIndex()
+    hard_content.extend(item for item in obstacles.all()
+                        if item.placement_id in context.required_label_obstacle_ids)
     explicit_window, window_affected, plot_clip = (
         prepared.explicit_window, prepared.window_affected, prepared.plot_clip)
     timeline_bounds = context.timeline_bounds
@@ -695,13 +697,16 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 not index.egress_collisions(ObstacleSegment(a, b), host_ids=(*hosts, *physical_ids),
                     classes=route_classes, regions=("timeline", "group-header"))
                 for a, b, physical_ids in split_route_at_physical_corridors(path, source_egress, target_egress)) and (
-                    not protect_label_ink or route_clears_retained_label_ink(path, index, width))
+                    route_clears_retained_label_ink(path, hard_content, width)
+                    and (not protect_label_ink or route_clears_retained_label_ink(path, index, width)))
         reduced = remove_substroke_jogs(tuple(points), width, accept=clear,
             start_minimum=start_minimum, end_minimum=end_minimum)
         def clear_reduction(path):
             if route_self_overlaps(path) or not clear(path):
                 return False
             drawn, start, end = complete_centred_terminals(path, marker_start, marker_end, width)
+            if not route_clears_retained_label_ink(drawn, hard_content, width):
+                return False
             if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
                 return False
             if any(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 < width
@@ -746,6 +751,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         # contact rule and segment-local physical-corridor authority.
         if (not clears_primary_marks(reduced, width, required_ids, source_egress, target_egress)
                 or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress)):
+            return None
+        if not route_clears_retained_label_ink(drawn, hard_content, width):
             return None
         if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
             return None
@@ -1031,8 +1038,6 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     target_host_id=target_mark.placement_id if target_mark else None,
                     relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
                     max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
-                    label_repair_obstacle_ids=context.label_repair_obstacle_ids,
-                    route_stroke_width=dependency_stroke,
                     outward_runs=((dependency_stroke + terminal_length(marker_start),
                                    dependency_stroke + terminal_length(marker_end))
                                   if domain.stage is RelationResolutionStage.NORMAL else None),
@@ -1105,7 +1110,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     budget_hits.append(RelationSearchBudgetHit("table-timeline", scene_id,
                         pass_name, selection.search_budget, selection.search_expansions))
             if resolution.terminal_fallback is RelationResolutionStage.OVERLAP:
-                host_domain = relaxed_domain(obstacles, RelationResolutionStage.MARKS, endpoint_hosts)
+                host_domain = relaxed_domain(obstacles, RelationResolutionStage.MARKS, endpoint_hosts,
+                                             context.required_label_obstacle_ids)
                 domain = RelationObstacleDomain(RelationResolutionStage.OVERLAP,
                     host_domain.obstacles, host_domain.required_primary_mark_ids)
                 entries = (entry_candidates(target_mark, relation.target_endpoint, source_nominal,
@@ -1153,7 +1159,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             and _stub_fragment_clears_physical_hosts(outgoing, pair[0], source=True,
                                 obstacles=obstacles)
                             and _stub_fragment_clears_physical_hosts(incoming, pair[1], source=False,
-                                obstacles=obstacles)):
+                                obstacles=obstacles)
+                            and route_clears_retained_label_ink(outgoing, hard_content, dependency_stroke)
+                            and route_clears_retained_label_ink(incoming, hard_content, dependency_stroke)):
                         stub_choice = (pair, outgoing, incoming,
                             orient_terminal(start, outgoing, pair[0].side, source=True),
                             orient_terminal(end, incoming, pair[1].side, source=False))
@@ -1216,7 +1224,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 if (not clears_primary_marks(points, dependency_stroke,
                                              source_egress=selected_pair[0],
                                              target_egress=selected_pair[1])
-                        or not terminal_segments_fit(points, dependency_stroke)):
+                        or not terminal_segments_fit(points, dependency_stroke)
+                        or not route_clears_retained_label_ink(points, hard_content, dependency_stroke)):
                     relations.append(RelationPlacement(scene_id,
                         f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
                         suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))

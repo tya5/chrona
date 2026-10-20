@@ -15,7 +15,6 @@ from tempfile import TemporaryDirectory
 import pytest
 import yaml
 
-import chrona.presentation.layout.surface_composer as surface_composer
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.operational.store_config import load_store_config
 from chrona.operational.store_reads import DraftExtensionPackageReader
@@ -349,30 +348,20 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
                      "message": f"{len(per_id)} plot labels on table-timeline were left out because they do not fit"}]
 
 
-def test_controller_executive_draft_preserves_routes_and_reports_blocked_performance_label(monkeypatch):
-    # The normal measured route to Performance occupies its only admitted
-    # member-label rung. Keep the GA/table regression positive while checking
-    # this separate optional label against actual Layout-produced geometry.
-    captured = []
-    compose = surface_composer.compose_routes_and_member_labels
-
-    def capture_options(context):
-        options = compose(context)
-        captured.append((context, options))
-        return options
-
-    monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", capture_options)
+def test_controller_executive_draft_places_member_names_before_routes():
+    # The old repair path left Performance unlabeled when its first route
+    # occupied the only rung. Content-first placement gives the route search
+    # the completed name footprint to preserve.
     rendered = render_review(_draft_request())
     suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
                     for item in rendered.scene.diagnostics
                     if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
-    assert suppressions == {"performance:performance"}
-    assert rendered.scene.diagnostics.count(
-        "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1") == 1
+    assert not suppressions
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics)
     labels = {item.scene_id for item in rendered.surface.primitives}
     member_sources = {item.source_ref for item in rendered.surface.primitives if item.purpose == "member-label"}
-    assert "ga" in member_sources and "performance" not in member_sources
+    assert {"ga", "performance"} <= member_sources
     project = yaml.safe_load((_root() / "tests/fixtures/controller-z/project.yaml").read_bytes())
     identities = {relation["id"]: identity
                   for relation, identity in zip(project["relations"], relation_identities(project["relations"]))}
@@ -381,19 +370,6 @@ def test_controller_executive_draft_preserves_routes_and_reports_blocked_perform
         f"relation-label:{identities['bringup-to-performance']}:silicon-bringup:silicon-bringup:performance:performance",
     } <= labels
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
-
-    assert len(captured) == 1
-    context, options = captured[0]
-    assert options.retry is not None
-    assert options.first.members.route_blocked_candidates
-    proposal = next(iter(options.first.members.route_blocked_candidates))
-    assert proposal.text.host_placement_id == "planned:performance:performance"
-    footprint = next(item for item in proposal.obstacles if item.obstacle_class == "text")
-    route = next(item for item in options.retry.routes.relations
-                 if item.source_ref == identities["bringup-to-performance"] and not item.suppressed)
-    assert any(obstacles_intersect(ObstacleSegment(start, end), footprint.geometry, footprint.clearance)
-               for start, end in zip(route.points, route.points[1:]))
-
 
 def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     root = _root()

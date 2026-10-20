@@ -112,7 +112,7 @@ def _project() -> dict:
     }
 
 
-def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_measured_blocked_names(
+def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_member_names(
         tmp_path: Path, monkeypatch):
     captured = []
     compose = surface_composer.compose_routes_and_member_labels
@@ -135,48 +135,33 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_measured
     suppressed = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
                   for item in result.rendered.scene.diagnostics
                   if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
-    expected_suppressions = {
-        'review-lane:["generated","","item-05"]:item-05',
-        'review-lane:["generated","","item-17"]:item-17',
-    }
-    assert suppressed == expected_suppressions
-    assert {item["sourceRef"] for item in labels} == expected_members - {"item-05", "item-17"}
-    assert len(labels) == 20
-    assert result.rendered.scene.diagnostics.count(
-        "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=2") == 1
+    assert not suppressed
+    assert {item["sourceRef"] for item in labels} == expected_members
+    assert len(labels) == len(expected_members)
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")
+                   for item in result.rendered.scene.diagnostics)
 
-    # The actual candidate boxes are measured by Layout. The retry's completed
-    # routes intersect those boxes, documenting why these optional names remain
-    # suppressed without reimplementing rung selection or route search here.
+    # Actual member-label footprints are present before NORMAL routing, and
+    # completed routes must avoid those measured footprints.
     assert len(captured) == 1
     context, options = captured[0]
-    assert options.retry is not None
-    proposals = {item.text.content: item for item in options.first.members.route_blocked_candidates}
-    assert set(proposals) == {"Design / コピーライティング (日本語/English)",
-                              "Release / Performance tuning"}
-    edge_ids = dict(zip(relation_identities(_project()["relations"]),
-                        (item["id"] for item in _project()["relations"])))
-    retries = {item.source_ref: item for item in options.retry.routes.relations
-               if not item.suppressed and len(item.points) >= 2}
-    expected_blocked_edges = {
-        "Design / コピーライティング (日本語/English)": ("item-05", ("edge-07", "edge-16")),
-        "Release / Performance tuning": ("item-17", ("edge-30",)),
-    }
-    marks = {item.placement_id: item for item in context.member_labels.marks}
-    for content, (source_ref, relation_ids) in expected_blocked_edges.items():
-        proposal = proposals[content]
-        mark_id = proposal.text.host_placement_id
-        assert mark_id in marks and marks[mark_id].source_ref == source_ref
-        footprint = next(item for item in proposal.obstacles if item.obstacle_class == "text")
-        intersecting = set()
-        for route in retries.values():
-            edge_id = edge_ids.get(route.source_ref)
-            if edge_id not in relation_ids:
-                continue
-            segments = (ObstacleSegment(start, end) for start, end in zip(route.points, route.points[1:]))
-            if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance) for segment in segments):
-                intersecting.add(edge_id)
-        assert intersecting == set(relation_ids)
+    actual_routes = {item.source_ref: item for item in options.routes.relations
+                     if not item.suppressed and len(item.points) >= 2}
+    label_footprints = tuple(item for item in options.obstacles.all()
+                             if item.placement_id.startswith("label-footprint:member-label:"))
+    assert label_footprints
+    route_context = context.routes_for(options.obstacles, context.base_text)
+    for route in actual_routes.values():
+        collisions = tuple(footprint.placement_id for footprint in label_footprints
+            if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance)
+                   for segment in (ObstacleSegment(start, end)
+                                   for start, end in zip(route.points, route.points[1:]))))
+        stage = tuple(item.stage.value for item in options.routes.resolution_info
+                      if getattr(item, "relation_id", None) == route.relation_id)
+        details = tuple((item.placement_id, item.region_id, item.geometry, item.clearance,
+                         item.placement_id in route_context.required_label_obstacle_ids)
+                        for item in label_footprints if item.placement_id in collisions)
+        assert not collisions, (route.relation_id, route.source_ref, stage, details)
 
     routes = [item for item in primitives
               if item.get("kind") == "Path" and item.get("purpose") == "dependency"

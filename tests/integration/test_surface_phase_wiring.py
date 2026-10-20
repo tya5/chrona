@@ -1,4 +1,4 @@
-"""One obstacle index and one phase order across label, route and relation-label placement (#592 I592-4)."""
+"""Member names are completed before route search and share its obstacle inventory."""
 import sys
 from pathlib import Path
 
@@ -12,30 +12,23 @@ from tests.support.draft_packages import stage_project_package_store
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
 
-def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    trials: list[tuple[str, int, int, bool]] = []
-    trial_initial_ids: dict[int, set[str]] = {}
-    trial_final_ids: dict[int, set[str]] = {}
-    trial_indexes: dict[int, object] = {}
-    requested: dict[int, list[str]] = {}
-    pre_requests: list[str] = []
-    probe_added_ids: dict[int, set[str]] = {}
-    route_trial_phases: list[list[str]] = []
-    seen: dict[str, object] = {}
+def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    phases: list[str] = []
+    pre_member_ids: list[str] = []
+    route_inputs: dict[int, set[str]] = {}
+    route_results = []
+    plan_facts: dict[str, object] = {}
 
-    def record(name, obstacles, *, reserve_only=False):
-        identity = id(obstacles)
-        ids = {item.placement_id for item in obstacles.all()}
-        trial_initial_ids.setdefault(identity, ids)
-        trial_indexes.setdefault(identity, obstacles)  # retain identities across isolated trial lifetimes
-        trials.append((name, identity, len(ids), reserve_only))
-        return identity
-
-    pre_label_owner = surface_composer.place_member_labels
+    place_pre = surface_composer.place_member_labels
 
     def pre_labels(context, requests, obstacles):
-        pre_requests.extend(item.placement_id for item in requests)
-        return pre_label_owner(context, requests, obstacles)
+        names = tuple(item.placement_id for item in requests if item.semantic_id == "memberLabel")
+        pre_member_ids.extend(names)
+        phases.append("member-names")
+        result = place_pre(context, requests, obstacles)
+        assert {f"label-footprint:{name}" for name in names} <= {
+            item.placement_id for item in obstacles.all()}
+        return result
 
     monkeypatch.setattr(surface_composer, "place_member_labels", pre_labels)
     route_owner = surface_route_label_plan.compose_surface_routes
@@ -43,31 +36,21 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
     member_label_owner = surface_route_label_plan.place_member_labels
 
     def routes(context):
-        identity = record("routes", context.obstacles)
-        route_trial_phases.append(["routes"])
+        identity = id(context.obstacles)
+        route_inputs[identity] = {item.placement_id for item in context.obstacles.all()}
+        phases.append("routes")
         result = route_owner(context)
-        trial_final_ids[identity] = {item.placement_id for item in context.obstacles.all()}
+        route_results.append(result)
         return result
 
     def relation_labels(context, batch, *, terminal):
-        assert isinstance(terminal, bool)
-        phase = "terminal-labels" if terminal else "ordinary-relation-labels"
-        identity = record(phase, context.obstacles)
-        route_trial_phases[-1].append(phase)
-        result = relation_label_owner(context, batch, terminal=terminal)
-        trial_final_ids[identity] = {item.placement_id for item in context.obstacles.all()}
-        return result
+        phases.append("terminal-labels" if terminal else "ordinary-relation-labels")
+        return relation_label_owner(context, batch, terminal=terminal)
 
-    def post_labels(context, requests, obstacles, *, reserve_only=False):
-        identity = record("member-labels", obstacles, reserve_only=reserve_only)
-        if not reserve_only:
-            route_trial_phases[-1].append("member-labels")
-            requested.setdefault(identity, []).extend(item.placement_id for item in requests)
-        result = member_label_owner(context, requests, obstacles, reserve_only=reserve_only)
-        trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
-        if reserve_only:
-            probe_added_ids[identity] = trial_final_ids[identity] - trial_initial_ids[identity]
-        return result
+    def post_labels(context, requests, obstacles):
+        assert not any(item.semantic_id == "memberLabel" for item in requests)
+        phases.append("post-route-labels")
+        return member_label_owner(context, requests, obstacles)
 
     monkeypatch.setattr(surface_route_label_plan, "compose_surface_routes", routes)
     monkeypatch.setattr(surface_route_label_plan, "place_relation_labels", relation_labels)
@@ -75,20 +58,14 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
     original_plan = surface_composer.compose_routes_and_member_labels
 
     def plan_spy(context):
-        seen["pre_index_id"] = id(context.clean_obstacles)
-        seen["pre_index_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
-        seen["post_request_ids"] = {item.placement_id for item in context.post_route_requests}
+        plan_facts["post_member_names"] = tuple(item.placement_id for item in context.post_route_requests
+                                                if item.semantic_id == "memberLabel")
+        plan_facts["pre_index_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
         result = original_plan(context)
-        seen["trial_ids"] = set(trial_initial_ids)
+        plan_facts["selected_index_id"] = id(result.obstacles)
         return result
 
     monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
-    original_selection = surface_route_label_plan.select_completed_route_label_plan
-    def selection_spy(*args):
-        result, annotations = original_selection(*args)
-        seen["selected_index_id"] = id(result.obstacles)
-        return result, annotations
-    monkeypatch.setattr(surface_route_label_plan, "select_completed_route_label_plan", selection_spy)
     example = ROOT / "examples/halcyon-1"
     project_path = example / "project.yaml"
     project = yaml.safe_load(project_path.read_bytes())
@@ -99,25 +76,14 @@ def test_routes_and_labels_use_isolated_trials_from_one_pre_route_inventory(tmp_
                                       "--output", str(tmp_path / "out.svg")])
     main()
 
-    probes = {identity for name, identity, _, reserve_only in trials
-              if name == "member-labels" and reserve_only}
-    route_ids = {identity for name, identity, _, _ in trials if name == "routes"}
-    final_label_ids = {identity for name, identity, _, reserve_only in trials
-                       if name == "member-labels" and not reserve_only}
-    assert not probes, "the coordinator must not run a global route-free label rehearsal"
-    assert 1 <= len(route_ids) <= 2
-    assert probes.isdisjoint(route_ids | final_label_ids)
-    assert seen["pre_index_id"] not in {identity for _, identity, _, _ in trials}
-    assert seen["selected_index_id"] in final_label_ids
-    assert "as-of-label" in pre_requests
-    assert set(pre_requests).isdisjoint(seen["post_request_ids"])
-    assert route_trial_phases == [["routes", "terminal-labels", "member-labels",
-                                   "ordinary-relation-labels"]] * len(route_ids)
-    for identity in final_label_ids:
-        assert len(requested.get(identity, ())) == len(set(requested.get(identity, ())))
-        assert seen["pre_index_ids"] <= trial_initial_ids[identity]
-    for identity in route_ids:
-        assert seen["pre_index_ids"] <= trial_initial_ids[identity]
-        assert trial_initial_ids[identity] <= trial_final_ids[identity]
-    for identity in final_label_ids:
-        assert trial_initial_ids[identity] <= trial_final_ids[identity]
+    assert pre_member_ids and len(pre_member_ids) == len(set(pre_member_ids))
+    assert not plan_facts["post_member_names"]
+    assert phases[0] == "member-names" and phases[1] == "routes"
+    assert phases.count("routes") == 1
+    assert phases == ["member-names", "routes", "terminal-labels", "post-route-labels",
+                      "ordinary-relation-labels"]
+    assert plan_facts["selected_index_id"] in route_inputs
+    assert plan_facts["pre_index_ids"] <= route_inputs[plan_facts["selected_index_id"]]
+    assert {f"label-footprint:{name}" for name in pre_member_ids} <= route_inputs[
+        plan_facts["selected_index_id"]]
+    assert len(route_results) == 1

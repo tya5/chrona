@@ -16,7 +16,6 @@ from chrona.presentation.layout.route_reduction import collapse_collinear_route
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
     relation_shape_candidates, shape_channels,
-    supplemental_relation_channel_candidates,
 )
 
 
@@ -457,8 +456,6 @@ def select_relation_route(
     protected: bool = False,
     endpoint_preserving_prepare: bool = False,
     protected_quality_barriers: Callable[[ConnectorEgress, ConnectorEgress], tuple[ObstacleRect, ...]] | None = None,
-    label_repair_obstacle_ids: frozenset[str] = frozenset(),
-    route_stroke_width: float = 0.0,
     outward_runs: tuple[float, float] | None = None,
     endpoint_lead_runs: Callable[[ConnectorEgress, ConnectorEgress], tuple[float, float]] | None = None,
     primary_egress_blockers: Callable[[ConnectorEgress, ConnectorEgress], tuple[str, ...]] | None = None,
@@ -496,12 +493,6 @@ def select_relation_route(
         raise _route_attempt_error("outward endpoint runs", outward_runs=outward_runs)
     if endpoint_lead_runs is not None and not callable(endpoint_lead_runs):
         raise _route_attempt_error("endpoint lead runs", endpoint_lead_runs=endpoint_lead_runs)
-    repair_active = (search_policy == "first-fit" and bool(label_repair_obstacle_ids)
-                     and any(obstacles.has(identifier) for identifier in label_repair_obstacle_ids))
-    if repair_active and (isinstance(route_stroke_width, bool)
-            or not isinstance(route_stroke_width, (int, float))
-            or not isfinite(route_stroke_width) or route_stroke_width < 0):
-        raise _route_attempt_error("route stroke width", route_stroke_width=route_stroke_width)
     phases = (("best", port_pairs),)
     if search_policy == "first-fit":
         phases = (("first-fit", first_fit_port_pairs(port_pairs)), ("best", port_pairs))
@@ -573,11 +564,6 @@ def select_relation_route(
             if phase == "first-fit":
                 shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                                    bounds=bounds, channels=channels)
-                if repair_active:
-                    shapes = _chain(shapes, supplemental_relation_channel_candidates(
-                        source.exposed_port, target.exposed_port, bounds=bounds, channels=channels,
-                        obstacles=obstacles, route_stroke_width=float(route_stroke_width),
-                        grid_offset=ROUTE_GRID_OFFSET, classes=classes, regions=regions))
                 if outward_runs is not None:
                     shapes = _chain(shapes, outward_candidates(source, target))
                 shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,

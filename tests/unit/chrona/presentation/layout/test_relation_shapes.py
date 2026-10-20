@@ -9,9 +9,7 @@ from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
     relation_shape_candidates, shape_channels,
-    supplemental_relation_channel_candidates,
 )
-from chrona.presentation.layout import routing
 from chrona.presentation.layout.routing import select_relation_route
 
 
@@ -89,86 +87,6 @@ def test_outward_channel_proposals_reject_leads_outside_bounds_and_keep_physical
     assert all(path[0] != source.semantic_port and path[-1] != target.semantic_port for path in paths)
     assert outward_relation_shape_candidates((source, target), source_run=19., target_run=3.,
         bounds=(0., 0., 20., 20.), channels=RelationShapeChannels((0., 10., 20.), (0., 10., 20.))) == ()
-
-
-def test_repair_supplement_is_bounded_and_keeps_basic_candidates_first(monkeypatch):
-    obstacles = SurfaceObstacleIndex()
-    obstacles.add(SurfaceObstacle("source-label", "text", "timeline", ObstacleRect(0.5, 1, 9, 2)))
-    obstacles.add(SurfaceObstacle("target-label", "label-visual", "timeline", ObstacleRect(0.5, 8, 9, 9)))
-    obstacles.add(SurfaceObstacle("middle-mark", "mark", "timeline", ObstacleRect(-2, 4.5, 2, 5.5)))
-    bounds = (-10, -2, 10, 12)
-    channels = shape_channels(obstacles, bounds=bounds)
-    base = relation_shape_candidates((0, 0), (0, 10), bounds=bounds, channels=channels)
-    extra = tuple(supplemental_relation_channel_candidates((0, 0), (0, 10), bounds=bounds,
-        channels=channels, obstacles=obstacles, route_stroke_width=1.0))
-    assert 0 < len(extra) <= 8
-
-    def accept(points):
-        return not any(obstacles.collisions(ObstacleSegment(a, b, 1.0),
-            classes=("text", "label-visual"), regions=("timeline", "group-header"))
-            for a, b in zip(points, points[1:]))
-
-    generated = []
-    original_supplement = routing.supplemental_relation_channel_candidates
-    def watched_supplement(*args, **kwargs):
-        generated.append(True)
-        yield from original_supplement(*args, **kwargs)
-    monkeypatch.setattr(routing, "supplemental_relation_channel_candidates", watched_supplement)
-
-    result = select_relation_route(((_port("end", (0, 0)), _port("start", (0, 10))),),
-        obstacles=obstacles, bounds=bounds, source_host_id=None, target_host_id=None,
-        relation_scene_id="relation:repair-supplement", max_bends=4, max_detour_ratio=2,
-        search_policy="first-fit", channels=channels,
-        label_repair_obstacle_ids=frozenset({"source-label", "target-label"}),
-        route_stroke_width=1.0, prepare=lambda points, source, target: points, accept=accept)
-    assert result.selected_pair is not None and result.settled_by_shape
-    assert result.points in extra
-    assert result.points not in base
-    assert result.points == ((0, 0), (0, 2.5), (-4, 2.5), (-4, 7.5), (0, 7.5), (0, 10))
-    assert generated == [True]
-    assert not result.search_used
-    assert all(not obstacles.collisions(ObstacleSegment(a, b, 1.0),
-        classes=("text", "label-visual"), regions=("timeline", "group-header"))
-        for a, b in zip(result.points, result.points[1:]))
-
-
-def test_supplement_is_not_invoked_without_a_matching_repair_obstacle(monkeypatch):
-    def forbidden(*args, **kwargs):
-        raise AssertionError("normal first-fit must keep the existing basic shape grammar")
-    monkeypatch.setattr(routing, "supplemental_relation_channel_candidates", forbidden)
-    result = _select(label_repair_obstacle_ids=frozenset({"not-in-domain"}), route_stroke_width=float("nan"))
-    assert result.settled_by_shape
-
-
-def test_repair_supplement_has_no_degenerate_vertical_span_with_one_contact_row():
-    proposals = tuple(supplemental_relation_channel_candidates((0, 0), (0, 10),
-        bounds=(-5, -5, 5, 15), channels=RelationShapeChannels((-5, 5), (0, 5, 10)),
-        obstacles=SurfaceObstacleIndex(), route_stroke_width=1.0))
-    assert proposals == ()
-
-
-def test_outward_channel_clearance_is_scoped_to_each_row_pair():
-    obstacles = SurfaceObstacleIndex()
-    obstacles.add(SurfaceObstacle("source-label", "text", "timeline",
-        ObstacleRect(947, 265, 1089, 284.6)))
-    obstacles.add(SurfaceObstacle("target-label", "label-visual", "timeline",
-        ObstacleRect(1044, 585, 1154, 604.6)))
-    channels = RelationShapeChannels((1070,), (274.8, 284.8, 583.0, 584.8, 594.8))
-    proposals = tuple(supplemental_relation_channel_candidates((944, 274.8), (944, 594.8),
-        bounds=(900, 200, 1200, 700), channels=channels, obstacles=obstacles,
-        route_stroke_width=1.0))
-    assert ((944, 274.8), (944, 286.6), (1070, 286.6), (1070, 583.0),
-            (944, 583.0), (944, 594.8)) in proposals
-    assert len(proposals) <= 8
-
-
-@pytest.mark.parametrize("width", [True, -1.0, float("nan"), float("inf")])
-def test_route_rejects_invalid_stroke_width_only_for_matching_repair_domain(width):
-    obstacles = SurfaceObstacleIndex()
-    obstacles.add(SurfaceObstacle("label", "text", "timeline", ObstacleRect(4, 4, 6, 6)))
-    with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
-        _select(obstacles=obstacles, label_repair_obstacle_ids=frozenset({"label"}),
-                route_stroke_width=width)
 
 
 def test_shape_settled_relation_never_builds_a_graph_or_invokes_search(monkeypatch):

@@ -1,4 +1,4 @@
-"""Synthetic member-name reservation trials preserve the unreserved route contract."""
+"""Synthetic content-first member names stay clear of completed route paint."""
 from __future__ import annotations
 
 from datetime import date
@@ -33,7 +33,7 @@ def _project(spans, relation):
                                  "to": {"object": target, "endpoint": "start"}}])
 
 
-def _parts(*, entry: str | None = None, unroutable="suppress"):
+def _parts(*, entry: str | None = None, unroutable="relax"):
     parts = sr.bundle()
     parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})["search"] = "best"
     parts["layout"]["relationRouting"]["unroutable"] = unroutable
@@ -43,35 +43,40 @@ def _parts(*, entry: str | None = None, unroutable="suppress"):
     return parts
 
 
-def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable="suppress", label_sides=None):
+def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable="relax", label_sides=None):
     captured = {}
     original = composer.compose_routes_and_member_labels
     def observe(context):
         clean_before = tuple(context.clean_obstacles.all())
-        options = original(context)
+        captured["context"] = context
+        completed = original(context)
         assert tuple(context.clean_obstacles.all()) == clean_before
-        captured["reference"] = options.first
-        return options
+        captured["completed"] = completed
+        return completed
     monkeypatch.setattr(composer, "compose_routes_and_member_labels", observe)
-    select = label_plan.select_completed_route_label_plan
-    def observe_selection(*args):
-        selected, annotations = select(*args)
-        captured["selected"] = selected
-        return selected, annotations
-    monkeypatch.setattr(label_plan, "select_completed_route_label_plan", observe_selection)
+    route_calls = []
+    compose_routes = label_plan.compose_surface_routes
+    def observe_routes(context):
+        route_calls.append(context)
+        return compose_routes(context)
+    monkeypatch.setattr(label_plan, "compose_surface_routes", observe_routes)
     parts = _parts(entry=entry, unroutable=unroutable)
     if label_sides:
         parts["view"]["body"]["visibility"]["fallback"]["labels"] = label_sides
         parts["layout"]["reviewSurface"]["rowDistribution"] = "fill"
     rendered = sr.render(tmp_path, source, presentation=parts)
-    reference, selected = captured["reference"], captured["selected"]
-    assert label_plan._preserves(reference, selected)
-    reference_names = {item.placement_id for item in reference.members.text
-                       if item.semantic_id == "memberLabel" and item.overflow != "suppressed"}
-    selected_names = {item.placement_id for item in selected.members.text
-                      if item.semantic_id == "memberLabel" and item.overflow != "suppressed"}
-    assert reference_names <= selected_names
-    return rendered, reference, selected
+    completed = captured["completed"]
+    assert len(route_calls) == 1
+    assert route_calls[0].progress_pass == "route-content-baseline"
+    assert route_calls[0].obstacles is completed.obstacles
+    names = tuple(item for item in captured["context"].base_text if item.semantic_id == "memberLabel")
+    assert names
+    name_ids = frozenset(identifier for item in names
+        for identifier in (item.placement_id, f"label-footprint:{item.placement_id}"))
+    assert name_ids <= route_calls[0].required_label_obstacle_ids
+    assert all(completed.obstacles.has(identifier) for identifier in name_ids)
+    assert not captured["context"].clean_obstacles.select(classes=("dependency-route",))
+    return rendered, captured["context"], completed
 
 
 def _routes(rendered):
@@ -93,45 +98,47 @@ def _segment_hits_box(start, end, box) -> bool:
 @pytest.mark.parametrize(("spans", "relation", "entry"), [
     (WALL, WALL_RELATION, None), (COSTLY, COSTLY_RELATION, "any"),
 ])
-def test_reserved_trial_never_worsens_reference_routes_or_suppresses_reference_names(
+def test_member_names_remain_hard_under_declared_suppress_policy(
         tmp_path, monkeypatch, spans, relation, entry):
-    rendered, reference, selected = _render_and_compare(
-        tmp_path, _project(spans, relation), monkeypatch, entry=entry)
+    rendered, context, completed = _render_and_compare(
+        tmp_path, _project(spans, relation), monkeypatch, entry=entry, unroutable="suppress")
 
-    reference_routes = {item.relation_id for item in reference.routes.relations if not item.suppressed}
-    selected_routes = {item.relation_id for item in selected.routes.relations if not item.suppressed}
-    assert reference_routes <= selected_routes
-    if selected_routes:
-        names = _names(rendered)
-        assert names
-        for route in _routes(rendered):
-            for start, end in zip(route.points, route.points[1:]):
-                assert all(not _segment_hits_box(start, end, tuple(name.text_layout.bounds)) for name in names)
+    assert len(completed.routes.relations) == 1
+    relation_result = completed.routes.relations[0]
+    if relation_result.suppressed:
+        warnings = [item for item in completed.routes.diagnostics
+                    if item.startswith("W_LAYOUT_RELATION_SUPPRESSED:")]
+        assert len(warnings) == 1 and relation_result.relation_id in warnings[0]
+    names = _names(rendered)
+    assert names
+    for route in _routes(rendered):
+        for start, end in zip(route.points, route.points[1:]):
+            assert all(not _segment_hits_box(start, end, tuple(name.text_layout.bounds)) for name in names), (
+                route.scene_id, start, end,
+                tuple((name.scene_id, tuple(name.text_layout.bounds)) for name in names))
+    assert len(names) >= sum(item.semantic_id == "memberLabel" for item in context.base_text)
 
 
-def test_no_conflict_keeps_completed_primitives_equal_to_unreserved_reference(tmp_path, monkeypatch):
+def test_clear_member_names_and_dependency_routes_complete_together(tmp_path, monkeypatch):
     source = sr.chain_project(groups=1, per_group=3)
     for index, item in enumerate(source["objects"].values()):
         item["title"] = str(index)
     # Short above-bar names are genuinely clear of the outward dependency stroke;
     # the former long end-side names were not an unobstructed control.
-    _, reference, selected = _render_and_compare(tmp_path, source, monkeypatch, label_sides=["above", "suppress"])
-    assert reference.routes.relations and all(not route.suppressed for route in reference.routes.relations)
-    assert all(item.overflow == "fit" for item in reference.members.text), [
-        (item.placement_id, item.content, item.overflow) for item in reference.members.text]
-    reference_text = [(item.placement_id, item.bounds, item.host_placement_id)
-                      for item in reference.members.text]
-    selected_text = [(item.placement_id, item.bounds, item.host_placement_id)
-                     for item in selected.members.text]
-    reference_routes = [(item.relation_id, item.points, item.suppressed)
-                        for item in reference.routes.relations]
-    selected_routes = [(item.relation_id, item.points, item.suppressed)
-                       for item in selected.routes.relations]
-    assert selected_text == reference_text
-    assert selected_routes == reference_routes
+    rendered, context, completed = _render_and_compare(
+        tmp_path, source, monkeypatch, label_sides=["above", "suppress"])
+    names = tuple(item for item in context.base_text if item.semantic_id == "memberLabel")
+    assert names and all(item.overflow == "fit" for item in names), [
+        (item.placement_id, item.content, item.overflow) for item in names]
+    assert completed.routes.relations and all(not route.suppressed for route in completed.routes.relations)
+    assert _names(rendered)
+    for route in _routes(rendered):
+        for start, end in zip(route.points, route.points[1:]):
+            assert all(not _segment_hits_box(start, end, tuple(name.text_layout.bounds))
+                       for name in _names(rendered))
 
 
-def test_project_without_relations_uses_one_normal_pass_and_no_replay(tmp_path, monkeypatch):
+def test_project_without_relations_uses_one_route_completion(tmp_path, monkeypatch):
     source = sr.chain_project()
     source["relations"] = []
     passes = []
@@ -143,4 +150,4 @@ def test_project_without_relations_uses_one_normal_pass_and_no_replay(tmp_path, 
     rendered = sr.render(tmp_path, source, presentation=_parts())
 
     assert _names(rendered)
-    assert passes == ["route-label-baseline"]
+    assert passes == ["route-content-baseline"]

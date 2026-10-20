@@ -4,7 +4,6 @@ import json
 import pytest
 
 from chrona.presentation.layout import surface_route_label_plan as label_plan
-from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_routes
 from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
 from chrona.usecases.draft_render import warning_payloads
@@ -30,7 +29,6 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
         result = original_routes(context)
         composed.append((context.progress_pass, result))
         return result
-    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe)
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe)
     results = []
     original_select = surface_routes.select_relation_route
@@ -42,22 +40,14 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=3), presentation=parts)
     infos = [item for item in rendered.info_diagnostics if isinstance(item, RelationRoutingSummary)]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == "I_LAYOUT_RELATION_ROUTING"]
+    passes = [name.split(":", 1)[0] for name, _ in calls]
+    assert passes == ["route-content-baseline"]
     if policy == "best":
         assert infos == payloads == []
-        passes = [name.split(":", 1)[0] for name, _ in calls]
-        lane_passes = [name for name in passes if name.startswith("lane-")]
-        assert lane_passes == sorted(lane_passes, key=("lane-rehearsal", "lane-reference",
-                                                       "lane-reservation-rehearsal").index)
-        baseline_index = passes.index("route-label-baseline")
-        assert passes[:baseline_index] == lane_passes
-        assert passes[baseline_index:] in (["route-label-baseline"],
-                                          ["route-label-baseline", "route-label-recovery"])
+        assert len(composed) == len(calls) == 1
         return
-    passes = [name.split(":", 1)[0] for name, _ in calls]
-    assert passes[0] == "route-label-baseline"
-    assert passes in (["route-label-baseline"],
-                      ["route-label-baseline", "route-label-recovery"])
-    assert not ({"memberLabel", "finishDelta"} & set(calls[0][1]))
+    assert len(composed) == len(calls) == 1
+    assert "memberLabel" in calls[0][1]
     assert len(infos) == len(payloads) == len(composed) == len(calls)
     emitted_infos = []
     for pass_name, batch in composed:
@@ -104,7 +94,6 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
                                            "search": policy, "searchBudget": 1}
     # Negative control: force the actual fallback iterator rather than a shape.
     monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: iter(()))
-    monkeypatch.setattr(routing, "supplemental_relation_channel_candidates", lambda *args, **kwargs: iter(()))
     original_routes = surface_routes.compose_surface_routes
     seen = []
     compose_passes = []
@@ -113,7 +102,6 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
         result = original_routes(context)
         seen.extend(item for item in result.routing_info if isinstance(item, RelationSearchBudgetHit))
         return result
-    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe)
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe)
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=3), presentation=parts)
     facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
@@ -121,24 +109,8 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
     assert all(item.budget == item.expansions == 1 for item in facts)
     passes = {item.pass_name.split(":", 1)[0] for item in facts}
     assert passes <= set(compose_passes)
-    if policy == "first-fit":
-        assert "route-label-baseline" in compose_passes
-        # The baseline settles from finite shapes; only recovery spends the
-        # explicit graph-search budget in this fixture.
-        assert "route-label-recovery" in passes
-        assert passes <= {"route-label-baseline", "route-label-recovery"}
-        assert not any(name.startswith("lane-") for name in compose_passes)
-    else:
-        assert "route-label-baseline" in compose_passes
-        expected_lane_passes = {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal"}
-        if lane:
-            assert expected_lane_passes <= set(compose_passes)
-            assert passes <= expected_lane_passes | {"route-label-baseline", "route-label-recovery"}
-        else:
-            assert {"lane-rehearsal", "lane-reference"} <= set(compose_passes)
-            assert passes <= {"lane-rehearsal", "lane-reference",
-                              "lane-reservation-rehearsal",
-                              "route-label-baseline", "route-label-recovery"}
+    assert compose_passes == ["route-content-baseline"]
+    assert passes == {"route-content-baseline"}
     assert [item for item in rendered.scene.diagnostics
             if item.startswith("I_LAYOUT_RELATION_SEARCH_BUDGET:")] == [item.scene_diagnostic() for item in facts]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == facts[0].code]
