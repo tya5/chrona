@@ -238,6 +238,8 @@ class SurfaceLegendEntry:
     view_scale_id: str | None = None
     view_scale_domain_value: str | None = None
     scale_collisions: tuple[ScaleCollision, ...] = ()
+    encoding_value_is_wording: bool = False
+    style_display_value: str | None = None
 
     def __post_init__(self) -> None:
         if self.view_scale_id is not None:
@@ -253,7 +255,8 @@ class SurfaceLegendEntry:
             if not isinstance(self.style_value, str):
                 raise ValueError("Style legend scope requires its completed domain value")
             title = self.style_scope.title
-            object.__setattr__(self, "label", f"{title}: {self.style_value}" if title else self.style_value)
+            display_value = self.style_display_value if self.style_display_value is not None else self.style_value
+            object.__setattr__(self, "label", f"{title}: {display_value}" if title else display_value)
         elif self.style_value is not None:
             raise ValueError("Style legend value requires its scope provenance")
 
