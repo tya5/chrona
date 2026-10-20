@@ -10,7 +10,7 @@ from typing import Any, Mapping
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, kind_header
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings, period_variant_role_base
 from chrona.presentation.model.theme_tokens import ThemeTokenError, checked_horizontal_scale
-from chrona.presentation.scene.capabilities import theme_role_property_consumer
+from chrona.presentation.scene.capabilities import theme_role_property_consumer, unsupported_role_property_detail
 from chrona.presentation.scene.contrast_policy import POLICY_MEMBERS, POLICY_SEVERITIES
 from chrona.presentation.scene.paint_analysis import composited_contrast
 
@@ -20,6 +20,8 @@ class ColorSchemeError(ValueError):
 
     def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None):
         super().__init__(diagnostic_id)
+        if detail is None and diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED":
+            detail = unsupported_role_property_detail(source_ref)
         self.diagnostic_id = diagnostic_id
         self.source_ref = source_ref
         self.detail = detail
