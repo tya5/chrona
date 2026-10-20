@@ -858,6 +858,61 @@ Relation terminals are Theme `marker` tokens resolved by Layout (`relation_termi
 
 `timeline.relation.cornerRadius` (a Theme metric in px; absent or `0` keeps square corners) rounds the turns of an orthogonal relation route when Layout completes the path: each turn becomes a quadratic arc whose radius is `min(r, half the incoming leg, half the outgoing leg)`; a leg that meets a terminal keeps a straight run of the terminal's `headLength` (a round terminal centred on the endpoint needs none); a point that is not a turn is not rounded; an arc whose chords meet a mark, text or label the polyline cleared halves its radius until clear, down to square. Scene `points` stay the orthogonal polyline and `pathCommands` carry the arcs; SVG and PNG draw the same commands, and the arcs are registered as route obstacles beside the polyline. The bundled default Theme (`editorial-readable-default`) declares 4 px; other presets declare their own value or none (#1046).
 
+**Declared route style (#1047; curved slice).**
+Layout Profile `relationRouting.style` selects `orthogonal` or `curved` for
+table-timeline and dependency-network relations. Omission means `orthogonal`:
+the existing route selection, Theme corner rounding, diagnostics and serialized
+Layout/Scene/SVG remain unchanged. Theme paint does not select the style.
+`metro` is a later slice, not admitted by this first implementation.
+
+`curved` smooths the already selected and terminal-completed orthogonal route;
+it does not introduce another route search, move ports, change relation order,
+or relax the selected resolution policy. Layout retains the selected skeleton
+in `points` and completes the drawn path in `pathCommands`. Remove redundant
+collinear vertices only for constructing this path, not from the skeleton.
+At each right-angle turn, the original vertex is a quadratic control point.
+An interior leg shared by two turns offers half its length to each; a terminal
+leg offers its length minus the required straight terminal run. The turn
+consumes the smaller adjoining allowance. Connect remaining intervals with
+straight segments. This produces a piecewise quadratic S-curve on an ordinary
+two-turn offset route, with endpoint tangents and mandatory terminal runs
+preserved. A one-turn route is a quadratic elbow; an S shape requires opposite
+turns in the selected skeleton, not an invented detour. It is independent of
+the Theme's small `cornerRadius`; that metric
+continues to govern only the existing orthogonal-style result. A straight
+route needs no artificial bend and is not a style fallback.
+
+Accept the complete curved candidate only when its actual painted geometry
+satisfies the selected stage's bounds, required mark/text/label clearance,
+terminal, route-crossing and self-overlap rules. This introduces no prohibition
+of relation crossings where the existing surface permits them. A fixed number of sampled
+chords is not sufficient proof for a large curve. Layout must use exact curve
+tests or conservative enclosing geometry; a quadratic's subdivided control
+hulls enclose the entire arc. Inflate that cover by the applicable stroke and
+clearance, use it for validation, and register a conservative cover for later
+routes and labels. Endpoint-host contact exemptions remain limited to the
+admitted terminal contact; do not exempt a whole host from curve validation.
+Conservative rejection is permitted; acceptance of an unchecked gap is not.
+
+If smoothing cannot retain these invariants, keep the already completed
+orthogonal-style result, including its Theme rounding and declared recovery
+behavior. Do not reroute, hide a relation, silently flatten a failed curve,
+or weaken critical safety to obtain a style. An existing recovery result
+which is not an eligible orthogonal skeleton also retains that result.
+Emit one `I_LAYOUT_RELATION_STYLE_FALLBACK` receipt per affected relation with
+its relation identity, requested `curved`, actual `orthogonal`, and a stable
+reason (`clearance`, `bounds`, `self-overlap`, `terminal`, or `recovery`).
+Here `orthogonal` names the existing routing mode: its explicitly diagnosed
+visible-overflow recovery can still be a direct diagonal. Keep that recovery
+diagnostic as well. Surface evidence counts these style receipts separately
+from route-search/recovery failures. Existing bend/detour eligibility remains
+the selected skeleton's policy; smoothing is not a new quality waiver.
+
+Layout owns construction, conservative safety evidence and fallback. Scene
+projects the completed quadratic commands and receipts; adapters serialize
+them without selecting a style or reconstructing a route. Existing adapter
+capability restrictions, including terminal support, remain in force.
+
 **Node approaches (#1109 R2).** Layout routes arrivals before departures in
 stable topological order; the cyclic remainder keeps declaration order. Public
 primitive order remains the declared relation order. Among candidates that
