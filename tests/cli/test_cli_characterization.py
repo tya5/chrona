@@ -386,7 +386,8 @@ _OS_ERROR = re.compile(r"\[(?:Errno|WinError) \d+\] [^:]*?: ")
 
 
 def _normalise(text: str, root: pathlib.Path) -> str:
-    for spelling in {str(root), root.as_posix(), str(root.resolve()), root.resolve().as_posix()}:
+    spellings = {str(root), root.as_posix(), str(root.resolve()), root.resolve().as_posix()}
+    for spelling in sorted(spellings, key=lambda value: (-len(value), value)):
         text = text.replace(spelling, "<tmp>")
         text = text.replace(spelling.replace("\\", "\\\\"), "<tmp>")
     text = _OS_ERROR.sub("<os error>: ", text)
@@ -628,3 +629,13 @@ def test_normalise_does_not_strip_external_error_filename(tmp_path):
     message = json.dumps({"message": f"[WinError 2] File not found: '{filename}'"})
     expected = json.dumps({"message": f"<os error>: '{filename}'"})
     assert _normalise(message, root) == expected
+
+
+def test_normalise_replaces_resolved_scratch_alias_before_shorter_spelling():
+    class ScratchPath(pathlib.PurePosixPath):
+        def resolve(self):
+            return pathlib.PurePosixPath("/private/tmp/chrona-scratch")
+
+    root = ScratchPath("/tmp/chrona-scratch")
+    text = "<os error>: '/private/tmp/chrona-scratch/missing.yaml'"
+    assert _normalise(text, root) == "<os error>: 'missing.yaml'"
