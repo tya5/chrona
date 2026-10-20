@@ -1,7 +1,10 @@
 # Issue 415 — shared Context acceptance
 
-Source/integration: `d44fb5e1a634872d2e142eb2848fb7c745d54cf0`.
-Feature verification in progress; this is not issue closure. Approved contract:
+Feature source: `3a30b154c18bf697d035f37183368100a2662595`,
+[PR1800](https://github.com/tya5/chrona/pull/1800), merged at
+`cd7dda5f594a65b296f1417f34dbc4676748f8e8`.
+Trusted ready main: `e965de32769ec18a9ab8da6e80540bc427b6aac4`.
+Feature PR verification passed; exact-main release remains pending. Approved contract:
 [Spec40 §7](../../specification/40-example-reproducibility-and-materialization.md#7-shared-deck-context-authoring-415),
 [reviewer approval](https://github.com/tya5/chrona/issues/415#issuecomment-6282070481).
 The final pre-code plan was published at `a1dfcdbbd559c30fee10267dbf3ed1185d3ba23c`.
@@ -55,5 +58,13 @@ assertion was weakened. Related batches passed197 and245 tests; integration with
 published1781 passed238 and schema equivalence. The expected-delta conflict was
 resolved to preserve main's complete ledger plus this schema's one added marker.
 
-Required PR snapshot, full CI and exact review-containing main release remain
-pending. Keep issue415 open for those gates and reviewer-owned migration.
+The [final PR run39364863475](https://github.com/tya5/chrona/actions/runs/39364863475)
+passed all three pytest shards, conformance, newest-Python reproduction and MCP.
+Official artifact12239450326 (SHA256
+`ae73a4b4aeb352a5fc19b93e522cfc8542e38568742710db46b4db703ef8a9e3`)
+contains50 unchanged SVG and50 unchanged Scene files. Only diagnostic/value
+reports differ: moved source anchors and22 added diagnostic sites (20 composer,
+2 materialization collisions), no removed normalized sites.
+The [native release39366776524](https://github.com/tya5/chrona/actions/runs/39366776524)
+on exact ready main above has Ubuntu/macOS success; Windows remains in progress.
+Keep issue415 open for that gate and reviewer-owned migration/count table.
