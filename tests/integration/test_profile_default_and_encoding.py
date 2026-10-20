@@ -68,13 +68,12 @@ def test_a_boolean_default_encodes_objects_that_omit_the_field_and_the_non_decla
     assert fills.get("c") == base.get("c") and fills.get("c") not in COLOURS.values()  # profile lacks `external`: base paint
 
 
-def test_a_declaring_object_without_value_or_default_is_still_refused(tmp_path):
+def test_a_declaring_object_without_value_or_default_keeps_base_paint(tmp_path):
+    # Superseded by #1789: an object with no value is not refused; only a present value outside the domain is.
     objects = {"a": {"type": "work", "fields": {"risk": "high"}, **_span(0)}, "b": {"type": "work", **_span(1)},
                "c": {"type": "checkpoint", **_span(2)}}
-    request = _setup(tmp_path, objects, _package(risk_required=False, external_default=None), "risk", ["low", "high"])
-    with pytest.raises(RenderFailed) as caught:
-        render_draft(request)
-    assert caught.value.args[0] == "E_PRESENTATION_SCALE_VALUE"
+    fills = _fills(_setup(tmp_path, objects, _package(risk_required=False, external_default=None), "risk", ["low", "high"]))
+    assert fills["a"] == COLOURS["high"] and fills.get("b") not in COLOURS.values()
 
 
 def test_the_non_declaring_object_alone_does_not_trigger_the_refusal(tmp_path):

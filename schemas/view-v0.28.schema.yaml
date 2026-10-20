@@ -46,6 +46,10 @@ allOf:
               domain:
                 description: "Closed set of values admitted by the scale, or firstAppearance to derive it from the selected items in projection order."
                 $ref: "urn:chrona:common-v0.1#/$defs/colorEncodingDomain"
+              missing:
+                description: "Optional paint for an object with no value for the source field: base (default) keeps the role's own paint; a domain value paints with that value's colour. A present value outside the domain is still refused."
+                type: string
+                minLength: 1
           progressFill:
             type: object
             description: "Optional display-only fraction submark source for completed planned or actual marks."

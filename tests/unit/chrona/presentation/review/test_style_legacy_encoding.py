@@ -144,13 +144,23 @@ def test_v05_surface_first_appearance_scale_omits_items_missing_the_derived_fiel
     assert tuple((key.subject_id, color) for key, color in content.style_fills.fills) == (("present", "#445566"),)
 
 
-def test_v05_surface_explicit_scale_still_reports_an_item_missing_its_field():
+def test_v05_surface_explicit_scale_leaves_an_item_without_a_value_on_base_paint():
+    scale = ResolvedColorScale(
+        "phase", "planned", "phase", ("build",), (("build", "#445566"),),
+    )
+
+    content = _surface_content((_surface_item("missing", value=None),), scale)
+
+    assert content.style_fills.fills == ()  # no value: the encoding does not apply (#1789)
+
+
+def test_v05_surface_explicit_scale_still_refuses_a_value_outside_its_domain():
     scale = ResolvedColorScale(
         "phase", "planned", "phase", ("build",), (("build", "#445566"),),
     )
 
     with pytest.raises(ColorScaleError) as error:
-        _surface_content((_surface_item("missing", value=None),), scale)
+        _surface_content((_surface_item("other", value="ship"),), scale)
 
     assert error.value.code == "E_PRESENTATION_SCALE_VALUE"
     assert error.value.source_ref == "/body/colorEncoding"

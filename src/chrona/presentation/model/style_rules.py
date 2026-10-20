@@ -337,13 +337,13 @@ def _resolved_encoding(outcome: StyleEncodingOutcome,
         resolved_source = source
     # Legend wording is presentation metadata, not encoding identity. S2 owns it.
     return StyleEncodingOutcome(outcome.channel, resolved_source, outcome.scale_id,
-                                outcome.domain, None)
+                                outcome.domain, None, outcome.missing)
 
 
 def _encoding_identity(outcome: StyleEncodingOutcome) -> tuple[Any, ...]:
     source = outcome.source
     return (outcome.channel, source.field_name, source.field_role,
-            outcome.scale_id, outcome.domain)
+            outcome.scale_id, outcome.domain, outcome.missing)
 
 
 def _validate_target(rule: StyleRule, occurrence: StyleOccurrence) -> None:

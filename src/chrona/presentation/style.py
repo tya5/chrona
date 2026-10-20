@@ -56,6 +56,8 @@ class StyleEncodingOutcome:
     scale_id: str
     domain: tuple[str, ...] | str
     legend: StyleLegend | None = None
+    # Paint for an object with no value for the field: "base" keeps the role's own paint, else a domain value (#1789).
+    missing: str = "base"
 
 
 StyleOutcome = StyleRoleOutcome | StyleEncodingOutcome
@@ -351,7 +353,11 @@ def _parse_outcome(raw: Mapping[str, Any], source_ref: str) -> StyleOutcome:
             raise StyleRuleError("E_RESOURCE_SCHEMA", "showScope must be a boolean",
                                  f"{source_ref}/encode/legend/showScope")
         legend = StyleLegend(title, show_scope)
-    return StyleEncodingOutcome(channel, source, scale_id, domain, legend)
+    missing = encode.get("missing", "base")
+    if not isinstance(missing, str) or not missing:
+        raise StyleRuleError("E_RESOURCE_SCHEMA", "encoding missing must be base or a nonempty domain value",
+                             f"{source_ref}/encode/missing")
+    return StyleEncodingOutcome(channel, source, scale_id, domain, legend, missing)
 
 
 def _optional_string(raw: Mapping[str, Any], key: str, source_ref: str) -> str | None:
