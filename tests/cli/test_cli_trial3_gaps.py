@@ -70,3 +70,59 @@ def test_import_help_names_the_columns_and_the_guide(monkeypatch, capsys):
     text = " ".join(capsys.readouterr().out.split())
     for column in ("predecessors", "actual_finish", "finish (inclusive)", "docs/guides/csv-import.md"):
         assert column in text
+
+
+# --- `chrona validate` checks one resource by its kind (#1854 row 1) -----------------------------------------------
+
+PRESET = ROOT / "src" / "chrona" / "resources" / "designs" / "marquee"
+
+
+def _resource(tmp_path, name, text):
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_validate_checks_a_theme_color_scheme_and_layout_profile_by_kind(monkeypatch, capsys):
+    for name, kind in (("theme.yaml", "theme"), ("scheme.yaml", "color-scheme"), ("layout.yaml", "layout-profile")):
+        code, payload = _validate(monkeypatch, capsys, PRESET / name)
+        assert (code, payload) == (0, {"status": "ok", "diagnostics": [], "resource": kind}), name
+
+
+def test_validate_checks_a_view_with_the_layouts_view_defaults(monkeypatch, capsys):
+    view = ROOT / "src" / "chrona" / "resources" / "presets" / "bundles" / "design-default" / "view.yaml"
+    code, payload = _validate(monkeypatch, capsys, view)
+    assert code == 1 and payload["diagnostics"][0]["code"] == "E_SCHEMA"  # the design supplies the rest
+    assert _run(monkeypatch, "validate", str(view), "--layout", str(PRESET / "layout.yaml")) == 0
+    assert json.loads(capsys.readouterr().out) == {"status": "ok", "diagnostics": [], "resource": "view"}
+
+
+def test_validate_reports_every_schema_error_of_a_resource_with_its_pointer(tmp_path, monkeypatch, capsys):
+    path = _resource(tmp_path, "theme.yaml", "version: chrona/theme/v0.16\nkind: theme\nid: t\nbody: {values: 3}\n")
+    code, payload = _validate(monkeypatch, capsys, path)
+    assert code == 1
+    assert {item["code"] for item in payload["diagnostics"]} == {"E_SCHEMA"}
+    assert "/body/values" in {item["sourceRef"] for item in payload["diagnostics"]}
+
+
+def test_validate_tells_a_layout_profile_without_kind_by_its_version(tmp_path, monkeypatch, capsys):
+    path = _resource(tmp_path, "layout.yaml", "version: chrona/layout-profile/v0.10\nid: x\n")
+    code, payload = _validate(monkeypatch, capsys, path)
+    assert code == 1
+    assert all(item["code"] == "E_SCHEMA" for item in payload["diagnostics"])
+    assert "project" not in payload["diagnostics"][0]["message"]  # not read as a Project
+
+
+def test_validate_names_the_accepted_kinds_for_an_unknown_kind(tmp_path, monkeypatch, capsys):
+    path = _resource(tmp_path, "widget.yaml", "kind: widget\nid: x\n")
+    code, payload = _validate(monkeypatch, capsys, path)
+    assert code == 1
+    row = payload["diagnostics"][0]
+    assert row["code"] == "E_CLOSURE_KIND" and row["sourceRef"] == "/kind"
+    for kind in ("project", "theme", "color-scheme", "layout-profile", "view"):
+        assert kind in row["message"]
+
+
+def test_validate_still_reads_a_project_as_a_project(monkeypatch, capsys):
+    code, payload = _validate(monkeypatch, capsys, SKILL_EXAMPLES / "launch.yaml")
+    assert (code, payload) == (0, {"status": "ok", "diagnostics": []})
