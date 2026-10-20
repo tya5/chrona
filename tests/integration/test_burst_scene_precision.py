@@ -164,7 +164,7 @@ def test_declared_scene_precision_reaches_completed_asof_burst_and_keeps_text_gr
     # this checks the selected circle/ellipse contour, not just Scene validity.
     tx, ty, tw, th = label.text_layout.bounds
     font_size = label.text_layout.font_size
-    pad_inline, pad_block = .3 * font_size, .15 * font_size
+    pad_inline, pad_block = .8 * font_size, .4 * font_size
     padded_corners = ((tx - pad_inline, ty - pad_block), (tx + tw + pad_inline, ty - pad_block),
                       (tx + tw + pad_inline, ty + th + pad_block),
                       (tx - pad_inline, ty + th + pad_block))
