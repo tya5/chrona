@@ -858,12 +858,11 @@ Relation terminals are Theme `marker` tokens resolved by Layout (`relation_termi
 
 `timeline.relation.cornerRadius` (a Theme metric in px; absent or `0` keeps square corners) rounds the turns of an orthogonal relation route when Layout completes the path: each turn becomes a quadratic arc whose radius is `min(r, half the incoming leg, half the outgoing leg)`; a leg that meets a terminal keeps a straight run of the terminal's `headLength` (a round terminal centred on the endpoint needs none); a point that is not a turn is not rounded; an arc whose chords meet a mark, text or label the polyline cleared halves its radius until clear, down to square. Scene `points` stay the orthogonal polyline and `pathCommands` carry the arcs; SVG and PNG draw the same commands, and the arcs are registered as route obstacles beside the polyline. The bundled default Theme (`editorial-readable-default`) declares 4 px; other presets declare their own value or none (#1046).
 
-**Declared route style (#1047; curved slice).**
-Layout Profile `relationRouting.style` selects `orthogonal` or `curved` for
+**Declared route style (#1047).**
+Layout Profile `relationRouting.style` selects `orthogonal`, `curved` or `metro` for
 table-timeline and dependency-network relations. Omission means `orthogonal`:
 the existing route selection, Theme corner rounding, diagnostics and serialized
 Layout/Scene/SVG remain unchanged. Theme paint does not select the style.
-`metro` is a later slice, not admitted by this first implementation.
 
 `curved` smooths the already selected and terminal-completed orthogonal route;
 it does not introduce another route search, move ports, change relation order,
@@ -913,8 +912,7 @@ projects the completed quadratic commands and receipts; adapters serialize
 them without selecting a style or reconstructing a route. Existing adapter
 capability restrictions, including terminal support, remain in force.
 
-**Metro follow-on design (#1047; architecture-reviewed, implementation pending).**
-The next slice admits `relationRouting.style: metro` for both surfaces. It uses
+**Metro style.** `relationRouting.style: metro` applies to both surfaces. It uses
 the same selected orthogonal skeleton and precompleted terminals, not a native
 diagonal search. At each right-angle corner, cut equal distances along its
 incoming and outgoing axes, connecting the cut points with a 45-degree line.
@@ -959,8 +957,7 @@ affected relation with requested `metro`, and count it separately from routing
 failure. Safety/criticality, ports, route order, quality policy and adapter
 capabilities do not change. The shared vocabulary's one-consumer widening and
 digest update follow Spec56 §7; no new schema/part version or resource migration
-is needed. Transit target adoption remains the reviewer's subsequent YAML step,
-not an excuse for a core rule tuned to that particular project.
+is needed.
 
 **Node approaches (#1109 R2).** Layout routes arrivals before departures in
 stable topological order; the cyclic remainder keeps declaration order. Public
