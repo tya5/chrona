@@ -10,10 +10,10 @@ Warning-message integration: `b5eb2a40354ba0848933b42a68a811454cd6f89a`.
 
 | Literal acceptance criterion | Status | Evidence |
 | --- | --- | --- |
-| update-a-plan has a "show slip against the original plan" step using `--forecast`, with an explanation of `*`. The Δ header names its reference (a wording key, e.g. "Δ vs baseline"), and `*` has a legend key when estimated deltas are drawn. | not met — release pending | Executable guide tests; reference/override tests; final-visible estimate witness and encoded/plain/completed/table/plot/folded controls. |
-| An unresolved `{asOf}` (or any heading placeholder) emits a pointed warning. Subtitle and marker use one date format from the locale. | not met — release pending | Typed missing-fact warning transport and shared locale formatter tests; explicit label-only markers remain label-only. |
-| The guide sentence is corrected, and the docs test covers it. | not met — release pending | `tests/integration/test_update_a_plan_guide.py` executes the documented commands and checks stdout warnings separately from stderr. |
-| The trial-10 week-2 render shows the slip with a labelled Δ and a keyed `*`. | not met — release pending | [Inspected actual PNG](assets-1810/trial10-week2-forecast.png); unmodified [public trial inputs](https://github.com/tya5/chrona/tree/b17c50028fdd3e7a4e2368b5bdc8033654638da5/trial-10). |
+| update-a-plan has a "show slip against the original plan" step using `--forecast`, with an explanation of `*`. The Δ header names its reference (a wording key, e.g. "Δ vs baseline"), and `*` has a legend key when estimated deltas are drawn. | met | Executable guide tests; reference/override tests; final-visible estimate witness and encoded/plain/completed/table/plot/folded controls. |
+| An unresolved `{asOf}` (or any heading placeholder) emits a pointed warning. Subtitle and marker use one date format from the locale. | met | Typed missing-fact warning transport and shared locale formatter tests; explicit label-only markers remain label-only. |
+| The guide sentence is corrected, and the docs test covers it. | met | `tests/integration/test_update_a_plan_guide.py` executes the documented commands and checks stdout warnings separately from stderr. |
+| The trial-10 week-2 render shows the slip with a labelled Δ and a keyed `*`. | met | [Inspected actual PNG](assets-1810/trial10-week2-forecast.png); unmodified [public trial inputs](https://github.com/tya5/chrona/tree/b17c50028fdd3e7a4e2368b5bdc8033654638da5/trial-10). |
 
 ## Actual output and architecture review
 
@@ -45,6 +45,22 @@ The all-warning-code catalogue guard caught the missing human explanation
 before PR CI; the corrected warning/heading suite passes 22 tests. The final
 wheel's no-Actual trial render returns `ok` with a pointed subtitle/asOf warning
 and the instruction to supply the fact or remove the placeholder.
+The first PR run39396541073 found one missing guide key-inventory entry;
+both new keys are now listed in `locale-and-wording.md`. Its whole module,
+the update guide and wording-table tests pass (31 tests); final CI is required.
+
+## Official public cohort
+
+[Artifact12251569617](https://github.com/tya5/chrona/actions/runs/39396541073/artifacts/12251569617)
+is from source529911008 (before the guide-only correction): 109 matching
+before/after paths, no additions/retirements, 46 SVG/Scene pairs byte-identical.
+Each of `chrona-roadmap/roadmap`, `chrona-roadmap/roadmap-yuya`,
+`controller-z/as-of-foot` and `halcyon-1/21-target-b` changes one subtitle's date
+text and measured width only (and its naturally sized title-slot width).
+Per slide: zero added/removed primitives, zero changed routes/marks/paint or
+diagnostics. The other 46 slides change nothing. Three reports change only
+source anchors, four subtitle contrast sample positions and the two wording-key
+inventories. Independent audit: [per-slide table](https://github.com/tya5/chrona/pull/1817#issuecomment-6287421891).
 
 Presentation owns the reference/wording/missing facts. Layout carries the typed
 estimated-delta witness and selects/measures the explanation from final visible

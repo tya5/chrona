@@ -46,6 +46,8 @@ The keys, with their `en-US` and `ja-JP` text:
 | `missing.unknown`, `missing.inProgress` | unknown, in progress | 不明, 進行中 |
 | `column.lane`, `column.items` | Lane, Items | レーン, 件数 |
 | `column.owner`, `column.number`, `column.phase`, `column.finishDelta` | Owner, No., Phase, Δ finish | 担当, 番号, フェーズ, Δ完了 |
+| `column.finishDeltaPlan` | Δ vs plan | 計画との差 |
+| `column.finishDeltaBaseline` | Δ vs baseline | 基準との差 |
 | `legend.actual-ahead`, `legend.actual-on-track`, `legend.actual-behind` | Ahead, On track, Behind | 前倒し, 予定どおり, 遅れ |
 | `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, baseline, current plan | 予定, 基準計画, 現行計画 |
 | `legend.gate`, `legend.holiday` | gate, holiday | ゲート, 祝日 |
