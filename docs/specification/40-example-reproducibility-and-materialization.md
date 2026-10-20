@@ -40,8 +40,8 @@ The three empty M27 documents are recovered only by verifying their exact histor
 
 ## 7. Shared deck Context authoring (#415)
 
-Status: selected design approved; implementation pending. This
-section reserves the contract; it does not claim the current CLI supports it.
+Deck manifests support the following authoring contract. Corpus migration and
+its measured acceptance remain tracked separately in issue415.
 
 This is an authoring step before immutable materialization, not Context
 inheritance in closure resolution. The existing manifest `context` and
