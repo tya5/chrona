@@ -7,7 +7,7 @@ from math import isfinite
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.path_geometry import flatten_path
+from chrona.presentation.layout.path_geometry import flatten_path, path_extrema
 from chrona.presentation.layout.relation_terminals import project_marker_outline
 from chrona.presentation.model.semantic_registry import semantic_binding
 
@@ -69,7 +69,7 @@ def network_ink_bounds(nodes: Iterable[Any], text: Iterable[Any], shapes: Iterab
         stroke = _relation_stroke_width(theme_tokens, role)
         points: tuple[Point, ...] = tuple(getattr(relation, "points", ()) or ())
         commands = tuple(getattr(relation, "path_commands", ()) or ())
-        route_points = flatten_path(commands) if commands else points
+        route_points = path_extrema(commands) if commands else points
         if route_points:
             result.append(_points_rect(route_points, stroke / 2))
         for marker, side in ((getattr(relation, "marker_start", None), "start"),

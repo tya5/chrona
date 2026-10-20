@@ -18,9 +18,9 @@ $defs:
     examples: [first-fit]
     enum: [first-fit, best]
   relationRouteStyle:
-    description: "Global Layout-owned drawing style for table-timeline and dependency-network relations."
-    examples: [orthogonal]
-    enum: [orthogonal, curved]
+    description: "Global Layout-owned drawing style for table-timeline and dependency-network relations. Metro derives a 45-degree transit path from the selected orthogonal route."
+    examples: [orthogonal, metro]
+    enum: [orthogonal, curved, metro]
   visualProfile:
     description: "Exact renderer-neutral visual capability profile."
     examples: ["chrona-output/visual/v0.5-baseline"]

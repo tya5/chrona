@@ -13,7 +13,7 @@ from chrona.presentation.layout.network_routes import (
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, obstacles_intersect
 from chrona.presentation.layout.path_geometry import flatten_path
-from chrona.presentation.layout.relation_style import curved_path_segments
+from chrona.presentation.layout.relation_style import changed_path_segments
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -80,7 +80,7 @@ def test_curved_table_surface_keeps_route_skeleton_clears_marks_and_text_and_ren
     # Safety checks cover the changed curve ink. Endpoint hosts, the intervening
     # required mark, and required text must all remain clear of its conservative
     # stroke-inflated cover.
-    arc_cover = curved_path_segments(relation.path_commands, stroke_width=1.0)
+    arc_cover = changed_path_segments(relation.path_commands, stroke_width=1.0)
     for mark in layout.marks:
         bounds = mark.bounds
         obstacle = ObstacleRect(float(bounds.inline), float(bounds.block),

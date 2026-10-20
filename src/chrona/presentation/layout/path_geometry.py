@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from math import hypot, inf, isfinite, nextafter
+from math import hypot, inf, isfinite, nextafter, pi, tan
 
 from chrona.presentation.layout.obstacles import ObstacleSegment
 from chrona.presentation.layout.surface_quality import PathCommand
@@ -116,6 +116,170 @@ def curved_orthogonal_path(points: tuple[tuple[float, float], ...], *,
     if current != route[-1]:
         commands.append(PathCommand("line", (route[-1],)))
     return tuple(commands)
+
+
+def metro_orthogonal_path(points: tuple[tuple[float, float], ...], *, radius: float,
+                          start_run: float = 0.0,
+                          end_run: float = 0.0) -> tuple[PathCommand, ...]:
+    """Convert orthogonal turns to 45-degree runs with rounded joins.
+
+    This transforms an already selected orthogonal skeleton; it does not choose
+    another route. Each right-angle cut consumes equal coordinate distances,
+    bounded by the same shared-leg and terminal-run allowances as curved mode.
+    If a required cut cannot be made, the complete original skeleton is kept so
+    callers can report one style fallback rather than a partially metro route.
+    """
+    _validate_orthogonal_points(points, start_run=start_run, end_run=end_run)
+    if (isinstance(radius, bool) or not isinstance(radius, (int, float))
+            or not isfinite(radius) or radius < 0):
+        raise _path_error(f"metro radius must be finite and nonnegative; found {radius!r}")
+    route = _simplify_orthogonal_points(points)
+    if len(route) < 2 or len(set(route)) < 2:
+        raise _path_error("metro orthogonal path requires two distinct endpoints")
+
+    lengths = tuple(_manhattan(left, right) for left, right in zip(route, route[1:]))
+    allowances = [length / 2 for length in lengths]
+    allowances[0] = max(0.0, lengths[0] - start_run)
+    allowances[-1] = max(0.0, lengths[-1] - end_run)
+
+    # Each right-angle corner becomes two 45-degree joins separated by a
+    # diagonal. Keep the turn vertices in order and leave reversals untouched.
+    expanded: list[tuple[float, float]] = [route[0]]
+    expanded_setbacks: list[float | None] = [None]
+    has_cut = False
+    for index, vertex in enumerate(route[1:-1], 1):
+        previous, following = route[index - 1], route[index + 1]
+        if not _is_right_angle(previous, vertex, following):
+            expanded.append(vertex)
+            expanded_setbacks.append(None)
+            continue
+        budget = min(allowances[index - 1], allowances[index])
+        if budget <= 0:
+            return _orthogonal_commands(tuple((float(x), float(y)) for x, y in points))
+        desired_setback = float(radius) * tan(pi / 8)
+        setback = min(desired_setback, budget * (2**0.5) / (4 + 2**0.5))
+        cut = budget - setback
+        before = (vertex[0] + (previous[0] - vertex[0]) * cut / lengths[index - 1],
+                  vertex[1] + (previous[1] - vertex[1]) * cut / lengths[index - 1])
+        after = (vertex[0] + (following[0] - vertex[0]) * cut / lengths[index],
+                 vertex[1] + (following[1] - vertex[1]) * cut / lengths[index])
+        expanded.extend((before, after))
+        expanded_setbacks.extend((setback or None, setback or None))
+        has_cut = True
+        continue
+    expanded.append(route[-1])
+    expanded_setbacks.append(None)
+    if not has_cut:
+        return _orthogonal_commands(expanded)
+
+    if radius == 0:
+        polyline = _simplify_forward_points(tuple(expanded))
+        setbacks: tuple[float | None, ...] = (None,) * len(polyline)
+    else:
+        # Positive-radius cut points are intentional non-collinear join sites.
+        # Keep them indexed rather than coordinate-keyed: a self-crossing
+        # skeleton may legitimately visit the same coordinate more than once.
+        polyline = tuple(expanded)
+        setbacks = tuple(expanded_setbacks)
+    commands: list[PathCommand] = [PathCommand("move", (polyline[0],))]
+    current = polyline[0]
+    for index, vertex in enumerate(polyline[1:-1], 1):
+        setback = setbacks[index]
+        if setback is None or setback <= 0:
+            if current != vertex:
+                commands.append(PathCommand("line", (vertex,)))
+            current = vertex
+            continue
+        previous, following = polyline[index - 1], polyline[index + 1]
+        incoming_dx, incoming_dy = vertex[0] - previous[0], vertex[1] - previous[1]
+        outgoing_dx, outgoing_dy = following[0] - vertex[0], following[1] - vertex[1]
+        incoming_length = hypot(incoming_dx, incoming_dy)
+        outgoing_length = hypot(outgoing_dx, outgoing_dy)
+        incoming_diagonal = incoming_dx != 0 and incoming_dy != 0
+        outgoing_diagonal = outgoing_dx != 0 and outgoing_dy != 0
+        incoming_cap = incoming_length / (4 if incoming_diagonal else 2)
+        outgoing_cap = outgoing_length / (4 if outgoing_diagonal else 2)
+        if index == 1:
+            incoming_cap = min(incoming_cap, max(0.0, incoming_length - start_run))
+        if index == len(polyline) - 2:
+            outgoing_cap = min(outgoing_cap, max(0.0, outgoing_length - end_run))
+        setback = min(setback, incoming_cap, outgoing_cap)
+        before = (vertex[0] + (previous[0] - vertex[0]) * setback / incoming_length,
+                  vertex[1] + (previous[1] - vertex[1]) * setback / incoming_length)
+        after = (vertex[0] + (following[0] - vertex[0]) * setback / outgoing_length,
+                 vertex[1] + (following[1] - vertex[1]) * setback / outgoing_length)
+        if current != before:
+            commands.append(PathCommand("line", (before,)))
+        commands.append(PathCommand("quadratic", (vertex, after)))
+        current = after
+    if current != polyline[-1]:
+        commands.append(PathCommand("line", (polyline[-1],)))
+    return tuple(commands)
+
+
+def path_extrema(commands: tuple[PathCommand, ...], *, axes: tuple[int, ...] = (0, 1)
+                 ) -> tuple[tuple[float, float], ...]:
+    """Return endpoints and exact quadratic extrema as points for requested axes."""
+    if not axes or any(axis not in (0, 1) for axis in axes):
+        raise _path_error(f"path extrema axes must be a nonempty subset of (0, 1); found {axes!r}")
+    current: tuple[float, float] | None = None
+    points: list[tuple[float, float]] = []
+
+    for index, command in enumerate(commands):
+        if command.kind == "move":
+            current = _finite_point(command.points[0])
+            points.append(current)
+        elif command.kind == "line":
+            if current is None:
+                raise _path_error(f"path command[{index}] line has no preceding move")
+            current = _finite_point(command.points[0])
+            points.append(current)
+        elif command.kind == "quadratic":
+            if current is None:
+                raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID: terminal quadratic contour requires a preceding move or line endpoint")
+            control, endpoint = (_finite_point(point) for point in command.points)
+            points.append(endpoint)
+            for axis in axes:
+                start_value, control_value, end_value = current[axis], control[axis], endpoint[axis]
+                denominator = start_value - 2 * control_value + end_value
+                if denominator:
+                    amount = (start_value - control_value) / denominator
+                    if 0 < amount < 1:
+                        point = tuple((1 - amount) ** 2 * current[index]
+                                      + 2 * (1 - amount) * amount * control[index]
+                                      + amount * amount * endpoint[index]
+                                      for index in (0, 1))
+                        points.append((point[0], point[1]))
+            current = endpoint
+        else:
+            raise _path_error(f"path command[{index}].kind={command.kind!r}; expected move, line, or quadratic")
+    if not commands:
+        raise _path_error("path extrema requires at least one move command")
+    return tuple(points)
+
+
+def _orthogonal_commands(points: tuple[tuple[float, float], ...]) -> tuple[PathCommand, ...]:
+    return (PathCommand("move", (points[0],)),) + tuple(
+        PathCommand("line", (point,)) for point in points[1:])
+
+
+def _simplify_forward_points(points: tuple[tuple[float, float], ...]) -> tuple[tuple[float, float], ...]:
+    result: list[tuple[float, float]] = []
+    for point in points:
+        if result and result[-1] == point:
+            continue
+        result.append(point)
+        while len(result) >= 3:
+            first, middle, last = result[-3:]
+            first_vector = (middle[0] - first[0], middle[1] - first[1])
+            second_vector = (last[0] - middle[0], last[1] - middle[1])
+            cross = first_vector[0] * second_vector[1] - first_vector[1] * second_vector[0]
+            dot = first_vector[0] * second_vector[0] + first_vector[1] * second_vector[1]
+            if cross == 0 and dot >= 0:
+                result.pop(-2)
+            else:
+                break
+    return tuple(result)
 
 
 def conservative_path_segments(commands: tuple[PathCommand, ...], stroke_width: float, *,
