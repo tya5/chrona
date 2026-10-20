@@ -544,7 +544,7 @@ body:
       fontSize: size.legend
       lineHeight: leading.body
       letterSpacing: letter-spacing
-      textTransform: text-transform
+      textTransform: text-transform-lower
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -780,7 +780,7 @@ body:
       fontSize: size.asof
       lineHeight: leading.tight
       letterSpacing: letter-spacing
-      textTransform: text-transform
+      textTransform: text-transform-lower
       numericSpacing: numeric-spacing
     annotation-kind-label:
       contrastTreatment: required
