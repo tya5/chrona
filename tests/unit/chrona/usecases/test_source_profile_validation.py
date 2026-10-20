@@ -19,7 +19,7 @@ class _Closure:
         self.snapshot_project = snapshot_project
         self._package_sets = package_sets
         self.profile_packages = tuple(package for packages in package_sets.values() for package in packages)
-        self.context = SimpleNamespace(forecast=False)
+        self.context = SimpleNamespace(forecast=False, environment=SimpleNamespace(locale="en-US"))
         self.actual_set = None
 
     def profile_packages_for(self, project):
@@ -49,7 +49,7 @@ def _view(*, scenario=False):
     item = SimpleNamespace(source_kind="scenario", scenario_id="case-a")
     rows = (SimpleNamespace(items=(item,)),) if scenario else ()
     return SimpleNamespace(
-        comparison=SimpleNamespace(baseline="planned", scenario_id=None),
+        wording=None, comparison=SimpleNamespace(baseline="planned", scenario_id=None),
         rows=SimpleNamespace(items=rows),
     )
 

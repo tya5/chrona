@@ -36,6 +36,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | --- | --- | --- |
 | `column.task`, `column.plan` | Task, Plan | タスク, 計画 |
 | `marker.today`, `marker.asOf` | TODAY, As of | 本日, 基準日 |
+| `marker.baselineNew`, `marker.baselineRemoved` | new, removed | 新規, 削除 |
 | `legend.planned` | Task duration | 計画期間 |
 | `legend.actual`, `legend.milestone`, `legend.dependency` | Actual, Milestone, Dependency | 実績, マイルストーン, 依存関係 |
 | `legend.asOf` | Today | 本日 |

@@ -946,6 +946,7 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         field_bindings=field_bindings,
         snapshot_field_bindings=snapshot_field_bindings,
         scenario_field_bindings=scenario_field_bindings,
+        wording=wording_resolver(closure.context.environment.locale, view.wording),
     )
     if forecast is not None:
         _require_forecast_occurrence_coverage(view, projection)
