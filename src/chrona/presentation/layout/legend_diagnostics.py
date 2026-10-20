@@ -7,9 +7,11 @@ from itertools import combinations
 
 from chrona.presentation.layout.legend_ink import mark_ink_keys, pattern_ink_identity
 from chrona.presentation.model.color_separability import (
-    MINIMUM_CATEGORY_DELTA_E, SIMULATED_VISIONS, delta_e_2000,
+    CHECKED_VISIONS, MINIMUM_CATEGORY_DELTA_E, delta_e_2000,
 )
-from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.model.diagnostic_sources import (
+    ColorPairFinding, DiagnosticProvenance, DiagnosticSubject,
+)
 from chrona.presentation.model.theme_paint import (
     PaintFamily, mark_paint_family, resolve_legend_shape_ink, resolve_theme_paint_witness,
 )
@@ -214,18 +216,17 @@ def _figure_ink_colours(figure):
     return tuple(dict.fromkeys(selected))
 
 
-def _palette_separation_failures(first_figure, second_figure, color_vision=()):
+def _palette_separation_failures(first_figure, second_figure):
     """Return the minimum below-floor distance once per affected vision."""
     first, second = _figure_ink_colours(first_figure), _figure_ink_colours(second_figure)
     if not first or not second:
         return ()
-    visions = ("normal", *(vision for vision in SIMULATED_VISIONS if vision in color_vision))
     failures = []
-    for vision in visions:
+    for vision in CHECKED_VISIONS:
         distance = min(delta_e_2000(left, right, vision=vision)
                        for left in first for right in second)
         if distance < MINIMUM_CATEGORY_DELTA_E:
-            failures.append((vision, round(distance, 3)))
+            failures.append((vision, distance))
     return tuple(failures)
 
 
@@ -234,7 +235,7 @@ def _subject(entry):
     return DiagnosticSubject(f"legend-key:{key_id}", f"{entry.label} ({entry.role})")
 
 
-def _colour_pair_diagnostics(key_entries, figures, color_vision=()):
+def _colour_pair_diagnostics(key_entries, figures):
     """Compare completed legend ink across distinct encoded and semantic meanings."""
     diagnostics: list[str] = []
     provenance: list[DiagnosticProvenance] = []
@@ -242,12 +243,14 @@ def _colour_pair_diagnostics(key_entries, figures, color_vision=()):
         if left.source_identity == right.source_identity:
             continue
         for vision, min_delta in _palette_separation_failures(
-                figures.get(left.source_identity), figures.get(right.source_identity), color_vision):
+                figures.get(left.source_identity), figures.get(right.source_identity)):
             if _covered_by_scale_collision(left, left_scale, right, right_scale, vision, min_delta):
                 continue
-            identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{min_delta}"
+            display_delta = round(min_delta, 3)
+            identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{display_delta}"
             diagnostics.append(identity)
-            provenance.append(DiagnosticProvenance(identity, (_subject(left), _subject(right))))
+            provenance.append(DiagnosticProvenance(
+                identity, (_subject(left), _subject(right)), ColorPairFinding(vision, min_delta)))
     return tuple(diagnostics), tuple(provenance)
 
 
@@ -291,10 +294,7 @@ def completed_legend_diagnostics(request, entries, marks, shapes, relations, tex
         if left_figure is not None and left_figure == right_figure:
             emit("W_LEGEND_SWATCH_COLLISION", left, right)
     key_entries = tuple((entry, entry.encoding_scale_id) for entry in visible)
-    pair_diagnostics, pair_provenance = _colour_pair_diagnostics(
-        key_entries, figures,
-        request.theme_tokens.color_vision if request.theme_tokens is not None else (),
-    )
+    pair_diagnostics, pair_provenance = _colour_pair_diagnostics(key_entries, figures)
     diagnostics.extend(pair_diagnostics)
     provenance.extend(pair_provenance)
     return tuple(diagnostics), tuple(provenance)

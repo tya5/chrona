@@ -21,7 +21,7 @@ from chrona.usecases.contrast_grouping import group_contrast_findings
 from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.diagnostic_messages import encoding_contrast_detail, error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
-from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, PrimitiveProvenance
 from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
@@ -37,7 +37,7 @@ from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, group_glyph_substitutions, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
-from chrona.presentation.model.color_separability import ScaleCollision
+from chrona.presentation.model.color_separability import SIMULATED_VISIONS, ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
     ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, RoutingCostAdvisory,
@@ -364,7 +364,6 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     legend_colors = _legend_colors(theme, profile_connections.detail)
     color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                       theme["body"].get("categorySlots"),
-                                      color_vision=tuple(theme["body"].get("colorVision", ())),
                                       observed=_observed_scale_values(view.color_encoding, projection),
                                       reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
                                       other_color=_other_color(theme, legend_colors))
@@ -449,8 +448,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         axis_band_scale = resolve_axis_band_scales(
             selected_content.axis_tiers, window=projection.window,
             fiscal_start_month=selected_content.axis_fiscal_start_month,
-            scales=theme["body"].get("colorScales", {}), categories=theme["body"].get("categorySlots", {}),
-            color_vision=tuple(theme["body"].get("colorVision", ())))
+            scales=theme["body"].get("colorScales", {}), categories=theme["body"].get("categorySlots", {}))
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
@@ -571,6 +569,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     perceptibility_warnings = (_scene_perceptibility_warnings(scene, surface.primitive_provenance)
                                if render_closure.context.identity.revision == "draft" else ())
     contrast_warnings = _scene_contrast_warnings(scene, theme, surface.primitive_provenance)
+    _enforce_color_vision_claims(theme, collisions, surface.diagnostic_provenance)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -669,6 +668,44 @@ def _scene_perceptibility_warnings(
 ) -> tuple[ScenePerceptibilityWarning, ...]:
     """Project only evaluator errors into ordered draft feedback facts."""
     return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)), provenance)
+
+
+def _enforce_color_vision_claims(
+    theme: Mapping[str, Any], collisions: tuple[ScaleCollision, ...],
+    provenance: tuple[DiagnosticProvenance, ...],
+) -> None:
+    """Enforce only Scheme claims; measurement and default warnings stay independent."""
+    claims = frozenset(ThemeTokenView(theme).color_vision) & frozenset(SIMULATED_VISIONS)
+    if not claims:
+        return
+    failures = []
+    for item in collisions:
+        if item.vision in claims:
+            failures.append(("E_PRESENTATION_SCALE_NOT_SEPARABLE", {
+                "vision": item.vision, "deltaE": item.delta_e,
+                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": item.vision,
+                "scaleId": item.scale_id, "first": item.first, "second": item.second,
+            }))
+    for item in provenance:
+        finding = item.color_pair
+        if finding is not None and finding.vision in claims:
+            failures.append(("E_LEGEND_COLOR_NOT_SEPARABLE", {
+                "vision": finding.vision, "deltaE": finding.delta_e,
+                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": finding.vision,
+                "sourceSubjects": [{"sourceRef": subject.source_ref,
+                    **({"title": subject.title} if subject.title is not None else {})}
+                    for subject in item.subjects],
+            }))
+    if failures:
+        code, details = failures[0]
+        pair = (f"scale {details['scaleId']}: {details['first']} / {details['second']}"
+                if "scaleId" in details else " / ".join(
+                    subject.get("title", subject["sourceRef"]) for subject in details["sourceSubjects"]))
+        more = f" and {len(failures) - 1} more" if len(failures) > 1 else ""
+        raise RenderFailed(code,
+            f"{pair}: colour difference {details['deltaE']!r} below {MINIMUM_CATEGORY_DELTA_E:g} "
+            f"under {details['vision']}{more}; the Scheme claims suitability.colorVision includes {details['claim']}",
+            "presentation", "/body/suitability/colorVision", details=details)
 
 
 def _scene_contrast_warnings(
@@ -840,7 +877,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
          "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
         source_ref="/body/grouping/tint",
-        color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups,
+        observed=groups,
         other_color=_tint_other_color(theme, scale_id=tint.scale))
     if scale is None:
         return (), (), None
