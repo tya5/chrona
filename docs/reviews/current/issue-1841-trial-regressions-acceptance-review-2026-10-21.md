@@ -27,6 +27,13 @@ separate from bend reserves. The focused programme-board render now completes
 and the PDR relation's actual SVG attributes and Scene points match the public
 base exactly, without stubs. No corpus/Theme or required-label-policy changes.
 Fresh official snapshot and exact-main release evidence remain required.
+Run39475207315 then completed rendering but rejected the stale `dependency-halo`
+unpainted classification. The programme-board witness has matching halo/line
+geometry, background-colour paint at width3 versus line width1, adjacent paint
+order and a typed overlap receipt under declared relax (Spec50). The authored
+classification is now single-role; strict report validation is unchanged.
+Local corpus-report checks still consume the old unpainted main snapshot;
+their acceptance belongs to CI's regenerated snapshot, not a local golden edit.
 
 ## Literal issue acceptance
 

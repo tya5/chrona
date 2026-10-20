@@ -146,6 +146,23 @@ def test_classification_must_match_the_derived_role_count(tmp_path):
         _rows((slide,), (C("one", "unpainted", "never drawn"),), {"one"})
 
 
+def test_dependency_recovery_halo_matches_its_authored_single_role_classification(tmp_path):
+    from chrona.presentation.model.semantic_realization import purpose_classifications
+
+    classification = next(item for item in purpose_classifications()
+                          if item.purpose == "dependency-halo")
+    assert classification.disposition == "single-role"
+    slide = _scene_slide(tmp_path, "recovered", [
+        _prim("dependency-halo", "dependency-halo", sourceKind="decoration"),
+    ])
+    (row,) = _rows((slide,), (classification,), {"dependency-halo"})
+    assert row.roles == ("dependency-halo",)
+    # The registry must remain coupled to real paint; do not hide missing halos.
+    with pytest.raises(SemanticRealizationCoverageError,
+                       match="E_PRESENTATION_PURPOSE_CLASSIFICATION_STALE.*dependency-halo"):
+        _rows((), (classification,), {"dependency-halo"})
+
+
 def test_unpainted_purposes_are_separate_rows_outside_the_denominator(tmp_path):
     from chrona.presentation.model.semantic_realization import PurposeClassification as C
     from tools.semantic_realization_coverage import _purpose_lines, single_role_figure

@@ -146,7 +146,7 @@ _PURPOSES = (
     _p("milestone-digest-entry", _S, "one digest entry ink"),
     # Relations.
     _p("dependency", _D),
-    _p("dependency-halo", _U, "no committed slide draws a dependency halo"),
+    _p("dependency-halo", _S, "one surface-ground recovery halo beneath a dependency line (Spec 50)"),
     _p("relation-label", _S, "a relation label is label text with the text role's ink (#880)"),
     _p("network-node", _S, "one network node paint"), _p("network-edge", _S, "one network edge paint"),
     _p("critical-edge", _U, "no committed slide draws a critical edge"),
