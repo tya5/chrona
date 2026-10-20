@@ -895,9 +895,11 @@ If all fitting candidates exhaust and the normal visible-overflow policy applies
 the first declared plot tail still completes as an integrated balloon tail,
 not a detached rectangle or an undeclared leader. Layout considers four boxes
 outside the anchor, using the existing half-box lattice step (minimum one
-geometry unit) as the gap. It selects by least plot overflow, then Manhattan
-anchor distance, block distance, inline distance, block coordinate and inline
-coordinate. The tip is the nearest anchor-boundary port; completed tail edges
+geometry unit) as the gap. It selects by fewest collisions with completed text
+and annotation boxes, then least plot overflow, fewest other obstacle collisions,
+Manhattan anchor distance, block distance, inline distance, block coordinate and
+inline coordinate. This preserves earlier narrative before preferring proximity.
+The tip is the nearest anchor-boundary port; completed tail edges
 enter the shared obstacle inventory. The box and its text retain explicit
 visible-overflow diagnostics: this connection is not a fitted or clear tail.
 This total geometry completion adds no route-search pass or budget exemption.
