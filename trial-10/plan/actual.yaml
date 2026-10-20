@@ -1,0 +1,9 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: crm-observed
+body:
+  asOf: '2026-10-20'
+  observations:
+    - {id: reqs-1, sequence: 1, projectObjectId: reqs, actual: {start: '2026-10-05', finish: '2026-10-15', progress: 1}}
+    - {id: arch-1, sequence: 1, projectObjectId: arch, actual: {start: '2026-10-15', openUntil: asOf, progress: 0.4}}
+    - {id: vendor-1, sequence: 1, projectObjectId: vendor, actual: {start: '2026-10-16', openUntil: asOf, progress: 0.2}}

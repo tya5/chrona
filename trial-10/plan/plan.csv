@@ -1,0 +1,15 @@
+id,title,type,start,duration,predecessors,owner
+reqs,Requirements,task,2026-10-05,8wd,,Aiko
+vendor,Vendor selection,task,,10wd,reqs,Ben
+arch,Architecture,task,,6wd,reqs,Chen
+data,Data migration plan,task,,5wd,arch,Chen
+build-api,Build API,task,,15wd,arch,Chen
+build-ui,Build UI,task,,12wd,arch,Ben
+contract,Vendor contract,task,,5wd,vendor,Aiko
+design-ok,Design approved,gate,,,"arch, vendor",Aiko
+integ,Integration,task,,8wd,"build-api, build-ui",Chen
+uat,User testing,task,,7wd,integ,Ben
+training,Training,task,,5wd,uat,Aiko
+cutover,Cutover,task,,3wd,"training, data, contract",Chen
+golive,Go-live,gate,,,cutover,Aiko
+hypercare,Hypercare,task,,10wd,golive,Ben

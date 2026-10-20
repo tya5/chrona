@@ -1,0 +1,7 @@
+version: timeline/v0.7
+project: {id: my-first-plan, title: My first plan}
+objects:
+  design: {type: task, title: Design, schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-31'}}
+  build: {type: task, title: Build, schedule: {mode: fixed-span, start: '2026-11-03', end: '2026-12-15'}}
+  release: {type: gate, title: Release, schedule: {mode: fixed-point, at: '2026-12-18'}}
+relations: []
