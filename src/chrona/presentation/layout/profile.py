@@ -262,7 +262,7 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
         expected = tuple(sorted(declared))
         raise LayoutError(
             "E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens",
-            detail=f"requiredThemeTokens must be sorted; expected order: {list(expected)!r}")
+            detail=f"requiredThemeTokens must be sorted in plain string order (the order sorted() gives); expected order: {list(expected)!r}")
     missing = sorted(used_tokens - set(declared))
     if missing:
         raise LayoutError(

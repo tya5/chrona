@@ -47,7 +47,11 @@ chrona render my-first-chrona-project/project.yaml \
 ```
 
 The copied `preset.yaml`, `view.yaml`, `theme.yaml`, `scheme.yaml`, and
-`layout.yaml` are ordinary editable files. All supplied looks render
+`layout.yaml` are ordinary editable files. To give the copy its own name, add `--id my-look`:
+the preset and every resource it declares (View, Theme, Color Scheme, Layout, and any
+Detail, Summary or Style profile) are renamed to `my-look` together, so the files agree and
+nothing needs renaming by hand (icon catalogs keep their ids). In a layout you edit, keep
+`requiredThemeTokens` sorted in plain string order; the error names the expected order. All supplied looks render
 with the default SVG profile. `elevated-light` uses a visible flat fallback
 there; select `--visual-profile chrona-output/visual/v0.7-svg` explicitly
 when you want its gradient and shadow treatment.
