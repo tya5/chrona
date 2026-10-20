@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager
 
 import pytest
 import yaml
@@ -17,6 +18,19 @@ from chrona.usecases.render_review import RenderFailed, RenderRejected
 def _one(report):
     assert len(report.diagnostics) == 1
     return report.diagnostics[0]
+
+
+def test_stable_failure_survives_context_manager_unwinding():
+    @contextmanager
+    def scope():
+        yield
+
+    failure = StableFailure("E_MATERIALIZER_CONTEXT", "pointed", "materializer", "/slides/0")
+    with pytest.raises(StableFailure) as caught:
+        with scope():
+            raise failure
+    assert caught.value is failure
+    assert _one(report_failure(caught.value))["sourceRef"] == "/slides/0"
 
 
 def test_a_stable_failure_keeps_its_fields_key_order_and_exit_code():
