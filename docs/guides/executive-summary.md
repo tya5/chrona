@@ -18,6 +18,16 @@ build,Build,task,2027-02-01,,15wd,delivery
 launch,Public launch,gate,2027-02-26,,,delivery
 ```
 
+How `depth` counts: `grouping.depth` is relative to the top-level rows, not an
+absolute level number. `depth: 0` shows only the top-level rows, `depth: 1` adds
+their direct children, `depth: 2` adds the next level, and `depth: all` shows
+everything. Count down from whatever is at the top of your plan: here the single
+`programme` group is the top row, so `depth: 1` shows the two phases. A plan
+whose phases are themselves top-level groups (no `programme` parent) needs
+`depth: 0` for the same page; `depth: 1` there would show every task under each
+phase. The header text comes from the `column.task` wording key, so it follows
+the render locale (`Task`, `タスク`) instead of the column id.
+
 Import the CSV, then make a View that selects spans and points and groups the
 Project hierarchy. At depth 1, the two gates are deeper than the displayed
 grouping cutoff, but remain visible on their retained phase rows.
@@ -57,13 +67,14 @@ body:
     relations: {mode: none, overflow: suppress}
     annotations: none
   tableColumns:
-  - id: Work item
+  - id: Task
+    header: {wording: column.task}
     source: title
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
-  hierarchyColumn: Work item
+  hierarchyColumn: Task
   axis:
     tiers:
     - unit: month
