@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 import pytest
 import yaml
@@ -105,9 +106,9 @@ def _write_multicontext_corpus(root: Path, *, invalid_defaults: bool = False) ->
     (example / "manifest.yaml").write_text(
         "version: chrona/example-materializer/v0.1\nid: multi-context\nrole: regression-corpus\n"
         "slides:\n"
-        "  - {id: first, context: contexts/first.yaml, expectedScene: generated/first.json}\n"
-        "  - {id: second, context: contexts/second.yaml, expectedScene: generated/second.json}\n"
-        "  - {id: third, context: contexts/third.yaml, expectedScene: generated/third.json}\n",
+        "  - {id: first, evidence: first, context: contexts/first.yaml, expectedSvg: generated/first.svg, expectedScene: generated/first.json}\n"
+        "  - {id: second, evidence: second, context: contexts/second.yaml, expectedSvg: generated/second.svg, expectedScene: generated/second.json}\n"
+        "  - {id: third, evidence: third, context: contexts/third.yaml, expectedSvg: generated/third.svg, expectedScene: generated/third.json}\n",
         encoding="utf-8")
     (example / "views/shared.yaml").write_text(
         "version: chrona/view/v0.28\nkind: view\nid: shared\nbody: {surface: table-timeline}\n",
@@ -167,6 +168,27 @@ def test_view_context_helpers_reject_invalid_defaults_in_later_context(tmp_path)
     _write_multicontext_corpus(tmp_path, invalid_defaults=True)
     with pytest.raises(PresentationCoverageError, match="E_PRESENTATION_COVERAGE_VIEW_DEFAULTS:multi-context/second"):
         effective_views(tmp_path)
+
+
+def test_discovery_uses_the_completed_composed_context(tmp_path):
+    root = tmp_path
+    example = root / "examples/demo"
+    shutil.copytree(_root() / "tests/fixtures/aster-ssd", example)
+    context = yaml.safe_load((example / "contexts/01-overview.yaml").read_bytes())
+    (example / "manifest.yaml").write_text(yaml.safe_dump({
+        "version": "chrona/example-materializer/v0.1", "id": "demo", "role": "regression-corpus",
+        "contextDefaults": context["body"],
+        "slides": [{"id": "overview", "evidence": "shared", "expectedSvg": "generated/overview.svg",
+                    "expectedScene": "generated/overview.scene.json",
+                    "contextOverrides": {"id": context["id"]}}],
+    }, sort_keys=False), encoding="utf-8")
+
+    slides = discover(root)
+
+    assert len(slides) == 1
+    assert slides[0].context_source is not None
+    assert slides[0].context_source.source_mode == "composed"
+    assert slides[0].context_source.document["body"] == context["body"]
 
 
 def _write_packaged_preset_contexts(root: Path, *, unsafe_source_root: str | None = None,

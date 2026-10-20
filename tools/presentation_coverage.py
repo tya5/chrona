@@ -13,6 +13,7 @@ from typing import Any, Iterable, Mapping
 import yaml
 
 from chrona.presentation.contracts.view_defaults import merge_view_defaults
+from chrona.usecases.deck_context import SelectedDeckContext, load_deck_manifest, select_deck_context
 from tools.derived_artifact_report import report_stale_artifact
 
 
@@ -29,6 +30,7 @@ class Slide:
     root: Path
     resources: tuple[tuple[str, Path, Mapping[str, Any]], ...]
     scene: Path
+    context_source: SelectedDeckContext | None = None
 
 
 @dataclass(frozen=True, order=True)
@@ -77,14 +79,15 @@ def discover(root: Path, loader: RunLocalYamlLoader | None = None) -> tuple[Slid
     loader = loader or RunLocalYamlLoader()
     result: list[Slide] = []
     for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
-        manifest, example = loader.load(manifest_path), manifest_path.parent.resolve()
+        manifest_source = load_deck_manifest(manifest_path)
+        manifest, example = manifest_source.document, manifest_path.parent.resolve()
         if manifest.get("role") != "regression-corpus" or not isinstance(manifest.get("id"), str):
             raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_MANIFEST:{manifest_path}")
-        default = manifest.get("context")
         for item in manifest.get("slides", ()):
             if not isinstance(item, Mapping) or not isinstance(item.get("id"), str):
                 raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_MANIFEST:{manifest_path}")
-            context = loader.load(_inside(example, item.get("context", default)))
+            context_source = select_deck_context(manifest_path, manifest_source, item["id"])
+            context = context_source.document
             body = context.get("body")
             if not isinstance(body, Mapping):
                 raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_CONTEXT:{item['id']}")
@@ -99,7 +102,8 @@ def discover(root: Path, loader: RunLocalYamlLoader | None = None) -> tuple[Slid
                 path = _inside(root / "src/chrona/resources" if packaged else example, ref.get("address"))
                 resources.append((kind, path, loader.load(path)))
             scene = _inside(example, item.get("expectedScene"))
-            result.append(Slide(f"{manifest['id']}/{item['id']}", example, tuple(resources), scene))
+            result.append(Slide(f"{manifest['id']}/{item['id']}", example, tuple(resources), scene,
+                                context_source))
     return tuple(result)
 
 

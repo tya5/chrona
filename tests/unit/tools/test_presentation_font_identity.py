@@ -3,10 +3,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from chrona.resources import safe_load
+from chrona.presentation.contracts.font_sets import expand_font_set
+from chrona.usecases.deck_context import SelectedDeckContext
 from tools.presentation_font_identity import evaluate_committed_scenes, render_markdown, report_document
 
 
-def _context(path: Path) -> Path:
+def _selected_context(path: Path) -> SelectedDeckContext:
+    payload = path.read_bytes()
+    return SelectedDeckContext(safe_load(payload), payload, path.name, path.resolve(),
+                               path.parent.parent / "manifest.yaml", "slide", "explicit", {})
+
+
+def _context(path: Path) -> SelectedDeckContext:
     path.write_text(
         """
 version: chrona/render-context/v0.17
@@ -25,16 +34,17 @@ body:
 """.lstrip(),
         encoding="utf-8",
     )
-    return path
+    return _selected_context(path)
 
 
-def _scene(path: Path, *, identity: str) -> Path:
+def _scene(path: Path, *, identity: str, context_id: str = "demo-context",
+           family: str = "Demo Sans, sans-serif") -> Path:
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps({
-        "provenance": {"resources": [{"kind": "render-context", "id": "demo-context"}]},
+        "provenance": {"resources": [{"kind": "render-context", "id": context_id}]},
         "surfaces": [{"primitives": [{
             "id": "title", "kind": "Text",
-            "textLayout": {"family": "Demo Sans, sans-serif", "weight": 700, "assetIdentity": identity},
+            "textLayout": {"family": family, "weight": 700, "assetIdentity": identity},
         }]}],
     }), encoding="utf-8")
     return path
@@ -65,7 +75,7 @@ def test_completed_weight_700_cannot_claim_the_regular_face_identity(tmp_path):
     assert report["weight700RegularFaceCount"] == 1
 
 
-def _faces_context(path: Path, regular: str | None, bold: str | None) -> Path:
+def _faces_context(path: Path, regular: str | None, bold: str | None) -> SelectedDeckContext:
     def face(weight: int, identity: str | None) -> str:
         font = "{}" if identity is None else "{contentIdentity: %s}" % identity
         return f"        - family: Demo Sans\n          weight: {weight}\n          font: {font}\n"
@@ -76,7 +86,7 @@ def _faces_context(path: Path, regular: str | None, bold: str | None) -> Path:
         + face(400, regular) + face(700, bold),
         encoding="utf-8",
     )
-    return path
+    return _selected_context(path)
 
 
 def _run(tmp_path: Path, regular: str | None, bold: str | None, identity: str):
@@ -129,3 +139,50 @@ def test_weight_700_pin_rules_with_unpinned_and_pinned_bold(tmp_path):
     assert records[0]["code"] == "I_FONT_IDENTITY_UNPINNED"
     records = _run(tmp_path / "d", "sha256:regular", "sha256:bold", "sha256:regular")
     assert records[0]["code"] == "E_FONT_IDENTITY_WEIGHT"
+
+
+def _font_set_context() -> SelectedDeckContext:
+    document = {
+        "version": "chrona/render-context/v0.17", "kind": "render-context", "id": "composed-context",
+        "body": {"environment": {"fontMetrics": {"fontSet": "chrona.noto-sans"}}},
+    }
+    payload = (
+        b"version: chrona/render-context/v0.17\nkind: render-context\nid: composed-context\n"
+        b"body:\n  environment:\n    fontMetrics:\n      fontSet: chrona.noto-sans\n"
+    )
+    return SelectedDeckContext(document, payload, "_deck-contexts/deck/slide.yaml", None,
+                               Path("manifest.yaml"), "slide", "composed", {})
+
+
+def _font_set_scene(tmp_path: Path, identity: str) -> Path:
+    return _scene(tmp_path / "examples/demo/generated/slide.scene.json", identity=identity,
+                  context_id="composed-context", family="Noto Sans, sans-serif")
+
+
+def test_composed_font_set_context_expands_for_identity_without_rewriting_payload(tmp_path):
+    context = _font_set_context()
+    raw = safe_load(context.payload)
+    expanded = expand_font_set(raw)
+    asset = next(item for item in expanded["body"]["environment"]["fontMetrics"]["assets"]
+                 if item["family"] == "Noto Sans" and item["weight"] == 700)
+    identity = asset["font"]["contentIdentity"]
+    scene = _font_set_scene(tmp_path, identity)
+
+    records = evaluate_committed_scenes((scene,), root=tmp_path, contexts={scene.resolve(): context})
+
+    assert records[0]["code"] == "I_FONT_IDENTITY_EXACT"
+    assert safe_load(context.payload)["body"]["environment"]["fontMetrics"] == {"fontSet": "chrona.noto-sans"}
+    assert context.payload == (
+        b"version: chrona/render-context/v0.17\nkind: render-context\nid: composed-context\n"
+        b"body:\n  environment:\n    fontMetrics:\n      fontSet: chrona.noto-sans\n"
+    )
+
+
+def test_composed_font_set_context_rejects_wrong_completed_identity(tmp_path):
+    context = _font_set_context()
+    scene = _font_set_scene(tmp_path, "sha256:not-the-selected-face")
+
+    records = evaluate_committed_scenes((scene,), root=tmp_path, contexts={scene.resolve(): context})
+
+    assert records[0]["code"] == "E_FONT_IDENTITY_ASSET"
+    assert records[0]["severity"] == "error"

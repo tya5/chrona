@@ -176,6 +176,7 @@ def schema_document(name: str) -> Mapping[str, Any]:
     return value
 
 
+# Frozen shared schema fragments available to the schema registry.
 SCHEMA_PARTS: tuple[str, ...] = (
     "common-v0.1.schema.yaml",
     "graphics-v0.1.schema.yaml",
@@ -185,11 +186,12 @@ SCHEMA_PARTS: tuple[str, ...] = (
     "vocabulary-v0.1.schema.yaml",
     "vocabulary-v0.2.schema.yaml",
 )
-"""Schema files that other schemas may reference by their `urn:chrona:` `$id`.
 
-A part is available to `$ref` only by being listed here, so a stray or archived
-schema file can never become a reference target.
-"""
+# Live schemas that are explicit reference targets, but are not frozen shared
+# vocabulary parts. Keep this list small and independent from SCHEMA_PARTS.
+SCHEMA_REFERENCE_TARGETS: tuple[str, ...] = (
+    "render-context-v0.17.schema.yaml",
+)
 
 
 @cache
@@ -200,7 +202,7 @@ def schema_registry() -> Registry:
     rather than lazily when some document reaches a `$ref` to it.
     """
     registry: Registry = Registry()
-    for name in SCHEMA_PARTS:
+    for name in (*SCHEMA_PARTS, *SCHEMA_REFERENCE_TARGETS):
         part = schema_document(name)
         registry = registry.with_resource(part["$id"], Resource.from_contents(part))
     # Crawl once: a registry that is not crawled re-crawls on every lookup.
@@ -227,7 +229,8 @@ def schema_validator(name: str) -> Draft202012Validator:
 
 
 def _part_ids() -> dict[str, str]:
-    return {schema_document(name)["$id"]: name for name in SCHEMA_PARTS}
+    return {schema_document(name)["$id"]: name
+            for name in (*SCHEMA_PARTS, *SCHEMA_REFERENCE_TARGETS)}
 
 
 def _external_ref_targets(node: Any, part_ids: Mapping[str, str]) -> set[str]:

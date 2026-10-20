@@ -9,9 +9,10 @@ from tempfile import TemporaryDirectory
 
 import yaml
 
-from chrona.resources import minimal_template_resource, safe_load, template_resource
+from chrona.resources import minimal_template_resource, template_resource
 from chrona.core.store_address import resolve_store_address
-from chrona.usecases.materialize import UnavailableFontProviders, copy_context_closure
+from chrona.usecases.materialize import UnavailableFontProviders, copy_context_closure, materializer_store_roots
+from chrona.usecases.deck_context import SelectedDeckContext, load_deck_manifest, select_deck_context
 
 
 @dataclass(frozen=True)
@@ -71,30 +72,34 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Init
     # advertised to commands; mutable source paths are never a reader fallback.
     store_root = destination / ".chrona" / "store"
     manifest_path = destination / "manifest.yaml"
-    manifest = safe_load(manifest_path.read_bytes())
+    loaded_manifest = load_deck_manifest(manifest_path)
+    manifest = dict(loaded_manifest.document)
     if not isinstance(manifest, dict) or manifest.get("version") != "chrona/example-materializer/v0.1":
         raise ValueError("E_INIT_EXAMPLE_MANIFEST: invalid example manifest")
     slides = manifest.get("slides")
     if not isinstance(slides, list) or not slides:
         raise ValueError("E_INIT_EXAMPLE_MANIFEST: expected nonempty slides")
-    contexts: dict[str, Path] = {}
+    contexts: dict[str, SelectedDeckContext] = {}
+    slide_addresses: dict[str, str] = {}
     for slide in slides:
         if not isinstance(slide, dict) or not isinstance(slide.get("id"), str):
             raise ValueError("E_INIT_EXAMPLE_MANIFEST: expected slide id")
-        address = slide.get("context", manifest.get("context"))
-        context_path = resolve_store_address(destination, address)
-        contexts[address] = context_path
+        selected = select_deck_context(manifest_path, loaded_manifest, slide["id"])
+        contexts[selected.address] = selected
+        slide_addresses[slide["id"]] = selected.address
         for key in ("expectedSvg", "expectedScene"):
             if key in slide:
                 output = resolve_store_address(destination, slide[key])
                 if not output.is_relative_to(destination.resolve() / "generated"):
                     raise ValueError("E_INIT_EXAMPLE_MANIFEST: derived outputs must be under generated/")
     unavailable: dict[str, tuple[str, ...]] = {}
-    for address, context_path in contexts.items():
+    shared_stores = materializer_store_roots(destination.resolve(), manifest.get("stores"))
+    for address, selected in contexts.items():
         with TemporaryDirectory(prefix="chrona-init-closure-") as temporary:
             staged = Path(temporary)
             try:
-                copy_context_closure(destination.resolve(), context_path, staged)
+                copy_context_closure(destination.resolve(), selected.source_path or selected, staged,
+                                     **({"stores": shared_stores} if shared_stores else {}))
             except UnavailableFontProviders as error:
                 unavailable[address] = error.providers
                 continue
@@ -103,23 +108,28 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Init
                     target = store_root / source_file.relative_to(staged)
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(source_file, target)
-    retained = [slide for slide in slides if slide.get("context", manifest.get("context")) not in unavailable]
-    deferred = tuple(DeferredSlide(slide["id"], slide.get("context", manifest.get("context")),
-                                   unavailable[slide.get("context", manifest.get("context"))])
+    retained = [slide for slide in slides if slide_addresses[slide["id"]] not in unavailable]
+    deferred = tuple(DeferredSlide(slide["id"], slide_addresses[slide["id"]],
+                                   unavailable[slide_addresses[slide["id"]]])
                      for slide in slides if slide not in retained)
     if not retained:
         raise ValueError("E_INIT_EXAMPLE_UNAVAILABLE: no slides have all required font providers")
     if deferred:
-        retained_paths = {slide.get("context", manifest.get("context")) for slide in retained}
+        retained_paths = {slide_addresses[slide["id"]] for slide in retained}
         retained_paths.update(slide[key] for slide in retained for key in ("expectedSvg", "expectedScene") if key in slide)
-        omitted_paths = set(unavailable)
+        # Virtual Context addresses never name authored files to remove.
+        omitted_paths = {address for address in unavailable if contexts[address].source_path is not None}
         omitted_paths.update(slide[key] for slide in slides if slide not in retained
                              for key in ("expectedSvg", "expectedScene") if key in slide)
         for address in omitted_paths - retained_paths:
             resolve_store_address(destination, address).unlink(missing_ok=True)
         manifest["slides"] = retained
         if manifest.get("context") in unavailable:
-            manifest["context"] = retained[0].get("context")
+            replacement = next((slide.get("context") for slide in retained if slide.get("context")), None)
+            if replacement is None:
+                manifest.pop("context", None)
+            else:
+                manifest["context"] = replacement
         manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
     config = destination / ".chrona" / "store.yaml"
     config.parent.mkdir(parents=True, exist_ok=True)

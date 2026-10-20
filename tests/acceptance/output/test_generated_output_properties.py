@@ -45,8 +45,6 @@ SLOT_PURPOSES = {
 def _slides():
     cases = []
     for slide in declared_slides(ROOT):
-        if slide.context is None:
-            raise ValueError(f"E_PUBLIC_EVIDENCE_CONTEXT:{slide.key}")
         if not slide.svg.is_file():
             continue
         marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
@@ -65,9 +63,9 @@ def _known():
 
 def pytest_generate_tests(metafunc):
     """Discover manifest-backed cases after module import, keeping slide node IDs."""
-    names = {"slide", "context_path", "svg_path"}
+    names = {"slide", "context_source", "svg_path"}
     if names <= set(metafunc.fixturenames):
-        metafunc.parametrize("slide,context_path,svg_path", tuple(_slides()))
+        metafunc.parametrize("slide,context_source,svg_path", tuple(_slides()))
 
 
 def check(slide: str, request, actual: list | set, message: str) -> None:
@@ -88,15 +86,15 @@ def check(slide: str, request, actual: list | set, message: str) -> None:
         pytest.xfail(message)
 
 
-def _load(svg_path: Path, context_path: Path):
+def _load(svg_path: Path, context_source):
     tree = ElementTree.fromstring(svg_path.read_text(encoding="utf-8"))
-    body = safe_load(context_path.read_bytes())["body"]
+    body = context_source.document["body"]
     viewport = (float(body["environment"]["viewport"]["inlineSize"]),
                 float(body["environment"]["viewport"]["blockSize"]))
     # A theme reference may address an ordinary v0.11 Theme or a v0.12 Theme that
     # extends one by inheritance; resolve_draft_theme returns the raw document
     # unchanged in the ordinary case, so this always yields a complete body.
-    theme = resolve_draft_theme(reference_path(context_path.parents[1], body["theme"]))
+    theme = resolve_draft_theme(reference_path(context_source.manifest_path.parent, body["theme"]))
     stacks = [v["value"] for v in theme["body"]["values"].values() if v.get("type") == "fontFamily"]
     weights = {int(v["value"]) for v in theme["body"]["values"].values() if v.get("type") == "fontWeight"}
     # Key by the SVG text's own family and weight; a Theme may declare several
@@ -154,8 +152,8 @@ def _serialized_canvas(tree, requested: tuple[float, float]) -> tuple[float, flo
     return width, height
 
 
-def _bound(context_path: Path, body: dict, name: str) -> dict:
-    return safe_load(reference_path(context_path.parents[1], body[name]).read_bytes())
+def _bound(context_source, body: dict, name: str) -> dict:
+    return safe_load(reference_path(context_source.manifest_path.parent, body[name]).read_bytes())
 
 
 def _marks(tree):
@@ -227,9 +225,9 @@ def _contrast(first: str, second: str) -> float:
     return (max(luminance(first), luminance(second)) + 0.05) / (min(luminance(first), luminance(second)) + 0.05)
 
 
-def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
+def test_no_text_is_drawn_over_a_mark(slide, context_source, svg_path, request):
     """Text clears every mark unless it is a contrast-safe inside label on its own host."""
-    tree, _, metrics = _load(svg_path, context_path)
+    tree, _, metrics = _load(svg_path, context_source)
     marks = list(_marks(tree))
     collisions = []
     for node in tree.iter(SVG + "text"):
@@ -253,19 +251,19 @@ def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
     check(slide, request, [list(item) for item in collisions], f"{len(collisions)} unsafe text/mark overlaps: {collisions[:5]}")
 
 
-def test_no_text_leaves_the_viewport(slide, context_path, svg_path, request):
-    tree, requested, metrics = _load(svg_path, context_path)
+def test_no_text_leaves_the_viewport(slide, context_source, svg_path, request):
+    tree, requested, metrics = _load(svg_path, context_source)
     width, height = _serialized_canvas(tree, requested)
     escaped = [(content, round(box[2] - width, 1)) for _, content, box in _texts(tree, metrics)
                if box[0] < 0 or box[1] < 0 or box[2] > width or box[3] > height]
     check(slide, request, [list(item) for item in escaped], f"text past the canvas edge: {escaped}")
 
 
-def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, request):
+def test_row_index_cells_render_an_ordinal(slide, context_source, svg_path, request):
     """A row number is not a duration; the default formatter must not sign it."""
-    tree, _, _ = _load(svg_path, context_path)
-    body = safe_load(context_path.read_bytes())["body"]
-    columns = {column["id"] for column in _bound(context_path, body, "view")["body"].get("tableColumns", ())
+    tree, _, _ = _load(svg_path, context_source)
+    body = context_source.document["body"]
+    columns = {column["id"] for column in _bound(context_source, body, "view")["body"].get("tableColumns", ())
                if column.get("source") == "rowIndex"}
     if not columns:
         pytest.skip("no rowIndex column declared")
@@ -276,11 +274,11 @@ def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, reques
     check(slide, request, [list(item) for item in wrong], f"row-index cells that are not an ordinal: {wrong[:3]}")
 
 
-def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path, request):
+def test_point_rows_never_render_a_span_only_state(slide, context_source, svg_path, request):
     """A gate is reached or it is not; it is never "in progress"."""
-    tree, _, _ = _load(svg_path, context_path)
-    body = safe_load(context_path.read_bytes())["body"]
-    points = {key for key, value in _bound(context_path, body, "project")["objects"].items()
+    tree, _, _ = _load(svg_path, context_source)
+    body = context_source.document["body"]
+    points = {key for key, value in _bound(context_source, body, "project")["objects"].items()
               if value.get("schedule", {}).get("mode") == "fixed"}
     offenders = set()
     for node in tree.iter(SVG + "text"):
@@ -291,11 +289,11 @@ def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path
     check(slide, request, offenders, f"point-kind rows labelled 'in progress': {sorted(offenders)}")
 
 
-def test_every_declared_slot_produces_a_primitive(slide, context_path, svg_path, request):
+def test_every_declared_slot_produces_a_primitive(slide, context_source, svg_path, request):
     """A slot that draws nothing is an authored intent the render silently dropped."""
-    tree, _, _ = _load(svg_path, context_path)
-    body = safe_load(context_path.read_bytes())["body"]
-    declared = _declared_slots(_bound(context_path, body, "layout"))
+    tree, _, _ = _load(svg_path, context_source)
+    body = context_source.document["body"]
+    declared = _declared_slots(_bound(context_source, body, "layout"))
     produced = {node.get("data-purpose") for node in tree.iter()}
     empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)
     check(slide, request, empty, f"slots declared in the Layout Profile that drew nothing: {empty}")

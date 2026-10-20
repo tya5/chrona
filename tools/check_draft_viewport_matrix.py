@@ -11,7 +11,7 @@ import re
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, Mapping, TypeVar
 
 import yaml
 
@@ -19,7 +19,9 @@ from chrona.presentation.model.closure import resolve_render_context
 from chrona.resources import safe_load
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.snapshot_paths import snapshot_directory
-from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure
+from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure, materializer_store_roots
+from chrona.usecases.deck_context import load_deck_manifest, resolve_deck_context, select_deck_context
+from tools.derived_evidence import manifest_targets
 from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.usecases.failure_report import report_failure
 
@@ -67,12 +69,12 @@ def _content_identity(payload: bytes) -> str:
     return "sha256:" + sha256(payload).hexdigest()
 
 
-def _derive_viewport_context(context: dict[str, Any], original_reference: dict[str, Any],
-                             context_path: Path, viewport: tuple[int, int],
+def _derive_viewport_context(context: Mapping[str, Any], original_reference: dict[str, Any],
+                             context_address: str, viewport: tuple[int, int],
                              overlay_builder: _OverlayBuilder) -> tuple[dict[str, Any], bytes]:
     """Stage one immutable Context derivative, retaining every authored input reference."""
     width, height = viewport
-    derived = deepcopy(context)
+    derived = deepcopy(dict(context))
     context_id = f"{context['id']}-viewport-{width}x{height}"
     derived["id"] = context_id
     derived["body"]["environment"]["viewport"] = {
@@ -81,7 +83,7 @@ def _derive_viewport_context(context: dict[str, Any], original_reference: dict[s
     }
     payload = yaml.safe_dump(derived, sort_keys=False, allow_unicode=True).encode("utf-8")
     address = (Path("contexts") / "_viewport_matrix" /
-               f"{context_path.stem}-{width}x{height}.yaml").as_posix()
+               f"{Path(context_address).stem}-{width}x{height}.yaml").as_posix()
     reference = {
         **original_reference,
         "id": context_id,
@@ -151,12 +153,15 @@ def _ordered_map(worker: Callable[[_Input], _Output], tasks: Iterable[_Input],
         return tuple(executor.map(worker, tasks))
 
 
-def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, int, tuple[str, ...]]:
+def _survey_context(task: tuple[Path, str, bool]) -> tuple[int, int, int, tuple[str, ...]]:
     """Survey all viewport cases for one Context using isolated temporary state."""
-    context_path, use_cli = task
+    manifest_path, slide_id, use_cli = task
     expectations = _load_expectations()
-    example = context_path.parent.parent
-    context = safe_load(context_path.read_bytes())
+    example = manifest_path.parent
+    manifest = load_deck_manifest(manifest_path)
+    selected = select_deck_context(manifest_path, manifest, slide_id)
+    context = selected.document
+    label = Path(selected.address).stem
     with TemporaryDirectory(prefix="chrona-1474-viewport-") as temporary:
         directory = Path(temporary)
         snapshot = directory / "snapshot"
@@ -165,12 +170,13 @@ def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, int, tuple[str, 
         decoded_catalogs: dict[str, Any] = {}
         try:
             original_reference, _revision = copy_context_closure(
-                example, context_path, snapshot, decoded_catalogs=decoded_catalogs,
+                example, selected, snapshot, decoded_catalogs=decoded_catalogs,
                 overlay_builder=overlay_builder,
+                stores=materializer_store_roots(example, manifest.document.get("stores")),
             )
         except Exception as error:
             failures = tuple(
-                f"{example.name}/{context_path.stem}@{width}x{height}: "
+                f"{example.name}/{label}@{width}x{height}: "
                 f"closure copy {type(error).__name__}: {error}"
                 for width, height in VIEWPORTS
             )
@@ -181,10 +187,10 @@ def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, int, tuple[str, 
         refused = 0
         failures: list[str] = []
         for viewport in VIEWPORTS:
-            identifier = f"{example.name}/{context_path.stem}@{viewport[0]}x{viewport[1]}"
+            identifier = f"{example.name}/{label}@{viewport[0]}x{viewport[1]}"
             try:
                 reference, payload = _derive_viewport_context(
-                    context, original_reference, context_path, viewport, overlay_builder,
+                    context, original_reference, selected.address, viewport, overlay_builder,
                 )
                 overlay = overlay_builder.finish()
                 if use_cli:
@@ -211,6 +217,26 @@ def _survey_context(task: tuple[Path, bool]) -> tuple[int, int, int, tuple[str, 
         return completed, refused, warning_count, tuple(failures)
 
 
+def _viewport_targets(root: Path) -> tuple[tuple[tuple[Path, str], ...], set[str]]:
+    """Enumerate unique selected Context sources and their refusal-case IDs."""
+    targets: list[tuple[Path, str]] = []
+    identifiers: set[str] = set()
+    seen_contexts: set[tuple[Path, str]] = set()
+    for manifest_path, slide_id in manifest_targets(root):
+        selected = resolve_deck_context(manifest_path, slide_id)
+        source_key = (selected.source_path.resolve().as_posix()
+                      if selected.source_path is not None else selected.address)
+        key = (manifest_path.parent.resolve(), source_key)
+        if key in seen_contexts:
+            continue
+        seen_contexts.add(key)
+        targets.append((manifest_path, slide_id))
+        label = Path(selected.address).stem
+        identifiers.update(f"{manifest_path.parent.name}/{label}@{width}x{height}"
+                           for width, height in VIEWPORTS)
+    return tuple(targets), identifiers
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cli", action="store_true", help="exercise each saved-Context render-review exit code")
@@ -222,12 +248,10 @@ def main() -> int:
     completed = 0
     refused = 0
     warning_count = 0
-    contexts = tuple(sorted(ROOT.glob("examples/*/contexts/*.yaml")))
-    identifiers = {f"{path.parent.parent.name}/{path.stem}@{width}x{height}"
-                   for path in contexts for width, height in VIEWPORTS}
+    targets, identifiers = _viewport_targets(ROOT)
     for missing in sorted(_load_expectations().keys() - identifiers):
         failures.append(f"{missing}: expected refusal case is missing")
-    results = _ordered_map(_survey_context, ((path, args.cli) for path in contexts), args.jobs)
+    results = _ordered_map(_survey_context, ((path, slide_id, args.cli) for path, slide_id in targets), args.jobs)
     for group_completed, group_refused, group_warnings, group_failures in results:
         completed += group_completed
         refused += group_refused

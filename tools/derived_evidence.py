@@ -12,6 +12,11 @@ from tempfile import TemporaryDirectory
 from typing import Mapping
 
 from chrona.resources import safe_load
+from chrona.usecases.deck_context import (
+    SelectedDeckContext,
+    load_deck_manifest,
+    select_deck_context,
+)
 from tools.materialize_example import materialize
 from tools.derived_report_inventory import REPORTS
 
@@ -37,8 +42,8 @@ def manifest_targets(root: Path = ROOT) -> tuple[tuple[Path, str], ...]:
     """Return stable (manifest, slide ID) entries from authored manifests."""
     targets: list[tuple[Path, str]] = []
     for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
-        manifest = safe_load(manifest_path.read_bytes())
-        slides = manifest.get("slides") if isinstance(manifest, Mapping) else None
+        manifest = load_deck_manifest(manifest_path)
+        slides = manifest.document.get("slides")
         if not isinstance(slides, list):
             raise ValueError(f"E_DERIVED_EVIDENCE_MANIFEST:{manifest_path}")
         slide_ids: set[str] = set()
@@ -51,12 +56,30 @@ def manifest_targets(root: Path = ROOT) -> tuple[tuple[Path, str], ...]:
     return tuple(targets)
 
 
+def selected_contexts(root: Path = ROOT) -> tuple[tuple[Path, SelectedDeckContext], ...]:
+    """Enumerate manifest-selected completed Contexts without staging files."""
+    selected: list[tuple[Path, SelectedDeckContext]] = []
+    for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
+        manifest = load_deck_manifest(manifest_path)
+        slides = manifest.document.get("slides")
+        if not isinstance(slides, list):
+            raise ValueError(f"E_DERIVED_EVIDENCE_MANIFEST:{manifest_path}")
+        seen: set[str] = set()
+        for slide in slides:
+            slide_id = slide.get("id") if isinstance(slide, Mapping) else None
+            if not isinstance(slide_id, str) or not slide_id or slide_id in seen:
+                raise ValueError(f"E_DERIVED_EVIDENCE_MANIFEST:{manifest_path}")
+            seen.add(slide_id)
+            selected.append((manifest_path, select_deck_context(manifest_path, manifest, slide_id)))
+    return tuple(selected)
+
+
 def materializer_outputs(root: Path = ROOT) -> tuple[Path, ...]:
     """Return every manifest-declared SVG and Scene output in stable order."""
     outputs: list[Path] = []
     for manifest_path, slide_id in manifest_targets(root):
-        manifest = safe_load(manifest_path.read_bytes())
-        slide = next(item for item in manifest["slides"] if item["id"] == slide_id)
+        manifest = load_deck_manifest(manifest_path)
+        slide = next(item for item in manifest.document["slides"] if item["id"] == slide_id)
         for key in ("expectedSvg", "expectedScene"):
             value = slide.get(key)
             if key == "expectedScene" and value is None:
@@ -77,8 +100,8 @@ def scene_paths(root: Path = ROOT) -> tuple[Path, ...]:
     """Return all manifest-declared Scene files, including untracked ones."""
     scenes = []
     for manifest_path, slide_id in manifest_targets(root):
-        manifest = safe_load(manifest_path.read_bytes())
-        slide = next(item for item in manifest["slides"] if item["id"] == slide_id)
+        manifest = load_deck_manifest(manifest_path)
+        slide = next(item for item in manifest.document["slides"] if item["id"] == slide_id)
         value = slide.get("expectedScene")
         if value is not None:
             if not isinstance(value, str) or not value:
@@ -93,22 +116,20 @@ def scene_paths(root: Path = ROOT) -> tuple[Path, ...]:
     return tuple(sorted(scenes))
 
 
-def scene_contexts(root: Path = ROOT) -> dict[Path, Path]:
-    """Map each manifest-declared Scene to its immutable Context path."""
-    contexts: dict[Path, Path] = {}
+def scene_contexts(root: Path = ROOT) -> dict[Path, SelectedDeckContext]:
+    """Map each manifest-declared Scene to its selected completed Context source."""
+    contexts: dict[Path, SelectedDeckContext] = {}
     for manifest_path, slide_id in manifest_targets(root):
-        manifest = safe_load(manifest_path.read_bytes())
-        slide = next(item for item in manifest["slides"] if item["id"] == slide_id)
+        manifest = load_deck_manifest(manifest_path)
+        slide = next(item for item in manifest.document["slides"] if item["id"] == slide_id)
         scene_value = slide.get("expectedScene")
         if not isinstance(scene_value, str) or not scene_value:
             raise ValueError(f"E_DERIVED_EVIDENCE_PATH:{manifest_path}:{slide_id}:expectedScene")
         scene = (manifest_path.parent / scene_value).resolve()
-        context_value = slide.get("context", manifest.get("context"))
-        if not isinstance(context_value, str):
-            raise ValueError(f"E_DERIVED_EVIDENCE_CONTEXT:{manifest_path}:{slide_id}")
-        context = (manifest_path.parent / context_value).resolve()
+        context = select_deck_context(manifest_path, manifest, slide_id)
         base = manifest_path.parent.resolve()
-        if scene in contexts or context == base or base not in context.parents:
+        if scene in contexts or (context.source_path is not None and
+                                 (context.source_path.resolve() == base or base not in context.source_path.resolve().parents)):
             raise ValueError(f"E_DERIVED_EVIDENCE_CONTEXT:{manifest_path}:{slide_id}")
         contexts[scene] = context
     return contexts

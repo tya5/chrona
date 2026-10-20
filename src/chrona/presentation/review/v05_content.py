@@ -11,7 +11,7 @@ from chrona.presentation.model.actual_variance_paint import select_actual_varian
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
 from chrona.presentation.model.wording_tables import LAYOUT_DEFAULT_LEGEND_ROLES, WordingResolver, wording_resolver
-from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta, is_new_against_baseline, NEW_MARKER, signed_delta_text
+from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta, is_new_against_baseline, signed_delta_text
 from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, entity_title_or_value, initials, table_value,
@@ -138,7 +138,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         if _is_estimated_forecast_delta(item, column.source) and display_finish_delta(item) is not None:
             suffix += "*"
         if value is None and is_new_against_baseline(item) and _is_finish_delta_source(column.source):
-            core = NEW_MARKER
+            core = resolver.text("marker.baselineNew")
         return prefix, core, suffix
 
     def cell(item: Any, column: Any, row_index: int, container_id: str = "") -> str:

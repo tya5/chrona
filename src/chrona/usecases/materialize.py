@@ -26,6 +26,7 @@ from chrona.core.store_address import StoreAddressError, check_store_address, ch
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
+from chrona.usecases.deck_context import SelectedDeckContext, load_deck_manifest, select_deck_context
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
 
 
@@ -168,11 +169,24 @@ class MaterializedResourceOverlay:
 
 
 class _OverlayBuilder:
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, *, stage_packages: bool = False):
         self.root = root / "materialized-overlay"
         self.root.mkdir(parents=True, exist_ok=True)
         self.references: dict[str, tuple[Path, str | None, str]] = {}
         self.assets: dict[str, tuple[Path, str | None, str]] = {}
+        self._owned_context_paths: set[Path] = set()
+        self.stage_packages = stage_packages
+
+    def reserve_context_path(self, path: Path) -> None:
+        """Protect a composed Context from every resource/asset staging path."""
+        self._owned_context_paths.add(path.resolve())
+
+    def check_resource_path(self, path: Path) -> None:
+        resolved = path.resolve()
+        if any(resolved == owned or resolved in owned.parents or owned in resolved.parents
+               for owned in self._owned_context_paths):
+            raise MaterializationError("E_MATERIALIZER_OVERLAY_COLLISION",
+                                       "resource shadows composed Context address")
 
     def _stage(self, key: str, payload: bytes) -> Path:
         path = self.root / sha256(key.encode()).hexdigest()
@@ -290,12 +304,15 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
     token, address = reference.get("revision", {}).get("token"), reference.get("address")
     payload = read_materializer_reference(example, reference, stores)
     package_reference = reference.get("store", {}).get("provider") == "package"
-    if not (overlay is not None and package_reference):
+    if not (overlay is not None and package_reference and not overlay.stage_packages):
         target = _inside(snapshot_directory(snapshot, target_token or token), _staged_address(reference, stores, address))
+        if overlay is not None:
+            overlay.check_resource_path(target)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(payload)
     if overlay is not None:
-        overlay.add_reference(reference, payload, staged_path=None if package_reference else target)
+        overlay.add_reference(reference, payload,
+                              staged_path=None if package_reference and not overlay.stage_packages else target)
     if reference.get("kind") == "theme":
         value = safe_load(payload)
         if is_derived_theme(value):
@@ -353,8 +370,10 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
             raise ValueError(f"E_ICON_ASSET_IDENTITY: icon {_label(icon_id)} asset at {_label(asset_address)}; expected {_label(expected)}, found {_identity(payload)}")
         package_asset = catalog_reference.get("store", {}).get("provider") == "package"
         staged_path = None
-        if not (overlay is not None and package_asset):
+        if not (overlay is not None and package_asset and not overlay.stage_packages):
             target = _inside(snapshot_directory(snapshot, token), _staged_address(catalog_reference, stores, asset_address))
+            if overlay is not None:
+                overlay.check_resource_path(target)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(payload)
             staged_path = target
@@ -363,12 +382,12 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
                                    "store": catalog_reference["store"], "address": asset_address,
                                    "revision": catalog_reference["revision"],
                                    "contentIdentity": expected}, payload,
-                                  staged_path=None if package_asset else staged_path)
+                                  staged_path=None if package_asset and not overlay.stage_packages else staged_path)
             locator = {"provider": catalog_reference.get("store", {}).get("provider"),
                        "identity": catalog_reference.get("store", {}).get("identity"),
                        "address": asset_address}
             overlay.add_asset(locator, expected, payload,
-                              staged_path=None if package_asset else staged_path)
+                              staged_path=None if package_asset and not overlay.stage_packages else staged_path)
     return catalog
 
 
@@ -386,11 +405,20 @@ def _copy_extension_packages(example: Path, project_reference: dict[str, Any], s
         _copy_reference(example, resource, snapshot, overlay=overlay, stores=stores)
 
 
-def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
+def copy_context_closure(example: Path, context_path: Path | SelectedDeckContext, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None,
                          overlay_builder: _OverlayBuilder | None = None,
                          stores: Mapping[str, Path] | None = None) -> tuple[dict[str, Any], str]:
-    raw_context = context_path.read_bytes()
+    selected = context_path if isinstance(context_path, SelectedDeckContext) else None
+    if selected is not None and selected.source_path is None and overlay_builder is None:
+        # Init retains only the snapshot tree. Keep identity-keyed package
+        # staging outside it, with the same lifetime as this closure copy.
+        with tempfile.TemporaryDirectory(prefix="chrona-context-overlay-") as temporary:
+            return copy_context_closure(
+                example, selected, snapshot, decoded_catalogs=decoded_catalogs,
+                overlay_builder=_OverlayBuilder(Path(temporary), stage_packages=True), stores=stores)
+    raw_context = selected.payload if selected is not None else context_path.read_bytes()
+    context_address = selected.address if selected is not None else context_path.relative_to(example).as_posix()
     # Normalize resource declarations for copying, not the authored bytes
     # staged below and used to compute the Context's content identity.
     context = expand_font_set(safe_load(raw_context))
@@ -403,6 +431,15 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     parse_contract(ClosureIdentity("render-context", identity_id, "initialization", _identity(raw_context)), context)
     body = context["body"]
     revision = body["project"]["revision"]["token"]
+    destination = snapshot_directory(snapshot, revision)
+    target = _inside(destination, context_address)
+    if selected is not None and selected.source_path is None:
+        authored_target = _inside(example, context_address)
+        if (authored_target.exists() or target.exists()
+                or any(parent.is_file() for parent in authored_target.parents if parent != example)):
+            raise MaterializationError("E_MATERIALIZER_OVERLAY_COLLISION",
+                                       f"composed Context address {_label(context_address)} already exists")
+        overlay_builder.reserve_context_path(target)
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
     if "style" in body:
         references.insert(2, body["style"])
@@ -422,21 +459,21 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
         catalog = _copy_icon_assets(example, icon_catalog, snapshot, catalog_payload, overlay_builder, stores)
         if decoded_catalogs is not None:
             decoded_catalogs[_identity(catalog_payload)] = catalog
-    destination = snapshot_directory(snapshot, revision)
     for asset in _font_copy_plan(body, example):
         asset_target = None
-        if not (overlay_builder is not None and asset.provider == "package"):
+        if not (overlay_builder is not None and asset.provider == "package" and not overlay_builder.stage_packages):
             asset_target = _inside(destination, asset.address)
+            if overlay_builder is not None:
+                overlay_builder.check_resource_path(asset_target)
             asset_target.parent.mkdir(parents=True, exist_ok=True)
             asset_target.write_bytes(asset.payload)
         if overlay_builder is not None:
             overlay_builder.add_asset(asset.locator, asset.content_identity, asset.payload,
                                       staged_path=asset_target if asset.provider == "context" else None)
-    target = _inside(destination, context_path.relative_to(example).as_posix())
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(raw_context)
     context_reference = {"id": context["id"], "kind": "render-context", "store": body["project"]["store"],
-                         "address": context_path.relative_to(example).as_posix(), "revision": {"token": revision},
+                         "address": context_address, "revision": {"token": revision},
                          "contentIdentity": _identity(raw_context)}
     if overlay_builder is not None:
         overlay_builder.add_reference(context_reference, raw_context, staged_path=target)
@@ -457,13 +494,17 @@ def _check_replaceable_output(output: Path) -> None:
 
 def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool = False, replace: bool = False) -> MaterializationResult:
     example = manifest_path.parent.resolve()
-    manifest = safe_load(manifest_path.read_text(encoding="utf-8"))
+    loaded_manifest = load_deck_manifest(manifest_path)
+    manifest = loaded_manifest.document
     if manifest.get("version") != "chrona/example-materializer/v0.1" or manifest.get("role") != "regression-corpus":
         raise ValueError(f"E_MATERIALIZER_MANIFEST: {_label(manifest_path)} requires version chrona/example-materializer/v0.1 and role regression-corpus; found version={_label(manifest.get('version'))}, role={_label(manifest.get('role'))}")
-    slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)
+    slides = manifest.get("slides")
+    if not isinstance(slides, list):
+        # The shared admission owner reports the pointed manifest failure.
+        select_deck_context(manifest_path, loaded_manifest, slide_id)
+    slide = next((item for item in slides if isinstance(item, Mapping) and item.get("id") == slide_id), None)
     if slide is None or not isinstance(slide.get("evidence"), str) or not slide["evidence"].strip():
         raise ValueError(f"E_MATERIALIZER_SLIDE: slide {_label(slide_id)} is missing or has no non-empty evidence path")
-    expected = _inside(example, str(slide["expectedSvg"]))
     if output.exists() and any(output.iterdir()):
         if not replace:
             raise ValueError(f"E_MATERIALIZER_OUTPUT: output directory {_label(output)} is not empty")
@@ -471,10 +512,11 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"; snapshot.mkdir()
-        context_path = _inside(example, str(slide.get("context", manifest["context"])))
+        context_source = select_deck_context(manifest_path, loaded_manifest, slide_id)
+        expected = _inside(example, str(slide["expectedSvg"]))
         decoded_catalogs: dict[str, Any] = {}
         overlay_builder = _OverlayBuilder(Path(temporary))
-        reference, _ = copy_context_closure(example, context_path, snapshot, decoded_catalogs=decoded_catalogs,
+        reference, _ = copy_context_closure(example, context_source, snapshot, decoded_catalogs=decoded_catalogs,
                                             overlay_builder=overlay_builder,
                                             stores=materializer_store_roots(example, manifest.get("stores")))
         overlay = overlay_builder.finish()

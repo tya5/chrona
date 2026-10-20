@@ -31,7 +31,7 @@ from chrona.usecases.render_review import RenderFailed, RenderRejected
 _LEADING_CODE = re.compile(r"E_[A-Z0-9_]+")
 
 
-@dataclass(frozen=True)
+@dataclass
 class StableFailure(Exception):
     """One failure with a stable code, raised by an adapter or a use case."""
 

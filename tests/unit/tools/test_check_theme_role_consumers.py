@@ -24,6 +24,12 @@ def _example(root: Path, *, theme_roles, bindings, views, name="demo", version="
         _write(base / f"contexts/{view_name}.yaml", {"body": {
             "theme": {"address": "themes/t.yaml"}, "view": {"address": f"views/{view_name}.yaml"},
             "layout": {"address": "layouts/l.yaml"}, "inputs": {}}})
+    _write(base / "manifest.yaml", {
+        "version": "chrona/example-materializer/v0.1", "id": name, "role": "regression-corpus",
+        "slides": [{"id": view_name, "evidence": view_name, "context": f"contexts/{view_name}.yaml",
+                    "expectedSvg": f"generated/{view_name}.svg"}
+                   for view_name in views],
+    })
 
 
 def test_a_role_no_closure_names_is_dead(tmp_path):

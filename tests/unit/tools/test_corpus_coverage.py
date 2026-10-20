@@ -1,9 +1,12 @@
 import json
 from pathlib import Path
+import shutil
+
+import yaml
 
 from tools.corpus_coverage import (
     CorpusMagnitude, CorpusProject, LaneNameCoverage, PROBES, _values_at,
-    lane_name_coverage, magnitude, render, vocabulary,
+    discover as corpus_discover, lane_name_coverage, magnitude, render, vocabulary,
 )
 
 
@@ -72,7 +75,9 @@ def test_lane_name_coverage_deduplicates_members_and_excludes_group_or_synthetic
     generated = project / "generated"
     generated.mkdir(parents=True)
     (project / "manifest.yaml").write_text(
-        'id: sample\nslides:\n  - id: lanes\n    expectedScene: generated/lanes.scene.json\n', encoding="utf-8",
+        'version: chrona/example-materializer/v0.1\nid: sample\nrole: regression-corpus\nslides:\n'
+        '  - id: lanes\n    evidence: lane labels\n    expectedSvg: generated/lanes.svg\n'
+        '    expectedScene: generated/lanes.scene.json\n', encoding="utf-8",
     )
     (generated / "lanes.scene.json").write_text(json.dumps({"surfaces": [{
         "laneMembers": [{"memberId": "a"}, {"memberId": "a"}, {"memberId": "b"}],
@@ -89,3 +94,21 @@ def test_lane_name_coverage_deduplicates_members_and_excludes_group_or_synthetic
     }]}), encoding="utf-8")
 
     assert lane_name_coverage(tmp_path) == (LaneNameCoverage("sample", "lanes", 1, 2),)
+
+
+def test_semantic_corpus_discovery_reads_a_composed_context(tmp_path):
+    example = tmp_path / "examples/demo"
+    shutil.copytree(_root() / "tests/fixtures/aster-ssd", example)
+    context = yaml.safe_load((example / "contexts/01-overview.yaml").read_bytes())
+    (example / "manifest.yaml").write_text(yaml.safe_dump({
+        "version": "chrona/example-materializer/v0.1", "id": "demo", "role": "regression-corpus",
+        "contextDefaults": context["body"],
+        "slides": [{"id": "overview", "evidence": "shared", "expectedSvg": "generated/overview.svg",
+                    "contextOverrides": {"id": context["id"]}}],
+    }, sort_keys=False), encoding="utf-8")
+
+    projects = corpus_discover(tmp_path)
+
+    assert len(projects) == 1
+    assert projects[0].identifier == "demo"
+    assert any(kind == "actual" for kind, _path, _document in projects[0].resources)

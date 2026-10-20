@@ -1,10 +1,12 @@
 from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
+import shutil
 import sys
 import time
 import subprocess
 import json
+from types import MappingProxyType
 
 import pytest
 import yaml
@@ -58,7 +60,28 @@ def _assert_sources_unchanged(context_bytes, staged_references, staged_assets):
                for path, payload, identity in staged_assets.values())
 
 
-def test_derived_context_identity_changes_only_context_id_and_viewport(tmp_path):
+def test_viewport_targets_are_manifest_selected_composed_sources(tmp_path):
+    root = tmp_path
+    example = root / "examples/demo"
+    shutil.copytree(ROOT / "tests/fixtures/aster-ssd", example)
+    context = safe_load((example / "contexts/01-overview.yaml").read_bytes())
+    manifest = {
+        "version": "chrona/example-materializer/v0.1", "id": "demo",
+        "role": "regression-corpus", "contextDefaults": context["body"],
+        "slides": [{"id": "overview", "evidence": "shared", "expectedSvg": "generated/overview.svg",
+                    "contextOverrides": {"id": context["id"]}}],
+    }
+    manifest_path = example / "manifest.yaml"
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+
+    targets, identifiers = matrix._viewport_targets(root)
+
+    assert targets == ((manifest_path, "overview"),)
+    assert identifiers == {f"demo/overview@{width}x{height}" for width, height in matrix.VIEWPORTS}
+
+
+@pytest.mark.parametrize("immutable", [False, True])
+def test_derived_context_identity_changes_only_context_id_and_viewport(tmp_path, immutable):
     source = {
         "version": "chrona/render-context/v0.17",
         "kind": "render-context",
@@ -80,7 +103,8 @@ def test_derived_context_identity_changes_only_context_id_and_viewport(tmp_path)
     original_overlay = builder.finish()
 
     derived_ref, payload = matrix._derive_viewport_context(
-        source, reference, Path("original.yaml"), (800, 450), builder,
+        MappingProxyType(source) if immutable else source,
+        reference, Path("original.yaml"), (800, 450), builder,
     )
     derived = yaml.safe_load(payload)
     expected = deepcopy(source)

@@ -27,7 +27,7 @@ Application Architecture decides which component evaluates or transports each sp
 | Component | Responsibility | Must not own |
 |---|---|---|
 | Revision Store adapter | Resolve immutable snapshots, read resources, and optionally persist canonical changes | Temporal interpretation, scheduling, or rendering |
-| Deck Context authoring composer (planned #415, pending review/implementation) | Expand explicit manifest defaults and slide overrides into one fully explicit, byte-pinned Context before copying/closure (Specification 40 section 7) | Immutable closure inheritance, resource-pin repair, Layout/Scene/adapter merging |
+| Deck Context authoring composer | Expand explicit manifest defaults and slide overrides into one fully explicit, byte-pinned Context before copying/closure (Specification 40 section 7) | Immutable closure inheritance, resource-pin repair, Layout/Scene/adapter merging |
 | Evaluation Closure Resolver | Resolve and verify the immutable resource/package closure named by a Render Context | Fallback to current files, branches, or host defaults |
 | Federation Resolver | Resolve pinned child timeline exports and compose read-only summary inputs | Loading a child branch tip, editing child data, or treating a raw child Project as a parent resource |
 | Profile Registry | Resolve supported core and extension profiles, typed fields, and schemas | Arbitrary executable extension behavior |
