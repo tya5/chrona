@@ -86,12 +86,19 @@ the expansion/provenance boundary itself.
    Verify its same-cohort reduction and output table, and the review-containing
    exact-main three-OS release before closing. A pending migration keeps415 open.
 
-Readiness audit found direct Context-path assumptions in `local_authoring.py`,
-`tools/derived_evidence.py`, `tools/corpus_coverage.py`,
-`tools/presentation_coverage.py` and `tools/check_design_purity.py`.
+Readiness audit scope (all consume one selected-source record, not private merges):
+
+| Consumers | Required connection |
+| --- | --- |
+| `usecases/materialize.py`, `usecases/local_authoring.py` | Explicit/composed bytes, owned address, normal closure copying and provider deferral. |
+| `tools/check_draft_viewport_matrix.py`, `check_theme_role_consumers.py` | Enumerate manifest-selected bodies rather than globbing Context files. |
+| `tools/corpus_coverage.py`, `presentation_coverage.py`, `check_design_purity.py`, `check_example_reachability.py` | Inspect completed refs with the manifest-root base; preserve source reachability without false orphans. |
+| `tools/example_inventory.py`, `render_design_gallery.py` | Completed body and honest explicit-file or manifest/slide source links. |
+| `tools/derived_evidence.py`, `presentation_font_identity.py`, `tests/support/public_evidence.py` and their callers | Replace mandatory Context-path assumptions with source provenance plus completed mapping/bytes; preserve exact identity/font checks. |
+
 Their adapters and synthetic twins belong to the feature before corpus migration;
 do not defer them until migrated examples break. Admission/composition is one
-application owner; inspections read its completed bytes. Require a manifest ID
+application owner; inspections do not need a staged file. Require a manifest ID
 only for composition, preserving valid explicit-only no-ID manifests.
 Pointed failures reuse the application failure-report transport; strict loading
 must detect duplicate/merge keys and cycles before ordinary loading loses them.
