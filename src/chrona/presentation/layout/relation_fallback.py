@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 from chrona.presentation.layout.relation_shapes import first_fit_port_pairs
+from chrona.presentation.layout.route_reduction import collapse_collinear_route
 
 Point = tuple[float, float]
 Path = tuple[Point, ...]
@@ -54,8 +55,8 @@ class PairedStubGeometry:
 def paired_stub_geometry(pair: Pair, *, source_run: float, target_run: float) -> PairedStubGeometry:
     source, target = pair
     a, b = outward_corridor_ends(pair, source_run=source_run, target_run=target_run)
-    outgoing = _without_duplicate_neighbours((source.semantic_port, source.exposed_port, a))
-    incoming = _without_duplicate_neighbours((b, target.exposed_port, target.semantic_port))
+    outgoing = collapse_collinear_route((source.semantic_port, source.exposed_port, a))
+    incoming = collapse_collinear_route((b, target.exposed_port, target.semantic_port))
     if len(outgoing) < 2 or len(incoming) < 2:
         raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: paired stubs require visible endpoint runs")
     return PairedStubGeometry(outgoing, incoming)

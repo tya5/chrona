@@ -3,7 +3,9 @@ from dataclasses import replace
 
 import pytest
 
-from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
+from chrona.presentation.layout.ports import (
+    ConnectorEgress, outward_corridor_ends, split_route_at_physical_corridors,
+)
 from chrona.presentation.layout.relation_fallback import (
     complete_fixed_connector, fixed_connector_candidates, paired_stub_geometry,
 )
@@ -73,11 +75,36 @@ def test_paired_stubs_retain_two_independent_semantic_endpoints():
 
 
 def test_paired_stubs_retain_exposed_comparison_corridors():
-    pair = (replace(PAIR[0], exposed_port=(4., 0.)),
-            replace(PAIR[1], exposed_port=(95., 20.)))
+    pair = (replace(PAIR[0], exposed_port=(4., 0.), corridor_host_ids=("source-host",)),
+            replace(PAIR[1], exposed_port=(95., 20.), corridor_host_ids=("target-host",)))
     paired = paired_stub_geometry(pair, source_run=16., target_run=12.)
-    assert paired.source == ((0., 0.), (4., 0.), (20., 0.))
-    assert paired.target == ((83., 20.), (95., 20.), (100., 20.))
+    assert paired.source == ((0., 0.), (20., 0.))
+    assert paired.target == ((83., 20.), (100., 20.))
+    assert split_route_at_physical_corridors(paired.source, pair[0], None) == (
+        ((0., 0.), (4., 0.), ("source-host",)), ((4., 0.), (20., 0.), ()))
+    assert split_route_at_physical_corridors(paired.target, None, pair[1]) == (
+        ((83., 20.), (95., 20.), ()), ((95., 20.), (100., 20.), ("target-host",)))
+
+
+def test_paired_stub_reduces_one_ulp_straight_boundary_without_moving_the_port():
+    from math import nextafter
+
+    coordinate = 824.2823529411764
+    pair = (replace(PAIR[0], semantic_port=(coordinate, 194.4),
+                    exposed_port=(nextafter(coordinate, float("inf")), 194.4)), PAIR[1])
+    paired = paired_stub_geometry(pair, source_run=7., target_run=12.)
+    assert paired.source == (pair[0].semantic_port, (pair[0].exposed_port[0] + 7., 194.4))
+    assert paired.source[0] != pair[0].exposed_port
+    assert paired.source[1][0] - paired.source[0][0] >= 7.
+
+
+def test_paired_stub_keeps_real_short_corner_and_reversal_segments():
+    corner = (replace(PAIR[0], side="above", exposed_port=(0.25, 0.)), PAIR[1])
+    reversal = (replace(PAIR[0], exposed_port=(-0.25, 0.)), PAIR[1])
+    assert paired_stub_geometry(corner, source_run=7., target_run=12.).source == (
+        (0., 0.), (0.25, 0.), (0.25, -7.))
+    assert paired_stub_geometry(reversal, source_run=7., target_run=12.).source == (
+        (0., 0.), (-0.25, 0.), (6.75, 0.))
 
 
 def test_degenerate_stub_is_not_a_drawn_relation():
