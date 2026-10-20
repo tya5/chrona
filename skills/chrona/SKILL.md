@@ -148,7 +148,6 @@ plan. List the builtin ids, render with one, or copy one to edit (`--id NAME` on
 chrona preset list
 chrona render examples/launch.yaml --preset editorial --output launch-editorial.svg
 chrona preset copy executive-light --output looks/executive-light
-chrona preset copy executive-light --id my-look --output looks/my-look
 chrona render examples/launch.yaml --preset looks/executive-light/preset.yaml --output launch-executive.svg
 ```
 
