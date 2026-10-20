@@ -93,7 +93,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
-        findings.extend(_relation_mark_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_mark_findings(scene_path, surface, diagnostics))
         findings.extend(_relation_segment_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_node_approach_findings(
             scene_path, surface.get("primitives"), diagnostics, fan_in_members))
@@ -347,13 +347,22 @@ def _relation_node_approach_findings(scene_path: str, raw_primitives: Any,
     return findings
 
 
-def _relation_mark_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
-    """Observe completed relation strokes crossing planned primary-mark interiors."""
+def _relation_mark_findings(scene_path: str, surface: Mapping[str, Any],
+                            diagnostics: list[str]) -> list[ScenePerceptibilityFinding]:
+    """Observe primary-mark crossings, distinguishing only evidenced Layout recovery."""
+    raw_primitives = surface.get("primitives")
     primitives = raw_primitives if isinstance(raw_primitives, list) else ()
+    surface_id = surface.get("id")
     marks = [raw for raw in primitives if isinstance(raw, Mapping)
              and str(raw.get("id", "")).startswith("planned:")
              and ":snapshot:" not in str(raw["id"]) and ":scenario:" not in str(raw["id"])
              and isinstance(raw.get("bounds"), Mapping)]
+    relation_counts: dict[str, int] = {}
+    for raw in primitives:
+        if (isinstance(raw, Mapping) and raw.get("kind") == "Path"
+                and raw.get("sourceKind") == "relation" and isinstance(raw.get("id"), str)
+                and raw["id"].startswith("relation:")):
+            relation_counts[raw["id"]] = relation_counts.get(raw["id"], 0) + 1
     findings = []
     for raw in primitives:
         if not (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
@@ -365,6 +374,11 @@ def _relation_mark_findings(scene_path: str, raw_primitives: Any) -> list[SceneP
                  "invalid relation stroke width")
         inset = width / 2
         points = _observed_relation_points(raw)
+        recovery = (_relation_recovery_stage(raw, surface_id, diagnostics)
+                    if relation_counts.get(raw["id"]) == 1 else None)
+        halo_matches = (_matching_recovery_halo(raw, surface, primitives, width)
+                        if recovery is not None else False)
+        endpoints = _known_endpoint_marks(raw, marks)
         for mark in marks:
             bounds = mark["bounds"]
             if bounds["inlineSize"] <= width or bounds["blockSize"] <= width:
@@ -375,10 +389,111 @@ def _relation_mark_findings(scene_path: str, raw_primitives: Any) -> list[SceneP
             length = sum(segment_length_inside_rect(ObstacleSegment(tuple(a), tuple(b)), rect)
                          for a, b in zip(points, points[1:]) if a != b)
             if length > 1e-9:
-                findings.append(_finding("E_SCENE_RELATION_THROUGH_MARK", "error", scene_path,
-                    (str(raw["id"]), str(mark["id"])), None,
-                    (("relation", str(raw.get("sourceRef"))), ("inside", round(length, 3)))))
+                recovered = (recovery is not None and halo_matches and endpoints is not None
+                             and mark["id"] not in endpoints)
+                facts = (("relation", str(raw.get("sourceRef"))), ("inside", round(length, 3)))
+                if recovered:
+                    findings.append(_finding("I_SCENE_RELATION_RECOVERED_THROUGH_MARK", "info", scene_path,
+                        (str(raw["id"]), str(mark["id"])), None,
+                        (*facts, ("stage", recovery)), "declared-recovery"))
+                else:
+                    findings.append(_finding("E_SCENE_RELATION_THROUGH_MARK", "error", scene_path,
+                        (str(raw["id"]), str(mark["id"])), None, facts))
     return findings
+
+
+def _relation_recovery_stage(relation: Mapping[str, Any], surface_id: Any,
+                             diagnostics: list[str]) -> str | None:
+    """Return one exact non-normal receipt; malformed or duplicate evidence never authorizes ink."""
+    relation_id = relation.get("id")
+    matches = []
+    for diagnostic in diagnostics:
+        prefix = "I_LAYOUT_RELATION_RESOLUTION:"
+        if not diagnostic.startswith(prefix):
+            continue
+        try:
+            payload = json.loads(diagnostic[len(prefix):])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if (isinstance(payload, Mapping) and payload.get("surfaceId") == surface_id
+                and payload.get("relationId") == relation_id):
+            matches.append(payload)
+    if len(matches) != 1:
+        return None
+    receipt = matches[0]
+    if (set(receipt) != {"surfaceId", "relationId", "stage", "critical"}
+            or not isinstance(surface_id, str) or not surface_id
+            or not isinstance(relation_id, str) or not relation_id
+            or not isinstance(receipt.get("critical"), bool)):
+        return None
+    stage = receipt.get("stage")
+    return stage if isinstance(stage, str) and stage in {"marks", "overlap"} else None
+
+
+def _known_endpoint_marks(relation: Mapping[str, Any], marks: list[Mapping[str, Any]]) -> frozenset[str] | None:
+    """Require endpoints to resolve to one base mark or a unique composite mark set."""
+    endpoints = (relation.get("fromInstanceId"), relation.get("toInstanceId"))
+    if any(not isinstance(value, str) or not value for value in endpoints):
+        return None
+    result = set()
+    for endpoint in endpoints:
+        identifier = f"planned:{endpoint}"
+        exact = [mark for mark in marks if mark.get("id") == identifier]
+        parts = [mark for mark in marks if isinstance(mark.get("id"), str)
+                 and mark["id"].startswith(identifier + ":part:")]
+        if len(exact) == 1 and not parts:
+            result.add(identifier)
+            continue
+        indexes = [mark["id"].removeprefix(identifier + ":part:") for mark in parts]
+        if (exact or not parts or any(not index.isdigit() for index in indexes)
+                or len(indexes) != len(set(indexes))):
+            return None
+        result.update(mark["id"] for mark in parts)
+    return frozenset(result)
+
+
+def _matching_recovery_halo(relation: Mapping[str, Any], surface: Mapping[str, Any],
+                            primitives: list[Any], relation_width: float) -> bool:
+    """Require the emitted matching ground halo, not a receipt or halo-looking role alone."""
+    source_ref = relation.get("sourceRef")
+    if not isinstance(source_ref, str) or not source_ref:
+        return False
+    candidates = [item for item in primitives if isinstance(item, Mapping)
+                  and item.get("kind") == "Path" and item.get("sourceKind") == "decoration"
+                  and item.get("purpose") == "dependency-halo"
+                  and item.get("visualRole") == "dependency-halo"
+                  and item.get("sourceRef") == source_ref
+                  and item.get("id") == f"{relation.get('id')}:halo"]
+    if len(candidates) != 1:
+        return False
+    halo = candidates[0]
+    if (halo.get("slotId") != relation.get("slotId")
+            or halo.get("points") != relation.get("points")
+            or halo.get("pathCommands") != relation.get("pathCommands")
+            or halo.get("paintClip") != relation.get("paintClip")
+            or halo.get("strokeClip") != relation.get("strokeClip")
+            or halo.get("markerStart") is not None or halo.get("markerEnd") is not None
+            or halo.get("fromInstanceId") is not None or halo.get("toInstanceId") is not None):
+        return False
+    ground = surface.get("canvasPaint")
+    halo_paint = halo.get("paint")
+    relation_paint = relation.get("paint")
+    if (not isinstance(ground, Mapping) or not is_hex_color(ground.get("fill"))
+            or not isinstance(halo_paint, Mapping) or not isinstance(relation_paint, Mapping)):
+        return False
+    ground_opacity = _opacity(ground)
+    halo_opacity = _opacity(halo_paint)
+    halo_width = halo_paint.get("strokeWidth")
+    halo_order, relation_order = halo.get("paintOrder"), relation.get("paintOrder")
+    dash = halo_paint.get("dash", ())
+    return (ground_opacity == 1.0 and halo_opacity == 1.0 and dash in ((), [])
+            and isinstance(halo_paint.get("stroke"), str)
+            and halo_paint["stroke"].upper() == ground["fill"].upper()
+            and isinstance(halo_width, (int, float)) and not isinstance(halo_width, bool)
+            and isfinite(halo_width) and halo_width > relation_width
+            and isinstance(halo_order, int) and not isinstance(halo_order, bool)
+            and isinstance(relation_order, int) and not isinstance(relation_order, bool)
+            and halo_order + 1 == relation_order)
 
 
 def _observed_relation_points(raw: Mapping[str, Any]) -> list[tuple[float, float]]:

@@ -374,6 +374,109 @@ def test_relation_mark_crossings_include_own_foreign_and_diagonal_paths(points):
     assert {f.primitive_ids[1] for f in findings} == {"planned:a", "planned:c"}
 
 
+def _recovered_crossing_scene(stage="marks"):
+    relation_id = "relation:r:source:target"
+    relation = _primitive(relation_id, "Path", slot="slot", order=9,
+                          paint={"stroke": "#000000", "strokeWidth": 1, "opacity": 1})
+    relation.update(sourceKind="relation", sourceRef="r", points=[[5, 5], [15, 5]],
+                    fromInstanceId="source", toInstanceId="target")
+    halo = _primitive(f"{relation_id}:halo", "Path", slot="slot", order=8,
+                      paint={"stroke": "#FFFFFF", "strokeWidth": 3, "opacity": 1})
+    halo.update(sourceKind="decoration", sourceRef="r", purpose="dependency-halo",
+                visualRole="dependency-halo", points=[[5, 5], [15, 5]])
+    source = _primitive("planned:source", "Rect", bounds=_bounds(0, 2, 5, 6), slot="slot")
+    target = _primitive("planned:target", "Rect", bounds=_bounds(15, 2, 5, 6), slot="slot")
+    crossing = _primitive("planned:foreign", "Rect", bounds=_bounds(9, 2, 2, 6), slot="slot")
+    document = _scene(relation, halo, source, target, crossing)
+    document["surfaces"][0]["slots"][0]["bounds"] = _bounds(0, 0, 30, 20)
+    document["diagnostics"] = ["I_LAYOUT_RELATION_RESOLUTION:" + json.dumps({
+        "surfaceId": "review", "relationId": relation_id,
+        "stage": stage, "critical": False,
+    }, separators=(",", ":"))]
+    return document
+
+
+@pytest.mark.parametrize("stage", ["marks", "overlap"])
+def test_matching_declared_mark_or_overlap_recovery_is_informational(stage):
+    findings = [item for item in evaluate_scene_perceptibility(_recovered_crossing_scene(stage))
+                if item.code in {"E_SCENE_RELATION_THROUGH_MARK",
+                                 "I_SCENE_RELATION_RECOVERED_THROUGH_MARK"}]
+    assert len(findings) == 1
+    finding, = findings
+    assert (finding.code, finding.severity, finding.disposition) == (
+        "I_SCENE_RELATION_RECOVERED_THROUGH_MARK", "info", "declared-recovery")
+    assert finding.primitive_ids == ("relation:r:source:target", "planned:foreign")
+    assert dict(finding.measured_facts) == {"relation": "r", "inside": 1.0, "stage": stage}
+
+
+@pytest.mark.parametrize("invalidator", [
+    "missing-halo", "wrong-halo-id", "wrong-path", "wrong-source", "wrong-paint-clip",
+    "wrong-stroke-clip", "wrong-ground", "not-wider", "wrong-order", "missing-receipt",
+    "dashed-halo", "halo-marker-start", "halo-marker-end", "halo-graph-endpoints",
+    "wrong-surface", "duplicate-receipt", "malformed-receipt", "malformed-stage", "endpoint-crossing",
+    "missing-endpoint", "label-visuals", "text", "stub",
+])
+def test_incomplete_or_inapplicable_recovery_evidence_keeps_crossing_as_error(invalidator):
+    document = _recovered_crossing_scene()
+    surface = document["surfaces"][0]
+    relation, halo = surface["primitives"][:2]
+    if invalidator == "missing-halo":
+        surface["primitives"].remove(halo)
+    elif invalidator == "wrong-halo-id":
+        halo["id"] = "relation:other:halo"
+    elif invalidator == "wrong-path":
+        halo["points"] = [[5, 5], [14, 5]]
+    elif invalidator == "wrong-source":
+        halo["sourceRef"] = "other"
+    elif invalidator == "wrong-paint-clip":
+        halo["paintClip"] = {"bounds": _bounds(0, 0, 10, 10)}
+    elif invalidator == "wrong-stroke-clip":
+        halo["strokeClip"] = {"bounds": _bounds(0, 0, 10, 10)}
+    elif invalidator == "wrong-ground":
+        halo["paint"]["stroke"] = "#EEEEEE"
+    elif invalidator == "not-wider":
+        halo["paint"]["strokeWidth"] = 1
+    elif invalidator == "wrong-order":
+        halo["paintOrder"] = 7
+    elif invalidator == "dashed-halo":
+        halo["paint"]["dash"] = [2, 1]
+    elif invalidator == "halo-marker-start":
+        halo["markerStart"] = "arrow"
+    elif invalidator == "halo-marker-end":
+        halo["markerEnd"] = "arrow"
+    elif invalidator == "halo-graph-endpoints":
+        halo["fromInstanceId"] = "source"
+        halo["toInstanceId"] = "target"
+    elif invalidator == "missing-receipt":
+        document["diagnostics"] = []
+    elif invalidator == "wrong-surface":
+        document["diagnostics"][0] = document["diagnostics"][0].replace('"review"', '"elsewhere"')
+    elif invalidator == "duplicate-receipt":
+        document["diagnostics"].append(document["diagnostics"][0])
+    elif invalidator == "malformed-receipt":
+        payload = json.loads(document["diagnostics"][0].split(":", 1)[1])
+        payload["critical"] = "false"
+        document["diagnostics"][0] = "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload)
+    elif invalidator == "malformed-stage":
+        payload = json.loads(document["diagnostics"][0].split(":", 1)[1])
+        payload["stage"] = ["marks"]
+        document["diagnostics"][0] = "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload)
+    elif invalidator == "endpoint-crossing":
+        surface["primitives"][2]["bounds"] = _bounds(9, 2, 2, 6)
+        surface["primitives"].pop(4)
+    elif invalidator == "missing-endpoint":
+        relation.pop("fromInstanceId")
+        relation.pop("toInstanceId")
+    else:
+        payload = json.loads(document["diagnostics"][0].split(":", 1)[1])
+        payload["stage"] = invalidator
+        document["diagnostics"][0] = "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload)
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "E_SCENE_RELATION_THROUGH_MARK"]
+    assert len(findings) == 1
+    assert findings[0].primitive_ids[0] == relation["id"]
+
+
 def test_boundary_contact_ghost_and_legend_swatch_are_not_primary_crossings():
     path = _primitive("relation:dep", "Path", paint={"strokeWidth": 1})
     path.update(sourceKind="relation", sourceRef="dep", points=[[0, 2], [20, 2]])
