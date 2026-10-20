@@ -103,11 +103,15 @@ def _packaged(weight: int) -> tuple[FontMetrics, FontFile]:
 
 def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, Any], *, asset_root: Path | None,
                               asset_resolver: FontAssetResolver | None = None,
-                              installed: InstalledFontIndex | None = None) -> DraftFontResolution | None:
+                              installed: InstalledFontIndex | None = None,
+                              font_files_required: bool = True) -> DraftFontResolution | None:
     """Resolve every Theme role's font stack, or None when every role is already one declared exact face.
 
     Returns the declared catalog extended with one entry per resolved stack (under the stack's own text), the font
     files to rasterize with, the roles whose tabular figures degrade, and one note per resolved or fallen-back role.
+    A target that draws no font file (SVG) passes ``font_files_required=False``: declared font files its Context did not
+    stage are then skipped instead of abandoning the whole resolution (#1842), so an installed or packaged CJK face
+    still joins the stack.
     """
     try:
         view = ThemeTokenView(theme)
@@ -115,7 +119,12 @@ def resolve_theme_font_stacks(theme: Mapping[str, Any], descriptor: dict[str, An
         treatments = {role: view.text_treatment(role) for role, binding in roles.items()
                       if isinstance(binding, Mapping) and "fontFamily" in binding and "fontWeight" in binding}
         declared = resolve_font_metrics_catalog(descriptor, asset_root=asset_root, asset_resolver=asset_resolver)
-        declared_files = resolve_font_files(descriptor, asset_root=asset_root, asset_resolver=asset_resolver)[0]
+        declared_files = ()
+        try:
+            declared_files = resolve_font_files(descriptor, asset_root=asset_root, asset_resolver=asset_resolver)[0]
+        except FontMetricsError:
+            if font_files_required:
+                raise
     except (AttributeError, ThemeTokenError, TypeError, ValueError, FontMetricsError):
         return None  # the established path reports a malformed Theme or descriptor
     pending = {role: item for role, item in treatments.items() if not (

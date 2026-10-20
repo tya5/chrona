@@ -383,7 +383,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         # Installed fonts are a normal source on every path (#1281): a role whose font stack is not one declared exact
         # face resolves to an installed face or the packaged Noto Sans; declared faces keep precedence.
         resolution = resolve_theme_font_stacks(theme, environment.font_metrics, asset_root=asset_root,
-                                               asset_resolver=request.asset_resolver)
+                                               asset_resolver=request.asset_resolver,
+                                               font_files_required=render_closure.context.target.kind != "svg")
     if resolution is not None and resolution.tabular_warnings:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(

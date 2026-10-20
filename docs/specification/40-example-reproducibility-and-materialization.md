@@ -116,6 +116,14 @@ SVG, geometry, paint and diagnostics must remain unchanged. Do not add a YAML
 CST layer merely to freeze old Context hashes. Reviewer-owned HALCYON migration
 and its same-cohort line/output table are required before issue415 closes.
 
+## Success report and fonts
+
+On success `chrona materialize` prints the one-line JSON `render` prints (`status`, `diagnostics`, `warnings`; the
+warnings are the render's warning and info records, exit 0). Fonts resolve through the same policy as `render`
+(#1281): a Theme role's stack takes a declared face, then an installed one, then the packaged Noto Sans, and an
+installed or packaged CJK face supplies a glyph the first lacks. An SVG Context stages font metrics but not font
+files, so missing declared font files never discard that resolution; a raster target still requires them.
+
 ## Boundary review
 
 - Context owns immutable references; local resources are copied into their declared revision namespaces, while provider-backed resources may be exposed through a transient identity-keyed overlay without rewriting those references.
