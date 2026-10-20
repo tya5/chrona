@@ -178,6 +178,9 @@ Layout recomposes the candidates once in the conservatively allocated legend
 slot. Final canvas completion releases candidate-only legend growth while
 preserving the declared allocation; it does not retry route, row or annotation
 layout.
+An independent text-only estimate explanation may remain under Spec06's
+forecast rule when the base forecast swatch is replaced. It is not an encoding
+or paint key and makes no claim about scale colours or their separability.
 
 ## 5. Migration boundary
 

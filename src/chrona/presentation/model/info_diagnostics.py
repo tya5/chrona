@@ -45,6 +45,31 @@ class RoutingCostAdvisory:
 
 
 @dataclass(frozen=True)
+class HeadingFactMissing:
+    """A View heading names an absent as-of or default-calendar fact (#1810)."""
+
+    fact: str
+    source_ref: str
+
+    def __post_init__(self) -> None:
+        if (self.fact not in {"asOf", "calendar"} or not isinstance(self.source_ref, str)
+                or not self.source_ref.startswith("/body/heading/")
+                or any(char in self.source_ref for char in ";\r\n")):
+            raise _diagnostic_error(
+                f"HeadingFactMissing fact={_shown(self.fact)}, sourceRef={_shown(self.source_ref)}; "
+                "expected asOf/calendar and a heading JSON pointer")
+
+    @property
+    def code(self) -> str:
+        return "W_PRESENTATION_HEADING_FACT_MISSING"
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(
+            {"fact": self.fact, "sourceRef": self.source_ref},
+            ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
 class ForecastInfo:
     """One published informational finding produced by the forecast analysis."""
 
@@ -516,4 +541,5 @@ class ScaleValuesFolded:
 PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | ForecastInfo | RelationRoutingSummary | RelationSearchBudgetHit
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | FieldGroupingSummariesOmitted
-                    | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole)
+                    | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole
+                    | HeadingFactMissing)

@@ -11,7 +11,8 @@ from chrona.presentation.model.actual_variance_paint import select_actual_varian
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
 from chrona.presentation.model.wording_tables import LAYOUT_DEFAULT_LEGEND_ROLES, WordingResolver, wording_resolver
-from chrona.presentation.model.projection import ObservationState, ReviewProjection, display_finish_delta, is_new_against_baseline, signed_delta_text
+from chrona.presentation.model.projection import (ObservationState, ReviewProjection, display_finish_delta,
+    is_estimated_finish_delta, is_new_against_baseline, signed_delta_text)
 from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, entity_title_or_value, initials, table_value,
@@ -26,9 +27,10 @@ from chrona.presentation.model.placement_candidates import legacy_candidate_orde
 from chrona.presentation.contracts.resources import (
     ReviewDetailInput, SummaryProfileInput, ViewInput, _PrivateGroupingMode,
 )
-from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers
+from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, compose_group_header_runs, compose_group_headers, parse_template
 from chrona.presentation.figure_text import FigureTextProgram
-from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
+from chrona.presentation.heading_text import PLACEHOLDERS as HEADING_PLACEHOLDERS, HeadingTextPrograms, close_heading
+from chrona.presentation.model.info_diagnostics import HeadingFactMissing
 from chrona.presentation.model.color_scale import OTHER_LABEL, OTHER_REF_SUFFIX, ResolvedColorScale, scale_text
 from chrona.presentation.model.style_rules import (
     OccurrenceStyleIndex, StyleMatchIndex, StyleOccurrenceKey, evaluate_style_rules,
@@ -86,7 +88,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     active_columns = tuple(column for column in view.table_columns
                            if _table_column_source_available(column.source, projection, actual_set))
-    columns = tuple(TableColumnContent(column.id, resolver.resolve(column.header) if column.header is not None else column.id,
+    columns = tuple(TableColumnContent(column.id, _table_column_header(column, projection, view, resolver),
                                        column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
                     for column in active_columns)
@@ -180,7 +182,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                     *cell_affixes(item, column, row_index, row.row_id),
                                     required=_is_forecast_delta(item, column.source),
                                     style_key=_table_style_key(item, row.row_id, column.id,
-                                                              "groupHeader" if header else cell_semantic(item, column)))
+                                                              "groupHeader" if header else cell_semantic(item, column)),
+                                    estimated_delta=_is_estimated_forecast_delta(item, column.source))
         cells = tuple(
             row_cell(row, column, row_index)
             for row_index, row in enumerate(projection.rows, 1) for column in active_columns)
@@ -199,13 +202,33 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                     cell_parts(item, column, row_index)
         years_visible = len(displayed_years) > 1
         cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index), required=_is_forecast_delta(item, column.source),
-                                       style_key=_table_style_key(item, item.object_id, column.id, cell_semantic(item, column)))
+                                       style_key=_table_style_key(item, item.object_id, column.id, cell_semantic(item, column)),
+                                       estimated_delta=_is_estimated_forecast_delta(item, column.source))
                       for row_index, item in enumerate(projection.items, 1) for column in active_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in active_columns)
         row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
     return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels,
                         indent_under_headers=_indents_under_headers(view), member_names=member_names)
+
+
+def _table_column_header(column: Any, projection: ReviewProjection, view: ViewInput,
+                         resolver: WordingResolver) -> str:
+    """Resolve the built-in finish-delta header against the comparison actually shown (#1810)."""
+    key = getattr(column, "header_wording_key", None)
+    if key != "column.finishDelta" or not _is_finish_delta_source(column.source):
+        return resolver.resolve(column.header) if column.header is not None else column.id
+
+    wording = view.wording or {}
+    overrides = wording.get("keys", {}) if isinstance(wording, Mapping) else {}
+    # An explicit override of the authored reference remains the strongest declaration. Otherwise
+    # select a wording key from the bound comparison source, not from the rendered text or View baseline.
+    if isinstance(overrides, Mapping) and "column.finishDelta" in overrides:
+        return resolver.resolve(column.header)
+    has_forecast = any(item.forecast is not None for item in _table_subjects(projection))
+    reference = ("Baseline" if has_forecast and "snapshot" in projection.bound_comparison_sources
+                 else "Plan")
+    return resolver.text(f"column.finishDelta{reference}")
 
 
 def _displayed_years(value: Any, end_display: str) -> set[int]:
@@ -398,9 +421,7 @@ def _is_forecast_delta(item: Any, source: Any) -> bool:
 
 
 def _is_estimated_forecast_delta(item: Any, source: Any) -> bool:
-    forecast = getattr(item, "forecast", None)
-    return (forecast is not None and not forecast.schedule.completed
-            and _is_finish_delta_source(source))
+    return is_estimated_finish_delta(item) and _is_finish_delta_source(source)
 
 
 def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any], projection: ReviewProjection,
@@ -750,7 +771,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                relation_overflow_declared=isinstance(relation_value, Mapping) and "overflow" in relation_value,
                                group_presentation=group_presentation,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
-                               as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale, resolver),
+                               as_of=as_of, as_of_label=_as_of_label(
+                                   as_of_marker, as_of, locale, resolver,
+                                   heading_date_form=view.heading.date_form if view.heading is not None else "localized-date"),
                                annotation_numbered=annotation_numbered,
                                calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,
                                    notes=notes, legend_entries=legend, coverage_text="",
@@ -926,23 +949,41 @@ def _attached_labels(projection: ReviewProjection, locale: str,
 
 
 def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str,
-                 resolver: WordingResolver | None = None) -> str:
-    """Return the as-of label exactly as declared, plus a date only in a declared form (#428).
-
-    A View without an as-of marker keeps the implicit "As of <localized date>"
-    label; a declared marker is its own text unless it names a date form.
-    """
-    date_form = {"form": "localized-date"} if marker is None else marker.get("date")
+                 resolver: WordingResolver | None = None, *, heading_date_form: str = "localized-date") -> str:
+    """Return declared marker copy and its date only when the marker declares date visibility (#428, #1810)."""
     label = (resolver or wording_resolver(locale, None)).text("marker.asOf") if marker is None else str(marker.get("label", ""))
-    if not isinstance(date_form, Mapping) or as_of is None:
+    if as_of is None:
         return label
-    table = axis_name_table(str(date_form.get("nameTable", locale)))
-    formatted = table.format(str(date_form["form"]), {
+    marker_date = marker.get("date") if isinstance(marker, Mapping) else None
+    if marker is not None and not isinstance(marker_date, Mapping):
+        return label
+    form, name_table = _as_of_date_spec(marker, heading_date_form, locale)
+    formatted = _format_as_of_date(as_of, form, name_table)
+    return f"{label} {formatted}" if label else formatted
+
+
+def _as_of_date_spec(marker: Mapping[str, Any] | None, heading_date_form: str,
+                     locale: str) -> tuple[str, str]:
+    """Resolve the one declared date format shared by the heading and marker (#1810)."""
+    declared = marker.get("date") if isinstance(marker, Mapping) else None
+    if isinstance(declared, Mapping):
+        return str(declared["form"]), str(declared.get("nameTable", locale))
+    return heading_date_form, locale
+
+
+def _as_of_marker(view: ViewInput) -> Mapping[str, Any] | None:
+    return next((item for item in view.markers
+                 if item.get("kind") == "asOf" and item.get("source") == "actual"), None)
+
+
+def _format_as_of_date(as_of: date, form: str, name_table: str) -> str:
+    """Format one date through the wheel-owned locale table, shared by headings and markers."""
+    table = axis_name_table(name_table)
+    return table.format(form, {
         "year": as_of.year, "monthShort": table.month_short[as_of.month - 1],
         "monthLong": table.month_long[as_of.month - 1], "monthNumber": as_of.month,
         "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
     })
-    return f"{label} {formatted}" if label else formatted
 
 
 def _heading_calendar_name(project: Mapping[str, Any]) -> str:
@@ -976,12 +1017,8 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
     as_of_text = ""
     if isinstance(as_of_value, str):
         as_of = date.fromisoformat(as_of_value)
-        table = axis_name_table(locale)
-        as_of_text = table.format(heading.date_form, {
-            "year": as_of.year, "monthShort": table.month_short[as_of.month - 1],
-            "monthLong": table.month_long[as_of.month - 1], "monthNumber": as_of.month,
-            "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
-        })
+        form, name_table = _as_of_date_spec(_as_of_marker(view), heading.date_form, locale)
+        as_of_text = _format_as_of_date(as_of, form, name_table)
     facts = {"project": project_title, "asOf": as_of_text, "calendar": _heading_calendar_name(project)}
     programs = HeadingTextPrograms(
         title=(close_heading(heading.title, facts) if heading.title is not None
@@ -991,6 +1028,38 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
         text_wrap=heading.text_wrap,
     )
     return programs if programs.figure_ids else HeadingContent(*programs.bind({}, {}), text_wrap=programs.text_wrap)
+
+
+def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
+                                 actual_set: Mapping[str, Any] | None) -> tuple[HeadingFactMissing, ...]:
+    """Report missing semantic facts used by a View heading without changing its empty fallback (#1810)."""
+    heading = view.heading
+    if heading is None:
+        return ()
+    calendar = _heading_calendar_name(project)
+    actual_body = _resource_body(actual_set, "ACTUAL_SET")
+    present = {
+        "asOf": isinstance(actual_body.get("asOf"), str) and bool(actual_body.get("asOf")),
+        "calendar": bool(calendar),
+    }
+    warnings: list[HeadingFactMissing] = []
+    seen: set[tuple[str, str]] = set()
+    for member in ("title", "subtitle", "kicker"):
+        source = getattr(heading, member)
+        if source is None:
+            continue
+        parts = (source,) if isinstance(source, str) else tuple(source)
+        for index, part in enumerate(parts):
+            text = part if isinstance(part, str) else part.text
+            template = parse_template(text, placeholders=HEADING_PLACEHOLDERS, code="E_VIEW_HEADING_TEMPLATE")
+            source_ref = (f"/body/heading/{member}" if isinstance(source, str)
+                          else f"/body/heading/{member}/{index}/text")
+            for fact in ("asOf", "calendar"):
+                key = (fact, source_ref)
+                if fact in template.fields and not present[fact] and key not in seen:
+                    warnings.append(HeadingFactMissing(fact, source_ref))
+                    seen.add(key)
+    return tuple(warnings)
 
 
 def normalize_axis_tiers(view: Any, *, locale: str) -> tuple[AxisTier, ...]:

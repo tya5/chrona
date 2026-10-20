@@ -29,6 +29,7 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_count_closure import inspect_count_reads
 from chrona.presentation.layout.surface_render_plan import (
     SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
+    uses_independent_view_heading,
 )
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import (
@@ -82,7 +83,8 @@ from chrona.presentation.review.profile_connections import ProfileConnectionErro
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, FigureTextReadError, resolve_figure_text
 from chrona.presentation.review.v05_content import (
-    compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    compose_heading, missing_heading_fact_warnings, normalize_summary_content,
+    normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.style import bind_style_rules
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
@@ -513,6 +515,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         rendered = compose_resolved_review_surface(count_input, visual_profile=visual_profile,
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
+        if (view.surface == "table-timeline"
+                or uses_independent_view_heading(view.surface, plan.profile)):
+            profile_info += missing_heading_fact_warnings(view, project, actual_observations)
         if routing_advisory is not None:
             profile_info += (routing_advisory,)
         if profile_info:

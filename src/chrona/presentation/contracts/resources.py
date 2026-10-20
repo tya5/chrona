@@ -202,6 +202,7 @@ class TableColumn:
     transform: str | None = None  # a closed cell transform, `initials` (#1373)
     suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
     header: str | FrozenDict | None = None  # a literal or `{wording: key}`; absent, the header is the id (#1724)
+    header_wording_key: str | None = None  # original `{wording: key}` identity, retained after locale resolution
 
 
 @dataclass(frozen=True)
@@ -1132,7 +1133,11 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       transform=str(column["transform"]) if "transform" in column else None,
                                       suffix=str(column["suffix"]) if "suffix" in column else None,
                                       header=(freeze(column["header"]) if isinstance(column["header"], Mapping)
-                                              else str(column["header"])) if "header" in column else None)
+                                              else str(column["header"])) if "header" in column else None,
+                                      header_wording_key=(str(column["header"]["wording"])
+                                                          if isinstance(column.get("header"), Mapping)
+                                                          and isinstance(column["header"].get("wording"), str)
+                                                          else None))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)

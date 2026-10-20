@@ -24,20 +24,27 @@ def _documented_file(name: str) -> str:
 
 
 def _render(monkeypatch, capsys, tokens: list[str]) -> dict:
+    result, _, _ = _render_channels(monkeypatch, capsys, tokens)
+    return result
+
+
+def _render_channels(monkeypatch, capsys, tokens: list[str]) -> tuple[dict, str, str]:
     monkeypatch.setattr(sys, "argv", tokens)
     capsys.readouterr()
     main()
-    return json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    captured = capsys.readouterr()
+    return json.loads(captured.out.strip().splitlines()[-1]), captured.out, captured.err
 
 
-def _guide_render() -> list[str]:
+def _guide_render(*, forecast: bool = False) -> list[str]:
     commands = [item.tokens for item in discover(ROOT) if item.path == GUIDE and item.tokens[1:2] == ("render",)]
-    assert commands, "the guide has a render command"
-    return list(commands[0])
+    command = next((tokens for tokens in commands if ("--forecast" in tokens) is forecast), None)
+    assert command is not None, f"the guide has a render command with forecast={forecast}"
+    return list(command)
 
 
 def _write_guide_files(tmp_path: Path) -> None:
-    for name in ("update-baseline.yaml", "update-plan.yaml", "update-actual.yaml"):
+    for name in ("update-baseline.yaml", "update-plan.yaml", "update-actual.yaml", "update-actual-week2.yaml"):
         (tmp_path / name).write_text(_documented_file(name), encoding="utf-8")
 
 
@@ -87,3 +94,42 @@ def test_guide_says_finish_delta_counts_working_days_and_the_product_does(tmp_pa
     assert "+2d" in with_calendar and "+4d" not in with_calendar
     without_calendar = delta("plan-nocal.yaml", "nocal.svg")
     assert "+4d" in without_calendar
+
+
+def test_guide_forecast_command_shows_baseline_slip_and_keys_the_estimate(tmp_path, monkeypatch, capsys):
+    prose = " ".join((ROOT / GUIDE).read_text(encoding="utf-8").split())
+    assert "show slip against the original plan" in prose
+    assert "`--forecast`" in prose
+    assert "`Δ vs baseline` header names that reference" in prose
+    assert "`Forecast (* estimated)` legend key" in prose
+    assert "ordinary Actual comparison is against the current plan" in prose
+
+    monkeypatch.chdir(tmp_path)
+    _write_guide_files(tmp_path)
+    tokens = _guide_render(forecast=True)
+    assert "--forecast" in tokens
+    assert tokens[tokens.index("--actual") + 1] == "update-actual-week2.yaml"
+    assert tokens[tokens.index("--snapshot") + 1] == "update-baseline.yaml"
+    assert _render(monkeypatch, capsys, tokens)["status"] == "ok"
+
+    output = Path(tokens[tokens.index("--output") + 1])
+    rendered_text = " ".join(ElementTree.fromstring(output.read_bytes()).itertext())
+    rendered_text_folded = rendered_text.casefold()
+    assert "δ vs baseline" in rendered_text_folded
+    assert "forecast (* estimated)" in rendered_text_folded
+    assert re.search(r"[+-]\d+d\*", rendered_text), rendered_text
+
+
+def test_guide_places_render_warnings_in_stdout_json(tmp_path, monkeypatch, capsys):
+    prose = " ".join((ROOT / GUIDE).read_text(encoding="utf-8").split())
+    assert "final JSON result on standard" in prose
+    assert "standard error" in prose
+
+    monkeypatch.chdir(tmp_path)
+    _write_guide_files(tmp_path)
+    tokens = ["chrona", "render", "update-plan.yaml", "--actual", "update-actual.yaml",
+              "--snapshot", "update-baseline.yaml", "--output", "default-no-ghost.svg"]
+    result, stdout, _stderr = _render_channels(monkeypatch, capsys, tokens)
+    assert result["status"] == "ok", result
+    assert any(item["code"] == "W_SNAPSHOT_NOT_DRAWN" for item in result["warnings"]), result
+    assert '"code": "W_SNAPSHOT_NOT_DRAWN"' in stdout

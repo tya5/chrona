@@ -119,6 +119,9 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
     roles.update(_scene_role(item.semantic_id) for item in relations if not item.suppressed and item.points)
     roles.update(_scene_role(item.semantic_id) for item in text
                  if item.semantic_id and item.content.strip() and item.overflow != "suppressed" and visible_placement(item))
+    estimated_delta_visible = any(item.estimated_delta and item.content.strip()
+                                  and item.overflow != "suppressed" and visible_placement(item)
+                                  for item in text)
     result = []
     for entry in content.legend_entries:
         key = entry.realized_key
@@ -135,6 +138,15 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
                   and _progress_adds_actual_ink(key, progress_shapes, drawn_marks,
                                                 content, tokens, capabilities)):
                 result.append(entry)
+            continue
+        if entry.role == "forecast":
+            candidates = tuple(mark for mark in drawn_marks if _base_mark(entry, mark))
+            if any(_same_base_ink(mark, content, tokens, capabilities) for mark in candidates):
+                result.append(entry)
+            elif estimated_delta_visible:
+                # The estimate marker remains meaningful when an encoding replaces
+                # forecast ink; retain its explanation without claiming a forecast swatch.
+                result.append(replace(entry, swatch_visible=False))
             continue
         if entry.style_scope is not None or entry.role.startswith("scale:"):
             if any(occurrence in painted for occurrence in entry.style_occurrences):

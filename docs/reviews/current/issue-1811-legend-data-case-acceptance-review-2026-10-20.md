@@ -28,6 +28,14 @@ stays capitalized beside lower-case authored/built-in keys. It renders the
 first integration fixture at1800×1000 with the same resources/Actual input;
 its pre-existing synthetic Actual-on-Plan contrast warnings are unchanged,
 not evidence for reviewer-owned palette row2.
-Required before release: current-ready integration, final-head CI, the official
-generated artifact's per-slide count table and exact review-containing main's
-three-OS release. No generated output is authored in this slice.
+Published in [PR1816](https://github.com/tya5/chrona/pull/1816), merge
+`323d32fec2f1254207102add701eba0401e2c23b`, on trusted ready `76a64952c`.
+Final-head [CI39392772621](https://github.com/tya5/chrona/actions/runs/39392772621)
+passed all three pytest shards, conformance, MCP floor and newest-Python checks.
+Its [official artifact12251005623](https://github.com/tya5/chrona/actions/runs/39392772621/artifacts/12251005623)
+has 109 matching before/after paths, no retirements: all 50 SVG and 50 Scene
+files are byte-identical (zero route/label/primitive/diagnostic changes on every
+public slide). Eight reports are identical; the inventory changes only source
+line/column anchors, with identical complete normalized text. No generated
+output was authored. Exact review-containing main three-OS release is pending;
+row2 remains reviewer-owned regardless of that release.

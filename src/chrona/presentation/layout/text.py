@@ -419,7 +419,8 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                lane_row_id: str | None = None, lane_member_id: str | None = None,
                lane_source_kind: str | None = None,
                orientation: str = "horizontal",
-               segments: tuple[TextSegment, ...] | None = None) -> TextPlacement:
+               segments: tuple[TextSegment, ...] | None = None,
+               estimated_delta: bool = False) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     treatment = theme_tokens.text_treatment(typography_role)
     font_metrics = metric_for_role(theme_tokens, typography_role, font_metrics)
@@ -489,4 +490,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         lane_member_id=lane_member_id,
         lane_source_kind=lane_source_kind,
         runs=runs,
+        estimated_delta=estimated_delta,
     )

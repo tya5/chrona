@@ -26,7 +26,8 @@ BUILT_IN_WORDING_KEYS = (
     "legend.snapshot", "legend.deadlineMark",
     "missing.unknown", "missing.inProgress",
     "legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate", "legend.holiday",
-    "column.owner", "column.number", "column.phase", "column.finishDelta", "summary.days",
+    "column.owner", "column.number", "column.phase", "column.finishDelta",
+    "column.finishDeltaPlan", "column.finishDeltaBaseline", "summary.days",
     "legend.plan", "legend.missing-actual", "legend.missing-actual-in-progress", "legend.in-the-wings",
     "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
     "delta.unit.calendarDay", "delta.unit.workingDay",
@@ -257,10 +258,13 @@ def test_the_keys_that_replace_preset_literals_read_as_the_literal_in_en_us_and_
     en, ja = wording_catalog()["en-US"], wording_catalog()["ja-JP"]
     assert {key: en[key] for key in ("legend.planned-plain", "legend.baseline", "legend.current-plan", "legend.gate",
                                       "legend.holiday", "column.owner", "column.number", "column.phase",
-                                      "column.finishDelta", "summary.days")} == {
+                                      "column.finishDelta", "column.finishDeltaPlan",
+                                      "column.finishDeltaBaseline", "summary.days")} == {
         "legend.planned-plain": "Planned", "legend.baseline": "baseline", "legend.current-plan": "current plan",
         "legend.gate": "gate", "legend.holiday": "holiday", "column.owner": "Owner", "column.number": "No.",
-        "column.phase": "Phase", "column.finishDelta": "Δ finish", "summary.days": "DAYS"}
+        "column.phase": "Phase", "column.finishDelta": "Δ finish",
+        "column.finishDeltaPlan": "Δ vs plan", "column.finishDeltaBaseline": "Δ vs baseline",
+        "summary.days": "DAYS"}
     assert en["legend.planned-plain"] != en["legend.planned"]  # `Planned` is not `Task duration`
     assert all(re.search(r"[぀-ヿ一-鿿]", ja[key]) for key in en)
 

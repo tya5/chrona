@@ -304,6 +304,8 @@ class TextPlacement:
     # Style-selected appearance stays separate from the canonical Scene role.
     theme_role: str | None = None
     style_occurrence_key: StyleOccurrenceKey | None = None
+    # Source-computed witness: this completed text is an estimated finish delta.
+    estimated_delta: bool = False
 
 
 @dataclass(frozen=True)

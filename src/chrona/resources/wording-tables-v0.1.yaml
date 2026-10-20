@@ -34,6 +34,8 @@ tables:
     column.number: "No."
     column.phase: Phase
     column.finishDelta: "Δ finish"
+    column.finishDeltaPlan: "Δ vs plan"
+    column.finishDeltaBaseline: "Δ vs baseline"
     summary.days: DAYS
     legend.plan: Plan
     legend.missing-actual: Not yet observed
@@ -80,6 +82,8 @@ tables:
     column.number: 番号
     column.phase: フェーズ
     column.finishDelta: Δ完了
+    column.finishDeltaPlan: 計画との差
+    column.finishDeltaBaseline: 基準との差
     summary.days: 日
     legend.plan: 計画
     legend.missing-actual: 未観測
