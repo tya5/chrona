@@ -481,15 +481,6 @@ route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
 The existing first-fit proposals retain their relative order (#1610), followed
 by the normal outward-corridor proposals under Primary-mark safety below.
-The single on-demand member-name repair described below may also append up to
-eight paired row-contact/outward-channel proposals after the basic proposals
-and before the pair's bounded search. This is not part of the ordinary first
-pass. Use the two nearest interior row contacts at each endpoint and the
-nearest vertically clear existing column on each side of the endpoint span;
-contacts come from completed row gaps and obstacle edges with their existing
-clearance/grid offset. Every proposal passes the ordinary stroke, terminal,
-bend, detour, obstacle and completed-route validators. No project coordinates,
-new quality threshold, expansion quota or additional routing pass is added.
 Layout checks completed reduced and terminal-adjusted route
 stroke against retained text/label-visual footprints, not just its centreline;
 staged recovery still removes only the obstacle classes its contract permits.
@@ -510,83 +501,37 @@ the same completed-route validators. An accepted fast route never invokes
 rescue. Rescue does not replay surface composition or label recovery. Both
 phases share the explicit `searchBudget`; an exhausted ceiling stops rescue.
 The routing summary counts the relation once, not once per search phase.
-Required labels precede routing. Under both search policies, member names use
-the reservation/revalidation contract below; ordinary finish deltas follow
+Required labels and member names precede routing under both search policies;
+ordinary finish deltas follow
 completed routes. Do not replay composition in Scene or adapters.
 
-**Member-name reservations (#1610, #1627).** First classify and complete required
-route-independent labels, including required attached-point and key-row labels.
-Their full footprints remain hard obstacles during normal and staged searches
-in every trial and reference; optional-reservation release/fallback MUST NOT
-remove or suppress those placements. Carry their explicit Layout obstacle
-identities through relaxation, rather than inferring priority from every
-completed Text's `required` flag. Explicit unsafe overlap/stub completion keeps
-its existing contract below. Existing typed required-label failure behavior
-remains authoritative. Run the normal policy-specific pipeline, including member
-names, relation labels and annotations, without new optional reservations.
-Under `best`, existing lane names precede routes and the existing bounded lane
-corridor planner remains a preflight; under `first-fit`, optional names follow
-routes. The on-demand pass does not change those initial phases or search
-proposals and replaces the former post-route lost-name retry, not the lane
-preflight. It adds at most one post-route repair, never another recovery loop. The
-as-of line does not obstruct member names (#1754). Their candidate contact
-generation, final placement and provisional route-blocked reservations ignore
-only that named line, preserving the normal halo/chip treatment. Other `rule`
-geometry, including deadline ticks, remains an obstacle. The shared inventory
-retains the as-of line for its own label host and annotation/connector policy;
-the as-of label/chip remains a separate real text/visual obstacle.
+**Content-first member names (#1841).** First complete required route-independent
+labels, including attached-point and key-row labels. Then actually place all
+member names before NORMAL routing, under both `best` and `first-fit`, for
+automatic and fixed-lane rows. Use the existing declared candidate sides,
+own-mark association, bounds and overflow policy. This is one actual placement,
+not a speculative reservation or rehearsal. The existing bounded `best` lane
+corridor preflight does not replace or replay the completed placement.
 
-Reserve on demand only for an initially suppressed optional member name when
-completed route paint blocked an otherwise legal declared candidate. Do not
-retry merely to improve the rung of an already-visible name: this intentionally
-retires the former preferred-rung repair for visible fallback placements.
-The placement owner retains the exact preceding inventory and obstruction
-evidence; the coordinator must not infer eligibility from a different, globally
-route-free label inventory. Probe each existing declared candidate against that
-same inventory with only dependency-route ink removed, retaining viewport,
-association, reach, required text, marks and rules. Select the feasible footprint
-intersecting the fewest distinct completed route instances; declared candidate
-rank breaks ties. This is a repair-disruption preference, not a safety waiver.
-Keep that ordered set as private proposals until the first label batch is
-complete. Admission then rejects any proposal whose full paint footprint
-intersects completed first-pass visible text or its label visuals, including
-ordinary finish deltas placed later than that name. Select the first admissible
-proposal in the existing cost/rank order, or reserve nothing for that name.
-This retention check does not replace the exact preceding eligibility inventory
-or re-rank candidates; it closes proposals against the text the retry must keep.
-Internal route-paint obstacles carry their logical route-instance owner; all
-segments, flattened arcs and stub fragments of that instance count once.
-An ownerless paint obstacle counts separately, without guessing an owner from
-its placement-id spelling. Ports and host geometry are not route paint.
-Reserve one full measured paint footprint per affected name. Final placement
-keeps its original declared candidate order and every existing validator.
-If no name qualifies, return the first completed pass without another routing
-pass or changed search policy. No additional route-search loop is introduced.
+Completed name text and label-visual footprints are hard content in every
+normal and recovery domain. Carry their explicit obstacle identities through
+relaxation; a general Text `required` flag is not their identity. Route around
+them, or use the existing truthfully diagnosed recovery policy. A formerly
+NORMAL route may become diagnosed recovery; it must not disappear or cross
+the completed names without a diagnostic. Existing strict unsafe/stub and
+required-label failure rules remain authoritative. Ordinary finish-delta and
+optional relation names follow routes; their suppression is not member-name
+suppression. Required stub titles complete against the already placed content.
 
-One Layout coordinator owns this policy for automatic and fixed-lane rows.
-At most one extra routing/placement pass runs, avoiding those provisional
-boxes and retaining required labels. Revalidate names against completed ink.
-In the retry only, revalidate initially visible text requests before initially
-suppressed requests, preserving relative request order within each class and
-every request's original candidate ladder. This protects existing visibility,
-not baseline coordinates; final geometry and obstacles must be the actual
-completed retry, never saved ghost boxes. The initial pass is unchanged.
-Keep the second pass only if every member/relation label and annotation
-placed in pass 1 remains placed, no relation is lost or degraded, and no
-completed annotation connector loses its connected topology. Otherwise return
-the original completed pass; do not selectively release reserves or run a
-third trial. Compare stable placement and logical relation identities, including
-stub fragments and declared recovery stages. Reuse the selected completed
-batches and their matching obstacle index, without replay or ghost placements.
-Reservations are private Layout facts, not emitted text or diagnostics.
-Each attempted pass retains its recorded routing facts and existing budgets;
-first-fit's cheap/exact phases still share one attempt ceiling. This adds no
-label candidate, routing policy, safety exemption or search-budget increase.
-Optional-name coverage is not promised to match the retired preferred-rung
-repair: a custom layout may retain suppressions when recovering them would
-require targeted preferred-rung reservations for already-visible names. Count diagnostics still report only
-the actual suppressed member names, not ordinary finish-delta/relation text.
-Suppression of an otherwise placeable name is not a successful readability repair.
+The as-of line alone does not obstruct member names (#1754); keep their normal
+halo/chip treatment. Deadline rules, the as-of label/chip and other completed
+text/visuals remain obstacles. Keep the line for annotation/connector policy.
+The former route-first optional-name repair transaction, provisional boxes and
+all-or-nothing route-stage comparison are retired. Complete annotations once
+against the same actual inventory, with no extra whole-surface routing pass,
+joint allocator, candidate, quality-limit relaxation or search-budget increase.
+Count only actual suppressed member names; suppression of an otherwise
+placeable name caused solely by route-priority is not successful placement.
 
 Omitted `search` means `first-fit`. Authors requiring legacy ranked output
 declare `best`; its canonical manifest representation remains unchanged.
@@ -737,20 +682,17 @@ painted short run. Semantic and exposed port coordinates and their scoped
 host authorization stay unchanged; physical-corridor validation still splits
 the completed leg at that boundary. Real turns and reversals are retained,
 with no coordinate snapping, tolerance expansion or short-leg exemption.
-The route/member-label coordinator owns their reservation (#1763). In each
-trial, complete and reserve required terminal text against existing completed
-text before optional member names; place ordinary relation labels afterward.
+The route/member-label coordinator owns their placement (#1763, #1841).
+Complete required terminal text against existing required text and member
+names; place ordinary relation labels afterward.
 All names and terminal labels use that same measured obstacle inventory.
 Visible overflow permits leaving the plot, not crossing completed text or
 label visuals. A caller's hard candidate filter also constrains visible
 fallbacks in the existing side order, without extra search passes or quotas.
 When no terminal candidate clears those reservations, report
 `E_PRESENTATION_LABEL_UNPLACEABLE` with the label identity, never suppression
-or an overlap-assertion exemption. If only the private repair trial fails this
-terminal-placement check, retain the valid completed first trial and append
-every routing/search-budget receipt from the attempted repair; do not replay
-either trial or discard its evidence. An unplaceable first trial reports the
-failure. This does not change the declared unsafe route-ink policy.
+or an overlap-assertion exemption. An unplaceable required terminal reports
+the failure. This does not change the declared unsafe route-ink policy.
 Stub geometry also uses visible overflow: once both semantic endpoints are
 admitted, insufficient plot-edge clearance must not silently erase a fragment
 or its terminal. Layout completes each endpoint independently against its own
@@ -1265,12 +1207,10 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
-The member-name reservation contract above retains #687's existing `best`
-lane-corridor preflight and adds bounded on-demand repair after the normal
-completed placement. It does not run that preflight again during repair. Required
-text remains an immutable obstacle; optional reservations may be discarded
-only by retaining the entire first completed pass. This never changes lane membership, adds
-a candidate to the declared ladder, or permits a final name to cross route ink.
+The content-first contract above retains #687's existing `best` lane-corridor
+preflight without a second placement or repair trial. Completed names remain
+hard route obstacles. This never changes lane membership, adds a candidate
+to the declared ladder, or permits a final name to cross route ink.
 For lane mode only, a declared `visible-overflow` direct fallback is permitted
 only if the completed path clears every required placed lane/member label.
 Otherwise Layout suppresses it with the same generic warning and typed
