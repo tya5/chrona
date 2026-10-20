@@ -331,9 +331,17 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
             except FileNotFoundError as error:
                 raise ValueError(f"E_THEME_INHERITANCE_BASE_MISSING: base theme for {_label(reference.get('id'))} at {_label(address)} is unavailable") from error
     if reference.get("kind") == "snapshot-ref":
-        nested = safe_load(payload).get("body", {}).get("project")
+        document = safe_load(payload)
+        body = document.get("body") if isinstance(document, dict) else None
+        nested = body.get("project") if isinstance(body, dict) else None
         if not isinstance(nested, dict):
-            raise _context_error("snapshot reference", "embedded Project reference object", nested)
+            where = (f"snapshot reference {_label(reference.get('id'))} at {_label(address)}")
+            missing = ("has no /body/project" if nested is None
+                       else f"has /body/project of type {type(nested).__name__}")
+            raise MaterializationError(
+                "E_MATERIALIZER_CONTEXT",
+                f"{where} {missing}; a snapshot-ref file must embed the baseline Project reference as "
+                "/body/project (id, kind: project, store, address, revision)")
         _copy_reference(example, nested, snapshot, overlay=overlay, stores=stores)
     return payload
 

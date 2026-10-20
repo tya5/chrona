@@ -441,3 +441,44 @@ def test_dispatched_full_matrix_sha_guard_uses_cross_platform_bash() -> None:
                      if step.get("name") == "Verify exact full-CI SHA when supplied")
     assert sha_guard["shell"] == "bash"
     assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in sha_guard["run"]
+
+
+def test_source_only_builds_inventory_once_with_unchanged_per_path_results(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    declared = tmp_path / "examples/deck/generated/a.svg"
+    calls: list[Path] = []
+
+    def fake_derived_paths(root: Path) -> list[Path]:
+        calls.append(root)
+        return [declared]
+
+    monkeypatch.setattr(derived_workflow, "derived_paths", fake_derived_paths)
+    reports = sorted(derived_workflow.REPORTS)[:1]
+    changed = (
+        "examples/deck/generated/a.svg",       # declared output
+        "examples/deck/generated/retired.svg",  # retired / generated-prefix output
+        "examples/deck/generated/b.scene.json",
+        "examples/deck/manifest.yaml",          # authored source
+        "src/chrona/x.py",
+        "examples/../generated/x.svg",
+        *reports,
+    )
+    old = [
+        path in {declared.relative_to(tmp_path).as_posix()} or derived_workflow._is_derived_path(path)
+        for path in changed
+    ]
+    inventory = derived_workflow.derived_inventory(tmp_path)
+    assert [derived_workflow.is_derived_path(p, tmp_path, inventory) for p in changed] == old
+    assert [derived_workflow.is_derived_path(p, tmp_path) for p in changed] == old
+    assert any(old) and not all(old)
+
+    calls.clear()
+    monkeypatch.setattr(derived_workflow, "changed_paths", lambda *_: changed)
+    monkeypatch.setattr(sys, "argv", ["derived_workflow", "source-only", "b", "h"])
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as raised:
+        derived_workflow.main()
+    assert len(calls) == 1
+    rejected = str(raised.value).removeprefix("E_DERIVED_SOURCE_ONLY:").split(",")
+    assert rejected == [p for p, hit in zip(changed, old) if hit]
