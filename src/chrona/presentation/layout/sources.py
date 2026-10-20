@@ -330,8 +330,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
         # The block size stays the stack of every run for a `line` too: how many rows a
         # wrapping line needs depends on the inline size the slot is given, which is not
-        # known here, so this measurement keeps its conservative height (#497); a Draft `auto` canvas narrows it
-        # to the rows the legend wraps to once the slot's inline size is resolved (#1649, surface_render_plan).
+        # known here, so this measurement keeps its conservative height (#497). The common render plan completes
+        # it to the actual rows once the slot's inline size is resolved (#1649, #1826).
         text_block = sum((run.block_size for run in measured_runs), Decimal(0))
         if not runs:
             text_block = text_line

@@ -21,6 +21,14 @@ Independent Luna review caught and corrected the Text misuse edge before
 publication. General optional-decoration synthetic coverage remains; a halo
 is no longer falsely required as a decoration witness.
 
-Final PR head, focused command/count, batched official artifact changes,
-CI links and exact-main three-OS release evidence remain to be recorded.
-The issue stays open until those release gates pass.
+Focused own-venv batch:315 passed, one obsolete ordinary-pair expectation
+corrected; directly affected37 tests then passed. Independent final registry,
+contrast and report review:91 passed. Fixed/auto SVG and render-plan tests:
+8 passed after the final internal naming cleanup. These batches overlap.
+The separate pre-existing block-stack/tall-swatch measurement defect is tracked
+as [#1830](https://github.com/tya5/chrona/issues/1830), not silently folded into
+this inline-row acceptance.
+
+Final PR head, batched official artifact changes, CI links and exact-main
+three-OS release evidence remain to be recorded. The issue stays open until
+those release gates pass.

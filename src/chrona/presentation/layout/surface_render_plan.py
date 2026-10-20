@@ -198,15 +198,15 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
     ).to_integral_value(rounding=ROUND_CEILING))) if value.content_sized else viewport["blockSize"]
     completion_floor = natural_block_floor if value.content_sized else viewport["blockSize"]
-    narrowed = _complete_wrapped_legend(
+    completed = _complete_wrapped_legend(
         resolved_layout, measured_before_headings, measured, viewport_inline=viewport["inlineSize"],
         floor=completion_floor, measurements=measurements,
         sizing=sizing_context(completion_floor) if source_sizing.active else None,
         content_sized=value.content_sized)
-    if narrowed is not None:
+    if completed is not None:
         # Complete the source measurement at the width allocated by the provisional solve. The
         # fixed outer canvas remains fixed; only content-sized allocation follows the completed rows.
-        measured = reserve_slot_heading_blocks(narrowed, resolved_layout, ThemeTokenView(theme),
+        measured = reserve_slot_heading_blocks(completed, resolved_layout, ThemeTokenView(theme),
                                                content=selected_content, font_metrics=font_metrics)
         measurements = _slot_measurements(resolved_layout.profile["root"], measured)
         source_sizing = SourceSizingSession(resolved_layout, measured, theme=theme,
@@ -376,8 +376,8 @@ def _complete_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: M
     current = unheaded.measurements["legend"]
     if block == current.preferred_block:
         return None
-    narrowed = replace(current, preferred_block=block, max_block=block * 2)
-    return replace(unheaded, measurements={**unheaded.measurements, "legend": narrowed})
+    completed = replace(current, preferred_block=block, max_block=block * 2)
+    return replace(unheaded, measurements={**unheaded.measurements, "legend": completed})
 
 
 def _legend_slot(node: Mapping[str, Any]) -> Mapping[str, Any] | None:
