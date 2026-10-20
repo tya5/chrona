@@ -132,6 +132,8 @@ skill (`chrona skill copy`).
 | show a dependency graph instead of a timeline | [Network view](docs/guides/network-view.md) |
 | make a one-page summary for a steering committee | [Executive summary](docs/guides/executive-summary.md) |
 | colour by my own typed field (risk, team) | [Typed fields](docs/guides/typed-fields.md) |
+| point a field at a deliverable or a person, and show its title | [objectReference](docs/guides/object-reference.md) |
+| build a deck of slides from one manifest, with a baseline | [Deck manifest](docs/guides/deck-manifest.md) |
 | record progress, move `asOf` and re-plan | [Update a plan](docs/guides/update-a-plan.md) |
 | render in Japanese or reword the built-in texts | [Locale and wording](docs/guides/locale-and-wording.md) |
 | choose and embed fonts | [Declared font assets](docs/guides/declared-font-assets.md) |
