@@ -1201,6 +1201,16 @@ Observation does not infer a policy or repair paint.
 The inset interior rectangles used for conservative rectangular-detour quality
 lower-bound certificates remain unchanged. They are not the contact envelope
 for actual candidate, repair, reduction or final drawn-path safety checks.
+Graph seed and frontier-edge admission also apply the selected stage's closed
+primary-mark contact rule, rather than enumerating prefixes that final
+validation must reject. Only isolated named source/target exposed-port touches
+are admitted at the graph endpoints; their physical corridors remain completed
+and validated separately. Stage-relaxed non-host marks stay relaxed. Apply this
+pair-specific admission to every traversal, including cached visibility graphs:
+shared caches retain endpoint-independent obstacle geometry, never a previous
+pair's contact authorization. Conservative graph/quality lower bounds may keep
+their existing relaxed visibility; no expansion ceiling, quality threshold,
+protected-feasibility obligation or final completed-route validator changes.
 Normal proposals also cover outward endpoint corridors: derive their lead ends
 from the admitted port sides and existing terminal/stroke run lengths, then
 reuse the finite obstacle-channel shape grammar between those leads. Every
