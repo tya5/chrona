@@ -33,7 +33,8 @@ def as_of_label_gap(theme_tokens: Any) -> float:
 
 def measure_as_of_chip(content: Any, *, window: tuple[Any, Any], theme_tokens: Any,
                        font_metrics: Any, visual_requests: tuple[Any, ...] = (),
-                       icon_assets: dict[str, Any] | None = None) -> MeasuredLabelChip | None:
+                       icon_assets: dict[str, Any] | None = None,
+                       scene_precision: int = 3) -> MeasuredLabelChip | None:
     """Close actual nonrect label geometry before content-sized allocation.
 
     The use case supplies normalized content/closed resources, not geometry.
@@ -57,7 +58,8 @@ def measure_as_of_chip(content: Any, *, window: tuple[Any, Any], theme_tokens: A
     text_block = float(treatment.font_size) * float(treatment.line_height)
     padding = chip_padding(theme_tokens, label_chip_semantic("asOfLabel"), float(treatment.font_size), text_block)
     return measure_label_chip(theme_tokens, "asOfLabel", text_inline=leading + text_width + trailing,
-                              text_block=text_block, font_size=float(treatment.font_size), padding=padding)
+                              text_block=text_block, font_size=float(treatment.font_size), padding=padding,
+                              scene_precision=scene_precision)
 
 
 def as_of_chip_block_size(theme_tokens: Any, *, chip_measurement: MeasuredLabelChip | None = None) -> float:
