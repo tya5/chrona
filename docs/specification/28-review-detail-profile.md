@@ -73,7 +73,7 @@ actual-trait/Style ink. A declared comparison with no available bound source
 contributes no comparison key; a supplied source with blank values retains its
 declared missing-value behavior.
 
-Actual grouping identity is semantic meaning plus the set of effective emitted
+Span Actual grouping identity is semantic meaning plus the set of effective emitted
 ink colours, including opacity, admitted gradients and pattern treatment.
 For a filled figure these are its visible fill inks; borders do not introduce
 another meaning. Only a figure with no visible fill uses its stroke inks.
@@ -86,7 +86,7 @@ The full paint witness is retained for projection, not weakened to this grouping
 identity. Distinct semantic families otherwise remain separate. Existing finite
 key shapes remain deliberate ink projections, not copies of source geometry.
 
-A multipart Actual glyph is one realized mark, not several independent
+A multipart point glyph is one realized mark, not several independent
 coloured marks. Its key preserves the ordered completed part paints and the
 glyph geometry as one miniature figure with one label. Composite identity
 retains the ordered effective paints and canonical glyph geometry/part
@@ -134,6 +134,42 @@ inside the conservatively allocated legend/footer slots. Canvas completion
 replaces candidate-only legend growth with the final caption-restored extent,
 retaining the declared allocation minimum and all other completed geometry.
 It does not retry route, row, or annotation layout.
+
+### Realized point-state keys (#1847)
+
+Point occurrences retain their distinct `planned`, `actual` and `forecast`
+meanings. A key's grouping identity includes its declared legend owner, typed
+state and complete canonical glyph/paint witness, for simple and multipart
+glyphs alike. Equal signatures within one owner/state coalesce; different
+states never coalesce merely because their ink matches. Span Actual's existing
+ink/variance grouping and Progress semantics are unchanged.
+
+A declared Detail entry matching an explicitly Style-selected point role owns
+those points, ahead of the general `milestone` entry. Otherwise `milestone`
+owns point states; when absent, the corresponding declared `planned`, `actual`
+or `forecast` entry may own its state's points separately from range keys.
+No declared owner means no synthesized point key. Ownership is explicit role
+and occurrence data, never a title, project name or inferred profile value.
+More-specific ownership prevents duplicate coverage by the generic entries.
+
+Expand each owner at its authored position, preserving unrelated entry order,
+with states ordered Planned, Actual, Forecast and variants in first-seen order.
+A point-specific owner keeps its authored/wording label for one final state;
+multiple final states append ` · ` and the localized `planned-plain`, `actual`
+or `forecast` legend wording. A range-semantic owner's point keys append the
+localized `milestone` wording to distinguish them from its range key. Repeated
+variant labels remain subject to the existing duplicate-label diagnostic; do
+not invent colour names or hashes. All potential qualified labels and maximum
+glyph footprints are reserved before measurement; final visible point witnesses
+alone admit keys and determine single-state labels, without rerunning layout.
+
+Chart and key glyphs use the same selected-symbol and outline kernels, including
+normalized shape traits and ordered part paints. Canonical identity excludes
+resource names and placement translations/bounds. Scene/adapters receive
+completed figures, not point-state inference. Explicit circle/rule-pair shapes
+remain intentional projections and still participate in ambiguity checks.
+Migration: the former combined milestone key and point/range Actual coalescing
+are replaced by these state-aware keys; schemas and scheduling kinds do not change.
 
 A View visual targeting a legend role binds to each completed label of that
 role, including realized colour groups with stable hashed identities. Layout
