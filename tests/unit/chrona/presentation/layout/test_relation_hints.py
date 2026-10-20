@@ -50,12 +50,14 @@ def _route(source_mark, target_mark, *, source_side="start", target_side="end",
 
 
 def _hints(marks, points, marker_start=None, marker_end=None, *, endpoint_identity=True,
-           terminal_compatible=True, duplicate_relation=False):
+           terminal_compatible=True, duplicate_relation=False, mark_kinds=None):
     relation = HintRelation(RELATION, SOURCE, TARGET, tuple(points),
                            marker_start, marker_end)
     relations = (relation, relation) if duplicate_relation else (relation,)
+    hint_marks = tuple(_hint_mark(mark, kind=kind) for mark, kind in zip(marks, mark_kinds)) if mark_kinds else tuple(
+        _hint_mark(mark) for mark in marks)
     return PreviousRouteHints(endpoint_identity,
-        (HintSurface(SURFACE, tuple(_hint_mark(mark) for mark in marks), relations),),
+        (HintSurface(SURFACE, hint_marks, relations),),
         "theme-sha256", terminal_compatible)
 
 
@@ -151,6 +153,43 @@ def test_painted_rect_and_symbol_hosts_propose_supported_geometry():
 
     assert proposal.disposition == "proposed"
     assert proposal.candidates[0].pair == (old_s, old_t)
+
+
+@pytest.mark.parametrize(("shape", "old_kind"), [
+    ("span", "Rect"), ("span", "Symbol"), ("point", "Rect"), ("point", "Symbol"),
+])
+def test_host_primitive_kind_does_not_override_temporal_point_or_span_ports(shape, old_kind):
+    source = _mark("planned:source-instance", "source", (0, 0, 10, 4), shape=shape)
+    target = _mark("planned:target-instance", "target", (20, 0, 10, 4), shape=shape)
+    source_endpoint = "at" if shape == "point" else "start"
+    target_endpoint = "at" if shape == "point" else "finish"
+    source_egress = ConnectorEgress("end" if shape == "point" else "start",
+        source.end_port if shape == "point" else source.start_port,
+        source.end_port if shape == "point" else source.start_port, (source.placement_id,))
+    target_egress = ConnectorEgress("start" if shape == "point" else "end",
+        target.start_port if shape == "point" else target.end_port,
+        target.start_port if shape == "point" else target.end_port, (target.placement_id,))
+    old_scene = _hints((source, target), (source_egress.semantic_port, target_egress.semantic_port),
+                       mark_kinds=(old_kind, old_kind))
+
+    proposal = _propose(old_scene, source, target, source_egress, target_egress,
+                        source_endpoint=source_endpoint, target_endpoint=target_endpoint)
+
+    assert proposal.disposition == "proposed"
+    assert proposal.candidates[0].pair == (source_egress, target_egress)
+
+
+def test_unknown_old_host_geometry_still_refuses_the_hint():
+    source, target = _mark("planned:source-instance", "source", (0, 0, 10, 4)), _mark(
+        "planned:target-instance", "target", (20, 0, 10, 4))
+    source_egress = ConnectorEgress("end", source.end_port, source.end_port, (source.placement_id,))
+    target_egress = ConnectorEgress("start", target.start_port, target.start_port, (target.placement_id,))
+    hints = _hints((source, target), (source.end_port, target.start_port), mark_kinds=("Glyph", "Rect"))
+
+    proposal = _propose(hints, source, target, source_egress, target_egress)
+
+    assert proposal.disposition == "unusable"
+    assert proposal.reason == "host-geometry"
 
 
 def test_unpainted_rollup_uses_only_compatible_theme_terminal_provenance():

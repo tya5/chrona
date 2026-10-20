@@ -34,7 +34,7 @@ from chrona.presentation.layout.rounded_outline import rounded_rect_commands
 from chrona.presentation.model.projection import WindowMode, shared_track_member_key, active_placement, finish_delta_text, finish_delta_semantic
 from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
-from chrona.presentation.layout.surface_deadlines import complete_deadline_host
+from chrona.presentation.layout.surface_deadlines import complete_deadline_host, deadline_boundary_in_window
 from chrona.presentation.layout.text import metric_for_role, measure_text_width
 from chrona.presentation.layout.lane_projection import (
     folded_instance_id, lane_missing_actual_visible,
@@ -334,7 +334,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         folded_by_group.setdefault(folded.group_id, []).append(folded)
     shown_deadlines = tuple(
         deadline for deadline in getattr(projection, "deadlines", ())
-        if projection.window[0] <= deadline.deadline <= projection.window[1]
+        if deadline_boundary_in_window(deadline, projection.window)
     )
     def folded_label_candidates():
         return (("end", "start") if contract.labels.side == "auto" else (contract.labels.side,))

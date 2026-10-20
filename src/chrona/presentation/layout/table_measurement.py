@@ -10,7 +10,8 @@ from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
     TableColumnPlacement, header_group_cell_indent, measure_table_column_minima,
-    place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
+    place_table_columns, table_cell_indent, table_content_inline_size, table_text_fit_budget,
+    table_text_measurer,
 )
 from chrona.presentation.layout.text import TextLineFit, fit_text_lines, measure_text_width, metric_for_role
 from chrona.presentation.model.surface_content import TableContent
@@ -46,12 +47,19 @@ class BoundedTableMeasurement:
 
 def _fit_table_text(content: str, *, available: float, role: str, wrap: str,
                      tokens: Any, font_metrics: Any, prefix: str = "", suffix: str = "",
-                     required: bool = False) -> TextLineFit:
+                     required: bool = False, column_inline_size: float | None = None,
+                     indent: float = 0.0, inset: float = 0.0) -> TextLineFit:
     treatment = tokens.text_treatment(role)
     metrics = metric_for_role(tokens, role, font_metrics)
     kwargs = dict(font_size=float(treatment.font_size), font_metrics=metrics,
                   letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                   numeric_spacing=treatment.numeric_spacing)
+    text_advance = measure_text_width(content, **kwargs)
+    # Use the same forward admission rule for equality and for the rare inverse
+    # subtraction that rounds a genuinely short column back up to the full run.
+    available = table_text_fit_budget(available, text_advance,
+                                      column_inline_size=column_inline_size,
+                                      indent=indent, inset=inset)
     fit = fit_text_lines(content, available_inline=available, wrap=wrap, **kwargs)
     if required and (fit is None or fit.ellipsized):
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table/cells", detail="required comparison text cannot be truncated")
@@ -120,7 +128,10 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
                 raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table/header", column.column_id)
             available = measure(column.header, header_role, "horizontal")
         fit = _fit_table_text(column.header, available=available, role=header_role,
-                              wrap=column.text_wrap, tokens=tokens, font_metrics=font_metrics)
+                              wrap=column.text_wrap, tokens=tokens, font_metrics=font_metrics,
+                              column_inline_size=(widths[column.column_id]
+                                                  if column.header_orientation == "horizontal" else None),
+                              inset=inset)
         block = (Decimal(str(fit.inline_size)) if column.header_orientation != "horizontal"
                  else treatment.font_size * treatment.line_height * len(fit.lines))
         headers.append(MeasuredTableText(column.column_id, "view:tableColumns", column.header,
@@ -136,7 +147,8 @@ def measure_bounded_table(table: TableContent, *, available_inline: float | Deci
                               role=cell.typography_role, wrap=column.text_wrap,
                               tokens=tokens, font_metrics=font_metrics,
                               prefix=cell.affix_prefix, suffix=cell.affix_suffix,
-                              required=getattr(cell, "required", False))
+                              required=getattr(cell, "required", False),
+                              column_inline_size=widths[cell.column_id], indent=indent, inset=inset)
         block = treatment.font_size * treatment.line_height * len(fit.lines)
         cells.append(MeasuredTableText(cell.column_id, cell.object_id, cell.content, cell.typography_role,
                                        "horizontal", fit, block, str(metrics.content_identity)))
