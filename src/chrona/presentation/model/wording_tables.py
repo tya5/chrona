@@ -111,3 +111,11 @@ def wording_resolver(locale: str, wording: Mapping[str, Any] | None) -> WordingR
     """The resolver for a Render Context locale and a View's ``wording`` mapping."""
     wording = wording or {}
     return WordingResolver(locale, dict(wording.get("keys", {})), dict(wording.get("legend", {})))
+
+
+_DELTA_UNIT_KEYS = {"calendar-days": "delta.unit.calendarDay", "working-days": "delta.unit.workingDay"}
+
+
+def delta_unit_text(resolver: WordingResolver, delta_unit: str) -> str:
+    """The unit that follows a signed day delta: `deltaUnit` picks the key, `wording.keys` may override it (#1790)."""
+    return resolver.text(_DELTA_UNIT_KEYS.get(delta_unit, _DELTA_UNIT_KEYS["calendar-days"]))
