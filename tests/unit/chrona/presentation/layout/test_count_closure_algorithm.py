@@ -7,6 +7,8 @@ from chrona.presentation.count_text import CountTextFormat
 from chrona.presentation.heading_text import HeadingTextPrograms, close_heading
 from chrona.presentation.layout import surface_count_closure as closure
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.model.info_diagnostics import RoutingCostAdvisory
+from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress, RenderProgressEvent
 from tests.integration.test_slot_heading import _render
 
 
@@ -64,6 +66,31 @@ def test_no_solution_retains_bounded_mismatch_evidence_and_never_projects(seed, 
     assert caught.value.upper == 3 and len(caught.value.trials) == 4
     assert all(t.outcome == "mismatch" for t in caught.value.trials)
     assert "domain=0..3; trials=4" in caught.value.detail
+
+
+def test_rejected_trial_reports_attempted_work_early_but_not_candidate_progress(seed, monkeypatch):
+    initial, completed, calls = _stub_planning(monkeypatch, seed)
+    observed = []
+    initial = replace(initial, value=replace(initial.value, progress=RenderProgress(observed.append)))
+
+    def compose(value, plan):
+        count = dict(value.projection.figures)["notes"]
+        advisory = RoutingCostAdvisory("table-timeline", 2370 + count)
+        value.progress.phase("routing")
+        value.progress.advisory(advisory)
+        # Before this trial's search/completion, the work advisory is visible
+        # but its ordinary progress is still buffered.
+        assert RenderAdvisoryEvent(advisory) in observed
+        assert not any(isinstance(event, RenderProgressEvent) for event in observed)
+        return _facts(completed, 2)
+
+    monkeypatch.setattr(closure, "_compose", compose)
+    result = closure.complete_surface_render_plan(initial)
+    assert calls == [3, 2]
+    assert [trial.outcome for trial in result.trials] == ["mismatch", "accepted"]
+    assert observed == [RenderAdvisoryEvent(RoutingCostAdvisory("table-timeline", 2373)),
+                        RenderAdvisoryEvent(RoutingCostAdvisory("table-timeline", 2372)),
+                        RenderProgressEvent("routing")]
 
 
 def test_unavailable_upper_number_names_do_not_preclude_a_lower_consistent_candidate(seed, monkeypatch):

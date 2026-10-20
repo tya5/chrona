@@ -14,7 +14,7 @@ import jsonschema
 import yaml
 
 import chrona.usecases.render_review as render_usecase
-from chrona.presentation.layout import surface_render_plan
+from chrona.presentation.layout import surface_render_plan, surface_routes
 from chrona.presentation.layout.surface_source_inputs import _source_inputs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
@@ -211,20 +211,20 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
 
 
-def test_routing_cost_advisory_precedes_layout_work_and_is_retained_once(monkeypatch):
+def test_routing_cost_advisory_precedes_route_search_and_is_retained_once(monkeypatch):
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
         advisory = RoutingCostAdvisory("table-timeline", 336)
         events = []
-        original_prepare = render_usecase.prepare_surface_render_plan
+        original_select = surface_routes.select_relation_route
 
-        monkeypatch.setattr(render_usecase, "routing_cost_advisory", lambda _projection, _content: advisory)
+        monkeypatch.setattr(surface_routes, "routing_cost_advisory", lambda _surface, _count: advisory)
 
-        def prepare_after_advisory(value):
+        def select_after_advisory(*args, **kwargs):
             assert RenderAdvisoryEvent(advisory) in events
-            return original_prepare(value)
+            return original_select(*args, **kwargs)
 
-        monkeypatch.setattr(render_usecase, "prepare_surface_render_plan", prepare_after_advisory)
+        monkeypatch.setattr(surface_routes, "select_relation_route", select_after_advisory)
         rendered = render_review(_request(closure, snapshot, progress=RenderProgress(events.append)))
 
     assert events.count(RenderAdvisoryEvent(advisory)) == 1
@@ -233,6 +233,37 @@ def test_routing_cost_advisory_precedes_layout_work_and_is_retained_once(monkeyp
                        if item.payload.get("code") == advisory.code]
     assert len(warning_records) == 1
     assert warning_records[0].identity == advisory.scene_diagnostic()
+
+
+def test_first_attempted_work_advisory_survives_no_or_failing_observer(monkeypatch):
+    advisory = RoutingCostAdvisory("table-timeline", 2370)
+    later = RoutingCostAdvisory("table-timeline", 9999)
+    original_compose = render_usecase.compose_resolved_review_surface
+
+    def compose(seed, **kwargs):
+        # A rejected attempt and a later attempt share a render-work collector;
+        # final metadata keeps the first count, not an accepted-geometry claim.
+        seed.value.progress.buffered([].append).advisory(advisory)
+        seed.value.progress.buffered([].append).advisory(later)
+        return original_compose(seed, **kwargs)
+
+    monkeypatch.setattr(render_usecase, "compose_resolved_review_surface", compose)
+    observed = []
+
+    def fail(event):
+        observed.append(event)
+        raise BrokenPipeError("closed UI")
+
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        plain = render_review(_request(closure, snapshot))
+        failed = render_review(_request(closure, snapshot, progress=RenderProgress(fail)))
+    assert observed  # external observation was attempted and detached
+    assert plain.artifact.content == failed.artifact.content
+    assert plain.scene == failed.scene
+    for rendered in (plain, failed):
+        costs = [item for item in rendered.surface.diagnostics if item.startswith(advisory.code + ":")]
+        assert costs == [advisory.scene_diagnostic()]
 
 
 def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():

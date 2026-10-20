@@ -18,7 +18,6 @@ from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan, SurfaceRenderPlanInput, prepare_surface_render_plan
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.projection import ReviewProjection
-from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts
 
@@ -157,7 +156,7 @@ def complete_surface_render_plan(seed: CountReadInput, *, initial: PreparedSurfa
     for count in range(upper, -1, -1):
         events = []
         candidate = replace(value, projection=_with_count(value, count),
-                            progress=RenderProgress(events.append) if value.progress is not None else None)
+                            progress=value.progress.buffered(events.append) if value.progress is not None else None)
         try:
             plan = prepare_surface_render_plan(candidate)
             composition = _compose(candidate, plan)
