@@ -1,6 +1,6 @@
 # Issue 415 — shared Context acceptance
 
-Source: `28237eed6e83a841a1030d4ad6e49727ce713f23`.
+Source: `078db75863a21f77311a5c5abfd7cc452552a8d3`.
 Feature verification in progress; this is not issue closure. Approved contract:
 [Spec40 §7](../../specification/40-example-reproducibility-and-materialization.md#7-shared-deck-context-authoring-415),
 [reviewer approval](https://github.com/tya5/chrona/issues/415#issuecomment-6282070481).
@@ -33,9 +33,16 @@ Composer/schema batch: 186 passed; inspection tools and acceptance caller batch:
 provider is installed; it did not cause these skips. Final composer/composition/
 malformed-manifest batch: 26 passed, including stable completed-Context error
 codes. Package-backed gallery diffs: 4 passed through the normal reference reader.
+Final inspector follow-up: 28 passed for immutable mapping viewport derivatives,
+shared Store-root propagation and fontSet-expanded identity checks; incorrect
+Scene font identities still fail and authored Context payloads remain unchanged.
 Schema maintenance uses the documented prune: fourteen already-merged stale
 L1 allowances retire; only this schema's added marker is new. No corpus source
 or generated SVG/Scene/report is authored by the feature.
+Local conformance passed every non-derived-report check, including actual
+documented commands. Its only failures were stale CI-owned diagnostic/value
+inventories (new diagnostic sites and moved source anchors); CI regenerates and
+verifies those reports in the official snapshot, not in authored commits.
 
 Required PR snapshot, full CI and exact review-containing main release remain
 pending. Keep issue415 open for those gates and reviewer-owned migration.
