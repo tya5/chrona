@@ -59,7 +59,7 @@ def test_fixed_and_auto_block_legends_reserve_full_rows_in_actual_svg(tmp_path, 
     assert slot.bounds[3] == pytest.approx(66)
     assert max(node.bounds[1] + node.bounds[3] for node in swatches) == pytest.approx(slot.bounds[1] + slot.bounds[3])
     assert not [warning for warning in rendered.surface.fit_warnings
-                if warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" and warning.source == "legend"]
+                if warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" and warning.source_ref == "legend"]
     root = ElementTree.fromstring(rendered.artifact.content)
     texts = ["".join(node.itertext()) for node in root.iter("{http://www.w3.org/2000/svg}text")]
     assert "Planned work" in texts and "Observed work" in texts
@@ -70,8 +70,11 @@ def test_fixed_and_auto_block_legends_reserve_full_rows_in_actual_svg(tmp_path, 
 def test_a_genuinely_short_fixed_block_legend_still_reports_overflow(tmp_path, monkeypatch):
     rendered, plan = _render(tmp_path, monkeypatch, cramped=True)
     assert plan.measured.measurements["legend"].preferred_block == 66
-    warnings = [warning for warning in rendered.surface.fit_warnings if warning.code == "W_LAYOUT_VISIBLE_OVERFLOW"]
-    assert any(warning.required_block > warning.available_block for warning in warnings)
+    warnings = [warning for warning in rendered.surface.fit_warnings
+                if warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" and warning.source_ref == "legend"]
+    assert len(warnings) == 1
+    assert warnings[0].required_block == 66
+    assert warnings[0].available_block == 40
     # The fixed allocation stays fixed; visible-overflow ink may enlarge the
     # completed Scene canvas envelope, independently of the declared viewport.
     assert plan.viewport[1] == 900
