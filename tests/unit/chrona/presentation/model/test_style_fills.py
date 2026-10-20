@@ -144,9 +144,21 @@ def test_first_appearance_domain_uses_only_matched_intents_in_input_order():
     assert fills.get(unmatched) is None
 
 
-def test_missing_closed_domain_value_keeps_existing_scale_error():
+def test_missing_closed_domain_value_is_not_encoded():
+    # #1789: no value for the field is not a refusal; the occurrence keeps its base paint.
     key = StyleOccurrenceKey("task", "primary", "planned", "row", "item")
     occurrence = _occurrence(key, None, present=False)
+    rule = _rule(domain=("A",))
+
+    fills = complete_style_fills(_index((occurrence,), rule=rule), (occurrence,), theme=_theme(("A",)),
+                                 encoding_sources=_sources((rule,)))
+
+    assert fills.get(key) is None
+
+
+def test_a_value_outside_the_closed_domain_keeps_the_scale_error():
+    key = StyleOccurrenceKey("task", "primary", "planned", "row", "item")
+    occurrence = _occurrence(key, "Z")
 
     with pytest.raises(ColorScaleError) as caught:
         rule = _rule(domain=("A",))
