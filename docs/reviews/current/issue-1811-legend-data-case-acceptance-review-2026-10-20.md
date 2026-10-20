@@ -7,7 +7,7 @@ Dev A owns row1; the [reviewer owns row2 and the owner comparison](https://githu
 
 | Literal criterion | Status | Evidence |
 | --- | --- | --- |
-| A synthetic legend with lower-case design voice and an owner encoding keeps "Aiko" as written; the built-in keys stay lower case. | met locally; release pending | `tests/integration/test_legend_data_case.py` checks actual SVG/Scene for Aiko and mixed-case entity titles, authored/built-in wording, Style title/value separation and real `Other` versus folded wording. `test_legend_literal_measurement.py` checks identical source/placement widths, inline/grid positions, source-preserving ellipsis and literal scope selectors. |
+| A synthetic legend with lower-case design voice and an owner encoding keeps "Aiko" as written; the built-in keys stay lower case. | met; released | `tests/integration/test_legend_data_case.py` checks actual SVG/Scene for Aiko and mixed-case entity titles, authored/built-in wording, Style title/value separation and real `Other` versus folded wording. `test_legend_literal_measurement.py` checks identical source/placement widths, inline/grid positions, source-preserving ellipsis and literal scope selectors. Exact-main release below passes. |
 | target-b's owner palette passes its own encoding-contrast floor and separability check against the other legend keys. This is reviewer YAML, and the owner decides the colours (the owner is colour-weak, so choose by lightness steps, not hue alone); a comparison page goes to the owner first. | not met by this slice; reviewer-owned | No palette or example edits. Keep issue1811 open until the reviewer records this row's result or an explicit disposition. |
 
 Layout alone selects wording/literal segments from typed provenance, then shares
@@ -37,5 +37,8 @@ has 109 matching before/after paths, no retirements: all 50 SVG and 50 Scene
 files are byte-identical (zero route/label/primitive/diagnostic changes on every
 public slide). Eight reports are identical; the inventory changes only source
 line/column anchors, with identical complete normalized text. No generated
-output was authored. Exact review-containing main three-OS release is pending;
-row2 remains reviewer-owned regardless of that release.
+output was authored. Exact review-containing main
+`27d2fd8f203ed28abc1f293a4d77674958aab92a` passed
+[release39410064482](https://github.com/tya5/chrona/actions/runs/39410064482), full
+pytest/conformance/wheel on macOS, Ubuntu and Windows, MCP floor and newest-Python
+reproduction. Row1 is complete; row2 remains reviewer-owned and issue1811 stays open.

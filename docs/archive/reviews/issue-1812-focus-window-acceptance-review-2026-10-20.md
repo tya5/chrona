@@ -1,6 +1,6 @@
 # Issue 1812 — focus-window acceptance
 
-Status: implementation and parked-head artifact verified; final-base CI/release pending.
+Status: accepted and closed; all three literal rows and exact-main release complete.
 Source: `f6e9802fe`; integrated trusted ready `27d2fd8f2` at `4d47de165`.
 Design: [living issue record](https://github.com/tya5/chrona/issues/1812#issuecomment-6286331161),
 published specifications `7b2752dae` and row-absence correction `85756e601`.
@@ -9,7 +9,7 @@ published specifications `7b2752dae` and row-absence correction `85756e601`.
 | --- | --- | --- |
 | Synthetic tests for each of the three rules, plus PNGs. | met | `test_completion.py`, `test_view_completion_window.py`, `test_projection_rows.py`, `test_focus_window_render.py`; inspected [finished](assets-1812/finished.png), [relative](assets-1812/relative.png), [combined focus](assets-1812/focus.png). Synthetic row counts: 2 / 3 / 1. |
 | A guide section "focus a slide: hide finished work, show the next N weeks" checked by the docs tests. | met | [Executable guide](../../guides/update-a-plan.md); `test_update_a_plan_guide.py` executes its literal command and checks kept/omitted labels and the identified dependency warning: 5 passed. |
-| Existing Views are unchanged (count table). | not met | Automatic/fixed-lane implicit-default versus explicit-keep Scene and SVG identity tests pass. Official parked-head audit below proves all 50 pairs unchanged; final-base artifact verification remains pending. |
+| Existing Views are unchanged (count table). | met | Automatic/fixed-lane implicit-default versus explicit-keep Scene and SVG identity tests pass. Final PR artifact below proves all 50 pairs unchanged. |
 
 Whole-architecture review: Core owns Actual completion; View owns selection and
 relative dates; one projection-bound Layout admission owns geometry compaction.
@@ -29,24 +29,27 @@ Initial conformance identified two authored omissions (schema examples and Scene
 delivery registration), now corrected with focused checks. Diagnostic inventory
 and presentation coverage are stale generated reports, delegated to the official
 CI snapshot rather than authored here; all other initial conformance checks passed.
-Official parked-head run [39402774549](https://github.com/tya5/chrona/actions/runs/39402774549),
-head `e8175242e`, artifact `12256001890`, SHA256
-`185baa0021f900e3af83d75834c8a27eb8ac3715dc50bab44b94621379fa0600`:
+Final PR run [39410405412](https://github.com/tya5/chrona/actions/runs/39410405412),
+head `7dd6a1ae7`, artifact `12258449372`, SHA-256
+`a4399d944f552ff74233ee00c87fc81b4b3f1b37e0d043439c1540449e5d7247`:
 
 | Scope | SVG changed | Scene changed | Primitives/routes/labels/diagnostics added, removed or changed |
 | --- | --- | --- | --- |
 | All 50 declared slides | 0/50 | 0/50 | 0 for every slide |
 
 All 109 paths remain present, with no additions/retirements. Only generated
-diagnostic source anchors/new guard catalog entries and coverage vocabulary/probes
-change. Conformance, public materializers and newest-Python checks pass. All three
-pytest shards were inventoried: seven stale synthetic-fixture/schema expectations,
-corrected by tests-only `fd3c8ae47`; the affected six modules pass 134 tests without
-product fallbacks or validator weakening.
+diagnostic source anchors, new guard catalog entries, and coverage vocabulary/
+probes change. All final PR checks pass. All three pytest shards were inventoried:
+seven stale synthetic-fixture/schema expectations, corrected by tests-only
+`fd3c8ae47`; the affected six modules pass 134 tests without product fallbacks or
+validator weakening.
 
 Integration with [1818](https://github.com/tya5/chrona/issues/1818) preserves both
 row admission and declared precision through the shared Layout request/preflight.
 Window/precision/guide tests pass 61 cases; defaults/chip/lane tests pass 82 cases
-(overlapping suites). The subsequent ready-main merge changes only bot-owned
-evidence, without product conflicts. CI supplies full tests and release evidence;
-final-base artifact and exact-main three-OS verification remain required.
+(overlapping suites); the three prior-failure fixture modules also pass 31 tests
+after integration. Exact review-containing main run
+[39413307476](https://github.com/tya5/chrona/actions/runs/39413307476) at
+`3d028adedebcf377d36fb9e1d7e983f0c858e074` passed full pytest, conformance and
+wheel/smoke on macOS, Ubuntu and Windows, plus MCP floor and newest-Python
+reproduction. [Closing acceptance](https://github.com/tya5/chrona/issues/1812#issuecomment-6290241604).

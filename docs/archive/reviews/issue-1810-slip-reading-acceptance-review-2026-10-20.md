@@ -1,6 +1,6 @@
 # Issue 1810 — slip reading acceptance
 
-Status: implementation verification in progress; release acceptance pending.
+Status: accepted and closed; all four literal rows and exact-main release complete.
 Design authority: Spec06 §7.4/§8.5, Specs28/50/60/63, and the
 [living issue plan](https://github.com/tya5/chrona/issues/1810#issuecomment-6286459093).
 Design publication: `62416caed6986875f6b9b61bd09a1bdbe4da360c` and
@@ -45,25 +45,30 @@ The all-warning-code catalogue guard caught the missing human explanation
 before PR CI; the corrected warning/heading suite passes 22 tests. The final
 wheel's no-Actual trial render returns `ok` with a pointed subtitle/asOf warning
 and the instruction to supply the fact or remove the placeholder.
-The first PR run39396541073 found one missing guide key-inventory entry;
-both new keys are now listed in `locale-and-wording.md`. Its whole module,
-the update guide and wording-table tests pass (31 tests); final CI is required.
+The one stale guide key-inventory expectation is corrected in
+`locale-and-wording.md`; its module, update guide and wording-table tests pass
+(31 tests). All final PR checks pass in run `39398809343`.
 
 ## Official public cohort
 
-[Artifact12251569617](https://github.com/tya5/chrona/actions/runs/39396541073/artifacts/12251569617)
-is from source529911008 (before the guide-only correction): 109 matching
-before/after paths, no additions/retirements, 46 SVG/Scene pairs byte-identical.
-Each of `chrona-roadmap/roadmap`, `chrona-roadmap/roadmap-yuya`,
-`controller-z/as-of-foot` and `halcyon-1/21-target-b` changes one subtitle's date
-text and measured width only (and its naturally sized title-slot width).
-Per slide: zero added/removed primitives, zero changed routes/marks/paint or
-diagnostics. The other 46 slides change nothing. Three reports change only
-source anchors, four subtitle contrast sample positions and the two wording-key
-inventories. Independent audit: [per-slide table](https://github.com/tya5/chrona/pull/1817#issuecomment-6287421891).
+Final PR artifact [12255030733](https://github.com/tya5/chrona/actions/runs/39398809343/artifacts/12255030733),
+from head `f423ec20`, has SHA-256
+`2b6c9114ba6fb514e352ecf7fde0310b1d94a285e8884f43b09897a222b19ed9`.
+All 109 before/after paths are present. Forty-six SVG/Scene pairs are byte-
+identical; four slides have subtitle-only changes. Across all slides, primitive
+counts and public diagnostic counts are
+unchanged. The four subtitle changes are the locale-formatted date text and its
+measured text/title-slot width; no routes, marks, paint, or other content change.
+The three report changes are inventory source anchors, four subtitle contrast
+sample positions, and the two wording-key coverage entries. Independent
+[per-slide audit](https://github.com/tya5/chrona/pull/1817#issuecomment-6287421891)
+confirms the final artifact's entire after-tree matches the audited product.
 
 Presentation owns the reference/wording/missing facts. Layout carries the typed
 estimated-delta witness and selects/measures the explanation from final visible
 placements. Scene/adapters and comparison arithmetic are unchanged. Official
-public snapshot counts and exact review-containing main three-OS CI remain
-required before acceptance; local focused tests alone do not close this issue.
+public snapshot counts are verified. Exact review-containing main run
+[39410064482](https://github.com/tya5/chrona/actions/runs/39410064482) at
+`27d2fd8f203ed28abc1f293a4d77674958aab92a` passed full pytest, conformance and
+wheel/smoke on macOS, Ubuntu and Windows, plus MCP floor and newest-Python
+reproduction. [Closing acceptance](https://github.com/tya5/chrona/issues/1810#issuecomment-6289996530).
