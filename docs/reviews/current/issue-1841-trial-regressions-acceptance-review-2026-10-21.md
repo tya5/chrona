@@ -9,7 +9,12 @@ Row4 source: `95fadef98`, including exact stub normalization, verified recovery
 observation, early impossible-egress rejection, minimum-lead protected search,
 completed narrow-span ports and retained provisional label footprints.
 Specs30/50 corrections were published before their corresponding source changes.
-The latest CLI/routing/Scene batch passes974 tests; impossible end-face corridors
+Normal canonical backroute hint validation is corrected in `7808ff57a`:
+preferred-only completed stub pairs must match the current canonical route and
+its existing corridor-relative quality predicate. Ordinary pair domains,
+quality, ranking and search quotas do not change. Both policies accept the
+neutral backroute without search; blocked and over-quality hints remain misses.
+The latest CLI/routing/Scene batch passes978 tests; impossible end-face corridors
 report actual `egress-collision` identities before search. The mark/viewport
 batch passes103 tests; narrow spans retain their1px visual floor and use its
 completed right edge for the connector, without moving Schedule dates or
@@ -60,11 +65,19 @@ three-OS release remain required.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | hints validate against the completed host geometry whatever the primitive kind. On the trial input, hinted renders accept the unchanged routes and the time drops (before/after recorded). | met | [53 host/decoder controls](../../../tests/unit/chrona/usecases/test_previous_scene.py) and [canonical trial audit](https://github.com/tya5/chrona/issues/1841#issuecomment-6296684466): target-b en-US 61.97→7.68s, Yuya ja-JP 61.09→9.95s. 103/102 accepted, 4/5 safely searched, zero unusable; both retain107 routes and accept all101 unchanged prior paths. Root independently verified matching resource and text geometry. | — |
+| 1 | hints validate against the completed host geometry whatever the primitive kind. On the trial input, hinted renders accept the unchanged routes and the time drops (before/after recorded). | met | [Host/decoder controls](../../../tests/unit/chrona/usecases/test_previous_scene.py), [normal backroute controls](../../../tests/unit/chrona/presentation/scene/test_relation_entry_back_route.py), and [historical PR1844 trial audit](https://github.com/tya5/chrona/issues/1841#issuecomment-6296684466). Current target-b replay under closed-mark safety:61.97s historical baseline→24.58s,84 accepted/23 searched/0 unusable,107 real relations retained;83/101 unchanged paths accepted,18 correctly revalidated through mark recovery rather than unsafe hint reuse. All Text geometry matches the current plain render; primitives are identical before/after the backroute-hint correction. Historical103/102 accepted and7.68/9.95s figures predate row4 safety and are not current composite evidence. Yuya current replay and final official integration remain recorded in the issue/PR audit. | — |
 | 2 | one shared measure/place rounding for every content-width text; a synthetic case for cells and headers. | met | [Forward-fit regressions](../../../tests/unit/chrona/presentation/layout/test_table_forward_fit.py) cover fractional headers/cells, hierarchy indent, affixes, wrapping, rotated headers and real one-ULP shortage. Shared demand/admission/budget helpers retain ordinary required/ellipsis policy, without epsilon or column inflation. Focused table batch126 pass; root integration/boundary/heading batch31 pass (overlap). | — |
 | 3 | the title is honoured; the guide example runs on the default preset in the docs tests. | met | [Heading tests](../../../tests/integration/test_network_heading_parts.py) assert actual SVG title/subtitle, omitted/independent parts and required-role refusal; [guide test](../../../tests/integration/test_network_view_guide.py) executes the unqualified default-preset commands and checks real SVG/PNG. Focused heading/default-view/guide batch: 92 pass; official PR1844 integration audit is below. | — |
 | 4 | a route segment may not run along a mark's edge (treat edge contact as an obstacle); a synthetic case. | met | [Closed-contact tests](../../../tests/unit/chrona/presentation/layout/test_primary_mark_closed_contact.py) cover top/end-face travel, tiny marks, isolated authorized tips and scoped physical corridors. [Selection controls](../../../tests/unit/chrona/presentation/layout/test_outward_relation_selection.py) preserve hint priority, best graph choices, quality/bounds/obstacle checks and cross-pair ranking; normal outward proposals close the missing route domain without relaxed acceptance. Short terminal candidates are rejected, including the preserved [actual head-tangent regression](../../../tests/unit/chrona/presentation/scene/test_relation_rounded_corners.py). Official artifact and exact-main release gates remain required below. | — |
 | 5 | network rank placement keeps unchanged nodes (hint or stable ordering), and row pitch is quantised so rows above an insertion stay byte-identical. | met | **By contract**, per [reviewer decision](https://github.com/tya5/chrona/issues/1841#issuecomment-6297232443): retain fractional authored pitch and fill redistribution; rank-demand moves are accepted, without node hints. Clarified in [Spec33 §13.1](../../specification/33-intent-oriented-layout.md#131-content-coherent-table-timeline-allocation-468) and [network stability](../../specification/50-constraint-driven-gantt-surface-quality.md#dependency-network-composition-1727); no code or preset changes. | — |
+
+Fresh Yuya ja-JP replay at `7808ff57a`:22.69s versus historical61.09s,
+86 accepted/21 searched/0 unusable;107 real relations retained. Of100 unchanged
+prior paths,85 are accepted;14 closed-mark contacts and1 other unsafe proposal
+are invalidated, then completed through declared recovery. Both presets retain
+all Text geometry versus their plain render, and every primitive remains
+identical before/after the canonical-backroute hint fix. Wall times are bounded
+observations under concurrent load, not isolated performance guarantees.
 
 ## Programme-level criteria (optional)
 
