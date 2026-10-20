@@ -71,7 +71,7 @@ $defs:
     required: [id]
     additionalProperties: false
     properties:
-      id: {type: string, minLength: 1, description: Explicit id for the composed immutable Context.}
+      id: {description: Explicit id for the composed immutable Context., $ref: "urn:chrona:render-context-v0.17#/properties/id"}
       body: {$ref: "#/$defs/contextBodyFragment"}
   contextBodyFragment:
     type: object
