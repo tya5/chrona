@@ -638,6 +638,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         required_ids = domain.required_primary_mark_ids if domain is not None else None
         protect_label_ink = domain is None or domain.stage not in {
             RelationResolutionStage.OVERLAP, RelationResolutionStage.STUB}
+        corridor_minima = (start_minimum, end_minimum)
         # A reduction must retain both the mandatory host corridor and the
         # configured terminal's straight tangent, not merely one stroke width.
         start_minimum = max(start_minimum, width + (marker_start.head_length / 2
@@ -671,6 +672,11 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         # setbacks, not the arbitrary length of the search's original legs.
         reduced = simplify_relation_route(reduced, clears=clear_reduction,
             start_minimum=start_minimum, end_minimum=end_minimum)
+        if len(reduced) == 2:
+            # With no turn, marker fitting—not a bend tangent reserve—owns
+            # short port gaps (including the shared centered-terminal fit).
+            start_minimum = max(corridor_minima[0], width)
+            end_minimum = max(corridor_minima[1], width)
         if not terminal_runs_preserved(tuple(points), reduced,
                 start_minimum=start_minimum, end_minimum=end_minimum):
             return None
