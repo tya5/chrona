@@ -112,9 +112,19 @@ def test_network_inapplicable_default_members_match_the_live_view_schema_branch(
     body_schema = schema["allOf"][1]["properties"]["body"]
     branch = next(item for item in body_schema["allOf"]
                   if item.get("description") == "A dependency network omits table-timeline-only presentation fields.")
-    forbidden = {item["required"][0] for item in branch["then"]["not"]["anyOf"]}
+    clauses = branch["then"]["not"]["anyOf"]
+    forbidden = {item["required"][0] for item in clauses}
 
-    assert forbidden == NETWORK_INAPPLICABLE_MEMBERS
+    # Layout defaults omit only wholly inapplicable members. The schema also
+    # rejects just two incompatible `window` forms on a network: relative mode
+    # and the outside-row policy, while derived/margin windows remain legal.
+    assert forbidden - {"window"} == NETWORK_INAPPLICABLE_MEMBERS
+    window_clauses = [item for item in clauses if item.get("required") == ["window"]]
+    assert len(window_clauses) == 2
+    assert any(item["properties"]["window"]["properties"]["mode"]["const"] == "relative"
+               for item in window_clauses)
+    assert any(item["properties"]["window"]["required"] == ["outside"]
+               for item in window_clauses)
 
 
 def test_network_view_keeps_compatible_defaults_and_does_not_erase_authored_forbidden_members():

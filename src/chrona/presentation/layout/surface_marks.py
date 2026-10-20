@@ -46,6 +46,7 @@ from chrona.presentation.layout.style_text import (
 from chrona.presentation.layout.surface_mark_visibility import (
     MarkOccurrence, MarkOccurrenceKind, outside_window_provenance,
 )
+from chrona.presentation.layout.window_row_admission import geometry_folded_points
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 if TYPE_CHECKING:
@@ -194,7 +195,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         member = member_id or item.item_id or item.object_id
         occurrence = style_sources.occurrence(kind, container_id, member, item.object_id, source_kind)
         return occurrence.style_intents(style_index)
-    if getattr(projection, "window_mode", None) == WindowMode.EXPLICIT and visibility_index is None:
+    if getattr(projection, "window_mode", WindowMode.SELECTED_PLANNED).is_bounded and visibility_index is None:
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
                           detail="stage=composition; reason=missing-visibility-index")
 
@@ -329,7 +330,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     updates: list[GroupHeaderExtentUpdate] = []
     visible_header_overflows: list[tuple[str, Rect, float]] = []
     folded_by_group: dict[str, list[Any]] = {}
-    for folded in getattr(projection, "folded_points", ()):
+    for folded in geometry_folded_points(projection, request.row_admission):
         folded_by_group.setdefault(folded.group_id, []).append(folded)
     shown_deadlines = tuple(
         deadline for deadline in getattr(projection, "deadlines", ())

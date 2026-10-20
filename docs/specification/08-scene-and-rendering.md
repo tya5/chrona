@@ -361,6 +361,12 @@ this completed omission evidence for explicit windows. Scene/adapters neither
 infer the forecast identity nor choose visibility or geometry. This is an
 additive opt-in Scene admission change, not a new primitive kind.
 
+For explicitly requested bounded-window row omission (#1812), Scene v0.7 also
+projects the Layout-completed `laneMembers[].rowAbsence` contract in Spec 46
+§7.1. Original source membership remains present even when the rendered row is
+absent. This is distinct from mark-level `windowAbsences`; neither Scene nor an
+adapter decides whether a row is visible or fabricates a lane band for it.
+
 Forecast plot-delta semantics `forecastFinishDelta`, `forecastVarianceAhead`
 and `forecastVarianceBehind` use primitive purpose `forecast-finish-delta`
 with the existing on-track/ahead/behind variance paint roles. Ordinary deltas

@@ -35,7 +35,9 @@ from chrona.presentation.scene.paint import (
     restrict_paint_channels, resolve_legend_shape_paint,
 )
 from chrona.presentation.scene.surface_overlays import project_canvas_overlays
-from chrona.presentation.scene.window_absences import project_lane_window_absences
+from chrona.presentation.scene.window_absences import (
+    project_lane_window_absences, project_lane_window_row_absences,
+)
 from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
 )
@@ -1337,7 +1339,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
         missing = next((item.scene_id for item in completed_primitives
                         if requires_lane_member_provenance(item.kind, item.purpose)
                         and item.scene_id not in owner_by_primitive), None)
-        if ((not owner_by_primitive and not placed_surface.lane_window_absences)
+        if ((not owner_by_primitive and not placed_surface.lane_window_absences
+             and not placed_surface.lane_window_row_absences)
                 or unexpected is not None or missing is not None):
             mismatch = unexpected or missing or "lane-emission-inventory"
             raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mismatch,
@@ -1353,6 +1356,22 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
             emitted_by_member.setdefault(owner, []).append(primitive_id)
         primary_purposes = {"planned", "forecast", "snapshot"}
         absences_by_member = project_lane_window_absences(placed_surface.lane_window_absences)
+        row_absences_by_member = project_lane_window_row_absences(
+            placed_surface.lane_window_row_absences)
+        source_member_keys = {
+            (row.lane_id, member_id)
+            for row in projection.lane_rows
+            for member_id in dict.fromkeys(row.member_item_ids)
+        }
+        rendered_row_ids = {row.row_id for row in placed_surface.rows}
+        expected_row_absence_keys = {
+            key for key in source_member_keys if key[0] not in rendered_row_ids
+        }
+        if set(row_absences_by_member) != expected_row_absence_keys:
+            raise SceneBuildError(
+                "E_PRESENTATION_PRIMITIVE_INVALID", "lane-row-absence-inventory",
+                "typed Layout row absences must exactly cover source members without rendered rows",
+            )
         member_values = []
         for row in projection.lane_rows:
             for member_id in dict.fromkeys(row.member_item_ids):
@@ -1361,7 +1380,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
                                      if primitive_by_id[identifier].purpose in primary_purposes)
                 try:
                     member_values.append(SceneLaneMember(row.lane_id, member_id, identifiers, primary_ids,
-                                                         tuple(absences_by_member.get((row.lane_id, member_id), ()))))
+                                                         tuple(absences_by_member.get((row.lane_id, member_id), ())),
+                                                         row_absences_by_member.get((row.lane_id, member_id))))
                 except ValueError as error:
                     raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", member_id,
                                           f"invalid lane member inventory row={row.lane_id}; "

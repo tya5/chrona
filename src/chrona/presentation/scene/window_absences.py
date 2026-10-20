@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from chrona.presentation.scene.model import SceneLaneWindowAbsence
+from chrona.presentation.scene.model import SceneLaneRowAbsence, SceneLaneWindowAbsence
 
 if TYPE_CHECKING:
-    from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+    from chrona.presentation.layout.lane_window_marks import (
+        LaneWindowPlacementAbsence, LaneWindowRowAbsence,
+    )
 
 
 def project_lane_window_absences(
@@ -22,3 +24,21 @@ def project_lane_window_absences(
             absence.source_ref, original.source_kind, expected.role, absence.reason)
         grouped.setdefault((absence.row_id, absence.member_id), []).append(projected)
     return {owner: tuple(values) for owner, values in grouped.items()}
+
+
+def project_lane_window_row_absences(
+    absences: tuple[LaneWindowRowAbsence, ...],
+) -> dict[tuple[str, str], SceneLaneRowAbsence]:
+    """Project Layout's completed per-member row reason without its cache."""
+    grouped: dict[tuple[str, str], SceneLaneRowAbsence] = {}
+    row_reasons: dict[str, str] = {}
+    for absence in absences:
+        key = (absence.row_id, absence.member_id)
+        previous = grouped.get(key)
+        prior_reason = row_reasons.get(absence.row_id)
+        projected = SceneLaneRowAbsence(absence.reason)
+        if (previous is not None or prior_reason not in {None, absence.reason}):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID: duplicate or conflicting lane row absence")
+        grouped[key] = projected
+        row_reasons[absence.row_id] = absence.reason
+    return grouped

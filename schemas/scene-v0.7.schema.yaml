@@ -44,24 +44,52 @@ $defs:
   surfaces: {description: "Completed renderer-neutral surfaces.", type: array, minItems: 1, items: {$ref: "#/$defs/surface"}}
   surface: {description: "One completed surface with its typed geometry and primitives.", type: object, required: [id, slots, rows, columns, groups, canvasBounds, primitives], additionalProperties: false, allOf: [{description: "Fixed-lane Scene evidence is complete only when mode, member and obstacle inventories, and shared clearance are all present.", examples: [{laneMode: lanes, laneMembers: [], laneObstacles: [], laneClearance: 0}], if: {required: [laneMode]}, then: {required: [laneMembers, laneObstacles, laneClearance]}, else: {not: {anyOf: [{required: [laneMembers]}, {required: [laneObstacles]}, {required: [laneClearance]}]}}}], properties: {id: {$ref: "#/$defs/string"}, slots: {$ref: "#/$defs/slots"}, rows: {$ref: "#/$defs/rows"}, columns: {$ref: "#/$defs/columns"}, groups: {$ref: "#/$defs/groups"}, scale: {$ref: "#/$defs/scale"}, canvasPaint: {description: "Optional canvas background paint; radial gradients are reserved for explicit overlay Rect primitives.", examples: [{fill: '#FFFFFF'}, {gradient: {start: {x: 0, y: 0}, end: {x: 0, y: 1}, stops: [{offset: 0, color: '#FFFFFF'}, {offset: 1, color: '#000000'}], fidelity: required}}], allOf: [{$ref: "#/$defs/paint"}, {description: "Canvas background paint excludes radialGradient; radial fades are painted by explicit overlay Rect primitives.", examples: [{fill: '#FFFFFF'}], not: {required: [radialGradient]}}]}, canvasBounds: {$ref: "#/$defs/bounds"}, fitWarnings: {$ref: "#/$defs/fitWarnings"}, decorationDispositions: {$ref: "#/$defs/decorationDispositions"}, laneMode: {description: "Discriminator for fixed data-only lane membership Scene evidence.", const: lanes}, laneMembers: {description: "Public Project/View membership oracle and exact owner inventory for emitted primitives.", type: array, minItems: 1, items: {$ref: "#/$defs/laneMember"}}, laneObstacles: {description: "Layout-completed visible footprint inventory; Scene validates correspondence with emitted primitives.", type: array, items: {$ref: "#/$defs/laneObstacle"}}, laneClearance: {description: "Non-negative shared tolerance for interpreting lane obstacle geometry in Scene route/label checks.", $ref: "#/$defs/nonnegative"}, primitives: {$ref: "#/$defs/primitives"}}}
   laneMember:
-    description: "One lane member and its exact completed Scene primitive inventory."
+    description: "One lane member and its exact completed Scene primitive inventory or completed row-absence reason."
     type: object
     required: [rowId, memberId, emittedPrimitiveIds, primaryMarkIds]
     additionalProperties: false
     allOf:
-      - description: "Without explicit window omission evidence, emitted and primary inventories remain nonempty."
+      - description: "Without mark- or row-absence evidence, emitted and primary inventories remain nonempty."
         examples: [{emittedPrimitiveIds: [mark], primaryMarkIds: [mark]}]
-        if: {not: {required: [windowAbsences]}}
+        if: {not: {anyOf: [{required: [windowAbsences]}, {required: [rowAbsence]}]}}
         then:
           properties:
             emittedPrimitiveIds: {minItems: 1}
             primaryMarkIds: {minItems: 1}
+      - description: "A row-absent member has no emitted geometry; expected temporal marks remain separately accounted at the omitted-row group."
+        examples: [{rowAbsence: {reason: outside-window}, emittedPrimitiveIds: [], primaryMarkIds: []}]
+        if: {required: [rowAbsence]}
+        then:
+          properties:
+            emittedPrimitiveIds: {maxItems: 0}
+            primaryMarkIds: {maxItems: 0}
+      - description: "A member with no selected temporal facet has no expected mark omissions; an outside-window row may aggregate omissions from a sibling member."
+        examples: [{rowAbsence: {reason: no-selected-temporal-facet}}]
+        if: {properties: {rowAbsence: {properties: {reason: {const: no-selected-temporal-facet}}, required: [reason]}}, required: [rowAbsence]}
+        then: {not: {required: [windowAbsences]}}
+      - description: "A non-actual source omitted outside the window retains proof for an expected planned or forecast mark; actual-only sources retain their actual omission."
+        examples: [{rowAbsence: {reason: outside-window}, windowAbsences: [{sourceKind: primary, facet: planned}]}]
+        if:
+          properties:
+            rowAbsence: {properties: {reason: {const: outside-window}}, required: [reason]}
+            windowAbsences:
+              contains:
+                properties: {sourceKind: {not: {const: actual}}}
+                required: [sourceKind]
+          required: [rowAbsence, windowAbsences]
+        then:
+          properties:
+            windowAbsences:
+              contains:
+                properties: {facet: {enum: [planned, forecast]}}
+                required: [facet]
     properties:
       rowId: {$ref: "#/$defs/string"}
       memberId: {$ref: "#/$defs/string"}
       emittedPrimitiveIds: {description: "Every primitive emitted for this countable member.", type: array, uniqueItems: true, items: {$ref: "#/$defs/string"}}
       primaryMarkIds: {description: "Completed primary marks, or empty only with a proven original primary omission.", type: array, uniqueItems: true, items: {$ref: "#/$defs/string"}}
       windowAbsences: {description: "Layout-proven original expected marks omitted by an explicit window; not geometry or deleted membership.", type: array, minItems: 1, uniqueItems: true, items: {$ref: "#/$defs/laneWindowAbsence"}}
+      rowAbsence: {description: "Layout-completed aggregate reason an original member has no rendered row; not geometry or deleted membership. The same reason is repeated for all members of an omitted row; an outside-window row has mark-omission evidence on at least one member, while a no-selected-temporal-facet row has none.", type: object, required: [reason], additionalProperties: false, properties: {reason: {description: "Aggregate row reason: outside-window when any member has an omitted selected temporal facet; no-selected-temporal-facet only when no member has a selected temporal facet.", examples: [outside-window, no-selected-temporal-facet], enum: [outside-window, no-selected-temporal-facet]}}}
   laneWindowAbsence:
     description: "An opaque original expected-mark omission joined to its final member by Layout."
     type: object

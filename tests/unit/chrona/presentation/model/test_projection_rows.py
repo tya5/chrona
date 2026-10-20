@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.projection import (
-    ObservationState, ReviewItem, ReviewRowProjection, _dependency_network_projection, _observation_state, _roles,
+    ObservationState, ReviewItem, ReviewRowProjection, WindowMode, _dependency_network_projection, _observation_state, _roles,
     _validate_explicit_row_hierarchy, build_review_projection, shared_track_member_key,
 )
 from chrona.presentation.model.surface_content import table_value
@@ -141,15 +141,19 @@ def typed_view(value):
     )
         parsed_rows.append(ViewRow(str(row["id"]), row.get("label"), int(row["depth"]), row.get("parentRow"),
                                    row.get("group"), row.get("tableSubject"), items))
-    selection = body.get("selection", {}).get("include", {})
+    selection_body = body.get("selection", {})
+    selection = selection_body.get("include", {})
+    exclusion = selection_body.get("exclude", {})
     visibility = body.get("visibility", {})
     grouping = body.get("grouping")
     ordering = body.get("ordering")
     return ViewInput(
-        ViewSelection(tuple(selection.get("ids", ())), tuple(selection.get("types", ()))) if selection else None,
+        ViewSelection(tuple(selection.get("ids", ())), tuple(selection.get("types", ())),
+                      excluded_states=tuple(exclusion.get("state", ()))) if selection or exclusion else None,
         ViewGrouping(grouping["by"], grouping.get("field"), tuple(grouping.get("order", ())), grouping.get("missing"), grouping.get("presentation"), grouping.get("depth"), grouping.get("rollup")) if grouping else None,
         ViewOrdering(ordering["by"], ordering["direction"], ordering["tieBreak"]) if ordering else None,
-        ViewWindow(body["window"]["mode"], body["window"].get("start"), body["window"].get("end"), body["window"].get("marginDays", 0)),
+        ViewWindow(body["window"]["mode"], body["window"].get("start"), body["window"].get("end"), body["window"].get("marginDays", 0),
+                   body["window"].get("before"), body["window"].get("after"), body["window"].get("outside", "keep")),
         ViewComparison(None, body["comparison"]["actual"], None, None, tuple(body["comparison"].get("facets", ()))),
         ViewVisibility(False, visibility.get("relations", "none"), "none"), (), (),
         ViewRows(rows["mode"], tuple(parsed_rows)), None, (), None, None, None)
@@ -158,6 +162,95 @@ def typed_view(value):
 def test_projection_exposes_only_fact_derived_role_inputs() -> None:
     assert set(inspect.signature(build_review_projection).parameters).isdisjoint({"style", "theme"})
     assert _roles(ObservationState.DUE_UNOBSERVED, None) == ("planned", "missing-actual")
+
+
+def test_bounded_window_capability_includes_only_explicit_and_relative_modes():
+    assert WindowMode.EXPLICIT.is_bounded
+    assert WindowMode.RELATIVE.is_bounded
+    assert not WindowMode.SELECTED_PLANNED.is_bounded
+    assert not WindowMode.SELECTED_COMPARISON.is_bounded
+
+
+def _window_project():
+    return ({"version": "timeline/v0.7", "project": {"id": "window-test"}, "entities": {},
+             "objects": {
+                 "done-span": {"type": "task", "title": "Done span", "schedule": {"mode": "fixed-span"}},
+                 "open-span": {"type": "task", "title": "Open span", "schedule": {"mode": "fixed-span"}},
+                 "done-point": {"type": "milestone", "title": "Done point", "schedule": {"mode": "fixed-point"}},
+                 "done-group": {"type": "group", "title": "Done group", "schedule": {"mode": "rollup"}},
+             }, "relations": []},
+            {"done-span": {"start": date(2026, 5, 1), "end": date(2026, 5, 3)},
+             "open-span": {"start": date(2026, 5, 3), "end": date(2026, 5, 5)},
+             "done-point": {"at": date(2026, 5, 4)},
+             "done-group": {"start": date(2026, 5, 1), "end": date(2026, 5, 5)}})
+
+
+def test_finished_state_uses_actual_temporal_facts_and_does_not_remove_source_tracks():
+    project, placements = _window_project()
+    project["objects"]["child-finished"] = {
+        "type": "task", "title": "Finished child", "parent": "done-group",
+        "schedule": {"mode": "fixed-span"}}
+    placements["child-finished"] = {"start": date(2026, 5, 1), "end": date(2026, 5, 2)}
+    actual = {"body": {"asOf": "2026-05-05", "observations": [
+        {"id": "obs-span", "projectObjectId": "done-span", "sequence": 1,
+         "actual": {"start": "2026-05-01", "finish": "2026-05-02"}},
+        {"id": "obs-open", "projectObjectId": "open-span", "sequence": 1,
+         "actual": {"start": "2026-05-03", "progress": 1}},
+        {"id": "obs-point", "projectObjectId": "done-point", "sequence": 1,
+         "actual": {"at": "2026-05-04"}},
+        {"id": "obs-child", "projectObjectId": "child-finished", "sequence": 1,
+         "actual": {"finish": "2026-05-02"}},
+    ]}}
+    view = typed_view({"body": {"selection": {"include": {}, "exclude": {"state": ["finished"]}},
+                              "rows": {"mode": "automatic"},
+                              "window": {"mode": "selected-planned"},
+                              "comparison": {"actual": "optional"}}})
+
+    projection = build_review_projection(project, placements, view, actual)
+
+    ids = {item.object_id for item in projection.items}
+    assert "done-span" not in ids
+    assert "done-point" not in ids
+    assert "done-group" not in ids  # rollup is finished only when all temporal children are finished
+    assert "open-span" in ids
+    assert "child-finished" not in ids  # hierarchy expansion cannot reintroduce an excluded child
+
+
+@pytest.mark.parametrize(("before", "after", "expected"), [
+    ("2d", "1w", (date(2026, 5, 3), date(2026, 5, 12))),
+    ("1d", "0d", (date(2026, 5, 4), date(2026, 5, 5))),
+    ("1w", None, (date(2026, 4, 28), date(2026, 5, 5))),
+])
+def test_relative_window_is_half_open_actual_asof_calendar_range(before, after, expected):
+    project, placements = _window_project()
+    actual = {"body": {"asOf": "2026-05-05", "observations": []}}
+    window = {"mode": "relative", "outside": "omit"}
+    if before is not None:
+        window["before"] = before
+    if after is not None:
+        window["after"] = after
+    view = typed_view({"body": {"rows": {"mode": "automatic"}, "window": window,
+                              "comparison": {"actual": "optional"}}})
+
+    projection = build_review_projection(project, placements, view, actual)
+
+    assert projection.window == expected
+    assert projection.window_mode.is_bounded
+    assert projection.window_outside == "omit"
+
+
+@pytest.mark.parametrize(("actual", "window", "code"), [
+    (None, {"mode": "relative", "before": "1d"}, "E_VIEW_WINDOW_AS_OF_REQUIRED"),
+    ({"body": {"asOf": "9999-12-31"}}, {"mode": "relative", "after": "1d"}, "E_REVIEW_WINDOW"),
+    ({"body": {"asOf": "2026-05-05"}}, {"mode": "relative", "before": "0d", "after": "0w"}, "E_REVIEW_WINDOW"),
+])
+def test_relative_window_rejects_missing_asof_overflow_and_zero_extent(actual, window, code):
+    project, placements = _window_project()
+    view = typed_view({"body": {"rows": {"mode": "automatic"}, "window": window,
+                              "comparison": {"actual": "optional"}}})
+
+    with pytest.raises(ValueError, match=code):
+        build_review_projection(project, placements, view, actual)
     assert _roles(ObservationState.NOT_YET_DUE, None) == ("planned",)
     assert _roles(ObservationState.UNAVAILABLE, None) == ("planned",)
     assert _roles(ObservationState.RECORDED, 3, critical=True) == (

@@ -322,6 +322,8 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "sha256Identity": ([DIGEST, "sha256:" + "abcdef0123456789" * 4], ["", "sha256:abc", "SHA256:" + "0" * 64, "sha256:" + "A" * 64, "sha256:" + "0" * 65, 5, None]),
     "sha256IdentityOrNull": ([DIGEST, "sha256:" + "abcdef0123456789" * 4, None], ["", "sha256:abc", "SHA256:" + "0" * 64, "sha256:" + "A" * 64, "sha256:" + "0" * 65, 5, [], {}]),
     "isoDate": (["2026-09-30", "0001-01-01"], ["", "2026-9-30", "20260930", "2026/09/30", "2026-09-30T00:00", " 2026-09-30", 20260930, None]),
+    "civilWindowOffset": (["0d", "0w", "1d", "12w", "9999999d"],
+                           ["", "0", "1", "-1d", "+1d", "01d", "1D", "1.5d", "1wd", "1d\n", 1, None]),
     "safeRelativePath": (["a", "views/overview.yaml", "A0._-/b", "a..b"], ["", "/abs", "../x", "a/../b", "a/..", "a/./b", ".hidden", "a b", "a\\b", "a\x00b", "é", 5]),
     "relativeAddress": (["resources/project.yaml", "a b", "a\\b", "é", ".hidden", "a..b"], ["", "/abs", "../x", "a/../b", "a/..", "./a", "a/./b"]),
     "relativeAddressDotTolerant": (["a", "a/./b", "./a", "a b", "é"], ["", "/abs", "../x", "a/../b", "a/.."]),

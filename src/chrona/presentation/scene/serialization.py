@@ -8,7 +8,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.scene.model import (
     PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient, RadialGradient,
-    PatternGeometry, SceneIconPath, SceneLaneMember, SceneLaneWindowAbsence, SceneLaneObstacle, SceneLaneRectObstacle,
+    PatternGeometry, SceneIconPath, SceneLaneMember, SceneLaneWindowAbsence, SceneLaneRowAbsence, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
     _validate_style_semantic_metadata,
@@ -69,6 +69,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_stroke_clip = any(primitive.stroke_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
     has_paint_clip = any(primitive.paint_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
     has_window_absences = any(member.window_absences for surface in scene.surfaces for member in surface.lane_members)
+    has_row_absences = any(member.row_absence is not None
+                           for surface in scene.surfaces for member in surface.lane_members)
     has_marker_axis = any(marker is not None and (marker.angle_degrees is not None or marker.physical_units)
                          for surface in scene.surfaces for primitive in surface.primitives
                          for marker in (primitive.marker_start, primitive.marker_end))
@@ -88,7 +90,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     return {
         "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
                     or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
-                    or has_relation_endpoint_identity or has_window_absences or has_style_semantic_metadata
+                    or has_relation_endpoint_identity or has_window_absences or has_row_absences
+                    or has_style_semantic_metadata
                     or has_style_provenance_metadata or has_encoding_metadata or has_mark_ground_metadata
                     else "chrona/scene/v0.6"),
         "kind": "scene",
@@ -150,9 +153,13 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
         for surface in surfaces if isinstance(surface, Mapping)
         and isinstance(surface.get("laneMembers"), list)
         for member in surface["laneMembers"] if isinstance(member, Mapping)) if isinstance(surfaces, list) else False
+    has_row_absences = any("rowAbsence" in member
+        for surface in surfaces if isinstance(surface, Mapping)
+        and isinstance(surface.get("laneMembers"), list)
+        for member in surface["laneMembers"] if isinstance(member, Mapping)) if isinstance(surfaces, list) else False
     if errors:
-        if has_window_absences:
-            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: windowAbsences requires complete valid original mark facts")
+        if has_window_absences or has_row_absences:
+            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: lane absence metadata requires complete valid original source facts")
         if any("paintClip" in error.absolute_path for error in errors):
             raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: paintClip requires completed finite positive bounds")
         first = errors[0]
@@ -419,13 +426,16 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
             member_keys: set[tuple[str, str]] = set()
             primary_ids: set[str] = set()
             member_row_ids: set[str] = set()
+            absent_row_reasons: dict[str, str] = {}
+            absent_row_has_mark_absences: dict[str, bool] = {}
             for member in lane_members:
                 if not isinstance(member, Mapping):
                     return False
                 row_id, member_id = member.get("rowId"), member.get("memberId")
                 emitted = member.get("emittedPrimitiveIds")
                 primary = member.get("primaryMarkIds")
-                if (row_id not in lane_rows or not isinstance(member_id, str) or not member_id
+                if (not isinstance(row_id, str) or not row_id
+                        or not isinstance(member_id, str) or not member_id
                         or not isinstance(emitted, list)
                         or not isinstance(primary, list)
                         or not set(primary) <= set(emitted)):
@@ -435,14 +445,29 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                         item["placementId"], item["instanceId"], item["facet"], item["sourceRef"],
                         item["sourceKind"], item["semanticRole"], item["reason"])
                         for item in member.get("windowAbsences", ()))
-                    SceneLaneMember(row_id, member_id, tuple(emitted), tuple(primary), absences)
+                    raw_row_absence = member.get("rowAbsence")
+                    row_absence = (SceneLaneRowAbsence(raw_row_absence["reason"])
+                                   if raw_row_absence is not None else None)
+                    SceneLaneMember(row_id, member_id, tuple(emitted), tuple(primary), absences,
+                                    row_absence)
                 except (KeyError, TypeError, ValueError):
                     return False
+                if row_absence is None:
+                    if row_id not in lane_rows:
+                        return False
+                    member_row_ids.add(row_id)
+                else:
+                    if row_id in lane_rows:
+                        return False
+                    previous_reason = absent_row_reasons.setdefault(row_id, row_absence.reason)
+                    if previous_reason != row_absence.reason:
+                        return False
+                    absent_row_has_mark_absences[row_id] = (
+                        absent_row_has_mark_absences.get(row_id, False) or bool(absences))
                 key = (row_id, member_id)
                 if key in member_keys or len(set(emitted)) != len(emitted) or len(set(primary)) != len(primary):
                     return False
                 member_keys.add(key)
-                member_row_ids.add(row_id)
                 for primitive_id in emitted:
                     if primitive_id in inventory:
                         return False
@@ -453,6 +478,11 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
             if inventory != tagged_inventory or any(item not in by_id for item in inventory):
                 return False
             if member_row_ids != lane_rows:
+                return False
+            if any((reason == "outside-window" and not absent_row_has_mark_absences.get(row_id, False))
+                   or (reason == "no-selected-temporal-facet"
+                       and absent_row_has_mark_absences.get(row_id, False))
+                   for row_id, reason in absent_row_reasons.items()):
                 return False
             if any(by_id[item][1].get("purpose") not in PRIMARY_LANE_MARK_PURPOSES
                    for item in primary_ids):
@@ -646,7 +676,9 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
              "emittedPrimitiveIds": list(item.emitted_primitive_ids),
              "primaryMarkIds": list(item.primary_mark_ids),
              **({"windowAbsences": [_window_absence(absence) for absence in item.window_absences]}
-                if item.window_absences else {})}
+                if item.window_absences else {}),
+             **({"rowAbsence": {"reason": item.row_absence.reason}}
+                if item.row_absence is not None else {})}
             for item in surface.lane_members
         ]
         result["laneObstacles"] = [_lane_obstacle(item) for item in surface.lane_obstacles]

@@ -18,7 +18,7 @@ from chrona.presentation.layout.surface_quality import (
     MarkPlacement, PhysicalMarkHost, ScalePlacement, SlotPlacement,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
-from chrona.presentation.model.projection import ReviewItem
+from chrona.presentation.model.projection import ReviewItem, WindowMode
 
 
 def _preflight_fixture(*, label_lane="child"):
@@ -87,7 +87,8 @@ def _label_request_context():
         fixed_lane_preflight=SimpleNamespace(measured_labels=(measured_label,)), mark_visibility_index=None,
         theme_tokens=SimpleNamespace(), capacity_short_sources=(),
     )
-    projection = SimpleNamespace(window_mode=None, lane_membership=object(), rows=(object(),), folded_points=())
+    projection = SimpleNamespace(window_mode=WindowMode.SELECTED_PLANNED,
+                                 lane_membership=object(), rows=(object(),), folded_points=())
     track = TrackPlacement("child-row:gate", 20.0, 20.0, 10.0)
     context = SurfaceMemberLabelContext(
         request=request, projection=projection,
