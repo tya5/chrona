@@ -1,9 +1,9 @@
 # Issue 415 — shared deck Context
 
-Status: selected design awaiting reviewer approval; no product code.
+Status: design approved; final implementation plan published before product code.
 Authoring boundary and migration allowance approved by
 the [reviewer](https://github.com/tya5/chrona/issues/415#issuecomment-6280957121).
-The selected syntax below still requires review before code. Current scope:
+The [selected contract is approved as written](https://github.com/tya5/chrona/issues/415#issuecomment-6282070481). Current scope:
 [issue and reviewer assignment](https://github.com/tya5/chrona/issues/415#issuecomment-6280175603).
 
 ## Published baseline
@@ -63,10 +63,9 @@ behavior to retain. Valid explicit manifests and Context bytes remain unchanged.
 Ordinary YAML serialization is sufficient; the approved migration allowance
 covers counted Context-provenance-only Scene changes, not geometry or ink.
 
-Review questions: approve the inline manifest syntax and finite merge/null
-rules; confirm that public authoring is the existing materialize entrypoint,
-not a new runtime Context inheritance mechanism. No owner blocker remains on
-the expansion/provenance boundary itself.
+Review decision: Spec40 section7 is approved as written, including syntax,
+finite merge/null rules, origins, owned staging and every consumer connection.
+There are no open design decisions; immutable render-review remains explicit.
 
 ## Publication slices and gates
 
@@ -103,7 +102,24 @@ only for composition, preserving valid explicit-only no-ID manifests.
 Pointed failures reuse the application failure-report transport; strict loading
 must detect duplicate/merge keys and cycles before ordinary loading loses them.
 
-## Implementation plan for review (not code approval)
+## Final implementation plan
+
+Public base: `f567d692202f19dda8bbb0b3ecc424968584a931` (design in PR1797;
+archive-only PR1799 does not change the approved contract).
+`resolve_deck_context(manifest_path, slide_id)` is the single selection owner.
+Its immutable selected-source record carries completed `document`, exact
+`payload`, owned `address`, optional explicit `source_path`, manifest/slide
+provenance and origin pointers. Manifest enumeration reuses the same admission
+and selector; inspectors never create temporary Context files. The existing
+Path-based copier delegates to a payload-based internal seam so explicit callers
+remain byte-preserving. Authoring failures use existing `StableFailure`
+code/message/sourceRef transport; no new diagnostic envelope is necessary.
+Line/range data may be retained internally, but is not a new public contract.
+
+Parallel ownership: composer/schema/unit tests; materializer/init/integration;
+inspection tools and their tests. The coordinator owns integration, publication
+and review. Source changes follow this plan's verified remote commit, not a
+private working copy. The one feature PR follows all three source slices.
 
 | Slice | Owned files and acceptance | Focused verification |
 | --- | --- | --- |
@@ -111,6 +127,6 @@ must detect duplicate/merge keys and cycles before ordinary loading loses them.
 | Closure and consumers | `usecases/materialize.py`, `local_authoring.py` and the complete consumer table above reuse that record. Check staging collisions before writes; retain normal pins, root bases, provider deferral and actual source links. CLI/tool keep shared typed failure transport. | Existing materializer, init/provider, failure-transport and each affected tool's unit modules; composed-source twins for enumeration/provenance/font/reachability; mismatched pin, collision and provider-negative tests. |
 | Acceptance and publication | One feature PR carries the separately reviewable source commits, specification and literal review; no authored generated output. Reviewer corpus migration is a subsequent publication and keeps415 open meanwhile. | Synthetic explicit/composed real Context/SVG/Scene equality; actual CLI and standalone pointed failures; CI's one generated snapshot, full matrix/wheel/newest materializers. After reviewer migration: all19 same-cohort line/output table, inspected adapter output and exact review-containing main release. |
 
-These slices are draft until the selected design review is resolved. Publish the
-final plan before product edits; pause and correct design first if integration
-exposes a contract gap. This branch has no active PR;1792 is the next code landing.
+Publish and verify this final plan before product edits. Pause and correct the
+design first if integration exposes a contract gap. Reviewer-owned corpus
+migration follows the feature; it is not silently counted as feature evidence.

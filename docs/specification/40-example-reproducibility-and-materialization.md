@@ -40,7 +40,7 @@ The three empty M27 documents are recovered only by verifying their exact histor
 
 ## 7. Shared deck Context authoring (#415)
 
-Status: selected design awaiting reviewer approval and implementation. This
+Status: selected design approved; implementation pending. This
 section reserves the contract; it does not claim the current CLI supports it.
 
 This is an authoring step before immutable materialization, not Context
