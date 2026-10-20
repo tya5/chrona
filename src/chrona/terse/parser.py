@@ -109,6 +109,17 @@ class CalendarStatement:
 
 
 @dataclass
+class EntityStatement:
+    """`entity ID "Title" PROFILE` (Spec 65 section 12.4): a minimal entity of `type` and `title`."""
+
+    line: int
+    name: Item
+    title: Item
+    profile: Item
+    range: SourceRange
+
+
+@dataclass
 class ProjectStatement:
     line: int
     id: Item
@@ -126,6 +137,7 @@ class ParseResult:
     problems: list[TerseDiagnostic]
     known_objects: dict[str, int]  # every object name seen (even on a failed line) -> line
     known_calendars: dict[str, int]
+    entities: list[EntityStatement] = field(default_factory=list)
 
 
 class _Stop(Exception):
@@ -182,6 +194,9 @@ class _Parser:
         self.objects: list[ObjectStatement] = []
         self.known_objects: dict[str, int] = {}
         self.known_calendars: dict[str, int] = {}
+        self.entities: list[EntityStatement] = []
+        self.known_entities: dict[str, int] = {}
+        self.object_seen = False
         self.statements_seen = 0
         self.first_statement_line = 0
         self.terse_seen = False
@@ -216,7 +231,7 @@ class _Parser:
             self.report("E_TERSE_PROJECT_REQUIRED", "the plan has no project statement", SourceRange(1, 1, 1, 2),
                         "start with `project my-plan \"My plan\"`")
         return ParseResult(self.lines, self.project, self.calendars, self.objects, self.problems,
-                           self.known_objects, self.known_calendars)
+                           self.known_objects, self.known_calendars, self.entities)
 
     def note_name(self, line: SourceLine) -> None:
         """A line that failed still registers its name so that later references do not cascade."""
@@ -241,6 +256,12 @@ class _Parser:
         first = cursor.peek()
         assert first is not None
         directive = first.kind == "word" and first.text in ("terse", "project", "calendar")
+        second = cursor.peek(1)
+        # `entity` is contextual (never reserved): `entity ID ...` with a non-kind word is the entity statement, so an
+        # object still named `entity` (`entity task 5d`, `entity "T" task`) compiles exactly as before.
+        entity = (first.kind == "word" and first.text == "entity" and second is not None
+                  and second.kind == "word" and second.text not in KINDS)
+        directive = directive or entity
         self.statements_seen += 1
         try:
             if line.indent % 2:
@@ -251,11 +272,13 @@ class _Parser:
                 if line.indent:
                     raise self.fail("E_TERSE_INDENT", f"`{first.text}` statements start in column 1",
                                     SourceRange(line.number, 1, line.number, line.indent + 1), "remove the indentation")
-                if first.text == "calendar":
+                if first.text in ("calendar", "entity"):
                     self.misplaced(first)
-                {"terse": self.terse, "project": self.project_statement, "calendar": self.calendar}[first.text](cursor, line)
+                {"terse": self.terse, "project": self.project_statement, "calendar": self.calendar,
+                 "entity": self.entity}[first.text](cursor, line)
             else:
                 self.misplaced(first)
+                self.object_seen = True
                 self.object(cursor, line)
         except _Stop:
             if first.text == "project" and first.kind == "word":
@@ -376,8 +399,35 @@ class _Parser:
         return Item(token.text, token.range)
 
     # -- calendars ---------------------------------------------------------------------------------------------
+    def entity(self, cursor: _Cursor, line: SourceLine) -> None:
+        keyword = cursor.take()
+        if self.object_seen:
+            raise self.fail("E_TERSE_DIRECTIVE_ORDER", "an entity statement must come before every object", keyword.range,
+                            "move the `entity ...` line above the first object (after the calendars)")
+        id_token = self.expect_word(cursor, "an entity id", 'write `entity del-portal "Partner portal" acme.deliverable`')
+        name = self.slug_name(id_token, "entity")
+        if name in self.known_entities:
+            raise self.fail("E_TERSE_NAME_DUPLICATE", f"entity '{name}' is already defined on line {self.known_entities[name]}",
+                            id_token.range, "entity ids are unique")
+        self.known_entities[name] = line.number
+        title_token = cursor.peek()
+        if title_token is None:
+            raise self.fail("E_TERSE_LINE_INCOMPLETE", f"entity '{name}' needs a quoted title and a profile", cursor.end_range(),
+                            f'write `entity {name} "Title" PROFILE`')
+        if title_token.kind != "string":
+            raise self.fail("E_TERSE_TITLE_UNQUOTED", "an entity title needs double quotes", title_token.range,
+                            f'write entity {name} "Your title" PROFILE')
+        title = self.title(cursor.take())
+        profile_token = self.expect_word(cursor, "a profile id", f'write `entity {name} "Title" PROFILE`')
+        self.finish(cursor)
+        self.entities.append(EntityStatement(line.number, Item(name, id_token.range), title,
+                                             Item(profile_token.text, profile_token.range), keyword.range.through(profile_token.range)))
+
     def calendar(self, cursor: _Cursor, line: SourceLine) -> None:
         keyword = cursor.take()
+        if self.entities:
+            raise self.fail("E_TERSE_DIRECTIVE_ORDER", "a calendar statement must come before every entity statement", keyword.range,
+                            "move the `calendar ...` line above the first `entity ...` line")
         name_token = self.expect_word(cursor, "a calendar name", "write `calendar standard mon-fri`")
         name = self.slug_name(name_token, "calendar")
         if name in self.known_calendars:
@@ -468,6 +518,9 @@ class _Parser:
         if slug_name in self.known_objects:
             raise self.fail("E_TERSE_NAME_DUPLICATE", f"'{name}' is already defined on line {self.known_objects[name]}", first.range,
                             "object names are unique; choose another")
+        if name in self.known_entities:
+            raise self.fail("E_TERSE_NAME_DUPLICATE", f"'{name}' is already defined as an entity on line {self.known_entities[name]}",
+                            first.range, "object and entity names share one id space; choose another")
         self.known_objects[name] = line.number
         parent = self.place(line, name)
         title: Item | None = None
