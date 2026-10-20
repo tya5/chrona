@@ -1,0 +1,771 @@
+version: timeline/v0.7
+project:
+  id: atlas-q4
+  title: Atlas sensor hub - Q4 portfolio review
+  calendar: office
+fieldRoles:
+  responsible: stream
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    exceptions:
+    - date: '2026-11-26'
+      working: false
+    - date: '2026-11-27'
+      working: false
+    - date: '2026-12-24'
+      working: false
+    - date: '2026-12-25'
+      working: false
+    - date: '2027-01-01'
+      working: false
+objects:
+  kickoff:
+    type: gate
+    title: Q4 kickoff
+    schedule:
+      mode: fixed-point
+      at: '2026-10-01'
+  ee:
+    type: group
+    title: Electronics
+    schedule:
+      mode: rollup
+  ee-1:
+    type: task
+    title: Schematic rev C
+    parent: ee
+    calendar: office
+    fields:
+      stream: Electronics
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  ee-2:
+    type: task
+    title: Layout rev C
+    parent: ee
+    calendar: office
+    fields:
+      stream: Electronics
+    schedule:
+      mode: scheduled
+      amount: 12wd
+  ee-3:
+    type: task
+    title: EVT board bring-up
+    parent: ee
+    calendar: office
+    fields:
+      stream: Electronics
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  ee-4:
+    type: task
+    title: Power integrity fixes
+    parent: ee
+    calendar: office
+    fields:
+      stream: Electronics
+    schedule:
+      mode: scheduled
+      amount: 15wd
+  ee-5:
+    type: task
+    title: DVT board spin
+    parent: ee
+    calendar: office
+    fields:
+      stream: Electronics
+    schedule:
+      mode: scheduled
+      amount: 20wd
+  ee-6:
+    type: task
+    title: DVT validation
+    parent: ee
+    calendar: office
+    fields:
+      stream: Electronics
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  me:
+    type: group
+    title: Mechanical
+    schedule:
+      mode: rollup
+  me-1:
+    type: task
+    title: Enclosure CAD v2
+    parent: me
+    calendar: office
+    fields:
+      stream: Mechanical
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  me-2:
+    type: task
+    title: Thermal simulation
+    parent: me
+    calendar: office
+    fields:
+      stream: Mechanical
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  me-3:
+    type: task
+    title: Soft tooling
+    parent: me
+    calendar: office
+    fields:
+      stream: Mechanical
+    schedule:
+      mode: scheduled
+      amount: 23wd
+  me-4:
+    type: task
+    title: Drop and ingress test
+    parent: me
+    calendar: office
+    fields:
+      stream: Mechanical
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  me-5:
+    type: task
+    title: Hard tooling kickoff
+    parent: me
+    calendar: office
+    fields:
+      stream: Mechanical
+    schedule:
+      mode: scheduled
+      amount: 20wd
+  me-6:
+    type: task
+    title: T1 sample review
+    parent: me
+    calendar: office
+    fields:
+      stream: Mechanical
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  fw:
+    type: group
+    title: Firmware
+    schedule:
+      mode: rollup
+  fw-1:
+    type: task
+    title: Bootloader hardening
+    parent: fw
+    calendar: office
+    fields:
+      stream: Firmware
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  fw-2:
+    type: task
+    title: Sensor driver port
+    parent: fw
+    calendar: office
+    fields:
+      stream: Firmware
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  fw-3:
+    type: task
+    title: OTA update pipeline
+    parent: fw
+    calendar: office
+    fields:
+      stream: Firmware
+    schedule:
+      mode: scheduled
+      amount: 21wd
+  fw-4:
+    type: task
+    title: Power management
+    parent: fw
+    calendar: office
+    fields:
+      stream: Firmware
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  fw-5:
+    type: task
+    title: Field diagnostics
+    parent: fw
+    calendar: office
+    fields:
+      stream: Firmware
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  fw-6:
+    type: task
+    title: Release candidate 1
+    parent: fw
+    calendar: office
+    fields:
+      stream: Firmware
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  mfg:
+    type: group
+    title: Manufacturing
+    schedule:
+      mode: rollup
+  mfg-1:
+    type: task
+    title: CM selection
+    parent: mfg
+    calendar: office
+    fields:
+      stream: Manufacturing
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  mfg-2:
+    type: task
+    title: Line layout
+    parent: mfg
+    calendar: office
+    fields:
+      stream: Manufacturing
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  mfg-3:
+    type: task
+    title: Test fixture design
+    parent: mfg
+    calendar: office
+    fields:
+      stream: Manufacturing
+    schedule:
+      mode: scheduled
+      amount: 12wd
+  mfg-4:
+    type: task
+    title: Pilot build 1
+    parent: mfg
+    calendar: office
+    fields:
+      stream: Manufacturing
+    schedule:
+      mode: scheduled
+      amount: 9wd
+  mfg-5:
+    type: task
+    title: Yield analysis
+    parent: mfg
+    calendar: office
+    fields:
+      stream: Manufacturing
+    schedule:
+      mode: scheduled
+      amount: 8wd
+  mfg-6:
+    type: task
+    title: Pilot build 2
+    parent: mfg
+    calendar: office
+    fields:
+      stream: Manufacturing
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  cert:
+    type: group
+    title: Certification
+    schedule:
+      mode: rollup
+  cert-1:
+    type: task
+    title: Pre-scan EMC
+    parent: cert
+    calendar: office
+    fields:
+      stream: Certification
+    schedule:
+      mode: scheduled
+      amount: 5wd
+  cert-2:
+    type: task
+    title: FCC/CE test plan
+    parent: cert
+    calendar: office
+    fields:
+      stream: Certification
+    schedule:
+      mode: scheduled
+      amount: 6wd
+  cert-3:
+    type: task
+    title: Safety file prep
+    parent: cert
+    calendar: office
+    fields:
+      stream: Certification
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  cert-4:
+    type: task
+    title: Lab EMC run
+    parent: cert
+    calendar: office
+    fields:
+      stream: Certification
+    schedule:
+      mode: scheduled
+      amount: 12wd
+  cert-5:
+    type: task
+    title: Radio cert submission
+    parent: cert
+    calendar: office
+    fields:
+      stream: Certification
+    schedule:
+      mode: scheduled
+      amount: 5wd
+  cert-6:
+    type: task
+    title: Cert review response
+    parent: cert
+    calendar: office
+    fields:
+      stream: Certification
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  g-evt-exit:
+    type: gate
+    title: EVT exit
+    schedule:
+      mode: scheduled-point
+  g-design-freeze:
+    type: gate
+    title: Design freeze
+    schedule:
+      mode: scheduled-point
+  g-fw-feature:
+    type: gate
+    title: FW feature complete
+    schedule:
+      mode: scheduled-point
+  g-pilot:
+    type: gate
+    title: Pilot go/no-go
+    schedule:
+      mode: scheduled-point
+  g-dvt-exit:
+    type: gate
+    title: DVT exit
+    schedule:
+      mode: scheduled-point
+    deadline: '2027-02-26'
+  g-cert:
+    type: gate
+    title: Cert submitted
+    schedule:
+      mode: scheduled-point
+relations:
+- id: r-ee-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: ee-1
+    endpoint: start
+  lag: 0d
+- id: r-ee-2
+  type: dependency
+  from:
+    object: ee-1
+    endpoint: end
+  to:
+    object: ee-2
+    endpoint: start
+  lag: 0d
+- id: r-ee-3
+  type: dependency
+  from:
+    object: ee-2
+    endpoint: end
+  to:
+    object: ee-3
+    endpoint: start
+  lag: 0d
+- id: r-ee-4
+  type: dependency
+  from:
+    object: ee-3
+    endpoint: end
+  to:
+    object: ee-4
+    endpoint: start
+  lag: 0d
+- id: r-ee-5
+  type: dependency
+  from:
+    object: ee-4
+    endpoint: end
+  to:
+    object: ee-5
+    endpoint: start
+  lag: 0d
+- id: r-ee-6
+  type: dependency
+  from:
+    object: ee-5
+    endpoint: end
+  to:
+    object: ee-6
+    endpoint: start
+  lag: 0d
+- id: r-me-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: me-1
+    endpoint: start
+  lag: 0d
+- id: r-me-2
+  type: dependency
+  from:
+    object: me-1
+    endpoint: end
+  to:
+    object: me-2
+    endpoint: start
+  lag: 0d
+- id: r-me-3
+  type: dependency
+  from:
+    object: me-2
+    endpoint: end
+  to:
+    object: me-3
+    endpoint: start
+  lag: 0d
+- id: r-me-4
+  type: dependency
+  from:
+    object: me-3
+    endpoint: end
+  to:
+    object: me-4
+    endpoint: start
+  lag: 0d
+- id: r-me-5
+  type: dependency
+  from:
+    object: me-4
+    endpoint: end
+  to:
+    object: me-5
+    endpoint: start
+  lag: 0d
+- id: r-me-6
+  type: dependency
+  from:
+    object: me-5
+    endpoint: end
+  to:
+    object: me-6
+    endpoint: start
+  lag: 0d
+- id: r-fw-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: fw-1
+    endpoint: start
+  lag: 0d
+- id: r-fw-2
+  type: dependency
+  from:
+    object: fw-1
+    endpoint: end
+  to:
+    object: fw-2
+    endpoint: start
+  lag: 0d
+- id: r-fw-3
+  type: dependency
+  from:
+    object: fw-2
+    endpoint: end
+  to:
+    object: fw-3
+    endpoint: start
+  lag: 0d
+- id: r-fw-4
+  type: dependency
+  from:
+    object: fw-3
+    endpoint: end
+  to:
+    object: fw-4
+    endpoint: start
+  lag: 0d
+- id: r-fw-5
+  type: dependency
+  from:
+    object: fw-4
+    endpoint: end
+  to:
+    object: fw-5
+    endpoint: start
+  lag: 0d
+- id: r-fw-6
+  type: dependency
+  from:
+    object: fw-5
+    endpoint: end
+  to:
+    object: fw-6
+    endpoint: start
+  lag: 0d
+- id: r-mfg-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: mfg-1
+    endpoint: start
+  lag: 0d
+- id: r-mfg-2
+  type: dependency
+  from:
+    object: mfg-1
+    endpoint: end
+  to:
+    object: mfg-2
+    endpoint: start
+  lag: 0d
+- id: r-mfg-3
+  type: dependency
+  from:
+    object: mfg-2
+    endpoint: end
+  to:
+    object: mfg-3
+    endpoint: start
+  lag: 0d
+- id: r-mfg-4
+  type: dependency
+  from:
+    object: mfg-3
+    endpoint: end
+  to:
+    object: mfg-4
+    endpoint: start
+  lag: 0d
+- id: r-mfg-5
+  type: dependency
+  from:
+    object: mfg-4
+    endpoint: end
+  to:
+    object: mfg-5
+    endpoint: start
+  lag: 0d
+- id: r-mfg-6
+  type: dependency
+  from:
+    object: mfg-5
+    endpoint: end
+  to:
+    object: mfg-6
+    endpoint: start
+  lag: 0d
+- id: r-cert-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: cert-1
+    endpoint: start
+  lag: 0d
+- id: r-cert-2
+  type: dependency
+  from:
+    object: cert-1
+    endpoint: end
+  to:
+    object: cert-2
+    endpoint: start
+  lag: 0d
+- id: r-cert-3
+  type: dependency
+  from:
+    object: cert-2
+    endpoint: end
+  to:
+    object: cert-3
+    endpoint: start
+  lag: 0d
+- id: r-cert-4
+  type: dependency
+  from:
+    object: cert-3
+    endpoint: end
+  to:
+    object: cert-4
+    endpoint: start
+  lag: 0d
+- id: r-cert-5
+  type: dependency
+  from:
+    object: cert-4
+    endpoint: end
+  to:
+    object: cert-5
+    endpoint: start
+  lag: 0d
+- id: r-cert-6
+  type: dependency
+  from:
+    object: cert-5
+    endpoint: end
+  to:
+    object: cert-6
+    endpoint: start
+  lag: 0d
+- id: r-ee-3-g-evt-exit
+  type: dependency
+  from:
+    object: ee-3
+    endpoint: end
+  to:
+    object: g-evt-exit
+    endpoint: at
+  lag: 0d
+- id: r-me-2-g-evt-exit
+  type: dependency
+  from:
+    object: me-2
+    endpoint: end
+  to:
+    object: g-evt-exit
+    endpoint: at
+  lag: 0d
+- id: r-ee-4-g-design-freeze
+  type: dependency
+  from:
+    object: ee-4
+    endpoint: end
+  to:
+    object: g-design-freeze
+    endpoint: at
+  lag: 0d
+- id: r-me-4-g-design-freeze
+  type: dependency
+  from:
+    object: me-4
+    endpoint: end
+  to:
+    object: g-design-freeze
+    endpoint: at
+  lag: 0d
+- id: r-fw-5-g-fw-feature
+  type: dependency
+  from:
+    object: fw-5
+    endpoint: end
+  to:
+    object: g-fw-feature
+    endpoint: at
+  lag: 0d
+- id: r-mfg-4-g-pilot
+  type: dependency
+  from:
+    object: mfg-4
+    endpoint: end
+  to:
+    object: g-pilot
+    endpoint: at
+  lag: 0d
+- id: r-ee-6-g-dvt-exit
+  type: dependency
+  from:
+    object: ee-6
+    endpoint: end
+  to:
+    object: g-dvt-exit
+    endpoint: at
+  lag: 0d
+- id: r-me-6-g-dvt-exit
+  type: dependency
+  from:
+    object: me-6
+    endpoint: end
+  to:
+    object: g-dvt-exit
+    endpoint: at
+  lag: 0d
+- id: r-fw-6-g-dvt-exit
+  type: dependency
+  from:
+    object: fw-6
+    endpoint: end
+  to:
+    object: g-dvt-exit
+    endpoint: at
+  lag: 0d
+- id: r-cert-5-g-cert
+  type: dependency
+  from:
+    object: cert-5
+    endpoint: end
+  to:
+    object: g-cert
+    endpoint: at
+  lag: 0d
+annotations:
+  n1:
+    kind: note
+    text: Ground-plane fix adds 5 wd
+    anchor:
+      object: ee-4
+  n2:
+    kind: note
+    text: Tooling vendor change
+    anchor:
+      object: me-3
+  n3:
+    kind: risk
+    text: OTA signing keys pending
+    anchor:
+      object: fw-3
+  n4:
+    kind: note
+    text: Board approval needed
+    anchor:
+      object: g-pilot

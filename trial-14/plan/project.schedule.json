@@ -1,0 +1,367 @@
+{
+  "status": "ok",
+  "placements": {
+    "kickoff": {
+      "at": "2026-10-01"
+    },
+    "ee": {
+      "start": "2026-10-01",
+      "end": "2027-01-21"
+    },
+    "ee-1": {
+      "start": "2026-10-01",
+      "end": "2026-10-15"
+    },
+    "ee-2": {
+      "start": "2026-10-15",
+      "end": "2026-11-02"
+    },
+    "ee-3": {
+      "start": "2026-11-02",
+      "end": "2026-11-12"
+    },
+    "ee-4": {
+      "start": "2026-11-12",
+      "end": "2026-12-07"
+    },
+    "ee-5": {
+      "start": "2026-12-07",
+      "end": "2027-01-07"
+    },
+    "ee-6": {
+      "start": "2027-01-07",
+      "end": "2027-01-21"
+    },
+    "me": {
+      "start": "2026-10-01",
+      "end": "2027-01-19"
+    },
+    "me-1": {
+      "start": "2026-10-01",
+      "end": "2026-10-15"
+    },
+    "me-2": {
+      "start": "2026-10-15",
+      "end": "2026-10-23"
+    },
+    "me-3": {
+      "start": "2026-10-23",
+      "end": "2026-11-25"
+    },
+    "me-4": {
+      "start": "2026-11-25",
+      "end": "2026-12-09"
+    },
+    "me-5": {
+      "start": "2026-12-09",
+      "end": "2027-01-11"
+    },
+    "me-6": {
+      "start": "2027-01-11",
+      "end": "2027-01-19"
+    },
+    "fw": {
+      "start": "2026-10-01",
+      "end": "2027-01-05"
+    },
+    "fw-1": {
+      "start": "2026-10-01",
+      "end": "2026-10-13"
+    },
+    "fw-2": {
+      "start": "2026-10-13",
+      "end": "2026-10-27"
+    },
+    "fw-3": {
+      "start": "2026-10-27",
+      "end": "2026-11-25"
+    },
+    "fw-4": {
+      "start": "2026-11-25",
+      "end": "2026-12-11"
+    },
+    "fw-5": {
+      "start": "2026-12-11",
+      "end": "2026-12-23"
+    },
+    "fw-6": {
+      "start": "2026-12-23",
+      "end": "2027-01-05"
+    },
+    "mfg": {
+      "start": "2026-10-01",
+      "end": "2026-12-17"
+    },
+    "mfg-1": {
+      "start": "2026-10-01",
+      "end": "2026-10-15"
+    },
+    "mfg-2": {
+      "start": "2026-10-15",
+      "end": "2026-10-27"
+    },
+    "mfg-3": {
+      "start": "2026-10-27",
+      "end": "2026-11-12"
+    },
+    "mfg-4": {
+      "start": "2026-11-12",
+      "end": "2026-11-25"
+    },
+    "mfg-5": {
+      "start": "2026-11-25",
+      "end": "2026-12-09"
+    },
+    "mfg-6": {
+      "start": "2026-12-09",
+      "end": "2026-12-17"
+    },
+    "cert": {
+      "start": "2026-10-01",
+      "end": "2026-12-10"
+    },
+    "cert-1": {
+      "start": "2026-10-01",
+      "end": "2026-10-08"
+    },
+    "cert-2": {
+      "start": "2026-10-08",
+      "end": "2026-10-16"
+    },
+    "cert-3": {
+      "start": "2026-10-16",
+      "end": "2026-10-30"
+    },
+    "cert-4": {
+      "start": "2026-10-30",
+      "end": "2026-11-17"
+    },
+    "cert-5": {
+      "start": "2026-11-17",
+      "end": "2026-11-24"
+    },
+    "cert-6": {
+      "start": "2026-11-24",
+      "end": "2026-12-10"
+    },
+    "g-evt-exit": {
+      "at": "2026-11-12"
+    },
+    "g-design-freeze": {
+      "at": "2026-12-09"
+    },
+    "g-fw-feature": {
+      "at": "2026-12-23"
+    },
+    "g-pilot": {
+      "at": "2026-11-25"
+    },
+    "g-dvt-exit": {
+      "at": "2027-01-21"
+    },
+    "g-cert": {
+      "at": "2026-11-24"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [],
+  "analysis": {
+    "criticalObjectIds": [
+      "kickoff",
+      "ee-1",
+      "ee-2",
+      "ee-3",
+      "ee-4",
+      "ee-5",
+      "ee-6",
+      "g-dvt-exit"
+    ],
+    "totalFloat": {
+      "kickoff": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ee-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ee-2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ee-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ee-4": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ee-5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ee-6": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "me-1": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "me-2": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "me-3": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "me-4": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "me-5": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "me-6": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fw-1": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fw-2": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fw-3": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fw-4": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fw-5": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fw-6": {
+        "value": 12,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mfg-1": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mfg-2": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mfg-3": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mfg-4": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mfg-5": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mfg-6": {
+        "value": 22,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cert-1": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cert-2": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cert-3": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cert-4": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cert-5": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cert-6": {
+        "value": 27,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-evt-exit": {
+        "value": 45,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-design-freeze": {
+        "value": 28,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-fw-feature": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-pilot": {
+        "value": 36,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-dvt-exit": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-cert": {
+        "value": 37,
+        "unit": "working-days",
+        "calendar": "office"
+      }
+    }
+  }
+}

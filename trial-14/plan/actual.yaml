@@ -1,0 +1,142 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: atlas-q4-observed
+body:
+  asOf: '2026-11-13'
+  observations:
+  - id: kickoff-1
+    sequence: 1
+    projectObjectId: kickoff
+    actual:
+      at: '2026-10-01'
+  - id: ee-1-1
+    sequence: 1
+    projectObjectId: ee-1
+    actual:
+      start: '2026-10-01'
+      finish: '2026-10-15'
+      progress: 1
+  - id: ee-2-1
+    sequence: 1
+    projectObjectId: ee-2
+    actual:
+      start: '2026-10-15'
+      finish: '2026-11-02'
+      progress: 1
+  - id: ee-3-1
+    sequence: 1
+    projectObjectId: ee-3
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-12'
+      progress: 1
+  - id: ee-4-1
+    sequence: 1
+    projectObjectId: ee-4
+    actual:
+      start: '2026-11-12'
+      openUntil: asOf
+      progress: 0.05
+  - id: me-1-1
+    sequence: 1
+    projectObjectId: me-1
+    actual:
+      start: '2026-10-01'
+      finish: '2026-10-17'
+      progress: 1
+  - id: me-2-1
+    sequence: 1
+    projectObjectId: me-2
+    actual:
+      start: '2026-10-15'
+      finish: '2026-10-25'
+      progress: 1
+  - id: me-3-1
+    sequence: 1
+    projectObjectId: me-3
+    actual:
+      start: '2026-10-23'
+      openUntil: asOf
+      progress: 0.54
+  - id: fw-1-1
+    sequence: 1
+    projectObjectId: fw-1
+    actual:
+      start: '2026-10-01'
+      finish: '2026-10-13'
+      progress: 1
+  - id: fw-2-1
+    sequence: 1
+    projectObjectId: fw-2
+    actual:
+      start: '2026-10-13'
+      finish: '2026-10-27'
+      progress: 1
+  - id: fw-3-1
+    sequence: 1
+    projectObjectId: fw-3
+    actual:
+      start: '2026-10-27'
+      openUntil: asOf
+      progress: 0.49
+  - id: mfg-1-1
+    sequence: 1
+    projectObjectId: mfg-1
+    actual:
+      start: '2026-10-01'
+      finish: '2026-10-17'
+      progress: 1
+  - id: mfg-2-1
+    sequence: 1
+    projectObjectId: mfg-2
+    actual:
+      start: '2026-10-15'
+      finish: '2026-10-27'
+      progress: 1
+  - id: mfg-3-1
+    sequence: 1
+    projectObjectId: mfg-3
+    actual:
+      start: '2026-10-27'
+      finish: '2026-11-12'
+      progress: 1
+  - id: mfg-4-1
+    sequence: 1
+    projectObjectId: mfg-4
+    actual:
+      start: '2026-11-12'
+      openUntil: asOf
+      progress: 0.05
+  - id: cert-1-1
+    sequence: 1
+    projectObjectId: cert-1
+    actual:
+      start: '2026-10-01'
+      finish: '2026-10-10'
+      progress: 1
+  - id: cert-2-1
+    sequence: 1
+    projectObjectId: cert-2
+    actual:
+      start: '2026-10-08'
+      finish: '2026-10-16'
+      progress: 1
+  - id: cert-3-1
+    sequence: 1
+    projectObjectId: cert-3
+    actual:
+      start: '2026-10-16'
+      finish: '2026-10-30'
+      progress: 1
+  - id: cert-4-1
+    sequence: 1
+    projectObjectId: cert-4
+    actual:
+      start: '2026-10-30'
+      openUntil: asOf
+      progress: 0.68
+  - id: g-evt-exit-1
+    sequence: 1
+    projectObjectId: g-evt-exit
+    actual:
+      at: '2026-11-12'

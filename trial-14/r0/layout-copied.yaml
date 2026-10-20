@@ -1,0 +1,143 @@
+version: chrona/layout-profile/v0.10
+id: "board-mono"
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
+requiredThemeTokens: [legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none]
+reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unroutable: relax}
+# The design half of the View (#1341, Spec 06 §9.2). Project-independent: a View connects a project by
+# declaring its selection, window, grouping key/order, column captions/sources, period and marker
+# sources and annotation bindings; any member the View declares replaces the one below.
+viewDefaults:
+  rows: {mode: automatic}
+  comparison:
+    baselineMarks: ghost-when-changed
+    missingActualScope: in-progress
+    deltaUnit: working-days
+    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+  progressFill: {source: actual}
+  visibility:
+    labels: {placement: table, content: [title, finishDelta], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: {mode: presentation, marker: none}
+  annotationPlacement:
+    note:
+      candidates:
+        - id: rail
+          region: {kind: slot, source: annotations}
+          search: {kind: row-aligned}
+          obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+          connector: {kind: leader}
+  axis:
+    tiers:
+      - {unit: quarter, every: 1, role: band, typographyRole: axisQuarter}
+      - {unit: quarter, every: 1, role: grid-major}
+      - unit: quarter
+        every: 1
+        role: labels
+        label: {form: quarter-year, align: center, overflow: visible-overflow, orientation: horizontal}
+        typographyRole: axisQuarter
+      - {unit: month, every: 1, role: band, typographyRole: axisMonth}
+      - unit: month
+        every: 1
+        role: labels
+        label: {form: short-month, align: center, overflow: visible-overflow, orientation: horizontal}
+        typographyRole: axisMonth
+      - {unit: month, every: 1, role: grid-minor}
+  markerPresentation: {kind: asOf, label: {wording: marker.asOf}, placement: below-plot, date: {form: day-month}}
+  periodLabelPresentation: {placement: top}
+  shading: {nonWorking: true, exceptions: true}
+  backgroundDecoration: {rows: rules, groups: all}
+  columnStyles:
+    title: {missing: em-dash, align: start, width: {minmax: {min: content, max: {fr: 1}}}, headerOrientation: horizontal}
+    field: {textRole: table-cell-secondary, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
+    facet:
+      format: signedDays
+      missing: blank
+      missingBy: {inProgress: blank, dueUnobserved: blank, notYetDue: blank}
+      align: end
+      width: content
+      headerOrientation: horizontal
+  grouping:
+    presentation: header
+    tint: {scale: owner, domain: firstAppearance}
+root:
+  id: page
+  kind: column
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.m}
+  padding: {token: spacing.l}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: required
+      overflow: visible-overflow
+    - id: review
+      kind: row
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: table
+          kind: slot
+          source: table
+          inlineSize: {minmax: {min: content, max: {fr: 1}}}
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: visible-overflow
+        - id: timeline-stack
+          kind: column
+          inlineSize: {fr: 2}
+          blockSize: fill
+          gap: {token: spacing.none}
+          padding: {token: spacing.none}
+          alignItems: stretch
+          justifyContent: start
+          children:
+            - id: timeline-axis
+              kind: slot
+              source: timeline-axis
+              inlineSize: fill
+              blockSize: content
+              place: {inline: stretch, block: start, safety: strict}
+              priority: required
+              overflow: visible-overflow
+            - id: timeline
+              kind: slot
+              source: timeline
+              inlineSize: fill
+              blockSize: fill
+              place: {inline: stretch, block: stretch, safety: strict}
+              priority: required
+              overflow: visible-overflow
+        - id: annotations
+          kind: slot
+          source: annotations
+          heading: {text: {wording: slot.notes}, align: start, block: header-row}
+          inlineSize: {fixed: {token: note-rail-width}}
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: optional
+          overflow: visible-overflow
+    - id: legend
+      kind: slot
+      source: legend
+      inlineSize: fill
+      blockSize: {fixed: {token: legend-block}}
+      place: {inline: start, block: start, safety: safe}
+      priority: preferred
+      overflow: ellipsize-with-source
+      direction: inline
+      itemMinInlineSize: {token: legend-item-min}
+      gap: {token: legend-gap}

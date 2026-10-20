@@ -1,0 +1,48 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: "board-mono"
+body:
+  colors:
+    surface: "#FFFFFF"
+    surfaceRaised: "#EFEFEF"
+    text: "#000000"
+    textMuted: "#4A4A4A"
+    accent: "#262626"
+    positive: "#4A4A4A"
+    negative: "#000000"
+    warning: "#000000"
+    neutral: "#8C8C8C"
+    rule: "#C4C4C4"
+    insideLabelPlanned: "#000000"
+    insideLabelActual: "#FFFFFF"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: light
+    colorVision:
+    - protanopia
+    - deuteranopia
+    - tritanopia
+    print: photocopy-friendly
+  provenance:
+    kind: chrona-authored
+    source: trial-14 board-mono, derived from target-b
+    license: MIT
+  categories:
+    default: "#FFFFFF"
+    period: "#262626"
+    exception: "#DDDDDD"
+    bar: "#C2C2C2"
+    barEdge: "#3A3A3A"
+    actualInk: "#000000"
+    progress: "#6E6E6E"
+    asofChip: "#000000"
+    asofInk: "#FFFFFF"
+    relationInk: "#8C8C8C"
+    closed: "#F4F4F4"
+    series-1: "#FFFFFF"
+    series-2: "#FFFFFF"
+    series-3: "#FFFFFF"
+    series-4: "#FFFFFF"
+    series-5: "#FFFFFF"
+    series-6: "#FFFFFF"

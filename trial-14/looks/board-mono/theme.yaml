@@ -1,0 +1,49 @@
+version: chrona/theme/v0.16
+kind: theme
+id: board-mono
+body:
+  extends:
+    id: target-b
+    path: base/target-b-theme.yaml
+  values:
+    editorial: {type: fontFamily, value: "Noto Sans, Noto Sans JP, sans-serif"}
+    size.heading: {type: number, value: 14}
+    size.body: {type: number, value: 9}
+    size.group: {type: number, value: 9}
+    size.numeric: {type: number, value: 9}
+    size.axis: {type: number, value: 8.5}
+    size.legend: {type: number, value: 8.5}
+    size.asof: {type: number, value: 8}
+    size.note: {type: number, value: 8}
+    timeline-row-height: {type: number, value: 13}
+    note-rail-width: {type: number, value: 150}
+    spacing.m: {type: number, value: 8}
+    axis-lane-quarter: {type: number, value: 16}
+    axis-lane-month: {type: number, value: 16}
+    legend-block: {type: number, value: 16}
+    timeline-row-padding: {type: number, value: 1}
+    leading.body: {type: number, value: 1.2}
+    header-size: {type: number, value: 9}
+    kind-label-size: {type: number, value: 8}
+    timeline-mark-size: {type: number, value: 11}
+  colorBindings:
+    as-of.stroke: text
+    progress-fill.fill: category:progress
+    progress-fill.stroke: surface
+    annotation-kind-accent.fill: text
+    note-index.fill: text
+    annotation-note-box.fill: surface
+    annotation-note-box.stroke: rule
+    snapshot.stroke: text
+    missing-actual.stroke: text
+  annotationKinds:
+    risk:
+      label: RISK
+      title: '{label} · {subject}'
+      color: text
+      colorAlso: [header, leader]
+    note:
+      label: NOTE
+      title: '{label} · {subject}'
+      color: textMuted
+      colorAlso: [header, leader]

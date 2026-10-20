@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_COLOR_SCHEME_SCHEMA", "severity": "error", "component": "closure", "sourceRef": "/body/suitability/colorVision/3", "revisionRefs": [], "message": "expected one of 'none-claimed', 'deuteranopia', 'protanopia', 'tritanopia'"}]}

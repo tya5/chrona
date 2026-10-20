@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_THEME_INHERITANCE_SCHEMA", "severity": "error", "component": "closure", "sourceRef": "/", "revisionRefs": [], "message": "the derived Theme does not satisfy theme-v0.16.schema.yaml: Additional properties are not allowed ('contrastPolicy' was unexpected)"}]}

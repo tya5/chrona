@@ -1,0 +1,30 @@
+version: chrona/theme/v0.16
+kind: theme
+id: board-mono
+body:
+  extends:
+    id: target-b
+    path: base/target-b-theme.yaml
+  values:
+    editorial: {type: fontFamily, value: "Noto Sans, Noto Sans JP, sans-serif"}
+    size.heading: {type: number, value: 17}
+    size.body: {type: number, value: 10.5}
+    size.group: {type: number, value: 10.5}
+    size.numeric: {type: number, value: 10}
+    size.axis: {type: number, value: 10}
+    size.legend: {type: number, value: 10}
+    size.asof: {type: number, value: 9.5}
+    size.note: {type: number, value: 9.5}
+    timeline-row-height: {type: number, value: 17}
+    note-rail-width: {type: number, value: 190}
+    spacing.m: {type: number, value: 10}
+  colorBindings:
+    as-of.stroke: text
+    progress-fill.fill: category:progress
+    progress-fill.stroke: surface
+    annotation-kind-accent.fill: text
+    note-index.fill: text
+    annotation-note-box.fill: surface
+    annotation-note-box.stroke: rule
+    snapshot.stroke: text
+    missing-actual.stroke: text

@@ -1,0 +1,5 @@
+visions ('protanopia', 'deuteranopia', 'tritanopia')
+normal [('baseline(stroke)', 'actual', 0.0), ('baseline(stroke)', 'gate', 0.0), ('plan(fill)', 'calendar-exception', 3.4), ('actual', 'gate', 0.0)]
+protanopia [('baseline(stroke)', 'actual', 0.0), ('baseline(stroke)', 'gate', 0.0), ('plan(fill)', 'calendar-exception', 3.4), ('actual', 'gate', 0.0)]
+deuteranopia [('baseline(stroke)', 'actual', 0.0), ('baseline(stroke)', 'gate', 0.0), ('plan(fill)', 'calendar-exception', 3.4), ('actual', 'gate', 0.0)]
+tritanopia [('baseline(stroke)', 'actual', 0.0), ('baseline(stroke)', 'gate', 0.0), ('plan(fill)', 'calendar-exception', 3.4), ('actual', 'gate', 0.0)]
