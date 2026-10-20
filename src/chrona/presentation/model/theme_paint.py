@@ -184,6 +184,7 @@ class LegendShapeInk:
     stroke: str | None
     stroke_width: Decimal | None
     opacity: Decimal
+    dash: tuple[float, ...] = ()
 
 
 def resolve_theme_paint_witness(
@@ -279,7 +280,8 @@ def resolve_legend_shape_ink(tokens: ThemeTokenView, role: str, shape: str,
             width = tokens.number(role, "strokeWidth")
             if width <= 0:
                 raise ThemePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}/strokeWidth")
-            return LegendShapeInk(None, stroke, width, opacity if opacity is not None else Decimal(1))
+            dash = tokens.dash(role) if tokens.has_binding(role, "dash") else ()
+            return LegendShapeInk(None, stroke, width, opacity if opacity is not None else Decimal(1), dash)
     except ThemeTokenError as error:
         raise ThemePaintError(error.diagnostic_id, error.path) from error
     raise ThemePaintError("E_PRESENTATION_PAINT_INVALID", f"/body/roles/{role}")

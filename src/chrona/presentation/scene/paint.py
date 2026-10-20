@@ -67,7 +67,7 @@ def resolve_legend_shape_paint(tokens: ThemeTokenView, role: str, shape: str,
         ink = resolve_legend_shape_ink(tokens, role, shape, fill_override=fill_override)
         return ScenePaint(fill=ink.fill, stroke=ink.stroke,
                           stroke_width=float(ink.stroke_width) if ink.stroke_width is not None else None,
-                          dash=(), opacity=float(ink.opacity))
+                          dash=ink.dash, opacity=float(ink.opacity))
     except ThemePaintError as error:
         raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
     except ThemeTokenError as error:
