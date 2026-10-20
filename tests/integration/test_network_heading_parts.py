@@ -6,17 +6,19 @@ from tests.integration.test_title_ink import ACTUAL, _network_parts, _source
 from tests.support import synthetic_review as sr
 
 
-def test_network_whole_source_still_ignores_unused_heading_typography(tmp_path):
-    plain_parts = _network_parts()
-    unused_parts = deepcopy(plain_parts)
-    unused_parts["view"]["body"]["heading"]["kicker"] = "Unused kicker"
-    assert "kicker" not in unused_parts["theme"]["body"]["roles"]
-    (tmp_path / "plain").mkdir()
-    (tmp_path / "unused").mkdir()
-    plain = sr.render(tmp_path / "plain", _source(), presentation=plain_parts, actual=ACTUAL)
-    unused = sr.render(tmp_path / "unused", _source(), presentation=unused_parts, actual=ACTUAL)
-    assert unused.artifact.content == plain.artifact.content
-    assert unused.surface.primitives == plain.surface.primitives
+def test_network_whole_title_slot_uses_the_shared_view_heading_copy(tmp_path):
+    parts = _network_parts()
+    parts["view"]["body"]["heading"] = {"title": "Dependencies for {project}", "subtitle": "CSV plan"}
+    parts["theme"]["body"]["roles"]["subtitle"] = dict(parts["theme"]["body"]["roles"]["heading"])
+    rendered = sr.render(tmp_path, _source(), presentation=parts, actual=ACTUAL)
+    texts = {item.scene_id: item for item in rendered.surface.primitives
+             if item.scene_id in {"title", "subtitle"}}
+    assert texts["title"].text == "Dependencies for Quarterly review"
+    assert texts["subtitle"].text == "CSV plan"
+    svg = {node.attrib["data-scene-id"]: node for node in ET.fromstring(rendered.artifact.content).iter()
+           if node.attrib.get("data-scene-id") in texts}
+    assert "".join(svg["title"].itertext()) == texts["title"].text
+    assert "".join(svg["subtitle"].itertext()) == texts["subtitle"].text
 
 
 def test_network_parts_keep_roles_and_distinct_native_slot_owners(tmp_path):

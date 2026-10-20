@@ -40,6 +40,7 @@ def test_network_guide_csv_renders_real_svg_and_png_without_clone_resources(tmp_
     assert nodes == {"network-node:design", "network-node:build", "network-node:test"}
     for object_id, label in (("design", "Design"), ("build", "Build"), ("test", "Test")):
         assert "".join(items[f"network-label:{object_id}"].itertext()) == label
+    assert "".join(items["title"].itertext()) == "Dependencies for Delivery dependencies"
     assert len([key for key in items if key.startswith("network-edge:")]) == 2
     with Image.open(tmp_path / "network.png") as image:
         assert image.size == (1200, 600)

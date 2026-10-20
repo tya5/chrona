@@ -27,6 +27,7 @@ body:
   ordering: {by: plannedStart, direction: ascending, tieBreak: id}
   window: {mode: selected-planned}
   comparison: {baseline: primary, actual: forbidden, observationSelection: latest, deltaUnit: calendar-days, facets: [planned]}
+  heading: {title: "Dependencies for {project}"}
   visibility: {labels: false, relations: semantic, annotations: none}
   network: {nodeLabel: {source: title}}
 ```
@@ -37,7 +38,7 @@ version: chrona/layout-profile/v0.10
 id: csv-network-layout
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
-requiredThemeTokens: [spacing.l, spacing.m]
+requiredThemeTokens: [spacing.m]
 reviewSurface:
   rowDistribution: pack
   backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}
@@ -49,7 +50,7 @@ root:
   inlineSize: fill
   blockSize: fill
   gap: {token: spacing.m}
-  padding: {token: spacing.l}
+  padding: {token: spacing.m}
   alignItems: stretch
   justifyContent: start
   children:
@@ -75,8 +76,8 @@ Save the three files above in the same working directory, then run:
 
 ```sh
 chrona import network-plan.csv --output network-project.yaml --title "Delivery dependencies"
-chrona render network-project.yaml --preset control-room-dark --view network-view.yaml --layout network-layout.yaml --viewport 1200x600 --output network.svg
-chrona render network-project.yaml --preset control-room-dark --view network-view.yaml --layout network-layout.yaml --viewport 1200x600 --output network.png
+chrona render network-project.yaml --view network-view.yaml --layout network-layout.yaml --viewport 1200x600 --output network.svg
+chrona render network-project.yaml --view network-view.yaml --layout network-layout.yaml --viewport 1200x600 --output network.png
 ```
 
 The output contains three labelled nodes and two directed dependencies. The
