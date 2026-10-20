@@ -13,7 +13,8 @@ from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.engine import measure_natural_normal_flow_block, resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.slot_heading import bind_slot_heading_templates, headed_slot_ids, reserve_slot_heading_blocks
+from chrona.presentation.layout.slot_heading import (
+    bind_slot_heading_templates, headed_slot_ids, resolve_heading_wording, reserve_slot_heading_blocks)
 from chrona.presentation.layout.sources import MeasuredSources, resolve_theme_metrics, measure_sources
 from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.source_presence import omit_absent_layout_sources
@@ -39,6 +40,7 @@ from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
+from chrona.presentation.model.wording_tables import wording_resolver
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.v05_content import compose_heading
 
@@ -130,7 +132,9 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     # Profile error is still reported after any measurement error, as before.
     layout_error: LayoutError | None = None
     try:
-        resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
+        resolved_layout = resolve_heading_wording(
+            resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme),
+            wording_resolver(value.locale, view.wording))
     except LayoutError as error:
         resolved_layout, layout_error = None, error
     claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])

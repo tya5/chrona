@@ -49,8 +49,8 @@ The keys, with their `en-US` and `ja-JP` text:
 | `column.finishDeltaPlan` | Δ vs plan | 計画との差 |
 | `column.finishDeltaBaseline` | Δ vs baseline | 基準との差 |
 | `legend.actual-ahead`, `legend.actual-on-track`, `legend.actual-behind` | Ahead, On track, Behind | 前倒し, 予定どおり, 遅れ |
-| `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, baseline, current plan | 予定, 基準計画, 現行計画 |
-| `legend.gate`, `legend.holiday` | gate, holiday | ゲート, 祝日 |
+| `legend.planned-plain`, `legend.baseline`, `legend.current-plan` | Planned, Baseline, Current plan | 予定, 基準計画, 現行計画 |
+| `legend.gate`, `legend.holiday` | Gate, Holiday | ゲート, 祝日 |
 | `summary.days` | DAYS | 日 |
 | `legend.plan`, `legend.period`, `legend.depends-on` | Plan, Period, Depends on | 計画, 期間, 依存先 |
 | `legend.missing-actual`, `legend.missing-actual-in-progress` | Not yet observed, In progress, not yet observed | 未観測, 進行中・未観測 |
@@ -58,6 +58,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | `legend.other` | Other | その他 |
 | `column.no` | No | 番号 |
 | `delta.unit.calendarDay`, `delta.unit.workingDay` | d, d | 日, 営業日 |
+| `slot.notes` | Notes | 注記 |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
@@ -71,6 +72,12 @@ typography `textTransform` token (`lowercase`, `uppercase`) on the role that dra
 for the as-of marker) and references the same key; it does not need a key of its own. The legend draws
 `TASK DURATION` this way. A transform belongs to a role, so it applies to every entry of that legend and, for the as-of marker, to the
 date after the label too (`as of 20 feb`). Japanese has no case and is unchanged by a transform.
+
+**A slot heading.** A Layout Profile slot `heading.text` is a literal or `{wording: <key>}`, for example
+`heading: {text: {wording: slot.notes}}` (`Notes` / `注記`). A literal stays as written under every locale, so a copied
+layout that keeps `text: Notes` still draws English under `--locale ja-JP`; reference `slot.notes` to follow the locale.
+The View's `wording.keys` override reaches it like any key, and a View `slotHeadingText` copy for the slot still wins. The
+heading's role `textTransform` styles the resolved text as before.
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.

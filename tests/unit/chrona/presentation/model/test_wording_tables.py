@@ -30,7 +30,7 @@ BUILT_IN_WORDING_KEYS = (
     "column.finishDeltaPlan", "column.finishDeltaBaseline", "summary.days",
     "legend.plan", "legend.missing-actual", "legend.missing-actual-in-progress", "legend.in-the-wings",
     "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
-    "delta.unit.calendarDay", "delta.unit.workingDay",
+    "delta.unit.calendarDay", "delta.unit.workingDay", "slot.notes",
 )
 LOCALES = ("en-US", "ja-JP")
 
@@ -260,8 +260,8 @@ def test_the_keys_that_replace_preset_literals_read_as_the_literal_in_en_us_and_
                                       "legend.holiday", "column.owner", "column.number", "column.phase",
                                       "column.finishDelta", "column.finishDeltaPlan",
                                       "column.finishDeltaBaseline", "summary.days")} == {
-        "legend.planned-plain": "Planned", "legend.baseline": "baseline", "legend.current-plan": "current plan",
-        "legend.gate": "gate", "legend.holiday": "holiday", "column.owner": "Owner", "column.number": "No.",
+        "legend.planned-plain": "Planned", "legend.baseline": "Baseline", "legend.current-plan": "Current plan",
+        "legend.gate": "Gate", "legend.holiday": "Holiday", "column.owner": "Owner", "column.number": "No.",
         "column.phase": "Phase", "column.finishDelta": "Δ finish",
         "column.finishDeltaPlan": "Δ vs plan", "column.finishDeltaBaseline": "Δ vs baseline",
         "summary.days": "DAYS"}
@@ -306,3 +306,10 @@ def test_the_lane_table_header_and_the_layout_marker_label_resolve_per_locale(tm
     texts = {text.strip() for text in _texts(sr.render(tmp_path, source, presentation=_lane_parts(), actual=_ACTUAL,
                                                        locale=locale))}
     assert expected <= texts, (expected, texts)
+
+
+def test_the_legend_entries_are_sentence_case_and_a_design_lowers_them_with_a_text_transform():
+    """The guide says every table value is sentence case; case is the design's `textTransform` (#1827)."""
+    en = wording_catalog()["en-US"]
+    lower_case = [key for key, text in en.items() if key.startswith("legend.") and text[:1].isalpha() and text[:1].islower()]
+    assert lower_case == []

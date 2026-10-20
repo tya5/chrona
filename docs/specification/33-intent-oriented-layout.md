@@ -249,7 +249,9 @@ caption part of its allocation. A caption never moves another slot.
 A slot with no area, one too short for its caption, or one whose source has no content draws no caption and
 reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:<too-small|no-content>`); an absent optional slot has
 no decision and so no caption. A caption wider than the slot is cut with its source kept
-(`W_LAYOUT_TEXT_ELLIPSIZED`). A derived profile overrides the copy with `overrides: {<slot>: {heading: ...}}`
+(`W_LAYOUT_TEXT_ELLIPSIZED`). The caption `text` is a literal or a `{wording: <key>}` reference (#1827): Layout resolves the reference through the
+`WordingResolver` of the Render Context locale and the View's `wording.keys`, before measurement, so the completed
+caption is literal copy and an unknown key is `E_LAYOUT_SCHEMA` at `<heading>/text`. A derived profile overrides the copy with `overrides: {<slot>: {heading: ...}}`
 (the whole declaration is replaced). A View may override only the caption copy with `slotHeadingText`
 (Spec 06 §7.5), keyed by the resolved slot node ID. This leaves the profile, hash, allocation, alignment,
 block placement and caption reservation unchanged; Layout measures and completes the selected copy.
