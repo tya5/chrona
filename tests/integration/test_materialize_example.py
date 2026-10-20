@@ -317,17 +317,21 @@ def test_halcyon_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     svg = (tmp_path / "gates/review.svg").read_text(encoding="utf-8")
     context = context_document(ROOT / "examples/halcyon-1", "gates")
     block = float(context["body"]["environment"]["viewport"]["blockSize"])
+    scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
+    completed_block = scene["surfaces"][0]["canvasBounds"]["blockSize"]
     baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
-    assert len(baselines) == 6 and max(baselines) < block
+    # Realized point figures add keys; every measured label must fit the
+    # completed canvas, with declared viewport growth explicitly diagnosed.
+    assert len(baselines) >= 6 and max(baselines) < completed_block
     svg_root = ET.fromstring(svg)
     legend_labels = [item for item in svg_root.iter() if item.get("data-purpose") == "legend-label"]
     snapshot = next(item for item in legend_labels if item.get("data-scene-id") == "legend:snapshot")
     assert "Baseline" in "".join(snapshot.itertext())
-    assert 'data-scene-id="legend:scale:model:FM"' in svg
+    assert all(f'data-scene-id="legend:scale:model:{value}"' in svg for value in ("EM", "QM", "FM"))
     assert 'data-purpose="progress-fill"' in svg
-    scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
-    assert not any(diagnostic.startswith(("W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT", "W_THEME_ROLE_UNREAD"))
-                   for diagnostic in scene["diagnostics"])
+    assert not any(diagnostic.startswith("W_THEME_ROLE_UNREAD") for diagnostic in scene["diagnostics"])
+    assert any(diagnostic.startswith("W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT")
+               for diagnostic in scene["diagnostics"]) == (completed_block > block)
     primitives = {primitive["id"]: primitive for primitive in scene["surfaces"][0]["primitives"]}
     # The compared scenario's negative lag (-3wd) starts payload TVAC before the current plan does.
     ghost = primitives["planned:payload-tvac:scenario:payload-fast-track:payload-tvac"]["bounds"]
