@@ -5,11 +5,11 @@
 [Current plan, design and architecture review](https://github.com/tya5/chrona/issues/1841#issuecomment-6295885856).
 Specs08/50 own neutral host identity and Layout validation; Spec06 owns the
 shared native-surface heading contract. No Scene/adaptor routing or title logic.
-Row4 source: `e825db974`, including exact stub normalization, verified recovery
+Row4 source: `95fadef98`, including exact stub normalization, verified recovery
 observation, early impossible-egress rejection, minimum-lead protected search,
 completed narrow-span ports and retained provisional label footprints.
 Specs30/50 corrections were published before their corresponding source changes.
-The latest routing/Scene batch passes760 tests; impossible end-face corridors
+The latest CLI/routing/Scene batch passes974 tests; impossible end-face corridors
 report actual `egress-collision` identities before search. The mark/viewport
 batch passes103 tests; narrow spans retain their1px visual floor and use its
 completed right edge for the connector, without moving Schedule dates or
@@ -21,7 +21,7 @@ route-or-suppression success. Independent architecture review found no safety
 bypass or geometry leaking beyond Layout.
 
 ```sh
-.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout tests/unit/chrona/presentation/scene -k 'relation or route or egress' -m 'not corpus' --tb=short
+.venv/bin/python -m pytest -q tests/cli/test_cli_characterization.py tests/unit/chrona/presentation/layout tests/unit/chrona/presentation/scene -k 'cli or relation or route or egress or forward_point' -m 'not corpus' --tb=short
 ```
 
 Release is **not accepted**. PR1849 CI39477068127 is red; shards1/3 failures
@@ -38,9 +38,18 @@ with bundled fonts; the PDR path is unchanged. Corrected observation of that
 same50-Scene artifact gives0errors/11 recovery infos without rerendering.
 [Optional-label disposition](https://github.com/tya5/chrona/issues/1841#issuecomment-6299771283)
 keeps quality/contact and route-preservation guards; historical name counts are
-not permission to cross a mark. Remaining render/arrival regressions, affected
-test-fixture characterizations, fresh official SVG/count review and exact-main
-three-OS release must be completed before acceptance.
+not permission to cross a mark. Forward-point admission preserves all31 neutral
+relations and all5 left/top/bottom arrivals without backward right entry
+(27 focused tests). Optional label omissions have measured retry-footprint
+witnesses and truthful count diagnostics; the separate feasible-reservation
+control still recovers both names. All9 affected test-fixture SVG/Scenes were
+regenerated through this worktree's asserted venv imports, not public derived
+paths; the focused materializer/suppression batch passes9 tests. Annotation and
+ja-JP before/after SVG rasters were viewed with bundled fonts. PR1849 lists
+per-fixture primitive/route/Text counts;4 CLI diagnostic records changed.
+Overlapping scratch-path aliases now normalize deterministically, retaining
+filename/error-envelope checks. Fresh official SVG/count review and exact-main
+three-OS release remain required.
 
 ## Literal issue acceptance
 
