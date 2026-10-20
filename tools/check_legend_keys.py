@@ -12,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 MARK_PREFIXES = {"planned": "planned:", "actual": "actual:",
                  "snapshot": "snapshot:", "scenario": "scenario:"}
+POINT_MARK_ROLES = {"planned", "actual", "forecast"}
 
 
 def _paint(item: dict[str, Any]) -> tuple[str | None, str | None]:
@@ -73,6 +74,44 @@ def _figure_groups(items: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
     return list(grouped.values())
 
 
+def _point_figure_role(item: dict[str, Any], owner_role: str) -> str | None:
+    """Recognize completed point figures, not temporal state (forecast can paint as planned)."""
+    state = item.get("visualRole")
+    if owner_role == "milestone":
+        return state if isinstance(state, str) and state in POINT_MARK_ROLES else "planned"
+    source_ref = item.get("sourceRef")
+    if (item.get("kind") == "Symbol" and item.get("sourceKind") == "legend"
+            and isinstance(source_ref, str) and source_ref != owner_role
+            and isinstance(state, str) and state in POINT_MARK_ROLES):
+        return state
+    return None
+
+
+def _point_key_findings(state: str, label: str, key_figures: list[list[dict[str, Any]]],
+                        marks: dict[str, list[dict[str, Any]]]) -> list[str]:
+    """Match each state key to one complete source mark figure, never a palette union."""
+    source_points = [item for role, items in marks.items() for item in items
+                     if item.get("kind") == "Symbol"
+                     and (item.get("visualRole") == state
+                          or (state == "planned" and role == "planned"
+                              and item.get("visualRole") is None))
+                     and ":snapshot:" not in item.get("id", "")]
+    if not source_points:
+        return [f"{label}: point key has no source Symbol mark figure"]
+    source_figures = _figure_groups(source_points)
+    source_paints = {_figure_paint_identity(figure) for figure in source_figures}
+    findings: list[str] = []
+    for key_figure in key_figures:
+        if any(item.get("kind") != "Symbol" for item in key_figure):
+            findings.append(f"{label}: point key shape is not Symbol")
+        elif _figure_paint_identity(key_figure) not in source_paints:
+            findings.append(
+                f"{label}: key paints fill/stroke complete figure {[_paint(item) for item in key_figure]}, "
+                "no source point figure has that ordered paint stack"
+            )
+    return findings
+
+
 def _progress_hosts(item: dict[str, Any], marks: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
     remainder = item.get("id", "").removeprefix("progress-fill:")
     role = remainder.partition(":")[0]
@@ -111,6 +150,24 @@ def _surface_findings(primitives: list[dict[str, Any]], *, legend_declared: bool
                 progress[role].append(item)
     findings: list[str] = []
     for role, role_keys in sorted(keys.items()):
+        state_key_figures: dict[str, list[list[dict[str, Any]]]] = defaultdict(list)
+        ordinary_role_keys: list[dict[str, Any]] = []
+        for key in role_keys:
+            state = _point_figure_role(key, role)
+            if state is None:
+                ordinary_role_keys.append(key)
+            else:
+                state_key_figures[state].append([key])
+        # Parts sharing a producer-owned sourceRef form one complete key figure.
+        for state in tuple(state_key_figures):
+            state_key_figures[state] = [figure for figure in _figure_groups(
+                [item for figure in state_key_figures[state] for item in figure])]
+            findings.extend(_point_key_findings(
+                state, "milestone" if role == "milestone" else state,
+                state_key_figures[state], marks))
+        role_keys = ordinary_role_keys
+        if not role_keys:
+            continue
         if role in {"actual", "milestone"}:
             expected_kind = "Symbol" if role == "milestone" else None
             candidates = [item for item in marks.get("planned" if role == "milestone" else role, ())

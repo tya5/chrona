@@ -117,6 +117,56 @@ def test_multipart_milestone_key_matches_the_complete_source_figure_palette():
     assert any("milestone" in item and "fill/stroke" in item for item in legend_key_findings(broken))
 
 
+def test_state_point_key_is_not_misclassified_by_its_owner_role():
+    mark = _rect("planned:gate", kind="Symbol", fill="#B06020", source_ref="gate")
+    mark["visualRole"] = "planned"
+    key = _rect("legend-swatch:planned:opaque-digest", kind="Symbol", fill="#B06020",
+                source_ref="planned:opaque-digest")
+    key.update(sourceKind="legend", visualRole="planned")
+    # A planned bar and its ordinary key may coexist with a planned point key.
+    scene = _scene([_rect("planned:bar"), _rect("legend-swatch:planned"), mark, key])
+    assert legend_key_findings(scene) == []
+
+    broken = deepcopy(scene)
+    broken["surfaces"][0]["primitives"][-1]["paint"]["fill"] = "#000000"
+    assert any("planned" in finding and "point figure" in finding
+               for finding in legend_key_findings(broken))
+
+    orphan = _rect("legend-swatch:actual:opaque-digest", kind="Symbol", fill="#B06020",
+                   source_ref="actual:opaque-digest")
+    orphan.update(sourceKind="legend", visualRole="actual")
+    assert any("no source Symbol" in finding for finding in legend_key_findings(_scene([orphan])))
+
+
+def test_each_point_key_matches_one_complete_multipart_source_figure():
+    bounds = {"inline": 0, "block": 0, "inlineSize": 10, "blockSize": 10}
+
+    def part(identifier, source, fill, stroke=None):
+        item = _rect(identifier, kind="Symbol", fill=fill, stroke=stroke,
+                     bounds=bounds, source_ref=source)
+        item["visualRole"] = "planned"
+        if identifier.startswith("legend-swatch:"):
+            item["sourceKind"] = "legend"
+        return item
+
+    scene = _scene([
+        part("planned:gate-a:part0", "gate-a", "#AA0000"),
+        part("planned:gate-a:part1", "gate-a", "#111111", "#EEEEEE"),
+        part("planned:gate-b:part0", "gate-b", "#0000AA"),
+        part("planned:gate-b:part1", "gate-b", "#FFFFFF", "#222222"),
+        part("legend-swatch:milestone:part0", "key-a", "#AA0000"),
+        part("legend-swatch:milestone:part1", "key-a", "#111111", "#EEEEEE"),
+    ])
+    # The key's declared owner is milestone, while semanticId carries point state.
+    assert legend_key_findings(scene) == []
+
+    # A hybrid assembled from individually valid parts is not a source figure.
+    broken = deepcopy(scene)
+    broken["surfaces"][0]["primitives"][-1]["paint"] = {
+        "fill": "#FFFFFF", "stroke": "#222222"}
+    assert any("complete figure" in finding for finding in legend_key_findings(broken))
+
+
 def test_planned_progress_does_not_require_an_actual_progress_key():
     scene = _scene([
         _rect("planned:campaign"),
