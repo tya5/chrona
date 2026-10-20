@@ -1193,6 +1193,11 @@ its existing finite shapes and before graph search. Best retains an accepted
 graph proposal; if that pair's bounded search finds no accepted route, it tries
 these finite proposals before obstacle relaxation, with the existing cross-pair
 rank. This closes a proposal gap, not a claim that bounded search was exhaustive.
+Terminal tangent reserves protect bends and reductions; they MUST NOT become
+a minimum distance between two ports on a completed straight two-point
+connector. Such a connector uses the existing centered-terminal/short-head
+completion rules, while retaining mandatory host corridors, stroke-fit and
+closed-mark contact validation. Bent routes retain their terminal reserves.
 Remaining candidate order, bounds and comparison semantics are unchanged.
 
 Required, route-independent lane item names and deltas are measured and
