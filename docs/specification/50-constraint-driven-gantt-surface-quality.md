@@ -918,9 +918,15 @@ The next slice admits `relationRouting.style: metro` for both surfaces. It uses
 the same selected orthogonal skeleton and precompleted terminals, not a native
 diagonal search. At each right-angle corner, cut equal distances along its
 incoming and outgoing axes, connecting the cut points with a 45-degree line.
-Use the same available-leg allocation as curved: half a shared interior leg,
-or the terminal leg minus its mandatory straight run; the smaller adjoining
-allowance determines the cut. Simplify forward-collinear/repeated construction
+Use the same available-leg budgets as curved: half a shared interior leg,
+or the terminal leg minus its mandatory straight run. The smaller adjoining
+budget B pays for both the cut c and each 45-degree fillet's tangent setback s,
+not the cut alone. With desired setback `d = radius * tan(pi / 8)`, use
+`s = min(d, B * sqrt(2) / (4 + sqrt(2)))` and `c = B - s`.
+This jointly enforces `c + s <= B` and `s <= sqrt(2) * c / 4`: terminal
+reserves and positive-radius rounding fit together, while at least half of the
+diagonal stays straight. Do not maximize the cut first and silently lose the
+endpoint join's rounding to the straight-run clamp. Simplify forward-collinear/repeated construction
 points, never semantic skeleton identity or a reversal. A straight route stays
 straight; a nonstraight route with no room for its required corner cut retains
 the existing mode with a `terminal` style fallback.
