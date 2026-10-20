@@ -1,8 +1,9 @@
 # Issue 415 — shared deck Context
 
-Status: design plan; authoring boundary and migration allowance approved by
+Status: selected design awaiting reviewer approval; no product code.
+Authoring boundary and migration allowance approved by
 the [reviewer](https://github.com/tya5/chrona/issues/415#issuecomment-6280957121).
-Selected syntax and the remaining contract still require review before code. Current scope:
+The selected syntax below still requires review before code. Current scope:
 [issue and reviewer assignment](https://github.com/tya5/chrona/issues/415#issuecomment-6280175603).
 
 ## Published baseline
@@ -32,37 +33,50 @@ Selected syntax and the remaining contract still require review before code. Cur
 | Reviewer 2 | Override precedence and an unknown or duplicate key are pointed diagnostics. | Positive precedence and negative unknown/duplicate/invalid-reference cases with source pointers. |
 | Reviewer 3 | Measured on HALCYON-1: the reduction in Context lines once the reviewer migrates the examples, and the count table (expected 0 output changes). | Same-cohort line counts and per-slide output counts, with the approved Context-provenance-only allowance stated separately; reviewer owns migration, dev verifies acceptance. |
 
-## Design questions and whole-architecture review
+## Selected design and whole-architecture review
 
-1. Choose the smallest explicit deck-fragment/slide reference form. Reuse
-   existing reference/address schemas; no templating language, directory scan,
-   implicit defaults from another evaluation or unbounded include mechanism.
-2. Close the allowed shared/override fields and precedence. Decide map versus
-   whole-value replacement, arrays, omission and null before code; unknown and
-   duplicate keys cannot become silent merge policy.
-3. Specify immutable loading/bootstrap, cycles, missing files, Store identity,
-   revision/hash verification and address bases for inherited references and
-   Context-relative font assets. Sharing cannot weaken any pin or containment.
-4. Approved boundary: one authoring expansion owner produces a fully explicit,
-   pinned Context before copying/pinning/immutable closure; public entrypoints
-   reuse it. Existing explicit Contexts remain byte-preserving. Scene provenance
-   includes the exact Context contentIdentity; count migration-only provenance
-   changes explicitly, never hide them in a comparison filter. Do not add a
-   format-preserving YAML/CST layer just to freeze old source hashes.
-5. Check normal Store rendering, materializer copying/repinning and Draft paths
-   for one composition owner. No duplicate merge implementation in CLI, tools,
-   renderer or adapters. Keep scheduling and geometry unaware of composition.
-6. Review optional schema additions against Spec56 sections3.2/7 and shared
-   parts/frozen definitions. Existing explicit Contexts keep their behavior;
-   update normative authority before finalizing implementation planning.
+Canonical contract: [Specification 40 section 7](../../specification/40-example-reproducibility-and-materialization.md#7-shared-deck-context-authoring-415).
+The existing manifest `context` is already an explicit-file fallback; do not
+overload it. Add inline `contextDefaults` (a body fragment) and slide
+`contextOverrides: {id: ..., body: ...}`. This needs no fragment resource kind,
+include graph or additional path base. Resource references remain atomic.
+
+The finite `inputs`/`environment` map overlays are necessary, not a general
+deep-merge facility: all19 HALCYON Contexts share the Project and Actual refs;
+14 share fontMetrics, but there are6 viewports and2 locales. Whole-environment
+replacement would retain the largest font-copy duplication. Arrays and all
+other objects replace whole; explicit null removes a member, and complete
+Context validation still rejects missing required members.
+
+| Authority / boundary | Consistency decision |
+| --- | --- |
+| Specs09/14 application entrypoints | One authoring composer reused by materialize CLI/library/tool; immutable render-review remains unchanged. Draft is not given an implicit deck lookup. |
+| Specs13/15 immutable identity | Expand before copying/pinning/closure. Pin the expanded bytes at an owned transient address, never the fragment's hash/address. Preserve every surviving resource pin and Store boundary. |
+| Specs40/50 materializer integrity | Explicit sources keep exact raw bytes. Composed source staging cannot collide with authored resources; no author files or pins are rewritten. |
+| Spec56 schema/diagnostics | Formalize the existing materializer manifest contract in `schemas/example-materializer-v0.1.schema.yaml`, adding optional authoring properties in place. Reuse live Context property definitions; reject unknown/duplicate keys with exact origins. No canonical Context schema widening is needed. |
+| View/Theme/Layout/Scene/adapters | Receive only the same explicit evaluated inputs. No new scheduling, geometry, routing, paint or adapter policy. |
+
+Intentional admission change: previously ignored unknown/duplicate manifest
+keys, YAML mapping merges and cyclic aliases are rejected, not compatibility
+behavior to retain. Valid explicit manifests and Context bytes remain unchanged.
+Ordinary YAML serialization is sufficient; the approved migration allowance
+covers counted Context-provenance-only Scene changes, not geometry or ink.
+
+Review questions: approve the inline manifest syntax and finite merge/null
+rules; confirm that public authoring is the existing materialize entrypoint,
+not a new runtime Context inheritance mechanism. No owner blocker remains on
+the expansion/provenance boundary itself.
 
 ## Publication slices and gates
 
-1. Publish this plan. Complete selected YAML examples, normative contract and
-   whole-architecture review; request reviewer approval on415 before code.
-2. After approval, publish the implementation plan: exact owning files,
-   schema/loader/materializer slices, migration handoff, focused tests and
-   independently publishable boundaries. A discovered contract gap returns here.
+1. Publish selected design, Specs09/13/40/50 consistency changes and request
+   reviewer approval before code. The current design is not final implementation
+   approval.
+2. After approval, finalize/publish the implementation plan: authoring schema
+   and pure composition with synthetic precedence/null/isolation/pointed-error
+   tests; one materializer/copy-source integration and real explicit/composed
+   SVG/Scene equivalence; then reviewer migration. One feature PR may carry
+   these source commits; no extra paperwork-only landing cycles.
 3. Implement approved slices; test synthetic sharing/isolation, all failures,
    immutable reads and actual byte equivalence. Full schema equivalence and
    generated public evidence belong to the shared CI snapshot; no local full
@@ -71,5 +85,6 @@ Selected syntax and the remaining contract still require review before code. Cur
    Verify its same-cohort reduction and output table, and the review-containing
    exact-main three-OS release before closing. A pending migration keeps415 open.
 
-Syntax, override/address rules and implementation decisions remain open until
-reviewed. This branch is not a second active landing PR while1788 is in flight.
+Implementation files, tests and acceptance/publication slices will be finalized
+after design review. This branch is not a second active landing PR while1794
+is in flight.
