@@ -118,3 +118,19 @@ def test_explicit_group_profile_retains_rollup_and_parent_semantics(tmp_path):
     schedule = schedule_project_mapping(result.project, base_dir=tmp_path)
     assert schedule.ok, schedule.diagnostics
     assert schedule.placements["phase"] == schedule.placements["child"]
+
+
+def test_terse_reference_error_names_value_and_nearest_ids(tmp_path):
+    package = {"version": "chrona/profile/v0.3", "packageId": "team-delivery",
+               "requires": {"projectFormat": "timeline/v0.7"},
+               "profiles": {"work": {"extends": "task", "fields": {
+                   "dep": {"type": "objectReference", "targetProfiles": ["work"]}}}}}
+    _package(tmp_path, package)
+    data = (f'project demo extension team-delivery "team.yaml" {REVISION}\n'
+            'portal "Portal" task profile work 2026-11-02..2026-11-09\n'
+            'build "Build" task profile work 2026-11-02..2026-11-09 dep=portl\n').encode()
+    result = compile_plan(data, "plan.chrona", resource_origin=tmp_path)
+    (finding,) = result.diagnostics
+    assert finding.id == "E_PROFILE_FIELD_TYPE" and finding.path == "/objects/build/fields/dep"
+    assert finding.message == ("dep must name one object or entity of profile ['work']; "
+                               "'portl' is not a declared id; nearest ids: portal")

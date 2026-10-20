@@ -264,7 +264,9 @@ override. It uses the area `swatchBlockSize`, else the legacy side. `rule-pair`
 draws two vertical strokes at one-quarter and three-quarters of the key box,
 using the keyed stroke ink/width/dash/opacity. The shared ink witness preserves
 that dash in both painted paths and the final legend signature; a deadline key
-therefore matches its tick/run without a second style mechanism. A circle
+therefore matches its tick/run without a second style mechanism. The completed stroke (ink, width, dash,
+opacity) of each final key is read as typed values from that signature
+(`completed_figure_strokes`), never parsed from strings. A circle
 remains a flat filled disk, without a borrowed dash. Existing inline/area sizing applies;
 the box expands to at least three stroke widths inline and two blockwise.
 The finite glyph replaces source pattern, terminal and effect geometry; it

@@ -182,6 +182,24 @@ relations:
   - {id: a-b, type: dependency, from: {object: a, endpoint: end}, to: {object: b, endpoint: at}, lag: 2d}
 ```
 
+## An entity for a field to reference
+
+`entity ID "Title" PROFILE` declares a minimal entity (`type` and `title`) so that an `objectReference` field such as `deliverable=del-portal` has something to name. Entities come after the calendars and before every object, and the profile must be defined by a package the plan declares. The full plan, with its package, is run in [typed fields](typed-fields.md); two mistakes the doc-check expects are below. An entity written after an object is rejected, and so is a profile that no declared package defines (this plan declares no package).
+
+<!-- chrona:doc-check expect-error: E_TERSE_DIRECTIVE_ORDER -->
+```chrona
+project p "P"
+build "Build" task 5d from 2027-03-01
+entity del-portal "Partner portal" atlas.deliverable
+```
+
+<!-- chrona:doc-check expect-error: E_TERSE_PROFILE_UNKNOWN -->
+```chrona
+project p "P"
+entity del-portal "Partner portal" atlas.deliverable
+build "Build" task 5d from 2027-03-01
+```
+
 ## A rejected plan
 
 Every problem in a plan is reported at once, each with its source position and a hint, and nothing is written. The plan below is deliberately wrong (the doc-check expects `E_TERSE_KIND_UNKNOWN`); `chrona validate plan.chrona` prints this JSON and exits 1.

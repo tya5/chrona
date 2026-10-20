@@ -583,7 +583,8 @@ identifies the estimate (Spec06 §8.5). No estimated-only Theme role is required
 The existing graphics dash vocabulary applies to both tick and run and to a
 `rule-pair` legend key for this role. Its shared completed ink witness retains
 the dash for Scene paint and final legend separability; no Layout dash geometry
-or deadline-specific adapter behavior is introduced.
+or deadline-specific adapter behavior is introduced. `dash` is optional and
+absent means solid (Spec56 §3.2); no packaged preset declares it, so default output is unchanged.
 
 Optional `outlineWidth` (#1397) names a nonnegative physical-pixel margin around
 the tick and run strokes; absent/zero preserves flat output. Layout completes

@@ -176,3 +176,39 @@ def test_idp_assignee_still_rejects_actor_profile_object_without_entity():
     assert [(item.id, item.path) for item in diagnostics] == [
         ("IDP-PROFILE-003", "/objects/work/fields/assignees"),
     ]
+
+
+def _messages(project):
+    return [item.message for item in validate_profiles(project, {"acme-reference": deepcopy(PACKAGE)})]
+
+
+def test_missing_reference_names_value_field_constraint_and_nearest_ids():
+    project = _project(owner="team-aa")
+    for extra in ("team-b", "team-ab", "unrelated-long-name"):
+        project["entities"][extra] = {"type": "acme-reference.team", "title": extra}
+    project["entities"]["other-entity"] = {"type": "acme-reference.other", "title": "Other"}
+    (message,) = _messages(project)
+    assert message == ("owner must name one object or entity of profile ['acme-reference.team']; "
+                       "'team-aa' is not a declared id; nearest ids: team-a, team-ab, team-b")
+
+
+def test_nearest_ids_are_capped_at_three_and_skip_far_and_wrong_profile_ids():
+    project = _project(owner="team-x")
+    for extra in ("team-b", "team-c", "team-d"):
+        project["entities"][extra] = {"type": "acme-reference.team", "title": extra}
+    project["entities"]["team-z"] = {"type": "acme-reference.other", "title": "wrong profile"}
+    (message,) = _messages(project)
+    assert message.endswith("nearest ids: team-a, team-b, team-c")
+    far = _project(owner="completely-different")
+    (message,) = _messages(far)
+    assert "nearest" not in message and "'completely-different' is not a declared id" in message
+
+
+def test_wrong_profile_reference_says_the_constraint_is_not_met():
+    (message,) = _messages(_project(owner="other"))
+    assert "'other' does not satisfy the profile constraint" in message
+
+
+def test_non_string_reference_reports_the_found_value():
+    (message,) = _messages(_project(owner=7))
+    assert message.endswith("found 7, which is not a non-empty id")
