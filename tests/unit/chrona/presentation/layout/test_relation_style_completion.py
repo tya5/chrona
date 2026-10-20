@@ -49,7 +49,7 @@ def test_straight_curved_style_stays_straight_without_fallback():
     assert len(calls) == 1
 
 
-def test_curved_style_accepts_an_s_path_and_returns_a_conservative_arc_cover():
+def test_curved_style_accepts_a_u_path_and_returns_a_conservative_arc_cover():
     placement = _relation(((0, 0), (0, 10), (10, 10), (10, 0)))
     seen = []
 
@@ -163,7 +163,7 @@ def test_genuine_self_crossing_curved_skeleton_falls_back_but_nearby_joins_do_no
         start_run=0, end_run=0, recovery=False,
         reject=lambda *_: None,
     )
-    ordinary_s = _relation(((0, 0), (0, 10), (10, 10), (10, 0)))
+    ordinary_s = _relation(((0, 0), (80, 0), (80, 160), (160, 160)))
     s_result, s_cover = complete_relation_style(
         ordinary_s, style="curved", stroke_width=1,
         start_run=0, end_run=0, recovery=False,

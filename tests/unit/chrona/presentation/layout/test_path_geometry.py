@@ -35,7 +35,7 @@ def test_rounded_diamond_is_a_closed_layout_owned_quadratic_path():
     assert commands[-1].points == commands[0].points
 
 
-def test_curved_orthogonal_path_builds_a_true_s_from_opposite_turns():
+def test_curved_orthogonal_path_smooths_a_u_route_without_inventing_an_s():
     points = ((0, 0), (0, 10), (10, 10), (10, 0))
 
     commands = curved_orthogonal_path(points)
@@ -45,6 +45,22 @@ def test_curved_orthogonal_path_builds_a_true_s_from_opposite_turns():
     assert commands[2].points == ((0.0, 10.0), (5.0, 10.0))
     assert commands[3].points == ((10.0, 10.0), (10.0, 5.0))
     assert commands[4].points == ((10.0, 0.0),)
+
+
+def test_opposite_turns_form_a_true_s_with_opposite_signed_curvature():
+    commands = curved_orthogonal_path(((0, 0), (80, 0), (80, 160), (160, 160)))
+    current = commands[0].points[0]
+    signs = []
+    for command in commands[1:]:
+        if command.kind == "quadratic":
+            control, end = command.points
+            signs.append((control[0] - current[0]) * (end[1] - control[1])
+                         - (control[1] - current[1]) * (end[0] - control[0]))
+        current = command.points[-1]
+    assert len(signs) == 2 and signs[0] * signs[1] < 0
+    assert tuple(command.kind for command in commands) == ("move", "quadratic", "quadratic")
+    assert commands[1].points == ((80.0, 0.0), (80.0, 80.0))
+    assert commands[2].points == ((80.0, 160.0), (160.0, 160.0))
 
 
 def test_curved_path_reserves_terminal_runs_but_uses_available_terminal_leg():
