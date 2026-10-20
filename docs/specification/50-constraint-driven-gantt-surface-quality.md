@@ -868,15 +868,19 @@ Ordinary work bounds below do not cover this protected pass, and its work must
 not be reported as ordinary quota-bounded work.
 
 When completion requires a straight outward terminal/stroke lead before a
-bend, protected graph search starts at the ends of those required leads and
+bend, ordinary NORMAL and protected graph searches start at the ends of those required leads and
 searches their residual middle path. Use the same minimum tangent lengths as
 completion, subtracting any already-completed semantic-to-exposed corridor;
 do not substitute a longer proposal reserve. Reassemble exposed port, fixed
 lead, middle and target lead before the unchanged full-route validators.
-Exposed-port finite proposals run first, so short straight connectors retain
-their existing completion rules. Fixed leads gain no host or text exemption.
-This makes the protected finite graph completion-aware; it neither caps its
-expansions nor changes normal search budgets, quality limits or hint priority.
+Preferred hints and exposed-port finite proposals keep their geometry and
+priority. An aligned exposed-port straight connector retains its existing
+completion rules before a shifted ordinary graph query. Fixed leads gain no
+host or text exemption. Each ordinary pair still invokes at most one graph
+query under its existing quota and shared expansion budget; the assembled
+route retains all completion, safety, quality and ranking checks. This intrinsic
+NORMAL-domain rule is not conditional on a label-repair pass. Protected finite
+completion remains separately exhaustive; its accounting is not ordinary work.
 
 A sound completed-endpoint quality lower bound may prove a pair cannot meet
 the declared limits: different x and y coordinates require at least one bend.
