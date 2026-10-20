@@ -85,7 +85,7 @@ the inverse used returned R1. Restoring content does not delete durable receipts
 
 | Literal requirement | Status | Evidence |
 | --- | --- | --- |
-| A transcript (host, version, steps, the rendered image) committed under docs or attached. | met locally; publication pending | Environment and actual report above; raw host events and extracted PNGs below. |
+| A transcript (host, version, steps, the rendered image) committed under docs or attached. | met; published | Environment and actual report above; raw host events and extracted PNGs below. [PR1808](https://github.com/tya5/chrona/pull/1808) merged at `f90696d329135a86a49ed2fe4592eea1b2518abb` after applicable docsCI39375967957 passed. |
 | Any defect it finds filed separately. | met | Confirmed prose/version mismatch is issue1807; host policy refusal and unconfirmed visual suspicion are explicitly distinguished. |
 | Validate a plan, fix a cycle, render, view the image, apply a guided authoring edit, revert it, and render again. | met | Completed host events item2–item21; actual images and observed CAS revisions above. |
 
@@ -97,4 +97,6 @@ Images (directly extracted from completed MCP image blocks, not re-rendered):
 Input: [cycle](assets-902-agent-host-2026-10-20/input-cycle.yaml);
 actual host output: [fixed Project](assets-902-agent-host-2026-10-20/fixed-project.yaml).
 Parent902 stays open for separately parked requirements; this records only the
-reviewer-assigned consolidated814 slice. Docs CI/publication remain required.
+reviewer-assigned consolidated814 slice. All applicable docsCI passed and the
+transcript is published. The next updated-review-containing main release is
+tracked with the1807 metadata correction; it does not unpark902 item4 or815.
