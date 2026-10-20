@@ -19,7 +19,7 @@ from chrona.resources.semantic_vocabulary import (
 )
 
 
-_BASELINE_BINDING_DIGEST = "dca7540d246009b957bdb1dd4c8abecbb5a97174a594f1af48475cee0fbd97a8"
+_BASELINE_BINDING_DIGEST = "f381624b9bbaa02c006de7c63943e1f21a631ccb8c65f6b3df61116726ff76e5"
 
 
 def _small_envelope() -> dict[str, object]:
@@ -45,7 +45,7 @@ def _payload(envelope: dict[str, object]) -> bytes:
     return yaml.safe_dump(envelope, sort_keys=False, allow_unicode=True).encode("utf-8")
 
 
-def test_runtime_vocabulary_preserves_all_117_pre_resource_bindings_and_order():
+def test_runtime_vocabulary_has_the_reviewed_117_bindings_in_order():
     rows = [
         (
             binding.semantic_id,

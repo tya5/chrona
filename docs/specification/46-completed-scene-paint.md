@@ -373,12 +373,27 @@ unrelated missing required decoration remains a coverage error. Synthetic
 tests cover each concept member and the optional layered strip; no claim that
 an unused optional role already has a committed corpus witness is made.
 
-**Recovery-halo coverage (#1427).** If no public Scene enables `dependency-halo`,
-its coverage is explicitly supplied by the synthetic blocked-relation mode,
-completed halo paint-order and decoration-contrast tests. The corpus report names
-this disposition rather than claiming a public witness. Once any public Scene
-enables the role, its public evidence takes over automatically. This exception
-does not waive contrast evaluation of emitted halos or any other missing role.
+**Non-figure decoration purposes (#1826).** A registered decoration binding with
+`contrastClass: null` has no independent floor only when the completed graphical
+primitive retains that binding's exact Scene role and purpose. A mismatched or
+absent purpose conservatively retains the decoration floor; it cannot inherit
+the null classification. Existing classified-role precedence, Text classification
+and graphical legend-key handling remain unchanged. This is a registry-derived
+rule, not a role-name, drawing-ID or project exemption.
+
+The canonical `dependency-halo` is a separator painted in the ground colour,
+not an information-bearing figure. Its vocabulary binding therefore has no
+independent contrast floor. Its physical paint, ground effects and paint order
+are unchanged; ordinary bands and other classified decorations retain their
+existing checks and Theme policy.
+
+**Recovery-halo coverage (#1427, corrected by #1826).** If no public Scene enables
+`dependency-halo`, its purpose and completed paint-order coverage is supplied by
+the synthetic blocked-relation tests. The corpus report names this disposition
+rather than claiming a public witness. A public halo supplies its own paint
+evidence, not a decoration-floor finding. No other missing classified role is
+waived. This replaces the earlier requirement to contrast-check the separator
+against the very ground colour it deliberately paints.
 
 Never governed by the policy, whatever its value: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid
 treatment (`E_SCENE_STATE_TEXT_CONTRAST_TREATMENT`) and a malformed Scene document: they are structural, not

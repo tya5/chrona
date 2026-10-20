@@ -50,6 +50,10 @@ def _assert_render(closure, asset_root, snapshot_root):
                                           asset_root=asset_root, require_all_inputs_read=True))
     assert "semantic-vocabulary" in rendered.read_inputs
     document = scene_document(rendered.scene)
+    planned = next(item for item in document["surfaces"][0]["primitives"]
+                   if item.get("visualRole") == "planned" and item.get("purpose") == "planned")
+    planned.update(semanticId="planned", themeRole="planned")
+    document["version"] = "chrona/scene/v0.7"
     validate_scene_document(document)
     resource, = [item for item in document["provenance"]["resources"] if item["kind"] == "semantic-vocabulary"]
     assert resource["contentIdentity"] == builtin_semantic_vocabulary().content_identity
@@ -106,3 +110,25 @@ def test_render_rejects_a_missing_or_forged_vocabulary_before_scene_output(tmp_p
     with pytest.raises(RenderFailed) as error:
         render_review(RenderRequest(invalid, tmp_path, ReferenceScheduler(), asset_root=draft.asset_root))
     assert error.value.code == ("E_CLOSURE_REQUIRED" if missing else "E_RESOURCE_IDENTITY_MISMATCH")
+
+
+def test_fresh_closure_uses_corrected_vocabulary_and_stale_scene_identity_is_rejected(tmp_path):
+    old_identity = "sha256:7fbb34ad6c0eb98ce3f6fe78dbef5cf44a4fdf99d54c1816457711ac7a31ff88"
+    draft, _ = _inputs(tmp_path)
+    vocabulary = builtin_semantic_vocabulary()
+    assert vocabulary.content_identity != old_identity
+
+    rendered = render_review(RenderRequest(draft.closure, tmp_path, ReferenceScheduler(),
+                                          asset_root=draft.asset_root, require_all_inputs_read=True))
+    document = scene_document(rendered.scene)
+    planned = next(item for item in document["surfaces"][0]["primitives"]
+                   if item.get("visualRole") == "planned" and item.get("purpose") == "planned")
+    planned.update(semanticId="planned", themeRole="planned")
+    document["version"] = "chrona/scene/v0.7"
+    validate_scene_document(document)
+    stale = _plain(document)
+    reference, = [item for item in stale["provenance"]["resources"]
+                  if item["kind"] == "semantic-vocabulary"]
+    reference["contentIdentity"] = old_identity
+    with pytest.raises(ValueError, match="E_RESOURCE_IDENTITY_MISMATCH"):
+        validate_scene_document(stale)

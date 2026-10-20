@@ -330,20 +330,29 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
         # The block size stays the stack of every run for a `line` too: how many rows a
         # wrapping line needs depends on the inline size the slot is given, which is not
-        # known here, so this measurement keeps its conservative height (#497); a Draft `auto` canvas narrows it
-        # to the rows the legend wraps to once the slot's inline size is resolved (#1649, surface_render_plan).
+        # known here, so this measurement keeps its conservative height (#497). The common render plan completes
+        # it to the actual rows once the slot's inline size is resolved (#1649, #1826).
         text_block = sum((run.block_size for run in measured_runs), Decimal(0))
         if not runs:
             text_block = text_line
         if grid_block is not None:
             text_block = grid_block
+        elif value.run_flow == "line" and measured_runs:
+            # Before a slot's inline size is resolved, every entry may occupy its own
+            # row. Taller swatches therefore enlarge the conservative stack as well
+            # as the completed single-row minimum.
+            text_block = max(text_block, value.row_block * len(measured_runs)
+                             + value.run_gap * (len(measured_runs) - 1))
         # The preferred block of a wrapping line keeps the conservative stack until its inline size is resolved, but
         # its minimum is one row: how many rows it really needs is known only once the slot's inline size is, and
         # the legend placement pass checks that and reports the true required block (#1273).
         minimum_text_block = text_block
         if value.run_flow == "line" and runs:
-            minimum_text_block = max(typography.text_treatment(run.typography_role).font_size
-                                     * typography.text_treatment(run.typography_role).line_height for run in runs)
+            minimum_text_block = max(
+                value.row_block,
+                *(typography.text_treatment(run.typography_role).font_size
+                  * typography.text_treatment(run.typography_role).line_height for run in runs),
+            )
         stack = None
         if value.run_flow == "block" and measured_runs:
             stack = measure_text_stack(measured_runs, tuple(

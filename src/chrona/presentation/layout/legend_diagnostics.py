@@ -234,14 +234,12 @@ def _subject(entry):
     return DiagnosticSubject(f"legend-key:{key_id}", f"{entry.label} ({entry.role})")
 
 
-def _colour_pair_diagnostics(encoded_entries, figures, color_vision=()):
+def _colour_pair_diagnostics(key_entries, figures, color_vision=()):
     """Compare completed legend ink across distinct encoded and semantic meanings."""
     diagnostics: list[str] = []
     provenance: list[DiagnosticProvenance] = []
-    for (left, left_scale), (right, right_scale) in combinations(tuple(encoded_entries), 2):
+    for (left, left_scale), (right, right_scale) in combinations(tuple(key_entries), 2):
         if left.source_identity == right.source_identity:
-            continue
-        if left_scale is None and right_scale is None:
             continue
         for vision, min_delta in _palette_separation_failures(
                 figures.get(left.source_identity), figures.get(right.source_identity), color_vision):
@@ -292,8 +290,9 @@ def completed_legend_diagnostics(request, entries, marks, shapes, relations, tex
         right_figure = figures[right.source_identity]
         if left_figure is not None and left_figure == right_figure:
             emit("W_LEGEND_SWATCH_COLLISION", left, right)
+    key_entries = tuple((entry, entry.encoding_scale_id) for entry in visible)
     pair_diagnostics, pair_provenance = _colour_pair_diagnostics(
-        tuple((entry, entry.encoding_scale_id) for entry in visible), figures,
+        key_entries, figures,
         request.theme_tokens.color_vision if request.theme_tokens is not None else (),
     )
     diagnostics.extend(pair_diagnostics)

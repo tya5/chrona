@@ -14,7 +14,7 @@ from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 # Scene provenance now includes the wheel-owned vocabulary; geometry, paint and SVG bytes remain characterized.
-NO_SUPPRESSION_SCENE_SHA256 = "3df36e3d3f3e623904489b4941bb818a60e06e5a7f2c79524ab5964390d05d99"
+NO_SUPPRESSION_SCENE_SHA256 = "421f49fbef539165190c4dad47b2406f4cb3a33be9def8617c2368b916d6e61f"
 NO_SUPPRESSION_SVG_SHA256 = "3e9593666a8f1e60d9180ca6f9697e0ff912626fbe565080edbf5a57d9c5c5ce"
 
 

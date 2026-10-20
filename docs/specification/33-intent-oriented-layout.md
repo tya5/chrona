@@ -124,12 +124,20 @@ title, not the raw value), a `block` legend is as wide as its widest entry, and 
 `inline` legend as wide as the line of entries, or as the widest entry when
 `itemMinInlineSize` lets it wrap. Measurement and drawing use the same entries and the
 same swatch geometry (#497).
+Legend entry reservations, remaining inline space and row offsets use the same
+Decimal component composition for measurement and placement (#1826). Equality
+with a natural label width is a fit before completed positions are converted
+for primitives; a genuinely smaller allocation still follows declared overflow.
 The block of an `inline` legend is the rows it wraps to. Its minimum block is one row (#1273).
 When the slot's inline size is known, its preferred block is the block `place_legend` draws at that size: the
 rows the `itemMinInlineSize` rule wraps to, each as tall as the tallest key, `gap` apart; only when that
 size is not yet known does the preferred block stay the conservative stack of one row per entry (#497).
-A Draft `auto` canvas resolves the slot's inline size from one solve and then reserves exactly those rows (#1649).
-A fixed-height canvas allocates its slots as declared and is unchanged.
+Common Layout measurement completes that known-width row block for fixed-height
+and Draft `auto` canvases alike (#1826). A Draft `auto` canvas reserves exactly
+those rows (#1649); a fixed canvas keeps its declared outer dimensions and slot
+constraints, not a stale conservative legend height. Unknown inline allocations
+retain the conservative stack. Row height includes the tallest actual swatch
+as well as the text line box; measurement and placement share the wrapping rule.
 A `notes` source with no notes is absent: its slot reserves no block and no gap (#1649).
 The [#427 dispatch amendment](../design/issue-427-legend-swatches-design-amendment-2026-09-26.md)
 qualifies this rule: known mark/line/decoration roles use the closed

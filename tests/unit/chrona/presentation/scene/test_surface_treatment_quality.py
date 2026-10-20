@@ -21,6 +21,8 @@ def _scene(*primitives, canvas=None):
     for item in primitives:
         item.setdefault("kind", "Rect")
         item.setdefault("slotId", "content")
+        if item.get("visualRole") in {"canvas-overlay", "canvas-overlay-gradient", "canvas-texture"}:
+            item.setdefault("purpose", item["visualRole"])
         if "pattern" in item:
             item["pattern"].update(densityBasisPoints=100, cornerRadius=0)
     return {"version": "chrona/scene/v0.7", "kind": "scene", "surfaces": [{
@@ -40,7 +42,7 @@ def _perceptibility_ratio(scene):
 
 def _underlay():
     value = _sparse(opacity=1, order=0)
-    value.update(id="rain", visualRole="canvas-texture")
+    value.update(id="rain", visualRole="canvas-texture", purpose="canvas-texture")
     return value
 
 
