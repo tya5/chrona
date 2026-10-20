@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
+from chrona.core.object_references import ObjectReferenceCatalog, ObjectReferenceTarget
+
 
 @dataclass(frozen=True)
 class FieldDescriptor:
@@ -21,9 +23,13 @@ class FieldDescriptor:
     enum_values: tuple[str, ...] = ()
     default: Any = None
     has_default: bool = False
+    # Profiles allowed by an objectReference field. Appended to preserve the
+    # positional construction contract used by existing callers.
+    target_profiles: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "enum_values", tuple(self.enum_values))
+        object.__setattr__(self, "target_profiles", tuple(self.target_profiles))
 
 
 @dataclass(frozen=True)
@@ -35,6 +41,24 @@ class FieldRead:
     value: Any
     descriptor: FieldDescriptor | None = None
     defaulted: bool = False  # the value is the declared profile default of an absent field (#1682)
+    reference_targets: tuple[ObjectReferenceTarget, ...] = ()
+
+    @property
+    def display_value(self) -> Any:
+        """Display projection for a resolved objectReference; raw value stays the target ID(s)."""
+        if self.value is None:
+            return self.value
+        if self.descriptor is None or self.descriptor.kind != "objectReference":
+            return self.value
+        if self.descriptor.cardinality == "many" and isinstance(self.value, (list, tuple)):
+            if not self.value:
+                return ""
+            if self.reference_targets:
+                return ", ".join(target.display_title for target in self.reference_targets)
+            return self.value
+        if not self.reference_targets:
+            return self.value
+        return self.reference_targets[0].display_title
 
 
 @dataclass(frozen=True)
@@ -48,6 +72,7 @@ class FieldRoleBindings:
 
     bindings: tuple[tuple[str, str], ...] = ()
     object_descriptors: tuple[tuple[str, tuple[FieldDescriptor, ...]], ...] = ()
+    reference_catalog: ObjectReferenceCatalog | None = field(default=None, repr=False, compare=False)
     _descriptor_lookup: Mapping[str, Mapping[str, FieldDescriptor]] = field(
         init=False, repr=False, compare=False,
     )
@@ -86,17 +111,28 @@ class FieldRoleBindings:
         project: Mapping[str, Any],
         *,
         object_descriptors: Mapping[str, Any] | tuple[tuple[str, Any], ...] = (),
+        reference_catalog: ObjectReferenceCatalog | None = None,
     ) -> "FieldRoleBindings":
         """Capture a Project's optional ``fieldRoles`` mapping immutably."""
+        descriptor_sets = object_descriptors.values() if isinstance(object_descriptors, Mapping) else (
+            descriptors for _, descriptors in object_descriptors
+        )
+        has_references = any(
+            (descriptor.kind if isinstance(descriptor, FieldDescriptor) else descriptor[1]) == "objectReference"
+            for descriptors in descriptor_sets
+            for descriptor in descriptors
+        )
+        if reference_catalog is None and has_references:
+            reference_catalog = ObjectReferenceCatalog.from_project(project)
         declared = project.get("fieldRoles", {})
         if not isinstance(declared, Mapping):
-            return cls(object_descriptors=object_descriptors)
+            return cls(object_descriptors=object_descriptors, reference_catalog=reference_catalog)
         pairs = tuple(sorted(
             (role, field_name)
             for role, field_name in declared.items()
             if isinstance(role, str) and isinstance(field_name, str)
         ))
-        return cls(pairs, object_descriptors)
+        return cls(pairs, object_descriptors, reference_catalog)
 
     def field_for(self, role: str) -> str | None:
         """Return the declared object-field key for ``role``, if any."""
@@ -135,9 +171,20 @@ class FieldRoleBindings:
         descriptor = self.descriptor_for(object_id, field_name)
         if not present and descriptor is not None and descriptor.has_default:
             # The one fill path: an absent declared field reads its profile default, for every consumer of this source.
-            return FieldRead(field_name, True, descriptor.default, descriptor, True)
-        return FieldRead(field_name, present, fields[field_name] if present else None,
-                         descriptor)
+            value = descriptor.default
+            return FieldRead(field_name, True, value, descriptor, True,
+                             self._reference_targets(value, descriptor))
+        value = fields[field_name] if present else None
+        return FieldRead(field_name, present, value, descriptor, False,
+                         self._reference_targets(value, descriptor) if present else ())
+
+    def _reference_targets(self, value: Any, descriptor: FieldDescriptor | None) -> tuple[ObjectReferenceTarget, ...]:
+        if (descriptor is None or descriptor.kind != "objectReference" or value is None
+                or self.reference_catalog is None):
+            return ()
+        values = value if descriptor.cardinality == "many" and isinstance(value, (list, tuple)) else (value,)
+        return tuple(self.reference_catalog.resolve(item, target_profiles=descriptor.target_profiles)
+                     for item in values)
 
     def descriptor_for(self, object_id: str | None,
                        field_name: str) -> FieldDescriptor | None:

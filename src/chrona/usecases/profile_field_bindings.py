@@ -26,7 +26,8 @@ def resolve_source_field_bindings(
         descriptors[object_id] = tuple(
             FieldDescriptor(name, definition["type"], definition.get("cardinality", "one"),
                             tuple(definition.get("enumValues", ())),
-                            definition.get("default"), "default" in definition)
+                            definition.get("default"), "default" in definition,
+                            tuple(definition.get("targetProfiles", ())))
             for name, definition in definitions.items()
         )
     return FieldRoleBindings.from_project(project, object_descriptors=descriptors), tuple(diagnostics)
