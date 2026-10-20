@@ -98,14 +98,30 @@ def test_unrelated_slip_keeps_valid_corridor_and_moved_primary_mark_gets_safe_de
     assert _mark(clear_slip, "source").bounds == old_source.bounds
     assert _mark(clear_slip, "target").bounds == old_target.bounds
 
-    # This unrelated work item slips into the old vertical corridor. Its row
-    # and both relation endpoints stay fixed; the prior path now crosses its
-    # completed primary mark, so only ordinary NORMAL-domain search can accept
-    # a replacement before RELAX is allowed to remove mark obstacles.
-    blocked_slip = _render(tmp_path / "blocked-slip", _project(date(2027, 1, 6)),
+    # Move the blocker one day earlier into the saved vertical corridor. Its
+    # row and both relation endpoints stay fixed, so only ordinary NORMAL-
+    # domain search can accept a replacement before RELAX removes mark obstacles.
+    blocked_slip = _render(tmp_path / "blocked-slip", _project(date(2027, 1, 29)),
                           parts, layout, prior)
     route = _relation(blocked_slip)
     blocker = _mark(blocked_slip, "blocker")
+
+    left, top, width, height = blocker.bounds
+    rect = (left, top, left + width, top + height)
+    def crosses(points):
+        for first, second in zip(points, points[1:]):
+            x1, y1 = first
+            x2, y2 = second
+            if x1 == x2 and rect[0] < x1 < rect[2] and max(min(y1, y2), rect[1]) < min(max(y1, y2), rect[3]):
+                return True
+            if y1 == y2 and rect[1] < y1 < rect[3] and max(min(x1, x2), rect[0]) < min(max(x1, x2), rect[2]):
+                return True
+        return False
+
+    # Prove that this is a real invalidation case rather than merely a changed
+    # blocker date: it intersects the saved line and the selected detour clears it.
+    assert crosses(old_route.points)
+    assert not crosses(route.points)
     receipts = [item for item in blocked_slip.info_diagnostics
                 if isinstance(item, RelationHintReceipt)]
     receipt, = [item for item in receipts if item.relation_id == old_route.scene_id]
@@ -119,20 +135,3 @@ def test_unrelated_slip_keeps_valid_corridor_and_moved_primary_mark_gets_safe_de
                    for item in blocked_slip.scene.diagnostics)
     assert _mark(blocked_slip, "source").bounds == old_source.bounds
     assert _mark(blocked_slip, "target").bounds == old_target.bounds
-
-    # The old line actually intersects the slipped primary bar; the completed
-    # route does not. This checks the path, not only its diagnostic receipt.
-    left, top, width, height = blocker.bounds
-    rect = (left, top, left + width, top + height)
-    def crosses(points):
-        for first, second in zip(points, points[1:]):
-            x1, y1 = first
-            x2, y2 = second
-            if x1 == x2 and rect[0] < x1 < rect[2] and max(min(y1, y2), rect[1]) < min(max(y1, y2), rect[3]):
-                return True
-            if y1 == y2 and rect[1] < y1 < rect[3] and max(min(x1, x2), rect[0]) < min(max(x1, x2), rect[2]):
-                return True
-        return False
-
-    assert crosses(old_route.points)
-    assert not crosses(route.points)
