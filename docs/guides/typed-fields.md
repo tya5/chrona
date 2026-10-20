@@ -218,7 +218,7 @@ id: executive-risk
 body:
   extends:
     id: chrona-builtin-executive-light
-    path: looks/executive-light/theme.yaml
+    path: looks/typed-executive-light/theme.yaml
   roles:
     subtitle:
       fontFamily: editorial
@@ -300,15 +300,15 @@ id: target-b-risk
 body:
   extends:
     id: target-b
-    path: looks/target-b/theme.yaml
+    path: looks/typed-target-b/theme.yaml
   colorScales:
     series:
       slots: {low: risk-low, medium: risk-medium, high: risk-high}
 ```
 
 ```sh
-chrona preset copy executive-light --output looks/executive-light
-chrona preset copy target-b --output looks/target-b
+chrona preset copy executive-light --output looks/typed-executive-light
+chrona preset copy target-b --output looks/typed-target-b
 chrona render typed-plan.yaml --preset executive-light --view typed-risk-view.yaml --theme typed-executive-theme.yaml --scheme typed-executive-scheme.yaml --output typed-risk-executive.svg
 chrona render typed-plan.yaml --preset target-b --view typed-risk-view.yaml --theme typed-target-b-theme.yaml --scheme typed-target-b-scheme.yaml --output typed-risk-target-b.svg
 ```

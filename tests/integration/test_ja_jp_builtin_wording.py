@@ -1,8 +1,9 @@
 """`--locale ja-JP` leaves no English built-in wording in a rendered scene (#1724 P4c, acceptance 2).
 
-The scan covers wording the code and the locale table own. A literal a preset author wrote (a marker or legend
-label in the preset files) is authored content until the presets reference the table (P4b), so it is removed
-from the scanned text, as are the Project's own titles.
+The scan covers wording the code and the locale table own. A literal label in the synthetic View or Layout is
+authored content, so it is removed from the scanned text, as are the Project's own titles. The shipped yuya and
+target-b designs reference the table for every legend and as-of label (#1783), so their Detail Profiles are
+scanned, not treated as authored; their lower case comes from the legend and as-of role `textTransform`.
 """
 from __future__ import annotations
 
@@ -20,7 +21,7 @@ from tests.support.text_treatments import CJK_DESCRIPTOR
 
 
 ROOT = Path(__file__).resolve().parents[2]
-YUYA = ROOT / "src/chrona/resources/designs/yuya"
+DESIGNS = ROOT / "src/chrona/resources/designs"
 ICONS = tuple((ROOT / "src/chrona/resources/icons").glob("chrona-*-v2026-10-09.yaml"))
 # The English words of the built-in tables, plus the lane/qualifier words, as the scan's vocabulary.
 BUILT_IN_ENGLISH = tuple(sorted(set(wording_catalog()["en-US"].values()) | {"Lane", "Items"}, key=len, reverse=True))
@@ -76,11 +77,18 @@ def _default_preset():
     return parts, legends._detail(), ()
 
 
-def _yuya_preset():
-    parts = legends._parts(progress=True)
-    for kind in ("theme", "scheme", "layout"):
-        parts[kind] = safe_load((YUYA / f"{kind}.yaml").read_bytes())
-    return parts, safe_load((YUYA / "detail.yaml").read_bytes()), ICONS
+def _design_preset(design):
+    def preset():
+        parts = legends._parts(progress=True)
+        for kind in ("theme", "scheme", "layout"):
+            parts[kind] = safe_load((DESIGNS / design / f"{kind}.yaml").read_bytes())
+        return parts, safe_load((DESIGNS / design / "detail.yaml").read_bytes()), ICONS
+    preset.lowercase = True  # the design's legend role lower-cases every entry, the code-owned one included
+    return preset
+
+
+_yuya_preset = _design_preset("yuya")
+_target_b_preset = _design_preset("target-b")
 
 
 def _font_descriptor(directory):
@@ -102,10 +110,10 @@ def _render(tmp_path, preset, locale, *, lanes):
     review = sr.render(tmp_path, _source(), presentation=parts, actual=legends.ACTUAL, detail=detail,
                        viewport=(1800, 1000), icon_catalogs=icons, locale=locale,
                        font_metrics_path=_font_descriptor(tmp_path))
-    return _scene_texts(review), _authored_labels(parts["view"], parts["layout"], detail)
+    return _scene_texts(review), _authored_labels(parts["view"], parts["layout"])
 
 
-@pytest.mark.parametrize("preset", [_default_preset, _yuya_preset], ids=["default", "yuya"])
+@pytest.mark.parametrize("preset", [_default_preset, _yuya_preset, _target_b_preset], ids=["default", "yuya", "target-b"])
 @pytest.mark.parametrize("lanes", [False, True], ids=["table", "lane-table"])
 def test_ja_jp_has_no_english_built_in_wording_and_en_us_still_does(tmp_path, preset, lanes):
     (tmp_path / "ja").mkdir()
@@ -120,4 +128,7 @@ def test_ja_jp_has_no_english_built_in_wording_and_en_us_still_does(tmp_path, pr
     en_texts, _ = _render(tmp_path / "en", preset, "en-US", lanes=lanes)
     found = {word for word in ("Lane", "Items", "Progress", "Ahead", "On track", "Behind", "Task")
              if any(re.search(rf"(?<![A-Za-z]){word}(?![A-Za-z])", text) for text in en_texts)}
+    if getattr(preset, "lowercase", False):
+        assert "progress" in en_texts and "Progress" not in found, en_texts
+        found.add("Progress")
     assert {"Progress"} <= found and ({"Lane", "Items"} <= found if lanes else {"Task"} <= found), en_texts

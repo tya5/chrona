@@ -11,7 +11,7 @@ import yaml
 from chrona.usecases.preset_library import list_builtin_presets
 from chrona.usecases.skill_library import copy_skill
 from tests.support.skill_files import EXAMPLE, ROOT, SKILL_DIR, fences, run_cli, skill_documents
-from tools.check_documented_commands import discover
+from tools.check_documented_commands import discover, execute
 
 SKILL = SKILL_DIR / "SKILL.md"
 FORBIDDEN = ("chrona mcp", "chrona compile", "--system-fonts", "--allow-missing-content-identity")
@@ -200,6 +200,21 @@ def test_typed_fields_colour_recipe_works_on_executive_light_and_target_b(tmp_pa
         assert all(colour in painted.upper() for colour in ("#2E7D5B", "#B7791F", "#B91C1C"))
         assert all(f">{value}<" in painted for value in ("low", "medium", "high"))
         assert "Typed fields demo: delivery risk" in painted and "Bars coloured by risk" in painted
+
+
+def test_documented_wheel_preset_copies_use_distinct_destinations():
+    """The guide and Skill copy commands share one wheel workspace."""
+    commands = tuple(
+        command for command in discover(ROOT)
+        if command.path.as_posix() in {
+            "docs/guides/typed-fields.md", "skills/chrona/SKILL.md"
+        }
+        and command.tokens[:3] == ("chrona", "preset", "copy")
+        and command.tokens[3] in {"executive-light", "target-b"}
+    )
+
+    assert len(commands) == 3
+    execute(commands, ROOT, wheel=True)
 
 
 def test_style_example_failures_name_what_to_change(tmp_path, monkeypatch, capsys):
