@@ -78,3 +78,36 @@ def test_lifecycle_registry_exposes_commands_payloads_and_truthful_write_annotat
                       "setPresentationOverride", "materializePresentationPreset"):
         assert operation in description
     assert "baseRevision" in description and "payload" in description
+
+
+def _select_preset(scope, workspace, revision, preset_id, version="1", command_id="select-1"):
+    return call_tool(scope, "apply_authoring_command", {
+        "workspace": workspace,
+        "command": {"version": "chrona/authoring-command/v0.1", "commandId": command_id,
+                    "type": "selectPresentationPreset",
+                    "target": {"kind": "authoring-workspace", "path": "workspace.yaml"},
+                    "baseRevision": revision,
+                    "payload": {"preset": {"id": preset_id, "version": version, "path": "preset/preset.yaml"}}},
+    }, allow_write=True).structured
+
+
+def test_select_preset_refuses_a_binding_the_pinned_preset_cannot_render(tmp_path):
+    scope = WorkspaceScope(tmp_path)
+    created = call_tool(scope, "create_workspace", {"directory": "plan", "project": _project(), "preset": "target-b"},
+                        allow_write=True).structured
+    workspace, revision = created["workspace"], created["workspaceRevision"]
+    before = (tmp_path / workspace).read_bytes()
+
+    for preset_id, version in (("marquee", "1"), ("chrona-builtin-target-b", "2")):
+        refused = _select_preset(scope, workspace, revision, preset_id, version)
+        diagnostic = refused["authoringResult"]["diagnostics"][0]
+        assert refused["status"] == "rejected"
+        assert diagnostic["code"] == "E_AUTHORING_PRESET_IDENTITY"
+        assert "create_workspace" in diagnostic["detail"]
+        assert (tmp_path / workspace).read_bytes() == before
+        assert call_tool(scope, "workspace_revision", {"workspace": workspace}).structured["workspaceRevision"] == revision
+    assert call_tool(scope, "render_workspace", {"workspace": workspace}).structured["status"] == "ok"
+
+    same = _select_preset(scope, workspace, revision, "chrona-builtin-target-b", command_id="select-2")
+    assert same["status"] == "ok"
+    assert same["authoringResult"]["resultRevision"] == revision

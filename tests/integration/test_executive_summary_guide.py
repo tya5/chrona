@@ -83,3 +83,52 @@ def test_guide_imports_and_renders_the_same_recipe_with_all_three_presets(tmp_pa
         assert gates == {"design-signoff", "launch"}, gates
         assert {item.get("sourceRef") for item in summaries} == {"programme", "design", "delivery"}
         assert len(summaries) == 3, summaries
+
+
+def _render_planned(monkeypatch, capsys, tmp_path, csv: str, view: str, *extra: str) -> tuple[str, set[str]]:
+    for stale in ("project.yaml", "out.svg", "out.scene.json"):
+        (tmp_path / stale).unlink(missing_ok=True)
+    (tmp_path / "plan.csv").write_text(csv, encoding="utf-8")
+    (tmp_path / "view.yaml").write_text(view, encoding="utf-8")
+    assert _run(monkeypatch, capsys, ("chrona", "import", "plan.csv", "--output", "project.yaml",
+                                      "--calendar", "standard mon-fri", "--project-id", "p", "--title", "P"))["status"] == "ok"
+    result = _run(monkeypatch, capsys, ("chrona", "render", "project.yaml", "--view", "view.yaml", *extra,
+                                        "--output", "out.svg", "--emit-scene", "out.scene.json"))
+    assert result["status"] == "ok", result
+    text = " ".join(ElementTree.fromstring((tmp_path / "out.svg").read_bytes()).itertext())
+    primitives = json.loads((tmp_path / "out.scene.json").read_text(encoding="utf-8"))["surfaces"][0]["primitives"]
+    rects = {item["sourceRef"] for item in primitives
+             if item.get("purpose") == "planned" and item.get("sourceKind") == "object" and item.get("kind") == "Rect"}
+    return text, rects
+
+
+def test_guide_depth_counts_from_the_top_level_rows_on_nested_and_grouped_only_plans(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    nested_csv, view = _documented_file("executive-plan.csv"), _documented_file("executive-view.yaml")
+    assert "depth: 1" in view
+    # Nested plan: the single programme row is the top; depth 1 adds the two phases.
+    text, rects = _render_planned(monkeypatch, capsys, tmp_path, nested_csv, view)
+    assert rects == {"programme", "design", "delivery"}
+    assert "Design sign-off" in text and "Public launch" in text
+
+    # Grouped-only plan: phases are the top-level rows, so the same page is depth 0 ...
+    lines = [line for line in nested_csv.splitlines() if not line.startswith("programme,")]
+    grouped_csv = "\n".join(line.removesuffix("programme") if line.endswith(",programme") else line
+                            for line in lines) + "\n"
+    text, rects = _render_planned(monkeypatch, capsys, tmp_path, grouped_csv, view.replace("depth: 1", "depth: 0"))
+    assert rects == {"design", "delivery"}
+    assert "Design sign-off" in text and "Public launch" in text
+
+    # ... and depth 1 on that plan reaches the tasks, as the guide warns.
+    _text, rects = _render_planned(monkeypatch, capsys, tmp_path, grouped_csv, view)
+    assert {"research", "build"} <= rects
+
+
+def test_guide_table_header_follows_the_render_locale(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    view = _documented_file("executive-view.yaml")
+    assert "header: {wording: column.task}" in view
+    for locale, header in (("en-US", "Task"), ("ja-JP", "タスク")):
+        text, _rects = _render_planned(monkeypatch, capsys, tmp_path, _documented_file("executive-plan.csv"), view,
+                                       "--locale", locale)
+        assert header in text and "Work item" not in text
