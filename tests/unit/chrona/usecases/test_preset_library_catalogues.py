@@ -144,18 +144,20 @@ def test_preset_copy_id_copy_renders_without_resource_mismatch(tmp_path):
     from chrona.app.cli import main
     import sys
 
-    target = copy_builtin_preset("target-b", tmp_path / "look", "renamed-look")
-    argv = ["chrona", "render", "examples/onboarding/01-spans/project.yaml", "--preset", str(target), "--output", str(tmp_path / "out.svg")]
-    old = sys.argv
-    sys.argv = argv
-    try:
+    for index, new_id in enumerate(("renamed-look", "true", "null", "yes", "a" * 256)):
+        target = copy_builtin_preset("target-b", tmp_path / f"look-{index}", new_id)
+        output = tmp_path / f"out-{index}.svg"
+        argv = ["chrona", "render", "examples/onboarding/01-spans/project.yaml", "--preset", str(target), "--output", str(output)]
+        old = sys.argv
+        sys.argv = argv
         try:
-            main()
-        except SystemExit as exited:
-            assert exited.code in (0, None)
-    finally:
-        sys.argv = old
-    assert (tmp_path / "out.svg").is_file()
+            try:
+                main()
+            except SystemExit as exited:
+                assert exited.code in (0, None)
+        finally:
+            sys.argv = old
+        assert output.is_file()
 
 
 def test_preset_copy_id_refuses_an_unusable_name_before_writing(tmp_path):
@@ -163,8 +165,43 @@ def test_preset_copy_id_refuses_an_unusable_name_before_writing(tmp_path):
     from chrona.usecases.failure_report import StableFailure
     from chrona.usecases.preset_library import copy_builtin_preset
 
-    for bad in ("", "has space", "-lead", "a/b"):
+    for index, bad in enumerate(("", "1lead", "has space", "-lead", "a/b", "a" * 257)):
+        absent = tmp_path / f"absent-{index}"
         with pytest.raises(StableFailure) as caught:
-            copy_builtin_preset("target-b", tmp_path / "bad", bad)
+            copy_builtin_preset("target-b", absent, bad)
         assert caught.value.code == "E_BUILTIN_PRESET_NEW_ID"
-        assert not (tmp_path / "bad").exists()
+        assert not absent.exists()
+
+        empty = tmp_path / f"empty-{index}"
+        empty.mkdir()
+        with pytest.raises(StableFailure) as caught:
+            copy_builtin_preset("target-b", empty, bad)
+        assert caught.value.code == "E_BUILTIN_PRESET_NEW_ID"
+        assert empty.is_dir() and list(empty.iterdir()) == []
+
+
+def test_preset_copy_id_uses_layout_id_schema_boundary(tmp_path):
+    import yaml
+
+    new_id = "a" * 256
+    target = preset_library.copy_builtin_preset("target-b", tmp_path / "look", new_id)
+    preset = yaml.safe_load(target.read_text(encoding="utf-8"))
+    assert preset["id"] == new_id
+    for resource in preset["body"]["resources"].values():
+        if isinstance(resource, dict):
+            document = yaml.safe_load((target.parent / resource["path"]).read_text(encoding="utf-8"))
+            assert document["id"] == new_id
+
+
+@pytest.mark.parametrize("new_id", ["true", "false", "null", "yes", "no", "on", "off", "y", "n"])
+def test_preset_copy_id_keeps_yaml_reserved_names_as_strings_for_every_preset(tmp_path, new_id):
+    import yaml
+
+    for entry in preset_library.list_builtin_presets():
+        target = preset_library.copy_builtin_preset(entry["id"], tmp_path / f"{entry['id']}-{new_id}", new_id)
+        preset = yaml.safe_load(target.read_text(encoding="utf-8"))
+        assert preset["id"] == new_id
+        for resource in preset["body"]["resources"].values():
+            if isinstance(resource, dict):
+                document = yaml.safe_load((target.parent / resource["path"]).read_text(encoding="utf-8"))
+                assert resource["id"] == document["id"] == new_id, (entry["id"], resource["path"])

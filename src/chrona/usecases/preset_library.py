@@ -1,6 +1,7 @@
 """Copy finite builtin presentation presets into editable local Draft source."""
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path, PurePosixPath
 from hashlib import sha256
@@ -131,13 +132,17 @@ def is_builtin_preset_id(identifier: str) -> bool:
     return any(entry.get("id") == identifier for entry in _library())
 
 
-_NEW_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 _TOP_LEVEL_ID = re.compile(r"(?m)^id:[^\n]*")
 
 
 def _with_id(raw: bytes, new_id: str) -> bytes:
     """The document with its top-level `id` replaced; the rest of the text, comments included, is untouched."""
-    text, count = _TOP_LEVEL_ID.subn(lambda _match: f"id: {new_id}", raw.decode("utf-8"), count=1)
+    # Quote even YAML 1.1 reserved words (e.g. `yes`, `null`) so every copied
+    # resource keeps the identifier's string type.
+    text, count = _TOP_LEVEL_ID.subn(
+        lambda _match: f"id: {json.dumps(new_id, ensure_ascii=False)}",
+        raw.decode("utf-8"), count=1,
+    )
     if count != 1:
         raise ValueError("E_BUILTIN_PRESET_RESOURCE: a copied document has no top-level id to rename")
     return text.encode("utf-8")
@@ -151,12 +156,15 @@ def copy_builtin_preset(identifier: str, destination: Path, new_id: str | None =
     copy loads without editing ids by hand (#1827). Icon catalogs are copied unchanged: they are
     pinned, licensed assets and keep their ids.
     """
-    if new_id is not None and not _NEW_ID.fullmatch(new_id):
-        raise StableFailure(
-            "E_BUILTIN_PRESET_NEW_ID",
-            f"--id {new_id!r} is not a usable identifier; start with a letter or digit and use only letters, digits, '.', '_' and '-'",
-            "presentation",
-        )
+    if new_id is not None:
+        layout_validator = schema_validator("layout-profile-v0.10.schema.yaml")
+        id_schema = layout_validator.schema["$defs"]["id"]
+        if list(layout_validator.evolve(schema=id_schema).iter_errors(new_id)):
+            raise StableFailure(
+                "E_BUILTIN_PRESET_NEW_ID",
+                f"--id {new_id!r} is not a usable identifier; start with a letter, use only letters, digits, '.', '_' and '-', and keep it at 256 characters or fewer",
+                "presentation",
+            )
     entry = next((item for item in _library() if item.get("id") == identifier), None)
     if entry is None:
         raise StableFailure(
