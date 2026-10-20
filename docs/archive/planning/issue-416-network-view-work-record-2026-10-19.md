@@ -6,7 +6,9 @@ falls back to `network.rank.gap`. This supersedes the temporary Layout Profile
 proposal in [review 6257221150](https://github.com/tya5/chrona/issues/416#issuecomment-6257221150),
 per [reviewer disposition 6267457613](https://github.com/tya5/chrona/issues/416#issuecomment-6267457613).
 Implementation `8240e85c0` passes 266 combined focused tests and the unchanged
-HALCYON05 materializer. PR/public snapshot and exact-main release are pending.
+HALCYON05 materializer. Closed after PR1786/public snapshot and the corrected
+review-containing main `1abfa2fef03ae407e3691068454ff61df98e0605` passed
+[release39352901914](https://github.com/tya5/chrona/actions/runs/39352901914).
 Implementation baseline: ready `d0dc06f6bc17227cda31cb9df8fbd7dc2dc3077c`.
 Authority: [issue and latest scope](https://github.com/tya5/chrona/issues/416#issuecomment-6256891542),
 [design approval and spacing correction](https://github.com/tya5/chrona/issues/416#issuecomment-6267457613).
@@ -160,12 +162,11 @@ unchanged HALCYON05 result. Publish the spec/work-record update before product
 code; B1766/1767's shared files have landed on the current baseline.
 
 Current evidence and all six literal rows are in the
-[acceptance review](../../reviews/current/issue-416-network-view-acceptance-review-2026-10-20.md).
+[acceptance review](../reviews/issue-416-network-view-acceptance-review-2026-10-20.md).
 Publication is batched with independently reviewed 1756 rows 1–2 and the
 1754 follow-up in PR1786. Each issue keeps its source commits and literal review;
 one combined ready-tip CI/snapshot/release avoids an extra serial landing.
 The combined 1754/1756/416 focused batch passes 532 tests, including the two additional
 primary-descending ordering cases in `ffb5f6ef4`. This changes publication
 granularity only, not either issue's design, ownership or acceptance gates.
-No further product slice is planned before PR/official public-output review;
-fix any discovered contract gap through design before extending code.
+All six literal rows are released; no product slice remains in this record.
