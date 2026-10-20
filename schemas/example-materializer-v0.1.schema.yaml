@@ -1,0 +1,117 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona:example-materializer-v0.1"
+title: "Chrona example materializer manifest v0.1"
+description: "Declared sources and expected outputs for one reproducible example deck."
+type: object
+required: [version, role, slides]
+additionalProperties: false
+properties:
+  version: {const: chrona/example-materializer/v0.1, description: Version of this example manifest.}
+  id: {type: string, minLength: 1, description: Stable deck id required only when a slide composes a Context.}
+  role: {const: regression-corpus, description: Materializer corpus role.}
+  context: {description: Manifest-level fallback Context Store address; explicit bytes remain unchanged., $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
+  contextDefaults: {description: Optional partial Render Context body shared by composed slides., $ref: "#/$defs/contextBodyFragment"}
+  stores:
+    type: array
+    description: Read-only shared Stores rooted relative to this manifest.
+    items: {$ref: "#/$defs/sharedStore"}
+  slides:
+    type: array
+    description: Ordered materialized slides in this deck.
+    items: {$ref: "#/$defs/slide"}
+allOf:
+  - description: A slide selects either an explicit Context or an override, never both.
+    examples: [{slides: [{id: overview, evidence: sample, expectedSvg: generated/overview.svg, context: contexts/overview.yaml}]}]
+    properties:
+      slides:
+        items:
+          not:
+            description: A slide cannot declare both an explicit Context and composed overrides.
+            examples: [{id: overview, evidence: sample, expectedSvg: generated/overview.svg}]
+            required: [context, contextOverrides]
+  - description: Any composed slide requires shared defaults.
+    examples: [{contextDefaults: {}, slides: [{id: overview, evidence: sample, expectedSvg: generated/overview.svg, contextOverrides: {id: context}}]}]
+    if:
+      description: Detect a slide that composes its Context from overrides.
+      properties:
+        slides:
+          contains:
+            type: object
+            description: One slide whose Context is composed from overrides.
+            examples: [{contextOverrides: {id: context}}]
+            required: [contextOverrides]
+    then:
+      description: A manifest with a composed slide supplies shared Context defaults.
+      required: [contextDefaults]
+$defs:
+  sharedStore:
+    type: object
+    description: A read-only shared Store located relative to the manifest.
+    examples: [{identity: portfolio, root: ../shared}]
+    required: [identity, root]
+    additionalProperties: false
+    properties:
+      identity: {type: string, minLength: 1, description: Store identity used by local resource references.}
+      root: {description: Directory relative to the manifest; may name a sibling shared Store., type: string, minLength: 1}
+  slide:
+    type: object
+    description: One selectable slide and its Context source or composition.
+    required: [id, evidence, expectedSvg]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1, description: Stable slide id and virtual Context address segment when composing.}
+      evidence: {type: string, minLength: 1, description: Human-readable reason this example slide is retained.}
+      context: {description: Explicit Context Store address; when present it bypasses defaults., $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
+      contextOverrides: {$ref: "#/$defs/contextOverride"}
+      expectedSvg: {description: Expected SVG Store address., $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
+      expectedScene: {description: Optional expected Scene Store address., $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
+  contextOverride:
+    type: object
+    description: A composed Context id and optional partial body overlay.
+    required: [id]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1, description: Explicit id for the composed immutable Context.}
+      body: {$ref: "#/$defs/contextBodyFragment"}
+  contextBodyFragment:
+    type: object
+    description: Partial Context body. Only body, inputs and environment map boundaries are composed.
+    additionalProperties: false
+    properties:
+      project: {description: Project reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/projectRef"}, {type: "null", description: Null removes the inherited Project reference.}]}
+      view: {description: View reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/viewRef"}, {type: "null", description: Null removes the inherited View reference.}]}
+      style: {description: Optional Style reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/styleRef"}, {type: "null", description: Null removes the inherited Style reference.}]}
+      theme: {description: Theme reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/themeRef"}, {type: "null", description: Null removes the inherited Theme reference.}]}
+      colorScheme: {description: Color Scheme reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/colorSchemeRef"}, {type: "null", description: Null removes the inherited Color Scheme reference.}]}
+      layout: {description: Layout reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/layoutRef"}, {type: "null", description: Null removes the inherited Layout reference.}]}
+      forecast: {description: Forecast flag to inherit, replace, or remove., examples: [null], oneOf: [{type: boolean, description: Whether to display the forecast.}, {type: "null", description: Null removes the inherited forecast setting.}]}
+      inputs:
+        type: [object, "null"]
+        description: Input references map; named entries merge independently and null removes an entry.
+        examples: [null]
+        additionalProperties: false
+        properties:
+          actual: {description: Actual Set reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/actualRef"}, {type: "null", description: Null removes the inherited Actual Set reference.}]}
+          snapshot: {description: Snapshot reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/snapshotRef"}, {type: "null", description: Null removes the inherited Snapshot reference.}]}
+          summaryProfile: {description: Summary Profile reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/reference"}, {type: "null", description: Null removes the inherited Summary Profile reference.}]}
+          detailProfile: {description: Detail Profile reference to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/reference"}, {type: "null", description: Null removes the inherited Detail Profile reference.}]}
+          previousScene: {description: Previous Scene pin to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/artifactPin"}, {type: "null", description: Null removes the inherited Previous Scene pin.}]}
+          iconCatalogs:
+            description: Ordered catalog references; null removes the optional list.
+            examples: [null]
+            oneOf:
+              - {type: array, minItems: 1, uniqueItems: true, description: Nonempty ordered list of icon catalog references., items: {$ref: "urn:chrona:render-context-v0.17#/$defs/iconCatalogRef"}}
+              - {type: "null", description: Null removes the inherited catalog list.}
+      environment:
+        type: [object, "null"]
+        description: Environment map; named settings merge independently and null removes a setting.
+        examples: [null]
+        additionalProperties: false
+        properties:
+          viewport: {description: Viewport setting to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/properties/body/properties/environment/properties/viewport"}, {type: "null", description: Null removes the inherited viewport.}]}
+          locale: {description: Locale setting to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/properties/body/properties/environment/properties/locale"}, {type: "null", description: Null removes the inherited locale.}]}
+          fontMetrics: {description: Font metrics source to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/$defs/fontMetrics"}, {type: "null", description: Null removes the inherited font metrics source.}]}
+          scenePrecision: {description: Scene precision setting to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/properties/body/properties/environment/properties/scenePrecision"}, {type: "null", description: Null removes the inherited scene precision.}]}
+          rasterizer: {description: Rasterizer setting to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/properties/body/properties/environment/properties/rasterizer"}, {type: "null", description: Null removes the inherited rasterizer.}]}
+          typesetter: {description: Typesetter setting to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/properties/body/properties/environment/properties/typesetter"}, {type: "null", description: Null removes the inherited typesetter.}]}
+      target: {description: Target options to inherit, replace, or remove., examples: [null], oneOf: [{$ref: "urn:chrona:render-context-v0.17#/properties/body/properties/target"}, {type: "null", description: Null removes the inherited target options.}]}
