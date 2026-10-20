@@ -615,6 +615,10 @@ Composite Symbol siblings may supply one host under the exact placement identity
 only through Spec08's identical-bounds, source and purpose checks. This decoding
 does not select ports or accept a route; ambiguous or conflicting hosts remain
 hint misses and every recovered proposal retains the ordinary validators.
+Fan-in non-owner hints compare the configured end terminal with the prior shared
+owner's terminal evidence (Spec08), not the absent non-owner paint. Layout must
+revalidate the recovered route normally and recompute current fan-in ownership;
+prior group membership never authorizes a route or suppresses a current terminal.
 
 Reanchoring preserves semantic endpoints, shape family and interior channels:
 translate the whole route for equal endpoint-corridor translations; otherwise
