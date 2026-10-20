@@ -22,7 +22,7 @@ from chrona.presentation.layout.mark_facet_visibility import FacetDisposition
 from chrona.presentation.model.projection import WindowMode
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
-    segment_length_inside_rect, segment_overlap_length,
+    segment_closed_rect_contact_interval, segment_length_inside_rect, segment_overlap_length,
 )
 from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates, physical_host_neighbors,
@@ -54,6 +54,39 @@ from chrona.presentation.layout.relation_style_model import RelationStyleFallbac
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 
 ROUTE_EDGE_CLEARANCE = 4.0
+
+
+def _same_point(left: tuple[float, float], right: tuple[float, float]) -> bool:
+    return abs(left[0] - right[0]) <= 1e-9 and abs(left[1] - right[1]) <= 1e-9
+
+
+def _primary_mark_contact_is_clear(parts, primary_bounds, *, route_start, route_end,
+                                   source_egress=None, target_egress=None) -> bool:
+    """Apply closed primary-mark contact rules to route or newly drawn segments."""
+    for left, right, physical_ids in parts:
+        segment = ObstacleSegment(left, right)
+        for placement_id, rect in primary_bounds:
+            if placement_id in physical_ids:
+                continue
+            interval = segment_closed_rect_contact_interval(segment, rect)
+            if interval is None:
+                continue
+            low, high = interval
+            if high > low:
+                return False
+            point = (left[0] + low * (right[0] - left[0]),
+                     left[1] + low * (right[1] - left[1]))
+            source_touch = (low == 0 and _same_point(point, route_start)
+                and _same_point(left, route_start) and source_egress is not None
+                and placement_id in (*source_egress.host_ids, *source_egress.corridor_host_ids)
+                and _same_point(point, source_egress.semantic_port))
+            target_touch = (high == 1 and _same_point(point, route_end)
+                and _same_point(right, route_end) and target_egress is not None
+                and placement_id in (*target_egress.host_ids, *target_egress.corridor_host_ids)
+                and _same_point(point, target_egress.semantic_port))
+            if not (source_touch or target_touch):
+                return False
+    return True
 
 
 def inset_route_bounds(bounds: tuple[float, float, float, float],
@@ -513,8 +546,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                       (timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom))
     routing_bounds = inset_route_bounds(routing_bounds, [float(mark.bounds.inline) for mark in marks] + [
         float(mark.bounds.inline + mark.bounds.inline_size) for mark in marks])
-    channels = (shape_channels(obstacles, bounds=routing_bounds, row_edges=tuple(row_edges.values()),
-                              classes=route_classes) if search_policy == "first-fit" else None)
+    channels = shape_channels(obstacles, bounds=routing_bounds, row_edges=tuple(row_edges.values()),
+                              classes=route_classes)
     relation_instances = shape_settled = fallback_search = 0
     budget_hits: list[RelationSearchBudgetHit] = []
     resolution_infos: list[RelationResolutionInfo] = []
@@ -535,21 +568,36 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 and (required_ids is None or mark.placement_id in required_ids))
         return primary_interiors[key]
 
+    primary_bounds: dict[frozenset[str] | None, tuple[tuple[str, ObstacleRect], ...]] = {}
+    def required_primary_bounds(required_ids: frozenset[str] | None):
+        """Full closed mark bounds for actual route-contact validation only."""
+        if required_ids not in primary_bounds:
+            primary_bounds[required_ids] = tuple((mark.placement_id, ObstacleRect(
+                float(mark.bounds.inline), float(mark.bounds.block),
+                float(mark.bounds.inline + mark.bounds.inline_size),
+                float(mark.bounds.block + mark.bounds.block_size)))
+                for mark in primary_marks
+                if required_ids is None or mark.placement_id in required_ids)
+        return primary_bounds[required_ids]
+
+    def clears_changed_primary_contacts(segments, points, required_ids,
+                                        source_egress, target_egress) -> bool:
+        """Validate newly drawn style segments with the same closed-bound rule."""
+        bounds = required_primary_bounds(required_ids)
+        parts = tuple(part for candidate in segments for part in split_route_at_physical_corridors(
+            (candidate.start, candidate.end), source_egress, target_egress))
+        return _primary_mark_contact_is_clear(parts, bounds, route_start=points[0],
+            route_end=points[-1], source_egress=source_egress, target_egress=target_egress)
+
     def clears_primary_marks(points: tuple[tuple[float, float], ...], width: float,
                              required_ids: frozenset[str] | None = None,
                              source_egress: ConnectorEgress | None = None,
                              target_egress: ConnectorEgress | None = None) -> bool:
-        """Reject positive-length crossings of any planned mark's stroked interior."""
-        interiors = required_primary_interiors(width, required_ids)
+        """Reject closed-bound contact except an isolated authorized port touch."""
+        bounds = required_primary_bounds(required_ids)
         parts = split_route_at_physical_corridors(points, source_egress, target_egress)
-        for left, right, physical_ids in parts:
-            segment = ObstacleSegment(left, right)
-            for placement_id, rect in interiors:
-                if placement_id in physical_ids:
-                    continue
-                if segment_length_inside_rect(segment, rect) > 1e-9:
-                    return False
-        return True
+        return _primary_mark_contact_is_clear(parts, bounds, route_start=points[0],
+            route_end=points[-1], source_egress=source_egress, target_egress=target_egress)
 
     def relation_stroke(relation) -> float:
         return float(request.theme_tokens.number(semantic_binding(relation.semantic_id).theme_role, "strokeWidth"))
@@ -590,6 +638,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         required_ids = domain.required_primary_mark_ids if domain is not None else None
         protect_label_ink = domain is None or domain.stage not in {
             RelationResolutionStage.OVERLAP, RelationResolutionStage.STUB}
+        # A reduction must retain both the mandatory host corridor and the
+        # configured terminal's straight tangent, not merely one stroke width.
+        start_minimum = max(start_minimum, terminal_run(marker_start) + width)
+        end_minimum = max(end_minimum, terminal_run(marker_end) + width)
         def clear(path):
             return terminal_runs_preserved(tuple(points), path,
                 start_minimum=start_minimum or None, end_minimum=end_minimum or None
@@ -598,7 +650,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     classes=route_classes, regions=("timeline", "group-header"))
                 for a, b, physical_ids in split_route_at_physical_corridors(path, source_egress, target_egress)) and (
                     not protect_label_ink or route_clears_retained_label_ink(path, index, width))
-        reduced = remove_substroke_jogs(tuple(points), width, accept=clear)
+        reduced = remove_substroke_jogs(tuple(points), width, accept=clear,
+            start_minimum=start_minimum, end_minimum=end_minimum)
         def clear_reduction(path):
             if route_self_overlaps(path) or not clear(path):
                 return False
@@ -619,6 +672,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 if marker_start is not None and marker_start.centred else 0.0)),
             end_minimum=max(end_minimum, width + (marker_end.head_length / 2
                 if marker_end is not None and marker_end.centred else 0.0)))
+        if not terminal_runs_preserved(tuple(points), reduced,
+                start_minimum=start_minimum, end_minimum=end_minimum):
+            return None
         drawn, start, end = complete_centred_terminals(reduced, marker_start, marker_end, width)
         # A round head's reference offset makes its centre axis-sensitive too.
         # If a short tangent disagrees with its port normal, try removing just
@@ -638,14 +694,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if any(marker is not None and marker.centred and marker.angle_degrees is not None
                    for marker in (first, last)):
                 return None
-        # Physical corridors need an unconditional post-reduction guard because
-        # segment-local authority must be revalidated after terminal completion.
-        # With the feature off, the legacy acceptance callback remains the
-        # primary-mark gate and preserves its diagnostic ordering.
-        if (any(egress is not None and egress.corridor_host_ids
-                for egress in (source_egress, target_egress))
-                and (not clears_primary_marks(reduced, width, required_ids, source_egress, target_egress)
-                     or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress))):
+        # Reduction and terminal completion must both retain the same closed
+        # contact rule and segment-local physical-corridor authority.
+        if (not clears_primary_marks(reduced, width, required_ids, source_egress, target_egress)
+                or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress)):
             return None
         if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
             return None
@@ -873,17 +925,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         if candidate[0] == source_exit.semantic_port
                         and candidate[-1] == target_entry.semantic_port)
                 def candidate_accepted(candidate):
-                    matched_pairs = tuple((source_exit, target_entry) for source_exit, target_entry in pairs
-                        if candidate[0] == source_exit.semantic_port
-                        and candidate[-1] == target_entry.semantic_port)
-                    if any(egress.corridor_host_ids for pair_ in matched_pairs for egress in pair_):
-                        primary_clear = candidate_primary_clear(candidate)
-                    else:
-                        # Preserve the former default-off acceptance path
-                        # and its ordering relative to route preparation.
-                        primary_clear = clears_primary_marks(candidate, dependency_stroke,
-                                                             domain.required_primary_mark_ids)
-                    return primary_clear and terminal_segments_fit(candidate, dependency_stroke)
+                    return (candidate_primary_clear(candidate)
+                            and terminal_segments_fit(candidate, dependency_stroke))
                 def quality_barriers(source_exit, target_entry):
                     # Exempt the entire authorized host conservatively; the
                     # final validator still enforces its segment-local use.
@@ -908,6 +951,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
                     label_repair_obstacle_ids=context.label_repair_obstacle_ids,
                     route_stroke_width=dependency_stroke,
+                    outward_runs=((dependency_stroke + terminal_length(marker_start),
+                                   dependency_stroke + terminal_length(marker_end))
+                                  if domain.stage is RelationResolutionStage.NORMAL else None),
                     prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
                         (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side,
                         source_egress=source_exit, target_egress=target_entry,
@@ -1138,14 +1184,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 # Only retained axis-aligned intervals are admitted subsets.
                 # Arcs and metro diagonals have no whole-host exemption here.
                 classes = tuple(dict.fromkeys((*route_classes, *LABEL_INK_OBSTACLE_CLASSES)))
-                for segment in changed_path_segments(candidate.path_commands, dependency_stroke):
+                changed = changed_path_segments(candidate.path_commands, dependency_stroke)
+                for segment in changed:
                     if domain.obstacles.collisions(segment, classes=classes,
                             regions=("timeline", "group-header")):
                         return "clearance"
-                    if any(obstacles_intersect(segment, rect) for _, rect in
-                           required_primary_interiors(dependency_stroke,
-                                                      domain.required_primary_mark_ids)):
-                        return "clearance"
+                if not clears_changed_primary_contacts(changed, candidate.points,
+                        domain.required_primary_mark_ids, source_egress, target_egress):
+                    return "clearance"
                 return None
             placed, paint_cover = complete_relation_style(placed,
                 style=context.layout_manifest.relation_style, stroke_width=dependency_stroke,

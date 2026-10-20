@@ -13,7 +13,8 @@ from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
 from chrona.presentation.layout.route_quality_bounds import rectangular_detour_lower_bound
 from chrona.presentation.layout.relation_shapes import (
-    RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
+    RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
+    relation_shape_candidates, shape_channels,
     supplemental_relation_channel_candidates,
 )
 
@@ -457,6 +458,7 @@ def select_relation_route(
     protected_quality_barriers: Callable[[ConnectorEgress, ConnectorEgress], tuple[ObstacleRect, ...]] | None = None,
     label_repair_obstacle_ids: frozenset[str] = frozenset(),
     route_stroke_width: float = 0.0,
+    outward_runs: tuple[float, float] | None = None,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -479,6 +481,10 @@ def select_relation_route(
                                    max_bends=max_bends, max_detour_ratio=max_detour_ratio)
     if search_policy not in {"best", "first-fit"}:
         raise _route_attempt_error("search policy", search_policy=search_policy)
+    if outward_runs is not None and (len(outward_runs) != 2 or any(
+            isinstance(value, bool) or not isinstance(value, (int, float))
+            or not isfinite(value) or value < 0 for value in outward_runs)):
+        raise _route_attempt_error("outward endpoint runs", outward_runs=outward_runs)
     repair_active = (search_policy == "first-fit" and bool(label_repair_obstacle_ids)
                      and any(obstacles.has(identifier) for identifier in label_repair_obstacle_ids))
     if repair_active and (isinstance(route_stroke_width, bool)
@@ -488,14 +494,15 @@ def select_relation_route(
     phases = (("best", port_pairs),)
     if search_policy == "first-fit":
         phases = (("first-fit", first_fit_port_pairs(port_pairs)), ("best", port_pairs))
-        if channels is None:
-            channels = shape_channels(obstacles, bounds=bounds, classes=classes, regions=regions,
-                                      grid_offset=ROUTE_GRID_OFFSET)
+    if channels is None and (search_policy == "first-fit" or outward_runs is not None):
+        channels = shape_channels(obstacles, bounds=bounds, classes=classes, regions=regions,
+                                  grid_offset=ROUTE_GRID_OFFSET)
     attempts: list[RouteAttemptEvidence] = []
     best = None
     chosen = None
     chosen_points = ()
     chosen_attempt = -1
+    chosen_outward = False
     search_used = False
     hint_rejection = None
     budget = RelationExpansionBudget(search_budget) if search_budget is not None else None
@@ -515,6 +522,11 @@ def select_relation_route(
             for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
             for port_id in (f"port:{host_id or relation_scene_id}:{side}",) if obstacles.has(port_id))
         return blockers, port_ids
+
+    def outward_candidates(source, target):
+        return outward_relation_shape_candidates((source, target),
+            source_run=outward_runs[0], target_run=outward_runs[1],
+            bounds=bounds, channels=channels)
 
     for pair, middle in preferred_routes:
         blockers, port_ids = pair_domain(*pair)
@@ -548,6 +560,8 @@ def select_relation_route(
                         source.exposed_port, target.exposed_port, bounds=bounds, channels=channels,
                         obstacles=obstacles, route_stroke_width=float(route_stroke_width),
                         grid_offset=ROUTE_GRID_OFFSET, classes=classes, regions=regions))
+                if outward_runs is not None:
+                    shapes = _chain(shapes, outward_candidates(source, target))
                 shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
                     port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
                     max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
@@ -565,20 +579,34 @@ def select_relation_route(
                 limit=pair_limit, exact_bound=phase == "best",
                 **({"budget": budget} if budget is not None else {}))
             attempts.append(measured)
+            settled_outward = False
+            if phase == "best" and measured.outcome != "accepted" and outward_runs is not None:
+                # These are normal finite proposals, not relaxed connectors or
+                # prior hints. Preserve an accepted graph choice; otherwise
+                # close the missing outward-corridor proposal before relaxing.
+                shaped, shaped_points = _select_pair_candidate(source, target,
+                    obstacles=obstacles, bounds=bounds, port_ids=port_ids,
+                    classes=classes, regions=regions, max_bends=max_bends,
+                    max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+                    limit=0, candidate_paths=outward_candidates(source, target))
+                attempts.append(shaped)
+                if shaped.outcome == "accepted":
+                    measured, points, settled_outward = shaped, shaped_points, True
             if measured.outcome == "accepted":
                 if rank is None or phase == "first-fit":
-                    return result((source, target), points, attempts)
+                    return result((source, target), points, attempts, shaped=settled_outward)
                 score = rank(tuple(points), source, target)
                 if best is None or score < best:
                     if chosen_attempt >= 0:
                         attempts[chosen_attempt] = replace(attempts[chosen_attempt], outcome="eligible-not-selected")
                     best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
+                    chosen_outward = settled_outward
                 else:
                     attempts[-1] = replace(measured, outcome="eligible-not-selected")
             if budget is not None and budget.hit:
                 break
     if chosen is not None or not protected:
-        return result(chosen, chosen_points, attempts)
+        return result(chosen, chosen_points, attempts, shaped=chosen_outward)
 
     # Exhaust only the declared finite domain; reuse all completed validators.
     protected_expansions = 0
