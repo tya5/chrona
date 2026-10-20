@@ -216,6 +216,10 @@ def _segment_width(segments: tuple[TextSegment, ...], *, font_size: float, font_
 
 def _entry_label_width(entry: SurfaceLegendEntry, *, font_size: float, font_metrics: Any,
                        treatment: Any) -> float:
+    if entry.label_variants:
+        return max(_entry_label_width(replace(entry, label=label, label_variants=()),
+                                     font_size=font_size, font_metrics=font_metrics, treatment=treatment)
+                   for label in (entry.label, *entry.label_variants))
     segments = _legend_text_segments(entry, treatment.transform)
     if segments is not None:
         return _segment_width(segments, font_size=font_size, font_metrics=font_metrics, treatment=treatment)
@@ -292,10 +296,16 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
     """
     treatment = tokens.text_treatment("legend")
     legend_size = float(treatment.font_size)
-    gap = _legend_item_gap_decimal(arrangement.gap, legend_size)
-    label_gaps = tuple(entry_label_gap(entry, arrangement.gap, tokens, legend_size) for entry in entries)
     if not entries:
         return SourceInput(("legend",), typography_role="legend")
+    # Size each potential key once using its widest possible final coverage label.
+    metrics = metric_for_role(tokens, "legend", font_metrics)
+    entries = tuple(replace(entry, label=max((entry.label, *entry.label_variants),
+        key=lambda label: _entry_label_width(replace(entry, label=label, label_variants=()),
+            font_size=legend_size, font_metrics=metrics, treatment=treatment)), label_variants=())
+        if entry.label_variants else entry for entry in entries)
+    gap = _legend_item_gap_decimal(arrangement.gap, legend_size)
+    label_gaps = tuple(entry_label_gap(entry, arrangement.gap, tokens, legend_size) for entry in entries)
     entry_extents = tuple(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)
                           for entry in entries)
     extents = tuple(width for width, _height, _bucket in entry_extents)

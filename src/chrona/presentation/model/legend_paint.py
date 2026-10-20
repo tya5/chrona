@@ -79,6 +79,11 @@ class RealizedLegendKey:
     base_label: str = ""
     glyph: RealizedGlyphInk | None = None
     point_state: Literal["planned", "actual", "forecast"] | None = None
+    covered_point_states: tuple[Literal["planned", "actual", "forecast"], ...] = ()
+
+    @property
+    def point_states(self) -> tuple[str, ...]:
+        return self.covered_point_states or ((self.point_state,) if self.point_state is not None else ())
 
     @property
     def identity(self) -> tuple[object, ...]:
@@ -86,7 +91,7 @@ class RealizedLegendKey:
             identity = self.family, ("glyph", self.glyph.identity), self.pattern_identity
         else:
             identity = self.family, self.paint.identity, self.pattern_identity
-        return identity if self.point_state is None else (*identity[:1], self.point_state, *identity[1:])
+        return identity if self.point_state is None else (*identity[:1], "point", *identity[1:])
 
     @property
     def ink_identity(self) -> tuple[object, ...]:
@@ -101,7 +106,7 @@ class RealizedLegendKey:
             return self.family, self.ink_identity
         witness = (("glyph", self.glyph.identity) if self.glyph is not None
                    else ("paint", self.paint.identity))
-        return self.family, self.point_state, witness, self.pattern_identity
+        return self.family, "point", witness, self.pattern_identity
 
     @property
     def key_id(self) -> str:

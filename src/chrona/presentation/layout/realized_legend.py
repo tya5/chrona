@@ -101,7 +101,10 @@ def _progress_adds_actual_ink(progress_key, progress_shapes, drawn_marks, conten
 def _final_representative(candidate, realized):
     """Keep the premeasured witness while updating only final occurrence facts."""
     return replace(candidate, occurrences=realized.occurrences,
-                    variance_classes=realized.variance_classes)
+                    variance_classes=realized.variance_classes,
+                    paint_role=(realized.paint_role if candidate.point_state is not None else candidate.paint_role),
+                    point_state=realized.point_state,
+                    covered_point_states=realized.covered_point_states)
 
 
 def filtered_realized_entries(request, marks, shapes, relations, text):
@@ -142,9 +145,9 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
                 if realized is None:
                     continue
                 selected = _final_representative(key, realized)
-                states = {item.point_state for item in points if item.family == key.family}
-                result.append(replace(entry, realized_key=selected,
-                    label=point_key_label(key.base_label, selected, states=states,
+                owned = tuple(item for item in points if item.family == key.family)
+                result.append(replace(entry, realized_key=selected, label_variants=(),
+                    label=point_key_label(key.base_label, selected, multiple=len(owned) > 1,
                         wording={**dict(content.legend_defaults), **dict(content.legend_wording)})))
             elif key.family == "actual":
                 realized = by_ink.get(key.grouping_identity)

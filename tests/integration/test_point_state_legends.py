@@ -1,4 +1,4 @@
-"""Final point-state legend keys keep semantic states distinct (#1847)."""
+"""Final keys cover point states once per completed figure under each owner (#1847)."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -167,3 +167,26 @@ def test_single_final_point_state_keeps_owner_label_and_omits_hidden_keys(tmp_pa
     assert swatches[0].scene_id in _svg_elements(rendered)
     assert not any(text in rendered.artifact.content.decode("utf-8")
                    for text in ("Gate · Actual", "Gate · Forecast"))
+
+
+def test_identical_planned_and_actual_figures_share_one_faithful_svg_key(tmp_path):
+    request = _request(tmp_path, actual=True, forecast=False)
+    theme = yaml.safe_load(request.theme.read_text())
+    # An identical declared treatment must not produce duplicate visual keys.
+    theme["body"]["roles"]["actual"] = dict(theme["body"]["roles"]["planned"])
+    theme["body"]["colorBindings"]["actual.fill"] = theme["body"]["colorBindings"]["planned.fill"]
+    sr._write(request.theme, theme)
+    rendered = render_draft(request).rendered
+    points = tuple(item for item in rendered.surface.primitives
+                   if item.kind == "Symbol" and item.source_kind == "object"
+                   and item.purpose in {"planned", "actual"})
+    swatches, labels = _legend(rendered)
+    assert {item.purpose for item in points} == {"planned", "actual"}
+    assert len(swatches) == len(labels) == 1
+    assert labels[0].text == "Gate"
+    assert {_ink_signature(item) for item in points} == {_ink_signature(swatches[0])}
+    svg = _svg_elements(rendered)
+    assert all(item.scene_id in svg and svg[item.scene_id].tag.endswith("path")
+               for item in (*points, *swatches))
+    assert all(svg[item.scene_id].attrib.get("fill") == item.paint.fill
+               for item in (*points, *swatches))
