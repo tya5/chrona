@@ -12,6 +12,7 @@ from hashlib import sha256
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.object_references import ObjectReferenceCatalog, ObjectReferenceError
 from chrona.resources import safe_load, schema_validator
 from chrona.schema_diagnostics import explain_errors
 from chrona.core.ports import SnapshotReadError, SnapshotReader
@@ -311,6 +312,7 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
     the delivery package (validated with IDP-* codes) are not touched.
     """
     definitions, diagnostics = resolve_profile_field_catalogue(project, package_manifests)
+    reference_catalog: ObjectReferenceCatalog | None = None
     delivery_declared = any(
         isinstance(extension, dict) and extension.get("packageId") == PACKAGE_ID
         for extension in project.get("extensions", [])
@@ -342,22 +344,34 @@ def validate_generic_profiles(project: dict[str, Any], package_manifests: dict[s
                 if spec.get("required"):
                     diagnostics.append(Diagnostic("E_PROFILE_FIELD_REQUIRED", f"Required field {name!r} is null", f"{path}/{_pointer(name)}"))
             else:
-                diagnostics.extend(_generic_value(project, name, values[name], spec, f"{path}/{_pointer(name)}"))
+                if spec.get("type") == "objectReference":
+                    if reference_catalog is None:
+                        reference_catalog = ObjectReferenceCatalog.from_project(project)
+                diagnostics.extend(_generic_value(
+                    project, name, values[name], spec, f"{path}/{_pointer(name)}",
+                    reference_catalog=reference_catalog,
+                ))
     return diagnostics
 
 
-def _generic_value(project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str) -> list[Diagnostic]:
+def _generic_value(
+    project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str,
+    *, reference_catalog: ObjectReferenceCatalog | None = None,
+) -> list[Diagnostic]:
     if spec.get("cardinality") == "many":
         if not isinstance(value, list):
             return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must be an array", path)]
         found: list[Diagnostic] = []
         for index, element in enumerate(value):
-            found.extend(_generic_scalar(project, name, element, spec, f"{path}/{index}"))
+            found.extend(_generic_scalar(project, name, element, spec, f"{path}/{index}", reference_catalog=reference_catalog))
         return found
-    return _generic_scalar(project, name, value, spec, path)
+    return _generic_scalar(project, name, value, spec, path, reference_catalog=reference_catalog)
 
 
-def _generic_scalar(project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str) -> list[Diagnostic]:
+def _generic_scalar(
+    project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str,
+    *, reference_catalog: ObjectReferenceCatalog | None = None,
+) -> list[Diagnostic]:
     kind = spec.get("type")
     if kind == "enum":
         allowed = spec.get("enumValues", [])
@@ -369,10 +383,14 @@ def _generic_scalar(project: dict[str, Any], name: str, value: Any, spec: dict[s
             return [Diagnostic("E_PROFILE_FIELD_ENUM", f"{name} value {value!r} is outside {list(allowed)}{hint}", path)]
         return []
     if kind == "objectReference":
-        targets = spec.get("targetProfiles")
-        known = {**project.get("entities", {}), **project.get("objects", {})}
-        if not isinstance(value, str) or value not in known or (targets and known[value].get("type") not in targets):
-            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must name an object or entity of profile {list(targets or [])}", path)]
+        try:
+            (reference_catalog or ObjectReferenceCatalog.from_project(project)).resolve(
+                value, target_profiles=tuple(spec.get("targetProfiles", ())),
+            )
+        except (ObjectReferenceError, TypeError, ValueError):
+            targets = spec.get("targetProfiles")
+            constraint = f" of profile {list(targets)}" if targets else ""
+            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must name one object or entity{constraint}", path)]
         return []
     if kind == "resourceReference":
         errors = tuple(schema_validator("revision-store-resource-ref-v0.1.schema.yaml").iter_errors(value))

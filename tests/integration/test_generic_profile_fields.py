@@ -71,3 +71,57 @@ def test_duplicate_of_a_delivery_profile_id_is_reported():
     project = _project(); project["extensions"].insert(0, {"packageId": "implementation-delivery"})
     ids = [d.id for d in validate_profiles(project, {"implementation-delivery": delivery, "acme-risk": MANIFEST})]
     assert "E_PROFILE_ID_DUPLICATE" in ids
+
+
+def _reference_package():
+    package = deepcopy(MANIFEST)
+    package["profiles"]["acme-risk.item"]["fields"].update({
+        "owner": {"type": "objectReference", "targetProfiles": ["acme-risk.team"]},
+        "reviewers": {"type": "objectReference", "targetProfiles": ["acme-risk.team"], "cardinality": "many"},
+        "related": {"type": "objectReference"},
+    })
+    package["profiles"]["acme-risk.team"] = {"extends": "entity"}
+    return package
+
+
+def _reference_project(owner="team-a", reviewers=None):
+    project = _project(owner=owner, reviewers=reviewers or [])
+    project["objects"]["a"]["schedule"] = {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-03"}
+    project["entities"] = {
+        "team-a": {"type": "acme-risk.team", "title": "Team A"},
+    }
+    project["objects"]["work-a"] = {
+        "type": "task", "title": "Work A",
+        "schedule": {"mode": "fixed-span", "start": "2026-10-03", "end": "2026-10-05"},
+    }
+    return project
+
+
+def test_object_references_resolve_declared_target_type_and_many_values():
+    package = _reference_package()
+    project = _reference_project(reviewers=["team-a", "work-a"])
+    assert _run(project, package) == [("E_PROFILE_FIELD_TYPE", "/objects/a/fields/reviewers/1")]
+
+    project["objects"]["a"]["fields"]["reviewers"] = ["team-a"]
+    assert _run(project, package) == []
+
+
+def test_object_references_report_missing_wrong_profile_and_cardinality_at_value_pointer():
+    package = _reference_package()
+    for project, path in (
+        (_reference_project(owner="missing"), "/objects/a/fields/owner"),
+        (_reference_project(owner="work-a"), "/objects/a/fields/owner"),
+        (_reference_project(reviewers="team-a"), "/objects/a/fields/reviewers"),
+    ):
+        assert _run(project, package) == [("E_PROFILE_FIELD_TYPE", path)]
+
+
+def test_declared_target_profiles_disambiguate_bare_id_but_unconstrained_overlap_fails():
+    package = _reference_package()
+    project = _reference_project(owner="shared")
+    project["entities"]["shared"] = {"type": "acme-risk.team", "title": "Entity Shared"}
+    project["objects"]["shared"] = {"type": "task", "title": "Object Shared"}
+    assert _run(project, package) == []  # the declared profile is semantic target typing
+
+    project["objects"]["a"]["fields"]["related"] = "shared"
+    assert _run(project, package) == [("E_PROFILE_FIELD_TYPE", "/objects/a/fields/related")]
