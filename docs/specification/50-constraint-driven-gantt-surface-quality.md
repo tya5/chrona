@@ -1601,6 +1601,7 @@ selected descendants; group objects are not emitted as orphan task nodes.
 Allocate disjoint secondary-axis bands to unrelated containers, preserving
 the existing deterministic rank/order within them. Nested containers enclose
 their child bands. Empty selected containers remain visible containers.
+Stable rank/member ordering does not promise fixed node coordinates when a larger measured rank demand requires movement; validated previous-node placement hints are not required.
 Group endpoints retain ports on the completed container boundary; no relation
 or ancestor is invented or silently removed. These are network-native groups,
 not the table-only region frames of Spec33.

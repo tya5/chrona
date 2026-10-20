@@ -1117,6 +1117,7 @@ final timeline host, and fill-expanded row placements MUST NOT become an
 input to a subsequent content-sizing pass. Explicit larger minimum requests
 may therefore create surplus for fill, while a compact auto result places
 rows at their natural requirements.
+`rowDistribution: fill` intentionally redistributes surplus when row count changes, preserving authored fractional row pitch rather than promising byte-stable rows above an insertion or removal.
 
 ## 14. Seeded canvas tiles and overlay geometry (#888)
 
