@@ -24,6 +24,7 @@ def lower_legacy_color_encoding(encoding: Mapping[str, Any] | None) -> tuple[Sty
     outcome = StyleEncodingOutcome(
         "fill", StyleFieldSource(field_name=encoding["source"]["field"]),
         encoding["scale"], domain if isinstance(domain, str) else tuple(domain),
+        missing=encoding.get("missing", "base"),
     )
     return tuple(
         StyleRule(f"view-colorEncoding:{semantic}", StyleSelector(semantic=semantic),

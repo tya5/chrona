@@ -166,7 +166,7 @@ def complete_style_fills(
             source_field = group[0][1]
             scale = resolve_color_scale(
                 {"scale": scale_id, "source": {"field": source_field},
-                 "domain": policy},
+                 "domain": policy, "missing": "base"},
                 body.get("colorScales"), body.get("categorySlots"),
                 source_ref=references[scale_id],
                 color_vision=tuple(body.get("colorVision", ())),
@@ -185,6 +185,19 @@ def complete_style_fills(
             fields = {field_name: value}
             if _profile_lacks_field(facts[intent.key].fields, field_name):
                 continue  # the occurrence's declared profile has no such field: the encoding does not apply (#1682)
+            if value is None:
+                # No value for the field (absent from any source, or null): the encoding does not apply (#1789).
+                # Base paint is the default; `missing` names a domain value to paint with instead.
+                missing = intent.fill.missing
+                if missing == "base":
+                    continue
+                if missing not in local_scale.domain:
+                    raise ColorScaleError(
+                        "E_PRESENTATION_SCALE_MAPPING",
+                        f"encoding.missing={missing!r} is not base or a value of the domain "
+                        f"{local_scale.domain!r}", source_reference(intent))
+                value = missing
+                fields = {field_name: value}
             if local_scale.covers(fields):
                 color = local_scale.color_for(intent.key.subject_id, fields)
                 canonical_value = scale_text(value)

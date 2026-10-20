@@ -50,6 +50,10 @@ calendars:
   office:
     working_days: [mon, tue, wed, thu, fri]
 objects:
+  kickoff:
+    type: gate
+    title: Kickoff
+    schedule: {mode: fixed-point, at: '2026-11-02'}
   design:
     type: work
     title: Design
@@ -127,6 +131,11 @@ chrona render examples/typed-fields/plan.yaml --preset wallboard-dark --view exa
 
 Each bar takes the colour of its `risk` value, the axis shows the months and the legend names
 `low`, `medium` and `high`. Edit `fields` in the plan, not the picture, and render again.
+
+The `kickoff` gate has no `risk`: an object with no value for the encoded field (absent or `null`) keeps the
+preset's base paint on every preset and under a Style rule, and adds nothing to the legend. A present value outside
+the `domain` is still refused (`E_PRESENTATION_SCALE_VALUE`). Add `missing: low` (a domain value; default `base`)
+to `colorEncoding` or a Style `encode` to paint such objects with that value's colour.
 
 ## 3a. A preset with no `series` scale (executive-light, target-b, marquee)
 
