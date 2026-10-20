@@ -10,8 +10,8 @@ from tests.support import synthetic_review as sr
 from tests.unit.chrona.presentation.layout.test_sources import theme as measuring_theme
 
 
-ROLES = ("planned", "actual", "gate")
-LABELS = {"planned": "Planned", "actual": "Actual", "gate": "Gate"}
+ROLES = ("planned", "actual", "milestone")
+LABELS = {"planned": "Planned", "actual": "Actual", "milestone": "Gate"}
 
 
 def _render(tmp_path, monkeypatch, *, width, host_block, mark_size=None):

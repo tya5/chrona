@@ -12,8 +12,10 @@ from chrona.presentation.layout.text import (TextSegment, ellipsize_text, measur
                                              metric_for_role, place_text)
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_periods import compose_period_decoration
-from chrona.presentation.layout.mark_geometry import SymbolPartPlacement, complete_point_outline, symbol_parts
-from chrona.presentation.layout.legend_ink import actual_symbol_token
+from chrona.presentation.layout.mark_geometry import (
+    SymbolPartPlacement, complete_point_outline, symbol_parts, place_canonical_point_geometry,
+)
+from chrona.presentation.layout.legend_ink import point_symbol_token
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding, mark_style_role
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
@@ -427,13 +429,17 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             key = entry.realized_key
             if key.glyph is not None:
                 bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-                parts, geometry_identity = _completed_point_key_parts(
-                    actual_symbol_token(request.theme_tokens, key.glyph.selected_role),
-                    (x, y, width, height), key.paint_role, request.theme_tokens)
+                if key.point_state is not None:
+                    geometry_identity = key.glyph.geometry_identity
+                    parts = place_canonical_point_geometry(geometry_identity, (x, y, width, height))
+                else:
+                    parts, geometry_identity = _completed_point_key_parts(
+                        point_symbol_token(request.theme_tokens, key.glyph.selected_role, "actual"),
+                        (x, y, width, height), key.paint_role, request.theme_tokens)
                 assert len(parts) == len(key.glyph.paints), "composite key geometry and ink must stay aligned"
                 center = (x + width / 2, y + height / 2)
                 marks.append(MarkPlacement(swatch_id, entry.source_identity, bounds, center, center,
-                    mark_shape="point", slot_id=legend.slot_id, semantic_id="actual",
+                    mark_shape="point", slot_id=legend.slot_id, semantic_id=key.point_state or "actual",
                     theme_role=key.paint_role, symbol_parts=parts, legend_paints=key.glyph.paints,
                     legend_geometry_identity=geometry_identity))
                 return

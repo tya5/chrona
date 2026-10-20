@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal
 from hashlib import sha256
+from typing import Literal
 
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
 from chrona.presentation.model.theme_paint import ThemePaintWitness
@@ -77,12 +78,15 @@ class RealizedLegendKey:
     pattern_identity: tuple[object, ...] | None = None
     base_label: str = ""
     glyph: RealizedGlyphInk | None = None
+    point_state: Literal["planned", "actual", "forecast"] | None = None
 
     @property
     def identity(self) -> tuple[object, ...]:
         if self.glyph is not None:
-            return self.family, ("glyph", self.glyph.identity), self.pattern_identity
-        return self.family, self.paint.identity, self.pattern_identity
+            identity = self.family, ("glyph", self.glyph.identity), self.pattern_identity
+        else:
+            identity = self.family, self.paint.identity, self.pattern_identity
+        return identity if self.point_state is None else (*identity[:1], self.point_state, *identity[1:])
 
     @property
     def ink_identity(self) -> tuple[object, ...]:
@@ -93,7 +97,11 @@ class RealizedLegendKey:
     @property
     def grouping_identity(self) -> tuple[object, ...]:
         """Semantic family plus visible ink; exact paint remains in ``identity``."""
-        return self.family, self.ink_identity
+        if self.point_state is None:
+            return self.family, self.ink_identity
+        witness = (("glyph", self.glyph.identity) if self.glyph is not None
+                   else ("paint", self.paint.identity))
+        return self.family, self.point_state, witness, self.pattern_identity
 
     @property
     def key_id(self) -> str:

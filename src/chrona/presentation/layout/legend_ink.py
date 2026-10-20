@@ -5,12 +5,20 @@ from collections.abc import Mapping
 from dataclasses import replace
 from decimal import Decimal
 
-from chrona.presentation.layout.mark_geometry import complete_point_outline, symbol_parts
-from chrona.presentation.layout.mark_role_geometry import resolve_mark_band, resolve_mark_geometries
+from chrona.presentation.layout.mark_geometry import (
+    canonical_point_geometry, complete_point_outline, symbol_parts,
+)
+from chrona.presentation.layout.mark_role_geometry import (
+    resolve_mark_band, resolve_mark_geometries, resolve_occurrence_mark_frame,
+)
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.presentation import MarkBandFrame
+from chrona.presentation.layout.path_geometry import rounded_diamond_path
 from chrona.presentation.layout.pattern_placement import complete_pattern_placement
+from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.model.legend_paint import RealizedGlyphInk, RealizedLegendKey
 from chrona.presentation.model.semantic_registry import mark_style_role
+from chrona.presentation.model.mark_semantics import canonical_mark_semantic
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.actual_variance_paint import ACTUAL_VARIANCE_TRAIT_ROLES
 from chrona.presentation.model.theme_paint import (
@@ -47,13 +55,78 @@ def pattern_ink_identity(tokens, role, *, completed_catalog=False):
             placed.density_basis_points, placed.primitives)
 
 
-def actual_symbol_token(tokens, selected_role):
-    return tokens.symbol(selected_role) if selected_role is not None else tokens.variant_symbol("actual")
+def point_symbol_token(tokens, selected_role, point_state):
+    """Resolve the same selected role/geometry variant used by chart points."""
+    if selected_role is not None:
+        return tokens.symbol(selected_role)
+    return tokens.variant_symbol(mark_style_role(point_state))
+
+
+def point_key_owner(content, point_state, selected_role):
+    """Return the first semantic Detail owner eligible to own this point state."""
+    entries = tuple(entry for entry in content.legend_entries
+                    if entry.source_ref is None and entry.style_scope is None
+                    and entry.view_scale_id is None and entry.encoding_scale_id is None
+                    and not entry.encoding_value_is_wording
+                    and not entry.role.startswith("scale:"))
+    if selected_role is not None and selected_role not in {"planned", "actual", "forecast"}:
+        selected = next((entry.role for entry in entries if entry.role == selected_role), None)
+        if selected is not None:
+            return selected
+    if any(entry.role == "milestone" for entry in entries):
+        return "milestone"
+    if any(entry.role == point_state for entry in entries):
+        return point_state
+    return None
+
+
+def _point_state_for_occurrence(key, tokens):
+    """Recover a logical point state through the same canonical facet mapping as mark composition."""
+    for state in ("planned", "actual", "forecast"):
+        if canonical_mark_semantic(state, "point", gate_declared=tokens.has_role("gate")) == key.semantic_id:
+            return state
+    return None
+
+
+def _point_witness_parts(content, tokens, key, point_state, mark_block_size):
+    gate_declared = tokens.has_role("gate")
+    state_intents = {}
+    for semantic in ("planned", "actual", "forecast"):
+        canonical = canonical_mark_semantic(semantic, "point", gate_declared=gate_declared)
+        intent = content.style_intents.get(replace(key, semantic_id=canonical))
+        if intent is not None:
+            state_intents[semantic] = intent
+    base_geometries = resolve_mark_geometries(tokens)
+    base_allocation = resolve_mark_band(tokens, mark_block_size, role_geometries=base_geometries)
+    frame = MarkBandFrame.zero_origin(None, mark_block_size, base_geometries, base_allocation)
+    frame = resolve_occurrence_mark_frame(frame, tokens, state_intents)
+    intent = state_intents.get(point_state)
+    selected_role = intent.role if intent is not None else None
+    geometries = frame.role_geometries
+    geometry_role = mark_style_role(point_state)
+    allocation = frame.allocation or resolve_mark_band(tokens, mark_block_size, role_geometries=geometries)
+    offset, size = allocation.symbol_bounds(geometry_role)
+    token = point_symbol_token(tokens, selected_role, point_state)
+    geometry = geometries[geometry_role]
+    radius = resolve_corner_radius(geometry.physical_corner_radius, width=size, height=size,
+        legacy_radius=min(geometry.corner_radius * size, size / 2))
+    outline = (rounded_diamond_path(inline=0.0, block=offset, inline_size=size,
+        block_size=size, radius=radius)
+        if radius > 0 and token.get("shape") == "diamond" else ())
+    parts = symbol_parts(token, (0.0, offset, size, size), outline,
+                         catalog_glyphs=getattr(tokens, "catalog_glyphs", None))
+    paint_role = (selected_role if selected_role is not None else
+                  resolve_point_paint_role(geometry_role,
+                      gate_declared=point_state != "forecast" and tokens.has_role("gate")))
+    if any(part.paint_mode == "fill" for part in parts):
+        parts = complete_point_outline(parts, paint_role=paint_role, theme_tokens=tokens)
+    return (selected_role, paint_role, parts, offset, size, token,
+            radius / size if size else 0.0)
 
 
 def _keys(content, tokens, capabilities, *, key, selected_role, parts,
           variance_classes=(), catalog=False, default_role="actual", family_id="actual", subject_id=None,
-          glyph_footprint=None):
+          glyph_footprint=None, point_state=None, point_geometry=None):
     role = selected_role or default_role
     result = []
     paints = []
@@ -63,7 +136,9 @@ def _keys(content, tokens, capabilities, *, key, selected_role, parts,
                                     has_completed_catalog_pattern=catalog)
         fill = choose_fill_override(
             style_fill=content.style_fills.get(key), legend_fill=None,
-            actual_eligible=family_id == "actual" and selected_role is None and role == "actual" and family != PaintFamily.OUTLINE,
+            actual_eligible=(point_state == "actual" if point_state is not None else
+                             family_id == "actual" and selected_role is None and role == "actual")
+                            and selected_role is None and family != PaintFamily.OUTLINE,
             actual_fill=dict(content.actual_variance_paints).get(key.subject_id if key else subject_id))
         paint = resolve_theme_paint_witness(
             tokens, role, family, fill_override=fill.color if fill is not None else None,
@@ -77,17 +152,13 @@ def _keys(content, tokens, capabilities, *, key, selected_role, parts,
         if channels.opacity == 0 or (channels.fill is None and channels.stroke is None):
             continue
         result.append(RealizedLegendKey(family_id, role, paint, (key,) if key else (), variance_classes,
-                                       pattern_ink_identity(tokens, role, completed_catalog=catalog)))
-    if glyph_footprint is not None and len(parts) > 1 and result:
-        # Canonical source structure, not translated/clipped Layout floats or
-        # a catalogue name. The ordinary part paints retain the physical ink.
-        canonical = symbol_parts(actual_symbol_token(tokens, selected_role), (0.0, 0.0, 1.0, 1.0),
-                                 catalog_glyphs=getattr(tokens, "catalog_glyphs", None))
-        geometry = tuple((part.paint_mode, part.line_cap, part.line_join,
-                          tuple((command.kind, command.points) for command in part.commands))
-                         for part in canonical)
-        glyph = RealizedGlyphInk(selected_role, geometry, tuple(paints), glyph_footprint)
-        return (replace(result[0], glyph=glyph),)
+                                       pattern_ink_identity(tokens, role, completed_catalog=catalog),
+                                       point_state=point_state))
+    if glyph_footprint is not None and result:
+        # Keep the canonical normalized shape/outline and ordered paint, not
+        # translated placement coordinates, resource IDs, or host bounds.
+        glyph = RealizedGlyphInk(selected_role, point_geometry or (), tuple(paints), glyph_footprint)
+        return (replace(result[0], glyph=glyph, point_state=point_state),)
     return tuple(result)
 
 
@@ -95,7 +166,7 @@ def source_actual_keys(content, tokens, *, mark_block_size, paint_capabilities):
     """Reserve potential ink using closed occurrence facts and shared mark geometry."""
     result = []
     for occurrence in content.legend_mark_occurrences:
-        if occurrence.key.semantic_id != "actual":
+        if occurrence.key.semantic_id != "actual" or occurrence.mark_shape == "point":
             continue
         key = occurrence.key
         intent = content.style_intents.get(key)
@@ -103,18 +174,6 @@ def source_actual_keys(content, tokens, *, mark_block_size, paint_capabilities):
         role = selected_role or "actual"
         parts = ()
         glyph_footprint = None
-        if occurrence.mark_shape == "point":
-            selected = {"actual": selected_role} if selected_role is not None else {}
-            for semantic in ("planned", "gate", "forecast"):
-                planned = content.style_intents.get(replace(key, semantic_id=semantic))
-                if planned is not None and planned.role is not None:
-                    selected["planned"] = planned.role
-            geometries = resolve_mark_geometries(tokens, theme_role_by_geometry_role=selected)
-            size = resolve_mark_band(tokens, mark_block_size, role_geometries=geometries).symbol_bounds("actual")[1]
-            token = actual_symbol_token(tokens, selected_role)
-            parts = complete_point_outline(symbol_parts(token, (0, 0, size, size),
-                catalog_glyphs=getattr(tokens, "catalog_glyphs", None)), paint_role=role, theme_tokens=tokens)
-            glyph_footprint = (size, size)
         pattern = tokens.optional_pattern(role)
         catalog = occurrence.mark_shape == "span" and isinstance(pattern, Mapping) and pattern.get("kind") == "catalog"
         classes = _actual_classes(occurrence)
@@ -127,7 +186,7 @@ def source_actual_keys(content, tokens, *, mark_block_size, paint_capabilities):
 def actual_mark_keys(mark, content, tokens, paint_capabilities):
     """Resolve final parts by their closed source identity, never parsed placement IDs."""
     key = mark.source_occurrence_key or mark.style_occurrence_key
-    if mark.semantic_id != "actual":
+    if mark.semantic_id != "actual" or mark.mark_shape == "point":
         return ()
     source = next((item for item in content.legend_mark_occurrences if item.key == key), None)
     classes = _actual_classes(source)
@@ -135,9 +194,64 @@ def actual_mark_keys(mark, content, tokens, paint_capabilities):
     pattern = tokens.optional_pattern(role)
     catalog = mark.mark_shape == "span" and isinstance(pattern, Mapping) and pattern.get("kind") == "catalog"
     return _keys(content, tokens, paint_capabilities, key=key, selected_role=mark.theme_role,
-                 parts=mark.symbol_parts, variance_classes=classes, catalog=catalog, subject_id=mark.source_ref,
-                 glyph_footprint=(float(mark.bounds.inline_size), float(mark.bounds.block_size))
-                 if mark.mark_shape == "point" else None)
+                 parts=mark.symbol_parts, variance_classes=classes, catalog=catalog,
+                 subject_id=mark.source_ref)
+
+
+def source_point_keys(content, tokens, *, mark_block_size, paint_capabilities):
+    """Measure potential point keys by semantic state and their declared Detail owner."""
+    result = []
+    for occurrence in content.legend_mark_occurrences:
+        if occurrence.mark_shape != "point":
+            continue
+        key = occurrence.key
+        state = _point_state_for_occurrence(key, tokens)
+        if state is None:
+            continue
+        intent = content.style_intents.get(key)
+        selected_role = intent.role if intent is not None else None
+        owner = point_key_owner(content, state, selected_role)
+        if owner is None:
+            continue
+        selected_role, paint_role, parts, offset, size, token, corner_fraction = _point_witness_parts(
+            content, tokens, key, state, mark_block_size)
+        # Point fills follow the actual semantic state, even where the selected
+        # point paint is supplied by a shared planned/gate role.
+        result.extend(_keys(content, tokens, paint_capabilities, key=key,
+            selected_role=selected_role, parts=parts, default_role=paint_role,
+            family_id=owner, subject_id=key.subject_id,
+            glyph_footprint=(size, size), point_state=state,
+            point_geometry=canonical_point_geometry(tokens, token, paint_role=paint_role,
+                                                     corner_fraction=corner_fraction)))
+    return tuple(result)
+
+
+def point_mark_keys(mark, content, tokens, paint_capabilities):
+    """Resolve final point ink against the exact source-state owner and glyph witness."""
+    state = mark.semantic_id
+    if mark.mark_shape != "point" or state not in {"planned", "actual", "forecast"}:
+        return ()
+    key = mark.source_occurrence_key or mark.style_occurrence_key
+    source = next((item for item in content.legend_mark_occurrences if item.key == key), None)
+    if source is None or source.mark_shape != "point":
+        return ()
+    selected_role = mark.theme_role
+    owner = point_key_owner(content, state, selected_role)
+    if owner is None:
+        return ()
+    parts = mark.symbol_parts
+    token = point_symbol_token(tokens, selected_role, state)
+    bounds = tuple(map(float, (mark.bounds.inline, mark.bounds.block,
+                               mark.bounds.inline_size, mark.bounds.block_size)))
+    corner_fraction = float(mark.corner_radius) / min(bounds[2], bounds[3]) if min(bounds[2:]) > 0 else 0.0
+    paint_role = (selected_role if selected_role is not None else
+                  resolve_point_paint_role(mark_style_role(state),
+                      gate_declared=state != "forecast" and tokens.has_role("gate")))
+    return _keys(content, tokens, paint_capabilities, key=key, selected_role=selected_role,
+        parts=parts, default_role=paint_role, family_id=owner, subject_id=mark.source_ref,
+        glyph_footprint=(bounds[2], bounds[3]), point_state=state,
+        point_geometry=(mark.legend_geometry_identity or canonical_point_geometry(
+            tokens, token, paint_role=paint_role, corner_fraction=corner_fraction)))
 
 
 def mark_ink_keys(mark, content, tokens, paint_capabilities, *, base=False):

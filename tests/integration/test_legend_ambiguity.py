@@ -38,8 +38,10 @@ def test_realized_equal_actual_and_planned_figures_warn_with_both_semantic_keys(
     svg = ElementTree.fromstring(rendered.artifact.content)
     serialized_ids = {node.attrib.get("data-scene-id") for node in svg.iter()}
     assert {item.scene_id for item in matching} <= serialized_ids
-    assert {subject["sourceRef"].removeprefix("legend-key:") for subject in subjects} == {
-        item.source_ref for item in matching}
+    collision_refs = {subject["sourceRef"].removeprefix("legend-key:") for subject in subjects}
+    assert collision_refs == {"planned", next(item.source_ref for item in matching
+                                               if item.visual_role == "actual")}
+    assert len(tuple(item for item in matching if item.source_ref in collision_refs)) == 2
 
 
 def test_duplicate_displayed_label_is_checked_after_scope_text_and_filters(tmp_path):
@@ -100,18 +102,16 @@ def test_black_actual_and_gate_diamonds_warn_and_remain_faithful(tmp_path):
     collision = next(item for item in rendered.warning_records
                      if item.payload["code"] == "W_LEGEND_SWATCH_COLLISION")
     assert {subject["title"] for subject in collision.payload["sourceSubjects"]} == {
-        "Actual (actual)", "Gate (milestone)"}
+        "Gate · Planned (milestone)", "Gate · Actual (milestone)"}
 
     swatches = tuple(item for item in rendered.surface.primitives
                      if item.purpose == "legend-swatch"
                      and item.scene_id.startswith(("legend-swatch:actual:", "legend-swatch:milestone")))
     assert len(swatches) == 6  # Two complete, three-part diamond keys.
-    assert {item.source_ref.split(":", 1)[0] for item in swatches} == {"actual", "milestone"}
-    assert {source_ref: sum(item.source_ref == source_ref for item in swatches)
-            for source_ref in {item.source_ref for item in swatches}} == {
-        next(item.source_ref for item in swatches if item.source_ref.startswith("actual:")): 3,
-        "milestone": 3,
-    }
+    assert {item.source_ref.split(":", 1)[0] for item in swatches} == {"milestone"}
+    figures = {source_ref: tuple(item for item in swatches if item.source_ref == source_ref)
+               for source_ref in {item.source_ref for item in swatches}}
+    assert len(figures) == 2 and {len(parts) for parts in figures.values()} == {3}
     assert all(item.paint.fill == "#101828" or item.paint.stroke == "#101828" for item in swatches)
     svg = ElementTree.fromstring(rendered.artifact.content)
     serialized = {node.get("data-scene-id"): node for node in svg.iter()

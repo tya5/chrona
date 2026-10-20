@@ -1,9 +1,11 @@
 """Close semantic and encoded keys against final completed painted placements."""
 from dataclasses import replace
 
-from chrona.presentation.layout.legend_candidates import actual_key_label, coalesce_actual_keys
+from chrona.presentation.layout.legend_candidates import (
+    actual_key_label, coalesce_actual_keys, coalesce_point_keys, point_key_label,
+)
 from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
-from chrona.presentation.layout.legend_ink import actual_mark_keys, mark_ink_keys
+from chrona.presentation.layout.legend_ink import actual_mark_keys, mark_ink_keys, point_mark_keys
 from chrona.presentation.layout.style_legend import painted_style_occurrences
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
 from chrona.presentation.layout.slot_heading import content_slot, full_slot, inline_content_slot, inline_full_slot
@@ -59,7 +61,7 @@ def _base_mark(entry, mark):
     if entry.role == "planned":
         return mark.mark_shape != "point" and mark.semantic_id == "planned"
     if entry.role == "forecast":
-        return mark.semantic_id == "forecast"
+        return mark.mark_shape != "point" and mark.semantic_id == "forecast"
     return _scene_role(entry.role) == _scene_role(mark.semantic_id)
 
 
@@ -79,7 +81,9 @@ def _progress_adds_actual_ink(progress_key, progress_shapes, drawn_marks, conten
         host = hosts.get(shape.host_placement_id)
         if host is None:
             return True
-        host_keys = (actual_mark_keys(host, content, tokens, capabilities)
+        host_keys = (point_mark_keys(host, content, tokens, capabilities)
+                     if host.mark_shape == "point" else
+                     actual_mark_keys(host, content, tokens, capabilities)
                      if host.semantic_id == "actual"
                      else mark_ink_keys(host, content, tokens, capabilities))
         if not host_keys:
@@ -94,7 +98,7 @@ def _progress_adds_actual_ink(progress_key, progress_shapes, drawn_marks, conten
     return False
 
 
-def _final_actual_representative(candidate, realized):
+def _final_representative(candidate, realized):
     """Keep the premeasured witness while updating only final occurrence facts."""
     return replace(candidate, occurrences=realized.occurrences,
                     variance_classes=realized.variance_classes)
@@ -106,8 +110,15 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
     actual = coalesce_actual_keys(tuple(key for mark in drawn_marks
         for key in actual_mark_keys(mark, content, tokens, capabilities)))
     by_ink = {key.grouping_identity: key for key in actual}
+    points = coalesce_point_keys(tuple(key for mark in drawn_marks
+        for key in point_mark_keys(mark, content, tokens, capabilities)))
+    point_by_ink = {key.grouping_identity: key for key in points}
+    point_reserved = {entry.realized_key.grouping_identity for entry in content.legend_entries
+                      if entry.realized_key is not None and entry.realized_key.point_state is not None}
+    assert point_by_ink.keys() <= point_reserved, "final point ink must have a premeasured candidate"
     reserved = {entry.realized_key.grouping_identity for entry in content.legend_entries
-                if entry.realized_key is not None and entry.realized_key.family == "actual"}
+                if entry.realized_key is not None and entry.realized_key.family == "actual"
+                and entry.realized_key.point_state is None}
     if reserved:
         assert by_ink.keys() <= reserved, "final Actual ink must have a premeasured candidate"
     progress_shapes = tuple(shape for shape in shapes
@@ -126,15 +137,24 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
     for entry in content.legend_entries:
         key = entry.realized_key
         if key is not None:
-            if key.family == "actual":
+            if key.point_state is not None:
+                realized = point_by_ink.get(key.grouping_identity)
+                if realized is None:
+                    continue
+                selected = _final_representative(key, realized)
+                states = {item.point_state for item in points if item.family == key.family}
+                result.append(replace(entry, realized_key=selected,
+                    label=point_key_label(key.base_label, selected, states=states,
+                        wording={**dict(content.legend_defaults), **dict(content.legend_wording)})))
+            elif key.family == "actual":
                 realized = by_ink.get(key.grouping_identity)
                 if realized is None:
                     continue
-                selected = replace(_final_actual_representative(key, realized), base_label=key.base_label)
+                selected = replace(_final_representative(key, realized), base_label=key.base_label)
                 result.append(replace(entry, realized_key=selected,
                     label=actual_key_label(key.base_label, selected, multiple=len(actual) > 1,
                                            wording={**dict(content.legend_defaults), **dict(content.legend_wording)})))
-            elif (progress_shapes and key.paint.effective_channels.opacity != 0
+            elif (key.family == "progressFill" and progress_shapes and key.paint.effective_channels.opacity != 0
                   and _progress_adds_actual_ink(key, progress_shapes, drawn_marks,
                                                 content, tokens, capabilities)):
                 result.append(entry)
