@@ -235,6 +235,7 @@ def test_a_tint_on_a_grouping_without_valued_groups_is_rejected_at_the_contract(
     with pytest.raises(Exception) as failure:
         _render(tmp_path, parts)
     assert "E_VIEW_GROUP_TINT_UNUSABLE" in str(failure.value)
+    assert getattr(failure.value, "source_ref", None) == "/body/grouping/tint"
 
 
 def test_a_tint_does_not_change_the_row_or_mark_colour_scales(tmp_path):

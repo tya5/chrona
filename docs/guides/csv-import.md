@@ -5,6 +5,9 @@ Export the sheet as CSV (or TSV) from your spreadsheet or scheduling tool, impor
 Next to the [terse plan card](terse-plan.md): the table is converted to a terse plan and compiled by the same compiler, so the
 Project is the one `chrona compile` writes for that plan. XLSX, MS Project XML and live sync are not supported.
 
+For a dependency graph rather than a timeline, see
+[render a network View from CSV](network-view.md), including the required Layout.
+
 ## The loop
 
 <!-- chrona:doc-check file: plan.csv -->

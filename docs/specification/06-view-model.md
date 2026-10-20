@@ -797,6 +797,21 @@ comparison bindings (`baseline`, `scenario`, `actual`, `observationSelection`), 
 captions, table column captions and sources, annotation anchors and text, hierarchy column, icon encodings. How the surface looks
 and is laid out is design, and a Layout profile may supply it as `viewDefaults`, a View body fragment (Specification 33).
 
+Only defaults applicable to the selected surface participate in that overlay.
+For `dependency-network`, ingress omits timeline-only defaults (`axis`,
+`shading`, `backgroundDecoration`, `timePresentation`,
+`annotationPresentation`, and `annotationPlacement`); it does not inject them
+and then report them as authored View errors. Explicitly declared forbidden
+View members still fail at their View pointers. Compatible defaults retain
+the ordinary precedence below; timeline-only defaults retain their ordinary
+`table-timeline` behavior.
+Ingress retains exact whole-member and split-member default origins. A
+semantic failure inside an inherited default identifies the selected Layout
+and its `/viewDefaults/...` pointer; it does not blame an authored View member.
+Explicit authored values retain their View pointers. Genuine inherited
+dependencies (such as named figures or group-header requirements) remain
+validated, not silently removed to make a different surface render.
+
 Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `timePresentation`, `annotationPresentation`,
 `backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
 `missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
@@ -818,6 +833,11 @@ splits: only `grouping.presentation`, `header`, `tint`, and
 replaces that nested object whole; grouping keys and color source/domain never
 come from those defaults. Project-specific wording and field selections remain
 View declarations even when a shared presentation grammar can express them.
+An omitted `grouping.tint` takes the design default only for value-bearing
+grouping (`field`, `objectType`, or a declared `fieldRole`). It is inapplicable
+to `none`, `hierarchy`, or absent grouping, on either surface. An explicitly
+authored unusable tint remains an error at `/body/grouping/tint`; ingress does
+not remove or repair it.
 
 `viewDefaults.columnStyles` is a named map of column presentation fragments:
 `format`, `missing`, `missingBy`, `affixes`, `zero`, `textRole`, `align`,

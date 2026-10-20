@@ -295,6 +295,10 @@ the View declares wins as a whole, an omitted member takes the profile's.
 Split members merge by design sub-member, creating an omitted member from
 those sub-members only; explicit declarations win and missing required
 connection fields remain View validation errors (Specification 06 section 9.2).
+Defaults inapplicable to the selected surface are not overlaid: the
+`dependency-network` exclusions and authored-member validation are defined in
+Specification 06 section 9.2. This is contract ingress, not Layout geometry
+or a preset-specific repair.
 Layout reads the merged View only; it never sees which
 half a member came from. Shared presentation fragments are also validated by
 the declaring profile's schema; the effective View still validates required
