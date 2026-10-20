@@ -11,7 +11,6 @@ from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
     TableColumnPlacement, header_group_cell_indent, measure_table_column_minima,
     place_table_columns, table_cell_indent, table_content_inline_size, table_text_fit_budget,
-    table_text_fits_column,
     table_text_measurer,
 )
 from chrona.presentation.layout.text import TextLineFit, fit_text_lines, measure_text_width, metric_for_role
@@ -56,16 +55,12 @@ def _fit_table_text(content: str, *, available: float, role: str, wrap: str,
                   letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                   numeric_spacing=treatment.numeric_spacing)
     text_advance = measure_text_width(content, **kwargs)
-    forward_fit = (column_inline_size is not None and table_text_fits_column(
-        text_advance, column_inline_size, indent=indent, inset=inset))
     # Use the same forward admission rule for equality and for the rare inverse
     # subtraction that rounds a genuinely short column back up to the full run.
     available = table_text_fit_budget(available, text_advance,
                                       column_inline_size=column_inline_size,
                                       indent=indent, inset=inset)
     fit = fit_text_lines(content, available_inline=available, wrap=wrap, **kwargs)
-    if required and wrap == "forbid" and column_inline_size is not None and not forward_fit:
-        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table/cells", detail="required comparison text cannot be truncated")
     if required and (fit is None or fit.ellipsized):
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/table/cells", detail="required comparison text cannot be truncated")
     if (prefix or suffix) and (fit is None or fit.ellipsized):

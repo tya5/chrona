@@ -321,9 +321,6 @@ def _resolve_table_text(content: str, available_inline: float, typography_role: 
     available_inline = table_text_fit_budget(available_inline, text_advance,
                                             column_inline_size=column_inline_size,
                                             indent=indent, inset=inset)
-    if column_inline_size is not None and table_text_fits_column(
-            text_advance, column_inline_size, indent=indent, inset=inset):
-        return content, "fit"
     resolved = ellipsize_text(
         content, available_inline=available_inline, font_size=float(treatment.font_size),
         font_metrics=metrics, letter_spacing=float(treatment.letter_spacing),
