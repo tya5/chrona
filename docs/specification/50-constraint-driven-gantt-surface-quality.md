@@ -912,7 +912,17 @@ path-dependent final validation. Cyclic prefixes are rejected. The deterministic
 is shared across a pair's candidate enumeration. Rehearsals and final Layout
 use the same search and completed-route validation.
 
-`relationRouting.entry` is an optional Layout Profile policy: `any` has no entry preference; absent or `side-when-free` prefers a horizontal span-start entry when the source is to its left (mirrored for span end). The full-radius corridor is offered first and a blocked corridor may use the head-plus-stroke minimum defined below. All horizontal stub pairs are tried across source exits before the other pairs (#1072). Every candidate retains normal bounds, mark/text/label, terminal and quality checks; remaining candidates stay eligible. Point targets and `at` endpoints are unchanged by `side-when-free` (#1030).
+`relationRouting.entry` is an optional Layout Profile policy: `any` has no entry preference; absent or `side-when-free` prefers a horizontal span-start entry when the source is to its left (mirrored for span end). The full-radius corridor is offered first and a blocked corridor may use the head-plus-stroke minimum defined below. All horizontal stub pairs are tried across source exits before the other pairs (#1072). Every candidate retains normal bounds, mark/text/label, terminal and quality checks; remaining candidates stay eligible. `side-when-free` adds no point-target or `at` entry stubs (#1030).
+
+Forward finish-to-point arrivals retain #1627's no-backward-arrival rule:
+when a dependency's source `end`/`finish` nominal coordinate is earlier on the
+time axis than a point target's temporal centre, its target `start`/`at` candidates
+exclude the right (`end`) side. Left, above and below remain eligible through
+the same completed safety and quality validators. Apply this finite admission
+rule before normal search, hint validation and every recovery/fallback domain;
+an exhaustion never authorizes a backward arrival. Explicit target `end`,
+non-point targets and non-forward dependencies retain their existing candidates.
+This is Layout port admission, not a Project-date change or adapter repair.
 
 `relationRouting.entry: side` also offers horizontal point-target stubs at the left vertex for `start`/`at` (right for `end`). When ordinary selection does not side-enter a different-row target, Layout tries row-gap back-routes from each legal source egress: complete the source corridor and its own terminal reserve, reach the target row edge on the source side, cross to the entry tip, then enter the target horizontally. Each candidate must clear primary marks and other obstacles, avoid self-overlap, and satisfy the unchanged `maxBends` and `maxDetourRatio` against the shortest path retaining both corridors. Common node-clearance/entry/bend/length ranking still applies. A final non-side entry emits `I_LAYOUT_RELATION_ENTRY_FALLBACK:<scene relation id>;reason=<code>` (`same-row`, `entry-stub-blocked`, `degenerate`, `bends-or-detour`, `blocked:<class>=<placement ids>`, `node-approach-conflict` or `forward-entry-failed`).
 
