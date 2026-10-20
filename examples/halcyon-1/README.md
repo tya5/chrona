@@ -44,9 +44,13 @@ second surface and extension-typed objects, on one spacecraft programme.
 - The five approved target designs, `target-b`, `yuya`, `titlecard`, `marquee` and `sunday`, are not
   copied here. They are shared designs in the packaged store (`src/chrona/resources/designs/<design>/`:
   `theme.yaml`, `scheme.yaml`, `layout.yaml`, `detail.yaml` and, for `titlecard`, `summary.yaml`). Their
-  Contexts (`contexts/21-target-b.yaml` … `contexts/25-sunday.yaml`) reference them with
+  slide Contexts (`target-b` … `sunday` in `manifest.yaml`) reference them with
   `store: {provider: package, identity: chrona.resources}`, together with the packaged icon catalogs
   (`icons/chrona-*-v2026-10-09.yaml`). Only their thin Views (`views/21-target-b.yaml` …
   `views/25-sunday.yaml`) stay here, because a View is the Project's connector.
-- `contexts/<slide>.yaml` are the immutable bindings; `generated/<slide>.svg` is the
-  materializer evidence declared by `manifest.yaml`.
+- `manifest.yaml` declares each slide's Context. `contextDefaults` holds what the slides share
+  (the Project, the Actual Set, locale, font metrics, Scene precision and SVG target); each slide's
+  `contextOverrides` states only its View, appearance, inputs, viewport and other differences
+  (Spec 40 section 7). `mission-brief` keeps the explicit `contexts/01-mission-brief.yaml`, because
+  the first-project guide and agent tools address it in an initialized Store by that path.
+  `generated/<slide>.svg` is the materializer evidence declared by `manifest.yaml`.

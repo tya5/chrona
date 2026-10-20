@@ -39,7 +39,7 @@ the [Project](../../examples/halcyon-1/project.yaml) but is visible only
 because the [View](../../examples/halcyon-1/views/06-flight-readiness.yaml)
 selects it. A prior-plan comparison uses a
 [snapshot reference](../../examples/halcyon-1/snapshots/baseline-2027-06.yaml)
-from [Render Context](../../examples/halcyon-1/contexts/07-replan-baseline.yaml),
+from the `replan-baseline` slide's [Render Context](../../examples/halcyon-1/manifest.yaml),
 not from an editable Draft Project. An extension is declared in the
 same [HALCYON Project](../../examples/halcyon-1/project.yaml) and resolved from a
 [pinned profile package](../../examples/halcyon-1/extensions/semiconductor-development.yaml).

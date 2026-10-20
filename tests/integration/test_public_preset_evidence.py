@@ -10,6 +10,7 @@ from chrona.presentation.contracts import ClosureIdentity, PresentationPresetCon
 from tests.support import synthetic_review as sr
 from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
+from tests.support.deck_contexts import context_document
 
 
 ROOT = Path(__file__).parents[2]
@@ -48,8 +49,8 @@ def test_editorial_non_view_corpus_copies_match_and_packaged_view_is_independent
         "theme": "theme.yaml",
         "colorScheme": "scheme.yaml",
     }
-    for context_name in ("13-gallery-editorial.yaml", "16-gallery-editorial-lanes.yaml"):
-        body = yaml.safe_load((corpus / "contexts" / context_name).read_bytes())["body"]
+    for context_name in ("gallery-editorial", "gallery-editorial-lanes"):
+        body = context_document(corpus, context_name)["body"]
         slots = {slot: body[slot] for slot in packaged} | {"detailProfile": body["inputs"]["detailProfile"]}
         for slot, reference in slots.items():
             name = packaged.get(slot, "detail.yaml")

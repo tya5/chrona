@@ -15,11 +15,12 @@ from chrona.resources import safe_load
 from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure
 from chrona.usecases.render_review import RenderFailed
 from tools import check_draft_viewport_matrix as matrix
+from tests.support.deck_contexts import slide_context
 
 
 ROOT = Path(__file__).resolve().parents[3]
 ROADMAP = ROOT / "examples/chrona-roadmap"
-ROADMAP_CONTEXT = ROADMAP / "contexts/roadmap.yaml"
+ROADMAP_SLIDE = "roadmap"
 
 
 def _delayed_value(task):
@@ -33,10 +34,11 @@ def _prepared_roadmap(tmp_path):
     snapshot.mkdir()
     overlay_builder = _OverlayBuilder(tmp_path / "overlay")
     decoded_catalogs = {}
-    original_bytes = ROADMAP_CONTEXT.read_bytes()
+    selected = slide_context(ROADMAP, ROADMAP_SLIDE)
+    original_bytes = selected.payload
     context = safe_load(original_bytes)
     original_reference, _revision = copy_context_closure(
-        ROADMAP, ROADMAP_CONTEXT, snapshot,
+        ROADMAP, selected, snapshot,
         decoded_catalogs=decoded_catalogs,
         overlay_builder=overlay_builder,
     )
@@ -53,7 +55,7 @@ def _prepared_roadmap(tmp_path):
 
 
 def _assert_sources_unchanged(context_bytes, staged_references, staged_assets):
-    assert ROADMAP_CONTEXT.read_bytes() == context_bytes
+    assert slide_context(ROADMAP, ROADMAP_SLIDE).payload == context_bytes
     assert all(path.read_bytes() == payload and matrix._content_identity(payload) == identity
                for path, payload, identity in staged_references.values())
     assert all(path.read_bytes() == payload and matrix._content_identity(payload) == identity
@@ -127,7 +129,7 @@ def test_context_api_matrix_path_retains_snapshot_and_authored_bytes(tmp_path):
      staged_references, staged_assets) = _prepared_roadmap(tmp_path)
     original_inputs = deepcopy(context["body"].get("inputs", {}))
     reference, _payload = matrix._derive_viewport_context(
-        context, original_ref, ROADMAP_CONTEXT, (800, 450), builder,
+        context, original_ref, original_ref["address"], (800, 450), builder,
     )
     overlay = builder.finish()
 
@@ -147,7 +149,7 @@ def test_context_cli_matrix_path_uses_public_render_review(tmp_path):
     (snapshot, builder, _decoded_catalogs, context, original_ref, source_bytes,
      staged_references, staged_assets) = _prepared_roadmap(tmp_path)
     reference, payload = matrix._derive_viewport_context(
-        context, original_ref, ROADMAP_CONTEXT, (800, 450), builder,
+        context, original_ref, original_ref["address"], (800, 450), builder,
     )
 
     artifact, _warnings = matrix._render_cli(

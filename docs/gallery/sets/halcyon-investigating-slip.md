@@ -12,7 +12,7 @@ Investigate the primary plan under the declared TVAC slip scenario.
 
 ![TVAC slip scenario](../../../examples/halcyon-1/generated/04-tvac-slip.svg)
 
-Corpus: `halcyon-1` · slide: `tvac-slip` · [Context](../../../examples/halcyon-1/contexts/04-tvac-slip.yaml)
+Corpus: `halcyon-1` · slide: `tvac-slip` · [Manifest (slide `tvac-slip`)](../../../examples/halcyon-1/manifest.yaml)
 
 ### Captured replan baseline
 
@@ -20,7 +20,7 @@ Investigate the same programme against its pinned June baseline.
 
 ![Captured replan baseline](../../../examples/halcyon-1/generated/07-replan-baseline.svg)
 
-Corpus: `halcyon-1` · slide: `replan-baseline` · [Context](../../../examples/halcyon-1/contexts/07-replan-baseline.yaml)
+Corpus: `halcyon-1` · slide: `replan-baseline` · [Manifest (slide `replan-baseline`)](../../../examples/halcyon-1/manifest.yaml)
 
 ## Presentation-reference diff
 

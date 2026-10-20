@@ -10,6 +10,7 @@ from chrona.presentation.model.closure import resolve_render_context
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure
 from chrona.usecases.render_review import RenderRequest, render_review
+from tests.support.deck_contexts import slide_context
 
 pytestmark = pytest.mark.corpus
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,7 +32,7 @@ def test_titlecard_heading_size_completes_distinct_full_frames(tmp_path, size):
     decoded = {}
     builder = _OverlayBuilder(tmp_path)
     reference, _ = copy_context_closure(
-        example, example / "contexts/23-titlecard.yaml", snapshot,
+        example, slide_context(example, "titlecard"), snapshot,
         decoded_catalogs=decoded, overlay_builder=builder)
     overlay = builder.finish()
     closure = resolve_render_context(reference, overlay, decoded_resources=decoded)

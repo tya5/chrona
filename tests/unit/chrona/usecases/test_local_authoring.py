@@ -7,6 +7,7 @@ from chrona.operational.store_config import load_store_config
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.resources import safe_load
 from chrona.operational.store_reads import PackageAwareReader
+from tests.support.deck_contexts import slide_context
 
 
 def test_explicit_store_config_wins_over_discovered_project_config(tmp_path: Path):
@@ -60,19 +61,21 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
     # The canonical Contexts leave their inner references unpinned by design (ADR-0030); this reader states the opt-out itself.
     # The five approved designs are shared designs in the packaged store (#1342): read them as render-review does.
     reader = PackageAwareReader(config.roots[("local", "halcyon-1-example")], "halcyon-1-example", require_content_identity=False)
+    # One closure per slide the copied manifest declares (no count to edit when a slide is added, #977),
+    # each at the explicit or composed address the manifest selects (#415).
+    declared = safe_load((destination / "manifest.yaml").read_bytes())["slides"]
     closures = []
-    for path in sorted((destination / "contexts").glob("*.yaml")):
-        context = safe_load(path.read_bytes())
+    for slide in declared:
+        selected = slide_context(destination, slide["id"])
+        context = selected.document
         context_reference = {
             "id": context["id"], "kind": "render-context",
-            "store": context["body"]["project"]["store"], "address": path.relative_to(destination).as_posix(),
+            "store": context["body"]["project"]["store"], "address": selected.address,
             "revision": context["body"]["project"]["revision"],
         }
         closures.append(resolve_render_context(context_reference, reader))
     assert closures[0].context.identity.id == "halcyon-1-01-mission-brief"
-    # One closure per slide Context the copied manifest declares (no count to edit when a slide is added, #977).
-    declared = safe_load((destination / "manifest.yaml").read_bytes())["slides"]
     assert closures and len(closures) == len(declared)
     assert sorted(path.name for path in (destination / "contexts").glob("*.yaml")) == sorted(
-        Path(slide["context"]).name for slide in declared)
+        Path(slide["context"]).name for slide in declared if "context" in slide)
     assert tuple((destination / ".chrona" / "store").glob("revision-*"))

@@ -1,0 +1,31 @@
+version: timeline/v0.7
+project: {id: host-trial, title: Agent host trial}
+objects:
+  kickoff:
+    type: gate
+    title: Kickoff
+    schedule: {mode: fixed-point, at: 2026-11-02}
+  design:
+    type: task
+    title: Design
+    schedule: {mode: scheduled, amount: 3d}
+  build:
+    type: task
+    title: Build
+    schedule: {mode: scheduled, amount: 4d}
+relations:
+  - id: kickoff-design
+    type: dependency
+    from: {object: kickoff, endpoint: at}
+    to: {object: design, endpoint: start}
+    lag: 0d
+  - id: design-build
+    type: dependency
+    from: {object: design, endpoint: end}
+    to: {object: build, endpoint: start}
+    lag: 0d
+  - id: cycle-back
+    type: dependency
+    from: {object: build, endpoint: end}
+    to: {object: design, endpoint: start}
+    lag: 0d
