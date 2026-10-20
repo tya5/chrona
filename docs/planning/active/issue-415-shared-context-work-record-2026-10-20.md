@@ -103,5 +103,14 @@ only for composition, preserving valid explicit-only no-ID manifests.
 Pointed failures reuse the application failure-report transport; strict loading
 must detect duplicate/merge keys and cycles before ordinary loading loses them.
 
-Implementation files, tests and acceptance/publication slices will be finalized
-after design review. This branch has no active PR;1792 is the next code landing.
+## Implementation plan for review (not code approval)
+
+| Slice | Owned files and acceptance | Focused verification |
+| --- | --- | --- |
+| Authoring resolution | An application-owned `usecases/deck_context.py` and `schemas/example-materializer-v0.1.schema.yaml`: strict admission, one selected-source record (bytes/body/address/origins), finite composition, explicit-byte preservation. No immutable Context widening. | New `test_deck_context.py`: precedence/null/isolation, eleven-slide shared edit, conditional manifest ID, unknown/duplicate/merge/cyclic-key pointers, atomic reference/array replacement and missing completed fields; schema equivalence. |
+| Closure and consumers | `usecases/materialize.py`, `local_authoring.py` and the complete consumer table above reuse that record. Check staging collisions before writes; retain normal pins, root bases, provider deferral and actual source links. CLI/tool keep shared typed failure transport. | Existing materializer, init/provider, failure-transport and each affected tool's unit modules; composed-source twins for enumeration/provenance/font/reachability; mismatched pin, collision and provider-negative tests. |
+| Acceptance and publication | One feature PR carries the separately reviewable source commits, specification and literal review; no authored generated output. Reviewer corpus migration is a subsequent publication and keeps415 open meanwhile. | Synthetic explicit/composed real Context/SVG/Scene equality; actual CLI and standalone pointed failures; CI's one generated snapshot, full matrix/wheel/newest materializers. After reviewer migration: all19 same-cohort line/output table, inspected adapter output and exact review-containing main release. |
+
+These slices are draft until the selected design review is resolved. Publish the
+final plan before product edits; pause and correct design first if integration
+exposes a contract gap. This branch has no active PR;1792 is the next code landing.
