@@ -28,15 +28,20 @@ def test_missing_heading_facts_keep_empty_copy_and_reach_the_render_warning_ledg
         assert "no further detail" not in item.payload["message"]
 
 
-def test_network_heading_warning_follows_profile_heading_ownership(tmp_path):
+def test_network_heading_warnings_follow_both_title_and_independent_heading_ownership(tmp_path):
     source = sr.project({"task": sr.span("task", date(2026, 1, 5), 12)})
 
     legacy = _network_parts()
     legacy["view"]["body"]["heading"] = {"title": "As of {asOf}"}
     (tmp_path / "legacy").mkdir()
     legacy_rendered = sr.render(tmp_path / "legacy", source, presentation=legacy)
-    assert not any(item.payload.get("code") == "W_PRESENTATION_HEADING_FACT_MISSING"
-                   for item in legacy_rendered.warning_records)
+    legacy_warnings = [item for item in legacy_rendered.warning_records
+                       if item.payload.get("code") == "W_PRESENTATION_HEADING_FACT_MISSING"]
+    assert [item.payload["diagnostic"] for item in legacy_warnings] == [
+        'W_PRESENTATION_HEADING_FACT_MISSING:{"fact":"asOf","sourceRef":"/body/heading/title"}',
+    ]
+    title = next(item for item in legacy_rendered.surface.primitives if item.scene_id == "title")
+    assert title.text == "As of "
 
     independent = _network_parts()
     independent["view"]["body"]["heading"] = {"title": "As of {asOf}"}

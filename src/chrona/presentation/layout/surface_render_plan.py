@@ -140,11 +140,14 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])
                        if resolved_layout is not None else frozenset())
     if uses_independent_view_heading(view.surface, resolved_layout):
-        network_heading = compose_heading(view, project, actual_observations, value.locale)
-        if isinstance(network_heading, HeadingTextPrograms):
-            network_heading = HeadingContent(*network_heading.bind(dict(projection.figures), view.figure_formats),
-                                             text_wrap=network_heading.text_wrap)
-        source_inputs.update(heading_part_sources(network_heading))
+        # The use case supplies the shared composed heading. Keep this fallback
+        # for direct plan callers, which may construct the plan without one.
+        if value.heading is None:
+            network_heading = compose_heading(view, project, actual_observations, value.locale)
+            if isinstance(network_heading, HeadingTextPrograms):
+                network_heading = HeadingContent(*network_heading.bind(dict(projection.figures), view.figure_formats),
+                                                 text_wrap=network_heading.text_wrap)
+            source_inputs.update(heading_part_sources(network_heading))
     try:
         source_inputs["legend"] = legend_source_input(
             selected_content.legend_entries,

@@ -220,8 +220,9 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
     content_slots = {source: content_slot(slot, headings.reserved(source))
                      for source, slot in slots.items()}
     title_slot = content_slots.get("title")
+    title_runs = request.measured_sources.run_measurements.get("title", ())
     heading_batch = None
-    if title_slot is None:
+    if title_slot is None or len(title_runs) > 1:
         heading_batch = place_surface_headings(request, content_slots, request.measured_sources)
     network_slot = content_slot(slots["network"], network_reserve)
     authored_legend = content_slots.get("legend")
