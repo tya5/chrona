@@ -229,7 +229,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 if style_sources is not None else None)
 
     def admission_for(item, container_id, *, folded=False):
-        if getattr(projection, "window_mode", None) != WindowMode.EXPLICIT:
+        mode = getattr(projection, "window_mode", None)
+        if mode is None or not mode.is_bounded:
             return None, None
         kind = (MarkOccurrenceKind.FOLDED if folded else MarkOccurrenceKind.LANE_FINAL
                 if projection.lane_membership is not None else MarkOccurrenceKind.ROW
@@ -256,6 +257,23 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
             window_absences.append(absence)
             return ()
         return parts
+
+    def admit_forecast_delta(item, container_id, placement_id, *, folded=False):
+        row_admission = getattr(request, "row_admission", None)
+        if row_admission is None or not row_admission.omit_outside:
+            return True
+        if not folded and projection.lane_membership is not None:
+            # Forecast IDs belong to the original source row, not its physical
+            # lane alias. Keep that identity for a source-temporal absence too.
+            occurrence = MarkOccurrence(MarkOccurrenceKind.LANE_SOURCE, container_id,
+                item.item_id or item.object_id, item.object_id, item.source_kind)
+            admission = request.mark_visibility_index.lookup_label(
+                occurrence, projection=projection, as_of=request.surface_content.as_of)
+        else:
+            occurrence, admission = admission_for(item, container_id, folded=folded)
+        return bool(normalize(placement_id, item,
+            (("finishDelta", finish_delta_text(item)),), occurrence, admission,
+            semantic_id="finishDelta"))
     if context.as_of_label is not None:
         x, content = context.as_of_label
         requests.append(LabelRequest("as-of-label", "actual-set", content,
@@ -419,8 +437,10 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     continue
                 instance_id = f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
                 placement_id = f"variance:{instance_id}"
+                if not admit_forecast_delta(item, folded.group_id, placement_id, folded=True):
+                    continue
                 endpoint = active_placement(item).get("at")
-                if (projection.window_mode == WindowMode.EXPLICIT
+                if (projection.window_mode.is_bounded
                         and not projection.window[0] <= endpoint < projection.window[1]):
                     raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{placement_id}")
                 mark = marks.get(f"planned:{instance_id}")
@@ -454,7 +474,9 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 endpoint = active_placement(item).get("end", active_placement(item).get("at"))
                 stable_instance = f"{row.row_id}:{item.item_id or item.object_id}"
                 placement_id = f"variance:{stable_instance}"
-                if projection.window_mode == WindowMode.EXPLICIT:
+                if not admit_forecast_delta(item, row.row_id, placement_id):
+                    continue
+                if projection.window_mode.is_bounded:
                     inside = (projection.window[0] <= endpoint < projection.window[1] if item.source_type == "point"
                               else projection.window[0] < endpoint <= projection.window[1])
                     if not inside:

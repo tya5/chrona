@@ -44,7 +44,8 @@ def _guide_render(*, forecast: bool = False) -> list[str]:
 
 
 def _write_guide_files(tmp_path: Path) -> None:
-    for name in ("update-baseline.yaml", "update-plan.yaml", "update-actual.yaml", "update-actual-week2.yaml"):
+    for name in ("update-baseline.yaml", "update-plan.yaml", "update-actual.yaml",
+                 "update-actual-week2.yaml", "focus-window.yaml"):
         (tmp_path / name).write_text(_documented_file(name), encoding="utf-8")
 
 
@@ -133,3 +134,37 @@ def test_guide_places_render_warnings_in_stdout_json(tmp_path, monkeypatch, caps
     assert result["status"] == "ok", result
     assert any(item["code"] == "W_SNAPSHOT_NOT_DRAWN" for item in result["warnings"]), result
     assert '"code": "W_SNAPSHOT_NOT_DRAWN"' in stdout
+
+
+def test_guide_focus_window_uses_actual_asof_and_warns_for_hidden_relation(tmp_path, monkeypatch, capsys):
+    prose = " ".join((ROOT / GUIDE).read_text(encoding="utf-8").split())
+    assert "Focus a slide: hide finished work, show the next N weeks" in prose
+    assert "Actual.asOf" in prose
+    assert "Chrona does not substitute today's date" in prose
+    assert "before: 1w, after: 6w, outside: omit" in prose
+    assert "W_LAYOUT_RELATION_SUPPRESSED" in prose
+
+    commands = [item.tokens for item in discover(ROOT)
+                if item.path == GUIDE and item.tokens[1:2] == ("render",)
+                and "--view" in item.tokens]
+    assert len(commands) == 1
+    tokens = list(commands[0])
+    assert tokens[tokens.index("--view") + 1] == "focus-window.yaml"
+    assert tokens[tokens.index("--actual") + 1] == "update-actual.yaml"
+    assert tokens[tokens.index("--snapshot") + 1] == "update-baseline.yaml"
+
+    monkeypatch.chdir(tmp_path)
+    _write_guide_files(tmp_path)
+    result, stdout, stderr = _render_channels(monkeypatch, capsys, tokens)
+    assert result["status"] == "ok", result
+    suppressed = [item for item in result["warnings"]
+                  if item["code"] == "W_LAYOUT_RELATION_SUPPRESSED"]
+    assert suppressed, result
+    assert "launch-to-support" in json.dumps(suppressed)
+    assert not stderr.strip()
+
+    output = Path(tokens[tokens.index("--output") + 1])
+    rendered_text = " ".join(ElementTree.fromstring(output.read_bytes()).itertext())
+    assert "Build" in rendered_text and "Launch" in rendered_text
+    assert "Design" not in rendered_text
+    assert "Post-launch support" not in rendered_text

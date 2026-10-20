@@ -8,6 +8,7 @@ from typing import Any
 from chrona.presentation.layout.group_header_runs import place_group_header_runs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
+from chrona.presentation.layout.window_row_admission import geometry_folded_points
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
                                              metric_for_role, place_text)
 from chrona.presentation.layout.vertical_text import place_vertical_label_fit
@@ -135,12 +136,18 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     """
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
-    for folded in getattr(request.projection, "folded_points", ()):
+    for folded in geometry_folded_points(request.projection, request.row_admission):
         # A group whose points were all folded has no ordinary row to name it (#1660).
         labels.setdefault(folded.group_id, next((item.group_label for item in folded.all_items if item.group_label),
                                                 folded.group_id))
     # A View-declared header template replaces the title text only (#583).
-    labels.update(dict(request.surface_content.group_headers))
+    declared_headers = dict(request.surface_content.group_headers)
+    admission = request.row_admission
+    if admission is not None and admission.omit_outside:
+        admission.require_match(request.projection, admission.visibility_index)
+        declared_headers = {group_id: label for group_id, label in declared_headers.items()
+                            if group_id in admission.admitted_group_ids}
+    labels.update(declared_headers)
     marked = dict(request.surface_content.group_header_runs)
     if tag_column is not None:
         for prop in ("labelInset", "labelInsetEnd"):

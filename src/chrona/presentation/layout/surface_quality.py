@@ -27,8 +27,11 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
     from chrona.presentation.layout.canvas_viewport import AutoBlockSizeWarning, CanvasViewportWarning, DeclaredViewport
     from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
-    from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+    from chrona.presentation.layout.lane_window_marks import (
+        LaneWindowPlacementAbsence, LaneWindowRowAbsence,
+    )
     from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
+    from chrona.presentation.layout.window_row_admission import WindowRowOmissionProof
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
@@ -591,6 +594,7 @@ class RelationPlacement:
     # Optional for existing surfaces; native network paths complete this in Layout.
     paint_bounds: tuple[float, float, float, float] | None = None
     style_fallback: RelationStyleFallback | None = None
+    window_row_absences: tuple[WindowRowOmissionProof, ...] = ()
 
     def __post_init__(self) -> None:
         if self.paint_bounds is not None and (
@@ -727,6 +731,8 @@ class SurfaceLayoutRequest:
     previous_route_hints: PreviousRouteHints | None = None
     temporal_capacity: TemporalInlineCapacity | None = None
     paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
+    # Optional source-bound mask for geometry rows under View outside: omit.
+    row_admission: Any | None = None
 
 
 @dataclass(frozen=True)
@@ -887,6 +893,7 @@ class SurfacePlacement:
     auto_block_warning: AutoBlockSizeWarning | None = None
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
     lane_window_absences: tuple[LaneWindowPlacementAbsence, ...] = ()
+    lane_window_row_absences: tuple[LaneWindowRowAbsence, ...] = ()
     narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
     def assert_valid(self) -> None:
@@ -898,18 +905,34 @@ class SurfacePlacement:
             if (len({item.identity for item in self.narrative_receipts}) != len(self.narrative_receipts)
                     or any(item.placement_id not in completed_text for item in self.narrative_receipts)):
                 raise ValueError("duplicate or uncompleted narrative receipt")
-        from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+        from chrona.presentation.layout.lane_window_marks import (
+            LaneWindowPlacementAbsence, LaneWindowRowAbsence,
+        )
         if any(not isinstance(item, LaneWindowPlacementAbsence) for item in self.lane_window_absences):
             raise ValueError("E_LAYOUT_WINDOW_CLIP: invalid completed lane absence")
+        if any(not isinstance(item, LaneWindowRowAbsence) for item in self.lane_window_row_absences):
+            raise ValueError("E_LAYOUT_WINDOW_CLIP: invalid completed lane row absence")
         keys = {(item.row_id, item.member_id, item.expected.placement_id)
                 for item in self.lane_window_absences}
+        row_absence_keys = {(item.row_id, item.member_id)
+                            for item in self.lane_window_row_absences}
+        row_absence_by_member = {(item.row_id, item.member_id): item
+                                 for item in self.lane_window_row_absences}
         emitted_ids = {mark.placement_id for mark in self.marks}
         rows = {row.row_id for row in self.rows}
         if (len(keys) != len(self.lane_window_absences)
-                or any(item.row_id not in rows or
+                or len(row_absence_keys) != len(self.lane_window_row_absences)
+                or any(item.row_id in rows for item in self.lane_window_row_absences)
+                or any((item.row_id not in rows) != (item.row_omission_proof is not None)
+                       or
                        f"{item.expected.purpose}:{item.row_id}:{item.expected.instance.item_id}" in emitted_ids
                        for item in self.lane_window_absences)):
             raise ValueError("E_LAYOUT_WINDOW_CLIP: duplicate, unowned or also-emitted lane absence")
+        if any(item.row_id not in rows and (
+                (row_absence := row_absence_by_member.get((item.row_id, item.member_id))) is None
+                or row_absence.proof.occurrence != item.row_omission_proof.occurrence)
+               for item in self.lane_window_absences):
+            raise ValueError("E_LAYOUT_WINDOW_CLIP: missing or mismatched lane row absence")
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
         if any(not isinstance(item, WindowLabelAbsence) for item in self.window_label_absences):
@@ -968,9 +991,12 @@ class SurfacePlacement:
                         and intersects(item.bounds, other.bounds)):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
-            if (relation.window_suppression_reason not in {None, "outside-window", "plot-containment"}
+            if (relation.window_suppression_reason not in {
+                    None, "outside-window", "row-omission", "plot-containment"}
                     or (bool(relation.window_endpoint_absences)
                         != (relation.window_suppression_reason == "outside-window"))
+                    or (bool(relation.window_row_absences)
+                        != (relation.window_suppression_reason == "row-omission"))
                     or (relation.window_suppression_reason is not None
                         and (not relation.suppressed or not relation.source_ref))
                     or (relation.suppressed and relation.paint_clip is not None)):
@@ -983,6 +1009,14 @@ class SurfacePlacement:
                     raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
                 for proof in relation.window_endpoint_absences:
                     proof.validate_cache()
+            if relation.window_row_absences:
+                from chrona.presentation.layout.window_row_admission import WindowRowOmissionProof
+                if (not relation.suppressed or not relation.source_ref
+                        or any(not isinstance(proof, WindowRowOmissionProof)
+                               for proof in relation.window_row_absences)):
+                    raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
+                for proof in relation.window_row_absences:
+                    proof.validate()
             if relation.corner_radius < 0:
                 raise ValueError(f"E_LAYOUT_RELATION_CORNER_RADIUS_INVALID:{relation.relation_id}")
             if relation.suppressed:

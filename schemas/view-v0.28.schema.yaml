@@ -77,6 +77,7 @@ allOf:
                 additionalProperties: false
                 properties:
                   objectTypes: {description: "Excluded domain object types.", type: array, uniqueItems: true, items: {description: "One excluded domain object type.", type: string, minLength: 1}}
+                  state: {description: "Excluded actual-observed completion states.", type: array, uniqueItems: true, items: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/viewCompletionState"}}
           grouping:
             description: "Automatic-row grouping policy."
             type: object
@@ -150,10 +151,34 @@ allOf:
             required: [mode]
             additionalProperties: false
             properties:
-              mode: {description: "Window derivation mode.", enum: [explicit, selected-planned, selected-comparison]}
+              mode: {description: "Window derivation mode.", enum: [explicit, selected-planned, selected-comparison, relative]}
               start: {description: "Inclusive explicit ISO calendar start.", examples: ["2026-01-01"], $ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
               end: {description: "Exclusive explicit ISO calendar end.", examples: ["2026-02-01"], $ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
               marginDays: {description: "Non-negative expansion around a derived window.", type: integer, minimum: 0}
+              before: {description: "Civil-day/week distance before Actual asOf for a relative window.", $ref: "urn:chrona:common-v0.1#/$defs/civilWindowOffset"}
+              after: {description: "Civil-day/week distance after Actual asOf for a relative window.", $ref: "urn:chrona:common-v0.1#/$defs/civilWindowOffset"}
+              outside: {description: "Whether source rows with no visible temporal occurrence are retained (`keep`, default) or omitted (`omit`); only explicit and relative windows are bounded.", enum: [keep, omit]}
+            allOf:
+              - description: "Explicit windows require both endpoints and admit no relative offsets or derived padding."
+                examples: [{mode: explicit, start: '2026-01-01', end: '2026-02-01'}]
+                if: {properties: {mode: {const: explicit}}, required: [mode]}
+                then: {required: [start, end], not: {anyOf: [{required: [before]}, {required: [after]}, {required: [marginDays]}]}}
+              - description: "Relative windows require at least one offset and use no explicit endpoints or derived padding."
+                examples: [{mode: relative, before: 1w, after: 6w, outside: omit}]
+                if: {properties: {mode: {const: relative}}, required: [mode]}
+                then:
+                  allOf:
+                    - {anyOf: [{required: [before]}, {required: [after]}]}
+                    - {not: {anyOf: [{required: [start]}, {required: [end]}, {required: [marginDays]}]}}
+                    - description: "At least one relative side must be nonzero."
+                      not:
+                        allOf:
+                          - anyOf: [{not: {required: [before]}}, {properties: {before: {enum: [0d, 0w]}}}]
+                          - anyOf: [{not: {required: [after]}}, {properties: {after: {enum: [0d, 0w]}}}]
+              - description: "Derived windows retain marginDays and do not accept explicit offsets, endpoints, or outside policy."
+                examples: [{mode: selected-planned, marginDays: 7}]
+                if: {properties: {mode: {enum: [selected-planned, selected-comparison]}}, required: [mode]}
+                then: {not: {anyOf: [{required: [start]}, {required: [end]}, {required: [before]}, {required: [after]}, {required: [outside]}]}}
           comparison:
             description: "Baseline, actual, and comparison-facet policy."
             type: object
@@ -734,6 +759,8 @@ allOf:
                   - {required: [annotationPresentation]}
                   - {required: [annotationBindings]}
                   - {required: [annotationPlacement]}
+                  - {properties: {window: {properties: {mode: {const: relative}}, required: [mode]}}, required: [window]}
+                  - {properties: {window: {required: [outside]}}, required: [window]}
           - description: "Explicit annotations inherit purpose policy only when the effective View offers annotationPlacement; otherwise legacy placement requirements are unchanged."
             examples: [{annotationPlacement: {note: {placement: {side: end, alignment: center}}}, annotations: [{id: note-1, purpose: note, anchor: {kind: object, id: task, facet: planned, endpoint: end}, text: Note}]}]
             if: {required: [annotationPlacement]}

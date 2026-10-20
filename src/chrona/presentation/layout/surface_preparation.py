@@ -22,17 +22,22 @@ from chrona.presentation.layout.presentation import (
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_mark_visibility import ensure_request_mark_visibility_index
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
+from chrona.presentation.layout.window_row_admission import (
+    WindowRowAdmission, ensure_request_window_row_admission, geometry_group_order, geometry_rows,
+)
 
 
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
                                        metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
                                        mark_band_allocation: MarkBandAllocation | None = None,
-                                       text_line_block: float = 0.0) -> Decimal:
+                                       text_line_block: float = 0.0,
+                                       row_admission: WindowRowAdmission | None = None) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
-    rows = (_review_rows(projection) if projection.has_rows else tuple(
-        type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
+    rows = (_review_rows(projection, row_admission) if projection.has_rows else geometry_rows(tuple(
+        type("_Row", (), {"row_id": item.object_id, "group_id": item.group_id,
+                           "items": (item,)})()
         for item in projection.items
-    ))
+    ), row_admission))
     if getattr(projection, "lane_membership", None) is not None:
         # The View fixes lane count before measurement. Its full mark-facet
         # subtrack extent is closed after the inline scale exists; one mark
@@ -52,7 +57,8 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
     if group_presentation == "header":
-        headers += len(empty_group_slots(tuple(rows), getattr(projection, "group_order", ())))
+        headers += len(empty_group_slots(
+            tuple(rows), geometry_group_order(projection, row_admission)))
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
@@ -111,6 +117,7 @@ class SurfaceNaturalGeometry:
 def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
     """Recompute fixed-lane inputs from this candidate's exact content and manifest."""
     request = ensure_request_mark_visibility_index(request)
+    request = ensure_request_window_row_admission(request)
     if request.projection.lane_membership is not None:
         if request.temporal_capacity is None:
             raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/temporalCapacity")
@@ -121,6 +128,7 @@ def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> Sur
             icon_assets=request.icon_assets, visual_requests=request.visual_requests,
             font_metrics=request.font_metrics,
             mark_visibility_index=request.mark_visibility_index,
+            row_admission=request.row_admission,
             temporal_capacity=request.temporal_capacity,
         )
         return replace(request, fixed_lane_preflight=preflight)

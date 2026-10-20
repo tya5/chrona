@@ -36,6 +36,9 @@ from chrona.presentation.layout.surface_geometry import bounds_from_rect, plot_r
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfaceLayoutRequest,
 )
+from chrona.presentation.layout.window_row_admission import (
+    ensure_request_window_row_admission, geometry_group_order, geometry_rows,
+)
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
 from chrona.presentation.layout.projection_window import require_positive_projection_window
@@ -248,6 +251,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     allocation = allocation if allocation is not None else prepare_surface_slots(request)
     decisions = {item.source: item for item in allocation.decisions}
     request = ensure_request_mark_visibility_index(request)
+    request = ensure_request_window_row_admission(request)
     projection = request.projection
     if projection.lane_membership is not None:
         preflight = request.fixed_lane_preflight
@@ -263,10 +267,10 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     slots = allocation.slots
     by_source = {slot.source_ref: slot for slot in slots}
     table, timeline = by_source["table"], by_source["timeline"]
-    review_row_values = (review_rows(projection) if projection.has_rows else tuple(
+    review_row_values = (review_rows(projection, request.row_admission) if projection.has_rows else geometry_rows(tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title,
                           "group_id": item.group_id, "table_subject_id": item.object_id,
-                          "items": (item,)})() for item in projection.items))
+                          "items": (item,)})() for item in projection.items), request.row_admission))
     timeline_bounds = bounds_from_rect(timeline.bounds)
     capacity = request.temporal_capacity
     if capacity is None:
@@ -356,7 +360,8 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
                       and (index == 0 or review_row_values[index - 1].group_id != row.group_id)
                       for index, row in enumerate(review_row_values))
         if group_header_size:
-            headers += len(empty_group_slots(review_row_values, projection.group_order))
+            headers += len(empty_group_slots(
+                review_row_values, geometry_group_order(projection, request.row_admission)))
         natural_block = (Decimal(str(geometry_sum(requirements)))
                          + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
     return SurfaceInlineGeometry(
@@ -401,7 +406,8 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     row_padding, text_line_block = inline.row_padding, inline.text_line_block
     requirements = inline.row_requirements
     lane_subtracks = request.fixed_lane_preflight.subtracks if projection.lane_membership is not None else None
-    empty_slots = empty_group_slots(review_row_values, projection.group_order) if group_header_size else ()
+    empty_slots = empty_group_slots(
+        review_row_values, geometry_group_order(projection, request.row_admission)) if group_header_size else ()
     foot_reserve = 0.0
     foot_fallback = False
     content = request.surface_content

@@ -13,16 +13,19 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.surface_content import detail_source_inputs
 from chrona.presentation.layout.surface_quality import VisualRequest
+from chrona.presentation.layout.surface_lanes import review_rows
+from chrona.presentation.layout.window_row_admission import WindowRowAdmission, geometry_rows, geometry_table
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
 def surface_source_inputs(project, view, projection, summary, *, content, table,
-                          heading, view_heading, visual_requests, icon_assets, theme):
+                          heading, view_heading, visual_requests, icon_assets, theme, row_admission=None):
     """Close visual advances before assembling the same source facts for measurement."""
     annotation_input = _annotation_source_input(view, content, visual_requests, icon_assets, theme)
     return _source_inputs(project, view, projection, summary, annotation_input,
-                          content=content, table=table, heading=heading, view_heading=view_heading)
+                          content=content, table=table, heading=heading, view_heading=view_heading,
+                          row_admission=row_admission)
 
 
 def network_deadline_source_input(projection: Any, theme: Mapping[str, Any]) -> SourceInput:
@@ -43,7 +46,8 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    content: SurfaceContentInput,
                    table: TableContent | None = None,
                    heading: HeadingContent | None = None,
-                   view_heading: HeadingContent | None = None) -> dict[str, SourceInput]:
+                   view_heading: HeadingContent | None = None,
+                   row_admission: WindowRowAdmission | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
 
     The `legend` entry is a placeholder: Layout measures the legend from the entries it
@@ -52,8 +56,15 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     lane_mode = view.rows.mode is ViewRowMode.LANES
     rows = projection.lane_rows if lane_mode else projection.rows or ()
     resolved = getattr(projection, "rows_resolved", False)
-    row_count = len(rows) if resolved else len(rows) or len(projection.items)
-    if lane_mode and (not rows or table is None):
+    if row_admission is not None:
+        row_admission.require_match(projection, row_admission.visibility_index)
+        rows = geometry_rows(review_rows(projection), row_admission)
+        table = geometry_table(table, row_admission) if table is not None else None
+        resolved = True  # A proved empty focus has zero rows, not a fallback to all source items.
+    row_count = (len(row_admission.admitted_auto_object_ids)
+                 if row_admission is not None and not projection.has_rows
+                 else len(rows) if resolved else len(rows) or len(projection.items))
+    if lane_mode and (table is None or (not rows and row_admission is None)):
         raise LayoutError("E_LAYOUT_LANE_TABLE_ENVELOPE", "/body/rows/laneTable")
     table_lines = (tuple(cell.content for cell in table.cells if cell.column_id == "Lane")
                    if lane_mode and table is not None else

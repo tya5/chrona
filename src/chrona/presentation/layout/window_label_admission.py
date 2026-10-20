@@ -72,7 +72,8 @@ class WindowLabelAbsence:
             instance = self.occurrence.object_id
         elif self.occurrence.kind == MarkOccurrenceKind.FOLDED:
             instance = f"group-header:{self.occurrence.container_id}:{self.occurrence.item_id}"
-        elif self.occurrence.kind in {MarkOccurrenceKind.ROW, MarkOccurrenceKind.LANE_FINAL}:
+        elif self.occurrence.kind in {
+                MarkOccurrenceKind.ROW, MarkOccurrenceKind.LANE_SOURCE, MarkOccurrenceKind.LANE_FINAL}:
             instance = f"{self.occurrence.container_id}:{self.occurrence.item_id}"
         else:
             raise LayoutError("E_LAYOUT_WINDOW_CLIP", self.placement_id,
@@ -119,7 +120,7 @@ def complete_window_label_admission(item: Any, visibility: ItemMarkVisibility, *
         anchor_facet = "forecast"
     if not isinstance(anchor, date):
         anchor, anchor_facet = None, None
-    explicit = window_mode == WindowMode.EXPLICIT
+    explicit = window_mode.is_bounded
     # A source-selected absence (for example invalid open Actual) is not a
     # temporal omission and retains its existing strict host validation.
     host_outside = bool(explicit and host is not None and host.disposition == FacetDisposition.OMITTED)

@@ -69,7 +69,7 @@ from chrona.presentation.model.axis_color_scale import (
     AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
 )
 from chrona.presentation.model.projection import (
-    NetworkDeadlineContent, NetworkLabelSourceError, ReviewDeadline, ReviewPeriod, build_review_projection, forecast_deadline_placements,
+    NetworkDeadlineContent, NetworkLabelSourceError, ViewWindowError, ReviewDeadline, ReviewPeriod, build_review_projection, forecast_deadline_placements,
 )
 from chrona.presentation.model.actual_variance_paint import resolve_actual_variance_colors
 from chrona.presentation.model.surface_content import SurfaceContentInput
@@ -268,6 +268,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     """Transport detector-owned presentation pointers across the use-case boundary."""
     try:
         return _render_review(request)
+    except ViewWindowError as error:
+        raise RenderFailed(error.code, error.detail, "view", error.source_ref) from error
     except NetworkLabelSourceError as error:
         subject = DiagnosticSubject.project_object(error.object_id, error.title)
         raise RenderFailed(error.code, error.detail, "view", error.source_ref, details={

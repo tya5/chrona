@@ -37,6 +37,9 @@ from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, ensure_item_mark_visibility_index,
 )
+from chrona.presentation.layout.window_row_admission import (
+    WindowRowAdmission, geometry_rows,
+)
 from chrona.presentation.layout.surface_geometry import bounds_from_rect as _bounds
 from chrona.presentation.layout.surface_quality import (
     IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
@@ -59,7 +62,7 @@ class _LaneLayoutRow:
     rollup_presentation: str = "none"
 
 
-def review_rows(projection: Any) -> tuple[Any, ...]:
+def review_rows(projection: Any, row_admission: WindowRowAdmission | None = None) -> tuple[Any, ...]:
     """Read completed View rows, validating lane occurrence identity without reselecting membership."""
     lane_membership = getattr(projection, "lane_membership", None)
     if lane_membership is not None:
@@ -68,9 +71,10 @@ def review_rows(projection: Any) -> tuple[Any, ...]:
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
         if any(len(row.items) != len(row.member_item_ids) for row in lane_rows):
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
-        return tuple(_LaneLayoutRow(row.lane_id, row.group_id, row.items, row.member_item_ids,
+        rows = tuple(_LaneLayoutRow(row.lane_id, row.group_id, row.items, row.member_item_ids,
                                     table_subject_id=row.lane_id) for row in lane_rows)
-    return projection.rows or ()
+        return geometry_rows(rows, row_admission)
+    return geometry_rows(projection.rows or (), row_admission)
 
 
 def place_lane_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Any, ...],
@@ -142,7 +146,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                 metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
                                 visual_requests: tuple[Any, ...], font_metrics: Any,
                                 temporal_capacity: TemporalInlineCapacity,
-                                mark_visibility_index: ItemMarkVisibilityIndex | None = None
+                                mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+                                row_admission: WindowRowAdmission | None = None,
                                 ) -> FixedLanePreflight:
     """Close fixed-lane tracks before final allocation from fixed View rows and Layout inputs."""
     membership = getattr(projection, "lane_membership", None)
@@ -150,12 +155,17 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/projection/laneRows")
     mark_visibility_index = ensure_item_mark_visibility_index(
         projection, as_of=surface_content.as_of, index=mark_visibility_index)
+    if row_admission is None and getattr(projection, "window_outside", "keep") == "omit":
+        from chrona.presentation.layout.window_row_admission import complete_window_row_admission
+        row_admission = complete_window_row_admission(projection, mark_visibility_index)
+    if row_admission is not None:
+        row_admission.require_match(projection, mark_visibility_index)
     point_host_plan = resolve_point_host_plan(
         projection, as_of=surface_content.as_of, mode=layout_manifest.point_host_mode,
         visibility_index=mark_visibility_index)
     start, end = projection.window
     lane_source_bounds_for_manifest(layout_manifest, window=(start, end))
-    rows = review_rows(projection)
+    rows = review_rows(projection, row_admission)
     timeline = next(item for item in layout_manifest.decisions if item.source == "timeline")
     if temporal_capacity.allocated_inline > 0:
         # Preserve the established positive-allocation arithmetic exactly;
@@ -203,10 +213,18 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                   compose_lane_item_footprints(scale=scale, **footprint_inputs))
     physical_allocation = (partition_hosted_facets(footprints, point_host_plan)
                            if point_host_plan.relations else None)
-    subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size,
+    full_subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size,
                                      reserved_band_bounds=mark_band_allocation.outer_bounds,
                                      mark_visibility_index=mark_visibility_index,
                                      point_host_allocation=physical_allocation)
+    admitted_lane_ids = (frozenset(lane.lane_id for lane in membership.lanes)
+                         if row_admission is None else row_admission.admitted_lane_ids)
+    member_ids = {member_id for lane in membership.lanes if lane.lane_id in admitted_lane_ids
+                  for member_id in lane.member_item_ids}
+    admitted_footprints = tuple(unit for unit in footprints if unit.item_id in member_ids)
+    subtracks = replace(full_subtracks,
+        lanes=tuple(lane for lane in full_subtracks.lanes if lane.lane_id in admitted_lane_ids),
+        items=tuple(item for item in full_subtracks.items if item.lane_id in admitted_lane_ids))
     resolved_visuals = resolved_lane_visual_requests(
         projection, visual_requests, as_of=surface_content.as_of)
     measured_labels = measure_lane_member_labels(
@@ -214,6 +232,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         theme_tokens=theme_tokens, font_metrics=font_metrics,
         visual_requests=resolved_visuals, icon_assets=dict(icon_assets),
         mark_visibility_index=mark_visibility_index)
+    measured_labels = tuple(label for label in measured_labels
+                            if label.lane_id in admitted_lane_ids)
     physical_label_rows = {}
     measured_ids = {label.placement_id for label in measured_labels}
     for relation in point_host_plan.relations:
@@ -223,7 +243,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
             physical_label_rows[label_id] = relation.span.row_id
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     lane_requirements = (lane_label_row_requirements(
-        measured_labels, scale, subtracks, footprints,
+        measured_labels, scale, subtracks, admitted_footprints,
         timeline_bounds=(float(frame.timeline_inline), float(frame.timeline_inline + frame.timeline_inline_size)),
         row_padding=row_padding, physical_label_rows=physical_label_rows or None)
         if layout_manifest.row_distribution == "fill" else

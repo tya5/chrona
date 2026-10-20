@@ -299,6 +299,7 @@ class ViewSelection:
     types: tuple[str, ...]
     object_types: tuple[str, ...] = ()
     excluded_object_types: tuple[str, ...] = ()
+    excluded_states: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -380,6 +381,9 @@ class ViewWindow:
     start: str | None
     end: str | None
     margin_days: int
+    before: str | None = None
+    after: str | None = None
+    outside: str = "keep"
 
 
 @dataclass(frozen=True)
@@ -1074,7 +1078,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     selection = ViewSelection(tuple(str(item) for item in raw_include.get("ids", ())),
                               tuple(str(item) for item in raw_include.get("types", ())),
                               tuple(str(item) for item in raw_include.get("objectTypes", ())),
-                              tuple(str(item) for item in raw_exclude.get("objectTypes", ()))) if raw_selection else None
+                              tuple(str(item) for item in raw_exclude.get("objectTypes", ())),
+                              tuple(str(item) for item in raw_exclude.get("state", ()))) if raw_selection else None
     raw_grouping = body.get("grouping")
     raw_grouping_by = raw_grouping.get("by") if raw_grouping else None
     field_role = raw_grouping_by.get("fieldRole") if isinstance(raw_grouping_by, Mapping) else None
@@ -1096,7 +1101,10 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                 if raw_ordering else None)
     raw_window = body["window"]
     window = ViewWindow(str(raw_window["mode"]), str(raw_window["start"]) if "start" in raw_window else None,
-                        str(raw_window["end"]) if "end" in raw_window else None, int(raw_window.get("marginDays", 0)))
+                        str(raw_window["end"]) if "end" in raw_window else None, int(raw_window.get("marginDays", 0)),
+                        str(raw_window["before"]) if "before" in raw_window else None,
+                        str(raw_window["after"]) if "after" in raw_window else None,
+                        str(raw_window.get("outside", "keep")))
     raw_comparison = body["comparison"]
     comparison = ViewComparison(str(raw_comparison["baseline"]) if "baseline" in raw_comparison else None,
                                 str(raw_comparison["actual"]),

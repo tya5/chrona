@@ -37,7 +37,10 @@ objects:
   design: {type: task, title: Design, schedule: {mode: fixed-span, start: '2026-11-02', end: '2026-11-09'}}
   build: {type: task, title: Build, schedule: {mode: fixed-span, start: '2026-11-09', end: '2026-12-01'}}
   launch: {type: gate, title: Launch, schedule: {mode: fixed-point, at: '2026-12-01'}}
-relations: []
+  support: {type: task, title: Post-launch support, schedule: {mode: fixed-span, start: '2026-12-29', end: '2027-01-08'}}
+relations:
+  - {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
+  - {id: launch-to-support, type: dependency, from: {object: launch, endpoint: at}, to: {object: support, endpoint: start}, lag: 0d}
 ```
 
 ## 2. Record the actuals and 3. move `asOf`
@@ -83,7 +86,10 @@ objects:
   design: {type: task, title: Design, schedule: {mode: fixed-span, start: '2026-11-02', end: '2026-11-09'}}
   build: {type: task, title: Build, schedule: {mode: fixed-span, start: '2026-11-12', end: '2026-12-08'}}
   launch: {type: gate, title: Launch, schedule: {mode: fixed-point, at: '2026-12-08'}}
-relations: []
+  support: {type: task, title: Post-launch support, schedule: {mode: fixed-span, start: '2027-01-05', end: '2027-01-15'}}
+relations:
+  - {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
+  - {id: launch-to-support, type: dependency, from: {object: launch, endpoint: at}, to: {object: support, endpoint: start}, lag: 0d}
 ```
 
 If your tasks are `scheduled` (an `amount` such as `15wd`, placed by its relations), change
@@ -140,6 +146,57 @@ output and do not change exit 0. Optional phase progress from `--progress` is wr
 to standard error.
 [The diagnostics reference](../../skills/chrona/references/diagnostics.md) says what each
 warning means.
+
+## Focus a slide: hide finished work, show the next N weeks
+
+For a short review, keep the full Project and filter only this View. The finished-state
+predicate uses the current Actual set; a completed span needs an observed `finish` (a
+completed point needs `at`). A relative window is anchored to `Actual.asOf`, so the Actual
+file must declare it—Chrona does not substitute today's date, a Project date, or the
+Snapshot date. This View shows one week before and six weeks after that date, and omits
+rows whose selected time sources are entirely outside the interval:
+
+<!-- chrona:doc-check file: focus-window.yaml -->
+```yaml
+version: chrona/view/v0.28
+kind: view
+id: website-focus-window
+body:
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection:
+    include: {}
+    exclude: {state: [finished]}
+  grouping: {by: none}
+  ordering: {by: source, direction: ascending, tieBreak: id}
+  tableColumns:
+    - {id: Task, source: title, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
+  window: {mode: relative, before: 1w, after: 6w, outside: omit}
+  comparison:
+    baseline: snapshot
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned, actual, finishDelta]
+  visibility:
+    labels: {placement: table, content: [title], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: {mode: none, marker: none}
+```
+
+Render that focused slide with the same inputs:
+
+```bash
+chrona render update-plan.yaml --view focus-window.yaml --actual update-actual.yaml \
+  --snapshot update-baseline.yaml --preset target-b --output update-focus.svg
+```
+
+Design is omitted because its observed finish is complete. Post-launch support falls
+after the focused interval, so its row is omitted too. The `launch-to-support`
+dependency still exists in the Project; because its endpoint is outside the window,
+Layout reports `W_LAYOUT_RELATION_SUPPRESSED` rather than drawing a misleading connector
+or silently deleting the relation. The warning and its source are in the final JSON on
+standard output; optional progress remains on standard error.
 
 ## The next update, a week later
 

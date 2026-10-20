@@ -16,6 +16,7 @@ from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum, Re
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_relation_admission import complete_window_relation_endpoint_absence
 from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
+from chrona.presentation.layout.window_row_admission import WindowRowOmissionProof
 from chrona.presentation.layout.window_relation_geometry import relation_geometry_inside_plot
 from chrona.presentation.layout.mark_facet_visibility import FacetDisposition
 from chrona.presentation.model.projection import WindowMode
@@ -163,6 +164,7 @@ class PreparedNormalRouteOccurrence:
     source_candidates: tuple[ConnectorEgress, ...]
     port_pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...]
     window_endpoint_absences: tuple[WindowRelationEndpointAbsence, ...] = ()
+    window_row_absences: tuple[WindowRowOmissionProof, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -320,7 +322,8 @@ def prepare_normal_relation_routes(context: SurfaceRoutesContext) -> PreparedNor
     prepared later against their live obstacle snapshots.
     """
     request, projection = context.request, context.projection
-    explicit_window = getattr(projection, "window_mode", None) == WindowMode.EXPLICIT
+    window_mode = getattr(projection, "window_mode", None)
+    explicit_window = window_mode is not None and window_mode.is_bounded
     visibility_index = getattr(request, "mark_visibility_index", None)
     if explicit_window and visibility_index is None:
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
@@ -333,28 +336,43 @@ def prepare_normal_relation_routes(context: SurfaceRoutesContext) -> PreparedNor
     unpainted_ports = {endpoint.instance_id: endpoint for endpoint in context.temporal_endpoints}
     rows = context.rows
     row_edges: dict[str, tuple[float, float]] = {}
-    instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
+    instance_anchors: dict[str, list[tuple[str, tuple[float, float] | None]]] = {}
     comparison_instances: set[str] = set()
     instance_rows: dict[str, str] = {}
     instance_occurrences: dict[str, MarkOccurrence] = {}
     omitted_folded_instances: dict[str, list[tuple[str, None]]] = {}
-    for review_row, row in zip(context.review_rows, rows, strict=True):
-        row_edges[review_row.row_id] = (float(row.bounds.block),
-            float(row.bounds.block + row.bounds.block_size))
-        fallback = (float(row.bounds.inline + row.bounds.inline_size),
-                    float(row.bounds.block + row.bounds.block_size / 2))
-        for item in review_row.items:
-            instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
+    row_admission = getattr(request, "row_admission", None)
+    if row_admission is None:
+        source_rows = tuple((review_row.row_id, review_row.items, row)
+                            for review_row, row in zip(context.review_rows, rows, strict=True))
+    else:
+        from chrona.presentation.layout.surface_lanes import review_rows
+        row_admission.require_match(projection, visibility_index)
+        geometry_by_id = {row.row_id: row for row in rows}
+        original_rows = review_rows(projection)
+        source_rows = (tuple((row.row_id, row.items, geometry_by_id.get(row.row_id))
+                             for row in original_rows) if projection.has_rows else
+                       tuple((item.object_id, (item,), geometry_by_id.get(item.object_id))
+                             for item in projection.items))
+    for row_id, items, row in source_rows:
+        fallback = None
+        if row is not None:
+            row_edges[row_id] = (float(row.bounds.block),
+                float(row.bounds.block + row.bounds.block_size))
+            fallback = (float(row.bounds.inline + row.bounds.inline_size),
+                        float(row.bounds.block + row.bounds.block_size / 2))
+        for item in items:
+            instance_id = (f"{row_id}:{item.item_id or item.object_id}"
                            if projection.rows else item.object_id)
             endpoint = unpainted_ports.get(instance_id)
             anchor = (endpoint.end_port or endpoint.start_port) if endpoint is not None else fallback
             instance_anchors.setdefault(item.object_id, []).append((instance_id, anchor))
-            instance_rows[instance_id] = review_row.row_id
+            instance_rows[instance_id] = row_id
             if explicit_window:
                 kind = (MarkOccurrenceKind.LANE_FINAL if projection.lane_membership is not None
                         else MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
                 instance_occurrences[instance_id] = MarkOccurrence(
-                    kind, review_row.row_id if projection.rows else item.object_id,
+                    kind, row_id if projection.rows else item.object_id,
                     item.item_id or item.object_id, item.object_id,
                     item.source_kind if projection.rows else "combined")
             if item.source_kind in COMPARISON_SOURCE_KINDS:
@@ -404,6 +422,10 @@ def prepare_normal_relation_routes(context: SurfaceRoutesContext) -> PreparedNor
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
                 scene_id = (f"relation:{relation.relation_id}:{source_id}:{target_id}"
                             if projection.has_rows else f"relation:{relation.relation_id}")
+                row_proofs = (() if row_admission is None else tuple(
+                    proof for instance in (source_id, target_id)
+                    if instance_rows[instance] in row_admission.omitted_row_reasons
+                    and (proof := row_admission.omission_for(instance_occurrences[instance])) is not None))
                 proofs = ()
                 if explicit_window:
                     proofs = tuple(proof for instance, endpoint in (
@@ -411,6 +433,8 @@ def prepare_normal_relation_routes(context: SurfaceRoutesContext) -> PreparedNor
                         if (proof := complete_window_relation_endpoint_absence(
                             instance_occurrences[instance], endpoint, projection=projection,
                             as_of=request.surface_content.as_of, visibility_index=visibility_index)) is not None)
+                if proofs:
+                    row_proofs = ()  # Retain the original endpoint cause when it is available.
                 source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
                                   else source_mark.end_port) if source_mark else source_anchor
                 target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
@@ -421,24 +445,28 @@ def prepare_normal_relation_routes(context: SurfaceRoutesContext) -> PreparedNor
                 if (target_endpoint := unpainted_ports.get(target_id)) is not None:
                     target_nominal = (target_endpoint.start_port if relation.target_endpoint in {"start", "at"}
                                       else target_endpoint.end_port)
-                source_candidates = (() if proofs else connector_egress_candidates(
+                unavailable = bool(proofs or row_proofs)
+                if not unavailable and (source_nominal is None or target_nominal is None):
+                    raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/relations",
+                                      detail="stage=relation-admission; reason=unaccounted-missing-row")
+                source_candidates = (() if unavailable else connector_egress_candidates(
                     source_mark, relation.source_endpoint, target_nominal,
                     comparison_clusters.get((source_mark.source_ref, instance_rows[source_id]), ()),
                     explicit_neighbors=physical_host_neighbors(source_mark, marks, relation.source_endpoint))
-                    if source_mark else (() if proofs else
+                    if source_mark else (() if unavailable else
                         (ConnectorEgress(relation.source_endpoint, source_nominal, source_nominal, ()),)))
-                target_candidates = (() if proofs else _entry_candidates(context, target_mark, relation.target_endpoint,
+                target_candidates = (() if unavailable else _entry_candidates(context, target_mark, relation.target_endpoint,
                     source_nominal,
                     comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()), relation,
                     entry=context.layout_manifest.relation_entry)
-                    if target_mark else (() if proofs else
+                    if target_mark else (() if unavailable else
                         (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),)))
                 port_pairs = tuple((left, right) for left in source_candidates for right in target_candidates)
                 if context.layout_manifest.relation_entry in {"side-when-free", "side"}:
                     port_pairs = stub_pairs_first(port_pairs)
                 occurrences.append(PreparedNormalRouteOccurrence(
                     source_id, target_id, scene_id, source_mark, target_mark,
-                    source_nominal, target_nominal, source_candidates, port_pairs, proofs))
+                    source_nominal, target_nominal, source_candidates, port_pairs, proofs, row_proofs))
         prepared_entries.append(PreparedNormalRelation(declared_index, relation, tuple(occurrences)))
     return PreparedNormalRouteBatch(tuple(prepared_entries), ordered_relations, row_edges,
         {key: tuple(values) for key, values in instance_anchors.items()},
@@ -764,14 +792,17 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             source_mark, target_mark = prepared_occurrence.source_mark, prepared_occurrence.target_mark
             scene_id = prepared_occurrence.scene_id
             declared_order[scene_id] = declared_index
-            if prepared_occurrence.window_endpoint_absences:
+            if prepared_occurrence.window_endpoint_absences or prepared_occurrence.window_row_absences:
                 proofs = prepared_occurrence.window_endpoint_absences
                 relations.append(RelationPlacement(scene_id,
                     f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
                     suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
                     semantic_id=relation.semantic_id, source_ref=relation_id,
                     from_instance_id=source_id, to_instance_id=target_id,
-                    window_endpoint_absences=proofs, window_suppression_reason="outside-window"))
+                    window_endpoint_absences=proofs,
+                    window_row_absences=prepared_occurrence.window_row_absences,
+                    window_suppression_reason=("row-omission" if prepared_occurrence.window_row_absences
+                                               else "outside-window")))
                 diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                 continue
             if window_affected and plot_clip is None:
