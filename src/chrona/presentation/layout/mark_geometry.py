@@ -425,7 +425,7 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
         try:
             parsed = parse_path_commands(raw)
         except IconNormalizationError as error:
-            raise _theme_error(f"glyph path data is not valid normalized geometry (length={len(raw)}, parser={type(error).__name__})") from error
+            raise _theme_error(f"glyph path data is not valid normalized geometry (length={len(raw)}): {error}; a glyph path accepts only M, L, H, V and Z, arcs (A/a) are not supported") from error
         if catalog_glyph and any(command.kind not in {"move", "line", "quadratic", "close"}
                                  for command in parsed):
             raise _theme_error("catalog glyph commands must use only move, line, quadratic, or close")

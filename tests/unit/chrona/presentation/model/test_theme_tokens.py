@@ -140,7 +140,7 @@ def test_declared_token_type_must_match_the_requested_property():
         ThemeTokenView(_theme()).color("text", "fontFamily")
     assert error.value.path == "/body/roles/text/fontFamily"
     assert "role='text', property='fontFamily', token='body'" in error.value.detail
-    assert "declaredType=str, expectedType='color'" in error.value.detail
+    assert "declaredType='fontFamily', expectedType='color'" in error.value.detail
 
 
 def test_dash_segment_diagnostic_names_role_index_and_numeric_expectation():
@@ -408,3 +408,31 @@ def test_annotation_container_image_rejects_missing_or_invalid_fields(mutation, 
     with pytest.raises(ThemeTokenError) as raised:
         ThemeTokenView(_theme_with_annotation_container(value)).annotation_container("annotation")
     assert raised.value.path.endswith(expected_suffix)
+
+
+def test_number_token_used_as_radius_reports_its_real_declared_type_and_token():
+    theme = _theme()
+    theme["body"]["values"]["r"] = {"type": "number", "value": 3}
+    theme["body"]["roles"]["planned"] = {"cornerRadius": "r"}
+    with pytest.raises(ThemeTokenError) as raised:
+        ThemeTokenView(theme).token("planned", "cornerRadius", "radius")
+    detail = raised.value.detail
+    assert "declaredType='number'" in detail and "declaredType=str" not in detail
+    assert "token='r'" in detail and "expectedType='radius'" in detail
+    assert "change the declared type of values.r to radius" in detail
+    assert raised.value.path == "/body/roles/planned/cornerRadius"
+
+
+def test_glyph_path_with_an_arc_names_the_token_pointer_and_the_supported_commands():
+    theme = _theme()
+    theme["body"]["values"]["dot"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [100, 100],
+        "parts": [{"d": "M50 0A50 50 0 1 1 49.999 0Z", "paint": "fill"}]}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "dot"}
+    with pytest.raises(ThemeTokenError) as raised:
+        ThemeTokenView(theme).symbol("milestoneSymbol")
+    assert raised.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
+    assert raised.value.path == "/body/values/dot/value/parts/0/d"
+    detail = raised.value.detail
+    assert "symbol token 'dot'" in detail and "arcs (A/a commands) are not supported" in detail
+    assert "shape: circle" in detail and "IconNormalizationError" not in detail

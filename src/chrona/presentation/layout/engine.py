@@ -12,6 +12,7 @@ from chrona.presentation.layout.model import (
     RelationRouteStyle,
     RelationUnroutableMode, PointHostMode,
 )
+from chrona.presentation.model.wording_tables import is_wording_ref, wording_resolver
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.layout.tracks import resolve_flexible_tracks as _resolve_flexible_tracks
 
@@ -112,7 +113,10 @@ def _slot_heading(node: Mapping[str, Any], profile: ResolvedLayoutProfile | None
     if declared is None:
         return None
     gap = _distance(profile, f"{path}/heading/gap") if profile is not None and "gap" in declared else None
-    return SlotHeading(declared.get("text"), str(declared.get("align", "start")), str(declared.get("block", "top")),
+    text = declared.get("text")
+    if is_wording_ref(text):  # a render resolves it for its locale first; this stands in for a bare Layout run
+        text = wording_resolver("en-US", None).resolve(text)
+    return SlotHeading(text, str(declared.get("align", "start")), str(declared.get("block", "top")),
                        gap, template=declared.get("template"))
 
 

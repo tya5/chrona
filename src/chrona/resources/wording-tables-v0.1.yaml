@@ -26,10 +26,10 @@ tables:
     missing.unknown: unknown
     missing.inProgress: in progress
     legend.planned-plain: Planned
-    legend.baseline: baseline
-    legend.current-plan: current plan
-    legend.gate: gate
-    legend.holiday: holiday
+    legend.baseline: Baseline
+    legend.current-plan: Current plan
+    legend.gate: Gate
+    legend.holiday: Holiday
     column.owner: Owner
     column.number: "No."
     column.phase: Phase
@@ -48,6 +48,7 @@ tables:
     column.no: "No"
     delta.unit.calendarDay: d
     delta.unit.workingDay: d
+    slot.notes: Notes
   ja-JP:
     column.task: タスク
     column.plan: 計画
@@ -96,3 +97,4 @@ tables:
     column.no: 番号
     delta.unit.calendarDay: 日
     delta.unit.workingDay: 営業日
+    slot.notes: 注記
