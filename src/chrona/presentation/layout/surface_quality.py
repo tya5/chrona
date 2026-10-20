@@ -733,6 +733,7 @@ class SurfaceLayoutRequest:
     paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
     # Optional source-bound mask for geometry rows under View outside: omit.
     row_admission: Any | None = None
+    scene_precision: int = 3
 
 
 @dataclass(frozen=True)

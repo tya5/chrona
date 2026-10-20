@@ -415,7 +415,8 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     if as_of_chip_measurement is None:
         as_of_chip_measurement = measure_as_of_chip(content, window=projection.window,
             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-            visual_requests=request.visual_requests, icon_assets=request.icon_assets)
+            visual_requests=request.visual_requests, icon_assets=request.icon_assets,
+            scene_precision=request.scene_precision)
     if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
             and start <= content.as_of < end):
         wanted = (below_plot_reserve(request.theme_tokens, chip_measurement=as_of_chip_measurement)

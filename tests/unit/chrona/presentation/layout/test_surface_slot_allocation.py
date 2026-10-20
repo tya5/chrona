@@ -69,7 +69,8 @@ def test_non_lane_candidate_keeps_native_preparation_and_natural_demand():
     assert ensure_request_mark_visibility_index(prepared_request) is prepared_request
 
 
-def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(monkeypatch):
+@pytest.mark.parametrize("precision", [3, 6])
+def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(monkeypatch, precision):
     from chrona.presentation.layout import surface_preparation
     from types import SimpleNamespace
     from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
@@ -89,7 +90,8 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
         lane_membership=membership,
         lane_rows=(ReviewLaneRowProjection("lane-final", "group", (lane_item,), ("member-view",)),),
     )
-    candidate = replace(original, projection=projection, fixed_lane_preflight=stale)
+    candidate = replace(original, projection=projection, fixed_lane_preflight=stale,
+                        scene_precision=precision)
     calls = []
 
     def preflight(**inputs):
@@ -121,7 +123,8 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
         metric_values=candidate.measured_sources.metric_values,
         icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
         font_metrics=candidate.font_metrics, mark_visibility_index=passed_index,
-        row_admission=passed_admission)]
+        row_admission=passed_admission,
+        scene_precision=precision)]
     assert candidate.fixed_lane_preflight is stale
     assert candidate.mark_visibility_index is None
 

@@ -67,6 +67,7 @@ class SurfaceRenderPlanInput:
     progress: RenderProgress | None = None
     previous_route_hints: PreviousRouteHints | None = None
     paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
+    scene_precision: int = 3
 
 
 @dataclass(frozen=True)
@@ -217,7 +218,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     try:
         as_of_chip_measurement = measure_as_of_chip(selected_content, window=projection.window,
             theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
-            visual_requests=visual_requests, icon_assets=icon_assets)
+            visual_requests=visual_requests, icon_assets=icon_assets,
+            scene_precision=value.scene_precision)
     except FontMetricsError as error:
         raise SurfacePlanFontError(error) from error
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
@@ -248,6 +250,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             previous_route_hints=value.previous_route_hints,
             mark_visibility_index=mark_visibility_index,
             row_admission=row_admission,
+            scene_precision=value.scene_precision,
         )
 
     if view.surface == "table-timeline":

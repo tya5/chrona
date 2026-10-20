@@ -39,6 +39,7 @@ class ChipGeometryError(ValueError):
         self.reason = reason if reason in {
             "invalid-measurement", "nonfinite-geometry", "unsupported-shape",
             "catalog-geometry", "catalog-fill-coverage", "catalog-coverage-geometry",
+            "precision-geometry",
         } else "unsupported-shape"
         super().__init__(self.reason)
 

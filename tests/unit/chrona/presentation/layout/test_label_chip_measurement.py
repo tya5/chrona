@@ -58,15 +58,16 @@ def test_burst_uses_semantic_role_and_preserves_role_paint_with_asymmetric_inset
     assert measured.geometry.symbol_parts[0].paint_mode is None
     assert measured.geometry.text_bounds.inline_size == Decimal(31)
     assert measured.geometry.text_bounds.block_size == Decimal(11)
-    assert measured.text_inline_inset == pytest.approx(float(measured.geometry.text_bounds.inline) + 12.5)
-    assert measured.text_block_inset == pytest.approx(float(measured.geometry.text_bounds.block) + 12.5)
+    assert measured.text_inline_inset == pytest.approx(float(measured.geometry.text_bounds.inline) + 12.5005)
+    assert measured.text_block_inset == pytest.approx(float(measured.geometry.text_bounds.block) + 12.5005)
     # The declared role stroke is expanded once per side, per Spec 46 §7.
-    assert float(measured.footprint.inline) == pytest.approx(-12.5)
-    assert float(measured.footprint.block) == pytest.approx(-12.5)
+    # The Scene precision adds its conservative half-quantum on each side.
+    assert measured.footprint.inline == Decimal("-12.5005")
+    assert measured.footprint.block == Decimal("-12.5005")
     assert float(measured.footprint.inline_size) == pytest.approx(
-        float(measured.geometry.outer_bounds.inline_size) + 25)
+        float(measured.geometry.outer_bounds.inline_size) + 25.001)
     assert float(measured.footprint.block_size) == pytest.approx(
-        float(measured.geometry.outer_bounds.block_size) + 25)
+        float(measured.geometry.outer_bounds.block_size) + 25.001)
 
 
 @pytest.mark.parametrize("semantic_id,role", CASES)
@@ -82,9 +83,9 @@ def test_ellipse_completion_uses_each_roles_measurement_and_expands_stroke_once(
     assert measured.geometry.outer_bounds.block_size <= (
         2 ** .5 / float(_inradius_factor(7, .8)) * (18 + 2 * 3) + 1e-8
     )
-    assert float(measured.footprint.block) == pytest.approx(-15)
+    assert measured.footprint.block == Decimal("-15.0005")
     assert float(measured.footprint.block_size) == pytest.approx(
-        float(measured.geometry.outer_bounds.block_size) + 30)
+        float(measured.geometry.outer_bounds.block_size) + 30.001)
 
 
 def _inradius_factor(points, ratio):

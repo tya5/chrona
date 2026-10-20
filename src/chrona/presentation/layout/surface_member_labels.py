@@ -20,7 +20,8 @@ from chrona.presentation.layout.obstacles import (
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
-from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
+from chrona.presentation.layout.chip_geometry import ChipGeometryError
+from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, complete_label_chip_placement
 from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
 from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
@@ -805,11 +806,13 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             if chip_measurement is not None:
                 geometry, footprint = chip_measurement.geometry, chip_measurement.footprint
                 origin_x, origin_y = chip_box.x - float(footprint.inline), chip_box.y - float(footprint.block)
-                paint_bounds = Rect(Decimal(str(origin_x)), Decimal(str(origin_y)),
-                                    geometry.outer_bounds.inline_size, geometry.outer_bounds.block_size)
-                symbol_parts = tuple(replace(part, commands=tuple(replace(command, points=tuple(
-                    (x + origin_x, y + origin_y) for x, y in command.points)) for command in part.commands))
-                    for part in geometry.symbol_parts)
+                try:
+                    paint_bounds, symbol_parts = complete_label_chip_placement(
+                        chip_measurement, origin_x=origin_x, origin_y=origin_y)
+                except ChipGeometryError as error:
+                    role = semantic_binding(chip_semantic).theme_role
+                    raise LayoutError("E_LAYOUT_CHIP_TEXT_GROUND_INVALID", f"/body/roles/{role}/chipShape",
+                                      detail=f"reason={error.reason}; increase Render Context environment.scenePrecision") from error
             shapes.append(ShapePlacement(f"chip:{placed_text.placement_id}", placed_text.source_ref,
                 "Symbol" if chip_measurement is not None else "Rect", paint_bounds,
                 required=False, slot_id=context.text_slot(placed_text),
