@@ -17,6 +17,7 @@ from chrona.core.relation_identity import relation_identities
 from chrona.presentation.contracts.resources import ViewInput, _PrivateGroupingMode
 from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
+from chrona.presentation.model.wording_tables import WordingResolver, delta_unit_text, wording_resolver
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.field_role_view import resolve_role_grouping
 from chrona.presentation.model.hierarchy_names import plot_name_selected
@@ -95,12 +96,17 @@ def is_new_against_baseline(item: Any) -> bool:
     return bool(getattr(item, "new_vs_baseline", False))
 
 
+def signed_delta_text(value: int, item: Any) -> str:
+    """A signed day delta with the item's wording-resolved unit (#1790)."""
+    return f"{value:+d}{getattr(item, 'delta_affix', 'd')}"
+
+
 def finish_delta_text(item: Any) -> str | None:
     value = display_finish_delta(item)
     if value is None:
         return NEW_MARKER if is_new_against_baseline(item) else None
     forecast = getattr(item, "forecast", None)
-    return f"{value:+d}d" + ("*" if forecast is not None and not forecast.schedule.completed else "")
+    return signed_delta_text(value, item) + ("*" if forecast is not None and not forecast.schedule.completed else "")
 
 
 def finish_delta_semantic(item: Any) -> str:
@@ -153,6 +159,9 @@ class ReviewItem:
     field_bindings: FieldRoleBindings = FieldRoleBindings()
     date_basis: ItemDateBasis = ItemDateBasis()
     comparison_delta_unit: str = "calendar-days"
+    # Locale text of the day unit that follows a signed delta (`d`, `日`, `営業日`); resolved from the
+    # `delta.unit.*` wording keys at projection time, so Layout never carries a literal unit (#1790).
+    delta_affix: str = "d"
     forecast: ForecastComparisonFact | None = None
     # View-owned content eligibility, independent of temporal mark visibility.
     member_label_eligible: bool = True
@@ -420,7 +429,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             forecast: ForecastOutcome | None = None,
                             field_bindings: FieldRoleBindings | None = None,
                             snapshot_field_bindings: FieldRoleBindings | None = None,
-                            scenario_field_bindings: Mapping[str, FieldRoleBindings] | None = None) -> ReviewProjection:
+                            scenario_field_bindings: Mapping[str, FieldRoleBindings] | None = None,
+                            wording: WordingResolver | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual "
@@ -432,6 +442,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
     as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
+    delta_affix = delta_unit_text(wording or wording_resolver("en-US", view.wording),
+                                  view.comparison.delta_unit or "calendar-days")
     explicit = view.rows.mode == "explicit"
     ids = set(view.selection.ids) if view.selection and view.selection.ids else set(placements)
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
@@ -500,6 +512,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             observation_state=observation_state, source_index=declared.get(object_id, 0),
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
             date_basis=date_basis, comparison_delta_unit=view.comparison.delta_unit or "calendar-days",
+            delta_affix=delta_affix,
             new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
                              and object_id not in snapshot_placements)))
     if not selected:

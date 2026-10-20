@@ -71,6 +71,10 @@ def test_guide_renders_japanese_headers_marker_legend_override_and_years(tmp_pat
     assert "2026年12月14日 – 2026年12月24日" in japanese and "2026年12月25日 – 2027年1月14日" in japanese
     assert "2027年1月15日" in japanese and "2026年12月" in japanese and "2027年1月" in japanese
     assert "25 Dec 2026 – 14 Jan 2027" in english
+    # section 5 states the rule the formatter applies: one decision per table, so the in-year range carries its year (#1790)
+    guide = (ROOT / GUIDE).read_text(encoding="utf-8")
+    assert "As soon as any range in the table crosses a year boundary" in guide
+    assert "`2026年12月14日 – 2026年12月24日` beside `2026年12月25日 – 2027年1月14日`" in guide
 
 
 def test_guide_table_entry_is_used_without_the_override_and_wording_keys_reach_a_string_legend(tmp_path, monkeypatch, capsys):

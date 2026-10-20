@@ -29,6 +29,7 @@ BUILT_IN_WORDING_KEYS = (
     "column.owner", "column.number", "column.phase", "column.finishDelta", "summary.days",
     "legend.plan", "legend.missing-actual", "legend.missing-actual-in-progress", "legend.in-the-wings",
     "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
+    "delta.unit.calendarDay", "delta.unit.workingDay",
 )
 LOCALES = ("en-US", "ja-JP")
 

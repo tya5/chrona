@@ -42,6 +42,8 @@ tables:
     legend.depends-on: Depends on
     legend.other: Other
     column.no: "No"
+    delta.unit.calendarDay: d
+    delta.unit.workingDay: d
   ja-JP:
     column.task: タスク
     column.plan: 計画
@@ -84,3 +86,5 @@ tables:
     legend.depends-on: 依存先
     legend.other: その他
     column.no: 番号
+    delta.unit.calendarDay: 日
+    delta.unit.workingDay: 営業日

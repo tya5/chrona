@@ -54,6 +54,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | `legend.in-the-wings`, `legend.calendar-exception` | In the wings, Calendar exception | 出番待ち, カレンダー例外 |
 | `legend.other` | Other | その他 |
 | `column.no` | No | 番号 |
+| `delta.unit.calendarDay`, `delta.unit.workingDay` | d, d | 日, 営業日 |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
@@ -70,6 +71,11 @@ date after the label too (`as of 20 feb`). Japanese has no case and is unchanged
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
+
+**The day unit of a delta.** A signed finish delta reads `+3d` in English and `+3日` in Japanese. The View's
+`comparison.deltaUnit` picks the key: `calendar-days` reads `delta.unit.calendarDay`, `working-days` reads
+`delta.unit.workingDay` (`d` in English for both, `営業日` in Japanese: `+3営業日`). A design that wants another unit text
+sets `wording.keys: {delta.unit.workingDay: 営}` instead of a literal in its layout; the override reaches the table cell, the label on the bar and the Summary metric.
 
 **Still English.** A text a preset author wrote as a plain string stays as written (titles, a design's marker text, panel
 titles). Reference a key or override it in your own copy of the preset (sections 3 and 4). The Titlecard's secondary axis
@@ -304,8 +310,10 @@ spelling; do not work around it with a string.
 
 ## 5. How years show in multi-year table dates
 
-In the `Plan` column a range inside one year omits the year (`11月2日 – 11月6日`). A range that crosses a
-year boundary shows the year on both ends, as in the picture above (`2026年12月25日 – 2027年1月14日`), and a
-single date (the milestone) always carries its year. English reads the same way: `25 Dec 2026 – 14 Jan 2027`.
+The `Plan` column decides once for the whole table. While every date in its ranges falls inside one calendar
+year, a range omits the year (`11月2日 – 11月6日`). As soon as any range in the table crosses a year boundary,
+as in the picture above, every date in that column carries its year, including ranges that sit inside one year
+(`2026年12月14日 – 2026年12月24日` beside `2026年12月25日 – 2027年1月14日`). A single date (the milestone)
+always carries its year. English reads the same way: `25 Dec 2026 – 14 Jan 2027`.
 The axis is separate: its upper tier names the month and year (`2026年12月`, `2027年1月`) and the lower tier
 the day.
