@@ -816,6 +816,20 @@ class SceneLaneWindowAbsence:
 
 
 @dataclass(frozen=True)
+class SceneLaneRowAbsence:
+    """Completed reason that an original lane member has no rendered row."""
+
+    reason: str
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.reason, str)
+                or self.reason not in {"outside-window", "no-selected-temporal-facet"}):
+            raise _invalid("reason", self.reason,
+                           "outside-window or no-selected-temporal-facet",
+                           owner="SceneLaneRowAbsence")
+
+
+@dataclass(frozen=True)
 class SceneLaneMember:
     """Closed lane membership and primitive-emission inventory for one member."""
 
@@ -824,6 +838,7 @@ class SceneLaneMember:
     emitted_primitive_ids: tuple[str, ...]
     primary_mark_ids: tuple[str, ...]
     window_absences: tuple[SceneLaneWindowAbsence, ...] = ()
+    row_absence: SceneLaneRowAbsence | None = None
 
     def __post_init__(self) -> None:
         if (not isinstance(self.row_id, str) or not self.row_id
@@ -832,7 +847,18 @@ class SceneLaneMember:
                 or not isinstance(self.primary_mark_ids, tuple)
                 or not isinstance(self.window_absences, tuple)
                 or any(not isinstance(item, SceneLaneWindowAbsence) for item in self.window_absences)
-                or ((not self.emitted_primitive_ids or not self.primary_mark_ids)
+                or (self.row_absence is not None
+                    and not isinstance(self.row_absence, SceneLaneRowAbsence))
+                or (self.row_absence is not None
+                    and (self.emitted_primitive_ids or self.primary_mark_ids
+                         or (self.row_absence.reason == "outside-window"
+                             and (any(item.source_kind != "actual" for item in self.window_absences)
+                                      and not any(item.facet in {"planned", "forecast"}
+                                                  for item in self.window_absences)))
+                         or (self.row_absence.reason == "no-selected-temporal-facet"
+                             and self.window_absences)))
+                or (self.row_absence is None
+                    and (not self.emitted_primitive_ids or not self.primary_mark_ids)
                     and not any(item.facet in {"planned", "forecast"} for item in self.window_absences))
                 or any(not isinstance(item, str) or not item
                        for item in (*self.emitted_primitive_ids, *self.primary_mark_ids))
@@ -840,8 +866,8 @@ class SceneLaneMember:
                 or len(set(self.primary_mark_ids)) != len(self.primary_mark_ids)
                 or not set(self.primary_mark_ids) <= set(self.emitted_primitive_ids)):
             raise _invalid("row_id/member_id/emitted_primitive_ids/primary_mark_ids",
-                           (self.row_id, self.member_id, self.emitted_primitive_ids, self.primary_mark_ids),
-                           "non-empty row/member IDs, unique tuple IDs, primary marks drawn from emitted IDs, and original primary omission proof for empty inventories",
+                           (self.row_id, self.member_id, self.emitted_primitive_ids, self.primary_mark_ids, self.row_absence),
+                           "non-empty source IDs, unique tuple IDs, primary marks drawn from emitted IDs, and either completed row absence or original primary omission proof for empty inventories",
                            owner="SceneLaneMember")
         if (len({item.placement_id for item in self.window_absences}) != len(self.window_absences)
                 or len({(item.instance_id, item.facet) for item in self.window_absences}) != len(self.window_absences)
@@ -1011,25 +1037,54 @@ class SceneSurface:
             if (not self.lane_members
                     or not _finite_number(self.lane_clearance)
                     or self.lane_clearance < 0
-                    or any(not isinstance(item, SceneLaneObstacle) for item in self.lane_obstacles) or any(
-                    not member.row_id or member.row_id not in lane_rows
-                    or lane_rows[member.row_id].lane_mark_band_block is None
-                    for member in self.lane_members)):
+                    or any(not isinstance(item, SceneLaneObstacle) for item in self.lane_obstacles)
+                    or any(not isinstance(member, SceneLaneMember) for member in self.lane_members)):
                 raise _invalid("lane_members/lane_obstacles/lane_clearance/rows", (self.lane_members, self.lane_obstacles, self.lane_clearance, self.rows),
-                               "non-empty typed lane facts, finite non-negative clearance, and member rows with lane bands",
+                               "non-empty typed lane facts and finite non-negative clearance",
                                owner=f"SceneSurface({_brief(self.surface_id)})")
             if (len(lane_rows) != len(self.rows)
                     or any(row.lane_mark_band_block is None for row in self.rows)):
                 raise _invalid("rows.lane_mark_band_block", tuple((row.row_id, row.lane_mark_band_block) for row in self.rows),
                                "a lane mark band for every row in lane mode", owner=f"SceneSurface({_brief(self.surface_id)})")
             member_keys = [(member.row_id, member.member_id) for member in self.lane_members]
+            absent_reasons: dict[str, str] = {}
+            absent_members: dict[str, list[SceneLaneMember]] = {}
+            for member in self.lane_members:
+                if member.row_absence is None:
+                    if (member.row_id not in lane_rows
+                            or lane_rows[member.row_id].lane_mark_band_block is None):
+                        raise _invalid("lane_members.row_id", (member.row_id, member.member_id),
+                                       "a rendered lane row with a completed lane band",
+                                       owner=f"SceneSurface({_brief(self.surface_id)})")
+                else:
+                    if member.row_id in lane_rows:
+                        raise _invalid("lane_members.row_absence", (member.row_id, member.member_id),
+                                       "row absence only for an unrendered row",
+                                       owner=f"SceneSurface({_brief(self.surface_id)})")
+                    previous_reason = absent_reasons.setdefault(member.row_id, member.row_absence.reason)
+                    absent_members.setdefault(member.row_id, []).append(member)
+                    if previous_reason != member.row_absence.reason:
+                        raise _invalid("lane_members.row_absence.reason", (member.row_id, previous_reason,
+                                                                          member.row_absence.reason),
+                                       "one consistent reason for all members of an omitted row",
+                                       owner=f"SceneSurface({_brief(self.surface_id)})")
+            for row_id, reason in absent_reasons.items():
+                row_members = absent_members[row_id]
+                has_mark_omissions = any(member.window_absences for member in row_members)
+                if ((reason == "outside-window" and not has_mark_omissions)
+                        or (reason == "no-selected-temporal-facet" and has_mark_omissions)):
+                    raise _invalid("lane_members.row_absence/window_absences", row_id,
+                                   "outside-window rows have aggregate expected-mark omissions and no-selected rows have none",
+                                   owner=f"SceneSurface({_brief(self.surface_id)})")
             emitted_ids = [primitive_id for member in self.lane_members
                            for primitive_id in member.emitted_primitive_ids]
             if len(set(member_keys)) != len(member_keys) or len(set(emitted_ids)) != len(emitted_ids):
                 raise _invalid("lane_members.row_id/member_id/emitted_primitive_ids", (member_keys, emitted_ids),
                                "unique (row, member) keys and unique emitted primitive IDs", owner=f"SceneSurface({_brief(self.surface_id)})")
-            if {row_id for row_id, _member_id in member_keys} != set(lane_rows):
-                raise _invalid("lane_members.row_id", tuple(sorted({row_id for row_id, _ in member_keys})),
+            present_member_rows = {member.row_id for member in self.lane_members
+                                   if member.row_absence is None}
+            if present_member_rows != set(lane_rows):
+                raise _invalid("lane_members.row_id", tuple(sorted(present_member_rows)),
                                f"exactly the row IDs {tuple(sorted(lane_rows))!r}", owner=f"SceneSurface({_brief(self.surface_id)})")
             expected = {primitive_id: (member.row_id, member.member_id)
                         for member in self.lane_members

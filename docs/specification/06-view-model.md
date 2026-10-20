@@ -104,6 +104,20 @@ omitted filter does not constrain selection. There is no arbitrary boolean expre
 regular expression, title match, script, or implicit hierarchy traversal. The exact
 typed-field reference form is introduced only with the Extension schema.
 
+**Completion selection (#1812).** `selection.exclude.state: [finished]` is an
+optional closed vocabulary predicate on the current Primary selection. Its
+selected Actual facts use Core's completion rule (Spec04 §17.1): a span needs
+observed `finish`, a point observed `at`, and a rollup all its temporal children
+complete. Share that rule with forecasting; neither `recorded`, progress,
+planned targets nor an inferred cutoff proves completion. Missing observations
+are not known finished. Filtering never changes the scheduler's input. Ordinary
+automatic comparison ghosts follow the retained Primary; explicit Snapshot and
+Scenario sources keep their independent scope and have no inferred current
+completion state. Explicit references to an excluded Primary/Actual retain
+the existing unavailable-source error. An empty selection retains its existing
+diagnostic. This addition also applies to network selection, without a version
+bump; omission leaves selection unchanged (Spec56 §3.2).
+
 `comparison.actual` is `forbidden`, `optional`, or `required`; a Render Context must
 provide an Actual set exactly when the selected mode requires it. The `facets` list is
 sorted and duplicate-free. `planned` and `actual` remain separate facets, so a Style or
@@ -369,9 +383,9 @@ they must not lose owner-local detail through a generic fallback.
 
 Date-based Views use the Date temporal domain. DateTime View behavior is deferred until a corresponding Core scheduling profile exists. Human-facing inclusive end-date display is a View or renderer concern and MUST NOT alter Core half-open span semantics.
 
-**Explicit-window visibility (#1292).** The projection retains the selected
+**Bounded-window visibility (#1292, #1812).** The projection retains the selected
 window mode as typed provenance; equal dates do not imply equal window policy.
-Only `explicit` selects the bounded mark-visibility contract in Spec 50.
+`explicit` and `relative` select the bounded mark-visibility contract in Spec 50.
 An intersecting span keeps its original source interval and table row while
 Layout completes its visible part. A wholly disjoint span, or a point outside
 `[start, end)`, keeps its table row but has no plot facet. Snapshot, scenario,
@@ -379,6 +393,36 @@ Actual and missing-Actual facets are evaluated independently without rewriting
 Project dates, observation state, progress fractions or delta facts. A point
 at `start` is included; a point at `end` is excluded. Derived-window selection
 is not changed by this rule.
+
+**As-of-relative focus (#1812).** A timeline View MAY declare
+`window: {mode: relative, before: 1w, after: 6w, outside: omit}`. Offsets are
+nonnegative integer civil days (`d`) or seven-day weeks (`w`), with no leading
+zero except `0d`/`0w`; they are not working durations or calendar months.
+At least one side is declared; an omitted side is `0d`. Resolve the exact
+half-open interval `[Actual.asOf - before, Actual.asOf + after)`; do not add an
+inclusive extra day. Both zero is `E_REVIEW_WINDOW`. A missing Actual `asOf`
+is `E_VIEW_WINDOW_AS_OF_REQUIRED` at `/body/window`; Date overflow is a pointed
+`E_REVIEW_WINDOW`. No clock, Project date or Snapshot date substitutes for as-of.
+
+Both bounded modes accept `outside: keep | omit`, default `keep` at runtime.
+`keep` retains today's rows and clipping. `omit` retains a row only when one of
+its selected temporal source occurrences intersects the window, using the same
+source visibility closure as mark clipping, not paint, labels or Theme. Any
+Primary/Actual/Snapshot/Scenario track can retain its row; a derived missing-
+Actual tick alone cannot. Preserve authored row/lane IDs and lane membership;
+compact only the admitted row geometry. Group headers remain for admitted rows
+or folded occurrences, not empty outside-only groups. Keep the complete source
+projection and relations for omission proofs. All-outside source sets may have
+zero geometry rows; do not invent a row or extend the window.
+
+The initial truthful relation fallback is the existing typed suppression with
+`W_LAYOUT_RELATION_SUPPRESSED`, identifying each affected relation and its proven
+outside source/endpoint. It is documented and observable, never a silent dropped
+edge. A clipped edge is not a semantic port, and existing paired routing stubs
+are not window-continuation stubs (Spec50). The guide explains this fallback.
+`relative` and the new `outside` member are timeline-only; reject them on a
+network View rather than ignoring them. Existing network declarations are
+unchanged. Derived window modes do not accept `outside`.
 
 ### 7.1 Named periods (#582)
 
@@ -765,6 +809,14 @@ fit, including under an explicit window; never silently ellipsise away `*`,
 suppress a required delta, or remove a row to obtain success. Optional titles
 keep their existing policy. Scene and adapters receive completed placements and
 paint only; they do not calculate dates, choose fonts or place the legend.
+
+An explicit `outside: omit` is source-temporal admission, not a fit escape:
+Layout records the original window absence before measuring or requesting
+forecast text for an omitted occurrence. A plot delta with an outside temporal
+anchor uses that typed absence; it is not a spatially suppressed required
+label. Retained in-window forecast text and visible table cells still require
+their full text and retain the existing refusal. Source-channel admission is
+unchanged; a window does not invent an undeclared forecast destination.
 
 Channel coverage is per selected temporal occurrence, not merely the presence
 of a delta column somewhere in the View. An explicit row's table channel

@@ -10,6 +10,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
 )
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, WindowMode
 from chrona.presentation.layout.window_label_admission import WindowLabelAdmission, complete_window_label_admission
+from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 from tests.unit.chrona.presentation.layout.test_lane_item_footprints import _window_footprint_fixture
 
 
@@ -71,6 +72,22 @@ def test_lane_source_and_final_aliases_share_identical_label_admission_objects()
             alias, projection=projection, as_of=None)
     with pytest.raises(TypeError):
         index.label_entries[source] = None
+
+
+def test_outside_lane_source_can_account_for_a_suppressed_plot_label():
+    projection, index, _ = _window_footprint_fixture(all_outside=True)
+    occurrence = next(key for key in index.entries
+                      if key.kind == MarkOccurrenceKind.LANE_SOURCE and key.object_id == "object-1")
+    admission = index.lookup_label(occurrence, projection=projection, as_of=None)
+
+    absence = WindowLabelAbsence(
+        "member-label:row-item-1:item-1", "object-1", occurrence, "memberLabel", admission,
+        (("title", "Item 1"),), lane_row_id="row-item-1", lane_member_id="item-1",
+        visibility_index=index,
+    )
+
+    assert absence.diagnostic == "W_LAYOUT_LABEL_SUPPRESSED:member-label:row-item-1:item-1"
+    assert absence.occurrence.kind == MarkOccurrenceKind.LANE_SOURCE
 
 
 def test_missing_or_stale_label_cache_fails_closed():

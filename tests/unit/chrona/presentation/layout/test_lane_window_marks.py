@@ -70,9 +70,10 @@ def test_forecast_lane_window_handoff_joins_physical_slot_without_losing_semanti
     mark = MarkPlacement("planned:lane:item", "object", Rect(*(Decimal(value) for value in (0, 0, 10, 10))),
                          (0., 5.), (10., 5.), semantic_id="forecast", lane_row_id="lane",
                          lane_member_id="item", lane_source_kind="primary")
-    absences, empty = complete_lane_window_handoff(projection=projection, marks=() if outside else (mark,),
-                                                  as_of=None, visibility_index=index)
+    absences, empty, row_absences = complete_lane_window_handoff(projection=projection, marks=() if outside else (mark,),
+                                                               as_of=None, visibility_index=index)
     assert bool(absences) == outside and bool(empty) == outside
+    assert row_absences == ()
     if outside:
         assert absences[0].expected.purpose == "forecast"
         assert absences[0].expected.role == "planned"

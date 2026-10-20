@@ -63,7 +63,7 @@ def complete_item_visibility(
     uses a span shape. Derived windows deliberately retain the existing path.
     No scale, footprint, Theme, row allocation, or Scene participates here.
     """
-    explicit = window_mode == WindowMode.EXPLICIT
+    explicit = window_mode.is_bounded
     if explicit and (type(window_start) is not date or type(window_end) is not date
                      or window_start >= window_end):
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
