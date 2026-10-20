@@ -858,7 +858,7 @@ Relation terminals are Theme `marker` tokens resolved by Layout (`relation_termi
 
 `timeline.relation.cornerRadius` (a Theme metric in px; absent or `0` keeps square corners) rounds the turns of an orthogonal relation route when Layout completes the path: each turn becomes a quadratic arc whose radius is `min(r, half the incoming leg, half the outgoing leg)`; a leg that meets a terminal keeps a straight run of the terminal's `headLength` (a round terminal centred on the endpoint needs none); a point that is not a turn is not rounded; an arc whose chords meet a mark, text or label the polyline cleared halves its radius until clear, down to square. Scene `points` stay the orthogonal polyline and `pathCommands` carry the arcs; SVG and PNG draw the same commands, and the arcs are registered as route obstacles beside the polyline. The bundled default Theme (`editorial-readable-default`) declares 4 px; other presets declare their own value or none (#1046).
 
-**Declared route style (#1047; selected design, review and implementation pending).**
+**Declared route style (#1047; architecture-reviewed design, implementation pending).**
 Layout Profile `relationRouting.style` selects `orthogonal` or `curved` for
 table-timeline and dependency-network relations. Omission means `orthogonal`:
 the existing route selection, Theme corner rounding, diagnostics and serialized
