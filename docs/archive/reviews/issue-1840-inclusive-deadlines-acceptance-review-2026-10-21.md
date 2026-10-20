@@ -35,4 +35,7 @@ No public-corpus source/generated evidence was authored. PR1844 at
 checks and merged as `f491f8d5ea7bd450e97019a7df07c615443313cf`.
 The official109-path snapshot changes only74 diagnostic source anchors;
 all50 actual SVGs and50 Scenes retain their bytes. Exact review-containing
-main three-OS release is still required before issue closure.
+main `0bf7031c6dc5f3dea109a9c2217cf20d6af566d0` passed
+[release39471381943](https://github.com/tya5/chrona/actions/runs/39471381943):
+Ubuntu, macOS and Windows full matrices, MCP floor and newest-Python reproduction
+all succeeded. Issue1840 is closed; this archive records that completed release.
