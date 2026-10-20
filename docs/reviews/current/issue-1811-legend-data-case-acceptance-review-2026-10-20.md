@@ -1,6 +1,7 @@
 # Issue1811 — legend wording versus data
 
 Source `673cdb8f833f95671f2b602108f609e8c0eccb51`;
+precision correction `58c8a4b51` reuses the existing `geometry_sum` contract.
 [pre-code plan and architecture review](https://github.com/tya5/chrona/issues/1811#issuecomment-6286123938).
 Dev A owns row1; the [reviewer owns row2 and the owner comparison](https://github.com/tya5/chrona/issues/1811#issuecomment-6285598446).
 
@@ -19,6 +20,9 @@ text and `textTransform: none` keep their existing path.
 Own-venv focused verification:113 passed across the two new modules and existing
 Style scopes, transformed placements, small caps, sources, legend sizing/grid,
 slot sizing and realized keys. No local full suite/public-materializer sweep.
+The initial CI's float-accumulation gate caught a builtin `sum`; corrected
+without changing policy. The gate,30 focused text/legend tests and24 precision/
+audit tests pass, including widely separated run widths.
 The [actual CLI PNG](assets-1811/legend-data-case.png) was inspected: `Aiko`
 stays capitalized beside lower-case authored/built-in keys. It renders the
 first integration fixture at1800×1000 with the same resources/Actual input;
