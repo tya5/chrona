@@ -102,7 +102,7 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
 | `render_review` | `chrona render-review` | Pinned evidence: renders an immutable Render Context from a Store (see below); read-only. |
 | `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
-| `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
+| `check_command` | `chrona command-check` | Previews an inline Store command or contained command file; writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
 | `apply_authoring_command` | `chrona authoring-command-apply` | Applies an inline authoring command or contained command file; requires `--allow-write`. |
 | `create_workspace` | Library entry (no CLI equivalent) | Creates a new workspace directory from a builtin preset and compact project; requires `--allow-write`. |
@@ -142,7 +142,7 @@ chrona render examples/launch.yaml --output launch.svg
 
 One command draws with the packaged default look. A **preset** bundles View, Theme,
 Color Scheme and Layout, so a different preset changes the look without touching the
-plan. List the builtin ids, render with one, or copy one to edit:
+plan. List the builtin ids, render with one, or copy one to edit (`--id NAME` on a copy renames the preset and all its resource ids together):
 
 ```bash
 chrona preset list
@@ -151,9 +151,9 @@ chrona preset copy executive-light --output looks/executive-light
 chrona render examples/launch.yaml --preset looks/executive-light/preset.yaml --output launch-executive.svg
 ```
 
-`--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`); a narrower
-one can clip or drop labels. Use explicit `--view`, `--theme`, `--scheme` or `--layout` files only
-to override one member of a preset. Contexts and Stores are the pinned-evidence path below; do not use them unless the user asks for pinned evidence.
+[Theme role reference](references/theme-role-reference.md) explains what roles paint and which
+properties consume tokens.
+`--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`); a narrower one can clip or drop labels. Use explicit `--view`, `--theme`, `--scheme` or `--layout` files only to override one member of a preset. Contexts and Stores are the pinned-evidence path below; do not use them unless the user asks for pinned evidence.
 
 ## Pinned evidence from a Store (only when the user asks)
 

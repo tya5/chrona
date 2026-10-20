@@ -32,10 +32,10 @@ def _captions(rendered):
 
 
 @pytest.mark.parametrize(("text_format", "expected"), [
-    (None, {"a": "9 days late", "g": "10 days late"}),
-    ({"form": "english-words"}, {"a": "nine days late", "g": "ten days late"}),
-    ({"form": "kanji"}, {"a": "九 days late", "g": "十 days late"}),
-    ({"form": "kanji-formal"}, {"a": "玖 days late", "g": "拾 days late"}),
+    (None, {"a": "8 days late", "g": "10 days late"}),
+    ({"form": "english-words"}, {"a": "eight days late", "g": "ten days late"}),
+    ({"form": "kanji"}, {"a": "八 days late", "g": "十 days late"}),
+    ({"form": "kanji-formal"}, {"a": "捌 days late", "g": "拾 days late"}),
 ])
 def test_actual_svg_has_formatted_core_count_only_for_slipped_deadlines(tmp_path, text_format, expected):
     parts = _caption_parts(text_format=text_format)
@@ -78,9 +78,20 @@ def test_actual_svg_places_overflow_on_other_side_of_tick(tmp_path):
     assert caption.text == "10 days late" and "10 days late" in rendered.artifact.content.decode()
 
 
-def test_outside_window_deadline_does_not_count_as_dropped_caption(tmp_path):
+def test_deadline_boundary_at_window_start_keeps_caption(tmp_path):
     rendered = _render(tmp_path, source=_source(a="2025-12-31"), parts=_caption_parts())
+    captions = _captions(rendered)
+    # The deadline date is outside the window, but the tick is the exclusive
+    # boundary after that date and lands exactly at the window start.
+    assert len(captions) == 1 and captions[0].source_ref == "a"
+    assert captions[0].text == "44 days late"
+    assert not any(isinstance(item, DeadlineCaptionsDropped) for item in rendered.info_diagnostics)
+
+
+def test_outside_window_deadline_does_not_count_as_dropped_caption(tmp_path):
+    rendered = _render(tmp_path, source=_source(a="2025-12-30"), parts=_caption_parts())
     assert not _captions(rendered)
+    assert "I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:a" in rendered.scene.diagnostics
     assert not any(isinstance(item, DeadlineCaptionsDropped) for item in rendered.info_diagnostics)
 
 
@@ -128,8 +139,8 @@ def test_custom_caption_role_is_measured_and_painted_without_changing_body_text(
     assert all(item.visual_role == "deadline-caption" for item in captions)
     assert all("deadline-caption" not in item for item in rendered.surface.diagnostics if item.startswith("W_THEME_ROLE_UNREAD"))
     # Source adapters receive the completed text, not a deadline-specific API.
-    assert "9 days late" in render_v05_typst(rendered.surface)
-    assert "9 days late" in render_v05_tikz(rendered.surface)
+    assert "8 days late" in render_v05_typst(rendered.surface)
+    assert "8 days late" in render_v05_tikz(rendered.surface)
 
 
 def test_caption_cannot_borrow_the_mark_contrast_floor(tmp_path):
@@ -174,7 +185,7 @@ def test_caption_uses_available_cjk_fallback_with_informational_substitution(tmp
     captions = _captions(rendered)
     assert len(captions) == 2
     assert {item.source_ref: item.text for item in captions} == {
-        "a": "九 days late", "g": "十 days late",
+        "a": "八 days late", "g": "十 days late",
     }
     substitutions = [item for item in rendered.info_diagnostics if item.code == "I_FONT_GLYPH_SUBSTITUTED"]
     assert substitutions
@@ -196,4 +207,4 @@ def test_actual_pdf_carries_caption_copy_without_deadline_specific_adapter_logic
     rendered = render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(),
         asset_root=draft.asset_root, draft_auto_block=draft.auto_block, draft_font_resolution=draft.font_resolution))
     text = PdfReader(BytesIO(rendered.artifact.content)).pages[0].extract_text()
-    assert "9 days late" in text and "10 days late" in text
+    assert "8 days late" in text and "10 days late" in text

@@ -605,7 +605,20 @@ search, including under `best` (#1754): a valid prior corridor takes priority
 over ranking a fresh route. Ranking and quotas for ordinary best search remain
 unchanged after a miss. A later optional side-entry/rank improvement MUST NOT
 replace a fully validated hint. Unsupported geometry or incompatible terminal evidence is a hint miss.
+Host reconstruction uses completed bounds and temporal endpoint semantics,
+not a point/span-to-primitive-kind assumption: admitted `Rect` and `Symbol`
+hosts may represent spans. Explicit primary forecast hosts retain their declared
+identity and participate through the same decoded evidence and validators
+(Spec08); neither their purpose nor symbol serialization is a reason to omit them.
 No nearest-point guess or serialized Scene mutation is permitted.
+Composite Symbol siblings may supply one host under the exact placement identity
+only through Spec08's identical-bounds, source and purpose checks. This decoding
+does not select ports or accept a route; ambiguous or conflicting hosts remain
+hint misses and every recovered proposal retains the ordinary validators.
+Fan-in non-owner hints compare the configured end terminal with the prior shared
+owner's terminal evidence (Spec08), not the absent non-owner paint. Layout must
+revalidate the recovered route normally and recompute current fan-in ownership;
+prior group membership never authorizes a route or suppresses a current terminal.
 
 Reanchoring preserves semantic endpoints, shape family and interior channels:
 translate the whole route for equal endpoint-corridor translations; otherwise
@@ -1444,13 +1457,16 @@ paint cannot be read stays `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
 A table-timeline deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
 carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge
 lateness). For every completed planned/forecast mark of the object (a snapshot or scenario mark never hosts one),
-including a point folded into a group header, the tick is the vertical segment at the deadline date, mapped through the scale that
+including a point folded into a group header, the tick is the vertical segment at the completed boundary after the inclusive deadline day, mapped through the scale that
 places marks, centred on the mark and `markReach` times its block size tall (placement id `deadline-tick:<mark instance>`);
-a slipped deadline adds the run, the horizontal segment from the tick's lower end to the selected forecast/planned finish
-carried on `ReviewDeadline` (Spec06 §7.3), clipped to the plot's
+a slipped deadline adds the run, the horizontal segment from the tick's lower end to the boundary after the selected inclusive finish day
+carried on `ReviewDeadline` (Core's integer day boundaries, Spec04 §10/Spec06 §7.3), clipped to the plot's
 inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object id, semantic `deadlineMark`, slot `timeline`
-and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
+and paint order the mark base plus Theme `markPaintOrder`. A completed tick boundary outside the View window (the closed range, both
 edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`.
+Use ordinal-based scale mapping rather than constructing a date beyond the
+supported range; Layout maps and clips completed boundaries, never normalizes
+inclusive finishes or recomputes the lateness verdict.
 Folded-header packing includes the tick/run maximum painted envelope (stroke,
 optional outline and declared wobble) in each occurrence's inline extent and
 block allocation, together with its existing mark/title/delta extent. Shared
@@ -1585,6 +1601,7 @@ selected descendants; group objects are not emitted as orphan task nodes.
 Allocate disjoint secondary-axis bands to unrelated containers, preserving
 the existing deterministic rank/order within them. Nested containers enclose
 their child bands. Empty selected containers remain visible containers.
+Stable rank/member ordering does not promise fixed node coordinates when a larger measured rank demand requires movement; validated previous-node placement hints are not required.
 Group endpoints retain ports on the completed container boundary; no relation
 or ancestor is invented or silently removed. These are network-native groups,
 not the table-only region frames of Spec33.

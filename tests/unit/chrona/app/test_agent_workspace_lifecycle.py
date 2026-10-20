@@ -68,7 +68,7 @@ def test_creation_refuses_an_in_root_symlink_parent_without_touching_its_target(
 
 def test_lifecycle_registry_exposes_commands_payloads_and_truthful_write_annotations():
     registry = registry_document()
-    assert registry["toolSet"] == "chrona/agent-tools/v0.7"
+    assert registry["toolSet"] == "chrona/agent-tools/v0.8"
     tools = {tool["name"]: tool for tool in registry["tools"]}
     for name in ("create_workspace", "validate_workspace", "workspace_revision", "render_workspace"):
         assert tools[name]["inputSchema"]["additionalProperties"] is False

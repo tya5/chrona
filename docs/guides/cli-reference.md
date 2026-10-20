@@ -220,10 +220,11 @@ list the built-in looks or copy one to edit
 
 copy one named builtin preset
 
-`chrona preset copy --output -o`
+`chrona preset copy --id --output -o`
 
 - `id`: builtin preset identifier
 - `--output, -o`: empty output directory
+- `--id`: name the copy: the preset and its View, Theme, Color Scheme, Layout and profile ids are all renamed to this (1-256 characters, letter first, then letters, digits, '.', '_', '-'); icon catalogs keep their ids
 
 ## chrona preset list
 

@@ -32,9 +32,9 @@ def test_filtered_candidate_growth_is_released_from_completed_canvas_without_cha
             request, legend, slots, headings, metric_values, metric_for)
         # Simulate conservative space reserved for possible keys that final
         # placement visibility will remove. Keep the allocation itself fixed.
-        initial_batches.append((batch, len(request.surface_content.legend_entries)))
         inflated = replace(batch, slot=replace(batch.slot, bounds=replace(
             batch.slot.bounds, block_size=batch.slot.bounds.block_size + 10000)))
+        initial_batches.append((inflated, len(request.surface_content.legend_entries)))
         return inflated, tuple(replace(slot, bounds=replace(
             slot.bounds, block_size=slot.bounds.block_size + 10000))
             if slot.source_ref == "legend" else slot for slot in completed_slots)

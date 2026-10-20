@@ -58,4 +58,9 @@ def extend_to_plot_edges(left: float, right: float, *, scale: ScalePlacement, pl
 
 def coordinate_for_date(value: date, scale: ScalePlacement) -> float:
     """Map a date through an already completed temporal scale."""
-    return scale.origin + (value - scale.domain_start).days * scale.unit_ratio
+    return coordinate_for_day_ordinal(value.toordinal(), scale)
+
+
+def coordinate_for_day_ordinal(value: int, scale: ScalePlacement) -> float:
+    """Map a completed day boundary, including one beyond the final date."""
+    return scale.origin + (value - scale.domain_start.toordinal()) * scale.unit_ratio

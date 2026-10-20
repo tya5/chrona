@@ -232,9 +232,14 @@ end <= 2026-11-30
 A deadline violation produces the warning `W_DEADLINE` and nothing else: no placement, verdict, analysis or
 diagnostic error changes, and a plan with a missed deadline is still scheduled and drawn.
 
-The finish of an object is `at` for a point and `end` for a span (the stored value that `constraints.end.max` also
-compares, Section 9); a rollup's finish is its `end`. The warning is raised when the finish is strictly later than the
-deadline; a finish equal to the deadline keeps it. By default planned placements are judged: an Actual input alone
+For deadline evaluation, finish is the inclusive final occupied calendar date:
+`at` for a point, and exclusive `end` minus one calendar day for a positive
+span or rollup. A zero-extent rollup is judged at its single boundary date.
+This is not a working-calendar retreat and does not change stored placements,
+dependency endpoints or `constraints.end.max` (Section 9). The warning is raised
+when this inclusive finish is strictly later than the inclusive deadline;
+finishing on the deadline keeps the promise. `daysLate` is their calendar-day
+difference. By default planned placements are judged: an Actual input alone
 never changes the basis (Section 17), and a scenario is judged only when it is the scheduled Project.
 An explicit forecast render selects the forecast finish for eligible primary temporal occurrences
 (Spec06 §7.3/§8.5), and the original planned finish for other objects. This is an explicit comparison
@@ -243,16 +248,27 @@ Project and selected placements, applied after scheduling; the scheduler itself 
 not a calendar date is `E_SCHEMA` at `/objects/<id>/deadline`.
 
 The warning carries `details` with the stable keys `object`, `endpoint` (`at` or `end`), `finish`, `deadline` (ISO
-dates) and `daysLate` (calendar days, at least 1), and the pointer `/objects/<id>/deadline`. Warnings follow Project
+dates; `finish` is inclusive) and `daysLate` (calendar days, at least 1), and the pointer `/objects/<id>/deadline`. Warnings follow Project
 object order. `chrona schedule` prints them as the `warnings` array of its result, beside an empty `diagnostics`;
 `chrona validate` computes no placements and does not judge a deadline.
 In explicit forecast renders, each warning also carries `finishBasis: forecast | planned`
 and names that basis in its message; its finish and late-day count use the same selected status
-as the drawn deadline. Without forecast, existing warning messages/details and scheduling behavior are unchanged.
+as the drawn deadline. Without forecast, warnings omit the basis field/text;
+both modes use the same inclusive-date rule. Scheduling behavior is unchanged.
 
-A View may draw the finished verdict (Spec 06 section 7.3): a tick at the deadline date and, for a slipped deadline, a run
-to the selected forecast or planned finish. The verdict is the same one `W_DEADLINE` names (`core/deadlines.py` `deadline_statuses`), so the
+A View may draw the finished verdict (Spec 06 section 7.3). Core supplies the
+exclusive boundary after the deadline day and after the inclusive finish day;
+their half-open interval contains exactly the late calendar days. Boundaries
+are integer calendar-day ordinals, so the conceptual boundary after the maximum
+representable date does not require constructing an out-of-range date. A
+slipped point uses the end of its occupied date, not its date's starting edge.
+The verdict is the same one `W_DEADLINE` names (`core/deadlines.py` `deadline_statuses`), so the
 picture and the warning cannot disagree, and drawing it changes no placement, verdict or analysis.
+
+This corrects the former exclusive-end deadline comparison (#1840). Span
+warnings/counts and deadline geometry intentionally change; no compatibility
+mode preserves the off-by-one result. Point verdicts and scheduler results do
+not change.
 
 ## 11. Span amount rule
 

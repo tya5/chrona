@@ -472,6 +472,7 @@ def _parser() -> JsonArgumentParser:
     command = preset_sub.add_parser("copy", help="copy one named builtin preset")
     command.add_argument("id", help="builtin preset identifier")
     command.add_argument("--output", "-o", required=True, help="empty output directory")
+    command.add_argument("--id", dest="new_id", help="name the copy: the preset and its View, Theme, Color Scheme, Layout and profile ids are all renamed to this (1-256 characters, letter first, then letters, digits, '.', '_', '-'); icon catalogs keep their ids")
     preset_sub.add_parser("list", help="list every builtin preset id with a one-line description")
 
 
@@ -740,7 +741,7 @@ def _run_mcp(args: argparse.Namespace) -> None:
 
 
 def _run_preset_copy(args: argparse.Namespace) -> None:
-    copy_builtin_preset(args.id, Path(args.output))
+    copy_builtin_preset(args.id, Path(args.output), args.new_id)
     _print_created(Path(args.output))
 
 

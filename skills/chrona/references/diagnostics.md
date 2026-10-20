@@ -49,6 +49,7 @@ in the chrona repository); if you meet one, quote it to the user and do not gues
 | `E_RENDER_RASTERIZER_UNAVAILABLE` | A `.png` or `.pdf` render needs the `render` extra, which is not installed. | `pip install 'chrona[render]'`, or write `.svg`. |
 | `E_BUILTIN_PRESET_UNKNOWN` | `--preset` is neither a path nor a builtin id. The message names the value you passed and lists every valid id. | Run `chrona preset list` and use one of its ids, or pass a path to a `preset.yaml`. |
 | `E_BUILTIN_PRESET_OUTPUT_EXISTS` | `chrona preset copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
+| `E_BUILTIN_PRESET_NEW_ID` | `chrona preset copy --id NAME` got a name outside the copied resources' identifier contract. | Use 1–256 characters: start with a letter, then use letters, digits, `.`, `_` or `-`. |
 | `E_INIT_OUTPUT_EXISTS` | `chrona init DIR` found `DIR` already in use. | Pick a new directory name. |
 | `E_SKILL_OUTPUT_EXISTS` | `chrona skill copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
 | `E_RESOURCE_VERSION_UNSUPPORTED` | A preset copied by an older chrona is stale for this version. | Copy the preset again into a new directory and re-apply your edits. |

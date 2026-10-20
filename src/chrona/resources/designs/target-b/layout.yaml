@@ -124,7 +124,7 @@ root:
         - id: annotations
           kind: slot
           source: annotations
-          heading: {text: Notes, align: start, block: header-row}
+          heading: {text: {wording: slot.notes}, align: start, block: header-row}
           inlineSize: {fixed: {token: note-rail-width}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}

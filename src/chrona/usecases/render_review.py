@@ -29,7 +29,6 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_count_closure import inspect_count_reads
 from chrona.presentation.layout.surface_render_plan import (
     SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
-    uses_independent_view_heading,
 )
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import (
@@ -469,8 +468,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     # Retain typed Layout work facts independently of the optional UI sink.
     # Count trials buffer ordinary progress but forward attempted-work advisories.
     layout_progress = RenderProgress(observe_layout_work)
-    heading_content = (compose_heading(view, project, actual_observations, environment.locale)
-                       if view.surface == "table-timeline" else None)
+    # Both native surfaces use the same composed View heading. A network's
+    # whole-title slot is the heading host; profiles without that slot admit
+    # the same named heading parts as before.
+    heading_content = compose_heading(view, project, actual_observations, environment.locale)
     try:
         count_input = inspect_count_reads(SurfaceRenderPlanInput(
             previous_route_hints=previous_scene.route_hints if previous_scene is not None else None,
@@ -518,8 +519,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         rendered = compose_resolved_review_surface(count_input, visual_profile=visual_profile,
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
-        if (view.surface == "table-timeline"
-                or uses_independent_view_heading(view.surface, plan.profile)):
+        if (view.surface == "table-timeline" or view.surface == "dependency-network"):
             profile_info += missing_heading_fact_warnings(view, project, actual_observations)
         if routing_advisory is not None:
             profile_info += (routing_advisory,)
@@ -1216,8 +1216,8 @@ def _shown_deadlines(project: dict[str, Any], statuses: tuple[DeadlineStatus, ..
                 caption = view.deadlines.caption.bind(item.days_late)
             except CountTextError as error:
                 raise RenderFailed(error.code, error.detail, "view", "/body/deadlines/caption/format") from error
-        shown.append(ReviewDeadline(item.object_id, item.deadline, item.finish, item.slipped,
-                                    item.days_late, caption))
+        shown.append(ReviewDeadline(item.object_id, item.deadline, item.deadline_boundary,
+                                    item.finish_boundary, item.slipped, item.days_late, caption))
     return tuple(shown)
 
 

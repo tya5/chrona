@@ -312,14 +312,15 @@ class ReviewPeriod:
 
 @dataclass(frozen=True)
 class ReviewDeadline:
-    """One Project deadline the View shows, with the finish the Core judged it against (#822).
+    """One shown promise with completed Core calendar-day boundaries.
 
     ``slipped`` is the Core's verdict (the finish is strictly after the deadline); Layout never compares the dates.
     """
 
     object_id: str
     deadline: date
-    finish: date
+    deadline_boundary: int
+    finish_boundary: int
     slipped: bool
     days_late: int
     caption: str | None = None

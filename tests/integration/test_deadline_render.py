@@ -42,8 +42,8 @@ def test_a_missed_deadline_warns_on_the_ledger_and_leaves_the_svg_unchanged(tmp_
     warnings = [item for item in warning_payloads(flagged.rendered) if item["code"] == "W_DEADLINE"]
     assert [item["sourceRef"] for item in warnings] == ["/objects/qa/deadline", "/objects/launch/deadline"]
     assert {key: warnings[0][key] for key in ("severity", "object", "endpoint", "finish", "deadline", "daysLate")} == {
-        "severity": "warning", "object": "qa", "endpoint": "end", "finish": "2026-10-08",
-        "deadline": "2026-10-05", "daysLate": 3}
+        "severity": "warning", "object": "qa", "endpoint": "end", "finish": "2026-10-07",
+        "deadline": "2026-10-05", "daysLate": 2}
     assert warnings[1]["message"] == "launch finishes 2026-10-10, 2 days after its deadline 2026-10-08"
     assert all(item["diagnostic"].startswith("W_DEADLINE:") for item in warnings)
     assert [item for item in flagged.rendered.scene.diagnostics if item.startswith("W_DEADLINE:")] == [

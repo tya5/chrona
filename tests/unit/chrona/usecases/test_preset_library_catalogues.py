@@ -117,3 +117,91 @@ def test_an_unknown_preset_names_the_value_and_lists_exactly_the_valid_ids(tmp_p
     listed = failure.message.split("valid ids: ", 1)[1].split(" (chrona preset list)", 1)[0].split(", ")
     assert listed == [item["id"] for item in preset_library.list_builtin_presets()]
     assert not (tmp_path / "out").exists()
+
+
+def test_preset_copy_id_renames_the_preset_and_every_resource_consistently(tmp_path):
+    """#1827 row 6: --id NEW writes one name everywhere, and the copy loads without hand edits."""
+    import yaml
+    from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
+
+    for entry in list_builtin_presets():
+        target = copy_builtin_preset(entry["id"], tmp_path / entry["id"], "my-look")
+        preset = yaml.safe_load(target.read_text(encoding="utf-8"))
+        assert preset["id"] == "my-look"
+        resources = preset["body"]["resources"]
+        declared = {name: value for name, value in resources.items() if isinstance(value, dict)}
+        assert {"view", "theme", "colorScheme", "layout"} <= set(declared)
+        for name, value in declared.items():
+            document = yaml.safe_load((target.parent / value["path"]).read_text(encoding="utf-8"))
+            assert value["id"] == document["id"] == "my-look", (entry["id"], name)
+        assert preset["body"]["compatibleColorSchemes"][0]["id"] == "my-look"
+        for catalog in resources.get("iconCatalogs", []):
+            assert catalog["id"] != "my-look"
+
+
+def test_preset_copy_id_copy_renders_without_resource_mismatch(tmp_path):
+    from chrona.usecases.preset_library import copy_builtin_preset
+    from chrona.app.cli import main
+    import sys
+
+    for index, new_id in enumerate(("renamed-look", "true", "null", "yes", "a" * 256)):
+        target = copy_builtin_preset("target-b", tmp_path / f"look-{index}", new_id)
+        output = tmp_path / f"out-{index}.svg"
+        argv = ["chrona", "render", "examples/onboarding/01-spans/project.yaml", "--preset", str(target), "--output", str(output)]
+        old = sys.argv
+        sys.argv = argv
+        try:
+            try:
+                main()
+            except SystemExit as exited:
+                assert exited.code in (0, None)
+        finally:
+            sys.argv = old
+        assert output.is_file()
+
+
+def test_preset_copy_id_refuses_an_unusable_name_before_writing(tmp_path):
+    import pytest
+    from chrona.usecases.failure_report import StableFailure
+    from chrona.usecases.preset_library import copy_builtin_preset
+
+    for index, bad in enumerate(("", "1lead", "has space", "-lead", "a/b", "a" * 257)):
+        absent = tmp_path / f"absent-{index}"
+        with pytest.raises(StableFailure) as caught:
+            copy_builtin_preset("target-b", absent, bad)
+        assert caught.value.code == "E_BUILTIN_PRESET_NEW_ID"
+        assert not absent.exists()
+
+        empty = tmp_path / f"empty-{index}"
+        empty.mkdir()
+        with pytest.raises(StableFailure) as caught:
+            copy_builtin_preset("target-b", empty, bad)
+        assert caught.value.code == "E_BUILTIN_PRESET_NEW_ID"
+        assert empty.is_dir() and list(empty.iterdir()) == []
+
+
+def test_preset_copy_id_uses_layout_id_schema_boundary(tmp_path):
+    import yaml
+
+    new_id = "a" * 256
+    target = preset_library.copy_builtin_preset("target-b", tmp_path / "look", new_id)
+    preset = yaml.safe_load(target.read_text(encoding="utf-8"))
+    assert preset["id"] == new_id
+    for resource in preset["body"]["resources"].values():
+        if isinstance(resource, dict):
+            document = yaml.safe_load((target.parent / resource["path"]).read_text(encoding="utf-8"))
+            assert document["id"] == new_id
+
+
+@pytest.mark.parametrize("new_id", ["true", "false", "null", "yes", "no", "on", "off", "y", "n"])
+def test_preset_copy_id_keeps_yaml_reserved_names_as_strings_for_every_preset(tmp_path, new_id):
+    import yaml
+
+    for entry in preset_library.list_builtin_presets():
+        target = preset_library.copy_builtin_preset(entry["id"], tmp_path / f"{entry['id']}-{new_id}", new_id)
+        preset = yaml.safe_load(target.read_text(encoding="utf-8"))
+        assert preset["id"] == new_id
+        for resource in preset["body"]["resources"].values():
+            if isinstance(resource, dict):
+                document = yaml.safe_load((target.parent / resource["path"]).read_text(encoding="utf-8"))
+                assert resource["id"] == document["id"] == new_id, (entry["id"], resource["path"])

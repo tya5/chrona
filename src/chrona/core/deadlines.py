@@ -11,7 +11,7 @@ and a View's deadline mark are both derived from it, so they cannot disagree.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Literal
 
 from chrona.core.diagnostics import Diagnostic
@@ -22,8 +22,10 @@ from chrona.core.temporal import as_date
 class DeadlineStatus:
     """One object's promise against its selected finish.
 
-    ``endpoint`` is ``at`` for a point and ``end`` for a span; ``days_late`` is the signed calendar days
-    ``finish - deadline`` (positive when the promise is missed, zero when kept on the day, negative slack).
+    ``finish`` is the inclusive final occupied date: ``at`` for a point and
+    ``end - 1 day`` for a positive span. A zero-extent rollup uses its shared
+    start/end boundary as its point-like date. ``days_late`` is the signed
+    calendar-day difference between that finish and the deadline.
     """
 
     object_id: str
@@ -35,16 +37,28 @@ class DeadlineStatus:
 
     @property
     def slipped(self) -> bool:
-        """A finish strictly after the deadline; a finish equal to it keeps the promise."""
+        """An inclusive finish strictly after the deadline."""
         return self.days_late > 0
+
+    @property
+    def deadline_boundary(self) -> int:
+        """Ordinal boundary after the inclusive deadline day (may be date.max + 1)."""
+        return self.deadline.toordinal() + 1
+
+    @property
+    def finish_boundary(self) -> int:
+        """Ordinal boundary after the inclusive finish day (may be date.max + 1)."""
+        return self.finish.toordinal() + 1
 
 
 def deadline_statuses(project: dict[str, Any], placements: dict[str, dict[str, date]],
                       forecast_placements: dict[str, dict[str, date]] | None = None) -> tuple[DeadlineStatus, ...]:
     """One status per object that has a ``deadline`` and a placement, in Project order.
 
-    The finish of a point is ``at``; the finish of a span is ``end``, the stored value that
-    ``constraints.end.max`` also compares. An object with no deadline or no placement is skipped.
+    The inclusive finish of a point is ``at``; for a positive span it is the
+    stored exclusive ``end`` minus one calendar day. A zero-extent rollup is
+    point-like and uses its shared start/end date. An object with no deadline
+    or no placement is skipped. This does not change the scheduler's endpoints.
     When supplied, ``forecast_placements`` selectively overrides the planned placement for
     the named objects; all other objects retain their planned finish.
     """
@@ -59,6 +73,12 @@ def deadline_statuses(project: dict[str, Any], placements: dict[str, dict[str, d
         if endpoint not in placement:
             continue
         finish, promised = placement[endpoint], as_date(deadline)
+        if endpoint == "end":
+            item_schedule = item.get("schedule", {})
+            zero_extent_rollup = (item_schedule.get("mode") == "rollup"
+                                  and placement.get("start") == finish)
+            if not zero_extent_rollup:
+                finish -= timedelta(days=1)
         statuses.append(DeadlineStatus(object_id, promised, finish, endpoint, (finish - promised).days,
                                        "forecast" if forecast_placement is not None else "planned"))
     return tuple(statuses)
@@ -68,7 +88,7 @@ def deadline_warnings_from_statuses(statuses: tuple[DeadlineStatus, ...], *,
                                     forecast_mode: bool = False) -> tuple[Diagnostic, ...]:
     """Format the slipped completed statuses, optionally naming each selected basis.
 
-    The ordinary wrapper omits basis text and details to preserve its public payload exactly.
+    The ordinary wrapper omits the forecast basis field and text.
     Explicit forecast mode records the selected basis even for a planned fallback.
     """
     return tuple(
@@ -86,7 +106,7 @@ def deadline_warnings_from_statuses(statuses: tuple[DeadlineStatus, ...], *,
 
 
 def deadline_warnings(project: dict[str, Any], placements: dict[str, dict[str, date]]) -> tuple[Diagnostic, ...]:
-    """One ``W_DEADLINE`` per object whose planned finish is strictly after its ``deadline``.
+    """One ``W_DEADLINE`` per object whose inclusive planned finish is after its ``deadline``.
 
     A finish equal to the deadline keeps the promise. Objects come in Project order.
     """

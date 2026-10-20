@@ -124,6 +124,11 @@ title, not the raw value), a `block` legend is as wide as its widest entry, and 
 `inline` legend as wide as the line of entries, or as the widest entry when
 `itemMinInlineSize` lets it wrap. Measurement and drawing use the same entries and the
 same swatch geometry (#497).
+The natural block of a block-direction legend is the sum of each entry's
+`max(label line box, actual swatch block)` plus gaps between entries only
+(#1830). Text-only entries reserve their label row. Measured allocation and
+completed placement both enclose every row, including its full swatch extent.
+A label baseline is not the row's end, and no gap follows the last row.
 Legend entry reservations, remaining inline space and row offsets use the same
 Decimal component composition for measurement and placement (#1826). Equality
 with a natural label width is a fit before completed positions are converted
@@ -1112,6 +1117,7 @@ final timeline host, and fill-expanded row placements MUST NOT become an
 input to a subsequent content-sizing pass. Explicit larger minimum requests
 may therefore create surplus for fill, while a compact auto result places
 rows at their natural requirements.
+`rowDistribution: fill` intentionally redistributes surplus when row count changes, preserving authored fractional row pitch rather than promising byte-stable rows above an insertion or removal.
 
 ## 14. Seeded canvas tiles and overlay geometry (#888)
 

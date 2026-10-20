@@ -266,6 +266,18 @@ edits that file or bypasses the common schema/project/integrity validation.
 Immutable `render-review` obtains the input only from its Context, not a CLI
 override. Layout alone consumes neutral decoded route evidence; Scene and adapters
 do not reanchor, search or validate routing geometry.
+Neutral host decoding includes the declared `forecast` primary purpose as well
+as planned/Actual/baseline hosts. Preserve its purpose, source and instance
+identity; do not relabel it as planned or discard it because its paint role is
+shared. Layout still decides whether that evidence reconstructs a valid route.
+For a composite Symbol, the existing `<placement>:partN` sibling identities may
+recover their exact endpoint placement only when every sibling has the same
+source, purpose and completed bounds. Reject conflicting siblings or a colliding
+unsuffixed primitive; never merge by source alone or infer a union of bounds.
+For a schema-validated fan-in non-owner, decode the shared end-terminal evidence
+from its exact `terminalOwnerId` relation on the same surface/target port. The
+absent local paint is not evidence of an unconfigured terminal. Preserve the
+original Scene and path; do not replay prior terminal suppression into Layout.
 
 Draft `chrona render --snapshot <project.yaml>` (#1533) accepts a baseline
 Project file as the typed Snapshot Project role. Validate it through the normal

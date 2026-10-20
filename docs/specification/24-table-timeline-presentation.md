@@ -200,6 +200,12 @@ extent is the sum of natural widths and the gutters between columns. A table slo
 at `inlineSize: content` receives the larger of this extent and
 `column count × table.column.minInlineSize`. The metric is a per-column floor for
 a content-sized slot, not a column minimum. Any surplus goes to flexible columns.
+Natural demand and full-text fit admission share one Layout-owned composition of
+measured text advance, hierarchy indent and inset (#1841). A complete header or
+cell fits when that demand fits its allocated column; reverse floating-point
+subtraction of the same chrome must not invent a shortage. Apply this also to
+bounded/wrapped and affixed content; genuine shortage retains the declared
+overflow policy. Do not add a tolerance or inflate column widths to hide it.
 
 **Rows under group headers (#1065).** The View's `hierarchyColumn` names the table column that carries row
 nesting. Hierarchy grouping, a row `depth` and a `parentRow` nest rows with their own depths: a grouped row starts

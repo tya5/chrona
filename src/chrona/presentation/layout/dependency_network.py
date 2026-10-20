@@ -220,8 +220,15 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
     content_slots = {source: content_slot(slot, headings.reserved(source))
                      for source, slot in slots.items()}
     title_slot = content_slots.get("title")
+    title_runs = request.measured_sources.run_measurements.get("title", ())
+    title_source = request.measured_sources.inputs.get("title")
     heading_batch = None
-    if title_slot is None:
+    # Explicit View heading parts can omit the title or add kicker/subtitle
+    # runs. Route those through the shared heading placer even when the profile
+    # also has a whole-title host; only the no-heading/one-run path retains the
+    # original scalar placement equations.
+    if (title_slot is None or len(title_runs) != 1 or
+            (title_source is not None and title_source.run_flow == "block")):
         heading_batch = place_surface_headings(request, content_slots, request.measured_sources)
     network_slot = content_slot(slots["network"], network_reserve)
     authored_legend = content_slots.get("legend")
