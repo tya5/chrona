@@ -727,6 +727,7 @@ class SurfaceLayoutRequest:
     previous_route_hints: PreviousRouteHints | None = None
     temporal_capacity: TemporalInlineCapacity | None = None
     paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
+    scene_precision: int = 3
 
 
 @dataclass(frozen=True)

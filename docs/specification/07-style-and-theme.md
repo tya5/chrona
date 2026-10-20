@@ -542,6 +542,16 @@ epsilon, circle fallback, text shrink or project-specific limit is introduced.
 Layout completes the geometry once for all four chip roles; allocation,
 placement and collision use that result, and Scene/adapters never refit it.
 
+Completed burst vertices use the Render Context's declared `scenePrecision`
+decimal places, rounded to nearest with ties to even after placement-origin
+translation (#1818). Layout retains the unrounded fit and reserves the extra
+half-quantum coordinate displacement before placement; completed bounds enclose
+the quantized ink. If that precision cannot preserve the padded text ground,
+fail `E_LAYOUT_CHIP_TEXT_GROUND_INVALID`, reason `precision-geometry`; increase
+`scenePrecision` rather than shrinking text or selecting a fallback shape.
+Rectangle/catalogue geometry is unchanged. Scene/adapters project the completed
+coordinates, not platform-specific trigonometry or a new rounding policy.
+
 Catalogue chips
 use the existing nine-slice geometry over padded text plus fixed borders;
 the nonzero union of their completed fill paths MUST cover the padded text

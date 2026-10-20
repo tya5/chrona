@@ -478,6 +478,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
+            scene_precision=environment.scene_precision,
             paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=layout_progress))

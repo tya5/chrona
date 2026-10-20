@@ -80,7 +80,8 @@ def measure_label_footprint(
         chip_measurement = chip_measurement_override
     else:
         chip_measurement = measure_label_chip(request.theme_tokens, semantic_id,
-            text_inline=text_size[0], text_block=text_size[1], font_size=float(font_size), padding=padding)
+            text_inline=text_size[0], text_block=text_size[1], font_size=float(font_size), padding=padding,
+            scene_precision=getattr(request, "scene_precision", 3))
     size = (text_size[0] + 2 * padding[0], text_size[1] + 2 * padding[1])
     if lane_measure is not None:
         size, padding = (lane_measure.width, lane_measure.height), lane_measure.chip_padding
