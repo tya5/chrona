@@ -212,7 +212,7 @@ root:
         kind: slot
         source: annotations
         heading:
-          text: Notes
+          text: {wording: slot.notes}
           align: start
           block: header-row
         inlineSize:
