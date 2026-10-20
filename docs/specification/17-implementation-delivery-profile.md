@@ -81,8 +81,8 @@ its typed fields violate this specification:
 Every other resolved profile package (#344) is checked against the same field definitions with
 generic diagnostics, each pointing at `/objects/<id>/fields[/<name>]`: `E_PROFILE_PACKAGE_INVALID`
 (manifest fails `profile-v0.3`), `E_PROFILE_ID_DUPLICATE` (a profile ID declared by two
-declared packages, naming both; profile IDs are globally unique per Spec 11; the first declaration stays in
-effect and the later package's duplicate is not used), `E_PROFILE_FIELD_UNKNOWN` (field not declared by the object's profile),
+declared packages, naming both; profile IDs are globally unique per Spec 11 and conflicting
+descriptors are not admitted), `E_PROFILE_FIELD_UNKNOWN` (field not declared by the object's profile),
 `E_PROFILE_FIELD_TYPE` (value is not the declared scalar, array or reference shape),
 `E_PROFILE_FIELD_ENUM` (value outside `enumValues`) and `E_PROFILE_FIELD_REQUIRED` (required field absent
 or null). An absent optional field is valid and an explicit `null` is valid only for an optional field.
@@ -102,9 +102,23 @@ base paint and the legend's base key stays, unless the encoding's optional `miss
 that is present but outside the domain is still refused with `E_PRESENTATION_SCALE_VALUE`.
 Objects whose `type` names no declared profile are not checked. The delivery package keeps its `IDP-*` codes.
 Within one Project, two declared packages MUST NOT claim the same profile ID
-(Spec11 §4.1). Report `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;
+(Spec11 §4.1). Report `E_PROFILE_ID_DUPLICATE` at the conflicting extension;
 declaration order MUST NOT silently choose a field schema. Independent source
 Projects resolve their own packages and descriptor catalogues.
+
+An `objectReference` (#344) names a target in that source Project's `entities`
+or `objects`. Resolve the effective field declaration, including its profile
+override, enumerate matching IDs, filter by exact `targetProfiles` when declared,
+then require one target. An omitted constraint is unconstrained, not a guessed
+namespace. Missing, incompatible or ambiguous targets are pointed
+`E_PROFILE_FIELD_TYPE` errors; `many` retains array order and per-element pointers.
+Existing required/null/cardinality rules and IDP-specific diagnostics remain.
+One semantic resolver supplies validation and detached source-local presentation
+bindings: target identity is logical Project ID, namespace and target ID, never
+its title or revision. Display uses the target's nonblank title, otherwise ID.
+Snapshot bindings use that Snapshot's declarations and target titles; scenario
+bindings use its effective source Project. No reference default, graph traversal,
+derived expression or new schema version is introduced.
 
 Typed-field Command execution is introduced by IDP-5. Evidence references are validated
 for shape only (section 8).

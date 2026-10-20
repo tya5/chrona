@@ -134,6 +134,11 @@ their declared types without boolean/number coercion. Snapshot facts use the
 Snapshot Project's own pinned declarations; scenario facts use the primary
 declarations after overlays. Object ID alone is not occurrence identity: source,
 row/member, semantic and column identities remain distinct.
+For a declared scalar `objectReference` (#344), a `fields` equality predicate
+compares the source-local resolved target title (target ID when untitled), as a
+column does. Raw target IDs remain separate encoding-domain facts (Spec60), so
+title equality does not merge target identities or colour keys. Many references
+remain outside scalar equality; no elementwise predicate is inferred.
 An occurrence also distinguishes its source container kind, such as an
 ordinary row and a folded group. Its semantic is the original canonical host
 binding, not a logical placement-name alias: existing primary points use
