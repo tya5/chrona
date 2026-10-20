@@ -320,6 +320,9 @@ saying why: the example Contexts leave inner references unpinned by design
 `required`. [First project](docs/guides/first-project.md#render-an-example-context-from-its-store)
 shows rendering an example Context from this Store with `render-review --store-config`.
 
+On success `chrona materialize` prints the same `{"status", "diagnostics", "warnings"}` JSON as `chrona render`, and
+resolves each Theme font stack the same way (declared, installed or packaged faces, #1281).
+
 Materialization verifies declared generated evidence. If a reviewed source
 change intentionally changes that artifact, rerun the same `chrona materialize`
 command with `--write` to refresh it; without that explicit flag, a mismatch is
