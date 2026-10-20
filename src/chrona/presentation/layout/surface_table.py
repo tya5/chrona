@@ -7,7 +7,8 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.presentation import (
-    TableColumnPlacement, column_inline_positions, header_group_cell_indent, table_cell_indent, table_text_measurer, place_table_columns,
+    TableColumnPlacement, column_inline_positions, header_group_cell_indent, table_cell_indent,
+    table_text_fits_column, table_text_measurer, place_table_columns,
 )
 from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -136,7 +137,8 @@ def prepare_table_header_seed(*, request: SurfaceLayoutRequest, table: SlotPlace
             resolved, overflow = closed.fit.content, "ellipsized" if closed.fit.ellipsized else "fit"
         else:
             resolved, overflow = _resolve_table_text(
-                label, available, header_role, table.overflow, tokens, font_metrics)
+                label, available, header_role, table.overflow, tokens, font_metrics,
+                column_inline_size=column_widths[column_id], inset=body_size)
         header_width = closed.fit.inline_size if closed is not None else measure_text_width(
             resolved, font_size=header_size, font_metrics=header_metrics,
             letter_spacing=float(header_treatment.letter_spacing),
@@ -236,10 +238,15 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                 resolved, overflow = closed.fit.content, "ellipsized" if closed.fit.ellipsized else "fit"
             else:
                 resolved, overflow = _resolve_table_text(
-                    content, available, typography_role, table.overflow, tokens, font_metrics)
+                    content, available, typography_role, table.overflow, tokens, font_metrics,
+                    column_inline_size=column_widths[column_id], indent=indent, inset=body_size)
+            full_content_fits = table_text_fits_column(
+                measure_table_text(content, typography_role, "horizontal"), column_widths[column_id],
+                indent=indent, inset=body_size)
             if getattr(cell, "required", False) and (
-                    (closed is not None and (closed.fit.ellipsized or closed.fit.inline_size > available))
-                    or (closed is None and (resolved != content or measure_table_text(content, typography_role, "horizontal") > available))):
+                    (closed is not None and (closed.fit.ellipsized or
+                                             (not full_content_fits and closed.fit.inline_size > available)))
+                    or (closed is None and (resolved != content or not full_content_fits))):
                 raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", f"/table/cells/{object_id}/{column_id}",
                                   detail="required comparison text must fit in full")
             if closed is None and overflow == "ellipsized" and (cell.affix_prefix or cell.affix_suffix):
@@ -300,11 +307,19 @@ def _column_header_rule(base: SurfaceBaseGeometry, seed: SurfaceTableHeaderSeed)
 
 
 def _resolve_table_text(content: str, available_inline: float, typography_role: str,
-                        overflow_policy: str, tokens: Any, font_metrics: Any) -> tuple[str, str]:
+                        overflow_policy: str, tokens: Any, font_metrics: Any, *,
+                        column_inline_size: float | None = None, indent: float = 0.0,
+                        inset: float = 0.0) -> tuple[str, str]:
     if overflow_policy != "ellipsize-with-source":
         return content, "fit"
     treatment = tokens.text_treatment(typography_role)
     metrics = metric_for_role(tokens, typography_role, font_metrics)
+    if column_inline_size is not None and table_text_fits_column(
+            measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metrics,
+                               letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                               numeric_spacing=treatment.numeric_spacing),
+            column_inline_size, indent=indent, inset=inset):
+        return content, "fit"
     resolved = ellipsize_text(
         content, available_inline=available_inline, font_size=float(treatment.font_size),
         font_metrics=metrics, letter_spacing=float(treatment.letter_spacing),
