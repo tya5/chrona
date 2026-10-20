@@ -640,8 +640,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             RelationResolutionStage.OVERLAP, RelationResolutionStage.STUB}
         # A reduction must retain both the mandatory host corridor and the
         # configured terminal's straight tangent, not merely one stroke width.
-        start_minimum = max(start_minimum, terminal_run(marker_start) + width)
-        end_minimum = max(end_minimum, terminal_run(marker_end) + width)
+        start_minimum = max(start_minimum, width + (marker_start.head_length / 2
+            if marker_start is not None and marker_start.centred else terminal_run(marker_start)))
+        end_minimum = max(end_minimum, width + (marker_end.head_length / 2
+            if marker_end is not None and marker_end.centred else terminal_run(marker_end)))
         def clear(path):
             return terminal_runs_preserved(tuple(points), path,
                 start_minimum=start_minimum or None, end_minimum=end_minimum or None
@@ -668,10 +670,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         # Retain declared corridors and enough free stroke beyond round-head
         # setbacks, not the arbitrary length of the search's original legs.
         reduced = simplify_relation_route(reduced, clears=clear_reduction,
-            start_minimum=max(start_minimum, width + (marker_start.head_length / 2
-                if marker_start is not None and marker_start.centred else 0.0)),
-            end_minimum=max(end_minimum, width + (marker_end.head_length / 2
-                if marker_end is not None and marker_end.centred else 0.0)))
+            start_minimum=start_minimum, end_minimum=end_minimum)
         if not terminal_runs_preserved(tuple(points), reduced,
                 start_minimum=start_minimum, end_minimum=end_minimum):
             return None
