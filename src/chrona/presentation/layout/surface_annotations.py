@@ -246,6 +246,24 @@ class SurfaceAnnotationBatch:
     narrative_receipts: tuple[NarrativeReceipt, ...] = ()
 
 
+def _register_balloon_tail_edges(surface_obstacles: SurfaceObstacleIndex, annotation_id: str,
+                                path_commands: tuple[PathCommand, ...], tail_tip: tuple[float, float]) -> None:
+    """Register the two already-completed tail edges for later placements."""
+    outline_points = tuple(point for command in path_commands for point in command.points)
+    tip_positions = tuple(index for index, point in enumerate(outline_points) if point == tail_tip)
+    if len(tip_positions) != 1:
+        raise AssertionError("completed balloon outline must contain its tail tip exactly once")
+    tip_index = tip_positions[0]
+    if tip_index == 0 or tip_index + 1 == len(outline_points):
+        raise AssertionError("completed balloon tail tip must have two adjacent outline edges")
+    tail_edges = ((outline_points[tip_index - 1], tail_tip), (tail_tip, outline_points[tip_index + 1]))
+    for edge_index, (start, end) in enumerate(tail_edges):
+        if start != end:
+            surface_obstacles.add(SurfaceObstacle(
+                f"annotation-box:{annotation_id}:tail:{edge_index}", "annotation-box", "annotations",
+                ObstacleSegment(start, end)))
+
+
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
     """Place annotations, reflowing a declared note list after monotone suppressions."""
     annotations = context.request.surface_content.annotations
@@ -1219,6 +1237,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if viewer_fit.mode != "raw":
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            if tail_tip is not None:
+                # A numbered index is placed later in this same annotation
+                # pass. Keep the two visible balloon-tail edges in the shared
+                # obstacle inventory so that index placement cannot land on
+                # the accepted tail after the tail's own search has finished.
+                _register_balloon_tail_edges(surface_obstacles, annotation_id,
+                                             shapes[-1].path_commands, tail_tip)
             if annotation_slot is not None and status_in_list:
                 rail_boxes.append(bounds)
             # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.
