@@ -380,7 +380,8 @@ class ThemeTokenView:
         declared = self._body["values"].get(token_id)
         if not isinstance(declared, Mapping) or declared.get("type") != expected_type or "value" not in declared:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", path,
-                                  f"role={_shown(role)}, property={_shown(property_name)}, token={_shown(token_id)}; declaredType={_operand(declared.get('type') if isinstance(declared, Mapping) else declared)}, expectedType={_shown(expected_type)}")
+                                  f"role={_shown(role)}, property={_shown(property_name)}, token={_shown(token_id)}; declaredType={_shown(declared.get('type')) if isinstance(declared, Mapping) else _operand(declared)}, expectedType={_shown(expected_type)}; "
+                                  f"change the declared type of values.{token_id} to {expected_type} or bind {property_name} to a token that is already a {expected_type}")
         return declared["value"]
 
     def color(self, role: str, property_name: str = "fill") -> str:
@@ -431,6 +432,8 @@ class ThemeTokenView:
         if not isinstance(value, Mapping):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
         shape = value.get("shape")
+        if shape == "glyph":
+            self._check_glyph_paths(role, value)
         if isinstance(shape, str):
             return value
         if (isinstance(shape, Mapping) and set(shape) == {"catalog"}
@@ -438,6 +441,28 @@ class ThemeTokenView:
             return value
         raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
         return value
+
+    def _check_glyph_paths(self, role: str, value: Mapping[str, Any]) -> None:
+        """Reject an unparsable inline glyph path here, where the token and the pointer are known (#1827)."""
+        from chrona.presentation.icons.normalizer import IconNormalizationError, parse_path_commands
+        parts = value.get("parts")
+        if not isinstance(parts, (list, tuple)):
+            return
+        token_id = self._body["roles"][role].get("symbol")
+        for index, part in enumerate(parts):
+            raw = part.get("d") if isinstance(part, Mapping) else None
+            if not isinstance(raw, str) or not raw:
+                continue
+            try:
+                parse_path_commands(raw)
+            except IconNormalizationError as error:
+                pointer = f"/body/values/{token_id}/value/parts/{index}/d"
+                arc = ("; arcs (A/a commands) are not supported" if any(c in raw for c in "Aa") else "")
+                raise ThemeTokenError(
+                    "E_THEME_TOKEN_TYPE", pointer,
+                    f"glyph path of symbol token {_shown(token_id)} (role {_shown(role)}, part {index}) is not valid: "
+                    f"{error}{arc}; a glyph path accepts only M, L, H, V and Z (straight segments), so draw a "
+                    f"circle with 'shape: circle' or approximate a curve with short L segments") from error
 
     _VARIANT_SYMBOL_ROLES = {"planned": "milestoneSymbol", "actual": "milestoneSymbolActual",
                              "baseline": "milestoneSymbolBaseline"}

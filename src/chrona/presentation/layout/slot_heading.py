@@ -17,6 +17,7 @@ from typing import Any, TYPE_CHECKING
 
 from chrona.presentation.count_text import CountTextError
 from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError, compile_figure_text
+from chrona.presentation.model.wording_tables import is_wording_ref
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
@@ -48,6 +49,32 @@ class SlotHeadings:
 
     def reserved_inline(self, source: str) -> Decimal:
         return (self.inline_reserve or {}).get(source, Decimal(0))
+
+
+def resolve_heading_wording(resolved_layout: ResolvedLayoutProfile, resolver: Any) -> ResolvedLayoutProfile:
+    """Replace each slot heading `text: {wording: key}` by the locale's text (#1827).
+
+    `resolver` is the `WordingResolver` of the Render Context locale and the View's `wording.keys`, the same one
+    every other wording reference reads. The result carries a literal caption, so measurement, placement and the
+    Scene never see a reference. A profile with no reference is returned as it came.
+    """
+    changed = False
+
+    def walk(value: Any) -> Any:
+        nonlocal changed
+        if isinstance(value, Mapping):
+            result = {key: walk(item) for key, item in value.items()}
+            heading = result.get("heading")
+            if isinstance(heading, Mapping) and is_wording_ref(heading.get("text")):
+                result["heading"] = {**heading, "text": resolver.resolve(heading["text"])}
+                changed = True
+            return result
+        if isinstance(value, (list, tuple)):
+            return [walk(item) for item in value]
+        return value
+
+    profile = walk(resolved_layout.profile)
+    return replace(resolved_layout, profile=profile) if changed else resolved_layout
 
 
 def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:

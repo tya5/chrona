@@ -240,6 +240,7 @@ def test_an_inset_token_the_profile_does_not_require_or_the_theme_lacks_is_a_tok
     with pytest.raises(LayoutError) as error:
         resolve_layout_profile(not_required, available_sources=SOURCES, theme=THEME)
     assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_TOKEN_REQUIREMENT_MISSING", "/requiredThemeTokens")
+    assert "add 'spacing.none' to requiredThemeTokens" in str(error.value)
 
     unavailable = profile(panel("row", frame={"inset": {"token": "frame.inset"}}))
     with pytest.raises(LayoutError) as error:
@@ -252,6 +253,8 @@ def test_an_inset_token_the_profile_does_not_require_or_the_theme_lacks_is_a_tok
     with pytest.raises(LayoutError) as error:
         resolve_layout_profile(extraneous, available_sources=SOURCES, theme=THEME)
     assert error.value.diagnostic_id == "E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS"
+    # #1827: the message names the token and says what to do, not only the code.
+    assert "'spacing.none'" in str(error.value) and "remove 'spacing.none' from requiredThemeTokens" in str(error.value)
 
 
 def derived(base: dict, overrides: dict) -> tuple[dict, dict]:
