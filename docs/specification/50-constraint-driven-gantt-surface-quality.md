@@ -1503,7 +1503,9 @@ The shared `period-label-chip` treatment is unchanged. Scene purpose, period `so
 collision policy do not vary with the role. A Theme that selects no label declares no label role.
 
 A Layout `legend` slot owns legend geometry. When it exists, every selected
-legend entry emits one swatch and one measured label. When absent, there are
+paint-key entry emits one swatch and one measured label. The forecast estimated-
+delta explanation defined by Spec06 may be text-only: measure/place its required
+label without a swatch or swatch-label gap. When absent, there are
 no legend primitives, except the explicit intrinsic network critical key below.
 This remains a resource choice on other surfaces, never renderer fallback.
 Header or row capacity shortfall completes visible stacked/natural geometry

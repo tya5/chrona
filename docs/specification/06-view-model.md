@@ -488,7 +488,16 @@ does not produce `I_LAYOUT_DEADLINE_CAPTION_DROPPED`.
 
 ### 7.4 Heading templates (#991)
 
-A `table-timeline` View MAY declare `heading: {title?, subtitle?, dateForm?}`. Each of `title` and `subtitle` is a template of literal text and the closed placeholders `{project}` (the Project title), `{asOf}` (the Actual Set's as-of date, formatted in `dateForm`, today `localized-date` in the context locale) and `{calendar}` (the Project's default calendar **title** when that calendar declares one, else its **id**; #1026). `{{` and `}}` are literal braces; any other brace use is `E_VIEW_HEADING_TEMPLATE`. The grammar is the group-header template's (section 6, #583) with this placeholder set. A fact the Project lacks (no as-of date, no default calendar) renders as empty text. Without `title` the title is the Project title; without `subtitle` there is no subtitle line, and a View without `heading` renders as before. The content layer composes the text; the title slot measures it as a stack of a `heading` run and a `subtitle` run, so the slot grows by the subtitle line; Layout places the subtitle under the title and Scene emits it as `subtitle-text` in the Theme's `subtitle` typography role (a Theme without that role fails with `E_THEME_ROLE_REQUIRED`). A `dependency-network` View draws its own title and ignores `heading`. The member is optional and additive in `chrona/view/v0.28`.
+A `table-timeline` View MAY declare `heading: {title?, subtitle?, dateForm?}`. Each of `title` and `subtitle` is a template of literal text and the closed placeholders `{project}` (the Project title), `{asOf}` (the Actual Set's as-of date, formatted by the shared as-of rule below) and `{calendar}` (the Project's default calendar **title** when that calendar declares one, else its **id**; #1026). `{{` and `}}` are literal braces; any other brace use is `E_VIEW_HEADING_TEMPLATE`. The grammar is the group-header template's (section 6, #583) with this placeholder set. A fact the Project lacks (no as-of date, no default calendar) renders as empty text. Without `title` the title is the Project title; without `subtitle` there is no subtitle line, and a View without `heading` renders as before. The content layer composes the text; the title slot measures it as a stack of a `heading` run and a `subtitle` run, so the slot grows by the subtitle line; Layout places the subtitle under the title and Scene emits it as `subtitle-text` in the Theme's `subtitle` typography role (a Theme without that role fails with `E_THEME_ROLE_REQUIRED`). A `dependency-network` View draws its own title and ignores `heading`. The member is optional and additive in `chrona/view/v0.28`.
+
+The heading `{asOf}` and as-of marker share one locale date formatter (#1810).
+An explicit marker `date` selects its form/name table for both; otherwise use
+the heading's `dateForm`, or `localized-date` in the context locale. Marker
+copy and Theme case treatment remain independent wording. A missing semantic
+heading fact still substitutes empty text, but emits
+`W_PRESENTATION_HEADING_FACT_MISSING` naming the fact and heading source
+pointer. Invalid/unknown placeholders and figure references retain their
+existing errors; this warning does not soften admission.
 
 For independent heading-part sources (Spec 33, #1239), both native surfaces
 resolve the View's heading into named parts. A dependency-network profile without
@@ -730,8 +739,21 @@ The content layer replaces the ordinary planned legend candidate with a
 paint. Do not leave a misleading current-plan key for the replacement bars.
 Final painted-occurrence filtering follows Specification 60 §4: if encoding
 replaces every forecast mark's base paint, its scale keys replace this base
-swatch too. The required delta and its estimated `*` remain; source capability
-checks still require the declared delta channel and legend slot.
+swatch too. If a completed visible delta still draws its estimated `*`, keep
+the forecast entry as a text-only explanation: the same required wording,
+without a swatch or swatch-label gap (#1810). Its witness comes from the typed
+estimated-delta fact on final text placements, never text parsing or available
+forecast sources. Reserve the candidate before Layout choice; final composition
+may remove its swatch or the unused entry, not restart geometry. This explanation
+claims no category ink. Source capability checks still require the declared
+delta channel and legend slot.
+
+The built-in `column.finishDelta` header names the displayed delta's reference:
+`column.finishDeltaPlan` for Actual/current-plan or forecast/primary-plan,
+`column.finishDeltaBaseline` for forecast/supplied-Snapshot. Keep the authored
+wording-key identity until that reference is known. Literal headers, other
+wording references and explicit wording overrides retain their authorship.
+The comparison calculation and working/calendar-day units are unchanged.
 
 Every selected primary temporal item needs a complete, visible forecast delta.
 Table cells use measured full comparison text; plot deltas are independent

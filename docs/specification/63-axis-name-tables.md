@@ -59,6 +59,11 @@ change is included in the atomic View v0.22 corpus migration.
 
 ## Built-in wording tables
 
+`column.finishDeltaPlan` and `column.finishDeltaBaseline` name the reference
+selected by the built-in `column.finishDelta` header under Spec06's forecast
+comparison rule (#1810). The locale table supplies both; authored literal
+headers and explicit wording overrides keep their existing precedence.
+
 (#1724) The engine also bundles `wording-tables-v0.1.yaml` (schema `wording-tables-v0.1.schema.yaml`), a sibling
 of the axis resource: one complete table per supported locale (`en-US`, `ja-JP`) mapping the same closed wording
 keys to text. A locale lacking any key, an unknown key, an empty text or a third table is `E_WORDING_TABLE_RESOURCE`.

@@ -43,6 +43,9 @@ encoded fill swatches. View encoding keys follow the same final-painted
 occurrence closure described below: when every planned occurrence has an encoding key, the base
 planned/forecast key is omitted; a mixed encoded and unencoded set retains the
 base key.
+An estimated-delta explanation may remain without a swatch under
+[Spec06's forecast rule](06-view-model.md#85-explicit-forecast-presentation-1634).
+It explains status, not ink, and contributes no swatch separability claim.
 After selecting the final route/label option, recompose filtered Style entries
 inside the conservatively allocated legend/footer slots. Final canvas completion
 uses the filtered legend extent, not candidate-only growth; it does not restart
