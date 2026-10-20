@@ -225,7 +225,10 @@ def _workspace_create_schema() -> dict[str, Any]:
 def _workspace_command_schema() -> dict[str, Any]:
     return _input_schema({
         "workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
-        "command": {"description": "Inline authoring-command/v0.1 request, or a contained command-file path.",
+        "command": {"description": "Inline request with version: chrona/authoring-command/v0.1, "
+                                    "or a contained command-file path. For workspace: guided/workspace.yaml, "
+                                    "the inline target is {kind: authoring-workspace, path: workspace.yaml}; "
+                                    "target.path is only the selected workspace's file name, not its outer path.",
                     "oneOf": [copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
                               copy.deepcopy(schema_document("authoring-command-v0.1.schema.yaml"))]},
     }, ["workspace", "command"])
@@ -830,8 +833,10 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ),
     ToolSpec(
         "apply_authoring_command", "Apply a guided workspace command",
-        "Apply an inline authoring-command/v0.1 object or contained YAML command file to a guided workspace. "
-        "A request has version, commandId, type, target {kind:authoring-workspace,path:<filename>}, baseRevision and payload. "
+        "Apply an inline request with version: chrona/authoring-command/v0.1 or a contained YAML command file "
+        "to a guided workspace. For workspace: guided/workspace.yaml, use target "
+        "{kind: authoring-workspace, path: workspace.yaml}; target.path is only the selected workspace's "
+        "file name, not its outer path. A request has version, commandId, type, target, baseRevision and payload. "
         "Types/payloads: setWorkspaceTask {task:{id,title,planned:{start,finish}}}; "
         "setWorkspaceActual {actual:{taskId,actual:{start,finish},progress?}}; "
         "selectPresentationPreset {preset:{id,version,path}}; setPresentationOverride {overrides:{view?,theme?}}; "

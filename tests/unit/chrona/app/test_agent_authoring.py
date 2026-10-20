@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.app.agent_tools import call_tool, registry_document
+from chrona.app.agent_tools import InvalidArgumentsError, call_tool, registry_document
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.app.cli import main
 from chrona.core.identity import content_identity
@@ -66,6 +66,43 @@ def test_agent_authoring_tool_has_write_truth_and_closed_two_path_input(tmp_path
     assert result.structured["diagnostics"][0]["code"] == "E_MCP_WRITE_DISABLED"
     assert "Nothing was read or written" in result.structured["diagnostics"][0]["message"]
     assert _tree(root) == {}
+
+
+def test_agent_authoring_metadata_matches_command_version_and_path_forms(tmp_path):
+    tool, = [item for item in registry_document()["tools"] if item["name"] == "apply_authoring_command"]
+    command = tool["inputSchema"]["properties"]["command"]
+    inline_schema = next(option for option in command["oneOf"] if option.get("type") == "object")
+    version = inline_schema["properties"]["version"]["const"]
+
+    assert version == "chrona/authoring-command/v0.1"
+    for description in (command["description"], tool["description"]):
+        assert f"version: {version}" in description
+        assert "workspace: guided/workspace.yaml" in description
+        assert "{kind: authoring-workspace, path: workspace.yaml}" in description
+        assert "file name, not its outer path" in description
+
+    root = tmp_path / "ws"
+    workspace = _seed(root)
+    before = _tree(root)
+    valid = _command(workspace)
+    wrong_version = json.loads(json.dumps(valid))
+    wrong_version["version"] = "authoring-command/v0.1"
+    with pytest.raises(InvalidArgumentsError, match="command/version"):
+        call_tool(WorkspaceScope(root), "apply_authoring_command",
+                  {"workspace": "workspace.yaml", "command": wrong_version}, allow_write=True)
+    assert _tree(root) == before
+
+    wrong_target = json.loads(json.dumps(valid))
+    wrong_target["target"]["path"] = "guided/workspace.yaml"
+    with pytest.raises(InvalidArgumentsError, match="command/target/path"):
+        call_tool(WorkspaceScope(root), "apply_authoring_command",
+                  {"workspace": "workspace.yaml", "command": wrong_target}, allow_write=True)
+    assert _tree(root) == before
+
+    accepted = call_tool(WorkspaceScope(root), "apply_authoring_command",
+                         {"workspace": "workspace.yaml", "command": valid}, allow_write=True)
+    assert accepted.structured["status"] == "ok"
+    assert accepted.structured["authoringResult"]["status"] == "accepted"
 
 
 def test_agent_authoring_tool_containment_and_diagnostic_source_are_honest(tmp_path):
