@@ -145,12 +145,14 @@ def test_sharing_scale_does_not_suppress_same_value_or_uncovered_delta():
     )
 
 
-def test_unencoded_pairs_and_missing_or_empty_figures_do_not_emit_findings():
+def test_unencoded_pairs_are_checked_but_missing_or_empty_figures_are_not():
     first = _entry("first", "First")
     second = _entry("second", "Second")
     blue = _figure(_paint(("solid", "#0000FF")))
-    assert _colour_pair_diagnostics(((first, None), (second, None)),
-                                    {"first": blue, "second": blue}) == ((), ())
+    diagnostics, provenance = _colour_pair_diagnostics(((first, None), (second, None)),
+                                                       {"first": blue, "second": blue})
+    assert diagnostics == ("W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0",)
+    assert len(provenance) == 1
     assert _colour_pair_diagnostics(((first, "scale"), (second, None)), {}) == ((), ())
     assert _colour_pair_diagnostics((), {"first": blue}) == ((), ())
 
