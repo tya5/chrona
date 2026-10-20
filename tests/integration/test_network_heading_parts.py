@@ -2,6 +2,9 @@
 from copy import deepcopy
 import xml.etree.ElementTree as ET
 
+import pytest
+
+from chrona.usecases.render_review import RenderFailed
 from tests.integration.test_title_ink import ACTUAL, _network_parts, _source
 from tests.support import synthetic_review as sr
 
@@ -19,6 +22,36 @@ def test_network_whole_title_slot_uses_the_shared_view_heading_copy(tmp_path):
            if node.attrib.get("data-scene-id") in texts}
     assert "".join(svg["title"].itertext()) == texts["title"].text
     assert "".join(svg["subtitle"].itertext()) == texts["subtitle"].text
+
+
+@pytest.mark.parametrize(("remaining", "expected_scene"), [
+    (None, {}),
+    ("subtitle", {"subtitle": "Deck"}),
+    ("kicker", {"kicker": "Kicker"}),
+])
+def test_network_whole_title_slot_handles_conditionally_omitted_title_parts(
+        tmp_path, remaining, expected_scene):
+    parts = _network_parts()
+    parts["view"]["body"]["figures"] = [{"id": "groups", "kind": "count", "source": "groups"}]
+    heading = {"title": [{"text": "Omitted", "omitWhenZero": "groups"}]}
+    if remaining is not None:
+        heading[remaining] = "Deck" if remaining == "subtitle" else "Kicker"
+    parts["view"]["body"]["heading"] = heading
+    if remaining == "kicker":
+        parts["theme"]["body"]["roles"]["kicker"] = dict(parts["theme"]["body"]["roles"]["heading"])
+    rendered = sr.render(tmp_path, _source(), presentation=parts, actual=ACTUAL)
+    texts = {item.scene_id: item.text for item in rendered.surface.primitives
+             if item.scene_id in {"title", "subtitle", "kicker"}}
+    assert texts == expected_scene
+
+
+def test_network_whole_title_slot_requires_kicker_role_for_visible_kicker(tmp_path):
+    parts = _network_parts()
+    parts["view"]["body"]["heading"] = {"kicker": "Only kicker"}
+    with pytest.raises(RenderFailed) as caught:
+        sr.render(tmp_path, _source(), presentation=parts, actual=ACTUAL)
+    assert caught.value.code == "E_THEME_ROLE_REQUIRED"
+    assert caught.value.source_ref == "/body/roles/kicker/fontFamily"
 
 
 def test_network_parts_keep_roles_and_distinct_native_slot_owners(tmp_path):
