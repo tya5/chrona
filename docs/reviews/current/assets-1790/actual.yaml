@@ -1,0 +1,23 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: ja-launch-observed
+body:
+  asOf: '2027-01-13'
+  observations:
+    - {id: kickoff-1, sequence: 1, projectObjectId: kickoff, actual: {at: '2026-11-02'}}
+    - {id: req-1, sequence: 1, projectObjectId: req, actual: {start: '2026-11-03', finish: '2026-11-16', progress: 1}}
+    - {id: market-1, sequence: 1, projectObjectId: market, actual: {start: '2026-11-03', finish: '2026-11-17', progress: 1}}
+    - {id: biz-1, sequence: 1, projectObjectId: biz, actual: {start: '2026-11-16', finish: '2026-11-25', progress: 1}}
+    - {id: budget-1, sequence: 1, projectObjectId: budget, actual: {start: '2026-11-25', finish: '2026-12-01', progress: 1}}
+    - {id: g-plan-1, sequence: 1, projectObjectId: g-plan, actual: {at: '2026-12-01'}}
+    - {id: arch-1, sequence: 1, projectObjectId: arch, actual: {start: '2026-12-01', finish: '2026-12-15', progress: 1}}
+    - {id: ui-1, sequence: 1, projectObjectId: ui, actual: {start: '2026-12-03', finish: '2026-12-16', progress: 1}}
+    - {id: db-1, sequence: 1, projectObjectId: db, actual: {start: '2026-11-30', finish: '2026-12-09', progress: 1}}
+    - {id: api-1, sequence: 1, projectObjectId: api, actual: {start: '2026-12-15', finish: '2026-12-23', progress: 1}}
+    - {id: sec-1, sequence: 1, projectObjectId: sec, actual: {start: '2026-12-15', finish: '2026-12-22', progress: 1}}
+    - {id: review1-1, sequence: 1, projectObjectId: review1, actual: {at: '2026-12-23'}}
+    - {id: fe-1, sequence: 1, projectObjectId: fe, actual: {start: '2026-12-23', openUntil: asOf, progress: 0.3}}
+    - {id: be-1, sequence: 1, projectObjectId: be, actual: {start: '2026-12-24', openUntil: asOf, progress: 0.25}}
+    - {id: infra-1, sequence: 1, projectObjectId: infra, actual: {start: '2026-12-23', openUntil: asOf, progress: 0.5}}
+    - {id: ci-1, sequence: 1, projectObjectId: ci, actual: {start: '2026-12-23', finish: '2027-01-07', progress: 1}}
+    - {id: sales-1, sequence: 1, projectObjectId: sales, actual: {start: '2026-12-24', openUntil: asOf, progress: 0.6}}

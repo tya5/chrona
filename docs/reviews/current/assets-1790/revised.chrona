@@ -1,0 +1,46 @@
+terse 0.1
+project ja-launch "新製品ローンチ計画" calendar office
+calendar office mon-fri except 2026-12-29 2026-12-30 2026-12-31 2027-01-01 2027-01-11 2027-02-11
+
+kickoff "キックオフ" gate 2026-11-02
+plan "企画フェーズ" group
+  req "要件定義" task 8wd from 2026-11-03
+  market "市場調査" task 10wd from 2026-11-03
+  biz "事業計画の策定" task 6wd after req
+  budget "予算承認" task 3wd after biz
+  g-plan "企画承認" gate after budget, market
+design "設計フェーズ" group
+  arch "基本設計" task 10wd after g-plan
+  ui "画面設計" task 8wd after arch.start +3wd
+  db "データベース設計" task 7wd after arch.start +2wd
+  api "API 設計" task 6wd after arch
+  sec "セキュリティ設計" task 5wd after arch
+  review1 "設計レビュー" gate after ui, db, api, sec
+build "開発フェーズ" group
+  fe "フロントエンド実装" task 20wd after review1
+  be "バックエンド実装" task 22wd after review1
+  infra "インフラ構築" task 12wd after review1
+  batch "バッチ処理実装" task 10wd after be.start +5wd
+  integ "外部連携実装" task 9wd after api +10wd
+  mig "データ移行ツール" task 8wd after db +12wd
+  ci "CI/CD 整備" task 6wd after infra.start
+  docs "利用者マニュアル作成" task 10wd after fe.start +8wd
+  code-freeze "コードフリーズ" gate after fe, be, batch, integ
+test "試験フェーズ" group
+  ut "単体試験" task 8wd after code-freeze
+  it "結合試験" task 10wd after ut
+  perf "性能試験" task 6wd after it.start +4wd
+  sect "脆弱性診断" task 5wd after it.start +2wd
+  uat "受入試験" task 8wd after it
+  mig-rehearsal "移行リハーサル" task 4wd after mig, uat.start
+  g-test "品質判定会議" gate after uat, perf, sect
+release "リリース準備" group
+  train "社内研修" task 5wd after docs
+  sales "営業資料作成" task 6wd after g-plan +20wd
+  ops "運用設計" task 8wd after infra
+  helpdesk "ヘルプデスク立ち上げ" task 5wd after ops
+  faq "FAQ 整備" task 4wd after helpdesk.start
+  a11y "アクセシビリティ試験" task 5wd after it.start +3wd
+  cutover "本番切替" task 2wd after g-test, mig-rehearsal
+  launch "正式リリース" gate after cutover deadline 2027-06-30
+  retro "振り返り" task 3wd after launch +5wd
