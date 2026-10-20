@@ -41,7 +41,7 @@ phase-2 "Phase 2" group
 ```
 
 One statement per line, `#` starts a comment. Order: optional `terse 0.1`, then one `project`, then `calendar`
-lines, then objects (objects may refer to objects defined later).
+lines, optional `entity` lines, then objects (objects may refer to objects defined later).
 
 ## Statements
 
@@ -50,6 +50,8 @@ lines, then objects (objects may refer to objects defined later).
 - `calendar CAL DAYS [except DATE ...] [work DATE ...]`: `DAYS` is `mon-fri`, `mon-wed,fri`, `sat,sun`. `except` lists
   non-working dates, `work` extra working dates. With exactly one calendar it is the project default; with two or
   more, say which on the project line (`project p "P" calendar standard`) or on each object.
+- `entity ID "Title" PROFILE`: a minimal entity (type and title) for `KEY=ID` references such as `deliverable=del-portal`;
+  after the calendars, before objects; PROFILE must come from a declared package (`E_TERSE_PROFILE_UNKNOWN`).
 - `NAME ["Title"] KIND [profile ID] SCHEDULE [calendar CAL] [after DEP, ...] [deadline DATE] [KEY=VALUE ...]`: profile follows KIND;
   assignments finish the line. `calendar CAL` overrides the project default for `wd` amounts; a deadline moves nothing.
   Scalar values include `risk=high`, `flag=true` or `note="two words"`; assignments need a profile; quotes keep strings.
@@ -101,7 +103,7 @@ launch "Launch" gate at >= 2027-05-07 after review +2d  # the floor wins: 2027-0
 
 ## What the syntax cannot say
 
-Arrays/maps, arbitrary Project extension forms, entity declarations, progress, links, WBS codes, annotations,
+Arrays/maps, arbitrary Project extension forms, entity fields, progress, links, WBS codes, annotations,
 scenarios, and presentation remain YAML-only. Compile first, then edit `project.yaml` by hand.
 
 ## Frequent errors
@@ -112,8 +114,6 @@ scenarios, and presentation remain YAML-only. Compile first, then edit `project.
 | `design tsak 5d` | `E_TERSE_KIND_UNKNOWN`: use `task`, `gate` or `group` |
 | `task design 5d` | `E_TERSE_NAME_RESERVED`: the name comes first |
 | `pdr gate` | `E_TERSE_SCHEDULE_REQUIRED`: a gate needs a date, or `after X` to derive it |
-| `a task 20` | `E_TERSE_AMOUNT_INVALID`: write `20d` |
-| `pdr gate 2027-3-5` | `E_TERSE_DATE_INVALID`: write `2027-03-05` |
 | `after structur` | `E_TERSE_REFERENCE_UNKNOWN`: the hint names the closest object |
 | `a task 5wd` and no calendar | `E_CALENDAR_REQUIRED`: add `calendar standard mon-fri` |
 

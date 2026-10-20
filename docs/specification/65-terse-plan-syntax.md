@@ -1,6 +1,6 @@
 # Terse Plan Syntax
 
-**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4), the derived gate of S3 and section 4 (#788, slice 2) and the `deadline` clause of S3 and section 4 (#822, I822-1).
+**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4), the derived gate of S3 and section 4 (#788, slice 2) the `deadline` clause of S3 and section 4 (#822, I822-1) and the `entity` statement of S11 and section 12.4 (#1842).
 Section 12 specifies the selected design for #806, implemented in PR1771 and
 accepted on review-containing main `9dca9c55a8df0d1e44149a0543fe892366d39930`
 after [release39256723703](https://github.com/tya5/chrona/actions/runs/39256723703).
@@ -41,7 +41,8 @@ determines no placement); (2) its value is a scalar, a date, an amount or a shor
 free-form map, prose or a reference to another top-level section; and (3) it has one unambiguous one-line
 spelling that maps to exactly one Project construct. Section 12 additionally admits scalar field assignments with
 explicit profile declarations, mapped to existing Project `fields`, `type` and local `extensions` references.
-Everything else (`entities`, `annotations`, `scenarios`, other extension forms, `link`, `wbsCode`, `plannedProgress`, `attachesTo`, `fiscalStartMonth`,
+An entity is admitted only as a minimal `type` and `title` declaration (S11), so that a field can reference it.
+Everything else (entity `fields`, `annotations`, `scenarios`, other extension forms, `link`, `wbsCode`, `plannedProgress`, `attachesTo`, `fiscalStartMonth`,
 endpoints other than `start`/`at` on the successor, `mo`/`y` lags) stays in YAML.
 
 `chrona.terse.ledger.LEDGER` classifies every authorable property path of `schemas/project-v0.7.schema.yaml`
@@ -81,7 +82,7 @@ forces a decision; it does not force a construct.
 ```text
 file        = { line } ;                     (blank and comment lines ignored)
 line        = indent statement ;
-statement   = terse | project | calendar | object ;
+statement   = terse | project | calendar | entity | object ;
 
 terse       = "terse" VERSION ;              (optional; if present it is the first statement; VERSION = 0.1)
 project     = "project" ID [ STRING ] [ "calendar" CAL ] { extension } ;
@@ -90,6 +91,8 @@ calendar    = "calendar" CAL days [ off ] [ on ] | "calendar" CAL days [ on ] [ 
 days        = dayitem { "," dayitem } ;      (dayitem = DAY | DAY "-" DAY, e.g. mon-fri, mon-wed,fri)
 off         = "except" date { [ "," ] date } ;
 on          = "work"   date { [ "," ] date } ;
+
+entity      = "entity" ID STRING PROFILE ;   (after the calendars, before every object; S11, section 12.4)
 
 object      = NAME [ STRING ] KIND [ "profile" PROFILE ] [ schedule ] [ "calendar" CAL ] [ after ] [ deadline ] { field } ;
 field       = KEY "=" VALUE ;                (one assignment, optionally ending in a quoted string; section 12)
@@ -107,7 +110,7 @@ dep         = REF [ LAG [ "in" CAL ] ] ;
 REF         = NAME [ "." ENDPOINT ] ;        (ENDPOINT = start | end | at)
 
 NAME, CAL   : slug  = [a-z][a-z0-9-]*
-ID          : any word that is not a reserved word (a slug such as halcyon-1, or HALCYON-1)
+ID          : any word that is not a reserved word (a slug such as halcyon-1, or HALCYON-1); an entity id is a NAME slug
 KIND        : task | gate | group
 PACKAGE, PROFILE : nonempty words, interpreted by the existing profile contracts
 REVISION    : a pinned Project Git revision (the shared Project schema owns its spelling)
@@ -173,6 +176,16 @@ DAY         : mon | tue | wed | thu | fri | sat | sun
   name it (`after deadline deadline 2027-09-01`). The grammar change is therefore additive: every plan that compiled before
   compiles to the same Project, and `terse 0.1` stays.
 
+- **S11 Entities.** `entity ID "Title" PROFILE` declares one entity: the Project's `entities.ID` is `{type: PROFILE, title: "Title"}`
+  and nothing else (an entity's `fields` stay YAML-only). Entities come after every `calendar` statement and before every object
+  (`E_TERSE_DIRECTIVE_ORDER` otherwise). The id is a `slug`; entity ids and object ids share one id space, because a field
+  reference resolves a bare id over both (`E_TERSE_NAME_DUPLICATE` at the second occurrence, in either order). `entity` is a
+  **contextual keyword**, not a reserved word (L9): a line is the entity statement only when `entity` is followed by a word that
+  is not a kind, so an object may still be named `entity` (`entity task 5d`, `entity "Title" gate 2026-12-01`) and every plan that
+  compiled before compiles to the same Project. The title is required and quoted (`E_TERSE_TITLE_UNQUOTED`, `E_TERSE_TITLE_EMPTY`,
+  `E_TERSE_LINE_INCOMPLETE`). An entity is not an object: `after ID` is `E_TERSE_REFERENCE_UNKNOWN` with a hint saying so. A field
+  such as `deliverable=ID` references it, resolved by the shared validator (section 12.2).
+
 ### 3.3 Default endpoints
 
 A `dep` names a **predecessor**; the dependent is the statement's own object.
@@ -200,6 +213,7 @@ An explicit `profile PROFILE` replaces only the emitted type, not the kind's sch
 | `project ... calendar C` | `project.calendar: C` |
 | `project ... extension P "file.yaml" REV` | one `extensions[]` entry `{packageId: P, path: file.yaml, revision: REV}` |
 | `calendar C days` | `calendars.C.working_days` (mon..sun order) |
+| `entity ID "Title" PROFILE` | key `entities.ID`: `type: PROFILE`, `title: "Title"` (between `calendars` and `objects`) |
 | `except D ...` | one `calendars.C.exceptions[]` `{date: D, working: false}` per date |
 | `work D ...` | one `calendars.C.exceptions[]` `{date: D, working: true}` per date |
 | `NAME ... KIND` | key `objects.NAME`, `type: KIND` |
@@ -229,7 +243,7 @@ Normalisations (the only implicit steps): **N1** single-calendar project default
 calendars and relations; **N6** a leading `+` on a lag is dropped; **N7** a schedule-less `gate` with `after` is a
 `scheduled-point` (the kind selects the form, S3). The `deadline` clause adds no normalisation: its date is emitted verbatim (S10).
 
-The compiler emits no `entities`, `annotations`, `scenarios`, `wbsCode`, `plannedProgress`, `attachesTo` or `link`,
+The compiler emits `entities` only for explicit `entity` statements (never `fields`), and no `annotations`, `scenarios`, `wbsCode`, `plannedProgress`, `attachesTo` or `link`,
 and never an empty section. It emits `deadline`, local `extensions` and `fields` only for their explicit clauses.
 
 ## 5. Identity
@@ -510,3 +524,23 @@ Temporary closure reads may read the staged bytes. Cleanup applies on every
 exit path. The pure `chrona.terse` package performs no I/O or profile semantics;
 only application code resolves resources. Contexts, Stores and presentation
 continue to consume ordinary YAML and existing extension references only.
+
+### 12.4 Entity declarations (#1842)
+
+A field of type `objectReference` names an object or an entity by bare id, and an entity could only be written in YAML. The
+`entity ID "Title" PROFILE` statement (S11) declares a minimal entity so that a terse plan is self-contained:
+
+```text
+project atlas "Atlas" calendar standard extension atlas-delivery "atlas-profile.yaml" git:0123456789abcdef0123456789abcdef01234567
+calendar standard mon-fri
+entity del-portal "Partner portal" atlas.deliverable
+hotfix "Hotfix" task profile atlas.work 4wd from 2026-12-15 deliverable=del-portal
+```
+
+The profile is emitted verbatim as the entity's `type` and is checked exactly like an object's explicit profile (section 12.1):
+an entity whose profile no valid declared package defines is `E_TERSE_PROFILE_UNKNOWN` at the profile token, pointing at
+`/entities/ID/type`, and, as for objects, there is no silent open type. Whether the entity satisfies a field's `targetProfiles`
+is the shared validator's (`E_PROFILE_FIELD_TYPE`, whose message names the value and the nearest ids). The grammar change is
+additive: `terse 0.1` stays, and a plan with no `entity` statement compiles to the same bytes. A second input file that
+supplies entities (`entities PATH`) is deliberately not part of the grammar; an entity with `fields`, or any other entity
+form, stays in YAML.

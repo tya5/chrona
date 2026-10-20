@@ -16,7 +16,7 @@ LEDGER: dict[str, tuple[str, str]] = {
     "top.project": (MAPPED, "`project` statement"),
     "top.calendars": (MAPPED, "`calendar` statements"),
     "top.fieldRoles": (YAML_ONLY, "a Project-scoped field-role map, not identity, hierarchy, dates or dependencies"),
-    "top.entities": (YAML_ONLY, "another top-level section, not a scalar"),
+    "top.entities": (MAPPED, "`entity ID \"Title\" PROFILE` statements (type and title only; an entity's `fields` stay YAML-only)"),
     "top.objects": (MAPPED, "object statements"),
     "top.relations": (MAPPED, "`after` clauses"),
     "top.annotations": (YAML_ONLY, "prose in another top-level section"),

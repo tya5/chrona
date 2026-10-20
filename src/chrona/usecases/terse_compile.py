@@ -89,10 +89,11 @@ def compile_plan(data: bytes, source: str | None = None, *, resource_origin: Pat
     # never cascade a misleading unknown-profile diagnostic from that failure.
     package_errors = catalogue_findings or any(item.id == "IDP-PROFILE-006" for item in findings)
     if not package_errors:
-        for object_id in compiled.profile_bindings:
-            profile = compiled.project["objects"][object_id]["type"]
+        bindings = [("objects", item) for item in compiled.profile_bindings] + [("entities", item) for item in compiled.entity_profile_bindings]
+        for section, object_id in bindings:
+            profile = compiled.project[section][object_id]["type"]
             if profile not in catalogue:
-                pointer = "/objects/" + object_id.replace("~", "~0").replace("/", "~1") + "/type"
+                pointer = f"/{section}/" + object_id.replace("~", "~0").replace("/", "~1") + "/type"
                 findings.append(Diagnostic("E_TERSE_PROFILE_UNKNOWN", f"profile {profile!r} is not declared by a valid package", pointer))
     if findings:
         return PlanCompilation(None, None, tuple(_position(item, compiled.source_map, source, "extensions")
