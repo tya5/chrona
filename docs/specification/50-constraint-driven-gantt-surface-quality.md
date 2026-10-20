@@ -510,8 +510,9 @@ labels, including attached-point and key-row labels. Then actually place all
 member names before NORMAL routing, under both `best` and `first-fit`, for
 automatic and fixed-lane rows. Use the existing declared candidate sides,
 own-mark association, bounds and overflow policy. This is one actual placement,
-not a speculative reservation or rehearsal. The existing bounded `best` lane
-corridor preflight does not replace or replay the completed placement.
+not a speculative reservation or rehearsal. The former `best` lane-corridor
+planner rehearsed name placement and routed first to make names yield; retire
+that planner as well, rather than retain another route-priority path.
 
 Completed name text and label-visual footprints are hard content in every
 normal and recovery domain. Carry their explicit obstacle identities through
@@ -1207,9 +1208,9 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
-The content-first contract above retains #687's existing `best` lane-corridor
-preflight without a second placement or repair trial. Completed names remain
-hard route obstacles. This never changes lane membership, adds a candidate
+The content-first contract replaces #687's speculative `best` lane-corridor
+preflight with one actual name placement. Completed names remain hard route
+obstacles. This never changes lane membership, adds a candidate
 to the declared ladder, or permits a final name to cross route ink.
 For lane mode only, a declared `visible-overflow` direct fallback is permitted
 only if the completed path clears every required placed lane/member label.
