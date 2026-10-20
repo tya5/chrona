@@ -1,6 +1,6 @@
 # Issue 415 — shared Context acceptance
 
-Source: `078db75863a21f77311a5c5abfd7cc452552a8d3`.
+Source/integration: `d44fb5e1a634872d2e142eb2848fb7c745d54cf0`.
 Feature verification in progress; this is not issue closure. Approved contract:
 [Spec40 §7](../../specification/40-example-reproducibility-and-materialization.md#7-shared-deck-context-authoring-415),
 [reviewer approval](https://github.com/tya5/chrona/issues/415#issuecomment-6282070481).
@@ -43,6 +43,17 @@ Local conformance passed every non-derived-report check, including actual
 documented commands. Its only failures were stale CI-owned diagnostic/value
 inventories (new diagnostic sites and moved source anchors); CI regenerates and
 verifies those reports in the official snapshot, not in authored commits.
+
+CI correction: run39363078550 rejected the prior head only at
+`test_schema_loader::test_registry_holds_exactly_the_listed_parts` (shard3) and
+`test_schema_identifiers_and_license::test_every_live_id_site_references_identifier_or_is_on_the_documented_allowlist`
+(shard2). Exact registry membership now includes both declared target lists;
+missing-target detection covers both, and bundling/dereferencing covers the new
+schema. Existing deck/slide IDs are explicitly classified; composed IDs reference
+the canonical Context ID grammar, with seven equivalence probes. No validator or
+assertion was weakened. Related batches passed197 and245 tests; integration with
+published1781 passed238 and schema equivalence. The expected-delta conflict was
+resolved to preserve main's complete ledger plus this schema's one added marker.
 
 Required PR snapshot, full CI and exact review-containing main release remain
 pending. Keep issue415 open for those gates and reviewer-owned migration.
