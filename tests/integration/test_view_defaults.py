@@ -15,9 +15,12 @@ from chrona.presentation.contracts.diagnostics import (
 )
 from chrona.presentation.contracts.resources import ClosureIdentity
 from chrona.presentation.contracts.view_defaults import (
-    SPLIT_MEMBERS, WHOLE_MEMBERS, collect_column_style_diagnostics, merge_view_defaults,
+    NETWORK_INAPPLICABLE_MEMBERS, SPLIT_MEMBERS, WHOLE_MEMBERS, collect_column_style_diagnostics,
+    merge_view_defaults,
 )
-from chrona.resources import builtin_preset_source_root, safe_load, schema_validator
+from chrona.resources import (builtin_preset_library_resource, builtin_preset_source_root, safe_load,
+                              schema_validator)
+from chrona.presentation.contracts.resources import explain_resource_schema_errors
 from tests.support import synthetic_review as sr
 
 
@@ -43,6 +46,18 @@ def _sub(tmp_path, name):
     path = tmp_path / name
     path.mkdir()
     return path
+
+
+def _network_view():
+    value = deepcopy(sr.bundle("executive-light")["view"])
+    value["version"] = "chrona/view/v0.28"
+    body = value["body"]
+    body["surface"] = "dependency-network"
+    body["rows"] = {"mode": "automatic"}
+    body["network"] = {}
+    for name in NETWORK_INAPPLICABLE_MEMBERS:
+        body.pop(name, None)
+    return value
 
 
 def test_a_view_without_the_design_members_renders_as_the_view_that_declares_them(tmp_path):
@@ -71,6 +86,162 @@ def test_without_viewdefaults_or_when_the_view_declares_every_member_nothing_cha
     full["layout"]["viewDefaults"] = {name: deepcopy(plain["view"]["body"][name]) for name in WHOLE_MEMBERS if name in plain["view"]["body"]}
 
     assert _render(_sub(tmp_path, "plain"), plain).artifact.content == _render(_sub(tmp_path, "full"), full).artifact.content
+
+
+def test_network_view_omits_only_surface_inapplicable_layout_defaults_across_all_bundled_presets():
+    view = _network_view()
+    library = safe_load(builtin_preset_library_resource().read_bytes())
+    errors = {}
+
+    for entry in library["entries"]:
+        member = entry.get("members", {}).get("layout")
+        if not isinstance(member, dict):
+            continue
+        layout = safe_load(builtin_preset_source_root(member["sourceRoot"]).joinpath(member["sourcePath"]).read_bytes())
+        effective = merge_view_defaults(view, layout.get("viewDefaults", {}))
+        schema_errors = tuple(schema_validator("view-v0.28.schema.yaml").iter_errors(effective))
+        if schema_errors:
+            errors[entry["id"]] = [str(error.absolute_path) for error in schema_errors]
+
+    assert len(library["entries"]) == 15
+    assert errors == {}
+
+
+def test_network_inapplicable_default_members_match_the_live_view_schema_branch():
+    schema = safe_load((Path(__file__).resolve().parents[2] / "schemas/view-v0.28.schema.yaml").read_bytes())
+    body_schema = schema["allOf"][1]["properties"]["body"]
+    branch = next(item for item in body_schema["allOf"]
+                  if item.get("description") == "A dependency network omits table-timeline-only presentation fields.")
+    forbidden = {item["required"][0] for item in branch["then"]["not"]["anyOf"]}
+
+    assert forbidden == NETWORK_INAPPLICABLE_MEMBERS
+
+
+def test_network_view_keeps_compatible_defaults_and_does_not_erase_authored_forbidden_members():
+    view = _network_view()
+    defaults = {
+        "axis": {"tiers": []},
+        "backgroundDecoration": {"rows": "rules"},
+        "deadlines": {"show": "none"},
+        "comparison": {"facets": ["planned"]},
+    }
+
+    merged = merge_view_defaults(view, defaults)
+
+    assert "axis" not in merged["body"] and "backgroundDecoration" not in merged["body"]
+    assert merged["body"]["deadlines"] == defaults["deadlines"]
+    assert merged["body"]["comparison"]["facets"] == view["body"]["comparison"]["facets"]
+    assert "axis" not in merged.design_supplied and "backgroundDecoration" not in merged.design_supplied
+
+    authored = deepcopy(view)
+    authored["body"]["backgroundDecoration"] = {"rows": "rules"}
+    authored_merged = merge_view_defaults(authored, defaults)
+    report = explain_resource_schema_errors(
+        ClosureIdentity("view", authored["id"], "draft", "sha256:" + "a" * 64), authored_merged)
+    assert authored_merged["body"]["backgroundDecoration"] == {"rows": "rules"}
+    assert report is not None
+    assert any(item.pointer == "/body/backgroundDecoration" and item.rule == "not" for item in report.aggregate)
+
+
+@pytest.mark.parametrize("surface", ["table-timeline", "dependency-network"])
+@pytest.mark.parametrize(("grouping", "tint_applies"), [
+    (None, False),
+    ({"by": "none"}, False),
+    ({"by": "hierarchy", "depth": "all", "rollup": "header"}, False),
+    ({"by": "field", "field": "owner", "missing": "Other"}, True),
+    ({"by": "objectType"}, True),
+    ({"by": {"fieldRole": "responsible"}, "fallback": "hierarchy", "missing": "Other"}, True),
+])
+def test_group_tint_default_requires_a_declared_value_bearing_grouping(surface, grouping, tint_applies):
+    view = _network_view()
+    view["body"]["surface"] = surface
+    if grouping is None:
+        view["body"].pop("grouping", None)
+    else:
+        view["body"]["grouping"] = deepcopy(grouping)
+    defaults = {"grouping": {"presentation": "header", "tint": {"scale": "owner"}}}
+
+    merged = merge_view_defaults(view, defaults)
+
+    effective_grouping = merged["body"].get("grouping", {})
+    assert ("tint" in effective_grouping) is tint_applies
+    assert effective_grouping.get("presentation") == "header"
+    assert view["body"].get("grouping") == grouping
+
+
+def test_network_semantic_error_inherited_from_split_group_header_names_layout_origin():
+    view = _network_view()
+    view["body"]["grouping"] = {"by": "none"}
+    layout = {"version": "chrona/layout-profile/v0.10", "kind": "layout-profile", "id": "marquee",
+              "viewDefaults": {"grouping": {
+                  "presentation": "header", "header": {"text": "{group}"},
+              }}}
+    sources = tuple(PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    ) for kind, value in (("view", view), ("layout-profile", layout)))
+
+    result = collect_presentation_contracts(sources)
+
+    (finding,) = [item for item in result.diagnostics if item.code == "E_VIEW_GROUP_HEADER_UNUSABLE"]
+    assert (finding.resource_kind, finding.resource_identity, finding.pointer) == (
+        "layout-profile", "marquee", "/viewDefaults/grouping/header")
+    assert "header needs presentation header" in finding.message
+    assert "network-compatible Layout profile" in finding.message
+    assert "docs/guides/network-view.md" in finding.message
+
+
+def test_group_header_first_template_error_keeps_its_member_pointer_after_layout_mapping():
+    view = _network_view()
+    view["body"]["grouping"] = {"by": "objectType"}
+    layout = {"version": "chrona/layout-profile/v0.10", "kind": "layout-profile", "id": "marquee",
+              "viewDefaults": {"grouping": {
+                  "presentation": "header",
+                  "header": {"text": "{title}", "first": "{unknown}"},
+              }}}
+    sources = tuple(PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    ) for kind, value in (("view", view), ("layout-profile", layout)))
+
+    result = collect_presentation_contracts(sources)
+
+    (finding,) = [item for item in result.diagnostics if item.code == "E_VIEW_GROUP_HEADER_TEMPLATE"]
+    assert (finding.resource_kind, finding.resource_identity, finding.pointer) == (
+        "layout-profile", "marquee", "/viewDefaults/grouping/header/first")
+    assert "unknown" in finding.message
+
+
+def test_network_semantic_error_inherited_from_whole_figure_formats_names_layout_origin():
+    view = _network_view()
+    layout = {"version": "chrona/layout-profile/v0.10", "kind": "layout-profile", "id": "marquee",
+              "viewDefaults": {"figureFormats": {"undeclared": {"form": "english-words"}}}}
+    sources = tuple(PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    ) for kind, value in (("view", view), ("layout-profile", layout)))
+
+    result = collect_presentation_contracts(sources)
+
+    (finding,) = [item for item in result.diagnostics if item.code == "E_VIEW_FIGURE_FORMAT_INVALID"]
+    assert (finding.resource_kind, finding.resource_identity, finding.pointer) == (
+        "layout-profile", "marquee", "/viewDefaults/figureFormats/undeclared")
+    assert "format target 'undeclared' must name a declared count figure" in finding.message
+    assert "network-compatible Layout profile" in finding.message
+
+
+def test_explicit_network_view_figure_format_error_retains_view_ownership():
+    view = _network_view()
+    view["body"]["figureFormats"] = {"undeclared": {"form": "english-words"}}
+    layout = {"version": "chrona/layout-profile/v0.10", "kind": "layout-profile", "id": "marquee",
+              "viewDefaults": {"figureFormats": {"other": {"form": "english-words"}}}}
+    sources = tuple(PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    ) for kind, value in (("view", view), ("layout-profile", layout)))
+
+    result = collect_presentation_contracts(sources)
+
+    (finding,) = [item for item in result.diagnostics if item.code == "E_VIEW_FIGURE_FORMAT_INVALID"]
+    assert (finding.resource_kind, finding.resource_identity, finding.pointer) == (
+        "view", view["id"], "/body/figureFormats/undeclared")
+    assert "network-compatible Layout profile" not in finding.message
 
 
 def test_split_members_merge_one_level_down_and_create_omitted_members():

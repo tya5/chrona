@@ -69,7 +69,9 @@ def collect_presentation_contracts(
     error.  The source order is the declared closure order; schema errors are
     already pointer/rule/message ordered by ``explain_schema_errors``.
     """
-    from chrona.presentation.contracts.view_defaults import apply_view_defaults, collect_column_style_diagnostics
+    from chrona.presentation.contracts.view_defaults import (
+        apply_view_defaults, collect_column_style_diagnostics, inherited_layout_origin,
+    )
 
     style_findings = collect_column_style_diagnostics(sources)
     sources = apply_view_defaults(sources)  # a Layout profile's `viewDefaults` under the View (#1341)
@@ -115,6 +117,21 @@ def collect_presentation_contracts(
                 violation.message if violation is not None else str(error), "schema",
             ))
         except ContractError as error:
+            origin = (inherited_layout_origin(source.value, error.source_ref)
+                      if source.identity.kind == "view" else None)
+            layout = next((item for item in sources if item.identity.kind == "layout-profile"), None)
+            if origin is not None and layout is not None:
+                detail = error.detail or error.diagnostic_id
+                message = f"Layout profile {layout.identity.id} viewDefaults {origin}: {detail}"
+                body = source.value.get("body") if isinstance(source.value, Mapping) else None
+                if isinstance(body, Mapping) and body.get("surface") == "dependency-network":
+                    message += "; select a network-compatible Layout profile with --layout " \
+                               "(see docs/guides/network-view.md)"
+                diagnostics.append(PresentationDiagnostic(
+                    error.diagnostic_id, layout.identity.kind, layout.identity.id,
+                    origin, None, message, "contract",
+                ))
+                continue
             diagnostics.append(PresentationDiagnostic(
                 error.diagnostic_id, source.identity.kind, source.identity.id,
                 error.source_ref, None, error.detail or error.diagnostic_id, "contract",

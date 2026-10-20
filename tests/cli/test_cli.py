@@ -1,4 +1,5 @@
 import contextlib
+from copy import deepcopy
 import io
 import json
 from collections import Counter
@@ -1063,6 +1064,57 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
     main()
 
     assert 'data-source-ref="architecture"' in output.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("preset_id", CATALOGUE_PRESET_IDS)
+def test_cli_network_view_without_network_layout_reports_actionable_layout_pointer(
+    preset_id, tmp_path, monkeypatch, capsys
+):
+    project = tmp_path / "project.yaml"
+    project.write_text(yaml.safe_dump(sr.project({
+        "a": sr.span("a", date(2026, 2, 2), 5),
+        "b": sr.span("b", date(2026, 2, 9), 5),
+    }), sort_keys=False), encoding="utf-8")
+    view = deepcopy(sr.bundle("executive-light")["view"])
+    view["version"] = "chrona/view/v0.28"
+    body = view["body"]
+    body["surface"] = "dependency-network"
+    body["rows"] = {"mode": "automatic"}
+    body["grouping"] = {"by": "none"}
+    body["visibility"] = {"labels": False, "relations": "semantic", "annotations": "none"}
+    body["network"] = {}
+    body["heading"] = {"text": {"wrap": "allow"}}
+    body["figureFormats"] = {}
+    for name in ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "periods",
+                 "shading", "timePresentation", "annotations", "annotationPresentation", "annotationBindings",
+                 "annotationPlacement"):
+        body.pop(name, None)
+    view_path = tmp_path / "network-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    output = tmp_path / "network.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project), "--preset", preset_id, "--view", str(view_path),
+        "--viewport", "1600x900", "--output", str(output),
+    ])
+
+    with pytest.raises(SystemExit) as failed:
+        main()
+
+    assert failed.value.code == 1 and not output.exists()
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    if diagnostic["code"] == "E_PRESENTATION_PRIMITIVE_MISSING":
+        assert diagnostic["sourceRef"] == "/layoutManifest/sources/network"
+        assert "surface=dependency-network" in diagnostic["message"]
+        assert "add this slot to a matching Layout Profile" in diagnostic["message"]
+        assert "--layout <profile>" in diagnostic["message"]
+    else:
+        assert preset_id in {"marquee", "sunday", "titlecard"}
+        assert diagnostic["code"] == "E_VIEW_GROUP_HEADER_UNUSABLE"
+        assert diagnostic["sourceRef"] == "/viewDefaults/grouping/header"
+        assert f"Layout profile {preset_id}" in diagnostic["message"]
+        assert "header needs presentation header" in diagnostic["message"]
+        assert "network-compatible Layout profile" in diagnostic["message"]
+        assert "docs/guides/network-view.md" in diagnostic["message"]
 
 
 def test_cli_render_accepts_a_declared_local_font_closure(tmp_path, monkeypatch):

@@ -482,25 +482,26 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.failure.code, error.failure.detail, error.component, error.path) from error
     if render_closure.detail_profile is not None:
         ledger.detail()
-    scene_input = None
-    if plan is not None:
-        scene_input = build_surface_input(
-            projection=projection, surface_content=plan.content, layout_manifest=plan.manifest,
-            resolved_theme=theme, font_metrics=font_metrics, measured_sources=plan.measured,
-            capabilities={name: True for name in render_closure.context.target.capabilities},
-            visual_profile=visual_profile, viewport=plan.viewport,
-            icon_assets=icon_assets, visual_requests=visual_requests,
-            fixed_lane_preflight=(plan.preparation.inline.request.fixed_lane_preflight if plan.preparation else None),
-            capacity_short_sources=plan.capacity_short_sources, surface_preparation=plan.preparation,
-            auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
-            declared_viewport=plan.declared_viewport, progress=request.progress)
-
-    unused = ledger.unused()
-    if request.require_all_inputs_read and unused:
-        raise RenderFailed("E_CLOSURE_INPUT_UNUSED",
-                           "closure inputs loaded but never read: " + ", ".join(unused), "closure")
-
     try:
+        scene_input = None
+        if plan is not None:
+            scene_input = build_surface_input(
+                projection=projection, surface_content=plan.content, layout_manifest=plan.manifest,
+                resolved_theme=theme, font_metrics=font_metrics, measured_sources=plan.measured,
+                capabilities={name: True for name in render_closure.context.target.capabilities},
+                visual_profile=visual_profile, viewport=plan.viewport,
+                icon_assets=icon_assets, visual_requests=visual_requests,
+                fixed_lane_preflight=(plan.preparation.inline.request.fixed_lane_preflight
+                                      if plan.preparation else None),
+                capacity_short_sources=plan.capacity_short_sources, surface_preparation=plan.preparation,
+                auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
+                declared_viewport=plan.declared_viewport, progress=request.progress)
+
+        unused = ledger.unused()
+        if request.require_all_inputs_read and unused:
+            raise RenderFailed("E_CLOSURE_INPUT_UNUSED",
+                               "closure inputs loaded but never read: " + ", ".join(unused), "closure")
+
         rendered = compose_resolved_review_surface(count_input, visual_profile=visual_profile,
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
