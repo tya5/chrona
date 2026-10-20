@@ -47,7 +47,7 @@ Portrait physical dimensions are A3 297×420mm, A4 210×297mm, A5 148×210mm,
 Letter 8.5×11in and Legal 8.5×14in; landscape exchanges the axes.
 Use the [CSS named media sizes](https://www.w3.org/TR/css-page-3/#page-size-prop)
 and [absolute-unit relation](https://www.w3.org/TR/css-values-4/#absolute-lengths)
-of96 CSS px per inch and25.4mm per inch. Keep fractional viewport dimensions;
+of 96 CSS px per inch and 25.4mm per inch. Keep fractional viewport dimensions;
 do not round a physical page to integer pixels before Layout. Existing Scene
 precision and adapter pixel discretization remain authoritative at export.
 
@@ -55,7 +55,7 @@ Draft ingress resolves the effective profile, including its normal top-level
 inheritance/replacement, before closing an omitted viewport from `pageSize`.
 An explicit Draft viewport wins as a whole, including an explicit auto-height;
 an immutable Render Context's viewport always wins. Without either an authored
-viewport or a page default, retain Draft's1600×auto behavior. Layout never
+viewport or a page default, retain Draft's 1600×auto behavior. Layout never
 rewrites a closed Context or chooses a viewport from content.
 
 When content exceeds the effective viewport, retain the existing overflow

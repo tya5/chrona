@@ -69,7 +69,7 @@ simulation in addition to the colour-vision checks of Specs28/60. Project an
 ink to linear-sRGB relative luminance Y and represent that luminance as an
 sRGB grey; compare the greys with the same CIEDE2000 metric and existing
 separability floor used by those checks. Preserve full precision, rather than
-quantizing the intermediate grey to an8-bit palette. This is no new threshold:
+quantizing the intermediate grey to an 8-bit palette. This is no new threshold:
 Spec60 currently declares `MINIMUM_CATEGORY_DELTA_E = 5.0`; there is no separate
 Theme-authored numeric deltaE floor or new print-only knob.
 
