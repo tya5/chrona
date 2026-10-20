@@ -39,7 +39,7 @@ class WindowRelationEndpointAbsence:
         valid = (isinstance(index, ItemMarkVisibilityIndex)
                  and isinstance(self.occurrence, MarkOccurrence)
                  and isinstance(self.visibility, ItemMarkVisibility)
-                 and index.projection.window_mode == WindowMode.EXPLICIT
+                 and index.projection.window_mode.is_bounded
                  and self.reason == "outside-window")
         if valid:
             try:
@@ -62,7 +62,7 @@ def complete_window_relation_endpoint_absence(
 ) -> WindowRelationEndpointAbsence | None:
     """Read the immutable original-port decision, without selecting dates again."""
     visibility_index.require_match(projection, as_of)
-    if projection.window_mode != WindowMode.EXPLICIT:
+    if not projection.window_mode.is_bounded:
         return None
     try:
         visibility = visibility_index.lookup(occurrence, projection=projection, as_of=as_of)

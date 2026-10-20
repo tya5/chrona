@@ -7,6 +7,7 @@ from types import MappingProxyType
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.completion import actual_occurrence_completed, rollup_completed
 from chrona.core.figures import working_days_in
 from chrona.core.forecast import ForecastItem, ForecastOutcome
 from chrona.core.hierarchy import children_by_parent, normalize_hierarchy
@@ -57,7 +58,7 @@ def forecast_schedule(
             diagnostics.append(_observation_diagnostic("E_FORECAST_ACTUAL_KIND", "Actual occurrence kind differs from the planned object", observation,
                                                        observation_indices[observation["id"]]))
             continue
-        completed[object_id] = ("at" in actual) if is_point else ("finish" in actual)
+        completed[object_id] = actual_occurrence_completed("point" if is_point else "span", actual)
         if raw["mode"] == "rollup":
             continue
         if is_point:
@@ -136,7 +137,7 @@ def forecast_schedule(
     for entry in reversed(normalize_hierarchy(project)):
         if objects[entry.object_id]["schedule"]["mode"] != "rollup":
             continue
-        completed[entry.object_id] = all(completed[child] for child in children[entry.object_id])
+        completed[entry.object_id] = rollup_completed(completed[child] for child in children[entry.object_id])
         observation = latest.get(entry.object_id)
         actual = (observation or {}).get("actual", {})
         placement = scheduled.placements[entry.object_id]

@@ -397,10 +397,12 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                        float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
         if icon.kind == "vector" else icon for icon in icons)
     lane_window_absences = ()
+    lane_window_row_absences = ()
     if projection.lane_membership is not None:
-        lane_window_absences, omitted_rows = complete_lane_window_handoff(
+        lane_window_absences, omitted_rows, lane_window_row_absences = complete_lane_window_handoff(
             tuple(marks), projection=projection, as_of=request.surface_content.as_of,
-            visibility_index=request.mark_visibility_index)
+            visibility_index=request.mark_visibility_index,
+            row_admission=request.row_admission)
         lane_mark_blocks: dict[str, Decimal] = {}
         for mark in marks:
             if mark.lane_row_id is not None:
@@ -485,6 +487,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                      declared=request.declared_viewport, limit=request.auto_block_limit),
                                  window_label_absences=context.window_label_absences,
                                  lane_window_absences=lane_window_absences,
+                                 lane_window_row_absences=lane_window_row_absences,
                                  narrative_receipts=context.narrative_receipts)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

@@ -239,6 +239,32 @@ unrelated Actual or label absence. Empty emitted IDs require this same account;
 empty obstacles additionally require no emitted lane geometry. Malformed or
 unaccounted empty inventories fail `E_PRESENTATION_PRIMITIVE_INVALID`.
 
+With declared `window.outside: omit` (#1812), Layout may additionally complete
+a row-absence account for each original lane member in an unallocated row.
+Scene v0.7 carries it as optional `laneMembers[].rowAbsence: {reason}`, where
+`reason` is `outside-window` or `no-selected-temporal-facet`. The enclosing
+unchanged `rowId` and `memberId` identify the source membership; this record is
+not row geometry or permission to discard that membership. Layout proves the
+account against its single projection-bound row-admission result and the
+complete expected/admitted/absent mark partition before Scene projection.
+
+A row-absent member must have no emitted or primary primitive IDs and must
+reference no rendered row, primitive or obstacle. Its expected temporal marks
+still require their ordinary `windowAbsences`; a row account cannot excuse an
+unaccounted expected mark. A completed `no-selected-temporal-facet` account with
+zero expected marks permits empty inventories without inventing a mark absence.
+All members of the same omitted row carry the same
+row-absence reason. Every other member must reference a rendered lane row with
+a completed lane band, and the set of these present member row IDs must equal
+the rendered lane row IDs. A row account on a rendered row, conflicting member
+accounts, or unaccounted missing row fails `E_PRESENTATION_PRIMITIVE_INVALID`.
+An all-omitted lane surface retains its source members and has zero rows and
+zero lane obstacles. Scene validates these completed facts without deriving
+visibility, allocating geometry or interpreting source IDs. Adapters ignore
+the absence metadata for painting. The optional field selects Scene v0.7;
+older versions stay strict, and absent metadata preserves existing bytes and
+validation. No primitive or adapter grammar changes.
+
 During Scene construction, paint-independent clip containment is checked as
 soon as geometry is projected. Terminal containment additionally depends on
 the resolved stroke width: it is checked when the Scene paint payload is

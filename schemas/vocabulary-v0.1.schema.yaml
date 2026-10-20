@@ -98,6 +98,10 @@ $defs:
     description: "Closed View selector for every Project-declared period in declaration order."
     examples: [all]
     enum: [all]
+  viewCompletionState:
+    description: "Actual-observed temporal completion state selectable by a View."
+    examples: [finished]
+    enum: [finished]
   legendSwatchShape:
     description: "Optional alternate shape for one Review Detail legend swatch."
     examples: [circle, rule-pair]

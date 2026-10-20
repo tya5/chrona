@@ -4,12 +4,14 @@ from __future__ import annotations
 from copy import deepcopy
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, timedelta
 from enum import StrEnum
 from itertools import chain
+import re
 from typing import Any
 
-from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
+from chrona.core.completion import actual_occurrence_completed, rollup_completed
+from chrona.core.hierarchy import HierarchyEntry, children_by_parent, normalize_hierarchy
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.forecast import ForecastItem, ForecastOutcome
 from chrona.core.observations import latest_observations
@@ -28,6 +30,17 @@ from chrona.presentation.review.lane_membership import (
 
 
 _SHARED_TRACK_SOURCE_ORDER = {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}
+
+
+class ViewWindowError(ValueError):
+    """A declared relative window cannot be resolved from its selected facts."""
+
+    source_ref = "/body/window"
+
+    def __init__(self, code: str, detail: str) -> None:
+        self.code = code
+        self.detail = detail
+        super().__init__(f"{code}: {detail}")
 
 
 class NetworkLabelSourceError(ValueError):
@@ -60,6 +73,12 @@ class WindowMode(StrEnum):
     SELECTED_PLANNED = "selected-planned"
     SELECTED_COMPARISON = "selected-comparison"
     EXPLICIT = "explicit"
+    RELATIVE = "relative"
+
+    @property
+    def is_bounded(self) -> bool:
+        """Whether the View declared a positive bounded date window."""
+        return self in {WindowMode.EXPLICIT, WindowMode.RELATIVE}
 
 
 def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
@@ -339,6 +358,7 @@ class ReviewProjection:
     group_order: tuple[str, ...] = ()
     # Comparison sources resolved by Render Context closure, independent of selected table rows.
     bound_comparison_sources: frozenset[str] = frozenset()
+    window_outside: str = "keep"
 
     @property
     def has_rows(self) -> bool:
@@ -427,6 +447,43 @@ def federated_scene_input(plan: dict[str, Any], resolved_exports: dict[str, dict
     return FederatedSceneInput(nodes)
 
 
+_CIVIL_WINDOW_OFFSET = re.compile(r"(0|[1-9][0-9]*)(d|w)\Z")
+
+
+def _civil_offset_days(value: str | None, *, default: int = 0) -> int:
+    if value is None:
+        return default
+    match = _CIVIL_WINDOW_OFFSET.fullmatch(value)
+    if match is None:
+        raise ValueError(f"E_REVIEW_WINDOW: invalid relative offset {value!r}; expected non-negative civil d/w")
+    amount = int(match.group(1))
+    return amount * (7 if match.group(2) == "w" else 1)
+
+
+def _actual_completion_states(project: Mapping[str, Any], placements: Mapping[str, Mapping[str, date]],
+                              latest: Mapping[str, Mapping[str, Any]]) -> dict[str, bool]:
+    """Close Core Actual completion over temporal objects and rollup children."""
+    states: dict[str, bool] = {}
+    objects = project.get("objects", {})
+    for object_id, placement in placements.items():
+        raw = objects.get(object_id, {})
+        if raw.get("schedule", {}).get("mode") == "rollup":
+            continue
+        observation = latest.get(object_id)
+        actual = observation.get("actual") if isinstance(observation, Mapping) else None
+        kind = "point" if "at" in placement else "span"
+        states[object_id] = actual_occurrence_completed(kind, actual)
+    hierarchy = normalize_hierarchy(project)
+    children = children_by_parent(hierarchy)
+    for entry in reversed(hierarchy):
+        raw = objects.get(entry.object_id, {})
+        if raw.get("schedule", {}).get("mode") != "rollup":
+            continue
+        states[entry.object_id] = rollup_completed(
+            states[child_id] for child_id in children.get(entry.object_id, ()) if child_id in states)
+    return states
+
+
 def build_review_projection(project: dict[str, Any], placements: dict[str, dict[str, date]],
                             view: ViewInput, actual_set: dict[str, Any] | None,
                             snapshot_project: dict[str, Any] | None = None,
@@ -450,6 +507,11 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
     as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
+    if view.window.mode == "relative" and as_of is None:
+        raise ViewWindowError("E_VIEW_WINDOW_AS_OF_REQUIRED",
+                              "A relative View window requires Actual.asOf. Declare it in the Actual set, or use an explicit window.")
+    if view.window.mode == "relative" and view.surface != "table-timeline":
+        raise ValueError("E_VIEW_WINDOW_SURFACE: relative windows require a table-timeline surface at /body/window")
     resolver = wording if wording is not None else wording_resolver("en-US", view.wording)
     delta_affix = delta_unit_text(resolver, view.comparison.delta_unit or "calendar-days")
     explicit = view.rows.mode == "explicit"
@@ -457,6 +519,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
     object_types = set(view.selection.object_types) if view.selection else set()
     excluded_object_types = set(view.selection.excluded_object_types) if view.selection else set()
+    excluded_states = set(view.selection.excluded_states) if view.selection else set()
+    completion_states = (_actual_completion_states(project, placements, latest)
+                         if "finished" in excluded_states else {})
     bindings = field_bindings if field_bindings is not None else FieldRoleBindings.from_project(project)
     grouping = resolve_role_grouping(view.grouping, bindings)
     if grouping is not view.grouping:
@@ -479,6 +544,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         # The role fallback presents top-level group objects as headers, not as
         # temporal rows, even when a group has a rollup placement.
         if root_grouping and project_type == "group":
+            continue
+        if "finished" in excluded_states and completion_states.get(object_id, False):
             continue
         if not hierarchy and (object_id not in ids or source_type not in types
                               or (object_types and project_type not in object_types)
@@ -595,20 +662,35 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         lanes_by_id = {lane.lane_id: lane for lane in lane_membership.lanes}
         lane_membership = replace(lane_membership,
                                   lanes=tuple(lanes_by_id[row.lane_id] for row in lane_rows))
-    dates = [v for row in rows for item in row.items for v in active_placement(item).values()]
-    dates += [v for point in folded_points for v in active_placement(point.item).values()]
-    if view.window.mode == "selected-comparison":
-        dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
-    start, end = min(dates), max(dates)
-    margin = view.window.margin_days
-    if view.window.mode == "selected-planned":
-        # View owns temporal breathing room; schedules remain half-open facts.
-        margin = max(margin, ((end - start).days + 9) // 10, 1)
-    if view.window.mode == "explicit":
+    if view.window.mode == "relative":
+        if view.window.before is None and view.window.after is None:
+            raise ValueError("E_REVIEW_WINDOW: relative window requires before or after at /body/window")
+        before_days = _civil_offset_days(view.window.before)
+        after_days = _civil_offset_days(view.window.after)
+        if before_days == 0 and after_days == 0:
+            raise ValueError("E_REVIEW_WINDOW: relative before and after cannot both be zero at /body/window")
+        try:
+            start = as_of - timedelta(days=before_days)
+            end = as_of + timedelta(days=after_days)
+        except (OverflowError, ValueError) as error:
+            raise ViewWindowError("E_REVIEW_WINDOW",
+                                  f"Relative bounds around Actual.asOf {as_of} exceed the Date domain. Reduce before/after.") from error
+        margin = 0
+    elif view.window.mode == "explicit":
         start, end = (_date_or_number(value) for value in (view.window.start, view.window.end))
         margin = 0
         if start >= end:
             raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
+    else:
+        dates = [v for row in rows for item in row.items for v in active_placement(item).values()]
+        dates += [v for point in folded_points for v in active_placement(point.item).values()]
+        if view.window.mode == "selected-comparison":
+            dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
+        start, end = min(dates), max(dates)
+        margin = view.window.margin_days
+        if view.window.mode == "selected-planned":
+            # View owns temporal breathing room; schedules remain half-open facts.
+            margin = max(margin, ((end - start).days + 9) // 10, 1)
     try:
         window = (date.fromordinal(start.toordinal() - margin),
                   date.fromordinal(end.toordinal() + margin))
@@ -625,6 +707,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             frozenset(getattr(active_analysis, "driving_relations", ()))),
         frozenset(getattr(active_analysis, "driving_relations", ()),), folded_points,
         lane_membership, lane_rows, window_mode=WindowMode(view.window.mode),
+        window_outside=view.window.outside,
         forecast_findings=forecast.findings if forecast is not None else (),
         forecast_warnings=forecast.warnings if forecast is not None else (),
         omitted_group_summary_count=omitted_group_summary_count,
@@ -1193,7 +1276,8 @@ def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, Hierarch
     item_by_id = {item.object_id: item for item in items}
     grouping = view.grouping
     predicate_omitted = view.selection is None or (not view.selection.ids and not view.selection.types
-                                                   and not view.selection.object_types and not view.selection.excluded_object_types)
+                                                   and not view.selection.object_types and not view.selection.excluded_object_types
+                                                   and not view.selection.excluded_states)
     candidate_ids = candidate_ids if not predicate_omitted else {
         entry.object_id for entry in entries.values() if entry.parent_id is None and entry.object_id in item_by_id
     }

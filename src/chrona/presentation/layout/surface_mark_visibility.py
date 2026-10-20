@@ -103,7 +103,7 @@ def outside_window_provenance(index: ItemMarkVisibilityIndex) -> DiagnosticProve
     Source/final lane aliases and repeated comparison facets never multiply
     the warning or its Project object subjects. No geometry is re-inspected.
     """
-    if index.projection.window_mode != WindowMode.EXPLICIT:
+    if not index.projection.window_mode.is_bounded:
         return None
     objects = sorted({occurrence.object_id for occurrence, visibility in index.entries.items()
                       if any(facet.disposition != FacetDisposition.CONTAINED

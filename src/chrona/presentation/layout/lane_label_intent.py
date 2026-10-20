@@ -80,7 +80,7 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
     footprint, and end-gap inset intentionally match surface composition.
     """
     attached_labels = dict(surface_content.attached_labels)
-    explicit = getattr(projection, "window_mode", None) == WindowMode.EXPLICIT
+    explicit = getattr(projection, "window_mode", WindowMode.SELECTED_PLANNED).is_bounded
     if explicit:
         mark_visibility_index = ensure_item_mark_visibility_index(
             projection, as_of=surface_content.as_of, index=mark_visibility_index)

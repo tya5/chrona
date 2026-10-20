@@ -20,6 +20,10 @@ from chrona.presentation.layout.source_presence import omit_absent_layout_source
 from chrona.presentation.layout.surface_legend import (
     LegendArrangement, legend_arrangement, legend_source_input, wrapped_legend_line_block)
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
+from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
+from chrona.presentation.layout.window_row_admission import (
+    complete_window_row_admission, geometry_surface_content, geometry_table,
+)
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
@@ -101,6 +105,12 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     selected_content, table_content = resolve_table_cell_typography(
         selected_content, table_content, ThemeTokenView(theme))
     actual_observations, heading_content = value.actual, value.heading
+    mark_visibility_index, row_admission = None, None
+    if view.surface == "table-timeline" and getattr(projection, "window_outside", "keep") == "omit":
+        mark_visibility_index = build_item_mark_visibility_index(projection, as_of=selected_content.as_of)
+        row_admission = complete_window_row_admission(projection, mark_visibility_index)
+        table_content = geometry_table(table_content, row_admission)
+        selected_content = geometry_surface_content(selected_content, row_admission)
     if isinstance(heading_content, HeadingTextPrograms):
         heading_content = HeadingContent(*heading_content.bind(dict(projection.figures), view.figure_formats),
                                          text_wrap=heading_content.text_wrap)
@@ -108,7 +118,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     source_inputs = surface_source_inputs(project, view, projection, summary,
         content=selected_content, table=table_content, heading=heading_content,
         view_heading=heading_content or HeadingContent(str(project.get("project", {}).get("title", ""))),
-        visual_requests=visual_requests, icon_assets=icon_assets, theme=theme)
+        visual_requests=visual_requests, icon_assets=icon_assets, theme=theme,
+        row_admission=row_admission)
     if isinstance(value.heading, HeadingTextPrograms):
         source_inputs = bind_heading_dependencies(source_inputs, value.heading)
     required_metrics = (("timeline.groupHeader.blockSize",)
@@ -237,6 +248,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
             progress=value.progress,
             previous_route_hints=value.previous_route_hints,
+            mark_visibility_index=mark_visibility_index,
+            row_admission=row_admission,
             scene_precision=value.scene_precision,
         )
 

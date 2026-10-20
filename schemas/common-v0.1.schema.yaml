@@ -470,6 +470,12 @@ $defs:
     examples: ["2026-09-30"]
     type: string
     pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  civilWindowOffset:
+    description: "A non-negative civil-day or seven-day week offset (`0d`/`0w` allowed; no signs or leading zeroes)."
+    examples: [1w, 6w, 0d]
+    type: string
+    maxLength: 8
+    pattern: "^(?:0|[1-9][0-9]*)(?:d|w)(?![\\s\\S])"
   safeRelativePath:
     description: "Strict relative path: starts with a letter or digit, uses only letters, digits, `.`, `_`, `-` and `/`, and has no `.` or `..` segment."
     examples: ["views/overview.yaml"]
