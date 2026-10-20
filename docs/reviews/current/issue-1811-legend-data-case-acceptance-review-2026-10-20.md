@@ -19,6 +19,11 @@ text and `textTransform: none` keep their existing path.
 Own-venv focused verification:113 passed across the two new modules and existing
 Style scopes, transformed placements, small caps, sources, legend sizing/grid,
 slot sizing and realized keys. No local full suite/public-materializer sweep.
+The [actual CLI PNG](assets-1811/legend-data-case.png) was inspected: `Aiko`
+stays capitalized beside lower-case authored/built-in keys. It renders the
+first integration fixture at1800×1000 with the same resources/Actual input;
+its pre-existing synthetic Actual-on-Plan contrast warnings are unchanged,
+not evidence for reviewer-owned palette row2.
 Required before release: current-ready integration, final-head CI, the official
 generated artifact's per-slide count table and exact review-containing main's
 three-OS release. No generated output is authored in this slice.
