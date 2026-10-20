@@ -27,6 +27,7 @@ class RelationRouteStyle(str, Enum):
 
     ORTHOGONAL = "orthogonal"
     CURVED = "curved"
+    METRO = "metro"
 
 
 class PointHostMode(str, Enum):

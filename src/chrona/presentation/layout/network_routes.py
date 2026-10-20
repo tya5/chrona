@@ -13,7 +13,7 @@ from chrona.presentation.layout.path_geometry import flatten_path
 from chrona.presentation.layout.relation_terminals import (
     centred_on_route, complete_centred_terminals, marker_geometry, project_marker_outline, terminal_run,
 )
-from chrona.presentation.layout.relation_style import complete_relation_style, curved_path_segments
+from chrona.presentation.layout.relation_style import complete_relation_style, changed_path_segments
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.route_search import RouteSearchFailure
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationPlacement
@@ -32,6 +32,7 @@ def complete_network_routes(
     max_detour_ratio: float, theme_tokens: ThemeTokenView | None,
     progress: RenderProgress | None = None,
     relation_style: str = "orthogonal",
+    relation_corner_radius: float | None = None,
 ) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
     """Complete each selected network edge through the existing deterministic route search.
 
@@ -156,8 +157,8 @@ def complete_network_routes(
             marker_end=marker_end, slot_id="network", paint_order=100,
             from_instance_id=source_id, to_instance_id=target_id,
         )
-        def reject_curve(candidate, cover):
-            for segment in curved_path_segments(candidate.path_commands, stroke):
+        def reject_style(candidate, cover):
+            for segment in changed_path_segments(candidate.path_commands, stroke):
                 radius = segment.stroke_width / 2
                 if (min(segment.start[0], segment.end[0]) - radius < extent[0]
                         or min(segment.start[1], segment.end[1]) - radius < extent[1]
@@ -165,7 +166,7 @@ def complete_network_routes(
                         or max(segment.start[1], segment.end[1]) + radius > extent[3]):
                     return "bounds"
                 # Node/group headers contain their required text. The changed
-                # arcs must clear every host, including both endpoint hosts.
+                # ink must clear every host, including both endpoint hosts.
                 if any(obstacles_intersect(segment, rect) for rect in obstacle_rects.values()):
                     return "clearance"
             if _terminal_blockers(candidate.points, candidate.path_commands,
@@ -176,7 +177,7 @@ def complete_network_routes(
         placement, _ = complete_relation_style(placement, style=relation_style,
             stroke_width=stroke, start_run=terminal_run(marker_start),
             end_run=terminal_run(marker_end), recovery=fallback_reason is not None,
-            reject=reject_curve)
+            reject=reject_style, join_radius=relation_corner_radius)
         relations.append(replace(placement, paint_bounds=relation_paint_bounds(placement, theme_tokens)))
     return tuple(relations), tuple(warnings)
 
