@@ -270,6 +270,10 @@ Neutral host decoding includes the declared `forecast` primary purpose as well
 as planned/Actual/baseline hosts. Preserve its purpose, source and instance
 identity; do not relabel it as planned or discard it because its paint role is
 shared. Layout still decides whether that evidence reconstructs a valid route.
+For a composite Symbol, the existing `<placement>:partN` sibling identities may
+recover their exact endpoint placement only when every sibling has the same
+source, purpose and completed bounds. Reject conflicting siblings or a colliding
+unsuffixed primitive; never merge by source alone or infer a union of bounds.
 
 Draft `chrona render --snapshot <project.yaml>` (#1533) accepts a baseline
 Project file as the typed Snapshot Project role. Validate it through the normal

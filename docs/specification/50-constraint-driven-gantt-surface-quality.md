@@ -611,6 +611,10 @@ hosts may represent spans. Explicit primary forecast hosts retain their declared
 identity and participate through the same decoded evidence and validators
 (Spec08); neither their purpose nor symbol serialization is a reason to omit them.
 No nearest-point guess or serialized Scene mutation is permitted.
+Composite Symbol siblings may supply one host under the exact placement identity
+only through Spec08's identical-bounds, source and purpose checks. This decoding
+does not select ports or accept a route; ambiguous or conflicting hosts remain
+hint misses and every recovered proposal retains the ordinary validators.
 
 Reanchoring preserves semantic endpoints, shape family and interior channels:
 translate the whole route for equal endpoint-corridor translations; otherwise
