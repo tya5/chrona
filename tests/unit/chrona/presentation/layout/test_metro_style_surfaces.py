@@ -49,9 +49,10 @@ def _diagonal_line_count(commands):
     return count
 
 
-@pytest.mark.parametrize(("radius", "expect_arcs"), [(None, True), (0, False), (4, True)])
+@pytest.mark.parametrize(("radius", "expect_arcs", "diagonals", "quadratics"),
+                         [(None, True, 4, 8), (0, False, 3, 0), (4, True, 4, 8)])
 def test_yaml_profile_style_completes_real_table_scene_svg_and_png(
-        radius, expect_arcs, tmp_path, monkeypatch):
+        radius, expect_arcs, diagonals, quadratics, tmp_path, monkeypatch):
     from tests.unit.chrona.presentation.scene import test_relation_rounded_corners as fixture
 
     style = _profile_style("metro")
@@ -64,12 +65,10 @@ def test_yaml_profile_style_completes_real_table_scene_svg_and_png(
     # style itself comes from a decoded YAML profile solved through Layout.
     relation_fact = {"id": "dep", "from": {"object": "a", "endpoint": "start"},
                      "to": {"object": "b", "endpoint": "end"}}
-    surface, relation = fixture._drawn(radius, relation=relation_fact)
-    assert _diagonal_line_count(relation.path_commands) == 2
-    if expect_arcs:
-        assert _quadratic_count(relation.path_commands) == 4
-    else:
-        assert _quadratic_count(relation.path_commands) == 0
+    padded_window = (fixture.D(2026, 1, 15), fixture.D(2026, 3, 1))
+    surface, relation = fixture._drawn(radius, relation=relation_fact, window=padded_window)
+    assert _diagonal_line_count(relation.path_commands) == diagonals
+    assert _quadratic_count(relation.path_commands) == quadratics
 
     head = relation.marker_start.head_length
     tail = relation.marker_end.head_length

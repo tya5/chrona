@@ -73,7 +73,7 @@ def test_curved_table_surface_keeps_route_skeleton_clears_marks_and_text_and_ren
     relation = next(item for item in layout.relations if item.source_ref == "dep")
 
     assert len(relation.points) >= 4
-    assert sum(command.kind == "quadratic" for command in relation.path_commands) == 2
+    assert sum(command.kind == "quadratic" for command in relation.path_commands) == 4
     assert relation.style_fallback is None
     assert not any(item.startswith("I_LAYOUT_RELATION_STYLE_FALLBACK:") for item in layout.diagnostics)
 
@@ -97,7 +97,7 @@ def test_curved_table_surface_keeps_route_skeleton_clears_marks_and_text_and_ren
     scene = _scene(request)
     scene_relation = next(item for item in scene.primitives
                           if item.source_kind == "relation" and item.source_ref == "dep")
-    assert sum(command.kind == "quadratic" for command in scene_relation.path_commands) == 2
+    assert sum(command.kind == "quadratic" for command in scene_relation.path_commands) == 4
     svg = render_v05_svg(scene)
     # The renderer emits SVG command letters adjacent to the preceding command.
     assert "Q" in svg
@@ -208,7 +208,8 @@ def test_scene_and_svg_render_an_s_curve_across_different_rows(tmp_path, monkeyp
     monkeypatch.setattr(fixture, "_theme", lambda: _contrasting_theme())
     relation = {"id": "dep", "from": {"object": "a", "endpoint": "start"},
                 "to": {"object": "b", "endpoint": "end"}}
-    surface, path = fixture._drawn(0, relation=relation)
+    padded_window = (fixture.D(2026, 1, 15), fixture.D(2026, 3, 1))
+    surface, path = fixture._drawn(0, relation=relation, window=padded_window)
 
     assert path.points[0][1] != path.points[-1][1]
     turns = []
@@ -216,8 +217,20 @@ def test_scene_and_svg_render_an_s_curve_across_different_rows(tmp_path, monkeyp
         incoming = (corner[0] - first[0], corner[1] - first[1])
         outgoing = (last[0] - corner[0], last[1] - corner[1])
         turns.append(incoming[0] * outgoing[1] - incoming[1] * outgoing[0])
-    assert len(turns) == 2 and turns[0] * turns[1] < 0
-    assert sum(command.kind == "quadratic" for command in path.path_commands) == 2
+    assert len(turns) == 4
+    assert turns[0] < 0 and turns[1] < 0 and turns[2] > 0 and turns[3] > 0
+    assert turns[0] * turns[-1] < 0
+    assert sum(command.kind == "quadratic" for command in path.path_commands) == 4
+
+    # The completed S-curve's conservative changed-ink cover remains clear of
+    # all required object marks and text, not merely its original polyline.
+    arc_cover = changed_path_segments(path.path_commands, stroke_width=1.0)
+    for primitive in surface.primitives:
+        if primitive.kind.value not in {"Rect", "Text", "Symbol"} or primitive.source_kind not in {"object", "review"}:
+            continue
+        left, top, width, height = primitive.bounds
+        obstacle = ObstacleRect(left, top, left + width, top + height)
+        assert all(not obstacles_intersect(segment, obstacle) for segment in arc_cover)
 
     svg = render_v05_svg(surface)
     assert svg.count("Q") >= 2 and 'stroke="#c43d24"' in svg
