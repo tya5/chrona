@@ -38,7 +38,8 @@ from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
-from chrona.presentation.model.projection import WindowMode, active_placement, finish_delta_text, finish_delta_semantic, signed_delta_text
+from chrona.presentation.model.projection import (WindowMode, active_placement, finish_delta_text,
+    finish_delta_semantic, is_estimated_finish_delta, signed_delta_text)
 
 
 @dataclass(frozen=True)
@@ -443,6 +444,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     CollisionDomain("group-header", folded.group_id), "diagnose",
                     bounds=LabelRect(*bounds_from_rect(group.header_bounds)),
                     semantic_id=finish_delta_semantic(item), required_before_routes=True,
+                    estimated_delta=is_estimated_finish_delta(item),
                     style_occurrence_key=style_key(item, folded.group_id, finish_delta_semantic(item), folded=True),
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
         for row in projection.rows:
@@ -472,6 +474,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     placement_id, item.object_id, finish_delta_text(item), LabelRect(*bounds_from_rect(mark.bounds)),
                     candidates, request.surface_content.label_text_role or "text", "plot-label", CollisionDomain("timeline", "overlay"),
                     "diagnose", bounds=row_bands.get(physical_row), semantic_id=finish_delta_semantic(item),
+                    estimated_delta=is_estimated_finish_delta(item),
                     style_occurrence_key=style_key(item, physical_row, finish_delta_semantic(item)),
                     lane_row_id=physical_row if projection.lane_membership is not None else None,
                     lane_member_id=(row.items[0].item_id or row.items[0].object_id)
@@ -552,7 +555,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 font_metrics=request.font_metrics, collision_region=label_request.collision_region,
                 collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id,
                 lane_row_id=label_request.lane_row_id, lane_member_id=label_request.lane_member_id,
-                lane_source_kind=label_request.lane_source_kind, lines=measured.lines)
+                lane_source_kind=label_request.lane_source_kind, lines=measured.lines,
+                estimated_delta=label_request.estimated_delta)
             bounds = label_request.bounds or timeline_rect
             if label_request.bounds is not None and measured.chip is not None:
                 if chip_measure is None:
@@ -757,7 +761,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             collision_region=provisional.collision_region, collision_domain=provisional.collision_domain,
             semantic_id=provisional.semantic_id, lane_row_id=provisional.lane_row_id,
             lane_member_id=provisional.lane_member_id, lane_source_kind=provisional.lane_source_kind,
-            overflow="visible-overflow" if visible_overflow else "fit", lines=lines),
+            overflow="visible-overflow" if visible_overflow else "fit", lines=lines,
+            estimated_delta=label_request.estimated_delta),
             fallback_ladder=ladder, selected_rung=candidate.side,
             host_placement_id=(hosting_mark.placement_id if hosting_mark is not None and
                 (associated_member or candidate.side == "inside") else None),

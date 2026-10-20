@@ -134,6 +134,9 @@ class TableCellContent:
     required: bool = False
     # Exact source row/member identity selected before table measurement.
     style_key: StyleOccurrenceKey | None = None
+    # True only when this cell displays an estimated finish delta; Layout carries
+    # the fact to the completed TextPlacement without interpreting its text.
+    estimated_delta: bool = False
 
 
 @dataclass(frozen=True)
@@ -240,6 +243,8 @@ class SurfaceLegendEntry:
     scale_collisions: tuple[ScaleCollision, ...] = ()
     encoding_value_is_wording: bool = False
     style_display_value: str | None = None
+    # Text-only explanatory entries keep their identity/label but emit no ink.
+    swatch_visible: bool = True
 
     def __post_init__(self) -> None:
         if self.view_scale_id is not None:

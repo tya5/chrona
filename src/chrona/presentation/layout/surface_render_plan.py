@@ -123,7 +123,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         resolved_layout, layout_error = None, error
     claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])
                        if resolved_layout is not None else frozenset())
-    if view.surface == "dependency-network" and resolved_layout is not None and "title" not in claimed_sources:
+    if uses_independent_view_heading(view.surface, resolved_layout):
         network_heading = compose_heading(view, project, actual_observations, value.locale)
         if isinstance(network_heading, HeadingTextPrograms):
             network_heading = HeadingContent(*network_heading.bind(dict(projection.figures), view.figure_formats),
@@ -319,6 +319,12 @@ def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_to
 def _layout_slot_sources(node: Mapping[str, Any]) -> frozenset[str]:
     own = frozenset((node["source"],)) if node.get("kind") == "slot" else frozenset()
     return own.union(*(_layout_slot_sources(child) for child in node.get("children", ())))
+
+
+def uses_independent_view_heading(surface: str, profile: ResolvedLayoutProfile | None) -> bool:
+    """Whether the selected native surface allocates the View heading as named parts."""
+    return (surface == "dependency-network" and profile is not None
+            and "title" not in _layout_slot_sources(profile.profile["root"]))
 
 def _narrow_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: MeasuredSources,
                            measured: MeasuredSources, *, viewport_inline: int, floor: int,
