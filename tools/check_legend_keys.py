@@ -12,7 +12,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 MARK_PREFIXES = {"planned": "planned:", "actual": "actual:",
                  "snapshot": "snapshot:", "scenario": "scenario:"}
-POINT_MARK_ROLES = {"planned", "actual", "forecast"}
 
 
 def _paint(item: dict[str, Any]) -> tuple[str | None, str | None]:
@@ -56,8 +55,22 @@ def _scene_ink_identity(items: list[dict[str, Any]]) -> tuple[Any, ...]:
 
 def _figure_paint_identity(items: list[dict[str, Any]]) -> tuple[Any, ...]:
     """Retain the complete ordered paint stack for a projected source figure."""
-    return tuple((_freeze(item.get("paint") or {}), _freeze(item.get("pattern")))
-                 for item in items)
+    result = []
+    for item in items:
+        paint = dict(item.get("paint") or {})
+        glow, bounds = paint.get("glow"), item.get("bounds")
+        if isinstance(glow, dict) and isinstance(bounds, dict) and isinstance(glow.get("region"), dict):
+            glow = dict(glow)
+            region = glow["region"]
+            # The filter rectangle follows the completed figure's placement;
+            # compare its physical padding, not absolute chart/key coordinates.
+            glow["region"] = tuple(round(value, 9) for value in (
+                bounds["inline"] - region["inline"], bounds["block"] - region["block"],
+                region["inline"] + region["inlineSize"] - bounds["inline"] - bounds["inlineSize"],
+                region["block"] + region["blockSize"] - bounds["block"] - bounds["blockSize"]))
+            paint["glow"] = glow
+        result.append((_freeze(paint), _freeze(item.get("pattern"))))
+    return tuple(result)
 
 
 def _figure_groups(items: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
@@ -67,7 +80,7 @@ def _figure_groups(items: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
         source = item.get("sourceRef")
         bounds = item.get("bounds")
         if item.get("kind") == "Symbol" and isinstance(source, str) and isinstance(bounds, dict):
-            identity = ("figure", source, _freeze(bounds))
+            identity = ("figure", source, item.get("purpose"), item.get("visualRole"), _freeze(bounds))
         else:
             identity = ("primitive", index)
         grouped.setdefault(identity, []).append(item)
@@ -76,24 +89,23 @@ def _figure_groups(items: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
 
 def _point_figure_role(item: dict[str, Any], owner_role: str) -> str | None:
     """Recognize completed point figures, not temporal state (forecast can paint as planned)."""
-    state = item.get("visualRole")
+    role = item.get("visualRole")
     if owner_role == "milestone":
-        return state if isinstance(state, str) and state in POINT_MARK_ROLES else "planned"
-    source_ref = item.get("sourceRef")
+        return role if isinstance(role, str) else "planned"
     if (item.get("kind") == "Symbol" and item.get("sourceKind") == "legend"
-            and isinstance(source_ref, str) and source_ref != owner_role
-            and isinstance(state, str) and state in POINT_MARK_ROLES):
-        return state
+            and isinstance(role, str)):
+        return role
     return None
 
 
-def _point_key_findings(state: str, label: str, key_figures: list[list[dict[str, Any]]],
+def _point_key_findings(visual_role: str, label: str, key_figures: list[list[dict[str, Any]]],
                         marks: dict[str, list[dict[str, Any]]]) -> list[str]:
     """Match each state key to one complete source mark figure, never a palette union."""
     source_points = [item for role, items in marks.items() for item in items
                      if item.get("kind") == "Symbol"
-                     and (item.get("visualRole") == state
-                          or (state == "planned" and role == "planned"
+                     and item.get("sourceKind") in {None, "object"}
+                     and (item.get("visualRole") == visual_role
+                          or (visual_role == "planned" and role == "planned"
                               and item.get("visualRole") is None))
                      and ":snapshot:" not in item.get("id", "")]
     if not source_points:

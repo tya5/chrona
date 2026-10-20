@@ -167,6 +167,114 @@ def test_each_point_key_matches_one_complete_multipart_source_figure():
     assert any("complete figure" in finding for finding in legend_key_findings(broken))
 
 
+@pytest.mark.parametrize("visual_role", ["gate", "custom-milestone"])
+def test_milestone_point_key_matches_its_completed_visual_role(visual_role):
+    bounds = {"inline": 12, "block": 20, "inlineSize": 10, "blockSize": 10}
+
+    def part(identifier, source, fill, stroke=None, *, legend=False):
+        item = _rect(identifier, kind="Symbol", fill=fill, stroke=stroke,
+                     bounds=bounds, source_ref=source)
+        item.update(purpose="planned" if not legend else "legend-swatch",
+                    visualRole=visual_role)
+        if legend:
+            item["sourceKind"] = "legend"
+        else:
+            item["sourceKind"] = "object"
+        return item
+
+    scene = _scene([
+        part("planned:milestone-a:part0", "milestone-a", "#B06020"),
+        part("planned:milestone-a:part1", "milestone-a", None, "#102030"),
+        part("legend-swatch:milestone:opaque-id:part0", "key", "#B06020", legend=True),
+        part("legend-swatch:milestone:opaque-id:part1", "key", None, "#102030", legend=True),
+    ])
+    assert legend_key_findings(scene) == []
+
+    broken = deepcopy(scene)
+    broken["surfaces"][0]["primitives"][-1]["paint"]["stroke"] = "#FFFFFF"
+    assert any("complete figure" in finding for finding in legend_key_findings(broken))
+
+
+def test_coincident_planned_and_actual_multipart_figures_do_not_form_a_hybrid():
+    bounds = {"inline": 12, "block": 20, "inlineSize": 10, "blockSize": 10}
+
+    def part(identifier, source, role, fill, stroke=None, *, legend=False):
+        item = _rect(identifier, kind="Symbol", fill=fill, stroke=stroke,
+                     bounds=bounds, source_ref=source)
+        item.update(purpose="legend-swatch" if legend else role, visualRole=role)
+        item["sourceKind"] = "legend" if legend else "object"
+        return item
+
+    scene = _scene([
+        part("planned:gate-a:part0", "same-source", "gate", "#AA0000"),
+        part("planned:gate-a:part1", "same-source", "gate", None, "#111111"),
+        part("actual:gate-a:part0", "same-source", "actual", "#0000AA"),
+        part("actual:gate-a:part1", "same-source", "actual", None, "#EEEEEE"),
+        part("legend-swatch:milestone:planned-key:part0", "planned-key", "gate", "#AA0000", legend=True),
+        part("legend-swatch:milestone:planned-key:part1", "planned-key", "gate", None, "#111111", legend=True),
+        part("legend-swatch:milestone:actual-key:part0", "actual-key", "actual", "#0000AA", legend=True),
+        part("legend-swatch:milestone:actual-key:part1", "actual-key", "actual", None, "#EEEEEE", legend=True),
+    ])
+    assert legend_key_findings(scene) == []
+
+    hybrid = deepcopy(scene)
+    # Each component exists in the coincident source figures, but this mix
+    # is not the complete paint stack of either one.
+    hybrid["surfaces"][0]["primitives"][-3]["paint"]["stroke"] = "#EEEEEE"
+    assert any("complete figure" in finding for finding in legend_key_findings(hybrid))
+
+
+def _glow_point_key_scene() -> dict:
+    source_bounds = {"inline": 1029.2, "block": 396.8,
+                     "inlineSize": 24, "blockSize": 24}
+    key_bounds = {"inline": 1396, "block": 771.338,
+                  "inlineSize": 24, "blockSize": 24}
+
+    def glow_paint(region_inline, region_block):
+        return {"fill": "#FF7A1A", "stroke": "#0A0A0C", "strokeWidth": 1,
+                "dash": [], "opacity": 1,
+                "glow": {"color": "#FFB52E", "blur": 7, "opacity": .85,
+                         "fidelity": "required",
+                         "region": {"inline": region_inline, "block": region_block,
+                                    "inlineSize": 66, "blockSize": 66}}}
+
+    source = _rect("planned:evb-arrival", kind="Symbol", fill="#FF7A1A",
+                   bounds=source_bounds, source_ref="evb-arrival")
+    source.update(sourceKind="object", purpose="planned", visualRole="planned",
+                  paint=glow_paint(1008.2, 375.8))
+    key = _rect("legend-swatch:planned:opaque-digest", kind="Symbol", fill="#FF7A1A",
+                bounds=key_bounds, source_ref="planned:opaque-digest")
+    key.update(sourceKind="legend", purpose="legend-swatch", visualRole="planned",
+               paint=glow_paint(1375, 750.338))
+    return _scene([source, key])
+
+
+def test_point_key_glow_region_matches_by_physical_padding():
+    assert legend_key_findings(_glow_point_key_scene()) == []
+
+
+@pytest.mark.parametrize("mutation", [
+    "fill", "glow-color", "glow-blur", "glow-opacity", "glow-fidelity", "glow-padding",
+])
+def test_point_key_glow_match_still_rejects_changed_paint_or_effect(mutation):
+    scene = _glow_point_key_scene()
+    key = scene["surfaces"][0]["primitives"][1]
+    glow = key["paint"]["glow"]
+    if mutation == "fill":
+        key["paint"]["fill"] = "#123456"
+    elif mutation == "glow-color":
+        glow["color"] = "#123456"
+    elif mutation == "glow-blur":
+        glow["blur"] += 1
+    elif mutation == "glow-opacity":
+        glow["opacity"] -= .1
+    elif mutation == "glow-fidelity":
+        glow["fidelity"] = "best-effort"
+    else:
+        glow["region"]["inlineSize"] += 1
+    assert any("complete figure" in finding for finding in legend_key_findings(scene))
+
+
 def test_planned_progress_does_not_require_an_actual_progress_key():
     scene = _scene([
         _rect("planned:campaign"),
