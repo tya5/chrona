@@ -5,9 +5,9 @@
 [Current plan, design and architecture review](https://github.com/tya5/chrona/issues/1841#issuecomment-6295885856).
 Specs08/50 own neutral host identity and Layout validation; Spec06 owns the
 shared native-surface heading contract. No Scene/adaptor routing or title logic.
-Row4 tested tree: `8c0da2ffe` (including source `fd281bb6a`/`c859f311f`);
-Spec50 corrections preceded code. Root's routing-focused command below passes
-751 tests (3722 deselected; ten existing Pillow deprecation warnings).
+Row4 tested tree: `867bf5ffe` (including straight-fit source `ba29cef7b`);
+Spec50 corrections, including `2b574fe46`, preceded code. Root's command below
+passes 753 tests (3722 deselected; ten existing Pillow deprecation warnings).
 Actual synthetic curved/metro SVG/PNG output was inspected. Tests retain full
 closed-mark/text clearance, centered terminal identity and straight tangents;
 fixed blocked/over-limit cases require diagnosed suppression, not vacuous
@@ -17,6 +17,16 @@ bypass or geometry leaking beyond Layout.
 ```sh
 .venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout tests/unit/chrona/presentation/scene -k 'relation or route or egress' -m 'not corpus' --tb=short
 ```
+
+PR1849 run39472589340 failed in derived-preview: our universal head-length
+minimum rejected a safe short straight connector, forcing an unplaceable
+required PDR stub label; missing-artifact reproduction and derived-ready
+failures were downstream. The published correction keeps straight marker fit
+separate from bend reserves. The focused programme-board render now completes
+(write=false reaches the expected Scene-byte mismatch); all24 relations remain,
+and the PDR relation's actual SVG attributes and Scene points match the public
+base exactly, without stubs. No corpus/Theme or required-label-policy changes.
+Fresh official snapshot and exact-main release evidence remain required.
 
 ## Literal issue acceptance
 
