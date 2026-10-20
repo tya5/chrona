@@ -212,6 +212,7 @@ def test_final_composition_looks_up_row_lane_alias_and_folded_selection(
     request = SimpleNamespace(
         fixed_lane_preflight=None, layout_manifest=SimpleNamespace(point_host_mode=None),
         projection=projection, mark_visibility_index=index,
+        row_admission=None,
         presentation_contract=SimpleNamespace(time=SimpleNamespace(as_of=as_of),
                                               labels=SimpleNamespace(side="auto")),
         surface_content=SimpleNamespace(progress_fill_source=None),

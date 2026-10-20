@@ -111,13 +111,17 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
     passed_index = calls[0]["mark_visibility_index"]
     assert passed_index is not None
     assert passed_index.projection is candidate.projection
+    passed_admission = calls[0]["row_admission"]
+    # The ordinary derived/keep window retains its no-admission fast path.
+    assert passed_admission is None
     assert calls == [dict(
         projection=candidate.projection, layout_manifest=candidate.layout_manifest,
         surface_content=candidate.surface_content, theme_tokens=candidate.theme_tokens,
         temporal_capacity=candidate.temporal_capacity,
         metric_values=candidate.measured_sources.metric_values,
         icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
-        font_metrics=candidate.font_metrics, mark_visibility_index=passed_index)]
+        font_metrics=candidate.font_metrics, mark_visibility_index=passed_index,
+        row_admission=passed_admission)]
     assert candidate.fixed_lane_preflight is stale
     assert candidate.mark_visibility_index is None
 
