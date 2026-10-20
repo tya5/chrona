@@ -70,6 +70,8 @@ def prepare_authoring_command(
 
         candidate = deepcopy(current)
         _apply(candidate, command)
+        if command["type"] == "selectPresentationPreset":
+            _check_preset_identity(canonical_path.parent, command["payload"]["preset"])
         parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate)), candidate)
         payload = yaml.safe_dump(candidate, allow_unicode=True, sort_keys=False).encode("utf-8")
         next_revision = content_identity(candidate)
@@ -122,6 +124,34 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> None:
         body["presentation"]["binding"]["overrides"] = payload["overrides"]
     else:
         raise ValueError(f"E_AUTHORING_COMMAND: unsupported command type {command_type!r}")
+
+
+def _check_preset_identity(root: Path, selector: dict[str, Any]) -> None:
+    """Refuse a binding whose id/version differ from the preset file it names.
+
+    Render requires the bound id and version to equal the preset's own identity, so
+    a binding that fails here could never render.  A path that does not exist yet is
+    left to the render-time resolver, as before.
+    """
+    from chrona.core.store_address import StoreAddressError, resolve_store_address
+    from chrona.resources import safe_load
+    try:
+        path = resolve_store_address(root, str(selector["path"]))
+    except StoreAddressError:
+        return
+    if not path.is_file():
+        return
+    try:
+        document = safe_load(path.read_text(encoding="utf-8"))
+        actual_id = str(document["id"])
+        actual_version = str(document["body"]["package"]["version"])
+    except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as error:
+        raise ValueError(f"E_AUTHORING_PRESET_SCHEMA: {selector['path']!r} is not a readable presentation preset") from error
+    if str(selector["id"]) != actual_id or str(selector["version"]) != actual_version:
+        raise ValueError(
+            f"E_AUTHORING_PRESET_IDENTITY: binding id/version={selector['id']!r}/{selector['version']!r}, but "
+            f"{selector['path']!r} is preset {actual_id!r}/{actual_version!r}; to use another builtin preset create a "
+            "workspace with create_workspace, or point the binding at a copied preset directory whose id and version match")
 
 
 def _accepted(command: dict[str, Any], workspace: str, result: str, *, reversible: bool | None = None) -> dict[str, Any]:

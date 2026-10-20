@@ -176,9 +176,28 @@ and `payload`. Its registry schema and description give the five operations:
 `setWorkspaceTask`, `setWorkspaceActual`, `selectPresentationPreset`,
 `setPresentationOverride` and `materializePresentationPreset`.
 Use creation/query `workspaceRevision` as the first base, then carry each
-accepted `authoringResult.resultRevision` into the next command. Revert a source
-edit with its inverse command at the current revision. No CLI call, manual file
-read or deliberately stale command is needed to discover a revision.
+accepted `authoringResult.resultRevision` into the next command. Revert an edit to
+an existing task or Actual with its inverse command at the current revision (send
+the previous values back). No CLI call, manual file read or deliberately stale
+command is needed to discover a revision.
+
+**Switch preset.** `selectPresentationPreset` only re-pins the workspace to a
+preset directory that is already inside it, and it checks the binding when you
+send it: `id` and `version` must equal the `id` and `body.package.version` of the
+file at `path`. For the workspace above that is
+`{"id":"chrona-builtin-target-b","version":"1","path":"preset/preset.yaml"}`
+(the id in the file, not the short `target-b` name from `list_presets`). A mismatch
+such as `marquee` over the copied `target-b` file is rejected with
+`E_AUTHORING_PRESET_IDENTITY`, the file is not touched and the revision does not
+advance. No tool copies a second builtin preset into an existing workspace, so to
+change the look call `create_workspace` again with the other builtin `preset`, a new
+`directory` and the same `project`, then render that workspace.
+
+**Undo an added task.** There is no delete operation: `setWorkspaceTask` adds a new
+`id` or replaces the task with that `id`, and undoing an addition is not an inverse
+edit. To drop a task, call `create_workspace` with a new `directory` and the project
+without it (it never overwrites), and keep working in the new workspace. Until then
+the old workspace is unchanged and still renders.
 
 ### Limits
 
