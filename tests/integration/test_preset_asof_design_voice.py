@@ -15,8 +15,8 @@ def _resource(root, filename):
 
 
 @pytest.mark.parametrize(("design", "wording"), [
-    ("target-b", "as of"), ("marquee", {"wording": "marker.asOf"}), ("sunday", "TODAY!"),
-    ("titlecard", "現在 NOW"), ("yuya", "as of"),
+    ("target-b", {"wording": "marker.asOf"}), ("marquee", {"wording": "marker.asOf"}), ("sunday", "TODAY!"),
+    ("titlecard", "現在 NOW"), ("yuya", {"wording": "marker.asOf"}),
 ])
 def test_generic_preset_uses_the_design_wording_and_retains_explicit_view_precedence(design, wording):
     view = _resource("presets/bundles/design-default", "view.yaml")
