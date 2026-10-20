@@ -42,6 +42,10 @@ class StyleFieldFact:
     cardinality: str = "one"
     enum_values: tuple[str, ...] = ()
     aliases: tuple[str, ...] = ()
+    reference_title: str | None = None
+    reference_identity: tuple[str, str, str] | None = None
+    non_scalar_value: bool = False
+    non_scalar_type: str | None = None
 
 
 def field_facts_for_item(item: Any) -> tuple[StyleFieldFact, ...]:
@@ -70,6 +74,10 @@ def field_facts_for_item(item: Any) -> tuple[StyleFieldFact, ...]:
         read = bindings.read_result(fields, {"field": name}, object_id=object_id)
         value = read.value if (read.value is None or isinstance(read.value, (str, bool, int, float))) else None
         descriptor = descriptor_by_name.get(name)
+        scalar_reference = (read.reference_targets[0]
+                            if descriptor is not None and descriptor.kind == "objectReference"
+                            and descriptor.cardinality == "one" and len(read.reference_targets) == 1
+                            else None)
         facts.append(StyleFieldFact(
             name=name,
             kind=descriptor.kind if descriptor is not None else None,
@@ -78,6 +86,12 @@ def field_facts_for_item(item: Any) -> tuple[StyleFieldFact, ...]:
             cardinality=descriptor.cardinality if descriptor is not None else "one",
             enum_values=descriptor.enum_values if descriptor is not None else (),
             aliases=tuple(aliases_by_name.get(name, ())),
+            reference_title=(scalar_reference.display_title if scalar_reference is not None else None),
+            reference_identity=(scalar_reference.identity if scalar_reference is not None else None),
+            non_scalar_value=(read.present and read.value is not None
+                              and not isinstance(read.value, (str, bool, int, float))),
+            non_scalar_type=(type(read.value).__name__ if read.present and read.value is not None
+                             and not isinstance(read.value, (str, bool, int, float)) else None),
         ))
     return tuple(facts)
 
@@ -226,6 +240,8 @@ def _literal_matches_type(value: object, fact: StyleFieldFact) -> bool:
 
 def _fact_equals_literal(fact: StyleFieldFact, literal: object) -> bool:
     value = fact.value
+    if fact.kind == "objectReference":
+        return isinstance(fact.reference_title, str) and type(fact.reference_title) is type(literal) and fact.reference_title == literal
     if fact.kind == "number":
         return (isinstance(value, (int, float)) and not isinstance(value, bool)
                 and isinstance(literal, (int, float)) and not isinstance(literal, bool)

@@ -87,6 +87,7 @@ def complete_style_fills(
     groups: dict[str, list[tuple[OccurrenceStyleIntent, str | None, object]]] = {}
     policies: dict[str, tuple[str, ...] | str] = {}
     references: dict[str, str] = {}
+    reference_identities: dict[tuple[str, str], tuple[str, str, str]] = {}
 
     def sources(intent: OccurrenceStyleIntent) -> tuple[EncodingSource, ...]:
         try:
@@ -123,8 +124,27 @@ def complete_style_fills(
         # lose the identity that was needed to explain its encoded colour.
         sources(intent)
         field_name = encoding.source.field_name
-        value = next((fact.value for fact in occurrence.fields
-                      if fact.name == field_name and fact.present), None)
+        field_fact = next((fact for fact in occurrence.fields
+                           if fact.name == field_name and fact.present), None)
+        value = field_fact.value if field_fact is not None else None
+        if (field_fact is not None and field_fact.non_scalar_value
+                and not _profile_lacks_field(occurrence.fields, field_name)):
+            raise ColorScaleError(
+                "E_PRESENTATION_SCALE_VALUE",
+                f"object={intent.key.subject_id!r}, field={field_name!r}, valueType={field_fact.non_scalar_type or 'non-scalar'}; expected a scalar value in the encoding domain",
+                source_reference(intent),
+            )
+        if (field_fact is not None and field_fact.reference_identity is not None
+                and isinstance(value, str)):
+            domain_key = (scale_id, value)
+            previous_identity = reference_identities.get(domain_key)
+            if previous_identity is not None and previous_identity != field_fact.reference_identity:
+                raise ColorScaleError(
+                    "E_PRESENTATION_SCALE_VALUE",
+                    f"object={intent.key.subject_id!r}, field={field_name!r}, value={value!r} resolves to different reference targets within scale {scale_id!r}; use separate scales for distinct target identities",
+                    source_reference(intent),
+                )
+            reference_identities[domain_key] = field_fact.reference_identity
         groups.setdefault(scale_id, []).append((intent, field_name, value))
 
     for intent in intents.intents:
