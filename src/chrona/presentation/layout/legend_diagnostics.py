@@ -89,7 +89,7 @@ def _shape_signature(request, entry, shape):
         ink = resolve_legend_shape_ink(request.theme_tokens, role, shape.legend_swatch_shape,
                                        fill_override=fill_override)
         fill = ("solid", _color(ink.fill)) if ink.fill is not None else None
-        paint_identity = (fill, _color(ink.stroke), ink.stroke_width, (), ink.opacity)
+        paint_identity = (fill, _color(ink.stroke), ink.stroke_width, ink.dash, ink.opacity)
         pattern = None
     elif key is not None:
         paint_identity = key.paint.identity
