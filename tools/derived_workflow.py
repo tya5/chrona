@@ -158,8 +158,14 @@ def changed_paths(root: Path, base: str, head: str) -> tuple[str, ...]:
     return tuple(sorted(set(result.stdout.splitlines())))
 
 
-def is_derived_path(path: str, root: Path) -> bool:
-    inventory = {item.relative_to(root).as_posix() for item in derived_paths(root)}
+def derived_inventory(root: Path) -> frozenset[str]:
+    """Closed declared derived inventory; parses every manifest, so build it once."""
+    return frozenset(item.relative_to(root).as_posix() for item in derived_paths(root))
+
+
+def is_derived_path(path: str, root: Path, inventory: frozenset[str] | None = None) -> bool:
+    if inventory is None:
+        inventory = derived_inventory(root)
     return path in inventory or _is_derived_path(path)
 
 
@@ -316,7 +322,9 @@ def main() -> int:
     args = parser.parse_args()
     root = Path.cwd().resolve()
     if args.command == "source-only":
-        paths = [path for path in changed_paths(root, args.base, args.head) if is_derived_path(path, root)]
+        changed = changed_paths(root, args.base, args.head)
+        inventory = derived_inventory(root) if changed else frozenset()
+        paths = [path for path in changed if is_derived_path(path, root, inventory)]
         if paths:
             raise SystemExit("E_DERIVED_SOURCE_ONLY:" + ",".join(paths))
     elif args.command == "snapshot":
