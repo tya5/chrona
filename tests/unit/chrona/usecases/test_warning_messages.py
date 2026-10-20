@@ -229,6 +229,18 @@ def test_legend_pair_identity_uses_raw_measurement_when_display_delta_is_equal()
     assert "ΔE=4.9991" in rows[0]["message"]
 
 
+def test_all_scale_pairs_and_visions_survive_warning_aggregation():
+    findings = [{"code": "W_PRESENTATION_SCALE_NOT_SEPARABLE", "severity": "warning",
+                 "scaleId": "owners", "values": ["A", str(index)], "vision": vision,
+                 "deltaE": 0.0, "diagnostic": f"pair:{index}:{vision}"}
+                for index in range(24)
+                for vision in ("normal", "protanopia", "deuteranopia", "tritanopia")]
+    rows = collapse_warnings(findings)
+    assert len(rows) == len(findings)
+    assert [(row["values"], row["vision"], row["deltaE"]) for row in rows] == [
+        (row["values"], row["vision"], row["deltaE"]) for row in findings]
+
+
 def test_an_ellipsized_text_warning_says_what_was_shortened_and_by_how_much():
     # #497: the legend's shortened labels carry a typed fit warning with a plain-language cause.
     text = describe_warning({

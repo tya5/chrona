@@ -361,6 +361,9 @@ def collapse_warnings(payloads: Iterable[Mapping[str, object]]) -> list[dict[str
         pair: object = ""
         if payload.get("encodingPair"):
             pair = ("encoding", str(payload.get("diagnostic", "")))
+        elif payload.get("code") == "W_PRESENTATION_SCALE_NOT_SEPARABLE":
+            pair = ("scale", payload.get("scaleId"), tuple(payload.get("values", ())),
+                    payload.get("vision"), payload.get("deltaE"))
         elif payload.get("code") == "W_LEGEND_COLOR_NOT_SEPARABLE":
             subjects = payload.get("sourceSubjects", ())
             refs = tuple(item.get("sourceRef") for item in subjects if isinstance(item, Mapping)) \
