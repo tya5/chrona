@@ -479,8 +479,9 @@ tries finite straight/L/Z/U proposals from completed row gaps and obstacle-edge
 channels before that pair's bounded search; the first fully accepted completed
 route wins. Proposal generation builds no visibility graph. Both paths retain
 terminal, bounds, obstacle, self-overlap, bend and detour validation.
-The existing first-fit proposal family and order remain unchanged (#1610).
-Only the single on-demand member-name repair described below may append up to
+The existing first-fit proposals retain their relative order (#1610), followed
+by the normal outward-corridor proposals under Primary-mark safety below.
+The single on-demand member-name repair described below may also append up to
 eight paired row-contact/outward-channel proposals after the basic proposals
 and before the pair's bounded search. This is not part of the ordinary first
 pass. Use the two nearest interior row contacts at each endpoint and the
