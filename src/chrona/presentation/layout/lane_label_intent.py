@@ -10,7 +10,7 @@ from chrona.presentation.layout.label_visual_measurement import resolve_label_vi
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, wrap_text
 from chrona.presentation.model.semantic_registry import label_chip_semantic
-from chrona.presentation.model.projection import WindowMode
+from chrona.presentation.model.projection import WindowMode, signed_delta_text
 from chrona.presentation.layout.surface_mark_visibility import (
     MarkOccurrence, MarkOccurrenceKind, ensure_item_mark_visibility_index,
 )
@@ -105,7 +105,7 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                 components.append(("title", surface_content.member_name(item, lane_row.lane_id)))
             if (attached is None and getattr(item, "forecast", None) is None and "finishDelta" in surface_content.label_content
                     and item.finish_delta is not None):
-                components.append(("finishDelta", f"{item.finish_delta:+d}d"))
+                components.append(("finishDelta", signed_delta_text(item.finish_delta, item)))
             parts = tuple(value for _, value in components)
             if explicit:
                 occurrence = MarkOccurrence(MarkOccurrenceKind.LANE_FINAL, lane_row.lane_id,
