@@ -51,6 +51,14 @@ contains every slide's primitive/text/route/diagnostic count and actual SVG
 before/after visual review. Final test-only correction must reproduce the
 same public artifact tree; do not repeat the expensive local corpus sweep.
 
-Final PR head, batched official artifact changes, CI links and exact-main
-three-OS release evidence remain to be recorded. The issue stays open until
-those release gates pass.
+PR1831 final head92c6134e2 and CI39428114449 passed; final artifact12266877360
+reproduces every audited payload (SHA256d471b10b1d9fa5b459cb7114eabb4d435cac9bf1c7239e5a4290c20592e41cfe).
+Exact-main c4ead79ed release39431151167 passed Ubuntu/macOS, MCP and newest
+Python, but Windows had one failure (14,430 passed/73 skipped): the hash-seed
+test child printed a Unicode diagnostic under cp1252. Windows conformance and
+OS probe passed; dependent wheel steps were skipped, so release remains open.
+The test-only correction explicitly sets the child PYTHONIOENCODING to UTF-8,
+matching its existing parent decoder, without changing product diagnostics or
+the three-seed equality check. Focused test passes under ambient cp1252.
+This red-main correction lands with PR1834 to avoid a separate serial cycle.
+Fresh exact-main three-OS release evidence remains required before closure.
