@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+import pytest
 
 from chrona.presentation.layout.relation_style import (
-    complete_relation_style, curved_path_segments,
+    complete_relation_style, changed_path_segments,
 )
 from chrona.presentation.layout.surface_quality import PathCommand, RelationPlacement
 
@@ -177,15 +178,65 @@ def test_genuine_self_crossing_curved_skeleton_falls_back_but_nearby_joins_do_no
     assert s_cover
 
 
-def test_curved_path_segments_contains_only_the_changed_arcs():
+def test_changed_path_segments_contains_only_the_changed_arcs():
     commands = (PathCommand("move", ((0, 0),)),
                 PathCommand("line", ((0, 5),)),
                 PathCommand("quadratic", ((0, 10), (5, 10))),
                 PathCommand("line", ((10, 10),)))
 
-    segments = curved_path_segments(commands, 3)
+    segments = changed_path_segments(commands, 3)
 
     assert len(segments) > 1
     assert all(segment.stroke_width > 3 for segment in segments)
     assert min(segment.start[0] for segment in segments) >= 0
     assert max(segment.end[0] for segment in segments) <= 5
+
+
+@pytest.mark.parametrize("radius", [None, 0.0, 4.0])
+def test_metro_completion_keeps_real_diagonal_runs_and_preserves_terminals(radius):
+    placement = _relation(((0, 0), (80, 0), (80, 160), (160, 160)))
+    completed, cover = complete_relation_style(placement, style="metro", stroke_width=2,
+        start_run=10, end_run=10, recovery=False, join_radius=radius, reject=lambda *_: None)
+    assert completed.style_fallback is None
+    assert completed.points == placement.points
+    assert cover
+    diagonals = [(previous.points[-1], command.points[-1])
+                 for previous, command in zip(completed.path_commands, completed.path_commands[1:])
+                 if command.kind == "line"
+                 and previous.points[-1][0] != command.points[-1][0]
+                 and previous.points[-1][1] != command.points[-1][1]]
+    assert diagonals
+    assert all(abs(end[0] - start[0]) == pytest.approx(abs(end[1] - start[1]))
+               for start, end in diagonals)
+    first_line = completed.path_commands[1]
+    assert first_line.kind == "line" and first_line.points[0][0] >= 10 - 1e-9
+    previous_end = completed.path_commands[-2].points[-1]
+    assert 160 - previous_end[0] >= 10 - 1e-9
+    assert any(command.kind == "quadratic" for command in completed.path_commands) == (radius != 0)
+
+
+def test_metro_omitted_radius_is_resolved_stroke_width_not_orthogonal_radius():
+    placement = _relation(((0, 0), (80, 0), (80, 160), (160, 160)), radius=0.0)
+    def complete(radius):
+        return complete_relation_style(placement, style="metro", stroke_width=3,
+            start_run=10, end_run=10, recovery=False, join_radius=radius, reject=lambda *_: None)
+    assert complete(None) == complete(3.0)
+    assert complete(None)[0].path_commands != complete(0.0)[0].path_commands
+
+
+def test_metro_receipt_restores_the_selected_mode_and_names_the_requested_style():
+    placement = _relation(((0, 0), (80, 0), (80, 160), (160, 160)))
+    completed, cover = complete_relation_style(placement, style="metro", stroke_width=2,
+        start_run=10, end_run=10, recovery=False, reject=lambda *_: "clearance")
+    assert completed.points == placement.points and completed.path_commands == placement.path_commands
+    assert cover == ()
+    assert completed.style_fallback.requested == "metro"
+    assert json.loads(completed.style_fallback.diagnostic.split(":", 1)[1])["reason"] == "clearance"
+
+
+def test_changed_ink_includes_diagonal_lines_but_not_retained_axis_aligned_runs():
+    commands = (PathCommand("move", ((0, 0),)), PathCommand("line", ((10, 0),)),
+                PathCommand("line", ((20, 10),)), PathCommand("line", ((30, 10),)))
+    cover = changed_path_segments(commands, 2)
+    assert len(cover) == 1
+    assert cover[0].start == (10, 0) and cover[0].end == (20, 10)

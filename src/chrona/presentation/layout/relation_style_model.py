@@ -8,13 +8,13 @@ from typing import Literal
 class RelationStyleFallback:
     relation_id: str
     reason: Literal["clearance", "bounds", "self-overlap", "terminal", "recovery"]
-    requested: Literal["curved"] = "curved"
+    requested: Literal["curved", "metro"] = "curved"
     actual: Literal["orthogonal"] = "orthogonal"
 
     def __post_init__(self) -> None:
         if (not self.relation_id or self.reason not in {
                 "clearance", "bounds", "self-overlap", "terminal", "recovery"}
-                or self.requested != "curved" or self.actual != "orthogonal"):
+                or self.requested not in {"curved", "metro"} or self.actual != "orthogonal"):
             raise ValueError("E_LAYOUT_PATH_INPUT: invalid relation style fallback")
 
     @property

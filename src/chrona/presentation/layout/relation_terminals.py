@@ -6,6 +6,7 @@ from dataclasses import replace
 from math import atan2, cos, degrees, hypot, isfinite, pi, sin, tan
 
 from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand
+from chrona.presentation.layout.path_geometry import path_extrema
 
 SHAPES = {"triangle", "open-triangle", "chevron", "circle", "open-circle",
           "stealth", "rounded-triangle", "dot", "half", "double-chevron", "none"}
@@ -95,22 +96,7 @@ def marker_geometry(value: Mapping[str, object], *, stroke_width: float = 1.0) -
 
 def _outline_tip(outline: tuple[PathCommand, ...]) -> float:
     """Exact forward extent, including interior extrema of quadratic curves."""
-    extent = float("-inf")
-    previous = None
-    for command in outline:
-        end = command.points[-1]
-        extent = max(extent, end[0])
-        if command.kind == "quadratic":
-            if previous is None:
-                raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID: terminal quadratic contour requires a preceding move or line endpoint")
-            start_x, control_x, end_x = previous[0], command.points[0][0], end[0]
-            denominator = start_x - 2 * control_x + end_x
-            if denominator:
-                t = (start_x - control_x) / denominator
-                if 0 < t < 1:
-                    extent = max(extent, (1 - t)**2 * start_x + 2 * (1 - t) * t * control_x + t*t * end_x)
-        previous = end
-    return extent
+    return max(point[0] for point in path_extrema(outline, axes=(0,)))
 
 
 def terminal_run(marker: MarkerGeometry | None) -> float:

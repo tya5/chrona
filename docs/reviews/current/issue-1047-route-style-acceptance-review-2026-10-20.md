@@ -1,42 +1,47 @@
 # Issue 1047 — route style acceptance
 
-Curved slice source: `edb309c44`; integration: `0e926adc3` on ready
-`e965de32769ec18a9ab8da6e80540bc427b6aac4`. Not whole-issue acceptance.
-Design: Spec50, declared route style; final pre-code plan and architecture
-review: [living Status](https://github.com/tya5/chrona/issues/1047#issuecomment-6282716395).
+Metro source: `b8e737962`; integration `45d40444c` on trusted ready main
+`98a8f3f83ea3c1ada559cb0617c0ca6a6dd74722`; curved PR1801 merged at
+`56719e632326fe7a4eff56e87090ad33c1a5994d`.
+Selected design and joint-budget correction were published before code resumed
+at `ad6339174` / `f8eedb05e`; the final pre-code implementation plan and
+whole-architecture review are in the
+[living Status](https://github.com/tya5/chrona/issues/1047#issuecomment-6282716395).
+Normative authority: Spec50, declared route style. Release gates remain pending.
 
 | Literal criterion | Status | Direct evidence / remaining work |
 | --- | --- | --- |
-| Both styles are declarable. Synthetic tests show no crossing of required labels and marks, or a counted, reported fallback to orthogonal. | not met | This slice implements `curved` only. `test_relation_style_surfaces.py` exercises actual table/Scene/SVG/PNG and network paths, safe mark/text clearance, orthogonal parity, terminal fallback and a required node that intersects only the curve causing counted clearance fallback. Geometry/completion/profile tests cover conservative ink, terminal runs and schema semantics. `metro` and release gates remain outstanding. |
-| The Transit target slide (when one is reproduced) uses `metro` from YAML only. | deferred | Metro and reviewer-owned Transit reproduction/adoption remain outstanding. No authored example is changed to conceal a core side effect. |
+| Both styles are declarable. Synthetic tests show no crossing of required labels and marks, or a counted, reported fallback to orthogonal. | met locally; release pending | Profile schema/engine tests admit curved and metro. `test_relation_style_surfaces.py` renders a genuine opposite-curvature S; `test_metro_yaml_acceptance.py` renders normal YAML through actual table and nonstraight network pipelines (45° L plus Q, unchanged selected skeleton). `test_metro_route_safety.py` proves actual completion restores the selected path for diagonal-only and fillet-only required-node collisions; style receipts are typed/countable. Additional mark/text, radius and terminal controls are in `test_metro_style_surfaces.py`. |
+| The Transit target slide (when one is reproduced) uses `metro` from YAML only. | deferred | Reviewer-owned reproduction/adoption remains outstanding. The [research target](../../research/presentation/transit-target-2026-09-26/README.md) explicitly identifies hand-drawn, not Chrona, output. This review accepts no reproduced Transit adoption; do not substitute the synthetic test slide for it. |
 
-Layout retains the selected skeleton, completes quadratic commands after
-terminal completion, and preserves each surface's existing recovery and
-crossing rules. Changed arcs have conservative stroke covers; no whole-host
-exemption applies to them. Scene/adapters receive completed geometry, not a
-style decision. Orthogonal omission/explicit selection preserves the existing
-default pipeline and omits the default manifest property.
-The shared vocabulary has one schema consumer; future metro widening can use
-Spec56 §7's explicit single-consumer digest-update exception rather than a
-duplicate grammar or unnecessary part version.
+Architecture review: Layout owns selected-skeleton style completion, joint
+chamfer/fillet/head allocation, conservative covers for changed Q **and L** ink,
+and exact quadratic paint extrema. Both owners retain their existing stage,
+crossing and critical/recovery rules. Scene/adapters only project/serialize
+completed commands. Shared terminal extent uses the same extrema authority.
+The shared vocabulary has one consumer; its deliberate enum widening and digest
+update use Spec56 §7, with one explicit L1 expected delta.
 
-Local batches: profile/shared-schema205, geometry20, completion+geometry29,
-integrated geometry/profile/network/rounding65, adjacent routing/engine126,
-SVG/typeset/diagnostic92 passed. Schema equivalence: additive1/equal43;
-L2/L3 pass with the same five pre-existing invalid fixtures. Its eleven new
-style probes are additional observations, not weakened baseline expectations.
-The documented prune proved and retired ten already-merged L1 allowances.
+Verification: final focused 236 tests passed (geometry, profile, shared completion,
+both surfaces, normal YAML integration, bounds, terminals and default controls).
+Ten Pillow deprecation warnings are from the existing terminal raster test, not
+failures. Schema equivalence against final ready main `98a8f3f83` passed:
+one declared enum widening, equal43, L2/L3 unchanged with five baseline invalid
+fixtures. Post-integration acceptance/schema-registry/parts controls:181 passed.
+Focused reproduction:
+`.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_metro*.py tests/integration/test_metro_yaml_acceptance.py`.
 
-Actual render review: six surface tests pass; the different-row witness uses
-opposite signed turns and two quadratic commands, not merely a U-shaped detour.
-The coordinator inspected the actual PNG; curve and marks are distinct and
-clear. PNG SHA256 `f67ebf5d048527ad8b67467489b4466bd7f2302d97f6c02cd6ec4b346db5e8d2`.
-Reproduce with `pytest -q tests/unit/chrona/presentation/layout/test_relation_style_surfaces.py --basetemp=/tmp/chrona-1047-review`.
-A nonuniform-pixel assertion prevents the earlier all-one-colour synthetic
-Theme from passing as usable visual evidence. Genuine S geometry has its own
-opposite-curvature test; terminal constraints still admit U/elbow/straight shapes
-without inventing a detour. Final integration batch:117 passed.
+The coordinator inspected actual curved and metro PNGs. Metro YAML witness SHA256:
+`5147053f265fa79ccab5dfa11971339992cd4e441b3d780b58510b9680cf2605`.
+Curved PR CI39367673183 passed; official artifact12240560787
+(`d38cb088c3e6e37b7cc45b75ef76d61bfae55438daebb878c9cb6b4c725607a3`)
+has50SVG/50Scene unchanged and only expected inventory/coverage reports.
+Metro official snapshot, exact-main full three-OS release and Transit disposition
+are still required. Keep issue1047 open.
 
-Required: official CI snapshot review,
-full exact-main three-OS release, metro, and Transit adoption. Keep issue1047
-open until both literal rows and their required evidence are complete.
+PR1803 run39370013122 found one test-only platform error: exact comparison of
+a tan/hypot-derived coordinate differed by1e-16 on Ubuntu. Join coordinates now
+use absolute1e-12 tolerance (relative0); command topology remains exact and
+diagonal runs additionally assert equal absolute axis deltas. Product geometry
+and its safety policy are unchanged. The readiness failure only propagated that
+shard failure; all other substantive jobs passed. New-head CI is required.
