@@ -34,7 +34,7 @@ from chrona.presentation.layout.relation_terminals import (
     centred_on_route, complete_centred_terminals, marker_geometry, orient_terminal, terminal_length, terminal_run,
 )
 from chrona.presentation.layout.routing import (
-    RouteSuppressionEvidence, back_route_points, route_self_overlaps,
+    RouteAttemptEvidence, RouteSuppressionEvidence, back_route_points, route_self_overlaps,
     remove_substroke_jogs, route_quality_metrics, select_relation_route,
 )
 from chrona.presentation.layout.route_reduction import simplify_relation_route, terminal_runs_preserved
@@ -54,6 +54,22 @@ from chrona.presentation.layout.relation_style_model import RelationStyleFallbac
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 
 ROUTE_EDGE_CLEARANCE = 4.0
+
+
+def _back_route_quality(points, source_exit, stub, source_run, *, max_bends, max_detour_ratio):
+    """The normal side-entry reference retains both mandatory corridors."""
+    dx, dy = {"start": (-1, 0), "end": (1, 0), "above": (0, -1), "below": (0, 1)}[source_exit.side]
+    out = (source_exit.exposed_port[0] + dx * source_run,
+           source_exit.exposed_port[1] + dy * source_run)
+    reference = (hypot(out[0] - source_exit.semantic_port[0], out[1] - source_exit.semantic_port[1])
+                 + abs(out[0] - stub.exposed_port[0]) + abs(out[1] - stub.exposed_port[1])
+                 + hypot(stub.exposed_port[0] - stub.semantic_port[0],
+                         stub.exposed_port[1] - stub.semantic_port[1]))
+    length, _, bends = route_quality_metrics(points)
+    accepted = bends <= max_bends and length <= reference * max_detour_ratio
+    return RouteAttemptEvidence(source_exit.side, stub.side,
+        "accepted" if accepted else "quality-rejected", length=length, direct_length=reference,
+        bends=bends, max_bends=max_bends, max_detour_ratio=max_detour_ratio)
 
 
 def _same_point(left: tuple[float, float], right: tuple[float, float]) -> bool:
@@ -760,7 +776,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     back_route_reason = [""]
 
     def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal,
-                   domain: RelationObstacleDomain | None = None):
+                   domain: RelationObstacleDomain | None = None, *, candidate_filter=None):
         """`entry: side` (#1060): a target the source does not approach from the entry side is entered through the
         gap between the rows. Returns (egress pair, points) or None when it does not fit; the order then falls back,
         and `back_route_reason` names why (reported with the fallback diagnostic)."""
@@ -819,12 +835,11 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if len(points) < 3:
                 fail("degenerate")
                 continue
-            # Shortest path retaining the two completed corridors (#1084).
-            reference = (start_minimum + abs(out[0] - stub.exposed_port[0])
-                         + abs(out[1] - stub.exposed_port[1]) + end_minimum)
-            length, _, bends = route_quality_metrics(points)
-            if (bends > context.layout_manifest.relation_max_bends or route_self_overlaps(points)
-                    or length > reference * context.layout_manifest.relation_max_detour_ratio):
+            quality = _back_route_quality(points, source_exit, stub, source_run,
+                max_bends=context.layout_manifest.relation_max_bends,
+                max_detour_ratio=context.layout_manifest.relation_max_detour_ratio)
+            length, bends = quality.length, quality.bends
+            if quality.outcome != "accepted" or route_self_overlaps(points):
                 fail("bends-or-detour")
                 continue
             if any(not (timeline_bounds[0] <= p[0] <= timeline_bounds[0] + timeline_bounds[2]
@@ -844,6 +859,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 continue
             if not clears_primary_marks(points, width, required_ids, source_exit, stub):
                 fail("primary-mark-blocked")
+                continue
+            if candidate_filter is not None and not candidate_filter((source_exit, stub), points):
                 continue
             if search_policy == "first-fit":
                 back_route_reason[0] = ""
@@ -911,10 +928,19 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
             normal_domain = RelationObstacleDomain.normal(obstacles)
             hint_proposal = None
+            hint_pairs = port_pairs
             if request.previous_route_hints is not None:
                 if context.layout_manifest.relation_unroutable.value in {"overlap", "stub"}:
                     hint_proposal = HintProposal("unusable", "mode-bypasses-normal")
                 else:
+                    if context.layout_manifest.relation_entry == "side" and target_mark is not None:
+                        far = (-1e9 if relation.target_endpoint in {"start", "at"} else 1e9,
+                               float(target_mark.bounds.block))
+                        back_entries = entry_candidates(target_mark, relation.target_endpoint, far,
+                            comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()),
+                            relation, entry="side", domain=normal_domain)
+                        hint_pairs = tuple(dict.fromkeys((*port_pairs,
+                            *((left, right) for left in source_candidates for right in back_entries))))
                     hint_proposal = propose_hint(request.previous_route_hints, surface_id="table-timeline",
                         source_ref=relation_id, source_id=source_id, target_id=target_id,
                         source_mark=source_mark, target_mark=target_mark,
@@ -923,7 +949,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                           *endpoint_host_neighbors(source_mark, relation.source_endpoint)) if source_mark else ()),
                         target_siblings=((*comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()),
                                           *endpoint_host_neighbors(target_mark, relation.target_endpoint)) if target_mark else ()),
-                        port_pairs=port_pairs, marker_start=marker_start, marker_end=marker_end,
+                        port_pairs=hint_pairs, marker_start=marker_start, marker_end=marker_end,
                         stroke_width=dependency_stroke)
             attempted_domains: dict[RelationResolutionStage, RelationObstacleDomain] = {}
             endpoint_hosts = frozenset(host for pair in port_pairs for egress in pair
@@ -972,12 +998,29 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     return tuple(sorted(set(_primary_egress_blockers(source_exit, bounds))
                                         | set(_primary_egress_blockers(target_entry, bounds))))
 
+                def preferred_quality(candidate, source_exit, target_entry):
+                    # A canonical normal back-route uses its existing corridor
+                    # reference, never a relaxed or arbitrary enlarged denominator.
+                    backed = back_route(relation, source_mark, target_mark, source_id, target_id,
+                        source_nominal, domain=domain,
+                        candidate_filter=lambda pair, points: pair == (source_exit, target_entry)
+                            and points == candidate)
+                    if backed is None:
+                        return None
+                    return _back_route_quality(candidate, source_exit, target_entry,
+                        terminal_length(marker_start) + max(dependency_stroke,
+                            float(context.metric_values.get("timeline.relation.cornerRadius", 0))),
+                        max_bends=context.layout_manifest.relation_max_bends,
+                        max_detour_ratio=context.layout_manifest.relation_max_detour_ratio)
+
                 protected = (relation.critical and context.layout_manifest.relation_unroutable
                              is RelationUnroutableMode.SUPPRESS)
                 selection = select_relation_route(pairs, obstacles=domain.obstacles,
                     endpoint_preserving_prepare=True,
                     protected_quality_barriers=quality_barriers,
                     primary_egress_blockers=primary_egress_blockers,
+                    preferred_quality=preferred_quality,
+                    preferred_port_pairs=hint_pairs,
                     protected=protected,
                     preferred_routes=(tuple((candidate.pair, candidate.middle) for candidate in hint_proposal.candidates)
                         if hint_proposal is not None and hint_proposal.disposition == "proposed"

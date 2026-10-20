@@ -2,10 +2,15 @@
 
 Synthetic Projects only, routed by the real surface composer; the published Scene is what is asserted.
 """
+
 from datetime import date
+import json
 
 import pytest
 
+from chrona.presentation.layout.relation_hint_model import (
+    HintMark, HintMarker, HintRelation, HintSurface, PreviousRouteHints,
+)
 from tests.unit.chrona.presentation.scene.test_relation_entry_side import (
     D, DEP, _assert_closed_contact_free, _bends, _item, _route, _rows,
 )
@@ -13,10 +18,13 @@ from tests.unit.chrona.presentation.scene.test_relation_route_invariant import g
 
 
 def run(source, target, relation=DEP, *, entry="side", rows=None, max_bends=4, max_detour=6.0,
-        window=(D(2026, 1, 25), D(2026, 2, 25)), search="first-fit"):
+        window=(D(2026, 1, 25), D(2026, 2, 25)), search="first-fit", previous_route_hints=None,
+        return_surface=False, allow_suppressed=False):
     first, second = (source, target) if rows is None else rows
     return _route((source, target), _rows((first,), (second,)), relation, entry, distribution="pack",
-                  max_bends=max_bends, max_detour=max_detour, window=window, diagnostics=True, search=search)
+                  max_bends=max_bends, max_detour=max_detour, window=window, diagnostics=True, search=search,
+                  previous_route_hints=previous_route_hints, return_surface=return_surface,
+                  allow_suppressed=allow_suppressed)
 
 
 def enters_from_side(points, *, start=True) -> bool:
@@ -39,6 +47,36 @@ def fell_back(diagnostics) -> bool:
 
 
 A = _item("a", D(2026, 2, 1), D(2026, 2, 8))
+
+
+def _hint_receipt(diagnostics):
+    line = next(item for item in diagnostics if item.startswith("I_LAYOUT_RELATION_HINT:{"))
+    return json.loads(line.split(":", 1)[1])
+
+
+def _hint_summary(diagnostics):
+    line = next(item for item in diagnostics if item.startswith("I_LAYOUT_RELATION_HINT_SUMMARY:{"))
+    return json.loads(line.split(":", 1)[1])
+
+
+def _hints(surface):
+    marks = tuple(HintMark(item.scene_id, item.source_ref, item.kind.value,
+                           item.purpose, item.bounds)
+                  for item in surface.primitives if item.scene_id.startswith("planned:"))
+    relation = next(item for item in surface.primitives
+                    if item.scene_id.startswith("relation:dep:"))
+
+    def marker(value):
+        if value is None:
+            return None
+        return HintMarker(tuple((command.kind, command.points) for command in value.outline),
+                          value.head_length, value.head_width, value.attachment_offset,
+                          value.paint_mode)
+
+    prior = HintRelation(relation.source_ref, relation.from_instance_id,
+                         relation.to_instance_id, relation.points,
+                         marker(relation.marker_start), marker(relation.marker_end))
+    return PreviousRouteHints(True, (HintSurface("table-timeline", marks, (prior,)),), None)
 
 
 @pytest.mark.parametrize("target_start", [D(2026, 2, 8), D(2026, 2, 5)], ids=["abutting", "overlapping"])
@@ -176,3 +214,60 @@ def test_a_mark_occupying_the_source_exit_causes_declared_suppression():
                                     diagnostics=True, allow_suppressed=True)
     assert points == ()
     assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+
+
+@pytest.mark.parametrize("search", ("first-fit", "best"))
+def test_safe_canonical_back_route_hint_is_preferred_before_normal_search(search):
+    # This is the original canonical back-route fixture: source and target
+    # abut, so its corridor reference differs from generic direct-route quality.
+    target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
+    old_points, _, old_surface = run(A, target, max_detour=2.0, search=search, return_surface=True)
+    hinted, _, diagnostics = run(A, target, max_detour=2.0, search=search,
+                                previous_route_hints=_hints(old_surface))
+
+    assert hinted == old_points
+    assert enters_from_side(old_points) and _bends(old_points) == 4
+    assert _hint_receipt(diagnostics) == {
+        "disposition": "accepted", "reason": "revalidated", "relationId": "relation:dep:a:a:b:b",
+        "searched": False, "surfaceId": "table-timeline",
+    }
+    assert _hint_summary(diagnostics)["accepted"] == 1
+    assert _hint_summary(diagnostics)["actualSearch"] == 0
+    assert not any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+
+
+def test_blocked_prior_back_route_is_rejected_and_does_not_bypass_obstacle_validation():
+    target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
+    old_points, _, old_surface = run(A, target, max_detour=6.0, return_surface=True)
+    blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
+    points, _, diagnostics = _route(
+        (A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side",
+        distribution="pack", max_detour=6.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
+        diagnostics=True, allow_suppressed=True,
+        previous_route_hints=_hints(old_surface),
+    )
+    receipt = _hint_receipt(diagnostics)
+    assert receipt["disposition"] == "invalidated"
+    assert receipt["reason"] == "E_LAYOUT_ROUTE_THROUGH_MARK"
+    assert receipt["searched"] is True
+    assert _hint_summary(diagnostics)["accepted"] == 0
+    assert _hint_summary(diagnostics)["actualSearch"] == 1
+    assert points == ()
+    assert points != old_points
+    assert "W_LAYOUT_RELATION_SUPPRESSED:relation:dep:a:a:b:b" in diagnostics
+
+
+def test_back_route_hint_that_exceeds_the_current_quality_bound_is_not_accepted():
+    target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
+    old_points, _, old_surface = run(A, target, max_detour=2.0, return_surface=True)
+    points, _, diagnostics = run(A, target, max_detour=0.5, allow_suppressed=True,
+                                 previous_route_hints=_hints(old_surface))
+    receipt = _hint_receipt(diagnostics)
+    assert receipt["disposition"] == "invalidated"
+    assert receipt["reason"] == "quality-rejected"
+    assert receipt["searched"] is True
+    assert _hint_summary(diagnostics)["accepted"] == 0
+    assert _hint_summary(diagnostics)["actualSearch"] == 1
+    assert points == ()
+    assert points != old_points
+    assert "W_LAYOUT_RELATION_SUPPRESSED:relation:dep:a:a:b:b" in diagnostics

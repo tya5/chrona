@@ -462,6 +462,9 @@ def select_relation_route(
     outward_runs: tuple[float, float] | None = None,
     protected_lead_runs: Callable[[ConnectorEgress, ConnectorEgress], tuple[float, float]] | None = None,
     primary_egress_blockers: Callable[[ConnectorEgress, ConnectorEgress], tuple[str, ...]] | None = None,
+    preferred_quality: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
+                                RouteAttemptEvidence | None] | None = None,
+    preferred_port_pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...] = (),
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -473,6 +476,9 @@ def select_relation_route(
     A search failure is
     distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
+    Preferred-only pairs require the caller's exact canonical normal-route
+    revalidation, including its existing quality reference. That callback is
+    never used for ordinary search or to authorize a relaxed-domain hint.
     Explicit first-fit sorts admitted ports and tries finite shapes before
     that pair's cheap search, ignoring rank after full acceptance. Only if
     that whole phase fails, the original ranked best phase rescues the relation
@@ -537,13 +543,15 @@ def select_relation_route(
 
     for pair, middle in preferred_routes:
         blockers, port_ids = pair_domain(*pair)
-        if pair not in port_pairs or blockers:
+        extra_pair = pair not in port_pairs and pair in preferred_port_pairs and preferred_quality is not None
+        if (pair not in port_pairs and not extra_pair) or blockers:
             hint_rejection = "egress-collision" if blockers else "unadmitted-port-pair"
         else:
             measured, points = _select_pair_candidate(*pair, obstacles=obstacles, bounds=bounds,
                 port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
                 max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-                limit=0, candidate_paths=(middle,))
+                limit=0, candidate_paths=(middle,), alternate_quality=preferred_quality,
+                require_alternate_quality=extra_pair)
             if measured.outcome == "accepted":
                 return result(pair, points, (measured,), hinted=True)
             hint_rejection = measured.search_failure or measured.outcome
@@ -708,7 +716,8 @@ def select_relation_route(
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
                            max_bends, max_detour_ratio, prepare, accept, limit, candidate_paths=None,
-                           budget=None, exact_bound=True, stop_on_safe=False):
+                           budget=None, exact_bound=True, stop_on_safe=False, alternate_quality=None,
+                           require_alternate_quality=False):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
@@ -755,6 +764,12 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
                 continue
             measured = route_quality_attempt(source.side, target.side, completed,
                 max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+            if alternate_quality is not None and (require_alternate_quality or measured.outcome == "quality-rejected"):
+                alternate = alternate_quality(completed, source, target)
+                if require_alternate_quality and alternate is None:
+                    failure = "E_CONNECTOR_UNROUTABLE"
+                    continue
+                measured = alternate or measured
             if measured.outcome == "accepted":
                 return measured, completed
             if stop_on_safe:

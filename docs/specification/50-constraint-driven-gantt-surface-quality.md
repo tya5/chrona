@@ -632,6 +632,10 @@ Hints are offered only in the normal obstacle domain, never replayed after
 relaxing the obstacle that invalidated them. Ordinary normal/label/text detours
 precede mark relaxation; no hint bypasses a primary-mark validator. This does
 not turn bounded search exhaustion into proof that no detour exists.
+Normal side-backroute hints may use that construction's completed stub pair
+and corridor-relative quality reference. Such a preferred-only pair must match
+the current canonical backroute exactly and pass its full validators; it does
+not enlarge ordinary search pairs or authorize arbitrary detours.
 Omitting the previous-Scene input preserves ordinary policy selection.
 
 For a supplied input under either search policy, Layout emits typed per-instance hint facts
