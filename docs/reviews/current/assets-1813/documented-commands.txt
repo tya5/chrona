@@ -1,0 +1,1 @@
+tools/check_documented_commands.py --check --execute: exit 0, no output (main 2350a3c4d)
