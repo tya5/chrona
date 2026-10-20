@@ -7,7 +7,7 @@ import yaml
 
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
-from chrona.usecases.previous_scene import decode_previous_scene
+from chrona.usecases.previous_scene import _hint_marks, decode_previous_scene
 from chrona.core.ports import SnapshotReadError
 from chrona.presentation.contracts import ArtifactPin, freeze
 from chrona.presentation.model.closure import ClosureError, _read_previous_scene
@@ -78,6 +78,81 @@ def test_same_project_accepts_prior_revision_and_freezes_input(previous_bytes):
     assert result.value["kind"] == "scene"
     with pytest.raises(TypeError):
         result.value["kind"] = "changed"
+
+
+def test_forecast_primary_mark_is_decoded_without_purpose_aliasing(previous_bytes):
+    value = json.loads(previous_bytes)
+    mark = next(primitive for surface in value["surfaces"]
+                for primitive in surface["primitives"]
+                if primitive.get("purpose") == "planned" and primitive.get("kind") in {"Rect", "Symbol"})
+    mark["purpose"] = "forecast"
+
+    decoded = decode_previous_scene(json.dumps(value).encode(), "nimbus-launch")
+    host = next(item for surface in decoded.route_hints.surfaces
+                for item in surface.marks if item.placement_id == mark["id"])
+    assert host.purpose == "forecast"
+    assert host.kind == mark["kind"]
+    assert host.source_ref == mark["sourceRef"]
+
+
+def _composite_symbol_parts():
+    base = "planned:milestone:milestone"
+    shared = {"sourceRef": "milestone", "kind": "Symbol", "purpose": "forecast",
+              "bounds": {"inline": 3, "block": 5, "inlineSize": 7, "blockSize": 9}}
+    first = {"id": f"{base}:part0", **shared, "bounds": dict(shared["bounds"])}
+    second = {"id": f"{base}:part1", **shared, "bounds": dict(shared["bounds"])}
+    return base, first, second
+
+
+def test_exact_composite_symbol_siblings_recover_one_forecast_placement():
+    base, first, second = _composite_symbol_parts()
+    marks = _hint_marks((first, second))
+    matches = [mark for mark in marks if mark.placement_id == base]
+
+    assert len(matches) == 1
+    assert matches[0].kind == "Symbol"
+    assert matches[0].purpose == "forecast"
+    assert matches[0].source_ref == first["sourceRef"] == second["sourceRef"]
+    assert matches[0].bounds == tuple(float(first["bounds"][key])
+                                      for key in ("inline", "block", "inlineSize", "blockSize"))
+    assert not any(mark.placement_id in {first["id"], second["id"]} for mark in marks)
+
+
+@pytest.mark.parametrize("conflict", ["sourceRef", "purpose", "bounds"])
+def test_conflicting_composite_symbol_siblings_are_not_coalesced(conflict):
+    base, first, second = _composite_symbol_parts()
+    if conflict == "sourceRef":
+        second["sourceRef"] = "different-source"
+    elif conflict == "purpose":
+        second["purpose"] = "actual"
+    else:
+        second["bounds"]["inlineSize"] += 1
+
+    marks = _hint_marks((first, second))
+    ids = {mark.placement_id for mark in marks}
+
+    assert base not in ids
+    assert {first["id"], second["id"]} <= ids
+
+
+def test_unsuffixed_composite_symbol_collision_is_not_decoded_as_a_host():
+    base, first, second = _composite_symbol_parts()
+    first["id"] = base
+
+    marks = _hint_marks((first, second))
+    ids = {mark.placement_id for mark in marks}
+
+    assert not ({base, second["id"]} & ids)
+
+
+@pytest.mark.parametrize("indices", [(1,), (0, 2), (0, 0)])
+def test_incomplete_or_duplicate_symbol_part_indices_do_not_recover_host(indices):
+    base, first, second = _composite_symbol_parts()
+    parts = {0: first, 1: second, 2: {**second, "id": f"{base}:part2"}}
+    values = [dict(parts[index]) for index in indices]
+    marks = _hint_marks(values)
+
+    assert all(mark.placement_id != base for mark in marks)
 
 
 @pytest.mark.parametrize("payload", [b"not-json", b"[]", b"\xff", b'{"version":"chrona/scene/v999"}'])
