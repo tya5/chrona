@@ -56,4 +56,3 @@ def test_missing_incompatible_and_invalid_references_are_distinct():
         with pytest.raises(ObjectReferenceError) as caught:
             catalog.resolve(value, target_profiles=profiles)
         assert caught.value.reason == reason
-

@@ -1,8 +1,7 @@
 """Source-local resolution for declarative object references (#344)."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from dataclasses import field
+from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Mapping
 
