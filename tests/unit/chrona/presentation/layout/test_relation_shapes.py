@@ -4,11 +4,12 @@ from collections import Counter
 import pytest
 
 from chrona.presentation.layout import route_search as search
+from chrona.presentation.layout.route_search import RouteSearchFailure
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
-    relation_shape_candidates, shape_channels,
+    recovery_shape_channels, relation_channel_candidates, relation_shape_candidates, shape_channels,
 )
 from chrona.presentation.layout.routing import select_relation_route
 
@@ -61,6 +62,165 @@ def test_shape_order_has_at_most_seven_raw_proposals_and_no_diagonal_or_outside_
     assert aligned.count(aligned[0]) == 1
     outside = relation_shape_candidates((-1, 1), (9, 9), bounds=(0, 0, 10, 10), channels=channels)
     assert outside == ()
+
+
+def test_recovery_channels_add_obstacle_edges_without_changing_normal_channels():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("wall", "text", "timeline", ObstacleRect(4, 4, 6, 6), clearance=1))
+    bounds = (0, 0, 10, 10)
+    normal = shape_channels(obstacles, bounds=bounds)
+    recovery = recovery_shape_channels(obstacles, bounds=bounds)
+    assert normal.rows == (0, 10)
+    assert recovery.rows == (0, 1, 9, 10)
+    assert normal.columns == recovery.columns
+
+
+def test_channel_state_walk_reaches_multiturn_path_and_charges_shared_limit():
+    obstacles = SurfaceObstacleIndex()
+    channels = RelationShapeChannels((0, 2, 4, 6, 8), (0, 2, 4, 6, 8))
+    expanded = []
+    paths = tuple(relation_channel_candidates((0, 0), (8, 8), bounds=(0, 0, 8, 8),
+        channels=channels, obstacles=obstacles, port_ids=(), expansion_limit=5000,
+        max_bends=8, initial_axis=0, initial_sign=1, terminal_axis=0, terminal_sign=1,
+        max_detour_ratio=2, direct_length=16, source_prefix_length=0, target_suffix_length=0,
+        stroke_width=0,
+        on_expansion=lambda: expanded.append(1)))
+    assert paths[0] in {((0, 0), (0, 8), (8, 8)), ((0, 0), (8, 0), (8, 8))}
+    assert any(len(path) - 2 >= 5 for path in paths)
+    assert len(expanded) < 300  # dominance keeps equivalent channel prefixes out of the quota
+
+    limited = []
+    with pytest.raises(RouteSearchFailure, match="E_PRESENTATION_ROUTE_LIMIT"):
+        tuple(relation_channel_candidates((0, 0), (8, 8), bounds=(0, 0, 8, 8),
+            channels=channels, obstacles=obstacles, port_ids=(), expansion_limit=2,
+            max_bends=8, initial_axis=0, initial_sign=1, terminal_axis=0, terminal_sign=1,
+            max_detour_ratio=2, direct_length=16, source_prefix_length=0, target_suffix_length=0,
+            stroke_width=0,
+            on_expansion=lambda: limited.append(1)))
+    assert len(limited) == 2
+
+
+def test_channel_terminal_sign_is_checked_only_when_arrival_axis_matches_lead_axis():
+    channels = RelationShapeChannels((0, 4, 8), (0, 4, 8))
+    paths = tuple(relation_channel_candidates((0, 0), (8, 8), bounds=(0, 0, 8, 8),
+        channels=channels, obstacles=SurfaceObstacleIndex(), port_ids=(), expansion_limit=200,
+        max_bends=4, initial_axis=0, initial_sign=1, terminal_axis=0, terminal_sign=-1,
+        max_detour_ratio=2, direct_length=16, source_prefix_length=0, target_suffix_length=0,
+        stroke_width=0,
+        on_expansion=lambda: None))
+    assert paths
+    assert all(path[-2][0] == path[-1][0] for path in paths)
+
+
+def test_channel_expansion_uses_completed_route_stroke_against_obstacles():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("nearby", "text", "timeline", ObstacleRect(1, 0, 3, 1)))
+    channels = RelationShapeChannels((0, 4), (1.25,))
+    common = dict(bounds=(0, 0, 4, 2), channels=channels, obstacles=obstacles,
+        port_ids=(), max_bends=0, initial_axis=0, initial_sign=1,
+        terminal_axis=0, terminal_sign=1, max_detour_ratio=2, direct_length=4,
+        source_prefix_length=0, target_suffix_length=0, expansion_limit=100,
+        on_expansion=lambda: None)
+    assert tuple(relation_channel_candidates((0, 1.25), (4, 1.25), stroke_width=0, **common)) == (
+        ((0, 1.25), (4, 1.25)),)
+    assert tuple(relation_channel_candidates((0, 1.25), (4, 1.25), stroke_width=1, **common)) == ()
+
+
+def test_best_recovery_channel_states_share_the_existing_budget_before_graph_search():
+    channels = RelationShapeChannels((0, 2, 4, 6, 8, 10), (0, 2, 4, 6, 8, 10))
+    result = select_relation_route(((_port("end", (0, 0)), _port("start", (10, 10))),),
+        obstacles=SurfaceObstacleIndex(), bounds=(0, 0, 10, 10), source_host_id=None,
+        target_host_id=None, relation_scene_id="relation:recovery-budget", max_bends=4,
+        max_detour_ratio=2, search_policy="best", channels=channels, recovery_channels=channels,
+        recovery_lead_runs=lambda source, target: (0, 0), search_budget=3,
+        prepare=lambda points, source, target: points, accept=lambda points: False)
+    assert result.selected_pair is None
+    assert result.search_used and result.budget_hit
+    assert result.search_expansions == 3
+
+
+def test_first_fit_channel_work_is_not_restarted_in_best_rescue_phase():
+    channels = RelationShapeChannels((0, 2, 4, 6, 8, 10), (0, 2, 4, 6, 8, 10))
+    result = select_relation_route(((_port("end", (0, 0)), _port("start", (10, 10))),),
+        obstacles=SurfaceObstacleIndex(), bounds=(0, 0, 10, 10), source_host_id=None,
+        target_host_id=None, relation_scene_id="relation:first-fit-channel-budget", max_bends=4,
+        max_detour_ratio=2, search_policy="first-fit", channels=channels,
+        recovery_channels=channels, recovery_lead_runs=lambda *_: (0, 0), search_budget=3,
+        prepare=lambda points, *_: points, accept=lambda points: False)
+    assert result.selected_pair is None and result.budget_hit
+    assert result.search_expansions == 3
+
+
+def test_channel_completion_prunes_paths_over_existing_detour_bound():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("hard-name-before", "text", "timeline", ObstacleRect(2, -4, 3, 1)))
+    obstacles.add(SurfaceObstacle("hard-name-after", "text", "timeline", ObstacleRect(7, -2, 8, 10)))
+    channels = RelationShapeChannels((0, 2, 3, 4, 7, 8, 9, 10), (-3, 0, 2))
+    expanded = []
+    paths = tuple(relation_channel_candidates((0, 0), (10, 0), bounds=(0, -4, 10, 10),
+        channels=channels, obstacles=obstacles, port_ids=(), max_bends=6,
+        initial_axis=0, initial_sign=1, terminal_axis=0, terminal_sign=1,
+        max_detour_ratio=1.9, direct_length=10, source_prefix_length=0, target_suffix_length=0,
+        stroke_width=0, expansion_limit=1000, on_expansion=lambda: expanded.append(1)))
+    assert paths == ()
+    assert expanded
+
+
+def test_best_aligned_completed_route_keeps_pre_channel_priority_and_budget():
+    channels = RelationShapeChannels((0, 5, 10), (0, 5, 10))
+    result = select_relation_route(((_port("end", (0, 0)), _port("start", (10, 0))),),
+        obstacles=SurfaceObstacleIndex(), bounds=(0, 0, 10, 10), source_host_id=None,
+        target_host_id=None, relation_scene_id="relation:aligned-before-channel", max_bends=4,
+        max_detour_ratio=2, search_policy="best", channels=channels, recovery_channels=channels,
+        recovery_lead_runs=lambda source, target: (1, 1), endpoint_lead_runs=lambda source, target: (1, 1),
+        search_budget=1, prepare=lambda points, source, target: points,
+        accept=lambda points: points == ((0, 0), (10, 0)))
+    assert result.selected_pair is not None
+    assert result.points == ((0, 0), (10, 0))
+    assert result.settled_by_shape
+    assert not result.search_used and result.search_expansions == 0
+
+
+def test_channel_and_graph_winners_keep_exactly_one_accepted_receipt():
+    channels = RelationShapeChannels((0, 5, 10), (0, 5, 10))
+    result = select_relation_route(((_port("end", (0, 0)), _port("start", (10, 10))),),
+        obstacles=SurfaceObstacleIndex(), bounds=(0, 0, 10, 10), source_host_id=None,
+        target_host_id=None, relation_scene_id="relation:channel-receipt", max_bends=4,
+        max_detour_ratio=2, search_policy="best", channels=channels, recovery_channels=channels,
+        recovery_lead_runs=lambda source, target: (0, 0), search_budget=1000,
+        prepare=lambda points, source, target: points, accept=lambda points: True,
+        rank=lambda points, source, target: (len(points), sum(
+            abs(b[0] - a[0]) + abs(b[1] - a[1]) for a, b in zip(points, points[1:]))))
+    outcomes = tuple(item.outcome for item in result.attempts)
+    assert outcomes.count("accepted") == 1
+    assert outcomes.count("eligible-not-selected") >= 1
+
+
+def test_recovery_channel_finds_multiturn_path_past_hard_name_obstacles_within_budget():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("hard-name-before", "text", "timeline", ObstacleRect(2, -4, 3, 1)))
+    obstacles.add(SurfaceObstacle("hard-name-after", "text", "timeline", ObstacleRect(7, -2, 8, 10)))
+    bounds = (0, -4, 10, 10)
+    channels = RelationShapeChannels((0, 2, 3, 4, 7, 8, 9, 10), (-3, 0, 2))
+    cheap = relation_shape_candidates((0, 0), (10, 0), bounds=bounds, channels=channels)
+    assert cheap
+    assert all(any(obstacles.collisions(ObstacleSegment(a, b, 1), classes=("text",),
+                regions=("timeline",)) for a, b in zip(path, path[1:])) for path in cheap)
+
+    source, target = _port("end", (0, 0)), _port("start", (10, 0))
+    result = select_relation_route(((source, target),), obstacles=obstacles, bounds=bounds,
+        source_host_id=None, target_host_id=None, relation_scene_id="relation:hard-name-channel",
+        max_bends=6, max_detour_ratio=2, search_policy="best", channels=channels,
+        recovery_channels=channels, recovery_lead_runs=lambda *_: (0, 0),
+        recovery_stroke_width=1, search_budget=4096,
+        prepare=lambda points, *_: points, accept=lambda points: not any(
+            obstacles.collisions(ObstacleSegment(a, b, 1), classes=("text",), regions=("timeline",))
+            for a, b in zip(points, points[1:])))
+    assert result.selected_pair == (source, target)
+    assert result.search_used and 0 < result.search_expansions <= 4096
+    assert result.points == ((0, 0), (0, 2), (4, 2), (4, -3), (9, -3), (9, 0), (10, 0))
+    assert not any(obstacles.collisions(ObstacleSegment(a, b, 1), classes=("text",),
+        regions=("timeline",)) for a, b in zip(result.points, result.points[1:]))
 
 
 def test_outward_channel_proposal_reuses_finite_shape_grammar_for_four_bend_route():

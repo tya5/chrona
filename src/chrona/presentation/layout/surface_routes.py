@@ -28,7 +28,9 @@ from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates, physical_host_neighbors,
     split_route_at_physical_corridors, stub_pairs_first,
 )
-from chrona.presentation.layout.relation_shapes import first_fit_port_pairs, shape_channels
+from chrona.presentation.layout.relation_shapes import (
+    first_fit_port_pairs, recovery_shape_channels, shape_channels,
+)
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import (
     centred_on_route, complete_centred_terminals,
@@ -1008,6 +1010,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 back_route_reason[0] = ""
                 pairs = port_pairs
                 candidate_channels = channels
+                recovery_channel_geometry = None
                 if domain.stage is not RelationResolutionStage.NORMAL:
                     entries = (entry_candidates(target_mark, relation.target_endpoint,
                         source_nominal, comparison_clusters.get((target_mark.source_ref,
@@ -1017,9 +1020,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     pairs = tuple((left, right) for left in source_candidates for right in entries)
                     if context.layout_manifest.relation_entry in {"side-when-free", "side"}:
                         pairs = stub_pairs_first(pairs)
-                    candidate_channels = (shape_channels(domain.obstacles, bounds=routing_bounds,
+                    candidate_channels = shape_channels(domain.obstacles, bounds=routing_bounds,
                         row_edges=tuple(row_edges.values()), classes=route_classes)
-                        if search_policy == "first-fit" else None)
+                    recovery_channel_geometry = recovery_shape_channels(domain.obstacles,
+                        bounds=routing_bounds, row_edges=tuple(row_edges.values()), classes=route_classes)
                 def candidate_primary_clear(candidate):
                     # Span endpoints share semantic coordinates across
                     # cardinal exits. The prepare callback has already
@@ -1074,6 +1078,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         if hint_proposal is not None and hint_proposal.disposition == "proposed"
                         and domain.stage is RelationResolutionStage.NORMAL else ()),
                     bounds=routing_bounds, search_policy=search_policy, channels=candidate_channels,
+                    recovery_channels=(recovery_channel_geometry
+                        if domain.stage is not RelationResolutionStage.NORMAL else None),
+                    recovery_lead_runs=(lambda source_exit, target_entry: (
+                        endpoint_lead_run(source_exit, dependency_stroke, marker_start),
+                        endpoint_lead_run(target_entry, dependency_stroke, marker_end)))
+                        if domain.stage is not RelationResolutionStage.NORMAL else None,
+                    recovery_stroke_width=(dependency_stroke
+                        if domain.stage is not RelationResolutionStage.NORMAL else 0.0),
                     search_budget=context.layout_manifest.relation_search_budget,
                     source_host_id=source_mark.placement_id if source_mark else None,
                     target_host_id=target_mark.placement_id if target_mark else None,
