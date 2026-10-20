@@ -11,6 +11,10 @@ calendars:
   office:
     working_days: [mon, tue, wed, thu, fri]
 objects:
+  kickoff:
+    type: gate
+    title: Kickoff
+    schedule: {mode: fixed-point, at: '2026-11-02'}
   design:
     type: work
     title: Design

@@ -120,6 +120,8 @@ class ResolvedColorScale:
     # remainder of a cycled palette, in source order, never repeats a hue.
     folded: tuple[str, ...] = ()
     palette_size: int = 0
+    # Paint for an object with no value for the field (#1789): "base" keeps the role's own paint.
+    missing: str = "base"
 
     def legend_items(self, used: set[object]) -> tuple[tuple[str, str, str], ...]:
         """One ``(source_ref, label_key, colour)`` per legend entry: each unfolded value, then one folded "Other"."""
@@ -194,6 +196,9 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
     source_field = source.get("field")
     if not isinstance(source_field, str):
         raise _invalid_mapping(f"encoding.source.field={_brief(source_field)}; expected a string field name", source_ref)
+    missing = encoding.get("missing", "base")
+    if not isinstance(missing, str) or not missing:
+        raise _invalid_mapping(f"encoding.missing={_brief(missing)}; expected base or a domain value", source_ref)
     if not isinstance(domain, (list, tuple)) or not domain:
         raise _invalid_mapping(f"encoding.domain={_brief(domain)}; expected a nonempty sequence of unique strings", source_ref)
     invalid_index = next((index for index, value in enumerate(domain) if not isinstance(value, str)), None)
@@ -204,6 +209,8 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
         if value in seen:
             raise _invalid_mapping(f"encoding.domain[{index}]={_brief(value)} duplicates an earlier domain value", source_ref)
         seen.add(value)
+    if missing != "base" and not derived and missing not in seen:
+        raise _invalid_mapping(f"encoding.missing={_brief(missing)} is neither base nor a value of the domain", source_ref)
     declared = scales.get(scale_id)
     theme_pointer = f"/body/colorScales/{_pointer_token(scale_id)}/slots"
     palette = declared.get("palette") if isinstance(declared, Mapping) else None
@@ -241,4 +248,4 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
         colors.append((value, color))
     return ResolvedColorScale(scale_id, target, source["field"], tuple(domain), tuple(colors),
                               scale_collisions(scale_id, tuple(colors[:len(colors) - len(folded)]), color_vision),
-                              derived, source_ref, folded, palette_size)
+                              derived, source_ref, folded, palette_size, missing)

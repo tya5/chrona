@@ -735,7 +735,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         encoding_rules = lower_legacy_color_encoding({
             "source": {"field": color_scale.source_field}, "scale": color_scale.scale_id,
             "domain": "firstAppearance" if color_scale.derived else color_scale.domain,
-            "target": color_scale.target_role,
+            "target": color_scale.target_role, "missing": color_scale.missing,
         })
         used = _used_scale_values(color_scale, projection)
         scale_legend_paints = tuple((ref, color) for ref, _label, color in color_scale.legend_items(used))

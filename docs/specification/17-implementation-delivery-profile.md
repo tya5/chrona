@@ -94,11 +94,12 @@ render (#1682). `path` is resolved beside the Project file; a local file that om
 SHA-256 of its bytes. `resource` declarations need a Store and are resolved by the Context path.
 A field definition may declare an optional `default` (a value of its declared scalar type; not for reference or
 many-valued fields; a non-conforming default is `E_PROFILE_PACKAGE_INVALID`). The source-local field accessor (`FieldRoleBindings.read_result`, one per source Project, so Snapshot, scenario, row and folded occurrences alike) reads the default when the
-field is absent from an object of that profile, and Style predicates and View encodings both see it (an explicit `null` stays `null`), and an absent `required` field with
+field is absent from an object of that profile, and Style predicates and View encodings both see it (an explicit `null` stays `null` and is a value-less object for a colour encoding), and an absent `required` field with
 a default is satisfied. `default` is an additive optional `profile-v0.3` member (Spec 56 section 3.2). A colour encoding
-(Spec 60) on a field that an object's declared profile does not declare does not apply to that object: it keeps its
-base paint and the legend's base key stays; an object whose profile declares the field without a value or default is
-still refused with `E_PRESENTATION_SCALE_VALUE`. Objects typed by no declared profile behave as before.
+(Spec 60) on a field for which an object has no value (its declared profile does not declare the field, the field is
+absent without a default, or the value is `null`; #1682, #1789) does not apply to that object: it keeps its
+base paint and the legend's base key stays, unless the encoding's optional `missing` names a domain value. A value
+that is present but outside the domain is still refused with `E_PRESENTATION_SCALE_VALUE`.
 Objects whose `type` names no declared profile are not checked. The delivery package keeps its `IDP-*` codes.
 Within one Project, two declared packages MUST NOT claim the same profile ID
 (Spec11 §4.1). Report `E_PROFILE_PACKAGE_INVALID` at the conflicting extension;

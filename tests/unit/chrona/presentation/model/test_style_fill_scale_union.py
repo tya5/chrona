@@ -166,9 +166,9 @@ def test_incompatible_policies_for_one_scale_id_keep_mapping_diagnostic():
 
 @pytest.mark.parametrize(
     ("value", "kind", "present"),
-    [("invalid", "string", True), (None, "string", False), (7, "integer", True)],
+    [("invalid", "string", True), (7, "integer", True)],
 )
-def test_invalid_or_missing_value_keeps_its_alias_field_and_rule_pointer(value, kind, present):
+def test_invalid_value_keeps_its_alias_field_and_rule_pointer(value, kind, present):
     actual = _occurrence("actual", "accountOwner", value, kind=kind, present=present)
     planned = _occurrence("planned", "owner", "A")
     occurrences = (actual, planned)
@@ -188,3 +188,21 @@ def test_invalid_or_missing_value_keeps_its_alias_field_and_rule_pointer(value, 
     assert caught.value.code == "E_PRESENTATION_SCALE_VALUE"
     assert caught.value.source_ref == "/body/rules/actual/then/encode"
     assert "field='accountOwner'" in caught.value.detail
+
+
+def test_an_occurrence_with_no_value_is_not_encoded_and_the_rest_are():
+    # #1789: absent is not a refusal; the object keeps its base paint.
+    actual = _occurrence("actual", "accountOwner", None, kind="string", present=False)
+    planned = _occurrence("planned", "owner", "A")
+    occurrences = (actual, planned)
+    rules = (_rule("actual", "actual", "accountOwner", domain=("A", "B")),
+             _rule("planned", "planned", "owner", domain=("A", "B")))
+    theme = {"body": {
+        "colorScales": {"owners": {"slots": {"A": "first", "B": "second"}}},
+        "categorySlots": {"first": "#112233", "second": "#445566"},
+    }}
+
+    fills = complete_style_fills(_intents(occurrences, rules), occurrences, theme=theme,
+                                 encoding_sources=_sources(rules))
+
+    assert [key.subject_id for key, _ in fills.fills] == ["planned"]

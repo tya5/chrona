@@ -83,6 +83,7 @@ allOf:
                         source: {description: "Project object-field name or closed field role supplying the value.", $ref: "urn:chrona:common-v0.1#/$defs/projectFieldReference"}
                         scale: {description: "Named Theme colour scale to apply.", type: string, minLength: 1}
                         domain: {description: "Closed source-value domain or firstAppearance in projection order.", $ref: "urn:chrona:common-v0.1#/$defs/colorEncodingDomain"}
+                        missing: {description: "Optional paint for an object with no value for the source field: base (default) keeps the role's own paint; a domain value paints with that value's colour. A present value outside the domain is still refused.", type: string, minLength: 1}
                         legend:
                           description: "Optional legend presentation; a scoped legend title is checked by the typed Style parser."
                           examples: [{title: Owner, showScope: true}]

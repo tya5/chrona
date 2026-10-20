@@ -58,6 +58,10 @@ calendars:
   office:
     working_days: [mon, tue, wed, thu, fri]
 objects:
+  kickoff:
+    type: gate
+    title: Kickoff
+    schedule: {mode: fixed-point, at: '2026-11-02'}
   design:
     type: work
     title: Design
@@ -92,6 +96,7 @@ View, demonstrating the same typed Project input without a separate YAML-edit st
 terse 0.1
 project typed-demo "Typed fields demo" calendar office extension team-delivery "typed-team.yaml" git:0123456789abcdef0123456789abcdef01234567
 calendar office mon-fri
+kickoff "Kickoff" gate 2026-11-02
 design "Design" task profile work 5wd from 2026-11-02 risk=low team=platform
 build "Build" task profile work 10wd after design risk=high team=platform
 test "Test" task profile work 5wd after build risk=medium team=product
@@ -157,6 +162,13 @@ chrona render typed-plan.yaml --preset wallboard-dark --view typed-risk-view.yam
 
 Each bar now carries the colour of its `risk` value, the axis labels the months and the legend names
 `low`, `medium` and `high`. To change a colour, edit `fields` in the plan; never edit the picture.
+
+The plan's `kickoff` gate has no `risk` (a terse plan or an untyped object often has no value for a field).
+An object with no value for the encoded field, absent or `null`, is not encoded: it keeps the preset's base
+paint, on every preset and with a Style rule alike, and it adds nothing to the legend. A value that is present
+but outside the `domain` is still refused (`E_PRESENTATION_SCALE_VALUE`). To paint such objects with one of
+the domain's colours instead, add `missing: low` (a domain value; the default is `base`) to `colorEncoding`
+or to a Style `encode`.
 
 ## 3a. Colour by field on a preset with no `series` scale
 

@@ -89,11 +89,24 @@ folded Other, over the completed union.
 
 For a closed explicit domain, Theme must provide exactly one mapping to a Scheme
 slot, and the Scheme must provide that slot.  The mapping keys must exactly
-equal the View domain.  At evaluation, every selected eligible object must
-have a scalar source value in that domain.  Missing, non-scalar, or undeclared
-values reject the presentation closure with `E_PRESENTATION_SCALE_VALUE`,
-including the object ID, field, and value state.  Missing Theme mappings or
+equal the View domain.  At evaluation, every selected eligible object that has a value
+for the source field must have a scalar value in that domain.  A present non-scalar or
+undeclared value rejects the presentation closure with `E_PRESENTATION_SCALE_VALUE`,
+including the object ID, field and value state.  Missing Theme mappings or
 Scheme slots reject closure with `E_PRESENTATION_SCALE_MAPPING`.
+
+An object with no value for the source field, whether the field is absent from its
+source (typed by a profile or not, with no declared default) or its value is `null`,
+is not encoded (#1789). It keeps its base paint, the encoding does not apply to it, and
+it contributes no legend entry. This is one rule in the shared completion path, so it
+holds identically on every preset, for a View `colorEncoding`, and for a Style `encode`.
+The optional `missing` member of `colorEncoding` and of Style `encode` changes the
+outcome: `base` (the default) is the behaviour above; a domain value paints those
+objects as if they carried that value, with that value's colour and legend entry. A
+`missing` that is neither `base` nor a value of the explicit domain (for `firstAppearance`,
+a value observed in the selection) is `E_PRESENTATION_SCALE_MAPPING`. `missing` is an
+additive optional member of `view-v0.28` and `style-v0.2` (Spec 56 section 3.2); `base`
+is reserved and cannot be named as a domain value of `missing`.
 
 An ordinary Theme colour binding may also explicitly name one category slot for
 a static role (for example a group band).  That is a direct role-to-slot
