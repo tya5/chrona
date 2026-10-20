@@ -1,0 +1,42 @@
+id,title,type,start,duration,parent,predecessors,progress,actual_start,actual_finish
+kickoff,Programme kickoff,gate,2027-01-04,,,,,2027-01-04,
+discovery,Discovery,group,,,,,,,
+stakeholder,Stakeholder interviews,task,,8wd,discovery,kickoff,1,2027-01-04,2027-01-13
+market,Market scan,task,,6wd,discovery,kickoff,1,2027-01-05,2027-01-14
+current,Current-state audit,task,,10wd,discovery,kickoff,1,2027-01-04,2027-01-19
+needs,Requirements catalogue,task,,7wd,discovery,"stakeholder, market",1,2027-01-15,2027-01-26
+business-case,Business case,task,,5wd,discovery,needs,1,2027-01-27,2027-02-03
+gate-1,Gate 1: scope agreed,gate,,,discovery,"business-case, current",,2027-02-04,
+design,Design,group,,,,,,,
+arch,Target architecture,task,,10wd,design,gate-1,1,2027-02-04,2027-02-18
+data-model,Data model,task,,8wd,design,arch.start +3wd,1,2027-02-09,2027-02-19
+ux,Service design,task,,12wd,design,gate-1,1,2027-02-04,2027-02-22
+security,Security review,task,,5wd,design,arch,1,2027-02-19,2027-02-26
+vendor,Vendor selection,task,,9wd,design,gate-1,1,2027-02-05,2027-02-18
+plan,Delivery plan,task,,4wd,design,"ux, security, vendor",1,2027-03-01,2027-03-04
+gate-2,Gate 2: design signed off,gate,,,design,"plan, data-model",,2027-03-05,
+build,Build,group,,,,,,,
+platform,Platform setup,task,,10wd,build,gate-2,1,2027-03-08,2027-03-22
+integration,Integration layer,task,,19wd,build,platform,0.6,2027-03-23,
+portal,Customer portal,task,,24wd,build,platform,0.45,2027-03-24,
+backoffice,Back-office tools,task,,14wd,build,platform,0.3,2027-03-29,
+migration,Data migration scripts,task,,15wd,build,platform +5wd,0.2,2027-04-05,
+reports,Reporting,task,,8wd,build,integration,,,
+docs,User documentation,task,,10wd,build,portal.start +10wd,,,
+code-freeze,Code freeze,gate,,,build,"reports, portal, backoffice, migration",,,
+verify,Verification,group,,,,,,,
+sit,System integration test,task,,10wd,verify,code-freeze,,,
+perf,Performance test,task,,6wd,verify,sit.start +4wd,,,
+pentest,Penetration test,task,,5wd,verify,code-freeze +2wd,,,
+uat,User acceptance test,task,,12wd,verify,sit,,,
+dress,Migration rehearsal,task,,5wd,verify,uat.start +3wd,,,
+training,Staff training,task,,8wd,verify,docs,,,
+gate-3,Gate 3: go-live approval,gate,,,verify,"uat, perf, pentest, dress, training",,,
+rollout,Rollout,group,,,,,,,
+pilot,Pilot region,task,,10wd,rollout,gate-3,,,
+wave-1,Wave 1 regions,task,,10wd,rollout,pilot,,,
+wave-2,Wave 2 regions,task,,10wd,rollout,wave-1,,,
+comms,Change communications,task,,15wd,rollout,gate-3,,,
+decom,Legacy decommission,task,,8wd,rollout,wave-2,,,
+hypercare,Hypercare,task,,10wd,rollout,wave-1 +5wd,,,
+close,Programme close,gate,,,rollout,"decom, hypercare, comms",,,

@@ -1,0 +1,25 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: programme-observed
+body:
+  asOf: '2027-04-14'
+  observations:
+    - {id: kickoff-observed, sequence: 1, projectObjectId: kickoff, actual: {at: '2027-01-04'}}
+    - {id: stakeholder-observed, sequence: 2, projectObjectId: stakeholder, actual: {start: '2027-01-04', finish: '2027-01-14', progress: 1.0}}
+    - {id: market-observed, sequence: 3, projectObjectId: market, actual: {start: '2027-01-05', finish: '2027-01-15', progress: 1.0}}
+    - {id: current-observed, sequence: 4, projectObjectId: current, actual: {start: '2027-01-04', finish: '2027-01-20', progress: 1.0}}
+    - {id: needs-observed, sequence: 5, projectObjectId: needs, actual: {start: '2027-01-15', finish: '2027-01-27', progress: 1.0}}
+    - {id: business-case-observed, sequence: 6, projectObjectId: business-case, actual: {start: '2027-01-27', finish: '2027-02-04', progress: 1.0}}
+    - {id: gate-1-observed, sequence: 7, projectObjectId: gate-1, actual: {at: '2027-02-04'}}
+    - {id: arch-observed, sequence: 8, projectObjectId: arch, actual: {start: '2027-02-04', finish: '2027-02-19', progress: 1.0}}
+    - {id: data-model-observed, sequence: 9, projectObjectId: data-model, actual: {start: '2027-02-09', finish: '2027-02-20', progress: 1.0}}
+    - {id: ux-observed, sequence: 10, projectObjectId: ux, actual: {start: '2027-02-04', finish: '2027-02-23', progress: 1.0}}
+    - {id: security-observed, sequence: 11, projectObjectId: security, actual: {start: '2027-02-19', finish: '2027-02-27', progress: 1.0}}
+    - {id: vendor-observed, sequence: 12, projectObjectId: vendor, actual: {start: '2027-02-05', finish: '2027-02-19', progress: 1.0}}
+    - {id: plan-observed, sequence: 13, projectObjectId: plan, actual: {start: '2027-03-01', finish: '2027-03-05', progress: 1.0}}
+    - {id: gate-2-observed, sequence: 14, projectObjectId: gate-2, actual: {at: '2027-03-05'}}
+    - {id: platform-observed, sequence: 15, projectObjectId: platform, actual: {start: '2027-03-08', finish: '2027-03-23', progress: 1.0}}
+    - {id: integration-observed, sequence: 16, projectObjectId: integration, actual: {start: '2027-03-23', progress: 0.6}}
+    - {id: portal-observed, sequence: 17, projectObjectId: portal, actual: {start: '2027-03-24', progress: 0.45}}
+    - {id: backoffice-observed, sequence: 18, projectObjectId: backoffice, actual: {start: '2027-03-29', progress: 0.3}}
+    - {id: migration-observed, sequence: 19, projectObjectId: migration, actual: {start: '2027-04-05', progress: 0.2}}

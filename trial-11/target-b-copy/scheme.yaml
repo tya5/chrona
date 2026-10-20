@@ -1,0 +1,40 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: nordic-paper
+body:
+  colors:
+    surface: "#F6F4EE"
+    surfaceRaised: "#EDEAE2"
+    text: "#1C222C"
+    textMuted: "#5A606B"
+    accent: "#1E3F7A"
+    positive: "#5A606B"
+    negative: "#1E3F7A"
+    warning: "#1E3F7A"
+    neutral: "#B8B4AA"
+    rule: "#CFCBC1"
+    insideLabelPlanned: "#1C222C"
+    insideLabelActual: "#F6F4EE"
+    insideLabelSnapshot: "#1C222C"
+    insideLabelScenario: "#1C222C"
+  suitability:
+    background: light
+    colorVision: [deuteranopia, protanopia, tritanopia]
+    print: print-friendly
+  provenance:
+    kind: chrona-authored
+    source: trial11 Nordic print poster design
+    license: MIT
+  categories:
+    default: "#F6F4EE"
+    period: "#1E3F7A"
+    exception: "#E9E5DB"
+    bar: "#DDD9CF"
+    barEdge: "#8A877F"
+    actualInk: "#1E3F7A"
+    asofChip: "#1E3F7A"
+    asofInk: "#F6F4EE"
+    relationInk: "#A6A298"
+    closed: "#F6F4EE"
+    ghost: "#7C7A73"
+    series-1: "#F6F4EE"

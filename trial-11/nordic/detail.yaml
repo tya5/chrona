@@ -1,0 +1,10 @@
+version: chrona/review-detail-profile/v0.1
+id: nordic-paper-legend
+body:
+  legend:
+    - {role: planned, label: {wording: legend.planned-plain}}
+    - {role: actual, label: {wording: legend.actual}}
+    - {role: snapshot, label: {wording: legend.snapshot}}
+    - {role: milestone, label: {wording: legend.milestone}}
+    - {role: asOf, label: {wording: legend.asOf}}
+    - {role: calendar-exception, label: {wording: legend.calendar-closed}}
