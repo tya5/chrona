@@ -303,11 +303,14 @@ row-aligned surface preserves these as output metadata even though it does not a
 stack Y offset. The independent-lane surface uses the same stack index to derive its
 Scene Y and emits the same metadata. Adapters never reconstruct a stack from bounds.
 
-Rect rounding and minimum visual width are resolved in Scene. The temporal start
-remains fixed; a span narrower than `theme.bar.minWidth` extends only its visual Rect to
-the right and its ports/hit bounds use that completed Rect. `theme.bar.radius` is
-clamped to half the smaller completed Rect dimension during semantic validation and
-stored as `cornerRadius`; it is not an SVG-only recovery.
+Layout completes Rect rounding and minimum visual width before routing; Scene
+and adapters carry that completed geometry. Ordinary closed spans retain their
+1px visual minimum, extending rightward without changing Project/Schedule dates.
+Their start/end ports and hit bounds use the same completed Rect boundaries,
+including its canonical right edge when the minimum exceeds the scaled duration.
+An open or in-progress span retains its exact duration width; an end-tick remains
+a separate glyph. Layout clamps the selected radius to half the smaller completed
+Rect dimension and stores `cornerRadius`; this is not an SVG-only recovery.
 
 Primitive-purpose style mapping consumes the complete selected stroke token. Missing
 Actual, variance status, annotations, summaries, notes, groups, points, and fallback
