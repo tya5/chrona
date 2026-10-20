@@ -1165,8 +1165,8 @@ distance and includes both corridor lengths. Rank by clear node approach,
 then bends and length, preserving stable egress order for ties. A blocked
 horizontal exit is not proof that the other legal egresses are blocked.
 
-**Primary-mark safety (#1114).** In every row mode and entry policy, completed
-relation paths MUST NOT traverse primary planned marks, including their own
+**Primary-mark safety (#1114).** In normal routing, in every row mode and entry
+policy, completed relation paths MUST NOT traverse primary planned marks, including their own
 endpoint marks. Positive-length contact with their full closed bounds, including
 travel along an edge, is blocked (#1841). An isolated terminal-point touch on the
 outward side remains necessary, never permission to slide along or pass through
@@ -1176,10 +1176,21 @@ far-side exit is not a candidate; start/end retain their temporal ports with
 outward or above/below egress. Spec 33's named comparison-host corridor
 exemption remains scoped to that corridor. This applies after repair, to
 back-routes, rounded paths and diagonal visible-overflow fallbacks, superseding
-the broad own-mark exemptions above. An unsafe direct fallback is suppressed
+the broad own-mark exemptions above. Under `suppress`, an unsafe direct fallback is suppressed
 with `W_LAYOUT_RELATION_SUPPRESSED` and `I_LAYOUT_RELATION_MARK_BLOCKED:<relation id>`.
 Lane attempts retain `E_LAYOUT_ROUTE_THROUGH_MARK` evidence. Scene observes
 completed crossings as `E_SCENE_RELATION_THROUGH_MARK`; it does not repair routes.
+The declared unroutable-resolution policy above remains authoritative for
+intentional non-endpoint-host crossings at `marks` and `overlap` stages.
+Perceptibility retains the measured crossing as an informational
+`I_SCENE_RELATION_RECOVERED_THROUGH_MARK` with its stage and
+`declared-recovery` disposition only when the same surface/instance has one
+valid resolution receipt and a matching completed halo: identical path geometry,
+source and clip, surface-ground ink, wider stroke and adjacent below-line paint
+order. Endpoint-host crossings, normal routes, and absent, ambiguous, malformed
+or mismatched recovery evidence remain errors. A receipt alone never exempts
+geometry; missing endpoint-instance identity cannot authorize a crossing.
+Observation does not infer a policy or repair paint.
 The inset interior rectangles used for conservative rectangular-detour quality
 lower-bound certificates remain unchanged. They are not the contact envelope
 for actual candidate, repair, reduction or final drawn-path safety checks.
