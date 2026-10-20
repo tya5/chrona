@@ -9,6 +9,9 @@ from chrona.presentation.layout import mark_geometry
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
 from chrona.presentation.layout.surface_quality import ScalePlacement
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_closed_rect_contact_interval
+from chrona.presentation.layout.ports import ConnectorEgress, connector_egress_candidates
+from chrona.presentation.layout.relation_fallback import paired_stub_geometry
 from chrona.presentation.model.projection import ObservationState
 
 
@@ -127,6 +130,62 @@ def test_nonselected_actual_reasons_remain_distinct(source_kind, state, actual, 
 class _ShapeTheme:
     def variant_symbol(self, _role):
         return {"shape": "diamond"}
+
+
+@pytest.mark.parametrize("duration_days", (1, 3))
+def test_ordinary_span_ports_follow_completed_rect_for_planned_and_actual(duration_days):
+    start = date(2026, 4, 12)
+    finish = date(2026, 4, 12 + duration_days)
+    item = _item(
+        planned={"start": start, "end": finish},
+        actual={"start": start, "finish": finish},
+        state=ObservationState.RECORDED,
+    )
+    original_planned, original_actual = dict(item.planned), dict(item.actual)
+    scale = ScalePlacement("surface", "test", start, date(2026, 8, 1), 0, 75, 0, 0.75)
+    frame = MarkBandFrame.zero_origin(
+        scale, 50, {role: MarkGeometry(.2, .1, index, 0)
+                    for index, role in enumerate(("planned", "snapshot", "actual", "missing-actual"))},
+    )
+
+    result = compose_item_marks(item=item, instance_id="row-1:item", source_kind="combined",
+                                frame=frame, as_of=None, theme_tokens=_ShapeTheme(), slot_id="timeline")
+
+    assert {mark.semantic_id for mark in result.marks} == {"planned", "actual"}
+    for mark in result.marks:
+        expected_width = max(1.0, duration_days * scale.unit_ratio)
+        assert float(mark.bounds.inline_size) == expected_width
+        assert mark.end_port == (float(mark.bounds.inline + mark.bounds.inline_size),
+                                 float(mark.bounds.block + mark.bounds.block_size / 2))
+        if duration_days == 1:
+            assert mark.end_port[0] != scale.origin + duration_days * scale.unit_ratio
+    assert item.planned == original_planned and item.actual == original_actual
+
+
+def test_subpixel_span_stub_leaves_from_completed_painted_boundary():
+    start = date(2026, 4, 12)
+    finish = date(2026, 4, 13)
+    item = _item(planned={"start": start, "end": finish})
+    scale = ScalePlacement("surface", "test", start, date(2026, 8, 1), 0, 75, 0, 0.75)
+    frame = MarkBandFrame.zero_origin(
+        scale, 50, {role: MarkGeometry(.2, .1, index, 0)
+                    for index, role in enumerate(("planned", "snapshot", "actual", "missing-actual"))},
+    )
+    mark = compose_item_marks(item=item, instance_id="row-1:item", source_kind="primary",
+                              frame=frame, as_of=None, theme_tokens=_ShapeTheme(),
+                              slot_id="timeline").marks[0]
+    source = next(candidate for candidate in connector_egress_candidates(
+        mark, "end", (10, mark.end_port[1]), ()) if candidate.side == "end")
+    target = ConnectorEgress("start", (10, mark.end_port[1]), (10, mark.end_port[1]), ("target",))
+    stub = paired_stub_geometry((source, target), source_run=2, target_run=2)
+    host = ObstacleRect(float(mark.bounds.inline), float(mark.bounds.block),
+                        float(mark.bounds.inline + mark.bounds.inline_size),
+                        float(mark.bounds.block + mark.bounds.block_size))
+
+    assert stub.source[0] == (float(host.right), mark.end_port[1])
+    assert all((hit := segment_closed_rect_contact_interval(ObstacleSegment(a, b), host)) is None
+               or hit[1] <= hit[0]
+               for a, b in zip(stub.source, stub.source[1:]))
 
 
 _KIND_EXPECTED = {

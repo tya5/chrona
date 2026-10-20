@@ -250,6 +250,11 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
             start_port = (x1, block + size / 2)
             end_port = (x2, block + size / 2)
         bounds = Rect(Decimal(str(x1)), Decimal(str(y)), Decimal(str(width)), Decimal(str(size)))
+        if facet.geometry == "span":
+            # A narrow ordinary span is extended to its completed Rect's
+            # minimum width. Its connector port follows that same completed
+            # boundary, rather than the interior raw date coordinate.
+            end_port = (float(bounds.inline + bounds.inline_size), block + size / 2)
         marks.append(compose_mark_placement(
             frame=composition_frame, placement_id=placement_id, source_ref=item.object_id,
             bounds=bounds, start_port=start_port, end_port=end_port, shape=facet.shape,
