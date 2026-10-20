@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding_for_primitive
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 
 
@@ -40,14 +41,42 @@ def test_policy_reports_every_classified_flat_paint_with_its_finite_floor():
     assert by_id["variance"].floor == 4.5
 
 
-def test_recovery_halo_is_decoration_not_a_mark_floor_exemption():
+def test_dependency_halo_separator_is_not_a_figure_contrast_obligation():
     halo = _primitive("halo", "dependency-halo", "dependency-halo", None,
                       kind="Path", stroke="#FFFFFF")
     halo["points"] = [[10, 15], [30, 15]]
-    finding = next(item for item in evaluate_scene_contrast(_scene(halo)) if item.primitive_id == "halo")
-    assert finding.code == "W_SCENE_DECORATION_CONTRAST"
-    assert finding.severity == "warning"
-    assert finding.floor == 1.10
+    assert evaluate_scene_contrast(_scene(halo)) == ()
+    assert contrast_binding_for_primitive("dependency-halo", "Path", "dependency-halo") is None
+
+
+@pytest.mark.parametrize("purpose", ["period-band", "axis-band", "unregistered-purpose"])
+def test_nullable_decoration_role_cannot_extend_its_no_floor_to_another_purpose(purpose):
+    halo = _primitive("arbitrary-id", "dependency-halo", purpose, None,
+                      kind="Path", stroke="#FFFFFF")
+    halo["points"] = [[10, 15], [30, 15]]
+    finding, = evaluate_scene_contrast(_scene(halo))
+    assert (finding.code, finding.severity, finding.floor) == (
+        "W_SCENE_DECORATION_CONTRAST", "warning", 1.10)
+    binding = contrast_binding_for_primitive("dependency-halo", "Path", purpose)
+    assert binding is not None and binding.contrast_class == ContrastClass.DECORATION
+
+
+def test_absent_purpose_cannot_inherit_a_nullable_decoration_classification():
+    binding = contrast_binding_for_primitive("dependency-halo", "Path", None)
+    assert binding is not None and binding.contrast_class == ContrastClass.DECORATION
+
+
+def test_text_misusing_graphical_separator_role_keeps_decoration_floor():
+    text = _primitive("text-misuse", "dependency-halo", "dependency-halo", "#FFFFFF", kind="Text")
+    finding, = evaluate_scene_contrast(_scene(text))
+    assert (finding.code, finding.severity, finding.floor) == (
+        "W_SCENE_DECORATION_CONTRAST", "warning", 1.10)
+
+
+def test_nullable_decoration_purpose_does_not_change_classified_role_precedence_or_text_fallback():
+    assert contrast_binding_for_primitive("planned", "Path", "dependency-halo").contrast_class == ContrastClass.MARK
+    assert contrast_binding_for_primitive("text", "Text", "table-cell").contrast_class == ContrastClass.GROUND_TEXT
+    assert contrast_binding_for_primitive("variance-ahead", "Rect", "legend-swatch").contrast_class == ContrastClass.MARK
 
 
 def test_policy_rejects_missing_state_treatment_instead_of_inferring_a_floor():

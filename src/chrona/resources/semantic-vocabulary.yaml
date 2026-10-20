@@ -516,7 +516,7 @@ body:
       purpose: "dependency-halo"
       sceneRole: "dependency-halo"
       themeRole: "dependency-halo"
-      contrastClass: "decoration"
+      contrastClass: null
     - semanticId: "dependency-critical"
       primitiveFamily: "line"
       purpose: "dependency"

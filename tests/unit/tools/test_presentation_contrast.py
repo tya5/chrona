@@ -189,25 +189,33 @@ def test_row_alternative_does_not_waive_an_unrelated_decoration_role(tmp_path, m
     assert report["corpusErrors"] == ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
 
 
-def test_unused_recovery_halo_has_explicit_synthetic_coverage(tmp_path, monkeypatch):
-    tool = _corpus(tmp_path, monkeypatch, omit_roles={"dependency-halo"})
+def test_unused_optional_rule_has_explicit_synthetic_coverage(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch, omit_roles={"tableColumnRule"})
     report = tool.report_document(tool.evaluate_committed_scenes(
         tool.committed_scene_paths(tmp_path), root=tmp_path))
     assert report["corpusErrors"] == []
     assert report["syntheticCoverage"] == [{
-        "role": "dependency-halo",
-        "tests": list(tool.SYNTHETIC_DECORATION_COVERAGE["dependency-halo"]),
+        "role": "tableColumnRule",
+        "tests": list(tool.SYNTHETIC_DECORATION_COVERAGE["tableColumnRule"]),
     }]
-    assert "Synthetic `dependency-halo` (no public use)" in tool.render_markdown(report)
+    assert "Synthetic `tableColumnRule` (no public use)" in tool.render_markdown(report)
 
 
-def test_public_recovery_halo_automatically_replaces_synthetic_coverage(tmp_path, monkeypatch):
+def test_public_optional_rule_automatically_replaces_synthetic_coverage(tmp_path, monkeypatch):
     tool = _corpus(tmp_path, monkeypatch)
     report = tool.report_document(tool.evaluate_committed_scenes(
         tool.committed_scene_paths(tmp_path), root=tmp_path))
     assert report["corpusErrors"] == [] and report["syntheticCoverage"] == []
-    assert any(item["finding"]["visualRole"] == "dependency-halo"
+    assert any(item["finding"]["visualRole"] == "tableColumnRule"
                for item in report["findings"])
+
+
+def test_separator_is_not_a_decoration_coverage_obligation(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch, omit_roles={"dependency-halo"})
+    report = tool.report_document(tool.evaluate_committed_scenes(
+        tool.committed_scene_paths(tmp_path), root=tmp_path))
+    assert report["corpusErrors"] == [] and report["syntheticCoverage"] == []
+    assert all(item["finding"]["visualRole"] != "dependency-halo" for item in report["findings"])
 
 
 def test_a_corpus_with_an_illegible_mark_still_fails_the_check(tmp_path, monkeypatch):

@@ -29,14 +29,9 @@ OUTPUT = Path("docs/diagnostics/presentation-contrast.md")
 
 OPT_IN = Path("conformance/contrast-opt-in.yaml")
 
-# Spec46: optional recovery has no truthful public witness until it is used.
+# Spec46: an optional decoration has no truthful public witness until it is used.
 # This is coverage evidence, never an exemption from emitted-paint evaluation.
 SYNTHETIC_DECORATION_COVERAGE = {
-    "dependency-halo": (
-        "tests/integration/test_unroutable_visible_obstacle.py",
-        "tests/integration/test_relation_resolution_wiring.py",
-        "tests/unit/chrona/presentation/scene/test_contrast_policy.py",
-    ),
     # Only a Theme that declares the stroke paints it; the sole bundled one (technical-print) has no public slide (#1545).
     "tableColumnRule": (
         "tests/integration/test_table_details_1545.py",

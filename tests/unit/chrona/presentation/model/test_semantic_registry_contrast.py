@@ -29,7 +29,7 @@ def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_
     ]
     assert [item.scene_role for item in contrast_bindings(ContrastClass.DECORATION)] == [
         "calendar-closed", "calendar-exception", "period-band", "axis-band-decoration", "axis-band-decoration2",
-        "group-band", "row-band", "row-rule", "tableColumnRule", "group-header-band", "group-header-strip", "group-tab", "dependency-halo", "annotation-note-box",
+        "group-band", "row-band", "row-rule", "tableColumnRule", "group-header-band", "group-header-strip", "group-tab", "annotation-note-box",
         "annotation-kind-bar", "annotation-kind-accent", "annotation-kind-stamp", "annotation-artwork",
         "annotation-border-start", "annotation-border-end", "annotation-border-top", "annotation-border-bottom",
     ]
@@ -133,3 +133,12 @@ def test_variance_role_keeps_existing_state_text_class_outside_graphical_legend(
 def test_primitive_resolver_keeps_purpose_based_ground_text_text_only():
     assert contrast_binding_for_primitive("text", "Text", "legend-label").contrast_class == ContrastClass.GROUND_TEXT
     assert contrast_binding_for_primitive("text", "Rect", "legend-label") is None
+
+
+def test_graphical_nullable_separator_does_not_make_text_role_unclassified():
+    canonical = contrast_binding_for_primitive("dependency-halo", "Path", "dependency-halo")
+    text_misuse = contrast_binding_for_primitive("dependency-halo", "Text", "dependency-halo")
+    wrong_purpose = contrast_binding_for_primitive("dependency-halo", "Text", "period-band")
+    assert canonical is None
+    assert text_misuse is not None and text_misuse.contrast_class == ContrastClass.DECORATION
+    assert wrong_purpose is not None and wrong_purpose.contrast_class == ContrastClass.DECORATION

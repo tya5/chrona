@@ -206,6 +206,22 @@ def contrast_binding_for_primitive(scene_role: str, kind: str, purpose: str | No
     legend swatch borrows MARK contrast; purpose-based ground text remains Text-only.
     """
     binding = contrast_binding_for(scene_role, purpose if kind == "Text" else None)
+    if binding is None:
+        # A nullable decoration class is a purpose-specific separator disposition,
+        # not a role-wide exemption. Any absent or mismatched purpose keeps the
+        # ordinary decoration floor. The vocabulary remains the sole source of
+        # role/purpose declarations; no exemption list is maintained here.
+        nullable_decorations = tuple(
+            item for item in _REGISTRY.values()
+            if item.scene_role == scene_role
+            and item.primitive_kind == "decoration"
+            and item.contrast_class is None
+        )
+        if nullable_decorations:
+            exact_purpose = sum(item.purpose == purpose for item in nullable_decorations) == 1
+            if exact_purpose and kind != "Text":
+                return None
+            return replace(nullable_decorations[0], contrast_class=ContrastClass.DECORATION)
     if (binding is not None and binding.contrast_class == ContrastClass.STATE_TEXT
             and kind in {"Rect", "Symbol", "Path"} and purpose == "legend-swatch"):
         return replace(binding, contrast_class=ContrastClass.MARK)
