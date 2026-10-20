@@ -474,15 +474,45 @@ def _generic_object_reference(
     *, reference_catalog: ObjectReferenceCatalog | None = None,
 ) -> list[Diagnostic]:
     """Resolve an in-memory target, separately from shape-only resource references."""
+    targets = tuple(spec.get("targetProfiles", ()))
+    constraint = f" of profile {list(targets)}" if targets else ""
+    base = f"{name} must name one object or entity{constraint}"
     try:
-        (reference_catalog or ObjectReferenceCatalog.from_project(project)).resolve(
-            value, target_profiles=tuple(spec.get("targetProfiles", ())),
-        )
-    except (ObjectReferenceError, TypeError, ValueError):
-        targets = spec.get("targetProfiles")
-        constraint = f" of profile {list(targets)}" if targets else ""
-        return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must name one object or entity{constraint}", path)]
+        catalog = reference_catalog or ObjectReferenceCatalog.from_project(project)
+        catalog.resolve(value, target_profiles=targets)
+    except ObjectReferenceError as error:
+        return [Diagnostic("E_PROFILE_FIELD_TYPE", _reference_message(base, error, catalog, targets), path)]
+    except (TypeError, ValueError):
+        return [Diagnostic("E_PROFILE_FIELD_TYPE", base, path)]
     return []
+
+
+def _edit_distance(left: str, right: str) -> int:
+    previous = list(range(len(right) + 1))
+    for i, a in enumerate(left, 1):
+        current = [i]
+        for j, b in enumerate(right, 1):
+            current.append(min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (a != b)))
+        previous = current
+    return previous[-1]
+
+
+def _reference_message(base: str, error: ObjectReferenceError, catalog: ObjectReferenceCatalog, targets: tuple[str, ...]) -> str:
+    """Name the bad value and up to three nearest permitted ids (#1842)."""
+    value = error.value
+    if not isinstance(value, str) or not value:
+        return f"{base}; found {value!r}, which is not a non-empty id"
+    reason = {"missing": "is not a declared id", "incompatible": "does not satisfy the profile constraint", "ambiguous": "names more than one target"}.get(error.reason, error.reason)
+    message = f"{base}; {value!r} {reason}"
+    if error.reason == "ambiguous":
+        return message
+    allowed = frozenset(targets)
+    ids = sorted({t.identity[2] for t in catalog.targets if not allowed or t.profile_id in allowed} - {value})
+    limit = max(2, len(value) // 2)
+    near = sorted((d, i) for i in ids if (d := _edit_distance(value.lower(), i.lower())) <= limit)[:3]
+    if near:
+        message += f"; nearest ids: {', '.join(i for _, i in near)}"
+    return message
 
 
 def _is_date(value: Any) -> bool:
