@@ -1,0 +1,47 @@
+version: chrona/view/v0.28
+kind: view
+id: executive-summary
+body:
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection:
+    include:
+      types: [span, point]
+  grouping:
+    by: hierarchy
+    depth: 1
+    rollup: bar
+    missing: ungrouped
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: selected-planned, marginDays: 7}
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned]
+  visibility:
+    labels:
+      placement: plot
+      content: [title]
+      side: auto
+      overflow: suppress
+    fallback:
+      labels: [above, below, end, start, suppress]
+    relations: {mode: none, overflow: suppress}
+    annotations: none
+  tableColumns:
+  - id: Task
+    header: {wording: column.task}
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  hierarchyColumn: Task
+  axis:
+    tiers:
+    - unit: month
+      every: 1
+      role: labels
+      label: {form: short-month-year, align: center, overflow: thin-with-record, orientation: horizontal}

@@ -1,0 +1,8 @@
+id,title,type,start,end,duration,parent
+programme,Product relaunch,group,,,,
+design,Design,group,,,,programme
+research,Customer research,task,2027-01-11,,10wd,design
+design-signoff,Design sign-off,gate,2027-01-29,,,design
+delivery,Delivery,group,,,,programme
+build,Build,task,2027-02-01,,15wd,delivery
+launch,Public launch,gate,2027-02-26,,,delivery
