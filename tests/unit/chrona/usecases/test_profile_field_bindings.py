@@ -100,3 +100,38 @@ def test_resolver_does_not_mutate_project_or_package_manifests():
 
     assert project == before_project
     assert manifests == before_manifests
+
+
+def test_delivery_assignee_descriptor_uses_owner_normalized_entity_namespace():
+    from pathlib import Path
+
+    import yaml
+
+    root = Path(__file__).resolve().parents[4]
+    delivery = yaml.safe_load(
+        (root / "conformance/implementation-delivery-profile-v0.2.yaml").read_text(encoding="utf-8")
+    )
+    project = {
+        "project": {"id": "source"},
+        "extensions": [{"packageId": "implementation-delivery"}],
+        "objects": {
+            "work": {"type": "implementation-delivery.work-item", "fields": {"assignees": ["same"]}},
+            "same": {"type": "implementation-delivery.person", "fields": {}},
+        },
+        "entities": {"same": {"type": "implementation-delivery.person", "title": "Entity title"}},
+    }
+
+    bindings, diagnostics = resolve_source_field_bindings(
+        project, {"implementation-delivery": delivery}
+    )
+    assignees = bindings.read_result(
+        project["objects"]["work"]["fields"], {"field": "assignees"}, object_id="work"
+    )
+
+    assert diagnostics == ()
+    assert assignees.descriptor.target_profiles == (
+        "implementation-delivery.person", "implementation-delivery.team",
+    )
+    assert assignees.descriptor.target_namespaces == ("entities",)
+    assert assignees.value == ["same"]
+    assert assignees.display_value == "Entity title"

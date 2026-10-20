@@ -416,7 +416,10 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
                 "entity": item.group_label, "rowIndex": row_index, "totalFloat": item.total_float,
                 "wbsCode": item.wbs_code}.get(source)
     if "field" in source or "fieldRole" in source:
-        return entity_title_or_value(item.field_bindings.read(item.fields, source), project)
+        result = item.field_bindings.read_result(item.fields, source, object_id=item.object_id)
+        if result.descriptor is not None and result.descriptor.kind == "objectReference":
+            return result.display_value
+        return entity_title_or_value(result.value, project)
     if "facet" in source:
         return {"planned": item.planned, "actual": item.actual,
                 "finishDelta": display_finish_delta(item)}.get(source["facet"])
