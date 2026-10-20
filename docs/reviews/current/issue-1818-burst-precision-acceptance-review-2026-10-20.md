@@ -33,5 +33,9 @@ displacement; final bounds enclose snapped ink and padded-text coverage is check
 Rectangle/catalogue geometry stays unquantized. Scene/adapters only project the
 completed result. No public schema, version, identity or fallback change.
 Float-accumulation, inward-import and explicit Scene-delivery checks pass.
+First-head CI `39404525656` passed shards 1/2, conformance and public materializers;
+shard 3 found one stale exact preflight-keyword expectation, now corrected with
+precision 3/6 coverage. The affected 29/69-test batches pass (overlapping suites).
+No product code changes follow the audited `dbb985b91` head.
 CI owns generated reports/materializers and full suites; no duplicate local full run.
 Issue stays open until the pending literal release evidence is complete.
