@@ -138,10 +138,11 @@ It does not retry route, row, or annotation layout.
 ### Realized point-state keys (#1847)
 
 Point occurrences retain their distinct `planned`, `actual` and `forecast`
-meanings. A key's grouping identity includes its declared legend owner, typed
-state and complete canonical glyph/paint witness, for simple and multipart
-glyphs alike. Equal signatures within one owner/state coalesce; different
-states never coalesce merely because their ink matches. Span Actual's existing
+meanings. A point key's grouping identity includes its declared legend owner
+and complete canonical glyph/ordered-paint witness, for simple and multipart
+glyphs alike. Identical completed figures under one owner share one key with
+typed coverage of all their visible states; differing figures never coalesce.
+State coverage does not change that visual identity. Span Actual's existing
 ink/variance grouping and Progress semantics are unchanged.
 
 A declared Detail entry matching an explicitly Style-selected point role owns
@@ -153,15 +154,19 @@ and occurrence data, never a title, project name or inferred profile value.
 More-specific ownership prevents duplicate coverage by the generic entries.
 
 Expand each owner at its authored position, preserving unrelated entry order,
-with states ordered Planned, Actual, Forecast and variants in first-seen order.
-A point-specific owner keeps its authored/wording label for one final state;
-multiple final states append ` · ` and the localized `planned-plain`, `actual`
-or `forecast` legend wording. A range-semantic owner's point keys append the
+with groups ordered by their first covered state (Planned, Actual, Forecast)
+and variants in first-seen order. A point-specific owner keeps its
+authored/wording label for one final visual group. Multiple final groups append
+` · ` and their covered states' localized `planned-plain`, `actual` or
+`forecast` wording, joined in that order by ` / `. A range-semantic owner's point keys append the
 localized `milestone` wording to distinguish them from its range key. Repeated
 variant labels remain subject to the existing duplicate-label diagnostic; do
 not invent colour names or hashes. All potential qualified labels and maximum
-glyph footprints are reserved before measurement; final visible point witnesses
-alone admit keys and determine single-state labels, without rerunning layout.
+glyph footprints are reserved before measurement, including every nonempty
+visible-state subset's label and the unqualified label. Final visible point
+witnesses alone admit keys and determine labels/coverage, without rerunning
+row, route or annotation layout. Source and final coalescing use one shared
+full-figure identity; equal colours alone never establish equality.
 
 Chart and key glyphs use the same selected-symbol and outline kernels, including
 normalized shape traits and ordered part paints. Canonical identity excludes
