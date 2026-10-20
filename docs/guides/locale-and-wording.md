@@ -87,6 +87,18 @@ heading's role `textTransform` styles the resolved text as before.
 `delta.unit.workingDay` (`d` in English for both, `営業日` in Japanese: `+3営業日`). A design that wants another unit text
 sets `wording.keys: {delta.unit.workingDay: 営}` instead of a literal in its layout; the override reaches the table cell, the label on the bar and the Summary metric.
 
+**The as-of date in a heading.** `{asOf}` in a View `heading` and the as-of marker's date share one format. When
+the marker declares `date: {form, nameTable}` that format is used for both; otherwise the heading's `dateForm`, which
+defaults to `localized-date` (`Dec 21, 2026`, `2026/12/21` in `ja-JP`). Some presets declare a marker date: `target-b`
+and `yuya` use `day-month` (`21 Dec`, `12月21日`), `mission-light` and the default preset declare none. That is why the
+same View reads `2026/12/21` on one preset and `12月21日` on another in `ja-JP`. To get one format on every preset, declare
+it on the View's marker (it wins over the preset's) and the heading follows:
+
+```yaml
+  markers:
+  - {kind: asOf, source: actual, label: {wording: marker.today}, date: {form: day-month}}
+```
+
 **Still English.** A text a preset author wrote as a plain string stays as written (titles, a design's marker text, panel
 titles). Reference a key or override it in your own copy of the preset (sections 3 and 4). The Titlecard's secondary axis
 names its month table (`nameTable: en-US`) on purpose, so it stays English next to the Japanese months. This page describes the tool as it is now.
