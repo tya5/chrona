@@ -1201,16 +1201,15 @@ Observation does not infer a policy or repair paint.
 The inset interior rectangles used for conservative rectangular-detour quality
 lower-bound certificates remain unchanged. They are not the contact envelope
 for actual candidate, repair, reduction or final drawn-path safety checks.
-Graph seed and frontier-edge admission also apply the selected stage's closed
-primary-mark contact rule, rather than enumerating prefixes that final
-validation must reject. Only isolated named source/target exposed-port touches
-are admitted at the graph endpoints; their physical corridors remain completed
-and validated separately. Stage-relaxed non-host marks stay relaxed. Apply this
-pair-specific admission to every traversal, including cached visibility graphs:
-shared caches retain endpoint-independent obstacle geometry, never a previous
-pair's contact authorization. Conservative graph/quality lower bounds may keep
-their existing relaxed visibility; no expansion ceiling, quality threshold,
-protected-feasibility obligation or final completed-route validator changes.
+Before ordinary or protected search, validate each pair's mandatory semantic-to-
+exposed egress corridors against the selected stage's closed primary bounds.
+A corridor that already slides along its own end face cannot be repaired by
+searching a different middle path: record its actual blocking mark identities
+as an egress collision and do not enter search for that pair. Named physical
+host corridors retain their segment-local authorization, and stage-relaxed
+non-host marks stay relaxed. Coincident ports impose no corridor segment.
+This changes neither shared visibility caches nor conservative quality lower
+bounds, expansion ceilings, protected obligations or final validators.
 Normal proposals also cover outward endpoint corridors: derive their lead ends
 from the admitted port sides and existing terminal/stroke run lengths, then
 reuse the finite obstacle-channel shape grammar between those leads. Every
