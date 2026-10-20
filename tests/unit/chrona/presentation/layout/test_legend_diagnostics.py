@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import replace
 from decimal import Decimal
 from types import SimpleNamespace
 
@@ -454,6 +455,67 @@ def test_completed_encoded_pair_warning_uses_typed_scale_and_final_visible_figur
         (texts[0], SimpleNamespace(placement_id=semantic.text_placement_id,
                                    content="Milestone", overflow="fit")))
     assert not any(item.startswith("W_LEGEND_COLOR_NOT_SEPARABLE:") for item in absent_figure[0])
+
+
+def _theme_request_with_claimed_visions():
+    request = _theme_request()
+    theme = deepcopy(request.theme_tokens.resolved_theme)
+    theme["body"]["colorVision"] = ["protanopia", "deuteranopia", "tritanopia"]
+    request.theme_tokens = ThemeTokenView(theme)
+    return request
+
+
+def test_completed_ordinary_keys_warn_for_low_separation_under_normal_and_claimed_visions():
+    planned = _entry("planned", _paint(fill="#DDD9CF"), "Planned finish")
+    nonworking = _entry("nonworking", _paint(fill="#E9E5DB"), "Non-working day")
+    request = _theme_request_with_claimed_visions()
+
+    diagnostics, provenance = _batch((planned, nonworking), (
+        ("shape", _box(0, 0, 10, 10), "Rect", planned.realized_key.paint, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", nonworking.realized_key.paint, None),
+    ), request=request)
+
+    assert diagnostics == (
+        "W_LEGEND_COLOR_NOT_SEPARABLE:normal:2.688",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:protanopia:2.696",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:2.683",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:tritanopia:2.69",
+    )
+    assert len(provenance) == 4
+    assert all(item.subjects == (
+        DiagnosticSubject(f"legend-key:{planned.realized_key.key_id}", "Planned finish (planned)"),
+        DiagnosticSubject(f"legend-key:{nonworking.realized_key.key_id}", "Non-working day (nonworking)"),
+    ) for item in provenance)
+
+
+def test_completed_identical_ordinary_keys_with_distinct_meanings_warn_and_keep_final_filter():
+    paint = _paint(fill="#DDD9CF")
+    planned = _entry("planned", paint, "Planned finish")
+    today = _entry("today", paint, "Today")
+    request = _theme_request_with_claimed_visions()
+    result = _batch((planned, today), (
+        ("shape", _box(0, 0, 10, 10), "Rect", paint, None),
+        ("shape", _box(20, 30, 20, 20), "Rect", paint, None),
+    ), request=request)
+    assert "W_LEGEND_SWATCH_COLLISION" in result[0]
+    assert {
+        item for item in result[0]
+        if item.startswith("W_LEGEND_COLOR_NOT_SEPARABLE:")
+    } == {
+        "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:protanopia:0.0",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:0.0",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:tritanopia:0.0",
+    }
+
+    text = tuple(SimpleNamespace(placement_id=entry.text_placement_id,
+                                 content=entry.label, overflow="fit")
+                 for entry in (planned, today))
+    hidden = replace(planned, swatch_visible=False)
+    filtered = completed_legend_diagnostics(
+        request, (hidden, today), (), (), (), text,
+    )
+    assert filtered == ((), ())
 
 
 def test_completed_encoded_warning_does_not_replace_swatch_collision_warning():

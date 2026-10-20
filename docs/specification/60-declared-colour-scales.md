@@ -205,8 +205,9 @@ the vision and the difference. It is reported in the CLI and as the Scene
 diagnostic `W_PRESENTATION_SCALE_NOT_SEPARABLE:<scale>:<first>:<second>:<vision>`.
 Rendering continues. Committed evidence carries no such diagnostic.
 
-After final legend filtering and placement, an encoded key is also compared
-with each other surviving legend meaning (including a different scale).
+After final legend filtering and placement, every pair of drawn swatches with
+distinct surviving legend meanings is compared, whether either key comes from
+a colour scale or both are ordinary semantic keys (#1826).
 Use this same floor, normal vision and the Scheme's claimed simulations;
 explicit slots are not exempt. Retain a domain diagnostic instead of duplicating
 it only when its closed `ScaleCollision` covers both realized domain values,

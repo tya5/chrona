@@ -5,7 +5,7 @@ from decimal import Decimal
 from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
-from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import (TextSegment, ellipsize_text, measure_text_segments, measure_text_width,
@@ -170,6 +170,11 @@ def entry_label_gap(entry: SurfaceLegendEntry, declared: Any, tokens: Any, legen
     return swatch_label_gap(declared, tokens, legend_size) if entry.swatch_visible else 0.0
 
 
+def _label_reservation(swatch_inline: float, label_gap: float) -> Decimal:
+    """Share the measured swatch/gap grouping before composing source and slot geometry."""
+    return Decimal(str(geometry_sum((swatch_inline, label_gap))))
+
+
 def _legend_text_segments(entry: SurfaceLegendEntry, text_transform: str, *, include_scope: bool = False
                           ) -> tuple[TextSegment, ...] | None:
     """Keep encoded values literal while retaining the Theme transform on legend wording."""
@@ -283,7 +288,7 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
     extents = tuple(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[0]
                     for entry in entries)
     runs = tuple(SourceTextRun(entry.label, "legend", entry.role,
-                               Decimal(str(extent + label_gap)),
+                               _label_reservation(extent, label_gap),
                                segments=_legend_text_segments(entry, treatment.transform) or ())
                  for entry, extent, label_gap in zip(entries, extents, label_gaps, strict=True))
     grid = arrangement.columns is not None
@@ -305,14 +310,13 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
             ellipsis = measure_text_width("\u2026", font_size=legend_size, font_metrics=metrics,
                                           letter_spacing=float(treatment.letter_spacing),
                                           text_transform=treatment.transform)
-            min_inline = Decimal(str(max(extent + label_gap for extent, label_gap in
-                                         zip(extents, label_gaps, strict=True)) + ellipsis))
+            min_inline = max(run.inline_advance for run in runs) + Decimal(str(ellipsis))
     if grid:
-        text_line = legend_size * float(treatment.line_height)
-        row_block = max([text_line] + [entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[1]
-                                       for entry in entries])
+        row_block = max([treatment.font_size * treatment.line_height]
+                        + [Decimal(str(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)[1]))
+                           for entry in entries])
         return SourceInput(runs=runs, typography_role="legend", run_flow="grid", run_gap=Decimal(str(gap)),
-                           columns=arrangement.columns, row_block=Decimal(str(row_block)))
+                           columns=arrangement.columns, row_block=row_block)
     row_block = Decimal(0)
     if line:
         # The height of one drawn row, as `place_legend` draws it: the label line box or the tallest swatch (#1649).
@@ -326,6 +330,21 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
                        run_gap=Decimal(str(gap)), min_inline=min_inline, row_block=row_block)
 
 
+def _legend_line_offsets(entry_inline_sizes: Sequence[Decimal], *, gap: Decimal, row_block: Decimal,
+                         item_min_inline: Decimal | None, available_inline: Decimal
+                         ) -> tuple[tuple[Decimal, Decimal], ...]:
+    """Complete the same relative row positions for measurement and placement."""
+    used, top = Decimal(0), Decimal(0)
+    positions: list[tuple[Decimal, Decimal]] = []
+    for size in entry_inline_sizes:
+        if item_min_inline is not None and used > 0 and available_inline - used < item_min_inline:
+            used = Decimal(0)
+            top += row_block + gap
+        positions.append((used, top))
+        used += size + gap
+    return tuple(positions)
+
+
 def wrapped_legend_line_block(entry_inline_sizes: Sequence[Decimal], *, gap: Decimal, row_block: Decimal,
                               item_min_inline: Decimal | None, available_inline: Decimal) -> Decimal:
     """Return the block a `line` legend draws at a known inline size: the rows it wraps to (#1649).
@@ -334,12 +353,9 @@ def wrapped_legend_line_block(entry_inline_sizes: Sequence[Decimal], *, gap: Dec
     slot declares `itemMinInlineSize` and less than that is left on the current row. Without it the legend is
     one row. Each entry advances by its swatch, label gap, label and the entry gap (a `line` measurement's run).
     """
-    rows, used = 1, Decimal(0)
-    for size in entry_inline_sizes:
-        if item_min_inline is not None and used > 0 and available_inline - used < item_min_inline:
-            rows, used = rows + 1, Decimal(0)
-        used += size + gap
-    return rows * row_block + (rows - 1) * gap
+    positions = _legend_line_offsets(entry_inline_sizes, gap=gap, row_block=row_block,
+                                     item_min_inline=item_min_inline, available_inline=available_inline)
+    return (positions[-1][1] if positions else Decimal(0)) + row_block
 
 
 def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
@@ -354,12 +370,11 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     side_content_warnings: list[FitWarning] = []
     legend_treatment = request.theme_tokens.text_treatment("legend")
     legend_size = float(legend_treatment.font_size)
-    legend_step = legend_size * float(legend_treatment.line_height)
-    text_line_block = legend_size * float(legend_treatment.line_height)
+    text_line_block = legend_treatment.font_size * legend_treatment.line_height
     mark_block_size = float(metric_values["timeline.mark.blockSize"])
-    gap = legend_item_gap(legend.gap, legend_size)
+    gap = Decimal(str(legend_item_gap(legend.gap, legend_size)))
     direction = legend.direction
-    item_min_inline = float(legend.item_min_inline_size) if legend.item_min_inline_size is not None else None
+    item_min_inline = legend.item_min_inline_size
 
     def swatch_geometry(entry: SurfaceLegendEntry) -> tuple[float, float, str]:
         return entry_swatch_extent(entry, request.theme_tokens, mark_block_size, legend_size)
@@ -468,7 +483,7 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id))
 
-    def emit_label(entry: SurfaceLegendEntry, x: float, baseline: float, available: float) -> float:
+    def emit_label(entry: SurfaceLegendEntry, x: Decimal, baseline: Decimal, available: Decimal) -> Decimal:
         role, label = entry.role, entry.label
         text_segments = _legend_text_segments(entry, legend_treatment.transform)
         natural_width = (_segment_width(text_segments, font_size=legend_size, font_metrics=metric_for("legend"),
@@ -492,36 +507,36 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             except FontMetricsError:
                 pass  # Optional scope alone must not reject the primary key.
             else:
-                if qualified_width <= available:
+                if Decimal(str(qualified_width)) <= available:
                     content = qualified
                     natural_width = qualified_width
                     text_segments = qualified_segments
         disposition = "fit"
         ellipsized = False
-        if natural_width > available and legend.overflow == "ellipsize-with-source":
+        if Decimal(str(natural_width)) > available and legend.overflow == "ellipsize-with-source":
             if entry.role == "forecast":
                 raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", entry.text_placement_id)
             if text_segments is not None:
-                text_segments = _ellipsize_segments(text_segments, available_inline=available,
+                text_segments = _ellipsize_segments(text_segments, available_inline=float(available),
                                                     font_size=legend_size, font_metrics=metric_for("legend"),
                                                     treatment=legend_treatment)
                 content = "".join(segment.content for segment in text_segments)
             else:
-                content = ellipsize_text(label, available_inline=available, font_size=legend_size,
+                content = ellipsize_text(label, available_inline=float(available), font_size=legend_size,
                                          font_metrics=metric_for("legend"),
                                          letter_spacing=float(legend_treatment.letter_spacing),
                                          text_transform=legend_treatment.transform,
                                          numeric_spacing=legend_treatment.numeric_spacing)
             disposition = "ellipsized"
             ellipsized = True
-        elif natural_width > available and legend.overflow == "visible-overflow":
+        elif Decimal(str(natural_width)) > available and legend.overflow == "visible-overflow":
             disposition = "visible-overflow"
         placed = place_text(placement_id=entry.text_placement_id, source_ref=entry.source_identity, content=content,
-                            inline=x, baseline_block=baseline, typography_role="legend",
+                            inline=float(x), baseline_block=float(baseline), typography_role="legend",
                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                             overflow=disposition, collision_region="legend",
                             collision_domain=CollisionDomain("legend", "content"), source_content=label,
-                            available_inline_start=x, available_inline_size=available,
+                            available_inline_start=float(x), available_inline_size=float(available),
                             semantic_id="legendLabel", slot_id=legend.slot_id, segments=text_segments)
         text.append(placed)
         label_targets.append((entry.role, placed.placement_id))
@@ -529,94 +544,77 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             # An ellipsis is never silent: the Scene names the text, its natural size and the room it had (#497).
             side_content_warnings.append(FitWarning(
                 "W_LAYOUT_TEXT_ELLIPSIZED", placed.placement_id, role, "legend-text", "ellipsize-with-source",
-                natural_width, float(placed.bounds.block_size), available, float(legend.bounds.block_size),
+                natural_width, float(placed.bounds.block_size), float(available), float(legend.bounds.block_size),
             ))
         if disposition == "visible-overflow":
             side_content_warnings.append(FitWarning(
                 "W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, role, "legend-text", "visible-overflow",
-                natural_width, float(placed.bounds.block_size), available, float(legend.bounds.block_size),
+                natural_width, float(placed.bounds.block_size), float(available), float(legend.bounds.block_size),
             ))
         return placed.bounds.block + placed.bounds.block_size
 
+    entries = request.surface_content.legend_entries
+    geometries = tuple(swatch_geometry(entry) for entry in entries)
+    reservations = tuple(_label_reservation(width, entry_label_gap(
+        entry, legend.gap, request.theme_tokens, legend_size))
+        for entry, (width, _height, _bucket) in zip(entries, geometries, strict=True))
+    label_widths = tuple(Decimal(str(_entry_label_width(
+        entry, font_size=legend_size, font_metrics=metric_for("legend"), treatment=legend_treatment)))
+        for entry in entries)
+    entry_widths = tuple(reservation + label for reservation, label in zip(reservations, label_widths, strict=True))
+    row_block = max([text_line_block] + [Decimal(str(height)) for _width, height, _bucket in geometries])
     final_legend_end = legend.bounds.block
     if legend.columns:
         # A declared grid (#1290): entry k sits in column k mod columns of row k div columns; each column is as wide as
         # its widest entry (swatch, gap and label), `gap` apart, and every row is as tall as the tallest key.
-        entries = request.surface_content.legend_entries
-        row_block = max([text_line_block] + [swatch_geometry(entry)[1] for entry in entries])
-        label_width = [_entry_label_width(entry, font_size=legend_size, font_metrics=metric_for("legend"),
-                                          treatment=legend_treatment) for entry in entries]
-        entry_width = [swatch_geometry(entry)[0]
-                       + entry_label_gap(entry, legend.gap, request.theme_tokens, legend_size)
-                       + label_width[index] for index, entry in enumerate(entries)]
         count = len(entries)
-        column_widths = [max((entry_width[index] for index in range(column, count, legend.columns)), default=0.0)
+        column_widths = [max((entry_widths[index] for index in range(column, count, legend.columns)), default=Decimal(0))
                          for column in range(min(legend.columns, count))]
-        slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
         if legend.column_distribution == "spread" and len(column_widths) > 1:
             # `spread` (#1392): equal columns across the slot, each at least the widest entry of any column; when they do not
             # fit the slot the columns stay packed as under `start`.
-            share = (float(legend.bounds.inline_size) - gap * (len(column_widths) - 1)) / len(column_widths)
+            share = (legend.bounds.inline_size - gap * (len(column_widths) - 1)) / len(column_widths)
             column_widths = [share] * len(column_widths) if max(column_widths) <= share else column_widths
-        starts = [float(legend.bounds.inline)]
+        starts = [Decimal(0)]
         for width in column_widths[:-1]:
             starts.append(starts[-1] + width + gap)
         for index, entry in enumerate(entries):
-            role = entry.role
-            item_label_gap = entry_label_gap(entry, legend.gap, request.theme_tokens, legend_size)
             row, column = divmod(index, legend.columns)
-            x = starts[column]
-            y = float(legend.bounds.block) + row * (row_block + gap)
-            width, height, bucket = swatch_geometry(entry)
-            emit_swatch(entry, x, y + (row_block - height) / 2.0, width, height, bucket)
-            label_end = emit_label(entry, x + width + item_label_gap, y + (row_block - text_line_block) / 2.0 + legend_size,
-                                   min(max(0.0, slot_end - (x + width + item_label_gap)),
-                                       max(0.0, column_widths[column] - width - item_label_gap))
+            x = legend.bounds.inline + starts[column]
+            y = legend.bounds.block + row * (row_block + gap)
+            width, height, bucket = geometries[index]
+            remaining = max(Decimal(0), legend.bounds.inline_size - starts[column] - reservations[index])
+            emit_swatch(entry, float(x), float(y + (row_block - Decimal(str(height))) / 2), width, height, bucket)
+            label_end = emit_label(entry, x + reservations[index], y + (row_block - text_line_block) / 2 + legend_treatment.font_size,
+                                   min(remaining, max(Decimal(0), column_widths[column] - reservations[index]))
                                    if entry.style_scope is not None or not entry.swatch_visible
-                                   else max(0.0, slot_end - (x + width + item_label_gap)))
-            final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_block)))
+                                   else remaining)
+            final_legend_end = max(final_legend_end, label_end, y + row_block)
     elif direction == "inline":
-        x = float(legend.bounds.inline)
-        y = float(legend.bounds.block)
-        row_height = 0.0
-        slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
         # Every swatch and label of the legend is centred on one row centreline (#991), the way the block
         # direction centres each entry: the row is as tall as the tallest swatch or the label line box.
-        row_block = max([text_line_block] + [swatch_geometry(entry)[1] for entry in request.surface_content.legend_entries])
-        for entry in request.surface_content.legend_entries:
-            role, label = entry.role, entry.label
-            item_label_gap = entry_label_gap(entry, legend.gap, request.theme_tokens, legend_size)
-            width, height, bucket = swatch_geometry(entry)
-            if item_min_inline is not None and x > float(legend.bounds.inline) and slot_end - x < item_min_inline:
-                y += row_height + gap
-                x = float(legend.bounds.inline)
-                row_height = 0.0
-            emit_swatch(entry, x, y + (row_block - height) / 2.0, width, height, bucket)
-            label_end = emit_label(entry, x + width + item_label_gap, y + (row_block - text_line_block) / 2.0 + legend_size,
-                                   min(max(0.0, slot_end - (x + width + item_label_gap)),
-                                       _entry_label_width(entry, font_size=legend_size,
-                                                          font_metrics=metric_for("legend"),
-                                                          treatment=legend_treatment))
-                                   if entry.style_scope is not None else max(0.0, slot_end - (x + width + item_label_gap)))
-            row_height = row_block
-            final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_height)))
-            x += width + item_label_gap + _entry_label_width(entry, font_size=legend_size,
-                                                       font_metrics=metric_for("legend"),
-                                                       treatment=legend_treatment) + gap
+        positions = _legend_line_offsets(entry_widths, gap=gap, row_block=row_block,
+                                         item_min_inline=item_min_inline, available_inline=legend.bounds.inline_size)
+        for index, (entry, (inline_offset, block_offset)) in enumerate(zip(entries, positions, strict=True)):
+            x, y = legend.bounds.inline + inline_offset, legend.bounds.block + block_offset
+            width, height, bucket = geometries[index]
+            remaining = max(Decimal(0), legend.bounds.inline_size - inline_offset - reservations[index])
+            emit_swatch(entry, float(x), float(y + (row_block - Decimal(str(height))) / 2), width, height, bucket)
+            label_end = emit_label(entry, x + reservations[index], y + (row_block - text_line_block) / 2 + legend_treatment.font_size,
+                                   min(remaining, label_widths[index]) if entry.style_scope is not None else remaining)
+            final_legend_end = max(final_legend_end, label_end, y + row_block)
     else:
-        cursor = float(legend.bounds.block)
-        for entry in request.surface_content.legend_entries:
-            role, label = entry.role, entry.label
-            item_label_gap = entry_label_gap(entry, legend.gap, request.theme_tokens, legend_size)
-            width, height, bucket = swatch_geometry(entry)
-            row_height = max(height, text_line_block)
-            swatch_top = cursor + (row_height - height) / 2.0
-            baseline = cursor + (row_height - text_line_block) / 2.0 + legend_size
-            text_inline = float(legend.bounds.inline) + width + item_label_gap
-            text_available = max(0.0, float(legend.bounds.inline_size) - width - item_label_gap)
-            emit_swatch(entry, float(legend.bounds.inline), swatch_top, width, height, bucket)
+        cursor = legend.bounds.block
+        for index, entry in enumerate(entries):
+            width, height, bucket = geometries[index]
+            row_height = max(Decimal(str(height)), text_line_block)
+            swatch_top = cursor + (row_height - Decimal(str(height))) / 2
+            baseline = cursor + (row_height - text_line_block) / 2 + legend_treatment.font_size
+            text_inline = legend.bounds.inline + reservations[index]
+            text_available = max(Decimal(0), legend.bounds.inline_size - reservations[index])
+            emit_swatch(entry, float(legend.bounds.inline), float(swatch_top), width, height, bucket)
             label_end = emit_label(entry, text_inline, baseline, text_available)
-            final_legend_end = max(final_legend_end, Decimal(str(label_end)))
+            final_legend_end = max(final_legend_end, label_end)
             cursor += row_height + gap
     final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)
     if (direction == "inline" and not legend.columns and legend.bounds.block_size >= text_line_block

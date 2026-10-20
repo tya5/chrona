@@ -12,7 +12,7 @@ import pytest
 from chrona.presentation.layout import surface_route_label_plan, surface_routes
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle
 from chrona.presentation.layout.relation_resolution import RelationResolutionStage
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
+from chrona.presentation.model.semantic_registry import contrast_binding_for_primitive
 from tests.support import synthetic_review as sr
 
 
@@ -106,7 +106,7 @@ def test_completed_search_domains_reach_real_scene_and_svg(
         svg = ET.fromstring(result.artifact.content)
         assert any(element.get("data-scene-id", element.get("id")) == paths[0].scene_id
                    for element in svg.iter())
-        assert contrast_binding("dependency-halo").contrast_class is ContrastClass.DECORATION
+        assert contrast_binding_for_primitive("dependency-halo", "Path", "dependency-halo") is None
         halos = [p for p in result.surface.primitives if p.visual_role == "dependency-halo"]
         assert len(halos) == len(paths)
         for line in paths:
