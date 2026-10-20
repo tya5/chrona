@@ -1,6 +1,7 @@
 # Issue 1047 — route style acceptance
 
-Metro source: `b8e737962`; curved PR1801 merged at
+Metro source: `b8e737962`; integration `45d40444c` on trusted ready main
+`98a8f3f83ea3c1ada559cb0617c0ca6a6dd74722`; curved PR1801 merged at
 `56719e632326fe7a4eff56e87090ad33c1a5994d`.
 Selected design and joint-budget correction were published before code resumed
 at `ad6339174` / `f8eedb05e`; the final pre-code implementation plan and
@@ -24,9 +25,9 @@ update use Spec56 §7, with one explicit L1 expected delta.
 Verification: final focused 236 tests passed (geometry, profile, shared completion,
 both surfaces, normal YAML integration, bounds, terminals and default controls).
 Ten Pillow deprecation warnings are from the existing terminal raster test, not
-failures. Schema equivalence against projected curved base `446ea23fd` passed:
+failures. Schema equivalence against final ready main `98a8f3f83` passed:
 one declared enum widening, equal43, L2/L3 unchanged with five baseline invalid
-fixtures. Repeat against current trusted ready main before final publication.
+fixtures. Post-integration acceptance/schema-registry/parts controls:181 passed.
 Focused reproduction:
 `.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_metro*.py tests/integration/test_metro_yaml_acceptance.py`.
 
