@@ -274,6 +274,10 @@ For a composite Symbol, the existing `<placement>:partN` sibling identities may
 recover their exact endpoint placement only when every sibling has the same
 source, purpose and completed bounds. Reject conflicting siblings or a colliding
 unsuffixed primitive; never merge by source alone or infer a union of bounds.
+For a schema-validated fan-in non-owner, decode the shared end-terminal evidence
+from its exact `terminalOwnerId` relation on the same surface/target port. The
+absent local paint is not evidence of an unconfigured terminal. Preserve the
+original Scene and path; do not replay prior terminal suppression into Layout.
 
 Draft `chrona render --snapshot <project.yaml>` (#1533) accepts a baseline
 Project file as the typed Snapshot Project role. Validate it through the normal
