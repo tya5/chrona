@@ -524,6 +524,11 @@ extent; do not duplicate terminal arithmetic. Reserve only this intrinsic
 footprint, not a detour, graph corridor or provisional route. Multi-port point
 and body endpoints have no preselected exit and MUST NOT acquire such a
 reservation. This introduces no extra label pass or routing rehearsal.
+Fixed-connector recovery uses the same mandatory lead per admitted endpoint,
+subtracting its completed semantic-to-exposed corridor; a centred terminal's
+full diameter is not its required outward lead. Preserve the fixed proposal
+grammar/order and all completed-route validators. Paired stubs retain their
+separate visible-fragment and required-title contract.
 
 Completed name text and label-visual footprints are hard content in every
 normal and recovery domain. Carry their explicit obstacle identities through
