@@ -726,6 +726,13 @@ Layout measures and places these with the existing terminal/text primitives;
 it does not present the pair as a connected safe route. Both fragments belong
 to one resolved relation instance and are counted once. Terminal labels must
 not silently disappear; their declared visible-overflow treatment is inspectable.
+Before terminal completion and stroke-run validation, each stub collapses
+redundant monotonic collinear vertices with the shared route normalizer.
+An exposed boundary on the same straight leg is not a bend or a separate
+painted short run. Semantic and exposed port coordinates and their scoped
+host authorization stay unchanged; physical-corridor validation still splits
+the completed leg at that boundary. Real turns and reversals are retained,
+with no coordinate snapping, tolerance expansion or short-leg exemption.
 The route/member-label coordinator owns their reservation (#1763). In each
 trial, complete and reserve required terminal text against existing completed
 text before optional member names; place ordinary relation labels afterward.
