@@ -86,6 +86,11 @@ class SourceInput:
     # Empty sources contribute no runs and have zero natural extent.
     content_present: bool = True
     text_wrap: str = "forbid"
+    # Optional per-run block minima. Producers that place variable-height rows
+    # may close each run against its own non-text geometry. ``None`` leaves
+    # generic stack behavior untouched; a supplied zero is meaningful. This
+    # is appended to preserve the positional construction contract.
+    run_block_minima: tuple[Decimal, ...] | None = None
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
         if not self.content_present:
@@ -359,6 +364,13 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 typography.text_block_gap(run.typography_role) for run in runs))
             block_stacks[source] = stack
             text_block = stack.block_size
+        elif value.run_flow == "stack" and value.run_block_minima is not None:
+            if len(value.run_block_minima) != len(measured_runs):
+                raise ValueError(f"source {source!r} run_block_minima must align with measured runs")
+            rows = tuple(max(run.block_size, minimum)
+                         for run, minimum in zip(measured_runs, value.run_block_minima, strict=True))
+            text_block = sum(rows, Decimal(0)) + value.run_gap * max(0, len(rows) - 1)
+            minimum_text_block = text_block
         summary_flow = None
         if value.summary is not None:
             inline_roles = {run.typography_role for panel in value.summary.panels
