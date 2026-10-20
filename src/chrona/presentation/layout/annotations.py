@@ -3,13 +3,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from heapq import heappop, heappush
+from math import isfinite
 from typing import Iterable
 
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelPlacement, LabelRect, place_label
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacleIndex
 from chrona.presentation.layout.routing import route_orthogonal
+from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
 from chrona.presentation.model.surface_content import AnnotationIntent
 
 
@@ -52,6 +54,78 @@ def nearest_box_port(box: LabelRect, target: tuple[float, float]) -> tuple[float
     ports = ((box.x + box.width / 2, box.y), (box.x + box.width / 2, box.bottom),
              (box.right, box.y + box.height / 2), (box.x, box.y + box.height / 2))
     return min(ports, key=lambda port: (abs(port[0] - x) + abs(port[1] - y), ports.index(port)))
+
+
+def visible_overflow_tail_box(*, region: LabelRect, anchor: LabelRect,
+                              box_size: tuple[float, float], obstacles: SurfaceObstacleIndex,
+                              obstacle_classes: tuple[str, ...], corner_radius: float, tail_base: float,
+                              host_id: str | None = None) -> tuple[LabelRect, tuple[float, float]]:
+    """Complete a nearest-free balloon box outside its anchor after search exhaustion.
+
+    The four deterministic anchor-adjacent placements preserve the declared
+    integrated tail. Preserve completed narrative first, then minimize plot
+    overflow and other collisions before distance and stable block/inline ties.
+    """
+    dimensions = (region.x, region.y, region.width, region.height,
+                 anchor.x, anchor.y, anchor.width, anchor.height, *box_size, corner_radius, tail_base)
+    if (len(box_size) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                                  or not isfinite(value) for value in dimensions)
+            or region.width <= 0 or region.height <= 0
+            or anchor.width <= 0 or anchor.height <= 0
+            or box_size[0] <= 0 or box_size[1] <= 0
+            or corner_radius < 0 or tail_base <= 0):
+        raise _annotation_error("E_PRESENTATION_LABEL_INPUT", "visible-overflow tail box",
+                                region=region, anchor=anchor, box_size=box_size)
+    width, height = box_size
+    center_x, center_y = anchor.x + anchor.width / 2, anchor.y + anchor.height / 2
+    gap_x, gap_y = max(1.0, width / 2), max(1.0, height / 2)
+
+    def clamp_start(center: float, size: float, minimum: float, maximum: float) -> float:
+        start = center - size / 2
+        return min(max(start, minimum), maximum - size) if size <= maximum - minimum else start
+
+    boxes = (
+        LabelRect(clamp_start(center_x, width, region.x, region.right), anchor.y - gap_y - height,
+                  width, height),
+        LabelRect(clamp_start(center_x, width, region.x, region.right), anchor.bottom + gap_y,
+                  width, height),
+        LabelRect(anchor.x - gap_x - width, clamp_start(center_y, height, region.y, region.bottom),
+                  width, height),
+        LabelRect(anchor.right + gap_x, clamp_start(center_y, height, region.y, region.bottom),
+                  width, height),
+    )
+    if any(not all(isfinite(value) for value in (box.x, box.y, box.right, box.bottom)) for box in boxes):
+        raise _annotation_error("E_PRESENTATION_LABEL_INPUT", "visible-overflow tail box",
+                                region=region, anchor=anchor, box_size=box_size)
+
+    def score(box: LabelRect) -> tuple[int, float, int, float, float, float, float, float]:
+        overlap_width = max(0.0, min(box.right, region.right) - max(box.x, region.x))
+        overlap_height = max(0.0, min(box.bottom, region.bottom) - max(box.y, region.y))
+        overflow_area = box.width * box.height - overlap_width * overlap_height
+        box_x, box_y = box.x + box.width / 2, box.y + box.height / 2
+        inline_distance, block_distance = abs(box_x - center_x), abs(box_y - center_y)
+
+        tip = nearest_box_port(anchor, (box_x, box_y))
+        edge = nearest_eligible_edge(box, tip)
+        radius = min(corner_radius, box.width / 2, box.height / 2)
+        base_a, base_b = tail_base_points(box, tip, edge=edge, tail_base=tail_base,
+                                          corner_radius=radius)
+        geometries = (ObstacleRect(box.x, box.y, box.right, box.bottom),
+                      ObstacleSegment(base_a, tip), ObstacleSegment(tip, base_b))
+        content_ids: set[str] = set()
+        other_ids: set[str] = set()
+        for geometry in geometries:
+            content_ids.update(item.placement_id for item in obstacles.collisions(
+                geometry, classes=("text", "annotation-box")))
+            other_ids.update(item.placement_id for item in obstacles.collisions(
+                geometry, classes=obstacle_classes, host_id=host_id)
+                if item.obstacle_class not in {"text", "annotation-box"})
+        return (len(content_ids), overflow_area, len(other_ids),
+                inline_distance + block_distance, block_distance, inline_distance, box.y, box.x)
+
+    box = min(boxes, key=score)
+    box_center = (box.x + box.width / 2, box.y + box.height / 2)
+    return box, nearest_box_port(anchor, box_center)
 
 
 def route_annotation_leader(source: tuple[float, float], target: tuple[float, float], *,

@@ -19,6 +19,7 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.layout.text import measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     AnnotationBox, annotation_rail_candidates, nearest_box_port, project_annotation_box,
+    visible_overflow_tail_box,
     resolve_annotation_anchor,
 )
 from chrona.presentation.layout.annotation_search import (
@@ -1111,17 +1112,32 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 resolved, LabelPlacement("rail", fallback_bounds, True), True)
                         elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
                             # #449 never refuses: complete the first declared
-                            # candidate's own region at its nearest lattice
-                            # position, visibly overflowing any obstacle.
+                            # candidate visibly after its explicit search ends.
+                            # A tail keeps its declared integrated topology.
                             region_bounds = LabelRect(*_bounds(timeline.bounds))
                             anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                              anchor_bounds.y + anchor_bounds.height / 2)
                             width, height = annotation_size
-                            forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
-                                                   region_bounds.right - width),
-                                               min(max(anchor_center[1] - height / 2, region_bounds.y),
-                                                   region_bounds.bottom - height), width, height)
-                            box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
+                            if first_candidate.connector.kind == "tail":
+                                container = request.theme_tokens.annotation_container(
+                                    semantic_binding(presentation.box_semantic_id).theme_role)
+                                corner_radius = (_container_radius(
+                                    role_corner_radius, container, size, width, height)
+                                    if role_corner_radius is not None else float(container.corner_radius) * size)
+                                forced, tail_tip = visible_overflow_tail_box(
+                                    region=region_bounds, anchor=anchor_bounds,
+                                    box_size=(width, height), obstacles=surface_obstacles,
+                                    obstacle_classes=first_candidate.obstacles.classes,
+                                    corner_radius=corner_radius, tail_base=float(container.tail_base) * size,
+                                    host_id=anchor_host.placement_id if anchor_host is not None else None)
+                                tail_topology = "direct-tail"
+                                box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
+                            else:
+                                forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
+                                                       region_bounds.right - width),
+                                                   min(max(anchor_center[1] - height / 2, region_bounds.y),
+                                                       region_bounds.bottom - height), width, height)
+                                box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
                         else:
                             box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,

@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from xml.etree import ElementTree
 
+from chrona.presentation.layout.labels import LabelRect
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
 
@@ -69,6 +70,45 @@ def test_fitting_nearest_free_plot_candidates_remain_fit(tmp_path):
     assert ids["annotation-text:view-n0"].text_layout is not None
     assert ids["annotation-text:view-n1"].text_layout is not None
     assert not any(item.code == "W_LAYOUT_LABEL_OVERFLOW" for item in rendered.surface.fit_warnings)
+
+
+def test_exhausted_nearest_free_tail_keeps_visible_integrated_balloon_and_anchor_tip(tmp_path):
+    source = ak.project(kinds=("risk",), text="Required synthetic plot annotation text.")
+    parts = sr.bundle()
+    sr.fix_inline(parts, "timeline", 20, token="tiny-tail-timeline-inline")
+    sr.fix_block(parts, "timeline", 20, token="tiny-tail-timeline-block")
+    sr.with_balloon_notes(parts)
+    ak.with_view_notes(parts, source)
+    annotation = parts["view"]["body"]["annotations"][0]
+    annotation["candidates"] = [sr.candidate("plot-tail", connector="tail", max_positions=1)]
+    rendered = ak.render(tmp_path, source, parts)
+    ids = _by_id(rendered)
+
+    balloon = ids["annotation-box:view-n0"]
+    # Scene's native path-backed symbol is how the completed Balloon geometry
+    # is represented and serialized by this adapter.
+    assert balloon.kind.value == "Symbol" and balloon.symbol is not None
+    assert ids["annotation-text:view-n0"].text_layout is not None
+    assert "annotation-leader:view-n0" not in ids
+    assert any(item.placement_id == "annotation-text:view-n0" and item.behaviour == "visible-overflow"
+               for item in rendered.surface.fit_warnings if item.code == "W_LAYOUT_LABEL_OVERFLOW")
+    anchor = next(item for item in rendered.surface.primitives
+                  if item.source_ref == "t0" and item.visual_role == "planned" and item.kind == "Rect")
+    anchor_bounds = LabelRect(*anchor.bounds)
+    outline_points = tuple(point for command in balloon.symbol.outline for point in command.points)
+    tip = next(point for point in outline_points
+               if point[0] < balloon.bounds[0] or point[0] > balloon.bounds[0] + balloon.bounds[2]
+               or point[1] < balloon.bounds[1] or point[1] > balloon.bounds[1] + balloon.bounds[3])
+    # The integrated tail tip reaches the selected temporal body anchor inside
+    # its completed mark; it is not a detached box or substituted leader.
+    assert anchor_bounds.x <= tip[0] <= anchor_bounds.right
+    assert anchor_bounds.y <= tip[1] <= anchor_bounds.bottom
+    svg = {node.attrib.get("data-scene-id"): node for node in ElementTree.fromstring(rendered.artifact.content).iter()
+           if node.attrib.get("data-scene-id")}
+    assert svg[balloon.scene_id].tag.endswith("path")
+    data = svg[balloon.scene_id].attrib["d"]
+    point_text = tuple(f"{value:.3f}".rstrip("0").rstrip(".") for value in tip)
+    assert f"{point_text[0]} {point_text[1]}" in data
 
 
 def _overlaps(left, right):
