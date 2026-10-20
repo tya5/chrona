@@ -82,25 +82,25 @@ def test_agent_authoring_metadata_matches_command_version_and_path_forms(tmp_pat
         assert "file name, not its outer path" in description
 
     root = tmp_path / "ws"
-    workspace = _seed(root)
+    workspace = _seed(root / "guided")
     before = _tree(root)
     valid = _command(workspace)
     wrong_version = json.loads(json.dumps(valid))
     wrong_version["version"] = "authoring-command/v0.1"
     with pytest.raises(InvalidArgumentsError, match="command/version"):
         call_tool(WorkspaceScope(root), "apply_authoring_command",
-                  {"workspace": "workspace.yaml", "command": wrong_version}, allow_write=True)
+                  {"workspace": "guided/workspace.yaml", "command": wrong_version}, allow_write=True)
     assert _tree(root) == before
 
     wrong_target = json.loads(json.dumps(valid))
     wrong_target["target"]["path"] = "guided/workspace.yaml"
     with pytest.raises(InvalidArgumentsError, match="command/target/path"):
         call_tool(WorkspaceScope(root), "apply_authoring_command",
-                  {"workspace": "workspace.yaml", "command": wrong_target}, allow_write=True)
+                  {"workspace": "guided/workspace.yaml", "command": wrong_target}, allow_write=True)
     assert _tree(root) == before
 
     accepted = call_tool(WorkspaceScope(root), "apply_authoring_command",
-                         {"workspace": "workspace.yaml", "command": valid}, allow_write=True)
+                         {"workspace": "guided/workspace.yaml", "command": valid}, allow_write=True)
     assert accepted.structured["status"] == "ok"
     assert accepted.structured["authoringResult"]["status"] == "accepted"
 
