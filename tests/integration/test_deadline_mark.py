@@ -101,14 +101,14 @@ def _planned(rendered, object_id: str):
 # --- geometry -------------------------------------------------------------------------------------------
 
 
-def test_a_tick_stands_at_the_deadline_date_through_the_marks_scale_centred_on_the_planned_mark(tmp_path):
+def test_a_tick_stands_after_the_deadline_day_through_the_marks_scale_centred_on_the_planned_mark(tmp_path):
     rendered = _render(tmp_path)
     ticks = _ticks(rendered)
     assert set(ticks) == {"a", "b", "g", "h"}
     for object_id, day in {"a": date(2026, 2, 5), "b": date(2026, 3, 25), "g": date(2026, 3, 10), "h": date(2026, 3, 5)}.items():
         tick, mark = ticks[object_id], _planned(rendered, object_id)
         assert (tick.kind, tick.visual_role, tick.slot_id) == ("Path", "deadline-mark", "timeline")
-        assert tick.bounds[0] == pytest.approx(_x(rendered, day)) and tick.bounds[2] == 0
+        assert tick.bounds[0] == pytest.approx(_x(rendered, day) + rendered.surface.scale_manifest.unit_ratio) and tick.bounds[2] == 0
         assert tick.bounds[3] == pytest.approx(mark.bounds[3] * 1.7)  # the Theme's markReach
         assert tick.bounds[1] + tick.bounds[3] / 2 == pytest.approx(mark.bounds[1] + mark.bounds[3] / 2)
         assert [tuple(point) for point in tick.points] == pytest.approx([(tick.bounds[0], tick.bounds[1]),
@@ -120,9 +120,9 @@ def test_a_slipped_deadline_has_a_run_from_the_tick_to_the_planned_finish_below_
     runs = _runs(rendered)
     assert set(runs) == {"a", "g"}  # b is kept, h is on its day
     span_run, point_run = runs["a"], runs["g"]
-    assert span_run.bounds[0] == pytest.approx(_x(rendered, date(2026, 2, 5)))
-    assert span_run.bounds[0] + span_run.bounds[2] == pytest.approx(_x(rendered, date(2026, 2, 14)))  # a span's finish is its end
-    assert point_run.bounds[0] + point_run.bounds[2] == pytest.approx(_x(rendered, date(2026, 3, 20)))  # a point's is its date
+    assert span_run.bounds[0] == pytest.approx(_x(rendered, date(2026, 2, 6)))
+    assert span_run.bounds[0] + span_run.bounds[2] == pytest.approx(_x(rendered, date(2026, 2, 14)))  # exclusive end, after the occupied finish day
+    assert point_run.bounds[0] + point_run.bounds[2] == pytest.approx(_x(rendered, date(2026, 3, 21)))  # after the point's occupied date
     for run, object_id in ((span_run, "a"), (point_run, "g")):
         tick, mark = _ticks(rendered)[object_id], _planned(rendered, object_id)
         assert run.bounds[3] == 0 and run.bounds[1] == pytest.approx(tick.bounds[1] + tick.bounds[3])  # the tick's lower end
@@ -179,12 +179,26 @@ def test_the_objects_with_a_run_are_exactly_the_w_deadline_objects(tmp_path):
         assert set(_runs(rendered)) == warned
 
 
-def test_a_deadline_equal_to_the_finish_keeps_the_promise_and_one_day_later_is_missed(tmp_path):
-    on_the_day = _render(tmp_path, _source(a="2026-02-14"), name="day")
-    assert "a" in _ticks(on_the_day) and "a" not in _runs(on_the_day)
-    one_late = _render(tmp_path, _source(a="2026-02-13"), name="late")
-    run = _runs(one_late)["a"]
+@pytest.mark.parametrize("object_id,finish_day,previous_day", [
+    ("a", "2026-02-13", "2026-02-12"), ("g", "2026-03-20", "2026-03-19"),
+])
+def test_a_deadline_equal_to_the_inclusive_finish_is_kept_and_one_day_later_is_missed(
+    tmp_path, object_id, finish_day, previous_day,
+):
+    from xml.etree import ElementTree
+
+    on_the_day = _render(tmp_path, _source(**{object_id: finish_day}), name="day")
+    assert object_id in _ticks(on_the_day) and object_id not in _runs(on_the_day)
+    svg = ElementTree.fromstring(on_the_day.artifact.content)
+    svg_ids = {node.attrib.get("data-scene-id") for node in svg.iter()}
+    assert _ticks(on_the_day)[object_id].scene_id in svg_ids
+    assert not [identity for identity in svg_ids if identity and identity.startswith("deadline-run:")]
+    one_late = _render(tmp_path, _source(**{object_id: previous_day}), name="late")
+    run = _runs(one_late)[object_id]
     assert run.bounds[2] == pytest.approx(one_late.surface.scale_manifest.unit_ratio)
+    assert run.bounds[0] == pytest.approx(_x(one_late, date.fromisoformat(finish_day)))
+    late_svg = ElementTree.fromstring(one_late.artifact.content)
+    assert any(node.attrib.get("data-scene-id") == run.scene_id for node in late_svg.iter())
 
 
 def test_an_object_without_a_deadline_gets_no_mark(tmp_path):
@@ -265,7 +279,7 @@ def test_a_folded_header_point_hosts_the_same_deadline_tick_and_run():
                            (0, 0), (0, 0), semantic_id="planned")
     batch = compose_deadline_marks(
         base=base, theme_tokens=Tokens(), marks=(folded,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100,
-        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3),))
+        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 6).toordinal(), date(2026, 1, 9).toordinal(), True, 3),))
     assert [item.placement_id for item in batch.shapes] == [
         "deadline-tick:group-header:grp:x", "deadline-run:group-header:grp:x"]
     assert batch.diagnostics == ()
@@ -292,7 +306,7 @@ def test_zero_width_deadline_has_no_outline_or_reserved_ink_envelope():
                          (0, 0), (0, 0), semantic_id="planned")
     geometry = complete_deadline_host(
         base=base, theme_tokens=Tokens(), host=host,
-        deadline=ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3), paint_order_base=100)
+        deadline=ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 6).toordinal(), date(2026, 1, 9).toordinal(), True, 3), paint_order_base=100)
     assert geometry.shapes and geometry.outlines == () and geometry.painted_bounds is None
 
 
@@ -378,7 +392,7 @@ def test_outline_is_actual_svg_ground_and_preserves_deadline_geometry(tmp_path):
     assert all(node.attrib["data-purpose"] == "deadline-mark" for node in elements[first_stroke:])
 
 
-@pytest.mark.parametrize("deadline", ["2026-01-01", "2026-04-01"])
+@pytest.mark.parametrize("deadline", ["2025-12-31", "2026-03-31"])
 def test_outline_and_foreground_keep_existing_window_edge_clipping(tmp_path, deadline):
     rendered = _render(tmp_path, source=_source(a=deadline), parts=_parts(outline=1))
     tick = _ticks(rendered)["a"]
@@ -496,17 +510,17 @@ def test_an_annotation_candidate_never_covers_a_tick_or_a_run(tmp_path):
             assert not _overlaps_segment(box.bounds, mark.points), (box.scene_id, mark.scene_id)
 
 
-def test_a_deadline_on_the_first_window_day_is_drawn_and_one_day_before_it_is_recorded(tmp_path):
-    first = _render(tmp_path, _source(a="2026-01-01"), name="first")  # the window starts 2026-01-01
+def test_a_deadline_boundary_at_the_first_window_edge_is_drawn_and_before_it_is_recorded(tmp_path):
+    first = _render(tmp_path, _source(a="2025-12-31"), name="first")  # boundary is the window start 2026-01-01
     assert "a" in _ticks(first)
-    before = _render(tmp_path, _source(a="2025-12-31"), name="before")
+    before = _render(tmp_path, _source(a="2025-12-30"), name="before")
     assert "a" not in _ticks(before) and "I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:a" in before.scene.diagnostics
 
 
-def test_a_deadline_on_the_window_edge_is_drawn_and_one_day_past_it_is_recorded(tmp_path):
-    edge = _render(tmp_path, _source(a="2026-04-01"), name="edge")  # the window ends 2026-04-01
+def test_a_deadline_boundary_on_the_window_edge_is_drawn_and_past_it_is_recorded(tmp_path):
+    edge = _render(tmp_path, _source(a="2026-03-31"), name="edge")  # boundary is the window end 2026-04-01
     assert "a" in _ticks(edge) and not [item for item in edge.scene.diagnostics if item.startswith("I_LAYOUT_DEADLINE_")]
-    past = _render(tmp_path, _source(a="2026-04-02"), name="past")
+    past = _render(tmp_path, _source(a="2026-04-01"), name="past")
     assert "a" not in _ticks(past)
     assert "I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:a" in past.scene.diagnostics
 
@@ -537,12 +551,12 @@ def test_only_a_planned_mark_hosts_a_deadline_never_a_snapshot_or_scenario_mark(
                            semantic_id="forecast", slot_id="timeline"))
     batch = compose_deadline_marks(
         base=base, theme_tokens=Tokens(), marks=marks, window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100,
-        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 8), True, 3),))
+        deadlines=(ReviewDeadline("x", date(2026, 1, 5), date(2026, 1, 6).toordinal(), date(2026, 1, 9).toordinal(), True, 3),))
     assert [item.placement_id for item in batch.shapes] == [
         "deadline-tick:row:x", "deadline-run:row:x",
         "deadline-tick:group-header:g:x", "deadline-run:group-header:g:x",
         "deadline-tick:forecast:group-header:g:x", "deadline-run:forecast:group-header:g:x"]
-    assert batch.shapes[0].bounds.inline == Decimal("40.0")
+    assert batch.shapes[0].bounds.inline == Decimal("50.0")
     assert batch.shapes[0].bounds.block_size == Decimal("12.0")  # 8 * the reach of 1.5
 
 

@@ -60,16 +60,18 @@ def test_the_source_map_positions_the_clause_so_a_finding_at_the_pointer_has_a_l
     assert locate(compiled.source_map, "/objects/qa/deadline") == locate(compiled.source_map, "/objects/qa")
 
 
-def test_a_deadline_moves_nothing_and_schedule_lists_exactly_the_missed_promises():
+@pytest.mark.parametrize("deadline_day,days_late", [("2027-03-12", 0), ("2027-03-11", 1)])
+def test_a_deadline_moves_nothing_and_schedule_lists_exactly_the_missed_promises(deadline_day, days_late):
     bare = _compile('dev "Dev" task 5d after qa\ngo "Go" gate after dev +1d\nlate "Late" task 2d after go\n')
-    promised = _compile('dev "Dev" task 5d after qa deadline 2027-03-12\ngo "Go" gate after dev +1d deadline 2027-03-14\n'
+    promised = _compile(f'dev "Dev" task 5d after qa deadline {deadline_day}\ngo "Go" gate after dev +1d deadline 2027-03-14\n'
                         'late "Late" task 2d after go deadline 2027-03-30\n')
     placed, plain = schedule(promised.project), schedule(bare.project)
     assert placed.ok and placed.placements == plain.placements  # dev ends 03-13, go is 03-14, late ends 03-16
     assert schedule_summary(promised.project) == schedule_summary(bare.project)
     warned = deadline_warnings(promised.project, placed.placements)
-    assert [item.path for item in warned] == ["/objects/dev/deadline"]  # go is on its date (kept); late has slack
-    assert warned[0].details["daysLate"] == 1
+    assert [item.path for item in warned] == (["/objects/dev/deadline"] if days_late else [])
+    if days_late:
+        assert warned[0].details["finish"] == "2027-03-12" and warned[0].details["daysLate"] == days_late
 
 
 def test_a_word_deadline_is_a_contextual_keyword_so_it_still_names_objects_and_dependencies():

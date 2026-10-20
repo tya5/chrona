@@ -7,7 +7,7 @@ of `deadline` in the scheduler: no placement, verdict or analysis changes with i
 from __future__ import annotations
 
 import copy
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -57,9 +57,9 @@ def test_a_fixed_span_and_a_derived_gate_past_their_deadlines_each_warn_with_det
     assert schedule(PROJECT).placements["launch"] == {"at": date(2026, 10, 12)}
     first, second = _warnings(PROJECT)
     assert (first.id, first.path) == ("W_DEADLINE", "/objects/qa/deadline")
-    assert first.message == "qa finishes 2026-10-08, 3 days after its deadline 2026-10-05"
-    assert dict(first.details) == {"object": "qa", "endpoint": "end", "finish": "2026-10-08",
-                                   "deadline": "2026-10-05", "daysLate": 3}
+    assert first.message == "qa finishes 2026-10-07, 2 days after its deadline 2026-10-05"
+    assert dict(first.details) == {"object": "qa", "endpoint": "end", "finish": "2026-10-07",
+                                   "deadline": "2026-10-05", "daysLate": 2}
     assert (second.id, second.path) == ("W_DEADLINE", "/objects/launch/deadline")
     assert second.message == "launch finishes 2026-10-12, 1 day after its deadline 2026-10-11"
     assert dict(second.details) == {"object": "launch", "endpoint": "at", "finish": "2026-10-12",
@@ -75,29 +75,30 @@ def test_the_derived_gate_finish_is_its_computed_date():
 
 
 def test_a_finish_equal_to_the_deadline_keeps_the_promise_and_one_day_later_breaks_it():
-    on_time = _project(qa="2026-10-08", launch="2026-10-12")
+    on_time = _project(qa="2026-10-07", launch="2026-10-12")
     assert _warnings(on_time) == ()
-    one_late = _project(qa="2026-10-07", launch="2026-10-12")
+    one_late = _project(qa="2026-10-06", launch="2026-10-12")
     (warning,) = _warnings(one_late)
-    assert warning.details["daysLate"] == 1 and warning.message.endswith("1 day after its deadline 2026-10-07")
+    assert warning.details["finish"] == "2026-10-07"
+    assert warning.details["daysLate"] == 1 and warning.message.endswith("1 day after its deadline 2026-10-06")
 
 
 def test_a_point_is_judged_by_at_and_a_span_by_end_never_by_start():
     only_start_early = _project(qa="2026-10-02", launch=None)
     (warning,) = _warnings(only_start_early)
-    assert warning.details["endpoint"] == "end" and warning.details["finish"] == "2026-10-08"
+    assert warning.details["endpoint"] == "end" and warning.details["finish"] == "2026-10-07"
 
 
 def test_a_rollup_is_judged_by_its_end():
     project = copy.deepcopy(PROJECT)
-    project["objects"]["phase"] = {"type": "phase", "title": "Phase", "deadline": "2026-10-07",
+    project["objects"]["phase"] = {"type": "phase", "title": "Phase", "deadline": "2026-10-06",
                                    "schedule": {"mode": "rollup"}}
     project["objects"]["qa"]["parent"] = "phase"
     project["objects"]["qa"].pop("deadline")
     project["objects"]["launch"].pop("deadline")
     (warning,) = _warnings(project)
     assert warning.path == "/objects/phase/deadline" and warning.details["endpoint"] == "end"
-    assert warning.details["finish"] == "2026-10-08"
+    assert warning.details["finish"] == "2026-10-07"
 
 
 def test_objects_without_a_deadline_or_a_placement_are_skipped_and_order_is_project_order():
@@ -148,11 +149,11 @@ def _statuses(project):
 
 def test_a_status_carries_the_promise_the_finish_the_endpoint_and_the_signed_lateness_for_kept_and_slipped_alike():
     first, second = _statuses(_project(qa="2026-10-10", launch="2026-10-12"))
-    assert first == DeadlineStatus("qa", date(2026, 10, 10), date(2026, 10, 8), "end", -2)
+    assert first == DeadlineStatus("qa", date(2026, 10, 10), date(2026, 10, 7), "end", -3)
     assert second == DeadlineStatus("launch", date(2026, 10, 12), date(2026, 10, 12), "at", 0)
     assert (first.slipped, second.slipped) == (False, False)  # slack and "on the day" both keep the promise
-    (late,) = _statuses(_project(qa="2026-10-07", launch=None))
-    assert late == DeadlineStatus("qa", date(2026, 10, 7), date(2026, 10, 8), "end", 1) and late.slipped
+    (late,) = _statuses(_project(qa="2026-10-06", launch=None))
+    assert late == DeadlineStatus("qa", date(2026, 10, 6), date(2026, 10, 7), "end", 1) and late.slipped
 
 
 def test_the_point_endpoint_is_at_the_span_endpoint_is_end_and_a_rollup_is_judged_by_its_end():
@@ -160,7 +161,7 @@ def test_the_point_endpoint_is_at_the_span_endpoint_is_end_and_a_rollup_is_judge
     project["objects"]["phase"] = {"type": "phase", "title": "Phase", "deadline": "2026-10-07", "schedule": {"mode": "rollup"}}
     project["objects"]["qa"]["parent"] = "phase"
     assert {item.object_id: (item.endpoint, item.finish.isoformat()) for item in _statuses(project)} == {
-        "qa": ("end", "2026-10-08"), "launch": ("at", "2026-10-12"), "phase": ("end", "2026-10-08")}
+        "qa": ("end", "2026-10-07"), "launch": ("at", "2026-10-12"), "phase": ("end", "2026-10-07")}
 
 
 def test_statuses_skip_an_object_without_a_deadline_or_a_placement_and_follow_project_order():
@@ -213,7 +214,7 @@ def test_forecast_finish_overrides_are_typed_and_use_point_at_or_span_end():
 
     assert [(item.object_id, item.finish, item.endpoint, item.finish_basis, item.days_late)
             for item in statuses] == [
-        ("qa", date(2026, 10, 9), "end", "forecast", 2),
+        ("qa", date(2026, 10, 8), "end", "forecast", 1),
         ("launch", date(2026, 10, 13), "at", "forecast", 2),
     ]
 
@@ -221,7 +222,7 @@ def test_forecast_finish_overrides_are_typed_and_use_point_at_or_span_end():
 def test_explicit_forecast_warnings_name_selected_basis_and_keep_equal_finish_kept():
     project = _project(qa="2026-10-07", launch="2026-10-13")
     placements = schedule(project).placements
-    forecast = {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)},
+    forecast = {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 9)},
                 "launch": {"at": date(2026, 10, 13)}}
     statuses = deadline_statuses(project, placements, forecast)
 
@@ -233,12 +234,43 @@ def test_explicit_forecast_warnings_name_selected_basis_and_keep_equal_finish_ke
                                     "finishBasis": "forecast"}
     assert statuses[1].finish_basis == "forecast" and not statuses[1].slipped
 
+    equal_span = deadline_statuses(project, schedule(project).placements,
+                                   {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)}})[0]
+    assert (equal_span.finish, equal_span.days_late, equal_span.slipped) == (date(2026, 10, 7), 0, False)
+
+
+def test_deadline_boundaries_are_integer_ordinals_including_the_boundary_after_date_max():
+    project = {"objects": {"span": {"deadline": "9999-12-30", "schedule": {"mode": "fixed-span"}},
+                           "point": {"deadline": "9999-12-30", "schedule": {"mode": "fixed-point"}}}}
+    statuses = deadline_statuses(project, {
+        "span": {"start": date.max - timedelta(days=1), "end": date.max},
+        "point": {"at": date.max},
+    })
+
+    assert [(item.object_id, item.finish, item.days_late, item.slipped) for item in statuses] == [
+        ("span", date.max - timedelta(days=1), 0, False),
+        ("point", date.max, 1, True),
+    ]
+    assert statuses[0].finish_boundary == date.max.toordinal()
+    assert statuses[1].finish_boundary == date.max.toordinal() + 1
+    assert statuses[0].deadline_boundary == date.max.toordinal()
+
+
+def test_zero_extent_rollup_at_date_min_is_point_like_without_underflow():
+    project = {"objects": {"phase": {"deadline": "0001-01-01", "schedule": {"mode": "rollup"}}}}
+    (status,) = deadline_statuses(project, {"phase": {"start": date.min, "end": date.min}})
+
+    assert (status.endpoint, status.finish, status.days_late, status.slipped) == (
+        "end", date.min, 0, False)
+    assert status.deadline_boundary == date.min.toordinal() + 1
+    assert status.finish_boundary == date.min.toordinal() + 1
+
 
 def test_partial_forecast_overrides_fall_back_to_plan_without_mutating_inputs():
     project = _project(qa="2026-10-07", launch="2026-10-11")
     placements = schedule(project).placements
     before_project, before_placements = copy.deepcopy(project), copy.deepcopy(placements)
-    forecast = {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)}}
+    forecast = {"qa": {"start": date(2026, 10, 1), "end": date(2026, 10, 9)}}
     before_forecast = copy.deepcopy(forecast)
 
     statuses = deadline_statuses(project, placements, forecast)
@@ -250,12 +282,12 @@ def test_partial_forecast_overrides_fall_back_to_plan_without_mutating_inputs():
     assert project == before_project and placements == before_placements and forecast == before_forecast
 
 
-def test_ordinary_wrapper_retains_the_exact_legacy_warning_payload():
+def test_ordinary_wrapper_reports_the_exact_inclusive_warning_payload():
     project = _project(qa="2026-10-05", launch=None)
     placements = schedule(project).placements
 
     (warning,) = deadline_warnings(project, placements)
 
-    assert warning.message == "qa finishes 2026-10-08, 3 days after its deadline 2026-10-05"
-    assert dict(warning.details) == {"object": "qa", "endpoint": "end", "finish": "2026-10-08",
-                                    "deadline": "2026-10-05", "daysLate": 3}
+    assert warning.message == "qa finishes 2026-10-07, 2 days after its deadline 2026-10-05"
+    assert dict(warning.details) == {"object": "qa", "endpoint": "end", "finish": "2026-10-07",
+                                    "deadline": "2026-10-05", "daysLate": 2}

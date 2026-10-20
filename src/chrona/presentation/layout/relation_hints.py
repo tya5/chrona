@@ -43,10 +43,9 @@ def _side(points, *, source):
 
 
 def _old_mark(current, old):
-    # Unknown primitive families cannot prove old temporal port geometry.
-    if (old.source_ref != current.source_ref
-            or current.mark_shape == "point" and old.kind != "Symbol"
-            or current.mark_shape != "point" and old.kind != "Rect"):
+    # Primitive kind is not temporal shape: admitted Rect and Symbol hosts both
+    # provide completed bounds, while the current mark's semantics select ports.
+    if old.source_ref != current.source_ref or old.kind not in {"Rect", "Symbol"}:
         return None
     x, y, width, height = old.bounds
     bounds = Rect(*(Decimal(str(value)) for value in old.bounds))
