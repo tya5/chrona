@@ -1,0 +1,24 @@
+version: chrona/view/v0.28
+kind: view
+id: ghost-view
+body:
+  heading: {title: '{project}', subtitle: 'as of {asOf}'}
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection: {include: {types: [span, point]}}
+  grouping: {by: field, field: team, missing: Unset, presentation: header}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  tableColumns:
+  - {id: Task, header: {wording: column.task}, source: title, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
+  - {id: Delta, header: {wording: column.finishDeltaBaseline}, source: {facet: finishDelta}, missing: blank, align: end, width: content, headerOrientation: horizontal}
+  window: {mode: selected-planned, marginDays: 7}
+  comparison: {baseline: snapshot, baselineMarks: ghost, actual: optional, observationSelection: latest, deltaUnit: working-days, facets: [planned, actual, finishDelta]}
+  markers:
+  - {kind: asOf, source: actual, label: {wording: marker.today}}
+  visibility:
+    labels: {placement: table, content: [title], side: end, overflow: suppress}
+    relations: {mode: none, overflow: suppress}
+    annotations: none
+  axis:
+    tiers:
+    - {unit: week, every: 1, role: labels, label: {form: start-day-month, align: start, overflow: thin-with-record, orientation: horizontal}}

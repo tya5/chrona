@@ -1,0 +1,4 @@
+$ chrona validate ref-plan.yaml
+{"status": "ok", "diagnostics": []}
+$ chrona render ref-plan.yaml --preset mission-light --view ref-view.yaml --output ref.svg
+{"diagnostics": [], "status": "ok", "warnings": [{"code": "I_LAYOUT_RELATION_ROUTING", "fallbackSearch": 0, "message": "1 relations on table-timeline settled without search; 0 used fallback search", "relationInstances": 1, "severity": "info", "shapeSettled": 1, "surfaceId": "table-timeline"}, {"code

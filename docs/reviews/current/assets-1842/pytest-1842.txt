@@ -1,0 +1,5 @@
+$ python -m pytest -q tests/integration/test_materialize_status_and_fonts.py tests/integration/test_deck_manifest_guide.py tests/integration/test_object_reference_guide.py tests/integration/test_review_small_items_1842.py tests/unit/chrona/presentation/model/test_forecast_projection.py tests/integration/test_object_reference_validation.py tests/unit/chrona/usecases/test_terse_typed_fields.py tests/unit/chrona/terse/test_entity_statement.py tests/unit/chrona/terse/test_ledger.py   # origin/main 2350a3c4d
+
+........................................................................ [ 91%]
+.......                                                                  [100%]
+79 passed in 31.03s

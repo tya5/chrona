@@ -1,0 +1,27 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-mission-light
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-mission-light
+      kind: view
+      path: view.yaml
+    theme:
+      id: chrona-builtin-mission-light
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: mission-light
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: chrona-builtin-mission-light
+      kind: layout-profile
+      path: layout.yaml
+  compatibleColorSchemes:
+  - id: mission-light
+    kind: color-scheme
+    path: scheme.yaml

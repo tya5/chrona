@@ -1,0 +1,71 @@
+$ chrona validate row1-no-entity.chrona
+{
+ "status": "rejected",
+ "diagnostics": [
+  {
+   "code": "E_PROFILE_FIELD_TYPE",
+   "severity": "error",
+   "component": "extensions",
+   "sourceRef": "/objects/bui-web-hotfix/fields/deliverable",
+   "revisionRefs": [],
+   "message": "deliverable must name one object or entity of profile ['atlas.deliverable']; 'del-portal' is not a declared id",
+   "source": "row1-no-entity.chrona",
+   "sourceRange": {
+    "line": 4,
+    "column": 135,
+    "endLine": 4,
+    "endColumn": 157
+   }
+  }
+ ]
+}
+
+$ chrona validate row1-with-entity.chrona
+{
+ "status": "ok",
+ "diagnostics": []
+}
+
+$ chrona validate row1-typo.chrona
+{
+ "status": "rejected",
+ "diagnostics": [
+  {
+   "code": "E_PROFILE_FIELD_TYPE",
+   "severity": "error",
+   "component": "extensions",
+   "sourceRef": "/objects/bui-web-hotfix/fields/deliverable",
+   "revisionRefs": [],
+   "message": "deliverable must name one object or entity of profile ['atlas.deliverable']; 'del-portl' is not a declared id; nearest ids: del-portal",
+   "source": "row1-typo.chrona",
+   "sourceRange": {
+    "line": 5,
+    "column": 135,
+    "endLine": 5,
+    "endColumn": 156
+   }
+  }
+ ]
+}
+
+$ chrona validate row1-yaml-typo.yaml
+{
+ "status": "rejected",
+ "diagnostics": [
+  {
+   "code": "E_PROFILE_FIELD_TYPE",
+   "severity": "error",
+   "component": "core",
+   "sourceRef": "/objects/dis-pla-1/fields/deliverable",
+   "revisionRefs": [],
+   "message": "deliverable must name one object or entity of profile ['atlas.deliverable']; 'del-appp' is not a declared id; nearest ids: del-app, del-api"
+  }
+ ]
+}
+
+$ chrona validate project.yaml
+{
+ "status": "ok",
+ "diagnostics": []
+}
+

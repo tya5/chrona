@@ -1,0 +1,3 @@
+$ chrona render plan.chrona --preset copy-unsorted/preset.yaml --output out.svg   # requiredThemeTokens edited out of order
+rejected
+  E_LAYOUT_TOKEN_REQUIREMENTS /requiredThemeTokens | requiredThemeTokens must be sorted in plain string order (the order sorted() gives); expected order: ['legend-block', 'legend-gap', 'legend-item-min', 'note-rail-width', 'spacing.l', 'spacing.m', 'spacing.none']

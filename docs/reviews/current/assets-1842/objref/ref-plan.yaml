@@ -1,0 +1,38 @@
+version: timeline/v0.7
+project:
+  id: ref-demo
+  title: Reference demo
+  calendar: office
+extensions:
+- packageId: atlas-delivery
+  path: ref-profile.yaml
+  revision: git:0123456789abcdef0123456789abcdef01234567
+calendars:
+  office:
+    working_days: [mon, tue, wed, thu, fri]
+entities:
+  del-api:
+    type: atlas.deliverable
+    title: Public API v2
+  del-portal:
+    type: atlas.deliverable
+    title: Partner portal
+  aiko:
+    type: atlas.person
+    title: Aiko
+  ben:
+    type: atlas.person
+    title: Ben
+objects:
+  api:
+    type: atlas.work
+    title: Build the API
+    fields: {deliverable: del-api, reviewers: [aiko, ben]}
+    schedule: {mode: fixed-span, start: 2026-11-02, end: 2026-11-13}
+  portal:
+    type: atlas.work
+    title: Build the portal
+    fields: {deliverable: del-portal, reviewers: [ben]}
+    schedule: {mode: scheduled, amount: 10wd}
+relations:
+- {id: api-to-portal, type: dependency, from: {object: api, endpoint: end}, to: {object: portal, endpoint: start}, lag: 0d}

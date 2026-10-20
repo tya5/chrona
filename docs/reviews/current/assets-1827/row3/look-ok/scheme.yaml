@@ -1,0 +1,35 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: mission-light
+body:
+  colors:
+    surface: "#FFFFFF"
+    surfaceRaised: "#EEF2F7"
+    text: "#101828"
+    textMuted: "#5B6B7F"
+    accent: "#1D5FD1"
+    positive: "#0E8A6C"
+    negative: "#C0392B"
+    warning: "#C77A12"
+    neutral: "#C6CFDA"
+    insideLabelPlanned: "#FFFFFF"
+    insideLabelActual: "#000000"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: print-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, mission-light
+    license: MIT
+  categories:
+    default: "#E8EFFA"
+    series-1: "#E8EFFA"
+    series-2: "#E4F4EE"
+    series-3: "#FBF0E1"
+    series-4: "#F1E9F8"
+    series-5: "#FBE3E8"
+    series-6: "#EAF4D9"

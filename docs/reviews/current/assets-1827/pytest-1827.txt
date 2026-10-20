@@ -1,0 +1,6 @@
+$ python -m pytest -q tests/integration/test_slot_heading_wording.py tests/unit/chrona/presentation/model/test_theme_tokens.py tests/unit/chrona/presentation/model/test_wording_tables.py tests/unit/chrona/usecases/test_preset_library_catalogues.py tests/unit/chrona/presentation/layout/test_intent_profile.py tests/unit/tools/test_theme_role_reference.py tests/unit/chrona/presentation/layout/test_region_frame_profile.py   # origin/main 2350a3c4d
+
+........................................................................ [ 41%]
+........................................................................ [ 83%]
+............................                                             [100%]
+172 passed in 48.54s
