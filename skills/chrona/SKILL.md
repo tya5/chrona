@@ -142,12 +142,13 @@ chrona render examples/launch.yaml --output launch.svg
 
 One command draws with the packaged default look. A **preset** bundles View, Theme,
 Color Scheme and Layout, so a different preset changes the look without touching the
-plan. List the builtin ids, render with one, or copy one to edit:
+plan. List the builtin ids, render with one, or copy one to edit (`--id NAME` on a copy renames the preset and all its resource ids together):
 
 ```bash
 chrona preset list
 chrona render examples/launch.yaml --preset editorial --output launch-editorial.svg
 chrona preset copy executive-light --output looks/executive-light
+chrona preset copy executive-light --id my-look --output looks/my-look
 chrona render examples/launch.yaml --preset looks/executive-light/preset.yaml --output launch-executive.svg
 ```
 

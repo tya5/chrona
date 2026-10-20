@@ -48,7 +48,7 @@ def test_unsorted_theme_token_requirements_show_exact_expected_order():
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
     assert (caught.value.diagnostic_id, caught.value.path) == (
         "E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens")
-    assert caught.value.detail == f"requiredThemeTokens must be sorted; expected order: {declared!r}"
+    assert caught.value.detail == f"requiredThemeTokens must be sorted in plain string order (the order sorted() gives); expected order: {declared!r}"
 
 
 def test_stable_id_override_changes_only_named_nodes():

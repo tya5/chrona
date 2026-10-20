@@ -1,6 +1,7 @@
 """Copy finite builtin presentation presets into editable local Draft source."""
 from __future__ import annotations
 
+import re
 from pathlib import Path, PurePosixPath
 from hashlib import sha256
 from typing import Any
@@ -130,8 +131,32 @@ def is_builtin_preset_id(identifier: str) -> bool:
     return any(entry.get("id") == identifier for entry in _library())
 
 
-def copy_builtin_preset(identifier: str, destination: Path) -> Path:
-    """Materialize one project-generic builtin preset as editable local files."""
+_NEW_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+_TOP_LEVEL_ID = re.compile(r"(?m)^id:[^\n]*")
+
+
+def _with_id(raw: bytes, new_id: str) -> bytes:
+    """The document with its top-level `id` replaced; the rest of the text, comments included, is untouched."""
+    text, count = _TOP_LEVEL_ID.subn(lambda _match: f"id: {new_id}", raw.decode("utf-8"), count=1)
+    if count != 1:
+        raise ValueError("E_BUILTIN_PRESET_RESOURCE: a copied document has no top-level id to rename")
+    return text.encode("utf-8")
+
+
+def copy_builtin_preset(identifier: str, destination: Path, new_id: str | None = None) -> Path:
+    """Materialize one project-generic builtin preset as editable local files.
+
+    With `new_id` the preset and every copied resource it declares (View, Theme, Color Scheme,
+    Layout, and the Style, Detail and Summary profiles when present) are renamed to `new_id`, so the
+    copy loads without editing ids by hand (#1827). Icon catalogs are copied unchanged: they are
+    pinned, licensed assets and keep their ids.
+    """
+    if new_id is not None and not _NEW_ID.fullmatch(new_id):
+        raise StableFailure(
+            "E_BUILTIN_PRESET_NEW_ID",
+            f"--id {new_id!r} is not a usable identifier; start with a letter or digit and use only letters, digits, '.', '_' and '-'",
+            "presentation",
+        )
     entry = next((item for item in _library() if item.get("id") == identifier), None)
     if entry is None:
         raise StableFailure(
@@ -154,12 +179,16 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
     for name, output in _MEMBER_OUTPUTS.items():
         member = _member(entry, name)
         payloads[output] = _plain(_read_member(member))
-        resources[name] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
+        if new_id is not None:
+            payloads[output] = _with_id(payloads[output], new_id)
+        resources[name] = {"id": new_id or str(member["id"]), "kind": str(member["kind"]), "path": output}
     for name, output in (("style", "style.yaml"), ("detailProfile", "detail.yaml"), ("summaryProfile", "summary.yaml")):
         if isinstance(entry.get("members"), dict) and name in entry["members"]:
             member = _member(entry, name)
             payloads[output] = _plain(_read_member(member))
-            resources[name] = {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
+            if new_id is not None:
+                payloads[output] = _with_id(payloads[output], new_id)
+            resources[name] = {"id": new_id or str(member["id"]), "kind": str(member["kind"]), "path": output}
     members_value = entry.get("members", {})
     for member in members_value.get("iconCatalogs", []) if isinstance(members_value, dict) else []:
         raw = _read_member(member)
@@ -198,7 +227,7 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
     preset: dict[str, Any] = {
         "version": "chrona/presentation-preset/v0.1",
         "kind": "presentation-preset",
-        "id": f"chrona-builtin-{identifier}",
+        "id": new_id or f"chrona-builtin-{identifier}",
         "body": {
             "package": {"version": "1"},
             "resources": resources,
