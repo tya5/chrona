@@ -58,13 +58,19 @@ def test_late_span_and_point_runs_end_at_forecast_and_warnings_name_the_same_fin
     runs, ticks = _marks(result, "deadline-run:"), _marks(result, "deadline-tick:")
     assert set(runs) == set(ticks) == {"a", "gate"}
     assert {item["object"] for item in _warnings(result)} == {"a", "gate"}
-    assert all(item["finishBasis"] == "forecast" and item["finish"] == "2026-01-15"
-               and item["daysLate"] == 3 and "forecast" in item["message"] for item in _warnings(result))
+    warnings = {item["object"]: item for item in _warnings(result)}
+    assert {key: (item["finish"], item["daysLate"]) for key, item in warnings.items()} == {
+        "a": ("2026-01-14", 2), "gate": ("2026-01-15", 3)}
+    assert all(item["finishBasis"] == "forecast" and "forecast" in item["message"]
+               for item in warnings.values())
     scale = result.rendered.surface.scale_manifest
-    finish_x = scale.origin + (date(2026, 1, 15) - scale.domain_start).days * scale.unit_ratio
     elements = {item.get("data-scene-id"): item for item in ElementTree.fromstring(result.artifact.content).iter()}
     for object_id, run in runs.items():
         assert run.bounds[0] == pytest.approx(ticks[object_id].bounds[0])
+        # A span ends at its exclusive forecast boundary; a point's late stub
+        # ends at the boundary after its occupied date.
+        finish = date(2026, 1, 15 if object_id == "a" else 16)
+        finish_x = scale.origin + (finish - scale.domain_start).days * scale.unit_ratio
         assert run.bounds[0] + run.bounds[2] == pytest.approx(finish_x)
         assert run.paint == ticks[object_id].paint  # ordinary deadline-mark, no estimated-only role
         assert elements[run.scene_id].tag.endswith("path")
@@ -74,7 +80,8 @@ def test_late_span_and_point_runs_end_at_forecast_and_warnings_name_the_same_fin
     if not folded:
         assert captions
     assert {item.source_ref for item in captions} <= {"a", "gate"}
-    assert all(item.text == "3 days late" for item in captions)
+    caption_counts = {"a": "2 days late", "gate": "3 days late"}
+    assert all(item.text == caption_counts[item.source_ref] for item in captions)
     validate_scene_document(scene_document(result.rendered.scene))
 
 
@@ -111,18 +118,20 @@ def test_explicit_window_omission_does_not_revert_the_forecast_warning_basis(tmp
     result = render_draft(replace(request, forecast=True))
     assert not _marks(result, "deadline-tick:") and not _marks(result, "deadline-run:")
     assert {item["object"] for item in _warnings(result)} == {"a", "gate"}
-    assert all(item["finishBasis"] == "forecast" and item["finish"] == "2026-01-15"
-               for item in _warnings(result))
+    assert {item["object"]: item["finish"] for item in _warnings(result)} == {
+        "a": "2026-01-14", "gate": "2026-01-15"}
+    assert all(item["finishBasis"] == "forecast" for item in _warnings(result))
 
 
-def test_no_forecast_retains_planned_geometry_and_legacy_warning_payload(tmp_path):
+def test_no_forecast_retains_planned_geometry_and_inclusive_warning_payload(tmp_path):
     request = _request(tmp_path, deadline="2026-01-10")
     omitted, disabled = render_draft(request), render_draft(replace(request, forecast=False))
     assert omitted.artifact.content == disabled.artifact.content
     assert omitted.rendered.scene == disabled.rendered.scene
     warnings = _warnings(omitted)
     assert len(warnings) == 2
-    assert all(item["finish"] == "2026-01-12" and item["daysLate"] == 2
-               and "finishBasis" not in item and "finishBasis" not in item.get("details", {})
+    assert {item["object"]: (item["finish"], item["daysLate"]) for item in warnings} == {
+        "a": ("2026-01-11", 1), "gate": ("2026-01-12", 2)}
+    assert all("finishBasis" not in item and "finishBasis" not in item.get("details", {})
                and "forecast" not in item["message"] for item in warnings)
     assert not any(item.purpose == "forecast" for item in omitted.rendered.surface.primitives)

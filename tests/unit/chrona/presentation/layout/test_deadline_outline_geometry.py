@@ -5,10 +5,22 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.surface_deadlines import _outline, compose_deadline_marks
+from chrona.presentation.layout.surface_deadlines import _outline, compose_deadline_marks, deadline_boundary_in_window
+from chrona.presentation.layout.surface_geometry import coordinate_for_date, coordinate_for_day_ordinal
 from chrona.presentation.layout.surface_quality import MarkPlacement, ScalePlacement, ShapePlacement
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.projection import ReviewDeadline
+
+
+def test_completed_ordinals_map_and_admit_without_constructing_a_date_after_date_max():
+    start = date(9999, 12, 30)
+    scale = ScalePlacement("surface", "time", start, date.max, 0, 10, 0, 10)
+    assert coordinate_for_day_ordinal(date.max.toordinal() + 1, scale) == 20
+    assert coordinate_for_date(date.max, scale) == 10
+    shown = ReviewDeadline("owner", start, date.max.toordinal(), date.max.toordinal() + 1, True, 1)
+    assert deadline_boundary_in_window(shown, (start, date.max))
+    outside = ReviewDeadline("owner", date.max, date.max.toordinal() + 1, date.max.toordinal() + 1, False, 0)
+    assert not deadline_boundary_in_window(outside, (start, date.max))
 
 
 @pytest.mark.parametrize("points,expected", [
@@ -50,7 +62,7 @@ def test_invisible_stroke_adds_no_ground_but_visible_tick_and_run_do(stroke_widt
                              wobble_intent=lambda _role: None,
                              number=lambda _role, _property: stroke_width)
     batch = compose_deadline_marks(base=base, theme_tokens=tokens,
-        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True, 3),),
+        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 6).toordinal(), date(2026, 1, 9).toordinal(), True, 3),),
         marks=(host,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100)
     assert sum(shape.semantic_id == "deadlineMarkOutline" for shape in batch.shapes) == expected_grounds
     assert sum(shape.semantic_id == "deadlineMark" for shape in batch.shapes) == 2
@@ -69,7 +81,7 @@ def test_caption_anchor_uses_the_same_completed_maximum_wobble_envelope():
                              wobble_intent=lambda _role: SimpleNamespace(amplitude=4),
                              number=lambda _role, _property: 2)
     result = compose_deadline_marks(base=base, theme_tokens=tokens,
-        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 8), True, 3, "3 days late"),),
+        deadlines=(ReviewDeadline("owner", date(2026, 1, 5), date(2026, 1, 6).toordinal(), date(2026, 1, 9).toordinal(), True, 3, "3 days late"),),
         marks=(host,), window=(date(2026, 1, 1), date(2026, 1, 11)), paint_order_base=100)
     anchor, = result.captions
     assert anchor.stroke_margin == 6 and anchor.subjects == (subject,)

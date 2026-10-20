@@ -1216,8 +1216,8 @@ def _shown_deadlines(project: dict[str, Any], statuses: tuple[DeadlineStatus, ..
                 caption = view.deadlines.caption.bind(item.days_late)
             except CountTextError as error:
                 raise RenderFailed(error.code, error.detail, "view", "/body/deadlines/caption/format") from error
-        shown.append(ReviewDeadline(item.object_id, item.deadline, item.finish, item.slipped,
-                                    item.days_late, caption))
+        shown.append(ReviewDeadline(item.object_id, item.deadline, item.deadline_boundary,
+                                    item.finish_boundary, item.slipped, item.days_late, caption))
     return tuple(shown)
 
 

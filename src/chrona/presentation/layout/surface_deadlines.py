@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Callable
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.deadline_captions import DeadlineCaptionAnchor
-from chrona.presentation.layout.surface_geometry import coordinate_for_date
+from chrona.presentation.layout.surface_geometry import coordinate_for_day_ordinal
 from chrona.presentation.layout.surface_quality import MarkPlacement, ShapePlacement
 from chrona.presentation.model.projection import ReviewDeadline
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -18,6 +19,11 @@ if TYPE_CHECKING:
 DEADLINE_SEMANTIC = "deadlineMark"
 TICK_PREFIX = "deadline-tick:"
 RUN_PREFIX = "deadline-run:"
+
+
+def deadline_boundary_in_window(deadline: ReviewDeadline, window: tuple[date, date]) -> bool:
+    """Admit the completed promise boundary, not its date's starting edge."""
+    return window[0].toordinal() <= deadline.deadline_boundary <= window[1].toordinal()
 
 
 def _outline(shape: ShapePlacement, margin: float) -> ShapePlacement | None:
@@ -116,8 +122,8 @@ def complete_deadline_host(*, base: SurfaceBaseGeometry, theme_tokens: object,
     reach, order = style.reach, style.paint_order
     margin = style.margin
     right_edge = float(base.plot.inline + base.plot.inline_size)
-    x = coordinate_for_date(deadline.deadline, base.scale)
-    finish = min(coordinate_for_date(deadline.finish, base.scale), right_edge)
+    x = coordinate_for_day_ordinal(deadline.deadline_boundary, base.scale)
+    finish = min(coordinate_for_day_ordinal(deadline.finish_boundary, base.scale), right_edge)
     instance = host.placement_id.removeprefix("planned:")
     centre = float(host.bounds.block + host.bounds.block_size / 2)
     half = float(host.bounds.block_size) * float(reach) / 2
@@ -143,20 +149,19 @@ def complete_deadline_host(*, base: SurfaceBaseGeometry, theme_tokens: object,
 
 
 def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, deadlines: tuple[ReviewDeadline, ...],
-                           marks: tuple[MarkPlacement, ...], window: tuple[object, object],
+                           marks: tuple[MarkPlacement, ...], window: tuple[date, date],
                            paint_order_base: int) -> DeadlineBatch:
-    """Complete a tick at each shown deadline's date and, for a slipped one, a run from it to the planned finish.
+    """Map the completed promise/finish day boundaries into tick and late-run geometry.
 
     Each deadline is anchored to the completed planned mark of its object, wherever its track put it: the tick is
     centred on that mark and spans the Theme's ``markReach`` times its block size, so a reach above 1 stands above
     and below the bar; the run is a line along the tick's lower end from the deadline to the finish, below the bar,
-    so it never covers the bar's own paint. Both use the scale that places marks. A deadline outside the View window
+    so it never covers the bar's own paint. Both use the scale that places marks. A boundary outside the View window
     draws nothing and is recorded, never silently dropped. Whether a deadline slipped is the Core's verdict, carried on ``ReviewDeadline``: nothing
     here compares two dates to judge lateness.
     """
     if not deadlines:
         return DeadlineBatch((), ())
-    window_start, window_end = window
     planned: dict[str, list[MarkPlacement]] = {}
     for mark in marks:
         if mark.semantic_id not in {"planned", "forecast"}:
@@ -170,7 +175,7 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
         hosts = planned.get(deadline.object_id, [])
         if not hosts:
             continue
-        if not window_start <= deadline.deadline <= window_end:
+        if not deadline_boundary_in_window(deadline, window):
             diagnostics.append(f"I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:{deadline.object_id}")
             continue
         for host in hosts:

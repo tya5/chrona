@@ -24,8 +24,8 @@ def test_network_deadline_projection_attaches_view_selected_iso_and_caption_to_p
         DependencyNetworkNode("no-deadline", "No deadline", ("no-deadline",), False, "primary"),
     ), ())
     deadlines = (
-        ReviewDeadline("primary", date(2026, 10, 1), date(2026, 10, 4), True, 3, "3 days late"),
-        ReviewDeadline("scenario", date(2026, 10, 2), date(2026, 10, 5), True, 3, "3 days late"),
+        ReviewDeadline("primary", date(2026, 10, 1), date(2026, 10, 2).toordinal(), date(2026, 10, 5).toordinal(), True, 3, "3 days late"),
+        ReviewDeadline("scenario", date(2026, 10, 2), date(2026, 10, 3).toordinal(), date(2026, 10, 6).toordinal(), True, 3, "3 days late"),
     )
 
     result = _network_deadline_projection(network, deadlines)

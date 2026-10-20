@@ -62,7 +62,7 @@ def test_network_deadlines_close_dates_state_and_caption_inside_node_before_svg(
     rendered = _render(tmp_path, source=source, parts=parts)
     footers = _footers(rendered)
     assert {key: item.text for key, item in footers.items()} == {
-        "a": "2026-02-05 nine days late", "b": "2026-03-25",
+        "a": "2026-02-05 eight days late", "b": "2026-03-25",
         "g": "2026-03-10 ten days late", "h": "2026-03-05"}
     primitives = {item.scene_id: item for item in rendered.surface.primitives}
     assert {key.removeprefix("deadline-network-tick:") for key in primitives
