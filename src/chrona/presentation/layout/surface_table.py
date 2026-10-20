@@ -8,7 +8,7 @@ from typing import Any
 
 from chrona.presentation.layout.presentation import (
     TableColumnPlacement, column_inline_positions, header_group_cell_indent, table_cell_indent,
-    table_text_fits_column, table_text_measurer, place_table_columns,
+    table_text_fit_budget, table_text_fits_column, table_text_measurer, place_table_columns,
 )
 from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -314,11 +314,15 @@ def _resolve_table_text(content: str, available_inline: float, typography_role: 
         return content, "fit"
     treatment = tokens.text_treatment(typography_role)
     metrics = metric_for_role(tokens, typography_role, font_metrics)
+    text_advance = measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metrics,
+                                      letter_spacing=float(treatment.letter_spacing),
+                                      text_transform=treatment.transform,
+                                      numeric_spacing=treatment.numeric_spacing)
+    available_inline = table_text_fit_budget(available_inline, text_advance,
+                                            column_inline_size=column_inline_size,
+                                            indent=indent, inset=inset)
     if column_inline_size is not None and table_text_fits_column(
-            measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metrics,
-                               letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                               numeric_spacing=treatment.numeric_spacing),
-            column_inline_size, indent=indent, inset=inset):
+            text_advance, column_inline_size, indent=indent, inset=inset):
         return content, "fit"
     resolved = ellipsize_text(
         content, available_inline=available_inline, font_size=float(treatment.font_size),

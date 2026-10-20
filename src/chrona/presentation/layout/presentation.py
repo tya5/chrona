@@ -176,6 +176,21 @@ def table_text_fits_column(text_advance: float, column_inline_size: float, *,
     return table_text_required_inline(text_advance, indent=indent, inset=inset) <= column_inline_size
 
 
+def table_text_fit_budget(available_inline: float, text_advance: float, *,
+                          column_inline_size: float | None, indent: float = 0.0,
+                          inset: float = 0.0) -> float:
+    """Reconcile inverse fit space with the shared forward admission predicate."""
+    if column_inline_size is None:
+        return available_inline
+    if table_text_fits_column(text_advance, column_inline_size, indent=indent, inset=inset):
+        return max(available_inline, text_advance)
+    if available_inline >= text_advance:
+        # A genuinely short column can still look large enough after inverse
+        # subtraction rounds upward. Keep it below the full run by one float.
+        return math.nextafter(text_advance, -math.inf)
+    return available_inline
+
+
 def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
                           cells: tuple[TableCellContent, ...],
                           measure_text: Callable[[str, str, str], float], minimum_inline: float,

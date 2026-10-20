@@ -18,6 +18,8 @@ class FractionalMetrics:
     content_identity = "sha256:table-forward-fit"
 
     def width(self, text, size, **kwargs):
+        if text == "A B":
+            return 753.6933920895333
         if text in {"H", "X", "(X)"}:
             return {"H": 14.02754960192089, "X": 14.02754960192089,
                     "(X)": 14.02754960192089}[text]
@@ -108,3 +110,25 @@ def test_required_forbid_text_still_rejects_a_true_one_ulp_shortage():
                         role="text", wrap="forbid", tokens=tokens,
                         font_metrics=FractionalMetrics(), required=True,
                         column_inline_size=nextafter(required, float("-inf")), inset=14.0)
+
+
+def test_inverse_subtraction_that_rounds_up_cannot_admit_short_full_text():
+    advance = 753.6933920895333
+    indent, inset = 79.93001136936257, 8.314399955454803
+    column_width = 841.9378034143506  # one representable float below the shared forward requirement
+    inverse_available = column_width - indent - inset
+    assert inverse_available == advance
+    assert not table_text_fits_column(advance, column_width, indent=indent, inset=inset)
+
+    tokens = ThemeTokenView(theme())
+    resolved, overflow = _resolve_table_text(
+        "A B", inverse_available, "text", "ellipsize-with-source", tokens,
+        FractionalMetrics(), column_inline_size=column_width, indent=indent, inset=inset)
+    assert resolved != "A B"
+    assert overflow == "ellipsized"
+
+    wrapped = _fit_table_text("A B", available=inverse_available, role="text", wrap="allow",
+                              tokens=tokens, font_metrics=FractionalMetrics(),
+                              column_inline_size=column_width, indent=indent, inset=inset)
+    assert wrapped.lines == ("A", "B")
+    assert not wrapped.ellipsized
