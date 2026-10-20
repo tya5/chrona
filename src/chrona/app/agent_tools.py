@@ -5,7 +5,7 @@ Four read-only tools front the use cases an agent needs to plan and draw a sched
 Store, ``render_review`` and ``compare_baseline`` (#812); two tools front the revision-bound Store commands,
 ``check_command`` (read-only) and ``apply_command`` (writes, only when the caller passes ``allow_write``; #813).
 ``apply_authoring_command`` edits a guided workspace through the shared durable transaction port.
-Tool set ``chrona/agent-tools/v0.7``, Spec 66. A tool is a use case
+Tool set ``chrona/agent-tools/v0.8``, Spec 66. A tool is a use case
 with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
@@ -54,7 +54,7 @@ from chrona.usecases.failure_report import (
 from chrona.usecases.preset_library import DEFAULT_PRESET_ID, list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.7"
+TOOL_SET_VERSION = "chrona/agent-tools/v0.8"
 COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot", "revertActualCommand", "redoActualCommand"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
@@ -190,9 +190,13 @@ def _output_schema(properties: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def _command_input_schema() -> dict[str, Any]:
     return _input_schema({
-        "command": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Command Request "
-                    "document (chrona/command/v0.3 or v0.4, Spec 10), as chrona command-apply --command takes. The file must "
-                    "already exist inside the workspace."},
+        "command": {"description": "An inline Command Request object with version: chrona/command/v0.3 or "
+                    "version: chrona/command/v0.4, or a '/'-separated workspace path to that document. "
+                    "Both forms use the same validation and Store transaction as chrona command-apply --command. "
+                    "A command file must already exist inside the workspace.",
+                    "oneOf": [copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
+                              copy.deepcopy(schema_document("command-request-v0.3.schema.yaml")),
+                              copy.deepcopy(schema_document("command-request-v0.4.schema.yaml"))]},
         "storeConfig": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Store configuration "
                         f"(chrona/store-config/v0.1). Omitted means {DEFAULT_STORE_CONFIG}. Every Store root in it must lie "
                         "strictly inside the workspace."},
@@ -616,9 +620,11 @@ def _compare_baseline(call: _Call, arguments: dict[str, Any]) -> ToolResult:
 
 def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResult]:
     def handle(call: _Call, arguments: dict[str, Any]) -> ToolResult:
-        command_path = call.scope.resolve_path(arguments["command"], "/command")
+        supplied = arguments["command"]
+        command_path = call.scope.resolve_path(supplied, "/command") if isinstance(supplied, str) else None
         config_path = call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig")
-        command = parse_command_request(command_path.read_text(encoding="utf-8"))
+        command = parse_command_request(command_path.read_text(encoding="utf-8") if command_path is not None
+                                        else json.dumps(supplied, ensure_ascii=False))
         reader = _open_contained_store(call, config_path)
         result = call.scope.scrub_value(run_store_command(operation, command, reader, allowed_types=COMMAND_TYPES))
         if result["status"] == "accepted":
@@ -807,7 +813,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ),
     ToolSpec(
         "check_command", "Preview a Store command",
-        "Check a Command Request file in the workspace against its Store without writing anything: the same check "
+        "Check an inline Command Request object (version: chrona/command/v0.3 or version: chrona/command/v0.4), "
+        "or a contained command-file path, against its Store without writing anything: the same check "
         "as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch), captureSnapshot "
         "(a named baseline), revertActualCommand or redoActualCommand; any other type is rejected with "
         "E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a "
@@ -819,7 +826,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ),
     ToolSpec(
         "apply_command", "Apply a Store command",
-        "Apply a Command Request file in the workspace to its Store: the same work as chrona command-apply. It "
+        "Apply an inline Command Request object (version: chrona/command/v0.3 or version: chrona/command/v0.4), "
+        "or a contained command-file path, to its Store: the same work as chrona command-apply. It "
         "executes directly. There is no approval step and no confirm token, and the proposal and decision exchange of "
         "Spec 10 section 9.1 is not implemented. It writes only when the server was started with --allow-write; "
         "otherwise it is refused with E_MCP_WRITE_DISABLED and writes nothing. The request must be "

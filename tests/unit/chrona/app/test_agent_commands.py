@@ -33,6 +33,19 @@ def apply(work: StoreWorkspace, command: dict, **arguments):
     return call(work, "apply_command", {"command": work.write_command(f"{command['commandId']}.yaml", command), **arguments})
 
 
+def command_input(work: StoreWorkspace, command: dict, form: str):
+    """Return the public path or inline-object spelling of one command request."""
+    if form == "inline":
+        return command
+    if form == "path":
+        return work.write_command(f"{command['commandId']}.yaml", command)
+    raise AssertionError(f"unknown command input form: {form}")
+
+
+def apply_as(work: StoreWorkspace, command: dict, form: str, **arguments):
+    return call(work, "apply_command", {"command": command_input(work, command, form), **arguments})
+
+
 @pytest.fixture
 def work(tmp_path: Path) -> StoreWorkspace:
     return StoreWorkspace(tmp_path / "ws")
@@ -58,10 +71,67 @@ def test_check_then_apply_an_intake_returns_the_automation_result(work):
     assert work.tip()["counter"] == 2 and work.snapshot() != before
 
 
-def test_a_baseline_is_captured_by_name(work):
-    path = work.write_command("capture.yaml", work.capture("capture-1", "q2"))
+@pytest.mark.parametrize("form", ["path", "inline"])
+@pytest.mark.parametrize("version", ["chrona/command/v0.3", "chrona/command/v0.4"])
+def test_check_and_apply_accept_both_command_versions_in_both_forms(tmp_path, form, version):
+    work = StoreWorkspace(tmp_path / f"{form}-{version.rsplit('.', 1)[-1]}")
+    if version == "chrona/command/v0.3":
+        command = work.intake("intake", work.batch("batch"))
+    else:
+        applied = apply(work, work.intake("origin", work.batch("origin-batch")))
+        target = work.actual_reference(applied.structured["automationResult"]["resultTarget"]["revision"]["token"])
+        command = {
+            "version": version, "commandId": "revert", "type": "revertActualCommand",
+            "target": target, "baseRevision": target["revision"]["token"],
+            "payload": {"commandId": "origin"},
+        }
+    command["version"] = version
+    encoded = command_input(work, command, form)
+    before = work.snapshot()
 
-    result = call(work, "apply_command", {"command": path})
+    checked = call(work, "check_command", {"command": encoded})
+
+    assert checked.structured["status"] == "ok", checked.structured
+    assert checked.structured["automationResult"]["operation"] == "command-check"
+    assert work.snapshot() == before
+
+    applied_result = call(work, "apply_command", {"command": encoded})
+
+    assert applied_result.structured["status"] == "ok", applied_result.structured
+    assert applied_result.structured["automationResult"]["operation"] == "command-apply"
+    assert work.snapshot() != before
+
+
+@pytest.mark.parametrize("version", ["chrona/command/v0.3", "chrona/command/v0.4"])
+def test_path_and_inline_forms_have_the_same_store_and_automation_result(tmp_path, version):
+    path_work, inline_work = StoreWorkspace(tmp_path / "path"), StoreWorkspace(tmp_path / "inline")
+    if version == "chrona/command/v0.3":
+        path_command = path_work.intake("intake", path_work.batch("batch"))
+        inline_command = inline_work.intake("intake", inline_work.batch("batch"))
+    else:
+        path_origin = apply(path_work, path_work.intake("origin", path_work.batch("origin-batch")))
+        inline_origin = apply(inline_work, inline_work.intake("origin", inline_work.batch("origin-batch")))
+        path_target = path_work.actual_reference(path_origin.structured["automationResult"]["resultTarget"]["revision"]["token"])
+        inline_target = inline_work.actual_reference(inline_origin.structured["automationResult"]["resultTarget"]["revision"]["token"])
+        path_command = {"version": version, "commandId": "revert", "type": "revertActualCommand",
+                        "target": path_target, "baseRevision": path_target["revision"]["token"],
+                        "payload": {"commandId": "origin"}}
+        inline_command = {"version": version, "commandId": "revert", "type": "revertActualCommand",
+                          "target": inline_target, "baseRevision": inline_target["revision"]["token"],
+                          "payload": {"commandId": "origin"}}
+    path_result = apply_as(path_work, path_command, "path")
+    inline_result = apply_as(inline_work, inline_command, "inline")
+
+    assert path_result.structured["status"] == inline_result.structured["status"] == "ok"
+    assert path_result.structured["automationResult"] == inline_result.structured["automationResult"]
+    assert path_work.snapshot() == inline_work.snapshot()
+
+
+@pytest.mark.parametrize("form", ["path", "inline"])
+def test_a_baseline_is_captured_by_name(work, form):
+    command = work.capture("capture-1", "q2")
+
+    result = apply_as(work, command, form)
 
     assert result.structured["status"] == "ok"
     assert (work.store / "snapshots" / "q2.yaml").is_file()
@@ -136,9 +206,11 @@ def test_missing_history_points_to_the_history_payload_reference(work, kind, fie
 
 def test_with_the_write_flag_off_apply_is_refused_and_nothing_is_opened_or_written(work):
     path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+    inline = work.intake("inline-c1", work.batch("inline-b1"))
     before = work.snapshot()
 
-    for arguments in ({"command": path}, {"command": "does/not/exist.yaml"}, {"command": "../escape.yaml"}):
+    for arguments in ({"command": path}, {"command": inline}, {"command": "does/not/exist.yaml"},
+                      {"command": "../escape.yaml"}):
         result = call(work, "apply_command", arguments, allow_write=False)
         assert (result.structured["status"], CODES(result), result.is_error) == ("failed", ["E_MCP_WRITE_DISABLED"], True)
         assert "--allow-write" in result.structured["diagnostics"][0]["message"]
@@ -155,6 +227,16 @@ def test_malformed_arguments_are_a_protocol_error_even_with_the_flag_off(work):
     for allow in (False, True):
         with pytest.raises(InvalidArgumentsError):
             call_tool(WorkspaceScope(work.root), "apply_command", {}, allow_write=allow)
+
+
+@pytest.mark.parametrize("command", [
+    {"version": "chrona/command/v0.3", "commandId": "missing-fields"},
+    {"version": "chrona/command/v9.9", "commandId": "unknown-version"},
+    {"version": "chrona/command/v0.4", "commandId": "extra", "extra": True},
+])
+def test_invalid_inline_command_is_a_protocol_argument_error(work, command):
+    with pytest.raises(InvalidArgumentsError):
+        call_tool(WorkspaceScope(work.root), "check_command", {"command": command})
 
 
 @pytest.mark.parametrize("extra", ["allowMissingContentIdentity", "storeRoot", "output", "allowWrite", "confirm"])
@@ -179,6 +261,29 @@ def test_a_replayed_command_is_a_no_op_that_returns_the_first_result(work):
     assert work.snapshot() == after_first and work.tip()["counter"] == 2
 
 
+@pytest.mark.parametrize(("first_form", "replay_form"), [("path", "inline"), ("inline", "path")])
+@pytest.mark.parametrize("version", ["chrona/command/v0.3", "chrona/command/v0.4"])
+def test_a_path_and_inline_retry_share_the_same_replay_record(work, first_form, replay_form, version):
+    if version == "chrona/command/v0.3":
+        command = work.intake("cross-form-replay", work.batch("replay-batch"))
+    else:
+        origin = apply(work, work.intake("origin", work.batch("origin-batch")))
+        target = work.actual_reference(origin.structured["automationResult"]["resultTarget"]["revision"]["token"])
+        command = {"version": version, "commandId": "cross-form-replay", "type": "revertActualCommand",
+                   "target": target, "baseRevision": target["revision"]["token"],
+                   "payload": {"commandId": "origin"}}
+    first = apply_as(work, command, first_form)
+    after_first = work.snapshot()
+    tip_after_first = work.tip()["counter"]
+
+    replay = apply_as(work, command, replay_form)
+
+    assert replay.structured["status"] == "ok"
+    assert replay.structured["automationResult"]["replayed"] is True
+    assert replay.structured["automationResult"] == first.structured["automationResult"] | {"replayed": True}
+    assert work.snapshot() == after_first and work.tip()["counter"] == tip_after_first
+
+
 def test_the_same_command_id_with_another_request_is_rejected(work):
     apply(work, work.intake("c1", work.batch("b1")))
     other_command = work.intake("c1", work.batch("b2", finish="2026-02-02", key="43"))
@@ -189,6 +294,18 @@ def test_the_same_command_id_with_another_request_is_rejected(work):
     assert (other.structured["status"], CODES(other)) == ("rejected", ["E_COMMAND_ID_REUSE"])
     row = other.structured["diagnostics"][0]
     assert row["message"] == other.structured["automationResult"]["diagnostics"][0]["message"] != "E_COMMAND_ID_REUSE"
+    assert work.snapshot() == after_first
+
+
+@pytest.mark.parametrize(("first_form", "other_form"), [("path", "inline"), ("inline", "path")])
+def test_reused_id_with_a_different_request_is_rejected_across_forms(work, first_form, other_form):
+    apply_as(work, work.intake("same-id", work.batch("first-batch")), first_form)
+    other_command = work.intake("same-id", work.batch("other-batch", finish="2026-07-04", key="88"))
+    after_first = work.snapshot()
+    other = apply_as(work, other_command, other_form)
+
+    assert (other.structured["status"], CODES(other)) == ("rejected", ["E_COMMAND_ID_REUSE"])
+    assert other.structured["automationResult"]["status"] == "rejected"
     assert work.snapshot() == after_first
 
 
@@ -205,12 +322,26 @@ def test_a_base_revision_that_differs_from_the_target_reference_is_rejected(work
     assert work.snapshot() == before
 
 
-def test_a_command_built_on_a_revision_the_store_has_moved_past_is_rejected(work):
+@pytest.mark.parametrize("form", ["path", "inline"])
+def test_a_stale_base_is_rejected_identically_for_path_and_inline_forms(work, form):
+    command = work.intake(f"stale-{form}", work.batch(f"stale-batch-{form}"), base="actual:0:stale")
+    before = work.snapshot()
+
+    result = apply_as(work, command, form)
+
+    assert (result.structured["status"], CODES(result)) == ("rejected", ["E_AUTOMATION_BASE_REVISION"])
+    assert result.structured["diagnostics"][0]["sourceRef"] == "/baseRevision"
+    assert result.structured["automationResult"]["status"] == "rejected"
+    assert work.snapshot() == before
+
+
+@pytest.mark.parametrize("form", ["path", "inline"])
+def test_a_command_built_on_a_revision_the_store_has_moved_past_is_rejected(work, form):
     apply(work, work.intake("c1", work.batch("b1")))
     stale = work.intake("c2", work.batch("b2", finish="2026-03-03", key="44"))  # still the initial revision
     after_first = work.snapshot()
 
-    result = apply(work, stale)
+    result = apply_as(work, stale, form)
 
     assert (result.structured["status"], CODES(result)) == ("rejected", ["E_AUTOMATION_TARGET_CLOSURE"])
     row = result.structured["diagnostics"][0]
@@ -230,6 +361,19 @@ def test_an_existing_baseline_name_is_never_overwritten(work):
 
     assert (result.structured["status"], CODES(result)) == ("rejected", ["E_BASELINE_EXISTS"])
     assert (work.store / "snapshots" / "q2.yaml").read_bytes() == original
+    assert work.snapshot() == after_first
+
+
+@pytest.mark.parametrize("form", ["path", "inline"])
+def test_inline_and_path_commands_both_preserve_an_existing_baseline(work, form):
+    apply(work, work.capture("capture-first", "same-baseline"))
+    original = (work.store / "snapshots" / "same-baseline.yaml").read_bytes()
+    after_first = work.snapshot()
+
+    result = apply_as(work, work.capture("capture-second", "same-baseline"), form)
+
+    assert (result.structured["status"], CODES(result)) == ("rejected", ["E_BASELINE_EXISTS"])
+    assert (work.store / "snapshots" / "same-baseline.yaml").read_bytes() == original
     assert work.snapshot() == after_first
 
 
