@@ -78,6 +78,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
                                       max_bends: int = 4,
                                       max_detour_ratio: float = 2.0,
                                       relation_style: str = "orthogonal",
+                                      relation_corner_radius: float | None = None,
                                       canvas_bounds: Rect | None = None,
                                       theme_tokens: Any | None = None,
                                       route_bounds: Rect | None = None,
@@ -141,7 +142,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None
     route_region = _expand_route_bounds(route_bounds, placed) if route_bounds is not None else canvas
     relations, route_warnings = _route_edges(edges, placed, route_region, max_bends, max_detour_ratio,
                                             groups=groups, theme_tokens=theme_tokens, progress=progress,
-                                            relation_style=relation_style)
+                                            relation_style=relation_style,
+                                            relation_corner_radius=relation_corner_radius)
     group_shapes = _network_group_shapes(groups, theme_tokens)
     occupied = network_ink_bounds(placed, text, (*group_shapes, *deadline_shapes), relations, theme_tokens)
     canvas = _completed_canvas(canvas, None, occupied, ())
@@ -246,6 +248,9 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         max_bends=manifest.relation_max_bends,
         max_detour_ratio=manifest.relation_max_detour_ratio,
         relation_style=manifest.relation_style,
+        relation_corner_radius=(float(request.measured_sources.metric_values[
+            "timeline.relation.cornerRadius"])
+            if "timeline.relation.cornerRadius" in request.measured_sources.metric_values else None),
         canvas_bounds=manifest.viewport, theme_tokens=request.theme_tokens,
         route_bounds=route_bounds,
         progress=request.progress,
@@ -553,6 +558,7 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
                  groups: tuple[GroupPlacement, ...] = (),
                  theme_tokens: Any | None = None,
                  relation_style: str = "orthogonal",
+                 relation_corner_radius: float | None = None,
                  progress: RenderProgress | None = None) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
     obstacles = {node.object_id: node.bounds for node in nodes if not node.is_container}
     obstacles.update({group.group_id: group.header_bounds for group in groups})
@@ -561,7 +567,8 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
         obstacles=obstacles,
         subjects={node.object_id: DiagnosticSubject.project_object(node.object_id) for node in nodes},
         bounds=bounds, max_bends=max_bends, max_detour_ratio=max_detour_ratio,
-        theme_tokens=theme_tokens, progress=progress, relation_style=relation_style)
+        theme_tokens=theme_tokens, progress=progress, relation_style=relation_style,
+        relation_corner_radius=relation_corner_radius)
 
 
 def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...]) -> None:

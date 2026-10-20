@@ -21,6 +21,7 @@ from tests.unit.chrona.presentation.layout.test_relation_entry_profile import (
     ({"maxBends": 4, "maxDetourRatio": 2}, RelationRouteStyle.ORTHOGONAL),
     ({"maxBends": 4, "maxDetourRatio": 2, "style": "orthogonal"}, RelationRouteStyle.ORTHOGONAL),
     ({"maxBends": 4, "maxDetourRatio": 2, "style": "curved"}, RelationRouteStyle.CURVED),
+    ({"maxBends": 4, "maxDetourRatio": 2, "style": "metro"}, RelationRouteStyle.METRO),
 ])
 def test_profile_style_reaches_layout_manifest(routing, expected):
     assert solved(with_routing(routing)).relation_style is expected
@@ -49,7 +50,15 @@ def test_curved_style_is_recorded_only_when_nondefault():
     assert payload["relationRouting"]["style"] == "curved"
 
 
-@pytest.mark.parametrize("style", ["bezier", "ORTHOGONAL", 1, None, True])
+def test_metro_style_is_recorded_in_the_canonical_layout_manifest():
+    payload = json.loads(solved(with_routing(
+        {"maxBends": 4, "maxDetourRatio": 2, "style": "metro"}
+    )).canonical_bytes())
+
+    assert payload["relationRouting"]["style"] == "metro"
+
+
+@pytest.mark.parametrize("style", ["bezier", "tram", "ORTHOGONAL", 1, None, True])
 def test_unknown_profile_style_fails_at_its_exact_pointer(style):
     with pytest.raises(LayoutError) as error:
         resolve_layout_profile(
@@ -71,5 +80,6 @@ def test_layout_manifest_direct_construction_validates_the_closed_style_enum():
 
     assert LayoutManifest(**base).relation_style is RelationRouteStyle.ORTHOGONAL
     assert LayoutManifest(**base, relation_style="curved").relation_style is RelationRouteStyle.CURVED
+    assert LayoutManifest(**base, relation_style="metro").relation_style is RelationRouteStyle.METRO
     with pytest.raises(ValueError, match="E_LAYOUT_RELATION_STYLE_INVALID"):
         LayoutManifest(**base, relation_style="bezier")
