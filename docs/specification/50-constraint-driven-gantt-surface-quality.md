@@ -402,21 +402,33 @@ admission still apply. No previous-render state is needed.
 
 ### 3.3 Relations
 
-**Routing cost advisory (#1723).** Before expensive table-timeline Layout,
-estimate potential endpoint pairs from the selected relation facts and selected
-occurrence multiplicities (including folded points): sum source-occurrence count
-times target-occurrence count for each selected relation. This is a conservative
-workload indicator, not a timing guarantee or a Core dependency count. At 336 or
-more potential pairs, emit `W_LAYOUT_ROUTING_COST` with the surface and count.
-The initial advisory threshold is calibrated to the measured 240-task/336-relation
-case in issue1723, not to a test timeout or a rendering limit. It neither changes
-`relationRouting` nor omits, reorders or limits any relation. Zero selected
-relations produces no advisory. The message names `--relations none` and the
-Layout Profile's `relationRouting` as explicit user choices, never automatic
-changes. CLI prints the advisory on stderr before candidate Layout/routing even
-without progress enabled; the same diagnostic remains in completed Scene and
-CLI/MCP warning results. Its early observation uses stable selected facts,
-not an unaccepted count-closure trial's geometry or progress.
+**Routing cost advisory (#1723, #1792).** Before the first expensive
+table-timeline route selection, Layout prepares the ordered normal-stage
+connector-port-pair domains and sums their cardinalities. The exact prepared
+pairs are reused for routing; measurement must not change their order, policy,
+obstacles or budgets. At **2,370 potential port pairs**, emit
+`W_LAYOUT_ROUTING_COST` with `surface` and `potentialPortPairs`.
+This is a potential-work bound, not an admitted/evaluated-search count, timing
+guarantee or Core dependency count. Hints, blocked egress, first-fit versus best,
+search budgets and contingent recovery stages can change actual work; recovery
+pairs are not included or predicted in this normal-stage count.
+
+The threshold is the conservative lower bound of normal-stage pair domains in
+the measured trial9 150-task/234-relation target-b case: 2,865 domains over
+267 selections, minus at most 15 for each of 33 recovery selections. The
+240-task/336-relation default reference measured 3,330 normal domains per pass.
+Both expensive cases therefore qualify; this does not imply equal cost or set
+a rendering limit. The diagnostic does not omit, reorder or limit relations.
+Zero selected relations produces no advisory. Its message names
+`--relations none` and the Layout Profile's `relationRouting` as explicit user
+choices, never automatic changes.
+
+CLI observes the advisory once on stderr before expensive routing even without
+progress enabled; the same structured diagnostic remains in completed Scene
+and CLI/MCP results. Internal count-closure trials must not leak candidate
+progress or duplicate observations. This supersedes the occurrence-pair
+threshold of 336 and the requirement to observe before all Layout: completed
+marks are needed for the cheap port-domain preparation, not for route search.
 
 **Route region (#1683).** A relation corridor never rides the plot's own inline edge, where it reads as running into the
 table area. The routing region is the plot inset by 4 px on each inline side, except as far as a mark port already lies
