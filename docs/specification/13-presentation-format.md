@@ -145,6 +145,12 @@ multi-context conformance fixture must demonstrate this isolation using named co
 Recursive includes, glob imports, implicit directory scans, and merge-by-file-order are
 outside v0.1 of this format. They must not be inferred by an implementation.
 
+Deck-level Context authoring (Specification 40 section 7) expands an explicit
+manifest fragment before copying/pinning/closure. Its authoring keys are not
+Render Context fields or implicit inheritance edges. The result is an ordinary
+fully explicit Context; the immutable format and reference checks above remain
+unchanged. Existing explicit Context sources remain byte-preserving.
+
 ## 5. Reference semantics
 
 References are typed and explicit. The following v0.1 shape is Git-adapter-specific:
