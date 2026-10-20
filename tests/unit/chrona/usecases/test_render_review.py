@@ -302,9 +302,10 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
         for prefix in ("annotation-box", "annotation-text", "note-index"):
             assert any(item.scene_id == f"{prefix}:{identifier}"
                        for item in finish.surface.primitives)
-    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
-    assert any(item.scene_id == "annotation-summary:firmware-slip" for item in finish.surface.primitives)
-    assert not any(item.scene_id == "annotation-leader:firmware-slip" for item in finish.surface.primitives)
+    firmware_ids = {item.scene_id for item in finish.surface.primitives}
+    assert {"annotation-box:firmware-slip", "annotation-text:firmware-slip",
+            "note-index:firmware-slip", "annotation-leader:firmware-slip"} <= firmware_ids
+    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" not in scene
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
 

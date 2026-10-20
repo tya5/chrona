@@ -274,8 +274,20 @@ def test_draft_captures_prior_bytes_without_modifying_file(tmp_path, previous_by
     assert result.scene.provenance.mode == "draft"
     assert previous.read_bytes() == previous_bytes
     summary = next(item for item in result.info_diagnostics if isinstance(item, RelationHintSummary))
-    assert summary.payload()["actualSearch"] == 0
-    assert summary.payload()["accepted"] == summary.payload()["relationInstances"], summary.payload()
+    payload = summary.payload()
+    assert payload["relationInstances"] == 10, payload
+    assert payload["accepted"] == 8, payload
+    assert payload["invalidated"] == 2, payload
+    assert payload["accepted"] + payload["invalidated"] == payload["relationInstances"], payload
+    assert payload["actualSearch"] == 2, payload
+    invalidated = {item.relation_id: item for item in summary.receipts
+                   if item.disposition == "invalidated"}
+    assert set(invalidated) == {
+        "relation:relation:id:spec-pricing:spec:spec:pricing:pricing",
+        "relation:relation:id:pos-press:positioning:positioning:press:press",
+    }
+    assert {item.reason for item in invalidated.values()} == {"E_LAYOUT_ROUTE_THROUGH_MARK"}
+    assert all(item.searched for item in invalidated.values())
 
 
 def test_draft_refuses_wrong_project_input(tmp_path, previous_bytes):

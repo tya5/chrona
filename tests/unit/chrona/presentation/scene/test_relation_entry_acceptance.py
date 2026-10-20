@@ -185,7 +185,8 @@ def test_blocked_nearest_exit_is_skipped_before_the_clear_end_entry(monkeypatch)
     assert _bends(points) == 4
     assert points[-2][1] == points[-1][1] and points[-2][0] < points[-1][0]
     assert points[-1][0] - points[-2][0] >= 11
-    assert attempts[0].source_side == "below" and attempts[0].outcome == "no-route-found"
+    assert attempts[0].source_side == "below" and attempts[0].outcome == "egress-collision"
+    assert attempts[0].blocker_ids == ("planned:a:a",)
     accepted = next(item for item in attempts if item.outcome == "accepted")
     assert (accepted.source_side, accepted.outcome, accepted.bends) == ("end", "accepted", 4)
 
