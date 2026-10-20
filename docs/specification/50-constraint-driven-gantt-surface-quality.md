@@ -514,6 +514,17 @@ not a speculative reservation or rehearsal. The former `best` lane-corridor
 planner rehearsed name placement and routed first to make names yield; retire
 that planner as well, rather than retain another route-priority path.
 
+Before this actual placement, Layout completes the intrinsic mandatory
+terminal-lead footprint of each exposed temporal span port used by a relation.
+That finite stroke/terminal ink belongs to the mark's endpoint, not a selected
+route. The existing name ladder avoids it as it avoids the mark, retaining
+declared sides, association, bounds and overflow. Placement and routing MUST
+reuse one endpoint-geometry source for the mandatory lead and its painted
+extent; do not duplicate terminal arithmetic. Reserve only this intrinsic
+footprint, not a detour, graph corridor or provisional route. Multi-port point
+and body endpoints have no preselected exit and MUST NOT acquire such a
+reservation. This introduces no extra label pass or routing rehearsal.
+
 Completed name text and label-visual footprints are hard content in every
 normal and recovery domain. Carry their explicit obstacle identities through
 relaxation; a general Text `required` flag is not their identity. Route around
