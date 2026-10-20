@@ -6,6 +6,7 @@ Design authority: Spec06 §7.4/§8.5, Specs28/50/60/63, and the
 Design publication: `62416caed6986875f6b9b61bd09a1bdbe4da360c` and
 `9dcca78efae5dd902ef668741985ad6bc7abf9d2` (declared marker date visibility).
 Implementation: `1f5d053261dc0b93c920b23afde3800d1c2ad07c`.
+Warning-message integration: `b5eb2a40354ba0848933b42a68a811454cd6f89a`.
 
 | Literal acceptance criterion | Status | Evidence |
 | --- | --- | --- |
@@ -29,7 +30,7 @@ not claimed as resolved by this issue. PNG SHA-256:
 `44683cb9cd393884062d154f8aa4e4a38791302235e7e8bcc7637aabf932fa45`.
 The same render from a fresh non-editable wheel install produces byte-identical
 PNG and Scene. Wheel SHA-256:
-`434a14f07c773b491db77f63d997e6252187bab895804c1796fe345b6540d7bb`.
+`06c9eb5e840cd8f86b1aff06dd9829097a5147e9d57e7be43f23da3005f62e8b`.
 All four documented guide commands run successfully with its four declared
 files in the existing docs checker's empty wheel workspace.
 
@@ -40,6 +41,10 @@ checks pass. Full schema equivalence passes (five changed schema expansions,
 39 equal; the same five existing invalid L2/L3 documents), as does schema
 inventory; only the two intended wording keys are added and stale L1 records
 are pruned. No local full pytest/public-materializer sweep.
+The all-warning-code catalogue guard caught the missing human explanation
+before PR CI; the corrected warning/heading suite passes 22 tests. The final
+wheel's no-Actual trial render returns `ok` with a pointed subtitle/asOf warning
+and the instruction to supply the fact or remove the placeholder.
 
 Presentation owns the reference/wording/missing facts. Layout carries the typed
 estimated-delta witness and selects/measures the explanation from final visible
