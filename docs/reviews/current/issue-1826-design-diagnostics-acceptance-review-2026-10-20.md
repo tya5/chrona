@@ -29,6 +29,28 @@ The separate pre-existing block-stack/tall-swatch measurement defect is tracked
 as [#1830](https://github.com/tya5/chrona/issues/1830), not silently folded into
 this inline-row acceptance.
 
+Initial [CI39424696347](https://github.com/tya5/chrona/actions/runs/39424696347)
+passed conformance, MCP and newest-Python reproduction; pytest had37 failures:
+20 stale CLI warning expectations,7 overprint fixtures without canonical
+purpose metadata,7 materializer fixture checks and3 fixed Scene digests.
+Disposition is fixture migration, not a weaker product rule. The three old
+digests are recovered exactly by substituting only the prior vocabulary SHA;
+SVG digests stay unchanged. Ten test-only materializer Scene mirrors are
+regenerated: only the host identity and15 finite-coordinate legend residues
+change; all10 SVG mirrors, primitive IDs, labels, routes and diagnostics stay.
+Seven affected fixture materializer checks pass. A broader local materializer
+run also passed33 tests but found6 expected stale public-example checks because
+this source-only worktree does not apply CI's disposable snapshot; those public
+checks passed in the official snapshot. Public derived files remain unauthored.
+Focused corrections:20 CLI cases,7 overprint cases,3 digest cases and7 affected
+materializer cases pass. The18 golden stdout changes contain only the intended
+new legend warning; status, artifacts, exit/stderr and existing warnings stay.
+
+The [official initial artifact audit](https://github.com/tya5/chrona/pull/1831#issuecomment-6291305105)
+contains every slide's primitive/text/route/diagnostic count and actual SVG
+before/after visual review. Final test-only correction must reproduce the
+same public artifact tree; do not repeat the expensive local corpus sweep.
+
 Final PR head, batched official artifact changes, CI links and exact-main
 three-OS release evidence remain to be recorded. The issue stays open until
 those release gates pass.
