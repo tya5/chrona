@@ -277,6 +277,14 @@ def _entry_candidates(context: SurfaceRoutesContext, mark: MarkPlacement,
         candidates = connector_egress_candidates(mark, endpoint, toward, cluster,
             entry=entry, stub_length=minimum,
             stub_free=stub_free, explicit_neighbors=physical_host_neighbors(mark, marks, endpoint))
+    # A finish/end dependency that moves forward in time cannot enter a point
+    # target from its right edge: that draws the arrow back toward earlier time.
+    # Keep this admission at the shared candidate boundary so preparation,
+    # hints, and each recovery domain use the same finite target ports.
+    if (mark.mark_shape == "point" and relation.source_endpoint in {"end", "finish"}
+            and endpoint in {"at", "start"} and mark.end_port is not None
+            and toward[0] < mark.end_port[0]):
+        candidates = tuple(item for item in candidates if item.side != "end")
     return candidates
 
 
