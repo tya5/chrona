@@ -252,3 +252,20 @@ chrona render examples/typed-fields/plan.yaml --preset wallboard-dark --style ex
 ```
 
 Only the `platform` bars take their `risk` colour; the legend entries read `Platform risk: low`.
+
+## 5. A field that points at another thing (objectReference)
+
+Declare the field with `type: objectReference` (and `targetProfiles: [<profile>]`, `cardinality: many` for a list).
+The targets are `entities` of the Project (a profile that `extends: entity`) or other `objects`; an object stores the
+target **id** under `fields` (`deliverable: del-api`, `reviewers: [aiko, ben]`), never the title. An unknown id or a
+target outside `targetProfiles` is `E_PROFILE_FIELD_TYPE` at the field pointer. A table column with
+`source: {field: deliverable}` shows the target's title (its id when untitled; a `many` field joins the titles with `, `).
+The repository guide "Point a field at another thing: objectReference" has the runnable files.
+
+## 6. Many slides from one manifest (contextDefaults)
+
+A deck manifest names the shared Context members once under `contextDefaults` and gives each slide
+`contextOverrides: {id, body}` plus a required `expectedSvg`; `chrona materialize <manifest> --slide <id> --output <dir>
+--write` writes the evidence. A baseline is an `inputs.snapshot` that is a `snapshot-ref` **file** whose `body.project`
+references the baseline Project, never the Project itself. A reference `id` must equal the referenced file's own `id`.
+The repository guide "A deck of slides" has the runnable files.
