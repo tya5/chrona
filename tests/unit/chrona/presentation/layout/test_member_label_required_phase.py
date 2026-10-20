@@ -5,7 +5,9 @@ from types import SimpleNamespace
 
 from chrona.presentation.layout.labels import CollisionDomain, LabelRect, LabelRequest
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
+)
 from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, SurfaceMemberLabelRequests, build_member_label_requests,
     place_member_labels,
@@ -162,6 +164,30 @@ def _placement_context(*, slot_width=200):
         lambda _text: "timeline", (), (), (), (),
         ScalePlacement("surface", "scale", date(2026, 1, 1), date(2026, 2, 1), 0, 200, 0, 1), (),
         (0, 0, 200, 100), None)
+
+
+def test_member_name_avoids_intrinsic_endpoint_ink_without_reserving_a_route():
+    context = _placement_context()
+    request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
+        ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
+        "suppress", semantic_id="memberLabel")
+    original = place_member_labels(context, (request,), SurfaceObstacleIndex()).text[0]
+    bounds = original.bounds
+    footprint = SurfaceObstacle("intrinsic-endpoint:a:end", "mark", "timeline",
+        ObstacleRect(float(bounds.inline), float(bounds.block),
+                     float(bounds.inline + bounds.inline_size),
+                     float(bounds.block + bounds.block_size)))
+    context = replace(context, intrinsic_endpoint_footprints=(footprint,))
+    index = SurfaceObstacleIndex()
+
+    batch = place_member_labels(context, (request,), index)
+
+    placed, = batch.text
+    assert placed.overflow != "suppressed" and placed.bounds != original.bounds
+    ink = next(item.geometry for item in index.all()
+               if item.placement_id == f"label-footprint:{request.placement_id}")
+    assert not obstacles_intersect(ink, footprint.geometry)
+    assert not index.has(footprint.placement_id)
 
 
 def test_generic_required_text_translates_diagnose_into_bounded_refusal_not_suppression():

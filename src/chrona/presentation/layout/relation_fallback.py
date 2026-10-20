@@ -62,11 +62,13 @@ def paired_stub_geometry(pair: Pair, *, source_run: float, target_run: float) ->
     return PairedStubGeometry(outgoing, incoming)
 
 
-def complete_fixed_connector(pairs: tuple[Pair, ...], *, source_run: float, target_run: float,
+def complete_fixed_connector(pairs: tuple[Pair, ...], *,
+                             lead_runs: Callable[[ConnectorEgress, ConnectorEgress], tuple[float, float]],
                              prepare: Callable[[Path, ConnectorEgress, ConnectorEgress], Path | None],
                              accept: Callable[[Path], bool]) -> FixedConnectorSelection | None:
     """Complete the first admissible fixed corridor; caller owns host/terminal checks."""
     for pair in first_fit_port_pairs(pairs):
+        source_run, target_run = lead_runs(*pair)
         for path in fixed_connector_candidates(pair, source_run=source_run, target_run=target_run):
             completed = prepare(path, *pair)
             if completed is not None and accept(completed):

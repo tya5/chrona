@@ -94,3 +94,54 @@ def test_normal_candidate_pairs_ignore_later_route_and_port_obstacles(monkeypatc
         ObstacleRect(0, 0, 1, 1)))
     after = prepare(context)
     assert tuple(item.port_pairs for entry in after.entries for item in entry.occurrences) == before
+
+
+def test_intrinsic_endpoint_footprints_use_admitted_spans_without_building_route_ports(monkeypatch):
+    contexts = []
+    prepare = surface_routes.prepare_normal_relation_routes
+
+    def capture(context, **kwargs):
+        contexts.append(context)
+        return prepare(context, **kwargs)
+
+    monkeypatch.setattr(surface_routes, "prepare_normal_relation_routes", capture)
+    compose_surface_layout(_surviving_relation_request())
+    context = contexts[-1]
+
+    def unexpected(*_args, **_kwargs):
+        raise AssertionError("intrinsic footprints must not build finite route candidates")
+
+    monkeypatch.setattr(surface_routes, "connector_egress_candidates", unexpected)
+    monkeypatch.setattr(surface_routes, "_entry_candidates", unexpected)
+    footprints = surface_routes.intrinsic_relation_endpoint_footprints(context)
+    assert footprints
+    assert all(item.obstacle_class == "mark" and item.placement_id.startswith("intrinsic-endpoint:")
+               and isinstance(item.geometry, (ObstacleRect, ObstacleSegment)) for item in footprints)
+    assert len({item.placement_id for item in footprints}) == len(footprints)
+
+    point_context = replace(context, marks=tuple(replace(mark, mark_shape="point")
+                                                 for mark in context.marks))
+    assert surface_routes.intrinsic_relation_endpoint_footprints(point_context) == ()
+    open_span_context = replace(context, marks=tuple(replace(mark, mark_shape="open-span")
+                                                      for mark in context.marks))
+    assert surface_routes.intrinsic_relation_endpoint_footprints(open_span_context)
+    body_context = replace(context, marks=tuple(replace(mark, mark_shape="body")
+                                                for mark in context.marks))
+    assert surface_routes.intrinsic_relation_endpoint_footprints(body_context) == ()
+
+
+def test_intrinsic_endpoint_footprints_omit_window_absent_relation_occurrences(monkeypatch):
+    contexts = []
+    prepare = surface_routes.prepare_normal_relation_routes
+
+    def capture(context, **kwargs):
+        contexts.append(context)
+        return prepare(context, **kwargs)
+
+    monkeypatch.setattr(surface_routes, "prepare_normal_relation_routes", capture)
+    request = _surviving_relation_request()
+    outside = _relation("outside", "object-1", "object-4")
+    request = replace(request, surface_content=replace(request.surface_content, relations=(outside,)))
+    compose_surface_layout(request)
+    footprints = surface_routes.intrinsic_relation_endpoint_footprints(contexts[-1])
+    assert footprints == ()

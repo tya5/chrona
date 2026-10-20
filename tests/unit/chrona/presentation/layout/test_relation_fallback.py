@@ -40,7 +40,7 @@ def test_preparation_rejection_tries_next_fixed_candidate_without_graph_search()
     def prepare(path, source, target):
         tried.append(path)
         return None if len(tried) == 1 else path
-    result = complete_fixed_connector((PAIR,), source_run=6., target_run=9.,
+    result = complete_fixed_connector((PAIR,), lead_runs=lambda _source, _target: (6., 9.),
         prepare=prepare, accept=lambda points: not route_self_overlaps(points))
     assert result is not None and result.points == tried[-1] and len(tried) == 2
 
@@ -50,9 +50,31 @@ def test_uncompletable_host_egress_returns_none_for_paired_stub_completion():
     def reject(path, source, target):
         calls.append(path)
         return None
-    assert complete_fixed_connector((PAIR,), source_run=6., target_run=9.,
+    assert complete_fixed_connector((PAIR,), lead_runs=lambda _source, _target: (6., 9.),
         prepare=reject, accept=lambda points: True) is None
     assert 1 <= len(calls) <= 6
+
+
+def test_fixed_recovery_uses_shared_residual_leads_not_a_second_full_terminal_reserve():
+    from chrona.presentation.layout.relation_endpoint_geometry import endpoint_lead_run
+    from chrona.presentation.layout.relation_terminals import marker_geometry
+
+    marker = marker_geometry({"shape": "circle", "headLength": 5, "headWidth": 5})
+    pair = (replace(PAIR[0], exposed_port=(4., 0.)), PAIR[1])
+    observed = []
+    def leads(source, target):
+        result = (endpoint_lead_run(source.exposed_port, source.semantic_port, 1, marker),
+                  endpoint_lead_run(target.exposed_port, target.semantic_port, 1, marker))
+        observed.append(result)
+        return result
+
+    completed = complete_fixed_connector((pair,), lead_runs=leads,
+        prepare=lambda path, _source, _target: path, accept=lambda _path: True)
+
+    assert observed == [(0., 3.5)]
+    assert completed is not None
+    assert completed.points[1] == (4., 0.)  # the completed host corridor already exceeds 3.5
+    assert completed.points[-2] == (96.5, 20.)
 
 
 @pytest.mark.parametrize("run", (-1., float("nan"), float("inf"), True, "1"))

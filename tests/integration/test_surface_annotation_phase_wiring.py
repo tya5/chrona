@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout import surface_annotations, surface_composer, surface_route_label_plan
+from chrona.presentation.layout.obstacles import ObstacleRect, obstacles_intersect
 from tests.support import synthetic_review as sr
 
 
@@ -36,7 +37,19 @@ def test_annotations_follow_single_content_first_route_plan(tmp_path, monkeypatc
     def labels(context, requests, index):
         names.extend(item.placement_id for item in requests if item.semantic_id == "memberLabel")
         events.append("pre-labels")
-        return original_names(context, requests, index)
+        footprints = context.intrinsic_endpoint_footprints
+        assert footprints
+        seen["intrinsic_ids"] = {item.placement_id for item in footprints}
+        batch = original_names(context, requests, index)
+        for item in batch.text:
+            if item.semantic_id != "memberLabel" or item.overflow == "suppressed":
+                continue
+            bounds = item.bounds
+            ink = ObstacleRect(float(bounds.inline), float(bounds.block),
+                               float(bounds.inline + bounds.inline_size),
+                               float(bounds.block + bounds.block_size))
+            assert not any(obstacles_intersect(ink, footprint.geometry) for footprint in footprints)
+        return batch
 
     def routes(context):
         events.append("routes")
@@ -45,6 +58,7 @@ def test_annotations_follow_single_content_first_route_plan(tmp_path, monkeypatc
         assert {item.placement_id for item in context.text if item.semantic_id == "memberLabel"} == set(names)
         seen["index"] = context.obstacles
         seen["before_routes"] = {item.placement_id for item in context.obstacles.all()}
+        assert seen["intrinsic_ids"].isdisjoint(seen["before_routes"])
         batch = original_routes(context)
         seen["routes"] = {item.relation_id: item.points for item in batch.relations}
         return batch

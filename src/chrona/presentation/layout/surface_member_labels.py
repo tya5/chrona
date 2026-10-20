@@ -62,6 +62,7 @@ class SurfaceMemberLabelContext:
     as_of_below_plot: bool = False
     rows_bottom: float = 0.0
     as_of_chip_measurement: MeasuredLabelChip | None = None
+    intrinsic_endpoint_footprints: tuple[SurfaceObstacle, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -501,6 +502,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
     for label_request in requests:
         placement_obstacles = obstacles.copy(geometry_overrides=paint_footprints,
             excluded_ids=("as-of",) if label_request.semantic_id == "memberLabel" else ())
+        if label_request.semantic_id == "memberLabel":
+            placement_obstacles.extend(context.intrinsic_endpoint_footprints)
         slot = context.by_source.get(label_request.collision_domain.slot)
         host = marks.get(label_request.inside_host_obstacle_id or "")
         associated_member = (label_request.semantic_id == "memberLabel" and

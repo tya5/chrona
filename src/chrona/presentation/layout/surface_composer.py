@@ -12,7 +12,9 @@ from chrona.presentation.layout.surface_visuals import (place_mark_visuals, plac
 from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests, place_member_labels,
 )
-from chrona.presentation.layout.surface_routes import SurfaceRoutesContext
+from chrona.presentation.layout.surface_routes import (
+    SurfaceRoutesContext, intrinsic_relation_endpoint_footprints,
+)
 from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
 )
@@ -226,6 +228,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     # routes and annotations. Background bands deliberately do not enter it.
     surface_obstacles = seed_surface_obstacles(marks=marks, text=text, shapes=shapes,
                                               theme_tokens=request.theme_tokens)
+    route_context = SurfaceRoutesContext(
+        request, projection, review_rows, tuple(rows), tuple(groups), tuple(marks),
+        timeline_bounds, layout_manifest, metric_values, tuple(text), surface_obstacles,
+        _bounds(base.plot), temporal_endpoints=mark_batch.temporal_endpoints)
+    member_label_context = replace(member_label_context,
+        intrinsic_endpoint_footprints=intrinsic_relation_endpoint_footprints(route_context))
 
     timeline_rect = LabelRect(*timeline_bounds)
 
@@ -253,9 +261,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
         member_label_context, post_route, tuple(text), surface_obstacles,
-        lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints,
+        lambda index, texts: replace(route_context, text=texts, obstacles=index,
             required_label_obstacle_ids=required_label_obstacle_ids)))
 
     # Resolve fixed side content and final slots once, before annotation

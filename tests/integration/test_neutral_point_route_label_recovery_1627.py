@@ -3,7 +3,7 @@
 Synthetic identities prevent project-name branching; the iOS label is generic,
 while other labels preserve measured mixed-language geometry. The fixture keeps
 the full relation inventory and checks permitted point-terminal approaches;
-optional names may be omitted only with measured route-contact evidence.
+member names precede routes and remain hard content through recovery.
 """
 from __future__ import annotations
 
@@ -152,9 +152,10 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_memb
     assert label_footprints
     route_context = context.routes_for(options.obstacles, context.base_text)
     for route in actual_routes.values():
+        assert route.stroke_width is not None and route.stroke_width > 0
         collisions = tuple(footprint.placement_id for footprint in label_footprints
             if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance)
-                   for segment in (ObstacleSegment(start, end)
+                   for segment in (ObstacleSegment(start, end, float(route.stroke_width))
                                    for start, end in zip(route.points, route.points[1:]))))
         stage = tuple(item.stage.value for item in options.routes.resolution_info
                       if getattr(item, "relation_id", None) == route.relation_id)
