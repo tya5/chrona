@@ -1,0 +1,41 @@
+version: chrona/authoring-workspace/v0.1
+kind: authoring-workspace
+id: launch-workspace
+body:
+  project:
+    id: launch
+    title: 公開計画
+    tasks:
+    - id: design
+      title: 設計
+      planned:
+        start: '2026-12-14'
+        finish: '2026-12-25'
+    - id: build
+      title: 実装
+      planned:
+        start: '2026-12-28'
+        finish: '2027-01-22'
+    - id: test
+      title: 試験
+      planned:
+        start: '2027-01-25'
+        finish: '2027-02-05'
+    - id: docs
+      title: 文書
+      planned:
+        start: '2027-01-11'
+        finish: '2027-01-29'
+  presentation:
+    mode: guided
+    binding:
+      preset:
+        id: chrona-builtin-target-b
+        version: '1'
+        path: preset/preset.yaml
+  actuals:
+  - taskId: design
+    actual:
+      start: '2026-12-14'
+      finish: '2026-12-28'
+    progress: 1

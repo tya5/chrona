@@ -1,0 +1,23 @@
+version: chrona/theme/v0.16
+kind: theme
+id: executive-risk
+body:
+  extends:
+    id: chrona-builtin-executive-light
+    path: looks/executive-light/theme.yaml
+  roles:
+    subtitle:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+  colorBindings:
+    subtitle.fill: textMuted
+  colorScales:
+    series:
+      slots: {low: risk-low, medium: risk-medium, high: risk-high}

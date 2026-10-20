@@ -1,0 +1,2465 @@
+{
+  "toolSet": "chrona/agent-tools/v0.7",
+  "tools": [
+    {
+      "name": "validate_project",
+      "title": "Validate a Project",
+      "description": "Validate a Project YAML file in the workspace against the Project schema and the Core rules. Returns status 'ok' with no diagnostics, or status 'rejected' with typed diagnostics (code, sourceRef, message). A rejected plan is a normal result, not a tool error. A dependency cycle is rejected here, naming the objects on it. This tool computes no dates, so a fixed date that contradicts its dependencies is found only by schedule_project: run it to read dates.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "project"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "projectIdentity": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "schedule_project",
+      "title": "Compute a Project's schedule",
+      "description": "Compute the schedule of a Project YAML file in the workspace. On 'ok' returns placements per object id ({start, end} or {at}, ISO dates, end exclusive) and the analysis (critical object ids on zero-float driving paths to project finish; totalFloat records {value, unit, calendar}, with calendar-days/null or working-days/effective object calendar id, including Project fallback). A fixed date that contradicts its dependencies, or a bound that cannot be met, is rejected here and not by validate_project (a dependency cycle is rejected by both). 'warnings' lists W_DEADLINE for each object planned to finish after its deadline (the plan is still scheduled; the deadline is a promise, not a bound). Read dates from this result; never compute a date by hand.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "project"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "placements": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "end": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "analysis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criticalObjectIds",
+              "totalFloat"
+            ],
+            "properties": {
+              "criticalObjectIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "totalFloat": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "value",
+                    "unit",
+                    "calendar"
+                  ],
+                  "properties": {
+                    "value": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "unit": {
+                      "enum": [
+                        "calendar-days",
+                        "working-days"
+                      ]
+                    },
+                    "calendar": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "unit": {
+                          "const": "calendar-days"
+                        },
+                        "calendar": {
+                          "type": "null"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "unit": {
+                          "const": "working-days"
+                        },
+                        "calendar": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            }
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "render_draft",
+      "title": "Render a draft picture of a Project",
+      "description": "Render a Project YAML file in the workspace to a deterministic draft picture. By default the result carries a PNG preview image (inline 'image'); inline 'svg' carries the SVG text; 'none' carries only the structured result. 'format' chooses the artifact that contentIdentity and byteLength describe. 'preset' is a builtin id from list_presets or a workspace .yaml path; omitted means chrona-default-draft. The tool writes no file, and it renders the file you name, not a saved Render Context. PNG needs the render extra (pngAvailable says whether it is installed). Read 'status' and 'warnings', not only isError: a rejected plan is a result, and a warning means something was clipped, suppressed or substituted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "storeConfig": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Store configuration (chrona/store-config/v0.1). Omitted means .chrona/store.yaml. Every Store root in it must lie strictly inside the workspace, and its integrity setting applies: a tool input cannot lower it."
+          },
+          "actual": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "Actual Set YAML to draw progress over the plan."
+          },
+          "snapshot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "Optional baseline Project YAML, scoped to this workspace, equivalent to --snapshot."
+          },
+          "forecast": {
+            "type": "boolean",
+            "default": false,
+            "description": "Opt in to forecast unfinished work from the supplied Actual Set and its asOf."
+          },
+          "preset": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A builtin preset id (see list_presets) or a workspace path ending .yaml or .yml."
+          },
+          "view": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "style": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "theme": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "scheme": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "layout": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "viewport": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$",
+            "default": "1600xauto"
+          },
+          "locale": {
+            "enum": [
+              "en-US",
+              "ja-JP"
+            ],
+            "default": "en-US"
+          },
+          "format": {
+            "enum": [
+              "svg",
+              "png"
+            ],
+            "default": "svg"
+          },
+          "inline": {
+            "enum": [
+              "none",
+              "image",
+              "svg"
+            ],
+            "default": "image"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "project"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "format": {
+            "enum": [
+              "svg",
+              "png"
+            ]
+          },
+          "contentIdentity": {
+            "$ref": "#/$defs/sha256"
+          },
+          "byteLength": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pngAvailable": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            }
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_presets",
+      "title": "List builtin presets",
+      "description": "List the builtin preset ids that render_draft accepts as 'preset', with the gallery set that shows each (when one does), and the preset used when none is named.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "presets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "gallerySet": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "type": "string"
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "render_review",
+      "title": "Render pinned evidence from a Store",
+      "description": "Render an immutable Render Context from a Store: the same render as chrona render-review with --store-config, not a draft. 'contextReference' is a workspace path to the Context's resource reference; 'storeConfig' is a workspace path to the Store configuration (default .chrona/store.yaml) and every Store root in it must lie inside the workspace. The Context fixes its own format and viewport, so none is an argument. Every reference is verified against its pinned contentIdentity, and the Store's integrity setting applies; no argument lowers it. Returns the target 'format', the artifact's contentIdentity and byteLength, 'warnings', and with inline 'artifact' the SVG text or PNG image. The tool is read-only, works without --allow-write, and writes no file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contextReference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to the immutable Render Context to render, as chrona render-review --context-reference takes: a YAML resource reference (id, kind, store, address, revision, contentIdentity). The file must already exist inside the workspace."
+          },
+          "storeConfig": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Store configuration (chrona/store-config/v0.1). Omitted means .chrona/store.yaml. Every Store root in it must lie strictly inside the workspace, and its integrity setting applies: a tool input cannot lower it."
+          },
+          "inline": {
+            "enum": [
+              "none",
+              "artifact"
+            ],
+            "default": "artifact",
+            "description": "'artifact' carries an SVG target as SVG text and a PNG target as an image; any other target, or 'none', carries only the structured result."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "contextReference"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "format": {
+            "enum": [
+              "svg",
+              "png",
+              "pdf",
+              "typst",
+              "tikz"
+            ]
+          },
+          "contentIdentity": {
+            "$ref": "#/$defs/sha256"
+          },
+          "byteLength": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "inlined": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            }
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "compare_baseline",
+      "title": "Compare a named baseline with a candidate",
+      "description": "Compare a named baseline (a snapshot-ref) with a candidate Project in a Store: the same comparison as chrona baseline-compare. Both references are workspace paths; 'storeConfig' is a workspace path to the Store configuration (default .chrona/store.yaml) and every Store root in it must lie inside the workspace. Both closures are verified against their pinned contentIdentity; no argument lowers the Store's integrity. Returns status 'ok' with automationResult (the Automation Result the command line writes: the changed objects and both schedules), or 'rejected' with typed diagnostics. The tool is read-only, works without --allow-write, and writes no file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "baselineReference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to the named baseline (a snapshot-ref), as chrona baseline-compare --baseline-reference takes: a YAML resource reference (id, kind, store, address, revision, contentIdentity). The file must already exist inside the workspace."
+          },
+          "candidateReference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to the candidate Project, as chrona baseline-compare --candidate-reference takes: a YAML resource reference (id, kind, store, address, revision, contentIdentity). The file must already exist inside the workspace."
+          },
+          "storeConfig": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Store configuration (chrona/store-config/v0.1). Omitted means .chrona/store.yaml. Every Store root in it must lie strictly inside the workspace, and its integrity setting applies: a tool input cannot lower it."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "baselineReference",
+          "candidateReference"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "automationResult": {
+            "type": "object",
+            "description": "The Automation Result (chrona/automation-result/v0.2) exactly as chrona baseline-compare writes it to --result: operation baseline-compare, status accepted or rejected, requestContentIdentity, inputs, diagnostics and, when accepted, comparison (changes, beforeSchedule, afterSchedule). Present when the comparison produced one."
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "check_command",
+      "title": "Preview a Store command",
+      "description": "Check a Command Request file in the workspace against its Store without writing anything: the same check as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch), captureSnapshot (a named baseline), revertActualCommand or redoActualCommand; any other type is rejected with E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a workspace path to a Store configuration and defaults to .chrona/store.yaml; every Store root in it must lie inside the workspace. Returns status 'ok' with automationResult (the Automation Result the command line writes), or 'rejected' with typed diagnostics, for example a stale baseRevision. A preview is not a precondition of apply_command, and it works whether or not writes are enabled.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Command Request document (chrona/command/v0.3 or v0.4, Spec 10), as chrona command-apply --command takes. The file must already exist inside the workspace."
+          },
+          "storeConfig": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Store configuration (chrona/store-config/v0.1). Omitted means .chrona/store.yaml. Every Store root in it must lie strictly inside the workspace."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "command"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "automationResult": {
+            "type": "object",
+            "description": "The Automation Result (chrona/automation-result/v0.2) exactly as the command line writes it to --result: operation, status accepted or rejected, requestContentIdentity, inputs, diagnostics, resultTarget when accepted, replayed true for a replay. Present when the engine produced one."
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "apply_command",
+      "title": "Apply a Store command",
+      "description": "Apply a Command Request file in the workspace to its Store: the same work as chrona command-apply. It executes directly. There is no approval step and no confirm token, and the proposal and decision exchange of Spec 10 section 9.1 is not implemented. It writes only when the server was started with --allow-write; otherwise it is refused with E_MCP_WRITE_DISABLED and writes nothing. The request must be applyActualIntakeBatch, captureSnapshot, revertActualCommand or redoActualCommand. Safeguards that are not approvals: a stale baseRevision is rejected (compare-and-set), the same commandId with the same request is a no-op that returns the first result (replayed: true), a baseline name or an observation with different facts is never overwritten, and every write is a new immutable Store revision, so an earlier one can be inspected and restored. Store roots must lie inside the workspace. Returns status 'ok' with automationResult, or 'rejected' with typed diagnostics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Command Request document (chrona/command/v0.3 or v0.4, Spec 10), as chrona command-apply --command takes. The file must already exist inside the workspace."
+          },
+          "storeConfig": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated workspace path to a Store configuration (chrona/store-config/v0.1). Omitted means .chrona/store.yaml. Every Store root in it must lie strictly inside the workspace."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "command"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "automationResult": {
+            "type": "object",
+            "description": "The Automation Result (chrona/automation-result/v0.2) exactly as the command line writes it to --result: operation, status accepted or rejected, requestContentIdentity, inputs, diagnostics, resultTarget when accepted, replayed true for a replay. Present when the engine produced one."
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "apply_authoring_command",
+      "title": "Apply a guided workspace command",
+      "description": "Apply an inline authoring-command/v0.1 object or contained YAML command file to a guided workspace. A request has version, commandId, type, target {kind:authoring-workspace,path:<filename>}, baseRevision and payload. Types/payloads: setWorkspaceTask {task:{id,title,planned:{start,finish}}}; setWorkspaceActual {actual:{taskId,actual:{start,finish},progress?}}; selectPresentationPreset {preset:{id,version,path}}; setPresentationOverride {overrides:{view?,theme?}}; materializePresentationPreset {directory?}. Get baseRevision from create_workspace/workspace_revision or the last authoringResult.resultRevision. Inverse edits revert source changes at a new revision. All paths stay inside the server workspace. Requires --allow-write; no approval step. A stale baseRevision is rejected without writing. A durable receipt returns the exact first accepted result for the same commandId and request; reusing that ID with another request is rejected. Returns authoringResult, with status ok when accepted or rejected with typed diagnostics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "command": {
+            "description": "Inline authoring-command/v0.1 request, or a contained command-file path.",
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512,
+                "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+              },
+              {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "$id": "chrona/authoring-command-v0.1",
+                "title": "Chrona guided authoring command v0.1",
+                "description": "One optimistic-concurrency command for a guided authoring workspace.",
+                "type": "object",
+                "required": [
+                  "version",
+                  "commandId",
+                  "type",
+                  "target",
+                  "baseRevision",
+                  "payload"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "version": {
+                    "description": "This authoring-command contract version.",
+                    "const": "chrona/authoring-command/v0.1"
+                  },
+                  "commandId": {
+                    "description": "Stable identifier for this command.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "description": "Operation to apply to the workspace.",
+                    "enum": [
+                      "setWorkspaceTask",
+                      "setWorkspaceActual",
+                      "selectPresentationPreset",
+                      "setPresentationOverride",
+                      "materializePresentationPreset"
+                    ]
+                  },
+                  "target": {
+                    "type": "object",
+                    "description": "Guided authoring workspace selected by the command.",
+                    "required": [
+                      "kind",
+                      "path"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "description": "The only command target resource kind.",
+                        "const": "authoring-workspace"
+                      },
+                      "path": {
+                        "description": "Workspace file name in the configured store: one name, no path separator or control character.",
+                        "$ref": "urn:chrona:common-v0.1#/$defs/fileName"
+                      }
+                    }
+                  },
+                  "baseRevision": {
+                    "description": "SHA-256 identity required for optimistic concurrency.",
+                    "examples": [
+                      "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                    ],
+                    "$ref": "urn:chrona:common-v0.1#/$defs/sha256Identity"
+                  },
+                  "payload": {
+                    "description": "Operation-specific command content.",
+                    "type": "object"
+                  }
+                },
+                "allOf": [
+                  {
+                    "description": "Task-edit commands require one complete compact task payload.",
+                    "examples": [
+                      {}
+                    ],
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "setWorkspaceTask"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "payload": {
+                          "type": "object",
+                          "required": [
+                            "task"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "task": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "title",
+                                "planned"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "planned": {
+                                  "type": "object",
+                                  "required": [
+                                    "start",
+                                    "finish"
+                                  ],
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "start": {
+                                      "$ref": "urn:chrona:common-v0.1#/$defs/isoDate"
+                                    },
+                                    "finish": {
+                                      "$ref": "urn:chrona:common-v0.1#/$defs/isoDate"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "description": "Actual-edit commands require one complete compact observation payload.",
+                    "examples": [
+                      {}
+                    ],
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "setWorkspaceActual"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "payload": {
+                          "type": "object",
+                          "required": [
+                            "actual"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "actual": {
+                              "type": "object",
+                              "required": [
+                                "taskId",
+                                "actual"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "taskId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "actual": {
+                                  "type": "object",
+                                  "required": [
+                                    "start",
+                                    "finish"
+                                  ],
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "start": {
+                                      "$ref": "urn:chrona:common-v0.1#/$defs/isoDate"
+                                    },
+                                    "finish": {
+                                      "$ref": "urn:chrona:common-v0.1#/$defs/isoDate"
+                                    }
+                                  }
+                                },
+                                "progress": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "description": "Preset-selection commands require a pinned preset payload.",
+                    "examples": [
+                      {}
+                    ],
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "selectPresentationPreset"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "payload": {
+                          "type": "object",
+                          "required": [
+                            "preset"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "preset": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "version",
+                                "path"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "path": {
+                                  "description": "Safe relative path to the pinned preset document.",
+                                  "minLength": 1,
+                                  "$ref": "urn:chrona:common-v0.1#/$defs/safeRelativePath"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "description": "Override commands require an override payload.",
+                    "examples": [
+                      {}
+                    ],
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "setPresentationOverride"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "payload": {
+                          "type": "object",
+                          "required": [
+                            "overrides"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "overrides": {
+                              "type": "object"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "description": "Materialization commands accept only the optional output directory.",
+                    "examples": [
+                      {}
+                    ],
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "materializePresentationPreset"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "payload": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "directory": {
+                              "description": "Safe relative output directory.",
+                              "minLength": 1,
+                              "$ref": "urn:chrona:common-v0.1#/$defs/safeRelativePath"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "workspace",
+          "command"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "authoringResult": {
+            "type": "object",
+            "description": "The authoring-command-result/v0.1 emitted by the CLI."
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "create_workspace",
+      "title": "Create a guided workspace from a builtin preset",
+      "description": "Create a new directory containing workspace.yaml and a local preset/ copy. Requires --allow-write. directory must not exist; its real parent must exist below the server workspace. No overwrite. project is {id,title?,tasks:[{id,title,planned:{start,finish}}]}; preset is a builtin ID from list_presets (default chrona-default-draft). Returns workspace and workspaceRevision for the first inline authoring command. Use validate_workspace, apply_authoring_command, workspace_revision and render_workspace for the lifecycle.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "New directory below the server workspace; parent must exist, destination must not."
+          },
+          "project": {
+            "type": "object",
+            "description": "Compact task source normalized to the ordinary Project contract.",
+            "required": [
+              "id",
+              "tasks"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "Stable compact Project identifier.",
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "description": "Optional human-readable Project title.",
+                "type": "string",
+                "minLength": 1
+              },
+              "tasks": {
+                "type": "array",
+                "description": "Compact tasks normalized to fixed planned Project objects.",
+                "items": {
+                  "type": "object",
+                  "description": "One compact task with a planned date range.",
+                  "required": [
+                    "id",
+                    "title",
+                    "planned"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "description": "Stable task identifier.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "description": "Human-readable task title.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "planned": {
+                      "$ref": "#/$defs/dateRange"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "preset": {
+            "type": "string",
+            "minLength": 1,
+            "default": "chrona-default-draft",
+            "description": "Builtin ID from list_presets; copied into the new workspace, never a file path."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "directory",
+          "project"
+        ],
+        "$defs": {
+          "date": {
+            "description": "Date-only ISO 8601 calendar value.",
+            "examples": [
+              "2026-09-23"
+            ],
+            "$ref": "urn:chrona:common-v0.1#/$defs/isoDate"
+          },
+          "dateRange": {
+            "type": "object",
+            "description": "A planned or observed ISO start and finish date range.",
+            "required": [
+              "start",
+              "finish"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "start": {
+                "description": "Inclusive ISO start date.",
+                "$ref": "#/$defs/date"
+              },
+              "finish": {
+                "description": "ISO finish date.",
+                "$ref": "#/$defs/date"
+              }
+            }
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "workspace": {
+            "type": "string"
+          },
+          "workspaceRevision": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "validate_workspace",
+      "title": "Validate a guided workspace and its pinned resources",
+      "description": "Validate workspace {workspace:<relative YAML path>} and its complete preset/resource closure without writing. Returns workspaceRevision. For an edit, pass that value as apply_authoring_command.command.baseRevision; a successful command returns the next authoringResult.resultRevision.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "workspace"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "workspaceRevision": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "workspace_revision",
+      "title": "Read the current guided workspace revision",
+      "description": "Read workspace {workspace:<relative YAML path>} and return its canonical workspaceRevision without writing. Use it as an inline authoring command baseRevision; a stale rejection writes nothing. After a successful edit use authoringResult.resultRevision instead of reading a file or provoking an error.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "workspace"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "workspaceRevision": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "render_workspace",
+      "title": "Render a guided workspace",
+      "description": "Render workspace {workspace:<relative YAML path>,viewport?,locale?,format?,inline?} without writing. Uses the same pinned preset resolution, Theme expressions and rendering as render-workspace, not raw Project render_draft. format is svg/png; inline image/svg/none controls the preview, default image. Returns artifact identity/length, availability and typed warnings; a rejected plan is a result, not a tool error.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A '/'-separated path relative to the workspace root. No drive, no leading '/', no '..', no backslash or colon. The file must already exist inside the workspace."
+          },
+          "viewport": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$",
+            "default": "1600xauto"
+          },
+          "locale": {
+            "enum": [
+              "en-US",
+              "ja-JP"
+            ],
+            "default": "en-US"
+          },
+          "format": {
+            "enum": [
+              "svg",
+              "png"
+            ],
+            "default": "svg"
+          },
+          "inline": {
+            "enum": [
+              "none",
+              "image",
+              "svg"
+            ],
+            "default": "image"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "workspace"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "diagnostics"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "rejected",
+              "failed"
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            },
+            "maxItems": 50
+          },
+          "omittedDiagnostics": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "format": {
+            "enum": [
+              "svg",
+              "png"
+            ]
+          },
+          "contentIdentity": {
+            "$ref": "#/$defs/sha256"
+          },
+          "byteLength": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pngAvailable": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            }
+          }
+        },
+        "$defs": {
+          "diagnostic": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "component",
+              "sourceRef",
+              "message"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[EWI]_[A-Z0-9_]+$"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "component": {
+                "type": "string"
+              },
+              "sourceRef": {
+                "type": "string",
+                "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What is wrong; never empty and never only the code."
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 2,
+                "description": "Present only when equal findings were merged into this row; absent means once."
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "description": "Warnings only: the identities of the merged findings, first occurrence first."
+              },
+              "revisionRefs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resourceKind": {
+                "type": "string"
+              },
+              "resourceIdentity": {
+                "type": "string"
+              },
+              "phase": {
+                "type": "string"
+              },
+              "rule": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "object",
+                "description": "The remaining ledger fields of a warning or info, verbatim."
+              }
+            }
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

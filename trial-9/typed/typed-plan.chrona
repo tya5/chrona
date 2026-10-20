@@ -1,0 +1,6 @@
+terse 0.1
+project typed-demo "Typed fields demo" calendar office extension team-delivery "typed-team.yaml" git:0123456789abcdef0123456789abcdef01234567
+calendar office mon-fri
+design "Design" task profile work 5wd from 2026-11-02 risk=low team=platform
+build "Build" task profile work 10wd after design risk=high team=platform
+test "Test" task profile work 5wd after build risk=medium team=product

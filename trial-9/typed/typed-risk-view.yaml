@@ -1,0 +1,35 @@
+version: chrona/view/v0.28
+kind: view
+id: risk-view
+body:
+  heading: {title: '{project}: delivery risk', subtitle: 'Bars coloured by risk'}
+  surface: table-timeline
+  selection:
+    include: {types: [span, point]}
+  colorEncoding:
+    scale: series
+    target: planned
+    source: {field: risk}
+    domain: [low, medium, high]
+  grouping: {by: field, field: team, missing: Unset}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: selected-planned}
+  comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: working-days, facets: [planned]}
+  visibility:
+    labels: {placement: plot, content: [title], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: none
+  rows:
+    mode: lanes
+    laneTable: {label: lane}
+  axis:
+    tiers:
+    - unit: auto
+      every: 1
+      role: labels
+      label:
+        forms: {month: short-month-year, quarter: year-quarter, half: half-year, year: year}
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - {unit: month, every: 1, role: grid-minor}

@@ -1,0 +1,6 @@
+version: chrona/authoring-command/v0.1
+commandId: c7-restore
+type: selectPresentationPreset
+target: {kind: authoring-workspace, path: workspace.yaml}
+baseRevision: "sha256:ffcfc7b7182a9d3e75dfe090c6ddbe706712309fea01f1fec14b0f00f4b7da50"
+payload: {preset: {id: chrona-builtin-target-b, version: "1", path: preset/preset.yaml}}

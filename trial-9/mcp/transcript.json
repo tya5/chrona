@@ -1,0 +1,812 @@
+[
+ [
+  "list_presets",
+  {},
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "presets": [
+    {
+     "id": "mission-light",
+     "description": "lane rows with a bold blue time band, light; --snapshot baseline not drawn; draws actuals and finish delta"
+    },
+    {
+     "id": "control-room-dark",
+     "description": "lane rows with a bright blue time band on a navy page, dark; --snapshot baseline not drawn; draws actuals and finish delta"
+    },
+    {
+     "id": "print-mono",
+     "description": "black-and-white lane rows with grey bars for print, light; --snapshot baseline not drawn; draws actuals and finish delta"
+    },
+    {
+     "id": "executive-light",
+     "description": "lane rows with wide rounded bars and a navy time band, light; --snapshot baseline not drawn; draws actuals and finish delta",
+     "gallerySet": "controller-z-treatment-ladder"
+    },
+    {
+     "id": "elevated-light",
+     "description": "blue lane rows with a soft raised shading and a legend, light; --snapshot baseline not drawn; draws actuals and finish delta",
+     "gallerySet": "controller-z-treatment-ladder"
+    },
+    {
+     "id": "editorial",
+     "description": "blue lane rows with a centred title and a legend, light; --snapshot baseline not drawn; draws actuals as progress fill"
+    },
+    {
+     "id": "technical-print",
+     "description": "numbered table with owner column, black axis and outlined bars for print, light; --snapshot baseline not drawn; draws actuals"
+    },
+    {
+     "id": "chrona-default-draft",
+     "description": "plain readable table and timeline used when no preset is named, light; --snapshot baseline not drawn; draws actuals as progress fill"
+    },
+    {
+     "id": "marquee",
+     "description": "theatre marquee with gold lamps and act headings, dark; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "sunday",
+     "description": "newspaper comics page with a key and panel headings, light; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "target-b",
+     "description": "clean table and timeline with tinted group bands, light; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "titlecard",
+     "description": "broadcast title card with a countdown box, dark; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "yuya",
+     "description": "cream chart in a red frame on a dark teal page, dark; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "muted-executive",
+     "description": "numbered table with owner column, slate bars and warm grey bands, light; --snapshot baseline not drawn; draws actuals"
+    },
+    {
+     "id": "wallboard-dark",
+     "description": "large-type table with owner column and blue axis for a shared screen, dark; --snapshot baseline not drawn; draws actuals"
+    }
+   ],
+   "default": "chrona-default-draft"
+  }
+ ],
+ [
+  "create_workspace",
+  {
+   "directory": "plan",
+   "preset": "target-b",
+   "project": {
+    "id": "launch",
+    "title": "公開計画",
+    "tasks": [
+     {
+      "id": "design",
+      "title": "設計",
+      "planned": {
+       "start": "2026-12-14",
+       "finish": "2026-12-25"
+      }
+     },
+     {
+      "id": "build",
+      "title": "実装",
+      "planned": {
+       "start": "2026-12-28",
+       "finish": "2027-01-22"
+      }
+     },
+     {
+      "id": "test",
+      "title": "試験",
+      "planned": {
+       "start": "2027-01-25",
+       "finish": "2027-02-05"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "workspace": "plan/workspace.yaml",
+   "workspaceRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a"
+  }
+ ],
+ [
+  "validate_workspace",
+  {
+   "workspace": "plan/workspace.yaml"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "workspaceRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a"
+  }
+ ],
+ [
+  "render_workspace",
+  {
+   "workspace": "plan/workspace.yaml",
+   "format": "png",
+   "locale": "ja-JP"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:f1ccf18742f6efdfa8304fe4e4157c5610e2859350ca66256b0eb4b381248b53",
+   "byteLength": 10959,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    },
+    {
+     "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+     "detail": {
+      "count": 1,
+      "fieldRole": "phase",
+      "sourceRefs": [
+       "/body/tableColumns/1/source/fieldRole"
+      ]
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 12 CJK Unified Ideographs glyphs (first U+57FA)",
+     "detail": {
+      "codepoint": "U+57FA",
+      "count": 12,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "基準計画",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 6 Katakana glyphs (first U+30AF)",
+     "detail": {
+      "codepoint": "U+30AF",
+      "count": 6,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "Katakana",
+      "text": "タスク",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 5 CJK Unified Ideographs glyphs (first U+516C)",
+     "detail": {
+      "codepoint": "U+516C",
+      "count": 5,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "公開計画",
+      "weight": 700
+     }
+    }
+   ]
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c1-move-build",
+    "type": "setWorkspaceTask",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "payload": {
+     "task": {
+      "id": "build",
+      "title": "実装（延長）",
+      "planned": {
+       "start": "2026-12-28",
+       "finish": "2027-02-05"
+      }
+     }
+    }
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "authoringResult": {
+    "version": "chrona/authoring-command-result/v0.1",
+    "status": "accepted",
+    "commandId": "c1-move-build",
+    "commandBaseRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "workspaceRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "resultRevision": "sha256:8b63670f25e52c66953391d003d9cf4531815f283b9c494774d10c19a771ea66",
+    "diagnostics": []
+   }
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c2-add-docs",
+    "type": "setWorkspaceTask",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:8b63670f25e52c66953391d003d9cf4531815f283b9c494774d10c19a771ea66",
+    "payload": {
+     "task": {
+      "id": "docs",
+      "title": "文書",
+      "planned": {
+       "start": "2027-01-11",
+       "finish": "2027-01-29"
+      }
+     }
+    }
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "authoringResult": {
+    "version": "chrona/authoring-command-result/v0.1",
+    "status": "accepted",
+    "commandId": "c2-add-docs",
+    "commandBaseRevision": "sha256:8b63670f25e52c66953391d003d9cf4531815f283b9c494774d10c19a771ea66",
+    "workspaceRevision": "sha256:8b63670f25e52c66953391d003d9cf4531815f283b9c494774d10c19a771ea66",
+    "resultRevision": "sha256:b547a87e3329925faad48582db6768ee835d836910337bc71b4723b1fc7e4fc6",
+    "diagnostics": []
+   }
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c3-actual",
+    "type": "setWorkspaceActual",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:b547a87e3329925faad48582db6768ee835d836910337bc71b4723b1fc7e4fc6",
+    "payload": {
+     "actual": {
+      "taskId": "design",
+      "actual": {
+       "start": "2026-12-14",
+       "finish": "2026-12-28"
+      },
+      "progress": 1
+     }
+    }
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "authoringResult": {
+    "version": "chrona/authoring-command-result/v0.1",
+    "status": "accepted",
+    "commandId": "c3-actual",
+    "commandBaseRevision": "sha256:b547a87e3329925faad48582db6768ee835d836910337bc71b4723b1fc7e4fc6",
+    "workspaceRevision": "sha256:b547a87e3329925faad48582db6768ee835d836910337bc71b4723b1fc7e4fc6",
+    "resultRevision": "sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998",
+    "diagnostics": []
+   }
+  }
+ ],
+ [
+  "render_workspace",
+  {
+   "workspace": "plan/workspace.yaml",
+   "format": "png",
+   "locale": "ja-JP"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:c3103e15a840f55660d9e408cab904c961a15819e267f99fb2c650826156cdf0",
+   "byteLength": 14614,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    },
+    {
+     "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+     "detail": {
+      "count": 1,
+      "fieldRole": "phase",
+      "sourceRefs": [
+       "/body/tableColumns/1/source/fieldRole"
+      ]
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 20 CJK Unified Ideographs glyphs (first U+4E86)",
+     "detail": {
+      "codepoint": "U+4E86",
+      "count": 20,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "Δ完了",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 2 Halfwidth and Fullwidth Forms glyphs (first U+FF08)",
+     "detail": {
+      "codepoint": "U+FF08",
+      "count": 2,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "Halfwidth and Fullwidth Forms",
+      "text": "実装（延長）",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 6 Katakana glyphs (first U+30AF)",
+     "detail": {
+      "codepoint": "U+30AF",
+      "count": 6,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "Katakana",
+      "text": "タスク",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 5 CJK Unified Ideographs glyphs (first U+516C)",
+     "detail": {
+      "codepoint": "U+516C",
+      "count": 5,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "公開計画",
+      "weight": 700
+     }
+    }
+   ]
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c4-stale",
+    "type": "setWorkspaceTask",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "payload": {
+     "task": {
+      "id": "test",
+      "title": "試験",
+      "planned": {
+       "start": "2027-02-08",
+       "finish": "2027-02-19"
+      }
+     }
+    }
+   }
+  },
+  {
+   "status": "rejected",
+   "diagnostics": [
+    {
+     "code": "E_AUTHORING_BASE_REVISION",
+     "severity": "error",
+     "component": "authoring",
+     "sourceRef": "/baseRevision",
+     "message": "workspace revision expected sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998; command declared sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a; query workspace_revision for 'workspace.yaml' and retry"
+    }
+   ],
+   "authoringResult": {
+    "version": "chrona/authoring-command-result/v0.1",
+    "status": "rejected",
+    "commandId": "c4-stale",
+    "commandBaseRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "workspaceRevision": "sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998",
+    "resultRevision": null,
+    "diagnostics": [
+     {
+      "code": "E_AUTHORING_BASE_REVISION",
+      "detail": "workspace revision expected sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998; command declared sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a; query workspace_revision for 'workspace.yaml' and retry",
+      "expectedRevision": "sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998",
+      "receivedRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a"
+     }
+    ]
+   }
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c1-move-build",
+    "type": "setWorkspaceTask",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "payload": {
+     "task": {
+      "id": "build",
+      "title": "実装（延長）",
+      "planned": {
+       "start": "2026-12-28",
+       "finish": "2027-02-05"
+      }
+     }
+    }
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "authoringResult": {
+    "commandBaseRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a",
+    "commandId": "c1-move-build",
+    "diagnostics": [],
+    "resultRevision": "sha256:8b63670f25e52c66953391d003d9cf4531815f283b9c494774d10c19a771ea66",
+    "status": "accepted",
+    "version": "chrona/authoring-command-result/v0.1",
+    "workspaceRevision": "sha256:6b7f40c812fc45b5adeeba8ef4cff2f5c4c2b96856ce20336b278d7fa583768a"
+   }
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c5-revert-build",
+    "type": "setWorkspaceTask",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998",
+    "payload": {
+     "task": {
+      "id": "build",
+      "title": "実装",
+      "planned": {
+       "start": "2026-12-28",
+       "finish": "2027-01-22"
+      }
+     }
+    }
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "authoringResult": {
+    "version": "chrona/authoring-command-result/v0.1",
+    "status": "accepted",
+    "commandId": "c5-revert-build",
+    "commandBaseRevision": "sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998",
+    "workspaceRevision": "sha256:d98968c0218d896aefc6b73cc2f0fd9f70044a0cea5c584f3f5c347e47a37998",
+    "resultRevision": "sha256:67dcb3d5f03f7aceb1f8f0995da1619b955ff9d014d8e5c828f7edbcea16f4c4",
+    "diagnostics": []
+   }
+  }
+ ],
+ [
+  "workspace_revision",
+  {
+   "workspace": "plan/workspace.yaml"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "workspaceRevision": "sha256:67dcb3d5f03f7aceb1f8f0995da1619b955ff9d014d8e5c828f7edbcea16f4c4"
+  }
+ ],
+ [
+  "validate_workspace",
+  {
+   "workspace": "plan/workspace.yaml"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "workspaceRevision": "sha256:67dcb3d5f03f7aceb1f8f0995da1619b955ff9d014d8e5c828f7edbcea16f4c4"
+  }
+ ],
+ [
+  "render_workspace",
+  {
+   "workspace": "plan/workspace.yaml",
+   "format": "png",
+   "locale": "ja-JP"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:b796628f87a3608caa8a8b0f77aad0060b79860c3110f4d3f3487fecb02bc23b",
+   "byteLength": 13955,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    },
+    {
+     "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+     "detail": {
+      "count": 1,
+      "fieldRole": "phase",
+      "sourceRefs": [
+       "/body/tableColumns/1/source/fieldRole"
+      ]
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 18 CJK Unified Ideographs glyphs (first U+4E86)",
+     "detail": {
+      "codepoint": "U+4E86",
+      "count": 18,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "Δ完了",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 6 Katakana glyphs (first U+30AF)",
+     "detail": {
+      "codepoint": "U+30AF",
+      "count": 6,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "Katakana",
+      "text": "タスク",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 5 CJK Unified Ideographs glyphs (first U+516C)",
+     "detail": {
+      "codepoint": "U+516C",
+      "count": 5,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "公開計画",
+      "weight": 700
+     }
+    }
+   ]
+  }
+ ],
+ [
+  "render_workspace",
+  {
+   "workspace": "plan/workspace.yaml",
+   "format": "png",
+   "locale": "en-US"
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:c8d202ef1be9a71375b1b3762a73fb86e9b215e618fd21bf88cdf9d5ecfc6abf",
+   "byteLength": 13729,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    },
+    {
+     "code": "I_VIEW_FIELD_ROLE_UNBOUND",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Project does not declare field role 'phase'; 1 View declarations use their fallback or are omitted",
+     "detail": {
+      "count": 1,
+      "fieldRole": "phase",
+      "sourceRefs": [
+       "/body/tableColumns/1/source/fieldRole"
+      ]
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 8 CJK Unified Ideographs glyphs (first U+5B9F)",
+     "detail": {
+      "codepoint": "U+5B9F",
+      "count": 8,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "実装",
+      "weight": 400
+     }
+    },
+    {
+     "code": "I_FONT_GLYPH_SUBSTITUTED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Noto Sans uses Hiragino Sans for 4 CJK Unified Ideographs glyphs (first U+516C)",
+     "detail": {
+      "codepoint": "U+516C",
+      "count": 4,
+      "fallbackFamily": "Hiragino Sans",
+      "requestedFamily": "Noto Sans",
+      "script": "CJK Unified Ideographs",
+      "text": "公開計画",
+      "weight": 700
+     }
+    }
+   ]
+  }
+ ],
+ [
+  "apply_authoring_command",
+  {
+   "workspace": "plan/workspace.yaml",
+   "command": {
+    "version": "chrona/authoring-command/v0.1",
+    "commandId": "c6-preset",
+    "type": "selectPresentationPreset",
+    "target": {
+     "kind": "authoring-workspace",
+     "path": "workspace.yaml"
+    },
+    "baseRevision": "sha256:67dcb3d5f03f7aceb1f8f0995da1619b955ff9d014d8e5c828f7edbcea16f4c4",
+    "payload": {
+     "preset": {
+      "id": "marquee",
+      "version": "1",
+      "path": "preset/preset.yaml"
+     }
+    }
+   }
+  },
+  {
+   "status": "ok",
+   "diagnostics": [],
+   "authoringResult": {
+    "version": "chrona/authoring-command-result/v0.1",
+    "status": "accepted",
+    "commandId": "c6-preset",
+    "commandBaseRevision": "sha256:67dcb3d5f03f7aceb1f8f0995da1619b955ff9d014d8e5c828f7edbcea16f4c4",
+    "workspaceRevision": "sha256:67dcb3d5f03f7aceb1f8f0995da1619b955ff9d014d8e5c828f7edbcea16f4c4",
+    "resultRevision": "sha256:ffcfc7b7182a9d3e75dfe090c6ddbe706712309fea01f1fec14b0f00f4b7da50",
+    "diagnostics": []
+   }
+  }
+ ]
+]

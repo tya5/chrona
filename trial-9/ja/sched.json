@@ -1,0 +1,367 @@
+{
+  "status": "ok",
+  "placements": {
+    "kickoff": {
+      "at": "2026-11-02"
+    },
+    "plan": {
+      "start": "2026-11-03",
+      "end": "2026-11-26"
+    },
+    "req": {
+      "start": "2026-11-03",
+      "end": "2026-11-13"
+    },
+    "market": {
+      "start": "2026-11-03",
+      "end": "2026-11-17"
+    },
+    "biz": {
+      "start": "2026-11-13",
+      "end": "2026-11-23"
+    },
+    "budget": {
+      "start": "2026-11-23",
+      "end": "2026-11-26"
+    },
+    "g-plan": {
+      "at": "2026-11-26"
+    },
+    "design": {
+      "start": "2026-11-26",
+      "end": "2026-12-18"
+    },
+    "arch": {
+      "start": "2026-11-26",
+      "end": "2026-12-10"
+    },
+    "ui": {
+      "start": "2026-12-01",
+      "end": "2026-12-11"
+    },
+    "db": {
+      "start": "2026-11-30",
+      "end": "2026-12-09"
+    },
+    "api": {
+      "start": "2026-12-10",
+      "end": "2026-12-18"
+    },
+    "sec": {
+      "start": "2026-12-10",
+      "end": "2026-12-17"
+    },
+    "review1": {
+      "at": "2026-12-18"
+    },
+    "build": {
+      "start": "2026-12-18",
+      "end": "2027-01-26"
+    },
+    "fe": {
+      "start": "2026-12-18",
+      "end": "2027-01-22"
+    },
+    "be": {
+      "start": "2026-12-18",
+      "end": "2027-01-26"
+    },
+    "infra": {
+      "start": "2026-12-18",
+      "end": "2027-01-12"
+    },
+    "batch": {
+      "start": "2026-12-25",
+      "end": "2027-01-15"
+    },
+    "integ": {
+      "start": "2027-01-07",
+      "end": "2027-01-21"
+    },
+    "mig": {
+      "start": "2026-12-25",
+      "end": "2027-01-13"
+    },
+    "ci": {
+      "start": "2026-12-18",
+      "end": "2026-12-28"
+    },
+    "docs": {
+      "start": "2027-01-05",
+      "end": "2027-01-20"
+    },
+    "code-freeze": {
+      "at": "2027-01-26"
+    },
+    "test": {
+      "start": "2027-01-26",
+      "end": "2027-03-04"
+    },
+    "ut": {
+      "start": "2027-01-26",
+      "end": "2027-02-05"
+    },
+    "it": {
+      "start": "2027-02-05",
+      "end": "2027-02-22"
+    },
+    "perf": {
+      "start": "2027-02-12",
+      "end": "2027-02-22"
+    },
+    "sect": {
+      "start": "2027-02-09",
+      "end": "2027-02-17"
+    },
+    "uat": {
+      "start": "2027-02-22",
+      "end": "2027-03-04"
+    },
+    "mig-rehearsal": {
+      "start": "2027-02-22",
+      "end": "2027-02-26"
+    },
+    "g-test": {
+      "at": "2027-03-04"
+    },
+    "release": {
+      "start": "2026-12-24",
+      "end": "2027-03-18"
+    },
+    "train": {
+      "start": "2027-01-20",
+      "end": "2027-01-27"
+    },
+    "sales": {
+      "start": "2026-12-24",
+      "end": "2027-01-07"
+    },
+    "pr": {
+      "start": "2027-01-07",
+      "end": "2027-01-14"
+    },
+    "ops": {
+      "start": "2027-01-12",
+      "end": "2027-01-22"
+    },
+    "helpdesk": {
+      "start": "2027-01-22",
+      "end": "2027-01-29"
+    },
+    "cutover": {
+      "start": "2027-03-04",
+      "end": "2027-03-08"
+    },
+    "launch": {
+      "at": "2027-03-08"
+    },
+    "retro": {
+      "start": "2027-03-15",
+      "end": "2027-03-18"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [],
+  "analysis": {
+    "criticalObjectIds": [
+      "req",
+      "biz",
+      "budget",
+      "g-plan",
+      "arch",
+      "api",
+      "review1",
+      "be",
+      "code-freeze",
+      "ut",
+      "it",
+      "uat",
+      "g-test",
+      "cutover",
+      "launch",
+      "retro"
+    ],
+    "totalFloat": {
+      "kickoff": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "req": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "market": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "biz": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "budget": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-plan": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "arch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ui": {
+        "value": 5,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "db": {
+        "value": 7,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "api": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "sec": {
+        "value": 1,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "review1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "fe": {
+        "value": 2,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "be": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "infra": {
+        "value": 33,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "batch": {
+        "value": 7,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "integ": {
+        "value": 3,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mig": {
+        "value": 31,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ci": {
+        "value": 52,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "docs": {
+        "value": 35,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "code-freeze": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ut": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "it": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "perf": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "sect": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "uat": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mig-rehearsal": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g-test": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "train": {
+        "value": 35,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "sales": {
+        "value": 44,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "pr": {
+        "value": 44,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ops": {
+        "value": 33,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "helpdesk": {
+        "value": 33,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "cutover": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "launch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "retro": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      }
+    }
+  }
+}

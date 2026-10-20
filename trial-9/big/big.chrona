@@ -1,0 +1,166 @@
+terse 0.1
+project big "Platform programme" calendar office
+calendar office mon-fri except 2026-12-25 2027-01-01
+
+kick "Kickoff" gate 2026-11-02
+grp0 "Workstream 1" group
+  w0t0 "Task 1.1 integrate" task 9wd after kick
+  w0t1 "Task 1.2 review" task 7wd after w0t0
+  w0t2 "Task 1.3 build" task 4wd after w0t1
+  w0t3 "Task 1.4 review" task 2wd after w0t2
+  w0t4 "Task 1.5 review" task 3wd after w0t3
+  w0t5 "Task 1.6 test" task 2wd after w0t4
+  w0t6 "Task 1.7 build" task 8wd after w0t5, w0t3
+  w0t7 "Task 1.8 build" task 3wd after w0t6, w0t0
+  w0t8 "Task 1.9 test" task 3wd after w0t7
+  w0t9 "Task 1.10 review" task 3wd after w0t8
+  w0t10 "Task 1.11 design" task 8wd after w0t9, w0t3
+  w0t11 "Task 1.12 test" task 5wd after w0t10
+  w0t12 "Task 1.13 design" task 5wd after w0t11, w0t0
+  w0t13 "Task 1.14 test" task 2wd after w0t12
+  w0t14 "Task 1.15 design" task 4wd after w0t13
+grp1 "Workstream 2" group
+  w1t0 "Task 2.1 design" task 8wd after w0t3
+  w1t1 "Task 2.2 design" task 2wd after w1t0
+  w1t2 "Task 2.3 build" task 5wd after w1t1
+  w1t3 "Task 2.4 build" task 3wd after w1t2
+  w1t4 "Task 2.5 integrate" task 9wd after w1t3, w0t9
+  w1t5 "Task 2.6 build" task 8wd after w1t4
+  w1t6 "Task 2.7 design" task 2wd after w1t5, w0t2
+  w1t7 "Task 2.8 review" task 4wd after w1t6, w1t5
+  w1t8 "Task 2.9 design" task 2wd after w1t7
+  w1t9 "Task 2.10 build" task 5wd after w1t8
+  w1t10 "Task 2.11 review" task 3wd after w1t9, w0t13
+  w1t11 "Task 2.12 test" task 5wd after w1t10, w1t9
+  w1t12 "Task 2.13 integrate" task 8wd after w1t11, w1t9
+  w1t13 "Task 2.14 review" task 6wd after w1t12, w1t6, w0t7
+  w1t14 "Task 2.15 design" task 6wd after w1t13
+grp2 "Workstream 3" group
+  w2t0 "Task 3.1 design" task 2wd after w1t6
+  w2t1 "Task 3.2 test" task 8wd after w2t0
+  w2t2 "Task 3.3 integrate" task 5wd after w2t1
+  w2t3 "Task 3.4 build" task 8wd after w2t2
+  w2t4 "Task 3.5 build" task 7wd after w2t3, w2t1
+  w2t5 "Task 3.6 build" task 2wd after w2t4, w1t0
+  w2t6 "Task 3.7 design" task 4wd after w2t5, w2t1
+  w2t7 "Task 3.8 review" task 2wd after w2t6, w2t3, w1t4
+  w2t8 "Task 3.9 design" task 4wd after w2t7, w2t3
+  w2t9 "Task 3.10 design" task 3wd after w2t8
+  w2t10 "Task 3.11 review" task 4wd after w2t9, w1t9
+  w2t11 "Task 3.12 review" task 9wd after w2t10
+  w2t12 "Task 3.13 build" task 4wd after w2t11, w2t0
+  w2t13 "Task 3.14 build" task 4wd after w2t12
+  w2t14 "Task 3.15 design" task 8wd after w2t13, w1t7
+grp3 "Workstream 4" group
+  w3t0 "Task 4.1 integrate" task 9wd after w2t3
+  w3t1 "Task 4.2 design" task 3wd after w3t0
+  w3t2 "Task 4.3 integrate" task 8wd after w3t1
+  w3t3 "Task 4.4 integrate" task 3wd after w3t2
+  w3t4 "Task 4.5 build" task 5wd after w3t3
+  w3t5 "Task 4.6 design" task 9wd after w3t4, w3t3
+  w3t6 "Task 4.7 build" task 9wd after w3t5, w0t14
+  w3t7 "Task 4.8 build" task 9wd after w3t6
+  w3t8 "Task 4.9 test" task 8wd after w3t7, w3t4, w0t10
+  w3t9 "Task 4.10 design" task 4wd after w3t8, w0t9
+  w3t10 "Task 4.11 design" task 9wd after w3t9, w3t5
+  w3t11 "Task 4.12 design" task 7wd after w3t10, w0t12
+  w3t12 "Task 4.13 test" task 4wd after w3t11
+  w3t13 "Task 4.14 review" task 3wd after w3t12
+  w3t14 "Task 4.15 build" task 4wd after w3t13
+grp4 "Workstream 5" group
+  w4t0 "Task 5.1 design" task 3wd after w3t3
+  w4t1 "Task 5.2 review" task 3wd after w4t0, w0t10
+  w4t2 "Task 5.3 review" task 5wd after w4t1, w0t7
+  w4t3 "Task 5.4 build" task 3wd after w4t2
+  w4t4 "Task 5.5 test" task 2wd after w4t3, w4t2
+  w4t5 "Task 5.6 design" task 8wd after w4t4, w4t0
+  w4t6 "Task 5.7 integrate" task 7wd after w4t5
+  w4t7 "Task 5.8 build" task 6wd after w4t6
+  w4t8 "Task 5.9 design" task 8wd after w4t7, w4t6, w2t12
+  w4t9 "Task 5.10 design" task 3wd after w4t8
+  w4t10 "Task 5.11 test" task 7wd after w4t9, w4t3
+  w4t11 "Task 5.12 test" task 8wd after w4t10
+  w4t12 "Task 5.13 integrate" task 9wd after w4t11, w4t4
+  w4t13 "Task 5.14 build" task 8wd after w4t12
+  w4t14 "Task 5.15 review" task 4wd after w4t13, w4t0
+grp5 "Workstream 6" group
+  w5t0 "Task 6.1 build" task 2wd after w4t6
+  w5t1 "Task 6.2 design" task 4wd after w5t0, w2t10
+  w5t2 "Task 6.3 integrate" task 9wd after w5t1
+  w5t3 "Task 6.4 build" task 8wd after w5t2
+  w5t4 "Task 6.5 design" task 3wd after w5t3
+  w5t5 "Task 6.6 review" task 5wd after w5t4
+  w5t6 "Task 6.7 test" task 3wd after w5t5
+  w5t7 "Task 6.8 design" task 5wd after w5t6
+  w5t8 "Task 6.9 design" task 4wd after w5t7, w5t2, w1t5
+  w5t9 "Task 6.10 test" task 8wd after w5t8
+  w5t10 "Task 6.11 integrate" task 4wd after w5t9
+  w5t11 "Task 6.12 build" task 6wd after w5t10
+  w5t12 "Task 6.13 integrate" task 4wd after w5t11, w5t6
+  w5t13 "Task 6.14 review" task 2wd after w5t12, w5t4
+  w5t14 "Task 6.15 design" task 8wd after w5t13
+grp6 "Workstream 7" group
+  w6t0 "Task 7.1 build" task 6wd after w5t4
+  w6t1 "Task 7.2 build" task 9wd after w6t0
+  w6t2 "Task 7.3 integrate" task 7wd after w6t1, w1t11
+  w6t3 "Task 7.4 design" task 7wd after w6t2, w2t14
+  w6t4 "Task 7.5 test" task 3wd after w6t3
+  w6t5 "Task 7.6 test" task 4wd after w6t4, w6t1
+  w6t6 "Task 7.7 design" task 8wd after w6t5, w6t1
+  w6t7 "Task 7.8 test" task 7wd after w6t6
+  w6t8 "Task 7.9 test" task 8wd after w6t7
+  w6t9 "Task 7.10 integrate" task 5wd after w6t8
+  w6t10 "Task 7.11 review" task 3wd after w6t9, w6t2
+  w6t11 "Task 7.12 integrate" task 4wd after w6t10, w6t3
+  w6t12 "Task 7.13 build" task 5wd after w6t11, w6t10
+  w6t13 "Task 7.14 review" task 5wd after w6t12, w6t11
+  w6t14 "Task 7.15 design" task 8wd after w6t13, w6t2
+grp7 "Workstream 8" group
+  w7t0 "Task 8.1 build" task 8wd after w6t2
+  w7t1 "Task 8.2 review" task 2wd after w7t0
+  w7t2 "Task 8.3 integrate" task 5wd after w7t1, w1t14
+  w7t3 "Task 8.4 integrate" task 8wd after w7t2
+  w7t4 "Task 8.5 test" task 6wd after w7t3, w7t1, w3t2
+  w7t5 "Task 8.6 integrate" task 3wd after w7t4, w6t10
+  w7t6 "Task 8.7 review" task 6wd after w7t5
+  w7t7 "Task 8.8 integrate" task 7wd after w7t6
+  w7t8 "Task 8.9 review" task 9wd after w7t7, w7t1
+  w7t9 "Task 8.10 test" task 5wd after w7t8, w6t0
+  w7t10 "Task 8.11 build" task 6wd after w7t9
+  w7t11 "Task 8.12 review" task 7wd after w7t10, w7t6
+  w7t12 "Task 8.13 build" task 2wd after w7t11, w7t2
+  w7t13 "Task 8.14 review" task 2wd after w7t12, w0t3
+  w7t14 "Task 8.15 review" task 7wd after w7t13
+grp8 "Workstream 9" group
+  w8t0 "Task 9.1 design" task 3wd after w7t6
+  w8t1 "Task 9.2 build" task 8wd after w8t0
+  w8t2 "Task 9.3 review" task 8wd after w8t1, w2t8
+  w8t3 "Task 9.4 review" task 5wd after w8t2
+  w8t4 "Task 9.5 design" task 8wd after w8t3
+  w8t5 "Task 9.6 review" task 6wd after w8t4, w8t2
+  w8t6 "Task 9.7 design" task 8wd after w8t5
+  w8t7 "Task 9.8 test" task 5wd after w8t6, w8t2
+  w8t8 "Task 9.9 integrate" task 8wd after w8t7, w8t3
+  w8t9 "Task 9.10 test" task 7wd after w8t8, w1t12
+  w8t10 "Task 9.11 test" task 3wd after w8t9
+  w8t11 "Task 9.12 build" task 9wd after w8t10, w8t3
+  w8t12 "Task 9.13 integrate" task 3wd after w8t11, w0t8
+  w8t13 "Task 9.14 build" task 6wd after w8t12, w1t6
+  w8t14 "Task 9.15 build" task 8wd after w8t13, w4t2
+grp9 "Workstream 10" group
+  w9t0 "Task 10.1 test" task 6wd after w8t3
+  w9t1 "Task 10.2 integrate" task 9wd after w9t0
+  w9t2 "Task 10.3 integrate" task 7wd after w9t1
+  w9t3 "Task 10.4 design" task 9wd after w9t2
+  w9t4 "Task 10.5 design" task 9wd after w9t3
+  w9t5 "Task 10.6 test" task 4wd after w9t4, w9t2, w7t2
+  w9t6 "Task 10.7 integrate" task 3wd after w9t5
+  w9t7 "Task 10.8 integrate" task 9wd after w9t6
+  w9t8 "Task 10.9 review" task 4wd after w9t7, w9t4
+  w9t9 "Task 10.10 integrate" task 9wd after w9t8, w9t5
+  w9t10 "Task 10.11 build" task 7wd after w9t9
+  w9t11 "Task 10.12 review" task 7wd after w9t10, w9t5
+  w9t12 "Task 10.13 review" task 7wd after w9t11
+  w9t13 "Task 10.14 review" task 6wd after w9t12
+  w9t14 "Task 10.15 design" task 9wd after w9t13
+golive "Go-live" gate after w0t14, w1t14, w2t14, w3t14, w4t14, w5t14, w6t14, w7t14, w8t14, w9t14

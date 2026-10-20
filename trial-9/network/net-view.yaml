@@ -1,0 +1,18 @@
+version: chrona/view/v0.28
+kind: view
+id: net-view
+body:
+  surface: dependency-network
+  network:
+    nodeLabel: {source: {field: team}}
+  selection:
+    include: {types: [span, point]}
+  ordering: {by: plannedStart, direction: descending, tieBreak: id}
+  comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: working-days, facets: [planned]}
+  visibility:
+    labels: {placement: plot, content: [title], side: end, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: none
+  rows: {mode: automatic}
+  grouping: {by: none}
+  window: {mode: selected-planned}

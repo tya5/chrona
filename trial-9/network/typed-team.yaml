@@ -1,0 +1,17 @@
+version: chrona/profile/v0.3
+packageId: team-delivery
+contentIdentity: sha256:bfa83970e98192c71baea0457a20dd3e6b9a3272a900004e4b2cf485c115e644
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  work:
+    extends: task
+    fields:
+      team:
+        type: enum
+        enumValues: [platform, product]
+        required: true
+      risk:
+        type: enum
+        enumValues: [low, medium, high]
+        required: true

@@ -1,0 +1,15 @@
+terse 0.1
+project risk-demo "Payments migration" calendar office extension team-delivery "typed-team.yaml" git:0123456789abcdef0123456789abcdef01234567
+calendar office mon-fri except 2026-12-25 2027-01-01
+
+kickoff "Kickoff" gate 2026-11-02
+discover "Discovery" task profile work 6wd from 2026-11-03 risk=low team=product
+schema "Schema design" task profile work 8wd after discover risk=medium team=platform
+ledger "Ledger service" task profile work 15wd after schema risk=high team=platform
+api "Public API" task profile work 10wd after schema +3wd risk=medium team=platform
+portal "Merchant portal" task profile work 12wd after discover +4wd risk=low team=product
+fraud "Fraud rules" task profile work 9wd after ledger.start +5wd risk=high team=platform
+reports "Reports" task profile work 7wd after portal risk=low team=product
+pilot "Pilot with 3 merchants" task profile work 8wd after ledger, api, portal risk=high team=product
+docs "Docs and onboarding" task profile work 6wd after api risk=low team=product
+golive "Go-live" gate after pilot, fraud, reports, docs
