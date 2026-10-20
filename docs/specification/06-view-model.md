@@ -680,12 +680,12 @@ analysis is not borrowed from the original plan.
 Forecast comparison uses the supplied Snapshot, or the original primary plan if
 none was supplied. A selected item the supplied Snapshot does not contain is
 **new** (#1755): it draws normally, its baseline distance is absent (not zero
-and not invented), its delta cell and label read `new` without `*` or variance
+and not invented), its delta cell and label read `new` (wording key `marker.baselineNew`; `新規` in `ja-JP`) without `*` or variance
 paint, and the forecast skips its baseline comparison. A Snapshot object with no
 current counterpart that the View's selection would show is **removed**: in an
 automatic-row View whose ghosts are shown (always in forecast mode;
 `comparison.baselineMarks` `ghost` or `ghost-when-changed` otherwise) it draws
-as a baseline ghost row whose title ends `(removed)`; otherwise
+as a baseline ghost row whose title ends `(removed)` (`marker.baselineRemoved`; `(削除)` in `ja-JP`); otherwise
 (hidden ghosts or explicit rows) one `I_BASELINE_OBJECT_REMOVED` information
 diagnostic lists it. The same new/removed rule applies to ordinary Snapshot
 comparison. `E_FORECAST_BASELINE_UNAVAILABLE` remains only for a displayed item

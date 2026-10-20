@@ -19,6 +19,7 @@ from chrona.presentation.model.actual_observation import finish_variance
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, aggregate_date_ranges, endpoint_distance
 from chrona.presentation.model.field_roles import FieldRoleBindings
 from chrona.presentation.model.field_role_view import resolve_role_grouping
+from chrona.presentation.model.wording_tables import WordingResolver, wording_resolver
 from chrona.presentation.model.hierarchy_names import plot_name_selected
 from chrona.presentation.review.lane_membership import (
     LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
@@ -86,8 +87,7 @@ def display_finish_delta(item: Any) -> int | None:
     return forecast.finish_delta if forecast is not None else item.finish_delta
 
 
-NEW_MARKER = "new"
-REMOVED_MARKER = "removed"
+NEW_MARKER = "new"  # the en-US default of ``marker.baselineNew``; localized text rides on ``ReviewItem.new_marker`` (#1781)
 
 
 def is_new_against_baseline(item: Any) -> bool:
@@ -98,7 +98,7 @@ def is_new_against_baseline(item: Any) -> bool:
 def finish_delta_text(item: Any) -> str | None:
     value = display_finish_delta(item)
     if value is None:
-        return NEW_MARKER if is_new_against_baseline(item) else None
+        return getattr(item, "new_marker", NEW_MARKER) if is_new_against_baseline(item) else None
     forecast = getattr(item, "forecast", None)
     return f"{value:+d}d" + ("*" if forecast is not None and not forecast.schedule.completed else "")
 
@@ -162,6 +162,8 @@ class ReviewItem:
     collapsed_row_id: str | None = None
     # The supplied Snapshot has no counterpart of this primary object: it is new, its baseline delta is empty (#1755).
     new_vs_baseline: bool = False
+    # The localized ``marker.baselineNew`` text a new object shows in its empty Δ (#1781).
+    new_marker: str = NEW_MARKER
 
     @property
     def at_delta(self) -> int | None:
@@ -420,7 +422,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             forecast: ForecastOutcome | None = None,
                             field_bindings: FieldRoleBindings | None = None,
                             snapshot_field_bindings: FieldRoleBindings | None = None,
-                            scenario_field_bindings: Mapping[str, FieldRoleBindings] | None = None) -> ReviewProjection:
+                            scenario_field_bindings: Mapping[str, FieldRoleBindings] | None = None,
+                            wording: WordingResolver | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual "
@@ -432,6 +435,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
     as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
+    resolver = wording if wording is not None else wording_resolver("en-US", view.wording)
     explicit = view.rows.mode == "explicit"
     ids = set(view.selection.ids) if view.selection and view.selection.ids else set(placements)
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
@@ -501,7 +505,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             declared_attaches_to=project["objects"][object_id].get("attachesTo"), field_bindings=bindings,
             date_basis=date_basis, comparison_delta_unit=view.comparison.delta_unit or "calendar-days",
             new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
-                             and object_id not in snapshot_placements)))
+                             and object_id not in snapshot_placements),
+            new_marker=resolver.text("marker.baselineNew")))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if forecast is not None:
@@ -547,7 +552,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     ghosts_shown = bool(removed_ids) and not explicit and (
         forecast is not None or (view.comparison.baseline == "snapshot"
                                  and view.comparison.baseline_marks in {"ghost", "ghost-when-changed"}))
-    removed_items = [_removed_ghost(snapshots[object_id]) for object_id in removed_ids] if ghosts_shown else []
+    removed_items = [_removed_ghost(snapshots[object_id], resolver.text("marker.baselineRemoved")) for object_id in removed_ids] if ghosts_shown else []
     hidden_removed = tuple((object_id, snapshots[object_id].title) for object_id in removed_ids) if not ghosts_shown else ()
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
     if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
@@ -886,9 +891,9 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
     return _forecast_member_label_ownership(tuple(output)), ()
 
 
-def _removed_ghost(item: ReviewItem) -> ReviewItem:
+def _removed_ghost(item: ReviewItem, marker: str) -> ReviewItem:
     """The removed marker rides on the title and on the path title a `path` name source reads (#1755)."""
-    marked = f"{item.title} ({REMOVED_MARKER})"
+    marked = f"{item.title} ({marker})"
     titles = item.hierarchy_titles
     if item.hierarchy_path and item.hierarchy_path[-1] == item.object_id and len(titles) == len(item.hierarchy_path):
         titles = titles[:-1] + (marked,)
