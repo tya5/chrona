@@ -78,6 +78,13 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
             < ids.index("diagnostic-inventory"))
 
 
+def test_the_generated_theme_reference_is_checked_even_without_pytest_shards():
+    runner = _runner()
+    checks = [check for check in runner.CHECKS if check.check_id == "theme-role-reference"]
+    assert len(checks) == 1
+    assert checks[0].argv[1:] == (str(runner.REPOSITORY / "tools/theme_role_reference.py"), "--check")
+
+
 def test_the_theme_role_consumer_check_is_a_conformance_gate():
     runner = _runner()
     ids = [item.check_id for item in runner.CHECKS]
