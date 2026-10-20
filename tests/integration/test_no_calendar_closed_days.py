@@ -47,7 +47,10 @@ def _closed(rendered) -> list[str]:
 
 
 def _key(rendered) -> list[str]:
-    return [item.scene_id for item in rendered.surface.primitives if item.scene_id == "legend-swatch:calendar-closed"]
+    prefix = "legend-swatch:calendar-closed"
+    return [item.scene_id for item in rendered.surface.primitives
+            if item.purpose == "legend-swatch"
+            and (item.scene_id == prefix or item.scene_id.startswith(prefix + ":"))]
 
 
 def test_a_project_without_a_calendar_draws_no_closed_day_and_no_closed_day_key(tmp_path):
@@ -55,7 +58,9 @@ def test_a_project_without_a_calendar_draws_no_closed_day_and_no_closed_day_key(
     assert _closed(rendered) == []
     assert _key(rendered) == []
     # The other legend keys are still listed.
-    assert {"legend-swatch:planned", "legend-swatch:milestone"} <= {item.scene_id for item in rendered.surface.primitives}
+    keys = {item.scene_id for item in rendered.surface.primitives if item.purpose == "legend-swatch"}
+    assert any(key == "legend-swatch:planned" or key.startswith("legend-swatch:planned:") for key in keys)
+    assert any(key == "legend-swatch:milestone" or key.startswith("legend-swatch:milestone:") for key in keys)
 
 
 def test_a_default_calendar_naming_no_declared_calendar_is_rejected_before_presentation(tmp_path):
