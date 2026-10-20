@@ -879,7 +879,7 @@ two-turn offset route, with endpoint tangents and mandatory terminal runs
 preserved. A one-turn route is a quadratic elbow; an S shape requires opposite
 turns in the selected skeleton, not an invented detour. It is independent of
 the Theme's small `cornerRadius`; that metric
-continues to govern only the existing orthogonal-style result. A straight
+retains its existing orthogonal-style meaning; metro's rule is below. A straight
 route needs no artificial bend and is not a style fallback.
 
 Accept the complete curved candidate only when its actual painted geometry
@@ -912,6 +912,49 @@ Layout owns construction, conservative safety evidence and fallback. Scene
 projects the completed quadratic commands and receipts; adapters serialize
 them without selecting a style or reconstructing a route. Existing adapter
 capability restrictions, including terminal support, remain in force.
+
+**Metro follow-on design (#1047; architecture-reviewed, implementation pending).**
+The next slice admits `relationRouting.style: metro` for both surfaces. It uses
+the same selected orthogonal skeleton and precompleted terminals, not a native
+diagonal search. At each right-angle corner, cut equal distances along its
+incoming and outgoing axes, connecting the cut points with a 45-degree line.
+Use the same available-leg allocation as curved: half a shared interior leg,
+or the terminal leg minus its mandatory straight run; the smaller adjoining
+allowance determines the cut. Simplify forward-collinear/repeated construction
+points, never semantic skeleton identity or a reversal. A straight route stays
+straight; a nonstraight route with no room for its required corner cut retains
+the existing mode with a `terminal` style fallback.
+
+Round the inserted joins with Layout-completed quadratic fillets. A declared
+Theme `timeline.relation.cornerRadius` supplies the radius: positive rounds,
+explicit zero intentionally keeps sharp joins. If absent, metro alone uses
+the resolved relation stroke width as its radius, so choosing metro in Profile
+YAML needs no matching Theme edit. Orthogonal omission/zero/positive behavior
+and curved construction remain unchanged. For a join with interior angle
+theta, tangent setback is `radius / tan(theta / 2)`, capped by half each adjacent
+orthogonal leg and one quarter each adjacent diagonal leg, and by terminal
+straight-run reserves. The two ends of a diagonal can therefore consume at
+most half its length; at least half stays visibly straight at 45 degrees.
+Collinear construction points need no fillet. This allocation is geometric,
+not a new project-specific threshold, search budget or tuning property.
+
+Validate every changed diagonal and quadratic fillet, not only arcs. Retained
+straight intervals are already admitted subsets of the selected skeleton.
+Use the same conservative full-ink cover for acceptance and subsequent obstacle
+registration where that surface already uses route obstacles. Do not invent a
+network relation-crossing prohibition. Actual route paint bounds include line
+endpoints and quadratic derivative-root extrema, expanded by stroke, not a fixed
+sampling's bounding box. Share that geometry authority with terminal extent
+calculation without changing existing orthogonal paint or marker values.
+
+The curved fallback/recovery contract also applies to metro: preserve the
+completed existing mode, emit one typed `I_LAYOUT_RELATION_STYLE_FALLBACK` per
+affected relation with requested `metro`, and count it separately from routing
+failure. Safety/criticality, ports, route order, quality policy and adapter
+capabilities do not change. The shared vocabulary's one-consumer widening and
+digest update follow Spec56 §7; no new schema/part version or resource migration
+is needed. Transit target adoption remains the reviewer's subsequent YAML step,
+not an excuse for a core rule tuned to that particular project.
 
 **Node approaches (#1109 R2).** Layout routes arrivals before departures in
 stable topological order; the cyclic remainder keeps declaration order. Public
