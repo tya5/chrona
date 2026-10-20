@@ -119,15 +119,23 @@ def _mark(marks, oid):
     return next(mark for key, mark in marks.items() if key.endswith(":" + oid))
 
 
-@pytest.mark.parametrize("exit_name", sorted(EXITS))
-def test_the_centre_rule_holds_whichever_side_the_route_leaves_from(exit_name):
-    items, rows = EXITS[exit_name]
+@pytest.mark.parametrize("layout_case", sorted(EXITS))
+def test_centred_terminals_remain_on_semantic_ports_with_outward_departure(layout_case):
+    items, rows = EXITS[layout_case]
     path, marks = _compose(items, rows(), DEP, "circle", "dot", search="best")
     direction = _unit(path.points[0], path.points[1])
-    assert ("horizontal" if direction[1] == 0 else "downward" if direction[1] > 0 else "upward") == exit_name
+    # The closed-mark rule forbids leaving the span-end port along its top or
+    # bottom face. The route first travels outward from the right edge, even
+    # when the target is in another row; the centered marker stays at the port.
+    assert direction == pytest.approx((1.0, 0.0))
     assert _centre(path, "source") == pytest.approx(_end_port(_mark(marks, "a")))
     assert _centre(path, "target") == pytest.approx(_start_port(_mark(marks, "b")))
     radius = path.marker_start.head_length / 2
+    required_run = radius + path.paint.stroke_width
+    assert hypot(path.points[1][0] - path.points[0][0],
+                 path.points[1][1] - path.points[0][1]) >= required_run
+    assert hypot(path.points[-1][0] - path.points[-2][0],
+                 path.points[-1][1] - path.points[-2][1]) >= required_run
     first, last = path.points[0], path.points[-1]
     assert hypot(first[0] - _end_port(_mark(marks, "a"))[0], first[1] - _end_port(_mark(marks, "a"))[1]) == pytest.approx(radius)
     assert hypot(last[0] - _start_port(_mark(marks, "b"))[0], last[1] - _start_port(_mark(marks, "b"))[1]) == pytest.approx(radius)
