@@ -1326,7 +1326,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 755.645, 514.358 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | stroke | — | 1.387 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 535.692, 259.803 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:yuya:snapshot:yuya` | `snapshot` | 525.218, 236.662 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `subtitle` | `subtitle` | 272.755, 106.515 | `region-frame:plaque` | flat | `#1B1512` | fill | — | 7.959 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `subtitle` | `subtitle` | 251.825, 106.515 | `region-frame:plaque` | flat | `#1B1512` | fill | — | 7.959 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:ai-design:Lane` | `table-cell-secondary` | 352.207, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:canvas-fit:Lane` | `table-cell-secondary` | 352.207, 352.369 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:defaults:Lane` | `table-cell-secondary` | 343.530, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
@@ -1555,7 +1555,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 758.105, 484.452 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 534.289, 204.060 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:yuya:snapshot:yuya` | `snapshot` | 523.632, 182.206 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `subtitle` | `subtitle` | 372.125, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `subtitle` | `subtitle` | 356.337, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Lane` | `table-cell-secondary` | 343.224, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Lane` | `table-cell-secondary` | 343.224, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Lane` | `table-cell-secondary` | 334.691, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
@@ -2198,7 +2198,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/as-of-foot.scene.json` | `row-band:performance` | `row-band` | 253.200, 500.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `row-band:pvt` | `row-band` | 253.200, 664.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `row-band:silicon-bringup` | `row-band` | 253.200, 336.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.116 | 1.100 | info |
-| `examples/controller-z/generated/as-of-foot.scene.json` | `subtitle` | `text` | 784.669, 66.656 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-foot.scene.json` | `subtitle` | `text` | 766.987, 66.656 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 192.400 | `row-band:architecture` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 572.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 428.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
@@ -6985,7 +6985,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:shipment:snapshot:shipment` | `snapshot` | 1061.255, 655.575 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:snapshot:tvac` | `snapshot` | 937.545, 462.598 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:snapshot:vibration` | `snapshot` | 905.145, 440.744 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `subtitle` | `subtitle` | 456.419, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `subtitle` | `subtitle` | 441.012, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:avionics:Phase` | `table-cell-secondary` | 325.278, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:bus-test:Phase` | `table-cell-secondary` | 330.631, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:campaign:Phase` | `table-cell-secondary` | 339.055, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
