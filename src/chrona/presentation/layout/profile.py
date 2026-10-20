@@ -12,6 +12,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.model import (
     SLOT_HEADING_ALIGNS, SLOT_HEADING_BLOCKS, LayoutError, ResolvedLayoutProfile,
 )
+from chrona.presentation.model.wording_tables import wording_keys
 from chrona.resources import schema_validator, validator_for_schema
 from chrona.schema_diagnostics import explain_errors
 
@@ -70,6 +71,11 @@ def _check_frame(frame: Any, pointer: str) -> None:
 _HEADING_KEYS = frozenset({"text", "template", "align", "block", "gap"})
 
 
+def _shown_heading_text(text: Mapping[str, Any]) -> str:
+    key = text.get("wording") if set(text) == {"wording"} else None
+    return f"wording key {key!r}" if isinstance(key, str) else "an object that is not {wording: key}"
+
+
 def _check_heading(heading: Any, pointer: str) -> None:
     """Fail a malformed slot heading (#1064) at its exact pointer, for the reason `_check_frame` gives."""
     if not isinstance(heading, Mapping):
@@ -82,7 +88,13 @@ def _check_heading(heading: Any, pointer: str) -> None:
         raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="expected exactly one of text or template")
     member = members[0]
     text = heading[member]
-    if (not isinstance(text, str) or not 1 <= len(text) <= 80
+    if member == "text" and isinstance(text, Mapping):
+        # A `{wording: key}` reference (#1827); the key is closed by the built-in table.
+        if set(text) != {"wording"} or not isinstance(text["wording"], str) or text["wording"] not in wording_keys():
+            raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/text",
+                              detail=f"expected a literal caption or {{wording: key}} naming a built-in wording key; "
+                                     f"received {_shown_heading_text(text)}")
+    elif (not isinstance(text, str) or not 1 <= len(text) <= 80
             or any(ord(char) < 32 or ord(char) == 127 for char in text)):
         raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{member}",
                           detail="expected one to eighty characters with no control character")
@@ -253,10 +265,17 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
             detail=f"requiredThemeTokens must be sorted in plain string order (the order sorted() gives); expected order: {list(expected)!r}")
     missing = sorted(used_tokens - set(declared))
     if missing:
-        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_MISSING", "/requiredThemeTokens", missing[0])
+        raise LayoutError(
+            "E_LAYOUT_TOKEN_REQUIREMENT_MISSING", "/requiredThemeTokens", missing[0],
+            detail=f"the layout uses Theme token {missing[0]!r} but requiredThemeTokens does not list it; "
+                   f"add {missing[0]!r} to requiredThemeTokens (kept sorted)")
     extraneous = sorted(set(declared) - used_tokens)
     if extraneous:
-        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS", "/requiredThemeTokens", extraneous[0])
+        raise LayoutError(
+            "E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS", "/requiredThemeTokens", extraneous[0],
+            detail=f"requiredThemeTokens lists {extraneous[0]!r}, which no layout size, padding or gap uses; "
+                   f"remove {extraneous[0]!r} from requiredThemeTokens, or reference it as {{token: {extraneous[0]}}} "
+                   f"where the layout needs it")
     if "maxBlockSize" in profile["reviewSurface"]:
         path = "/reviewSurface/maxBlockSize"
         distances[path] = _distance(profile["reviewSurface"]["maxBlockSize"], theme_values, path, literals, used_tokens)
