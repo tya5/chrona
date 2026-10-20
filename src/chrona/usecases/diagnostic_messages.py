@@ -81,6 +81,9 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_PRESENTATION_HEADING_FACT_MISSING": (
+        "a heading placeholder has no source fact and renders empty; supply the named fact or remove the placeholder"
+    ),
     "W_LEGEND_SWATCH_COLLISION": (
         "two legend meanings use the same completed figure; distinguish their paint or shape so readers can tell them apart"
     ),

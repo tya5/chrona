@@ -22,6 +22,10 @@ def test_missing_heading_facts_keep_empty_copy_and_reach_the_render_warning_ledg
         'W_PRESENTATION_HEADING_FACT_MISSING:{"fact":"calendar","sourceRef":"/body/heading/subtitle"}',
     ]
     assert [item.payload["severity"] for item in warnings] == ["warning", "warning"]
+    for item in warnings:
+        assert "supply the named fact" in item.payload["message"]
+        assert "/body/heading/" in item.payload["message"]
+        assert "no further detail" not in item.payload["message"]
 
 
 def test_network_heading_warning_follows_profile_heading_ownership(tmp_path):
