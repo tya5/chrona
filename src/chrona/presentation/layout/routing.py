@@ -9,9 +9,10 @@ from math import hypot, isfinite
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacleIndex
-from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
 from chrona.presentation.layout.route_quality_bounds import rectangular_detour_lower_bound
+from chrona.presentation.layout.route_reduction import collapse_collinear_route
 from chrona.presentation.layout.relation_shapes import (
     RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
     relation_shape_candidates, shape_channels,
@@ -459,6 +460,7 @@ def select_relation_route(
     label_repair_obstacle_ids: frozenset[str] = frozenset(),
     route_stroke_width: float = 0.0,
     outward_runs: tuple[float, float] | None = None,
+    protected_lead_runs: Callable[[ConnectorEgress, ConnectorEgress], tuple[float, float]] | None = None,
     primary_egress_blockers: Callable[[ConnectorEgress, ConnectorEgress], tuple[str, ...]] | None = None,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
@@ -486,6 +488,8 @@ def select_relation_route(
             isinstance(value, bool) or not isinstance(value, (int, float))
             or not isfinite(value) or value < 0 for value in outward_runs)):
         raise _route_attempt_error("outward endpoint runs", outward_runs=outward_runs)
+    if protected_lead_runs is not None and not callable(protected_lead_runs):
+        raise _route_attempt_error("protected endpoint lead runs", protected_lead_runs=protected_lead_runs)
     repair_active = (search_policy == "first-fit" and bool(label_repair_obstacle_ids)
                      and any(obstacles.has(identifier) for identifier in label_repair_obstacle_ids))
     if repair_active and (isinstance(route_stroke_width, bool)
@@ -622,9 +626,22 @@ def select_relation_route(
         from chrona.presentation.layout.route_search import orthogonal_route_candidates
         nonlocal protected_search_used
         protected_search_used = True
-        yield from orthogonal_route_candidates(source.exposed_port, target.exposed_port,
-            obstacles, bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
-            limit=None, on_expansion=charge_protected)
+        if protected_lead_runs is None:
+            start, end = source.exposed_port, target.exposed_port
+            assemble = lambda path: path
+        else:
+            runs = protected_lead_runs(source, target)
+            if (len(runs) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not isfinite(value) or value < 0 for value in runs)):
+                raise _route_attempt_error("protected endpoint lead runs", protected_lead_runs=runs)
+            start, end = outward_corridor_ends(
+                (source, target), source_run=runs[0], target_run=runs[1])
+            def assemble(path):
+                return collapse_collinear_route((source.exposed_port, *path, target.exposed_port))
+        for path in orthogonal_route_candidates(start, end, obstacles,
+                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
+                limit=None, on_expansion=charge_protected):
+            yield assemble(path)
 
     fallback = None
     protected_start = len(attempts)

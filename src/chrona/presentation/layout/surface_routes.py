@@ -623,6 +623,16 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth"))))
                 + float(theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))
 
+    def endpoint_tangent_minimum(width: float, marker) -> float:
+        """Minimum straight lead required before a completed route may turn."""
+        reserve = marker.head_length / 2 if marker is not None and marker.centred else terminal_run(marker)
+        return width + reserve
+
+    def protected_lead_run(egress: ConnectorEgress, width: float, marker) -> float:
+        corridor = hypot(egress.exposed_port[0] - egress.semantic_port[0],
+                         egress.exposed_port[1] - egress.semantic_port[1])
+        return max(0.0, endpoint_tangent_minimum(width, marker) - corridor)
+
     def entry_candidates(mark, endpoint, toward, cluster, relation, *, entry,
                          domain: RelationObstacleDomain | None = None):
         return _entry_candidates(context, mark,
@@ -652,10 +662,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         corridor_minima = (start_minimum, end_minimum)
         # A reduction must retain both the mandatory host corridor and the
         # configured terminal's straight tangent, not merely one stroke width.
-        start_minimum = max(start_minimum, width + (marker_start.head_length / 2
-            if marker_start is not None and marker_start.centred else terminal_run(marker_start)))
-        end_minimum = max(end_minimum, width + (marker_end.head_length / 2
-            if marker_end is not None and marker_end.centred else terminal_run(marker_end)))
+        start_minimum = max(start_minimum, endpoint_tangent_minimum(width, marker_start))
+        end_minimum = max(end_minimum, endpoint_tangent_minimum(width, marker_end))
         def clear(path):
             return terminal_runs_preserved(tuple(points), path,
                 start_minimum=start_minimum or None, end_minimum=end_minimum or None
@@ -956,12 +964,13 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     return tuple(sorted(set(_primary_egress_blockers(source_exit, bounds))
                                         | set(_primary_egress_blockers(target_entry, bounds))))
 
+                protected = (relation.critical and context.layout_manifest.relation_unroutable
+                             is RelationUnroutableMode.SUPPRESS)
                 selection = select_relation_route(pairs, obstacles=domain.obstacles,
                     endpoint_preserving_prepare=True,
                     protected_quality_barriers=quality_barriers,
                     primary_egress_blockers=primary_egress_blockers,
-                    protected=(relation.critical and context.layout_manifest.relation_unroutable
-                               is RelationUnroutableMode.SUPPRESS),
+                    protected=protected,
                     preferred_routes=(tuple((candidate.pair, candidate.middle) for candidate in hint_proposal.candidates)
                         if hint_proposal is not None and hint_proposal.disposition == "proposed"
                         and domain.stage is RelationResolutionStage.NORMAL else ()),
@@ -976,6 +985,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     outward_runs=((dependency_stroke + terminal_length(marker_start),
                                    dependency_stroke + terminal_length(marker_end))
                                   if domain.stage is RelationResolutionStage.NORMAL else None),
+                    protected_lead_runs=(lambda source_exit, target_entry: (
+                        protected_lead_run(source_exit, dependency_stroke, marker_start),
+                        protected_lead_run(target_entry, dependency_stroke, marker_end)))
+                        if protected and domain.stage is RelationResolutionStage.NORMAL else None,
                     prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
                         (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side,
                         source_egress=source_exit, target_egress=target_entry,

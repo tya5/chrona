@@ -3,16 +3,21 @@ import json
 
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.relation_shapes import RelationShapeChannels
 from chrona.presentation.layout.routing import select_relation_route
 
 
-def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_policy="first-fit", rank=None):
+def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_policy="first-fit", rank=None,
+            bounds=(-2., -2., 12., 12.), channels=None, protected_lead_runs=None,
+            max_bends=0, search_budget=1, prepare=None):
     pairs = pairs or ((ConnectorEgress("end", (0., 0.), (0., 0.), ()),
                        ConnectorEgress("start", (10., 10.), (10., 10.), ())),)
     return select_relation_route(pairs, obstacles=obstacles or SurfaceObstacleIndex(),
-        bounds=(-2., -2., 12., 12.), source_host_id=None, target_host_id=None,
-        relation_scene_id="critical", max_bends=0, max_detour_ratio=2.,
-        search_policy=search_policy, search_budget=1, protected=protected, accept=accept, rank=rank)
+        bounds=bounds, channels=channels, protected_lead_runs=protected_lead_runs,
+        source_host_id=None, target_host_id=None,
+        relation_scene_id="critical", max_bends=max_bends, max_detour_ratio=2.,
+        search_policy=search_policy, search_budget=search_budget, protected=protected, accept=accept, rank=rank,
+        prepare=prepare)
 
 
 def test_safe_quality_fallback_outlives_ordinary_budget_and_keeps_measurements():
@@ -149,3 +154,70 @@ def test_detour_proof_does_not_claim_a_safe_path_when_full_validation_rejects(mo
     assert result.selected_pair is None
     assert result.critical_evidence.exhausted
     assert result.critical_evidence.quality_fallback is None
+
+
+def test_protected_graph_searches_between_minimum_lead_tips(monkeypatch):
+    from chrona.presentation.layout import route_search
+
+    source = ConnectorEgress("end", (0., 0.), (2., 0.), ("source-host",))
+    target = ConnectorEgress("start", (20., 10.), (18., 10.), ("target-host",))
+    pairs = ((source, target),)
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("source-host", "mark", "timeline", ObstacleRect(-10., -10., -9., -9.)))
+    obstacles.add(SurfaceObstacle("target-host", "mark", "timeline", ObstacleRect(30., 30., 31., 31.)))
+    graph_queries = []
+
+    def candidates(start, end, obstacles, **kwargs):
+        if kwargs["limit"] is None:
+            graph_queries.append((start, end))
+            assert (start, end) == ((5., 0.), (15., 10.))
+            yield ((5., 0.), (5., 10.), (15., 10.))
+
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", candidates)
+    channels = RelationShapeChannels((0., 10., 20.), (0., 10., 20.))
+    prepared, accepted = [], []
+    def prepare(points, *_):
+        prepared.append(points)
+        return points
+    def accept(points):
+        accepted.append(points)
+        return (5., 0.) in points and points[0] == (0., 0.) and points[-1] == (20., 10.)
+    selected = _select(pairs=pairs, obstacles=obstacles, protected=True, search_policy="best", search_budget=1,
+        bounds=(0., 0., 20., 20.), channels=channels,
+        protected_lead_runs=lambda left, right: (3., 3.),
+        max_bends=4,
+        prepare=prepare, accept=accept)
+
+    assert graph_queries == [((5., 0.), (15., 10.))]
+    assert selected.selected_pair == pairs[0], (selected.attempts, prepared, accepted)
+    assert selected.points == ((0., 0.), (2., 0.), (5., 0.), (5., 10.), (18., 10.), (20., 10.))
+    assert selected.critical_evidence is not None
+
+
+def test_short_straight_protected_shape_precedes_overlapping_lead_query(monkeypatch):
+    from chrona.presentation.layout import route_search
+
+    source = ConnectorEgress("end", (0., 0.), (0., 0.), ())
+    target = ConnectorEgress("start", (10., 0.), (10., 0.), ())
+    pairs = ((source, target),)
+    graph_queries = []
+
+    def candidates(start, end, obstacles, **kwargs):
+        if kwargs["limit"] is None:
+            graph_queries.append((start, end))
+            return iter(())
+        return iter(())
+
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", candidates)
+    channels = RelationShapeChannels((0., 10.), (0., 10.))
+    selected = _select(pairs=pairs, protected=True, search_policy="best", search_budget=1,
+        bounds=(0., 0., 10., 10.), channels=channels,
+        protected_lead_runs=lambda left, right: (6., 6.),
+        max_bends=0,
+        prepare=lambda points, *_: points,
+        accept=lambda points: points[0] == (0., 0.) and points[-1] == (10., 0.)
+            and all(point[1] == 0. for point in points))
+
+    assert selected.selected_pair == pairs[0]
+    assert selected.points == ((0., 0.), (10., 0.))
+    assert graph_queries == []
