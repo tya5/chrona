@@ -754,6 +754,13 @@ finite token value and image-catalog asset still follow the existing Theme
 schema, `ThemeTokenView`, and Specification 64 closure rules. This admission
 gate does not reparse the nested token or move Layout geometry into Scene.
 
+Completed Scene paint can derive from another role without admitting a new
+Theme colour knob. The same consumer registry records those channel owners
+separately from authorable properties. A dependency halo admits its existing
+optional `strokeWidth` for Layout; its completed stroke derives from
+`background.fill`, never `dependency-halo.fill` or `.stroke`. The analogous
+deadline outline ground also derives its fill from `background.fill`.
+
 The note annotation roles have explicit contrast responsibilities. The
 `annotation-note-text` role is state text and MUST declare
 `contrastTreatment: required`; its Theme/Scheme closure is checked against the
