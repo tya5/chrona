@@ -112,6 +112,7 @@ def _install(monkeypatch, *, repair=False, retry_bad=False, lose_member_label=Fa
         if repair and context.progress_pass == "route-label-recovery":
             assert context.obstacles.has("b")
             assert {"b", "label-footprint:b"} <= context.required_label_obstacle_ids
+            assert {"a", "label-footprint:a"} <= context.required_label_obstacle_ids
             assert context.label_repair_obstacle_ids == {"a", "label-footprint:a"}
         suppressed = retry_bad and context.progress_pass == "route-label-recovery"
         relation = SimpleNamespace(relation_id="relation:r", suppressed=suppressed)
