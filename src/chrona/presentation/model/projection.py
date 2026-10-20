@@ -637,7 +637,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     ghosts_shown = bool(removed_ids) and not explicit and (
         forecast is not None or (view.comparison.baseline == "snapshot"
                                  and view.comparison.baseline_marks in {"ghost", "ghost-when-changed"}))
-    removed_items = [_removed_ghost(snapshots[object_id], resolver.text("marker.baselineRemoved")) for object_id in removed_ids] if ghosts_shown else []
+    removed_items = [_in_baseline_group(
+        _removed_ghost(snapshots[object_id], resolver.text("marker.baselineRemoved")),
+        snapshot_project, grouping, root_grouping, selected) for object_id in removed_ids] if ghosts_shown else []
     hidden_removed = tuple((object_id, snapshots[object_id].title) for object_id in removed_ids) if not ghosts_shown else ()
     # `ghost-when-changed` without a snapshot baseline draws no ghost and is not an error (#429); `ghost` still needs one.
     if forecast is None and view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
@@ -926,12 +928,15 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
             rollup_presentation=(view.grouping.rollup or "none"
                                 if item.is_rollup and view.grouping is not None else "none"))
-            for item in selected) + tuple(
-                # A Snapshot object with no current counterpart is a removed baseline ghost row (#1755).
-                ReviewRowProjection(item.object_id, item.title, "", f"snapshot:{item.object_id}",
-                                    (replace(item, item_id=f"snapshot:{item.object_id}", source_kind="snapshot",
-                                             track="shared"),))
-                for item in (removed or ()))
+            for item in selected)
+        # A Snapshot object with no current counterpart is a removed baseline ghost row (#1755). It closes its own
+        # baseline group, not the last group of the table (#1842): it sits after the last row of that group, or after
+        # every row when the group has no current member.
+        rows = _insert_removed_rows(rows, tuple(
+            ReviewRowProjection(item.object_id, item.title, item.group_id, f"snapshot:{item.object_id}",
+                                (replace(item, item_id=f"snapshot:{item.object_id}", source_kind="snapshot",
+                                         track="shared"),))
+            for item in (removed or ())))
         collapsed: dict[str, list[ReviewItem]] = {}
         for row in rows:
             target = row.items[0].collapsed_row_id
@@ -990,6 +995,41 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
     return _forecast_member_label_ownership(tuple(output)), ()
+
+
+def _insert_removed_rows(rows: tuple[ReviewRowProjection, ...],
+                         removed: tuple[ReviewRowProjection, ...]) -> tuple[ReviewRowProjection, ...]:
+    """Place each removed-baseline row after the last row of its group, else at the end."""
+    placed = list(rows)
+    for row in removed:
+        last = max((index for index, other in enumerate(placed) if row.group_id and other.group_id == row.group_id),
+                   default=len(placed) - 1)
+        placed.insert(last + 1, row)
+    return tuple(placed)
+
+
+def _in_baseline_group(item: ReviewItem, snapshot_project: dict[str, Any] | None, grouping: Any,
+                       root_grouping: bool, selected: list[ReviewItem]) -> ReviewItem:
+    """Give a removed ghost the group its Snapshot object had under the View's grouping (#1842).
+
+    The group id comes from the Snapshot Project by the rule current items use, so a ghost of a `mobile` task
+    belongs to the `mobile` group; a hierarchy or ungrouped View keeps the ghost ungrouped.
+    """
+    if snapshot_project is None or grouping is None:
+        return item
+    if root_grouping:
+        entries = {entry.object_id: entry for entry in normalize_hierarchy(snapshot_project)}
+        groups = {object_id for object_id, value in snapshot_project.get("objects", {}).items()
+                  if value.get("type") == "group"}
+        group_id = _root_group_ancestor(entries.get(item.object_id), groups)
+        label = str(snapshot_project.get("objects", {}).get(group_id, {}).get("title", group_id))
+    else:
+        group_id = _group_id(snapshot_project, item.object_id, item.source_type, grouping)
+        label = str(snapshot_project.get("entities", {}).get(group_id, {}).get("title", group_id))
+    if not group_id:
+        return item
+    label = next((current.group_label for current in selected if current.group_id == group_id), label)
+    return replace(item, group_id=group_id, group_label=label)
 
 
 def _removed_ghost(item: ReviewItem, marker: str) -> ReviewItem:

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation.contracts.resources import ViewComparison, ViewInput, ViewRows, ViewVisibility, ViewWindow
+from chrona.presentation.contracts.resources import ViewComparison, ViewGrouping, ViewInput, ViewRows, ViewVisibility, ViewWindow
 from chrona.presentation.model.projection import active_placement, build_review_projection, display_finish_delta, finish_delta_text
 from chrona.presentation.model.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.layout.mark_geometry import compose_item_marks
@@ -149,3 +149,35 @@ def test_removed_marker_survives_every_name_source(source):
     names = close_member_names(projected, view)
     shown = names[member_name_key(ghost)] if source == "path" else ghost.title
     assert shown.endswith("(removed)") and "Gone" in shown
+
+
+def _grouped_removed(team_of_removed: str):
+    """A field-grouped View (`team`): `a` is in x, `b` in y; the Snapshot also had `r`, which is gone."""
+    project, actual, view, ordinary, forecast = inputs()
+    for key, team in (("a", "x"), ("b", "y")):
+        project["objects"][key]["fields"] = {"team": team}
+    project["entities"] = {"x": {"type": "team", "title": "Team X"}}
+    ordinary = ReferenceScheduler().schedule(project)
+    snapshot = deepcopy(project)
+    snapshot["objects"]["r"] = {"type": "task", "title": "Gone", "fields": {"team": team_of_removed},
+                                "schedule": {"mode": "fixed-span", "start": "2026-01-05", "end": "2026-01-06"}}
+    placements = ReferenceScheduler().schedule(snapshot).placements
+    view = replace(view, grouping=ViewGrouping("field", "team", (), "Unset", "header", None, None),
+                   comparison=ViewComparison("snapshot", "optional", None, None, (), baseline_marks="ghost"))
+    return build_review_projection(project, ordinary.placements, view, actual, snapshot_project=snapshot,
+                                   snapshot_placements=placements)
+
+
+def test_removed_ghost_row_closes_its_own_baseline_group_not_the_last_group():
+    projected = _grouped_removed("x")
+    # before #1842 the ghost followed `b`, the last row of group y, and read as part of it
+    assert [(row.row_id, row.group_id) for row in projected.rows] == [("a", "x"), ("r", "x"), ("b", "y")]
+    ghost = projected.rows[1].items[0]
+    assert (ghost.group_id, ghost.group_label, ghost.title) == ("x", "Team X", "Gone (removed)")
+    assert projected.group_ids == ("x", "y")
+
+
+def test_removed_ghost_whose_group_has_no_current_member_forms_its_own_group_at_the_end():
+    projected = _grouped_removed("z")
+    assert [(row.row_id, row.group_id) for row in projected.rows] == [("a", "x"), ("b", "y"), ("r", "z")]
+    assert projected.group_ids == ("x", "y", "z")
