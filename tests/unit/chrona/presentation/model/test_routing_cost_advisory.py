@@ -10,7 +10,7 @@ def test_routing_cost_advisory_has_stable_scene_diagnostic():
 
     assert advisory.code == "W_LAYOUT_ROUTING_COST"
     assert advisory.scene_diagnostic() == (
-        "W_LAYOUT_ROUTING_COST:surface=table-timeline;potentialPairs=336")
+        "W_LAYOUT_ROUTING_COST:surface=table-timeline;potentialPortPairs=336")
 
 
 @pytest.mark.parametrize("surface,count", [

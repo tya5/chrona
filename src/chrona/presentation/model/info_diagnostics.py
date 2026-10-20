@@ -20,20 +20,20 @@ def _diagnostic_error(detail: str) -> ValueError:
 
 @dataclass(frozen=True)
 class RoutingCostAdvisory:
-    """Selected-fact estimate of a potentially expensive surface route set."""
+    """Potential normal-stage connector-port-pair workload, not search time."""
 
     surface_id: str
-    potential_pairs: int
+    potential_port_pairs: int
 
     def __post_init__(self) -> None:
         if (not isinstance(self.surface_id, str) or not self.surface_id
                 or any(char in self.surface_id for char in ";=")
-                or isinstance(self.potential_pairs, bool)
-                or not isinstance(self.potential_pairs, int)
-                or self.potential_pairs < 1):
+                or isinstance(self.potential_port_pairs, bool)
+                or not isinstance(self.potential_port_pairs, int)
+                or self.potential_port_pairs < 1):
             raise _diagnostic_error(
-                "RoutingCostAdvisory requires a delimiter-safe surface and positive integer potential-pair count; got "
-                f"surfaceId={_shown(self.surface_id)}, potentialPairs={_shown(self.potential_pairs)}")
+                "RoutingCostAdvisory requires a delimiter-safe surface and positive integer potential-port-pair count; got "
+                f"surfaceId={_shown(self.surface_id)}, potentialPortPairs={_shown(self.potential_port_pairs)}")
 
     @property
     def code(self) -> str:
@@ -41,7 +41,7 @@ class RoutingCostAdvisory:
 
     def scene_diagnostic(self) -> str:
         return (f"{self.code}:surface={self.surface_id};"
-                f"potentialPairs={self.potential_pairs}")
+                f"potentialPortPairs={self.potential_port_pairs}")
 
 
 @dataclass(frozen=True)

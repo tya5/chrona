@@ -47,6 +47,34 @@ def test_advisory_is_a_distinct_frozen_event():
     assert events[0].advisory is advisory
 
 
+def test_candidate_progress_is_buffered_but_attempted_work_advisory_is_immediate():
+    observed, buffered = [], []
+    parent = RenderProgress(observed.append)
+    candidate = parent.buffered(buffered.append)
+    advisory = RoutingCostAdvisory("table-timeline", 2370)
+    candidate.phase("layout")
+    candidate.advisory(advisory)
+    assert observed == [RenderAdvisoryEvent(advisory)]
+    assert buffered == [RenderProgressEvent("layout")]
+
+
+def test_nested_candidate_buffers_keep_advisories_out_of_replay_and_isolate_sink_failures():
+    observed, outer, inner = [], [], []
+
+    def fail(event):
+        observed.append(event)
+        raise OSError("sink unavailable")
+
+    parent = RenderProgress(fail)
+    candidate = parent.buffered(outer.append).buffered(inner.append)
+    advisory = RoutingCostAdvisory("table-timeline", 2370)
+    candidate.advisory(advisory)
+    candidate.advisory(advisory)
+    candidate.phase("routing")
+    assert observed == [RenderAdvisoryEvent(advisory)]
+    assert inner == [RenderProgressEvent("routing")] and outer == []
+
+
 @pytest.mark.parametrize("failure", [BrokenPipeError, OSError, ValueError])
 def test_failed_observer_detaches_without_changing_iteration(failure):
     calls = []

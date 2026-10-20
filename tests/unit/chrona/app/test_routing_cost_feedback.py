@@ -41,7 +41,7 @@ def test_quiet_nonterminal_reports_cost_but_not_phase_progress(monkeypatch):
     text = stream.getvalue()
     assert text.count("W_LAYOUT_ROUTING_COST") == 1
     assert "--relations none" in text and "relationRouting" in text
-    assert "potentialPairs=336" in text and "surface=table-timeline" in text
+    assert "potentialPortPairs=336" in text and "surface=table-timeline" in text
     assert "chrona: layout" not in text and "chrona: output" not in text
 
 
@@ -69,23 +69,23 @@ def test_early_and_final_warning_use_the_same_actionable_message(monkeypatch):
     assert stream.getvalue() == f"chrona: {advisory.code}: {message}\n"
 
 
-def test_real_large_relation_input_warns_before_candidate_layout(tmp_path, monkeypatch, capsys):
+def test_real_large_relation_input_warns_before_first_route_search(tmp_path, monkeypatch, capsys):
     source = tmp_path / "large.yaml"
     source.write_text(yaml.safe_dump(_project(336)), encoding="utf-8")
-    render_usecase = importlib.import_module("chrona.usecases.render_review")
+    surface_routes = importlib.import_module("chrona.presentation.layout.surface_routes")
 
     class BeforeExpensiveLayout(BaseException):
         pass
 
-    def stop_before_layout(_value):
+    def stop_before_search(*_args, **_kwargs):
         feedback = capsys.readouterr().err
         assert "W_LAYOUT_ROUTING_COST" in feedback
-        assert "potentialPairs=336" in feedback
+        assert "potentialPortPairs=" in feedback
         assert "--relations none" in feedback and "relationRouting" in feedback
         assert "chrona: layout" not in feedback
         raise BeforeExpensiveLayout
 
-    monkeypatch.setattr(render_usecase, "prepare_surface_render_plan", stop_before_layout)
+    monkeypatch.setattr(surface_routes, "select_relation_route", stop_before_search)
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(source), "-o", str(tmp_path / "plan.svg")])
     with pytest.raises(BeforeExpensiveLayout):
         cli.main()
@@ -95,11 +95,11 @@ def test_real_large_relation_input_warns_before_candidate_layout(tmp_path, monke
 def test_mcp_completed_warning_keeps_the_same_advisory_once(tmp_path, monkeypatch):
     source = tmp_path / "plan.yaml"
     source.write_text(yaml.safe_dump(_project()), encoding="utf-8")
-    render_usecase = importlib.import_module("chrona.usecases.render_review")
+    surface_routes = importlib.import_module("chrona.presentation.layout.surface_routes")
     advisory = RoutingCostAdvisory("table-timeline", 336)
     # Workload admission has separate synthetic fanout/boundary tests. Here
     # isolate completed warning transport from the expensive search itself.
-    monkeypatch.setattr(render_usecase, "routing_cost_advisory", lambda *_args: advisory)
+    monkeypatch.setattr(surface_routes, "routing_cost_advisory", lambda *_args: advisory)
     result = call_tool(WorkspaceScope(tmp_path), "render_draft", {"project": "plan.yaml", "inline": "none"})
     assert result.structured["status"] == "ok", result.structured
     warnings = [item for item in result.structured["warnings"] if item["code"] == advisory.code]

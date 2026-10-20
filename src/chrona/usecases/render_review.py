@@ -26,7 +26,6 @@ from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.routing_workload import routing_cost_advisory
 from chrona.presentation.layout.surface_count_closure import inspect_count_reads
 from chrona.presentation.layout.surface_render_plan import (
     SurfaceRenderPlanInput, SlotHeadingCopyError, SurfacePlanFontError, prepare_surface_render_plan,
@@ -41,14 +40,14 @@ from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
-    ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved,
+    ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, RoutingCostAdvisory,
 )
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
 from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
-from chrona.presentation.model.render_progress import RenderProgress
+from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderEvent, RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
@@ -452,11 +451,20 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
     selected_content = _complete_annotation_headers(selected_content, theme, projection, view)
-    routing_advisory = routing_cost_advisory(projection, selected_content)
-    if routing_advisory is not None:
-        profile_info += (routing_advisory,)
+    routing_advisory: RoutingCostAdvisory | None = None
+
+    def observe_layout_work(event: RenderEvent) -> None:
+        nonlocal routing_advisory
+        if isinstance(event, RenderAdvisoryEvent):
+            if routing_advisory is not None:
+                return
+            routing_advisory = event.advisory
         if request.progress is not None:
-            request.progress.advisory(routing_advisory)
+            request.progress.emit(event)
+
+    # Retain typed Layout work facts independently of the optional UI sink.
+    # Count trials buffer ordinary progress but forward attempted-work advisories.
+    layout_progress = RenderProgress(observe_layout_work)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
     try:
@@ -470,7 +478,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             content_sized=request.draft_auto_block, locale=environment.locale,
             paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
-            icon_assets=icon_assets, visual_requests=visual_requests, progress=request.progress))
+            icon_assets=icon_assets, visual_requests=visual_requests, progress=layout_progress))
         plan = prepare_surface_render_plan(count_input.value) if not count_input.active else None
     except SurfacePlanFontError as error:
         raise _font_failure(error.failure) from error.failure
@@ -493,7 +501,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             fixed_lane_preflight=(plan.preparation.inline.request.fixed_lane_preflight if plan.preparation else None),
             capacity_short_sources=plan.capacity_short_sources, surface_preparation=plan.preparation,
             auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
-            declared_viewport=plan.declared_viewport, progress=request.progress)
+            declared_viewport=plan.declared_viewport, progress=layout_progress)
 
     unused = ledger.unused()
     if request.require_all_inputs_read and unused:
@@ -504,6 +512,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         rendered = compose_resolved_review_surface(count_input, visual_profile=visual_profile,
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
+        if routing_advisory is not None:
+            profile_info += (routing_advisory,)
         if profile_info:
             surface = replace(surface,
                 info_diagnostics=(*surface.info_diagnostics, *(item for item in profile_info if not item.code.startswith("W_"))),
