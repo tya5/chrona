@@ -674,14 +674,24 @@ never execute a recovery stage. Each attempted stage has fresh per-instance/pass
 search state and budget; first-fit cheap/exact phases share that stage's ceiling.
 No surface replay or reset of a ceiling within one stage is permitted.
 
-The member-reservation coordinator rejects a non-normal completion when the
-first completed pass had a normal route. Its at-most-two passes
-retain common validators and their own recorded budgets. Explicit `overlap`
+Member names are completed once before routing and remain hard in every
+recovery domain; there is no speculative or second surface pass. Explicit `overlap`
 and `stub` still intentionally select their fixed completion policies; final
 member-name revalidation does not exempt their ink.
 
 If all relax searches fail, attempt the preferred fixed overlap shape, then
 paired terminal stubs when full-route endpoint egress cannot be completed.
+Before that fallback, diagnosed recovery may extend its finite proposals from
+the completed stage's obstacle-edge and row-gap channels. One Layout-owned
+channel mechanism supplies deterministic proposals, including multi-turn
+connections between the existing mandatory endpoint leads. Preserve the
+declared bend/detour limits, stage expansion budgets, port admission, terminal
+completion, hard member-name and completed-ink validators. Best compares eligible
+pair results with its existing rank; first-fit keeps its declared order.
+This does not invoke or amend protected unbounded search, increase any budget,
+reposition labels, or claim that missed proposals prove infeasibility. If no
+eligible proposal completes, retain the existing visible diagnosed fallback
+and its strict safety checks; never silently omit a dependency.
 `overlap` goes directly to fixed end-side/start-side orthogonal L/Z geometry,
 ignoring non-host obstacles and quality limits; it uses the same terminal
 fallback if endpoint egress fails. `stub` completes an independent short
