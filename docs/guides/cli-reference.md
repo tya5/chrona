@@ -180,7 +180,7 @@ create a new editable project in a new directory
 
 ## chrona materialize
 
-rebuild one slide of an example from its manifest
+rebuild one slide of an example from its manifest; on success it prints the same status and warnings JSON as render, and resolves fonts the same way
 
 `chrona materialize --output --replace --slide --write -o`
 

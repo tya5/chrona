@@ -418,7 +418,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", required=True)
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
 
-    command = sub.add_parser("materialize", help="rebuild one slide of an example from its manifest")
+    command = sub.add_parser("materialize", help="rebuild one slide of an example from its manifest",
+                                description="rebuild one slide of an example from its manifest; on success it prints the same status and warnings JSON as render, and resolves fonts the same way")
     command.add_argument("manifest", help="example materializer manifest")
     command.add_argument("--slide", required=True, help="declared slide identifier")
     command.add_argument("--output", "-o", required=True, help="empty output directory")
@@ -559,12 +560,13 @@ def _store_reader(args: argparse.Namespace):
 
 def _run_materialize(args: argparse.Namespace) -> None:
     try:
-        materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write, replace=args.replace)
+        result = materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write, replace=args.replace)
     except MaterializationError as error:
         if error.code != "E_MATERIALIZER_MISMATCH":
             raise
         command = f"chrona materialize {args.manifest} --slide {args.slide} --output {args.output} --write"
         raise CliFailure(error.code, f"{error.detail}; review the generated diff, then run `{command}` to refresh intended evidence", "materializer") from error
+    _emit_render_result(result.rendered)
 
 
 def _compile_failure(diagnostics: tuple, *, to_stderr: bool, status: str = "rejected", exit_code: int = 1) -> NoReturn:
