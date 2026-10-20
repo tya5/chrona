@@ -225,9 +225,9 @@ natural-width prototype permits measurement when allocation is zero, never a
 fake completed scale or epsilon. Both capped and uncapped hosts retain the
 authored allocation; positive usable ranges retain their current output.
 
-**Explicit-window visibility closure (#1292).** Before point-inset measurement
+**Bounded-window visibility closure (#1292, #1812).** Before point-inset measurement
 or lane-footprint preflight, Layout derives one immutable visibility result per
-instance and source facet from the projection's explicit-window provenance.
+instance and source facet from the projection's explicit/relative provenance.
 The same result drives automatic, lane and folded final composition; it does
 not alter data-only lane membership. Disjoint spans and out-of-window points
 are omitted, not mapped beyond the plot. Point insets include only admitted
@@ -243,6 +243,19 @@ complete typed absence account proves why. It retains ordinary track allocation
 and does not acquire a fake mark, port, obstacle, or minimum footprint. Visuals
 bound to an omitted host are intentionally unpainted, not invalid selectors.
 The same immutable visibility closure supplies this account and final geometry.
+
+The retained-row rules above describe `window.outside: keep`, the unchanged
+runtime default. With explicit `outside: omit` (Spec06 §7), one immutable
+Layout row-admission result is derived from this exact projection-bound source
+cache before source row sizing and row allocation. It supplies the same admitted
+row/group/folded-occurrence view to natural demand, fixed-lane preflight, table,
+marks, labels and final completion. Do not independently filter those consumers
+or rebuild the projection, source lane membership, source aliases or relations.
+Every original geometry row is either admitted or has a typed source omission
+account; preserve original occurrence identity without inventing coordinates.
+An omitted lane keeps its source membership but no allocated row/subtracks.
+Final expected/admitted/absent validation still covers its original instances.
+An all-outside View has no fabricated minimum row or orphan group header.
 
 Final lane completion validates the original expected/admitted/absent partition
 against that cache before emission. The final mark inventory is restricted to
@@ -277,6 +290,16 @@ its edge. A relation lacking a required visible endpoint is suppressed with
 `W_LAYOUT_RELATION_SUPPRESSED` and typed outside-window cause/source facts;
 raw relation-anchor fallback is forbidden. Surviving route paint must remain
 inside the completed plot.
+
+Under `outside: omit`, relation enumeration still uses the complete source
+ledger even when geometry rows have been compacted. Missing geometry is not
+proof of an outside endpoint: retain the exact original-window absence proof.
+If a source-context row is omitted without an outside temporal-endpoint proof,
+carry its distinct row-admission proof rather than forging that endpoint cause.
+The current documented fallback is typed suppression and the existing warning,
+with relation/source identity retained. Do not reuse paired obstacle-recovery
+stubs, invent an omitted row's y coordinate, or fabricate an edge port.
+Scene/adapters serialize the completed result; they perform no row filtering.
 
 The same original-endpoint eligibility gates a `finishDelta` label candidate:
 span terminals use `(start, end]`, point anchors use `[start, end)`. An outside
