@@ -94,7 +94,7 @@ def measure_text_segments(segments: tuple[TextSegment, ...], *, font_size: float
             text, font_size=font_size, font_metrics=font_metrics, letter_spacing=letter_spacing,
             numeric_spacing=numeric_spacing)))
     # TextRunPlacement widths include within-run spacing; add spacing at each run boundary.
-    width = sum(run.inline_size for run in runs) + letter_spacing * max(0, len(runs) - 1)
+    width = geometry_sum([*(run.inline_size for run in runs), letter_spacing * max(0, len(runs) - 1)])
     return "".join(painted), width, tuple(runs)
 
 

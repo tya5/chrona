@@ -10,6 +10,7 @@ from chrona.presentation.layout.surface_legend import (
     LegendArrangement, SurfaceLegendContext, entry_swatch_extent, legend_item_gap, legend_source_input, place_legend,
 )
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
+from chrona.presentation.layout.text import TextSegment, measure_text_segments
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.style import StyleLegendScope
@@ -98,3 +99,13 @@ def test_style_scope_selector_data_is_not_case_transformed():
         "style", "rule", "owners", '{"objectId":"BuildAPI"}', "OWNER", True))
     placed, = _place((entry,), tokens, metrics).text
     assert placed.content == 'owner: Aiko when {"objectId":"BuildAPI"}'
+
+
+def test_segment_width_uses_correctly_rounded_geometry_accumulation():
+    class WidelySeparatedWidths(CaseSensitiveMetrics):
+        def width(self, text, size, **kwargs):
+            return {"a": 1e16, "b": 1.0, "c": 1.0}[text]
+
+    _painted, width, _runs = measure_text_segments(
+        tuple(TextSegment(char) for char in "abc"), font_size=14, font_metrics=WidelySeparatedWidths())
+    assert width == 1.0000000000000002e16
