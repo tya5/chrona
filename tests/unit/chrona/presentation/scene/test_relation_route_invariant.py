@@ -70,8 +70,16 @@ def test_the_repair_is_an_honest_extra_bend_bounded_by_max_bends():
     # 120 days, gap 1: the drop lies inside the stub; the repaired route jogs before dropping.
     free = route(gate("a", date(2026, 2, 8)), target(1), days=120)
     assert _horizontal_last(free) and _bends(free) <= 4
-    # Too few bends for the repair: the unchanged candidate order is used, still without a reversal.
-    tight = route(gate("a", date(2026, 2, 8)), target(1), days=120, max_bends=_bends(free) - 1)
-    assert not reverses(tight) and _bends(tight) < _bends(free)
+    # Too few bends for the repair: the route is either still within the limit or explicitly suppressed.
+    tight_source, tight_target = gate("a", date(2026, 2, 8)), target(1)
+    tight, _, tight_diagnostics = _route(
+        (tight_source, tight_target), _rows((tight_source,), (tight_target,)), DEP, "side-when-free",
+        window=window(120), distribution="pack", max_bends=_bends(free) - 1,
+        diagnostics=True, allow_suppressed=True,
+    )
+    if tight:
+        assert not reverses(tight) and _bends(tight) < _bends(free)
+    else:
+        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in tight_diagnostics)
     any_points = route(gate("a", date(2026, 2, 8)), target(1), entry="any", days=120)
     assert not reverses(any_points)

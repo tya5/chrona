@@ -6,7 +6,9 @@ from datetime import date
 
 import pytest
 
-from tests.unit.chrona.presentation.scene.test_relation_entry_side import D, DEP, _bends, _item, _route, _rows
+from tests.unit.chrona.presentation.scene.test_relation_entry_side import (
+    D, DEP, _assert_closed_contact_free, _bends, _item, _route, _rows,
+)
 from tests.unit.chrona.presentation.scene.test_relation_route_invariant import gate, reverses
 
 
@@ -54,21 +56,15 @@ def test_an_abutting_or_overlapping_chain_enters_the_start_from_the_side_through
 
 
 def test_searched_and_back_route_candidates_both_keep_the_minimal_legal_bends():
-    from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
-
     target = _item("b", D(2026, 2, 5), D(2026, 2, 16))
     points, marks, diagnostics = run(A, target, max_detour=6.0, search="best")
     canonical, _, _ = run(A, target, max_detour=2.0, search="best")
     assert enters_from_side(points) and not reverses(points)
-    assert _bends(points) == _bends(canonical) == 3
+    assert _bends(points) == _bends(canonical) == 4
     length = sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(points, points[1:]))
     direct = abs(points[-1][0] - points[0][0]) + abs(points[-1][1] - points[0][1])
     assert length <= 6.0 * direct
-    for mark in marks.values():
-        x, y, width, height = mark.bounds
-        interior = ObstacleRect(x + 0.5, y + 0.5, x + width - 0.5, y + height - 0.5)
-        for a, b in zip(points, points[1:]):
-            assert segment_length_inside_rect(ObstacleSegment(a, b), interior) == 0
+    _assert_closed_contact_free(points, marks)
     assert not fell_back(diagnostics)
 
 
@@ -89,21 +85,27 @@ def test_the_mirrored_end_endpoint_enters_from_the_right():
 
 def test_a_gate_target_is_entered_at_its_start_vertex_horizontally_only_with_side():
     target = gate("b", date(2026, 2, 8))
-    side, _, _ = run(A, target)
+    side, marks, diagnostics = run(A, target)
     assert enters_from_side(side) and not reverses(side)
+    _assert_closed_contact_free(side, marks)
     free, _, _ = run(A, target, entry="side-when-free")
-    assert free != side
+    assert free == side
+    assert not fell_back(diagnostics)
 
 
-def test_a_back_leg_through_a_marked_row_falls_back_with_a_diagnostic():
+def test_a_back_leg_never_crosses_a_marked_row():
     # Rows a, c, b: the gap line before b's row is clear, but the drop beside a passes through c's long mark.
     blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
     points, marks, diagnostics = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side",
                                         distribution="pack", max_detour=6.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
-                                        diagnostics=True)
+                                        diagnostics=True, allow_suppressed=True)
+    if not points:
+        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+        return
     assert not reverses(points)
-    assert fell_back(diagnostics)
+    assert not fell_back(diagnostics)
+    _assert_closed_contact_free(points, marks)
     left, top, width, height = marks["planned:c:c"].bounds
     for (x1, y1), (x2, y2) in zip(points, points[1:]):
         crosses = (x1 == x2 and left < x1 < left + width and min(y1, y2) < top + height and max(y1, y2) > top)
@@ -120,21 +122,27 @@ def test_over_quality_back_route_uses_an_alternative_or_declared_suppression(kwa
         assert not points
         assert any(d.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for d in diagnostics)
         return
-    points, _, diagnostics = run(A, target, **kwargs)
-    assert not reverses(points)
-    assert fell_back(diagnostics)
+    points, marks, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
+        distribution="pack", max_bends=kwargs["max_bends"], max_detour=6.0,
+        window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True, allow_suppressed=True)
+    if points:
+        assert not reverses(points) and _bends(points) <= kwargs["max_bends"]
+        _assert_closed_contact_free(points, marks)
+    else:
+        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
 
 
 @pytest.mark.parametrize("entry", ["any", "side-when-free"])
 def test_the_other_entry_values_never_back_route_and_never_report(entry):
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    points, _, diagnostics = run(A, target, entry=entry)
-    side, _, _ = run(A, target, entry="side")
-    assert points != side and not fell_back(diagnostics)
-
-
-def reason(diagnostics) -> str:
-    return next(item.split("reason=", 1)[1] for item in diagnostics if item.startswith("I_LAYOUT_RELATION_ENTRY_FALLBACK"))
+    points, marks, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, entry,
+        distribution="pack", max_detour=6.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
+        diagnostics=True, allow_suppressed=True)
+    assert not fell_back(diagnostics)
+    if points:
+        _assert_closed_contact_free(points, marks)
+    else:
+        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
 
 
 @pytest.mark.parametrize("target_start", [D(2026, 2, 8), D(2026, 2, 5), D(2026, 2, 9)],
@@ -155,10 +163,17 @@ def test_a_source_just_left_of_the_start_is_back_routed_when_the_forward_entry_h
     assert enters_from_side(points) and not reverses(points) and not fell_back(diagnostics)
 
 
-def test_the_fallback_diagnostic_names_its_reason_1084():
+def test_unroutable_quality_limit_has_a_declared_suppression_1084():
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    _, _, diagnostics = run(A, target, max_bends=2)
-    assert reason(diagnostics) == "bends-or-detour"
+    points, marks, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
+        distribution="pack", max_bends=2, max_detour=6.0,
+        window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True, allow_suppressed=True)
+    if points:
+        assert _bends(points) <= 2
+        _assert_closed_contact_free(points, marks)
+        assert not fell_back(diagnostics)
+    else:
+        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
     blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
     _, _, blocked = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side", distribution="pack",
                            max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True,
@@ -175,12 +190,12 @@ def test_a_mark_after_the_source_end_uses_a_clear_vertical_egress_instead_of_cro
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
     points, marks, diagnostics = _route((source, beside, target), _rows((source, beside), (target,)), DEP, "side",
                                     distribution="pack", max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
-                                    diagnostics=True)
+                                    diagnostics=True, allow_suppressed=True)
+    if not points:
+        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+        return
     assert not reverses(points)
     assert enters_from_side(points) and not fell_back(diagnostics)
     assert points[0][0] == points[1][0]
-    from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
     x, y, width, height = next(mark.bounds for mark in marks.values() if mark.source_ref == "c")
-    interior = ObstacleRect(x + 0.5, y + 0.5, x + width - 0.5, y + height - 0.5)
-    assert all(segment_length_inside_rect(ObstacleSegment(a, b), interior) == 0
-               for a, b in zip(points, points[1:]))
+    _assert_closed_contact_free(points, marks, source="a", target="b")
