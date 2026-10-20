@@ -1,0 +1,115 @@
+version: chrona/view/v0.28
+kind: view
+id: atlas-focus-deliv
+body:
+  heading:
+    title: '{project}: the next six weeks'
+    subtitle: Open work from one week before {asOf}
+  surface: table-timeline
+  rows:
+    mode: automatic
+  selection:
+    include:
+      types:
+      - span
+      - point
+    exclude:
+      state:
+      - finished
+  grouping:
+    by:
+      fieldRole: responsible
+    missing: Unassigned
+    fallback: hierarchy
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  tableColumns:
+  - id: Task
+    header:
+      wording: column.task
+    source: title
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Risk
+    source:
+      field: risk
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Deliverable
+    source:
+      field: deliverable
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ finish
+    header:
+      wording: column.finishDelta
+    source:
+      facet: finishDelta
+    missing: blank
+    align: end
+    width: content
+    headerOrientation: horizontal
+  window:
+    mode: relative
+    before: 1w
+    after: 6w
+    outside: omit
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: working-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+  markers:
+  - kind: asOf
+    source: actual
+    label:
+      wording: marker.today
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      side: end
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: none
+      marker: none
+  axis:
+    tiers:
+    - unit: week
+      every: 1
+      role: labels
+      label:
+        form: start-day-month
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: day
+      every: 1
+      role: grid-minor
+  colorEncoding:
+    scale: series
+    target: planned
+    source:
+      field: deliverable
+    domain:
+    - del-api
+    - del-app
+    - del-portal
+    - del-runbook
+    - del-report

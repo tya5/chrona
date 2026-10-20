@@ -1,0 +1,9 @@
+address: _deck-contexts/atlas-deck/focus.yaml
+contentIdentity: sha256:da9fc6387eec6aa962f389c1ea17cf7f3f3b93723f1f6d535c1ab20bd9eeaacb
+id: atlas-focus
+kind: render-context
+revision:
+  token: w3
+store:
+  identity: atlas-deck
+  provider: local

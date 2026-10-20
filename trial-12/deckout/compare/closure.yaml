@@ -1,0 +1,9 @@
+address: _deck-contexts/atlas-deck/compare.yaml
+contentIdentity: sha256:5f0f66d6d1df5f2d45d3b2d3821dcb0cb08854a2614d5991a167f8c51f0eabc5
+id: atlas-compare
+kind: render-context
+revision:
+  token: w3
+store:
+  identity: atlas-deck
+  provider: local

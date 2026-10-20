@@ -1,0 +1,914 @@
+{
+  "status": "ok",
+  "placements": {
+    "atlas": {
+      "start": "2026-11-02",
+      "end": "2027-04-08"
+    },
+    "kickoff": {
+      "at": "2026-11-02"
+    },
+    "ph-discover": {
+      "start": "2026-11-02",
+      "end": "2026-12-04"
+    },
+    "ws-discover-platform": {
+      "start": "2026-11-02",
+      "end": "2026-11-25"
+    },
+    "dis-pla-1": {
+      "start": "2026-11-02",
+      "end": "2026-11-10"
+    },
+    "dis-pla-2": {
+      "start": "2026-11-10",
+      "end": "2026-11-18"
+    },
+    "dis-pla-3": {
+      "start": "2026-11-18",
+      "end": "2026-11-25"
+    },
+    "ws-discover-payments": {
+      "start": "2026-11-02",
+      "end": "2026-11-19"
+    },
+    "dis-pay-1": {
+      "start": "2026-11-02",
+      "end": "2026-11-06"
+    },
+    "dis-pay-2": {
+      "start": "2026-11-06",
+      "end": "2026-11-12"
+    },
+    "dis-pay-3": {
+      "start": "2026-11-12",
+      "end": "2026-11-19"
+    },
+    "ws-discover-mobile": {
+      "start": "2026-11-02",
+      "end": "2026-11-11"
+    },
+    "dis-mob-1": {
+      "start": "2026-11-02",
+      "end": "2026-11-06"
+    },
+    "dis-mob-2": {
+      "start": "2026-11-06",
+      "end": "2026-11-11"
+    },
+    "ws-discover-web": {
+      "start": "2026-11-02",
+      "end": "2026-11-23"
+    },
+    "dis-web-1": {
+      "start": "2026-11-02",
+      "end": "2026-11-06"
+    },
+    "dis-web-2": {
+      "start": "2026-11-06",
+      "end": "2026-11-11"
+    },
+    "dis-web-3": {
+      "start": "2026-11-11",
+      "end": "2026-11-23"
+    },
+    "ws-discover-data": {
+      "start": "2026-11-02",
+      "end": "2026-12-04"
+    },
+    "dis-dat-1": {
+      "start": "2026-11-02",
+      "end": "2026-11-12"
+    },
+    "dis-dat-2": {
+      "start": "2026-11-12",
+      "end": "2026-11-24"
+    },
+    "dis-dat-3": {
+      "start": "2026-11-24",
+      "end": "2026-12-04"
+    },
+    "ws-discover-ops": {
+      "start": "2026-11-02",
+      "end": "2026-11-13"
+    },
+    "dis-ops-1": {
+      "start": "2026-11-02",
+      "end": "2026-11-06"
+    },
+    "dis-ops-2": {
+      "start": "2026-11-06",
+      "end": "2026-11-13"
+    },
+    "discovery-done": {
+      "at": "2026-12-04"
+    },
+    "ph-build": {
+      "start": "2026-12-04",
+      "end": "2027-02-16"
+    },
+    "ws-build-platform": {
+      "start": "2026-12-04",
+      "end": "2027-01-21"
+    },
+    "bui-pla-1": {
+      "start": "2026-12-04",
+      "end": "2026-12-09"
+    },
+    "bui-pla-2": {
+      "start": "2026-12-09",
+      "end": "2026-12-16"
+    },
+    "bui-pla-3": {
+      "start": "2026-12-16",
+      "end": "2026-12-28"
+    },
+    "bui-pla-4": {
+      "start": "2026-12-28",
+      "end": "2027-01-04"
+    },
+    "bui-pla-5": {
+      "start": "2027-01-04",
+      "end": "2027-01-12"
+    },
+    "bui-pla-6": {
+      "start": "2027-01-12",
+      "end": "2027-01-18"
+    },
+    "bui-pla-7": {
+      "start": "2027-01-18",
+      "end": "2027-01-21"
+    },
+    "ws-build-payments": {
+      "start": "2026-12-04",
+      "end": "2027-02-01"
+    },
+    "bui-pay-1": {
+      "start": "2026-12-04",
+      "end": "2026-12-11"
+    },
+    "bui-pay-2": {
+      "start": "2026-12-11",
+      "end": "2026-12-21"
+    },
+    "bui-pay-3": {
+      "start": "2026-12-21",
+      "end": "2026-12-30"
+    },
+    "bui-pay-4": {
+      "start": "2026-12-30",
+      "end": "2027-01-07"
+    },
+    "bui-pay-5": {
+      "start": "2027-01-07",
+      "end": "2027-01-14"
+    },
+    "bui-pay-6": {
+      "start": "2027-01-14",
+      "end": "2027-01-26"
+    },
+    "bui-pay-7": {
+      "start": "2027-01-26",
+      "end": "2027-02-01"
+    },
+    "ws-build-mobile": {
+      "start": "2026-12-04",
+      "end": "2027-02-04"
+    },
+    "bui-mob-1": {
+      "start": "2026-12-04",
+      "end": "2026-12-09"
+    },
+    "bui-mob-2": {
+      "start": "2026-12-09",
+      "end": "2026-12-21"
+    },
+    "bui-mob-3": {
+      "start": "2026-12-21",
+      "end": "2026-12-30"
+    },
+    "bui-mob-4": {
+      "start": "2026-12-30",
+      "end": "2027-01-07"
+    },
+    "bui-mob-5": {
+      "start": "2027-01-07",
+      "end": "2027-01-21"
+    },
+    "bui-mob-6": {
+      "start": "2027-01-21",
+      "end": "2027-02-04"
+    },
+    "ws-build-web": {
+      "start": "2026-12-04",
+      "end": "2027-02-16"
+    },
+    "bui-web-1": {
+      "start": "2026-12-04",
+      "end": "2026-12-16"
+    },
+    "bui-web-2": {
+      "start": "2026-12-16",
+      "end": "2026-12-30"
+    },
+    "bui-web-3": {
+      "start": "2026-12-30",
+      "end": "2027-01-15"
+    },
+    "bui-web-4": {
+      "start": "2027-01-15",
+      "end": "2027-01-29"
+    },
+    "bui-web-5": {
+      "start": "2027-01-29",
+      "end": "2027-02-10"
+    },
+    "bui-web-6": {
+      "start": "2027-02-10",
+      "end": "2027-02-16"
+    },
+    "ws-build-data": {
+      "start": "2026-12-04",
+      "end": "2027-01-27"
+    },
+    "bui-dat-1": {
+      "start": "2026-12-04",
+      "end": "2026-12-09"
+    },
+    "bui-dat-2": {
+      "start": "2026-12-09",
+      "end": "2026-12-17"
+    },
+    "bui-dat-3": {
+      "start": "2026-12-30",
+      "end": "2027-01-07"
+    },
+    "bui-dat-4": {
+      "start": "2027-01-07",
+      "end": "2027-01-21"
+    },
+    "bui-dat-5": {
+      "start": "2027-01-21",
+      "end": "2027-01-27"
+    },
+    "ws-build-ops": {
+      "start": "2026-12-04",
+      "end": "2027-01-18"
+    },
+    "bui-ops-1": {
+      "start": "2026-12-04",
+      "end": "2026-12-09"
+    },
+    "bui-ops-2": {
+      "start": "2026-12-09",
+      "end": "2026-12-15"
+    },
+    "bui-ops-3": {
+      "start": "2026-12-17",
+      "end": "2026-12-23"
+    },
+    "bui-ops-4": {
+      "start": "2026-12-23",
+      "end": "2027-01-06"
+    },
+    "bui-ops-5": {
+      "start": "2027-01-06",
+      "end": "2027-01-18"
+    },
+    "build-complete": {
+      "at": "2027-02-16"
+    },
+    "ph-launch": {
+      "start": "2027-02-16",
+      "end": "2027-04-08"
+    },
+    "ws-launch-platform": {
+      "start": "2027-02-16",
+      "end": "2027-04-02"
+    },
+    "lau-pla-1": {
+      "start": "2027-02-16",
+      "end": "2027-02-22"
+    },
+    "lau-pla-2": {
+      "start": "2027-02-22",
+      "end": "2027-03-01"
+    },
+    "lau-pla-3": {
+      "start": "2027-03-01",
+      "end": "2027-03-15"
+    },
+    "lau-pla-4": {
+      "start": "2027-03-15",
+      "end": "2027-03-29"
+    },
+    "lau-pla-5": {
+      "start": "2027-03-29",
+      "end": "2027-04-02"
+    },
+    "ws-launch-payments": {
+      "start": "2027-02-16",
+      "end": "2027-03-18"
+    },
+    "lau-pay-1": {
+      "start": "2027-02-16",
+      "end": "2027-02-26"
+    },
+    "lau-pay-2": {
+      "start": "2027-02-26",
+      "end": "2027-03-03"
+    },
+    "lau-pay-3": {
+      "start": "2027-03-03",
+      "end": "2027-03-09"
+    },
+    "lau-pay-4": {
+      "start": "2027-03-09",
+      "end": "2027-03-12"
+    },
+    "lau-pay-5": {
+      "start": "2027-03-12",
+      "end": "2027-03-18"
+    },
+    "ws-launch-mobile": {
+      "start": "2027-02-16",
+      "end": "2027-03-26"
+    },
+    "lau-mob-1": {
+      "start": "2027-02-16",
+      "end": "2027-02-22"
+    },
+    "lau-mob-2": {
+      "start": "2027-02-22",
+      "end": "2027-03-08"
+    },
+    "lau-mob-4": {
+      "start": "2027-03-08",
+      "end": "2027-03-16"
+    },
+    "lau-mob-5": {
+      "start": "2027-03-16",
+      "end": "2027-03-26"
+    },
+    "ws-launch-web": {
+      "start": "2027-02-16",
+      "end": "2027-04-08"
+    },
+    "lau-web-1": {
+      "start": "2027-02-16",
+      "end": "2027-03-02"
+    },
+    "lau-web-2": {
+      "start": "2027-03-02",
+      "end": "2027-03-12"
+    },
+    "lau-web-3": {
+      "start": "2027-03-12",
+      "end": "2027-03-26"
+    },
+    "lau-web-4": {
+      "start": "2027-03-26",
+      "end": "2027-04-02"
+    },
+    "lau-web-5": {
+      "start": "2027-04-02",
+      "end": "2027-04-08"
+    },
+    "ws-launch-data": {
+      "start": "2027-02-16",
+      "end": "2027-04-07"
+    },
+    "lau-dat-1": {
+      "start": "2027-02-16",
+      "end": "2027-02-22"
+    },
+    "lau-dat-2": {
+      "start": "2027-02-22",
+      "end": "2027-03-02"
+    },
+    "lau-dat-3": {
+      "start": "2027-03-12",
+      "end": "2027-03-26"
+    },
+    "lau-dat-4": {
+      "start": "2027-03-26",
+      "end": "2027-04-07"
+    },
+    "ws-launch-ops": {
+      "start": "2027-02-16",
+      "end": "2027-03-25"
+    },
+    "lau-ops-1": {
+      "start": "2027-02-16",
+      "end": "2027-02-23"
+    },
+    "lau-ops-2": {
+      "start": "2027-02-23",
+      "end": "2027-03-03"
+    },
+    "lau-ops-3": {
+      "start": "2027-03-03",
+      "end": "2027-03-17"
+    },
+    "lau-ops-4": {
+      "start": "2027-03-17",
+      "end": "2027-03-25"
+    },
+    "launch": {
+      "at": "2027-04-08"
+    },
+    "bui-web-hotfix": {
+      "start": "2026-12-15",
+      "end": "2026-12-21"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [
+    {
+      "code": "W_DEADLINE",
+      "severity": "warning",
+      "component": "core",
+      "sourceRef": "/objects/dis-pla-3/deadline",
+      "revisionRefs": [],
+      "message": "dis-pla-3 finishes 2026-11-25, 5 days after its deadline 2026-11-20",
+      "details": {
+        "object": "dis-pla-3",
+        "endpoint": "end",
+        "finish": "2026-11-25",
+        "deadline": "2026-11-20",
+        "daysLate": 5
+      },
+      "sourceRange": {
+        "line": 99,
+        "column": 5,
+        "endLine": 99,
+        "endColumn": 13
+      }
+    },
+    {
+      "code": "W_DEADLINE",
+      "severity": "warning",
+      "component": "core",
+      "sourceRef": "/objects/dis-dat-3/deadline",
+      "revisionRefs": [],
+      "message": "dis-dat-3 finishes 2026-12-04, 14 days after its deadline 2026-11-20",
+      "details": {
+        "object": "dis-dat-3",
+        "endpoint": "end",
+        "finish": "2026-12-04",
+        "deadline": "2026-11-20",
+        "daysLate": 14
+      },
+      "sourceRange": {
+        "line": 257,
+        "column": 5,
+        "endLine": 257,
+        "endColumn": 13
+      }
+    }
+  ],
+  "analysis": {
+    "criticalObjectIds": [
+      "kickoff",
+      "dis-dat-1",
+      "dis-dat-2",
+      "dis-dat-3",
+      "discovery-done",
+      "bui-web-1",
+      "bui-web-2",
+      "bui-web-3",
+      "bui-web-4",
+      "bui-web-5",
+      "bui-web-6",
+      "build-complete",
+      "lau-web-1",
+      "lau-web-2",
+      "lau-web-3",
+      "lau-web-4",
+      "lau-web-5",
+      "launch"
+    ],
+    "totalFloat": {
+      "kickoff": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-pla-1": {
+        "value": 7,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-pla-2": {
+        "value": 7,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-pla-3": {
+        "value": 7,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-pay-1": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-pay-2": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-pay-3": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-mob-1": {
+        "value": 17,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-mob-2": {
+        "value": 17,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-web-1": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-web-2": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-web-3": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-dat-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-dat-2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-dat-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-ops-1": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "dis-ops-2": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "discovery-done": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-1": {
+        "value": 14,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-2": {
+        "value": 14,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-3": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-4": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-5": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-6": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pla-7": {
+        "value": 18,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-1": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-2": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-3": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-4": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-5": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-6": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-pay-7": {
+        "value": 11,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-mob-1": {
+        "value": 5,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-mob-2": {
+        "value": 5,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-mob-3": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-mob-4": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-mob-5": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-mob-6": {
+        "value": 8,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-4": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-6": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-dat-1": {
+        "value": 21,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-dat-2": {
+        "value": 21,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-dat-3": {
+        "value": 14,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-dat-4": {
+        "value": 14,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-dat-5": {
+        "value": 14,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-ops-1": {
+        "value": 23,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-ops-2": {
+        "value": 23,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-ops-3": {
+        "value": 21,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-ops-4": {
+        "value": 21,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-ops-5": {
+        "value": 21,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "build-complete": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pla-1": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pla-2": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pla-3": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pla-4": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pla-5": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pay-1": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pay-2": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pay-3": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pay-4": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-pay-5": {
+        "value": 15,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-mob-1": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-mob-2": {
+        "value": 4,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-mob-4": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-mob-5": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-web-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-web-2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-web-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-web-4": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-web-5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-dat-1": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-dat-2": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-dat-3": {
+        "value": 1,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-dat-4": {
+        "value": 1,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-ops-1": {
+        "value": 10,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-ops-2": {
+        "value": 10,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-ops-3": {
+        "value": 10,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "lau-ops-4": {
+        "value": 10,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "launch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "bui-web-hotfix": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      }
+    }
+  }
+}

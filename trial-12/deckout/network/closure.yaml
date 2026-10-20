@@ -1,0 +1,9 @@
+address: _deck-contexts/atlas-deck/network.yaml
+contentIdentity: sha256:823984bf6a5b75713143b46ac2cbff96a765399025dcf5f7d907ecb064275203
+id: atlas-network
+kind: render-context
+revision:
+  token: w3
+store:
+  identity: atlas-deck
+  provider: local

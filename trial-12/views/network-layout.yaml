@@ -1,0 +1,36 @@
+version: chrona/layout-profile/v0.10
+id: csv-network-layout
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
+requiredThemeTokens: [spacing.m]
+reviewSurface:
+  rowDistribution: pack
+  backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}
+  annotationRouting: {maxBends: 4, maxDetourRatio: 2}
+relationRouting: {maxBends: 4, maxDetourRatio: 2}
+root:
+  id: page
+  kind: column
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.m}
+  padding: {token: spacing.m}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: required
+      overflow: visible-overflow
+    - id: network
+      kind: slot
+      source: network
+      inlineSize: fill
+      blockSize: fill
+      place: {inline: stretch, block: stretch, safety: strict}
+      priority: required
+      overflow: visible-overflow

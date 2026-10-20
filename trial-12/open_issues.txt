@@ -1,0 +1,19 @@
+1832	OPEN	Avoid reparsing the full derived inventory for every changed source path		2026-10-20T13:40:41Z
+1830	OPEN	Block legend source height omits tall swatches and inter-entry gaps		2026-10-20T15:34:50Z
+1827	OPEN	Design authoring from a brief: no theme-role reference, legend auto-adds roles, three unhelpful errors, wording case, slot heading, preset copy --id		2026-10-20T15:34:53Z
+1826	OPEN	Design self-checks: legend separability skips ordinary keys; dependency halo flagged as decoration; content-width legend false ellipsis		2026-10-20T15:19:27Z
+1821	OPEN	yuya: finish-delta unit is a layout literal (日) that ignores the delta.unit wording keys (#1790 row 1)		2026-10-20T11:10:38Z
+1813	OPEN	Newcomer docs: README guide index, colour-by-owner recipe, which-file-to-edit map, PNG scale		2026-10-20T07:19:23Z
+1811	OPEN	Legend lower-case transform lowercases data names (aiko); target-b owner palette fails its own contrast/separability		2026-10-20T12:11:37Z
+1790	OPEN	ja-JP and locale: delta unit hard-coded, quarter word order, locale guide date claim; preset as-of, axis year, titlecard holiday key		2026-10-20T00:39:36Z
+1783	OPEN	ja-JP: key the remaining yuya, target-b legend and Today marker literals (follow-up of #1724 row 2)		2026-10-19T23:39:28Z
+1718	OPEN	Landing queue: reserve the next main landing here (both devs)		2026-10-20T15:34:54Z
+1553	OPEN	typesetter-compile: yuya TikZ fails in Tectonic, fontspec cannot find "Noto Sans JP" on the CI runner		2026-10-15T21:51:39Z
+1552	OPEN	TikZ rotate= direction is opposite to SVG for 90/-90 text and shapes (successor of #1532)		2026-10-15T21:51:38Z
+1551	OPEN	TikZ export of titlecard does not compile whole in Tectonic: canvas texture pattern tiles exceed TeX main memory (successor of #1532)		2026-10-15T21:51:36Z
+1501	OPEN	Folded milestones, remainder of #440: points: key-row, the quarter bound on milestone-only rows, and pairing a fold with a distribution that reuses the freed height		2026-10-15T08:33:49Z
+902	OPEN	Agent interface follow-ups over MCP: resolve, guided authoring and revert; a real agent-host transcript; HTTP transport and inline project text (consolidates #814, #815)		2026-10-20T15:40:38Z
+883	OPEN	Reproduce the group-header identity targets in preset YAML on corpus slides: Marquee ACT n, Target B tints, Title Card tab		2026-10-11T11:04:28Z
+645	OPEN	Enforce derived-ready as a required check on main (deferred from #590 row 3)		2026-10-15T04:12:30Z
+454	OPEN	Priority board: what to take next and why (maintained by the reviewer; dev reads only)		2026-10-20T15:40:41Z
+344	OPEN	Proposal: declarative Project Data extensions and semantic-to-presentation contracts		2026-10-20T15:19:29Z

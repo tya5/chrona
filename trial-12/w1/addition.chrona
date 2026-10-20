@@ -1,0 +1,4 @@
+terse 0.1
+project atlas "Atlas programme" calendar standard extension atlas-delivery "atlas-profile.yaml" git:0123456789abcdef0123456789abcdef01234567
+calendar standard mon-fri except 2026-12-24 2026-12-25 2026-12-31 2027-01-01
+bui-web-hotfix "Web checkout hotfix" task profile atlas.work 4wd from 2026-12-15 deadline 2027-01-08 team=web risk=high external=true

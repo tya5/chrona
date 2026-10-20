@@ -1,0 +1,13 @@
+version: chrona/snapshot-ref/v0.3
+kind: snapshot-ref
+id: atlas-baseline-w0
+body:
+  project:
+    id: atlas
+    kind: project
+    store:
+      provider: local
+      identity: atlas-deck
+    address: baseline/project.yaml
+    revision:
+      token: w0

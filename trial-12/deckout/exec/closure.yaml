@@ -1,0 +1,9 @@
+address: _deck-contexts/atlas-deck/exec.yaml
+contentIdentity: sha256:3df956b899b371a881fad044e84f68c8fb78cf0ff71e2d04ab635684306abf63
+id: atlas-exec
+kind: render-context
+revision:
+  token: w3
+store:
+  identity: atlas-deck
+  provider: local

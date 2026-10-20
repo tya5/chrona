@@ -1,0 +1,90 @@
+w0->w1	compare.default.en-US	251	0	20	
+w0->w1	compare.default.ja-JP	251	0	20	
+w0->w1	compare.target-b.en-US	273	0	162	
+w0->w1	compare.target-b.ja-JP	273	0	162	
+w0->w1	compare.yuya.en-US	311	0	158	
+w0->w1	compare.yuya.ja-JP	311	0	158	
+w0->w1	exec.default.en-US	10	0	0	
+w0->w1	exec.default.ja-JP	10	0	0	
+w0->w1	exec.mission-light.en-US	10	0	0	
+w0->w1	exec.mission-light.ja-JP	10	0	0	
+w0->w1	exec.target-b.en-US	16	0	0	
+w0->w1	exec.target-b.ja-JP	16	0	0	
+w0->w1	exec.yuya.en-US	46	0	0	
+w0->w1	exec.yuya.ja-JP	46	0	0	
+w0->w1	focus.default.en-US	33	19	33	planned:bui-dat-3:bui-dat-3 dx=146.7; planned:bui-dat-4:bui-dat-4 dx=209.5; planned:bui-mob-3:bui-mob-3 dx=146.7
+w0->w1	focus.default.ja-JP	33	19	33	planned:bui-dat-3:bui-dat-3 dx=146.2; planned:bui-dat-4:bui-dat-4 dx=208.9; planned:bui-mob-3:bui-mob-3 dx=146.2
+w0->w1	focus.mission-light.en-US	33	19	33	planned:bui-dat-3:bui-dat-3 dx=127.9; planned:bui-dat-4:bui-dat-4 dx=182.7; planned:bui-mob-3:bui-mob-3 dx=127.9
+w0->w1	focus.mission-light.ja-JP	33	19	33	planned:bui-dat-3:bui-dat-3 dx=127.9; planned:bui-dat-4:bui-dat-4 dx=182.7; planned:bui-mob-3:bui-mob-3 dx=127.9
+w0->w1	focus.target-b.en-US	33	19	33	planned:bui-dat-3:bui-dat-3 dx=145.7; planned:bui-dat-4:bui-dat-4 dx=208.2; planned:bui-mob-3:bui-mob-3 dx=145.7
+w0->w1	focus.target-b.ja-JP	33	19	33	planned:bui-dat-3:bui-dat-3 dx=145.7; planned:bui-dat-4:bui-dat-4 dx=208.2; planned:bui-mob-3:bui-mob-3 dx=145.7
+w0->w1	focus.yuya.en-US	33	19	33	planned:bui-dat-3:bui-dat-3 dx=143.0; planned:bui-dat-4:bui-dat-4 dx=204.4; planned:bui-mob-3:bui-mob-3 dx=143.0
+w0->w1	focus.yuya.ja-JP	33	19	33	planned:bui-dat-3:bui-dat-3 dx=143.0; planned:bui-dat-4:bui-dat-4 dx=204.4; planned:bui-mob-3:bui-mob-3 dx=143.0
+w0->w1	network.default.en-US	87	87	0	
+w0->w1	network.default.ja-JP	87	87	0	
+w0->w1	network.mission-light.en-US	87	87	0	
+w0->w1	network.mission-light.ja-JP	87	87	0	
+w0->w1	network.target-b.en-US	87	87	0	
+w0->w1	network.target-b.ja-JP	87	87	0	
+w0->w1	network.yuya.en-US	87	87	0	
+w0->w1	network.yuya.ja-JP	87	87	0	
+w1->w2	compare.default.en-US	244	0	108	
+w1->w2	compare.default.ja-JP	244	0	108	
+w1->w2	compare.target-b.en-US	271	0	122	
+w1->w2	compare.target-b.ja-JP	271	0	122	
+w1->w2	compare.yuya.en-US	309	0	122	
+w1->w2	compare.yuya.ja-JP	309	0	122	
+w1->w2	exec.default.en-US	10	0	0	
+w1->w2	exec.default.ja-JP	10	0	0	
+w1->w2	exec.mission-light.en-US	10	0	0	
+w1->w2	exec.mission-light.ja-JP	10	0	0	
+w1->w2	exec.target-b.en-US	16	0	0	
+w1->w2	exec.target-b.ja-JP	16	0	0	
+w1->w2	exec.yuya.en-US	46	0	0	
+w1->w2	exec.yuya.ja-JP	46	0	0	
+w1->w2	focus.default.en-US	28	17	28	planned:bui-dat-3:bui-dat-3 dx=146.7; planned:bui-dat-4:bui-dat-4 dx=146.7; planned:bui-dat-5:bui-dat-5 dx=188.6
+w1->w2	focus.default.ja-JP	28	17	28	planned:bui-dat-3:bui-dat-3 dx=146.2; planned:bui-dat-4:bui-dat-4 dx=146.2; planned:bui-dat-5:bui-dat-5 dx=188.0
+w1->w2	focus.mission-light.en-US	28	17	28	planned:bui-dat-3:bui-dat-3 dx=127.9; planned:bui-dat-4:bui-dat-4 dx=127.9; planned:bui-dat-5:bui-dat-5 dx=164.4
+w1->w2	focus.mission-light.ja-JP	28	17	28	planned:bui-dat-3:bui-dat-3 dx=127.9; planned:bui-dat-4:bui-dat-4 dx=127.9; planned:bui-dat-5:bui-dat-5 dx=164.4
+w1->w2	focus.target-b.en-US	28	17	28	planned:bui-dat-3:bui-dat-3 dx=145.7; planned:bui-dat-4:bui-dat-4 dx=145.7; planned:bui-dat-5:bui-dat-5 dx=187.3
+w1->w2	focus.target-b.ja-JP	28	17	28	planned:bui-dat-3:bui-dat-3 dx=145.7; planned:bui-dat-4:bui-dat-4 dx=145.7; planned:bui-dat-5:bui-dat-5 dx=187.3
+w1->w2	focus.yuya.en-US	28	17	28	planned:bui-dat-3:bui-dat-3 dx=143.0; planned:bui-dat-4:bui-dat-4 dx=143.0; planned:bui-dat-5:bui-dat-5 dx=183.9
+w1->w2	focus.yuya.ja-JP	28	17	28	planned:bui-dat-3:bui-dat-3 dx=143.0; planned:bui-dat-4:bui-dat-4 dx=143.0; planned:bui-dat-5:bui-dat-5 dx=183.9
+w1->w2	network.default.en-US	81	0	0	
+w1->w2	network.default.ja-JP	81	0	0	
+w1->w2	network.mission-light.en-US	81	0	0	
+w1->w2	network.mission-light.ja-JP	81	0	0	
+w1->w2	network.target-b.en-US	81	0	0	
+w1->w2	network.target-b.ja-JP	81	0	0	
+w1->w2	network.yuya.en-US	81	0	0	
+w1->w2	network.yuya.ja-JP	81	0	0	
+w2->w3	compare.default.en-US	262	0	0	
+w2->w3	compare.default.ja-JP	262	0	0	
+w2->w3	compare.target-b.en-US	296	0	0	
+w2->w3	compare.target-b.ja-JP	296	0	0	
+w2->w3	compare.yuya.en-US	334	0	0	
+w2->w3	compare.yuya.ja-JP	334	0	0	
+w2->w3	exec.default.en-US	10	0	0	
+w2->w3	exec.default.ja-JP	10	0	0	
+w2->w3	exec.mission-light.en-US	10	0	0	
+w2->w3	exec.mission-light.ja-JP	10	0	0	
+w2->w3	exec.target-b.en-US	16	0	0	
+w2->w3	exec.target-b.ja-JP	16	0	0	
+w2->w3	exec.yuya.en-US	46	0	0	
+w2->w3	exec.yuya.ja-JP	46	0	0	
+w2->w3	focus.default.en-US	21	13	15	planned:bui-dat-3:bui-dat-3 dx=146.7; planned:bui-dat-4:bui-dat-4 dx=146.7; planned:bui-dat-5:bui-dat-5 dx=146.7
+w2->w3	focus.default.ja-JP	21	13	15	planned:bui-dat-3:bui-dat-3 dx=146.2; planned:bui-dat-4:bui-dat-4 dx=146.2; planned:bui-dat-5:bui-dat-5 dx=146.2
+w2->w3	focus.mission-light.en-US	21	13	15	planned:bui-dat-3:bui-dat-3 dx=127.9; planned:bui-dat-4:bui-dat-4 dx=127.9; planned:bui-dat-5:bui-dat-5 dx=127.9
+w2->w3	focus.mission-light.ja-JP	21	13	15	planned:bui-dat-3:bui-dat-3 dx=127.9; planned:bui-dat-4:bui-dat-4 dx=127.9; planned:bui-dat-5:bui-dat-5 dx=127.9
+w2->w3	focus.target-b.en-US	21	13	19	planned:bui-dat-3:bui-dat-3 dx=145.7; planned:bui-dat-4:bui-dat-4 dx=145.7; planned:bui-dat-5:bui-dat-5 dx=145.7
+w2->w3	focus.target-b.ja-JP	21	13	19	planned:bui-dat-3:bui-dat-3 dx=145.7; planned:bui-dat-4:bui-dat-4 dx=145.7; planned:bui-dat-5:bui-dat-5 dx=145.7
+w2->w3	focus.yuya.en-US	21	13	19	planned:bui-dat-3:bui-dat-3 dx=143.0; planned:bui-dat-4:bui-dat-4 dx=143.0; planned:bui-dat-5:bui-dat-5 dx=143.0
+w2->w3	focus.yuya.ja-JP	21	13	19	planned:bui-dat-3:bui-dat-3 dx=143.0; planned:bui-dat-4:bui-dat-4 dx=143.0; planned:bui-dat-5:bui-dat-5 dx=143.0
+w2->w3	network.default.en-US	87	0	0	
+w2->w3	network.default.ja-JP	87	0	0	
+w2->w3	network.mission-light.en-US	87	0	0	
+w2->w3	network.mission-light.ja-JP	87	0	0	
+w2->w3	network.target-b.en-US	87	0	0	
+w2->w3	network.target-b.ja-JP	87	0	0	
+w2->w3	network.yuya.en-US	87	0	0	
+w2->w3	network.yuya.ja-JP	87	0	0	

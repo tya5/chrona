@@ -1,0 +1,170 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: atlas-observed
+body:
+  asOf: '2026-12-07'
+  observations:
+  - id: kickoff-1
+    sequence: 1
+    projectObjectId: kickoff
+    actual:
+      at: '2026-11-02'
+  - id: dis-pla-1-1
+    sequence: 1
+    projectObjectId: dis-pla-1
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-11'
+      progress: 1
+  - id: dis-pla-2-1
+    sequence: 1
+    projectObjectId: dis-pla-2
+    actual:
+      start: '2026-11-10'
+      finish: '2026-11-21'
+      progress: 1
+  - id: dis-pla-3-1
+    sequence: 1
+    projectObjectId: dis-pla-3
+    actual:
+      start: '2026-11-18'
+      finish: '2026-11-26'
+      progress: 1
+  - id: dis-pay-1-1
+    sequence: 1
+    projectObjectId: dis-pay-1
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-09'
+      progress: 1
+  - id: dis-pay-2-1
+    sequence: 1
+    projectObjectId: dis-pay-2
+    actual:
+      start: '2026-11-06'
+      finish: '2026-11-12'
+      progress: 1
+  - id: dis-pay-3-1
+    sequence: 1
+    projectObjectId: dis-pay-3
+    actual:
+      start: '2026-11-12'
+      finish: '2026-11-19'
+      progress: 1
+  - id: dis-mob-1-1
+    sequence: 1
+    projectObjectId: dis-mob-1
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-08'
+      progress: 1
+  - id: dis-mob-2-1
+    sequence: 1
+    projectObjectId: dis-mob-2
+    actual:
+      start: '2026-11-06'
+      finish: '2026-11-14'
+      progress: 1
+  - id: dis-web-1-1
+    sequence: 1
+    projectObjectId: dis-web-1
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-06'
+      progress: 1
+  - id: dis-web-2-1
+    sequence: 1
+    projectObjectId: dis-web-2
+    actual:
+      start: '2026-11-06'
+      finish: '2026-11-13'
+      progress: 1
+  - id: dis-web-3-1
+    sequence: 1
+    projectObjectId: dis-web-3
+    actual:
+      start: '2026-11-11'
+      finish: '2026-11-23'
+      progress: 1
+  - id: dis-dat-1-1
+    sequence: 1
+    projectObjectId: dis-dat-1
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-13'
+      progress: 1
+  - id: dis-dat-2-1
+    sequence: 1
+    projectObjectId: dis-dat-2
+    actual:
+      start: '2026-11-12'
+      finish: '2026-11-25'
+      progress: 1
+  - id: dis-dat-3-1
+    sequence: 1
+    projectObjectId: dis-dat-3
+    actual:
+      start: '2026-11-24'
+      finish: '2026-12-04'
+      progress: 1
+  - id: dis-ops-1-1
+    sequence: 1
+    projectObjectId: dis-ops-1
+    actual:
+      start: '2026-11-02'
+      finish: '2026-11-06'
+      progress: 1
+  - id: dis-ops-2-1
+    sequence: 1
+    projectObjectId: dis-ops-2
+    actual:
+      start: '2026-11-06'
+      finish: '2026-11-15'
+      progress: 1
+  - id: discovery-done-1
+    sequence: 1
+    projectObjectId: discovery-done
+    actual:
+      at: '2026-12-04'
+  - id: bui-pla-1-1
+    sequence: 1
+    projectObjectId: bui-pla-1
+    actual:
+      start: '2026-12-04'
+      openUntil: asOf
+      progress: 0.6
+  - id: bui-pay-1-1
+    sequence: 1
+    projectObjectId: bui-pay-1
+    actual:
+      start: '2026-12-04'
+      openUntil: asOf
+      progress: 0.43
+  - id: bui-mob-1-1
+    sequence: 1
+    projectObjectId: bui-mob-1
+    actual:
+      start: '2026-12-04'
+      openUntil: asOf
+      progress: 0.6
+  - id: bui-web-1-1
+    sequence: 1
+    projectObjectId: bui-web-1
+    actual:
+      start: '2026-12-04'
+      openUntil: asOf
+      progress: 0.25
+  - id: bui-dat-1-1
+    sequence: 1
+    projectObjectId: bui-dat-1
+    actual:
+      start: '2026-12-04'
+      openUntil: asOf
+      progress: 0.6
+  - id: bui-ops-1-1
+    sequence: 1
+    projectObjectId: bui-ops-1
+    actual:
+      start: '2026-12-04'
+      openUntil: asOf
+      progress: 0.6

@@ -1,0 +1,107 @@
+id,title,type,start,end,duration,parent,predecessors,deadline,progress,actual_start,actual_finish,team,risk,external,deliverable
+atlas,Atlas programme,group,,,,,,,,,,,,,
+kickoff,Programme kickoff,gate,2026-11-02,,,atlas,,,,2026-11-02,,,,,
+ph-discover,Discovery,group,,,,atlas,,,,,,,,,
+ws-discover-platform,Platform discovery,group,,,,ph-discover,,,,,,,,,
+dis-pla-1,Platform discovery step 1,task,,,6wd,ws-discover-platform,kickoff,,,,,platform,medium,false,del-app
+dis-pla-2,Platform discovery step 2,task,,,6wd,ws-discover-platform,dis-pla-1,,,,,platform,low,false,del-runbook
+dis-pla-3,Platform discovery step 3,task,,,5wd,ws-discover-platform,dis-pla-2,2026-11-20,,,,platform,high,false,del-report
+ws-discover-payments,Payments discovery,group,,,,ph-discover,,,,,,,,,
+dis-pay-1,Payments discovery step 1,task,,,4wd,ws-discover-payments,kickoff,,,,,payments,high,true,del-report
+dis-pay-2,Payments discovery step 2,task,,,4wd,ws-discover-payments,dis-pay-1,,,,,payments,medium,false,del-app
+dis-pay-3,Payments discovery step 3,task,,,5wd,ws-discover-payments,dis-pay-2,,,,,payments,low,true,del-report
+ws-discover-mobile,Mobile discovery,group,,,,ph-discover,,,,,,,,,
+dis-mob-1,Mobile discovery step 1,task,,,4wd,ws-discover-mobile,kickoff,,,,,mobile,low,false,del-runbook
+dis-mob-2,Mobile discovery step 2,task,,,3wd,ws-discover-mobile,dis-mob-1,2026-11-20,,,,mobile,low,true,del-report
+ws-discover-web,Web discovery,group,,,,ph-discover,,,,,,,,,
+dis-web-1,Web discovery step 1,task,,,4wd,ws-discover-web,kickoff,,,,,web,low,false,del-runbook
+dis-web-2,Web discovery step 2,task,,,3wd,ws-discover-web,dis-web-1,,,,,web,high,false,del-app
+dis-web-3,Web discovery step 3,task,,,8wd,ws-discover-web,dis-web-2,,,,,web,medium,true,del-api
+ws-discover-data,Data discovery,group,,,,ph-discover,,,,,,,,,
+dis-dat-1,Data discovery step 1,task,,,8wd,ws-discover-data,kickoff,,,,,data,low,true,del-runbook
+dis-dat-2,Data discovery step 2,task,,,8wd,ws-discover-data,dis-dat-1,,,,,data,medium,false,del-runbook
+dis-dat-3,Data discovery step 3,task,,,8wd,ws-discover-data,dis-dat-2,2026-11-20,,,,data,medium,true,del-api
+ws-discover-ops,Ops discovery,group,,,,ph-discover,,,,,,,,,
+dis-ops-1,Ops discovery step 1,task,,,4wd,ws-discover-ops,kickoff,,,,,ops,high,false,del-portal
+dis-ops-2,Ops discovery step 2,task,,,5wd,ws-discover-ops,dis-ops-1,,,,,ops,high,false,del-portal
+discovery-done,Discovery complete,gate,,,,ph-discover,"dis-pla-3, dis-pay-3, dis-mob-2, dis-web-3, dis-dat-3, dis-ops-2",2026-12-18,,,,,,,
+ph-build,Build,group,,,,atlas,,,,,,,,,
+ws-build-platform,Platform build,group,,,,ph-build,,,,,,,,,
+bui-pla-1,Platform build step 1,task,,,3wd,ws-build-platform,discovery-done,,,,,platform,medium,true,del-portal
+bui-pla-2,Platform build step 2,task,,,5wd,ws-build-platform,bui-pla-1,,,,,platform,medium,true,del-api
+bui-pla-3,Platform build step 3,task,,,6wd,ws-build-platform,bui-pla-2,,,,,platform,medium,true,del-report
+bui-pla-4,Platform build step 4,task,,,3wd,ws-build-platform,bui-pla-3,,,,,platform,low,false,del-api
+bui-pla-5,Platform build step 5,task,,,6wd,ws-build-platform,bui-pla-4,,,,,platform,low,true,del-report
+bui-pla-6,Platform build step 6,task,,,4wd,ws-build-platform,bui-pla-5,,,,,platform,low,true,del-portal
+bui-pla-7,Platform build step 7,task,,,3wd,ws-build-platform,bui-pla-6,2027-03-19,,,,platform,medium,false,del-runbook
+ws-build-payments,Payments build,group,,,,ph-build,,,,,,,,,
+bui-pay-1,Payments build step 1,task,,,5wd,ws-build-payments,discovery-done,,,,,payments,high,true,del-report
+bui-pay-2,Payments build step 2,task,,,6wd,ws-build-payments,bui-pay-1,,,,,payments,medium,true,del-portal
+bui-pay-3,Payments build step 3,task,,,5wd,ws-build-payments,"bui-pay-2, bui-pla-2",,,,,payments,medium,false,del-runbook
+bui-pay-4,Payments build step 4,task,,,4wd,ws-build-payments,bui-pay-3,,,,,payments,low,false,del-report
+bui-pay-5,Payments build step 5,task,,,5wd,ws-build-payments,bui-pay-4,,,,,payments,low,true,del-app
+bui-pay-6,Payments build step 6,task,,,8wd,ws-build-payments,bui-pay-5,,,,,payments,low,false,del-portal
+bui-pay-7,Payments build step 7,task,,,4wd,ws-build-payments,bui-pay-6,,,,,payments,low,true,del-report
+ws-build-mobile,Mobile build,group,,,,ph-build,,,,,,,,,
+bui-mob-1,Mobile build step 1,task,,,3wd,ws-build-mobile,discovery-done,,,,,mobile,low,true,del-portal
+bui-mob-2,Mobile build step 2,task,,,8wd,ws-build-mobile,bui-mob-1,,,,,mobile,high,true,del-api
+bui-mob-3,Mobile build step 3,task,,,5wd,ws-build-mobile,"bui-mob-2, bui-pay-2",,,,,mobile,high,false,del-api
+bui-mob-4,Mobile build step 4,task,,,4wd,ws-build-mobile,bui-mob-3,,,,,mobile,high,false,del-runbook
+bui-mob-5,Mobile build step 5,task,,,10wd,ws-build-mobile,bui-mob-4,,,,,mobile,medium,false,del-runbook
+bui-mob-6,Mobile build step 6,task,,,10wd,ws-build-mobile,bui-mob-5,2027-03-19,,,,mobile,low,false,del-portal
+ws-build-web,Web build,group,,,,ph-build,,,,,,,,,
+bui-web-1,Web build step 1,task,,,8wd,ws-build-web,discovery-done,,,,,web,low,false,del-portal
+bui-web-2,Web build step 2,task,,,8wd,ws-build-web,bui-web-1,,,,,web,high,false,del-app
+bui-web-3,Web build step 3,task,,,10wd,ws-build-web,"bui-web-2, bui-mob-2",,,,,web,medium,false,del-api
+bui-web-4,Web build step 4,task,,,10wd,ws-build-web,bui-web-3,,,,,web,low,true,del-app
+bui-web-5,Web build step 5,task,,,8wd,ws-build-web,bui-web-4,,,,,web,medium,false,del-app
+bui-web-6,Web build step 6,task,,,4wd,ws-build-web,bui-web-5,,,,,web,low,false,del-runbook
+ws-build-data,Data build,group,,,,ph-build,,,,,,,,,
+bui-dat-1,Data build step 1,task,,,3wd,ws-build-data,discovery-done,,,,,data,high,false,del-api
+bui-dat-2,Data build step 2,task,,,6wd,ws-build-data,bui-dat-1,,,,,data,medium,true,del-runbook
+bui-dat-3,Data build step 3,task,,,4wd,ws-build-data,"bui-dat-2, bui-web-2",,,,,data,high,false,del-portal
+bui-dat-4,Data build step 4,task,,,10wd,ws-build-data,bui-dat-3,,,,,data,high,false,del-report
+bui-dat-5,Data build step 5,task,,,4wd,ws-build-data,bui-dat-4,2027-03-19,,,,data,low,true,del-api
+ws-build-ops,Ops build,group,,,,ph-build,,,,,,,,,
+bui-ops-1,Ops build step 1,task,,,3wd,ws-build-ops,discovery-done,,,,,ops,low,false,del-report
+bui-ops-2,Ops build step 2,task,,,4wd,ws-build-ops,bui-ops-1,,,,,ops,medium,true,del-portal
+bui-ops-3,Ops build step 3,task,,,4wd,ws-build-ops,"bui-ops-2, bui-dat-2",,,,,ops,medium,false,del-report
+bui-ops-4,Ops build step 4,task,,,6wd,ws-build-ops,bui-ops-3,,,,,ops,high,true,del-app
+bui-ops-5,Ops build step 5,task,,,8wd,ws-build-ops,bui-ops-4,,,,,ops,high,false,del-report
+build-complete,Build complete,gate,,,,ph-build,"bui-pla-7, bui-pay-7, bui-mob-6, bui-web-6, bui-dat-5, bui-ops-5",2027-03-26,,,,,,,
+ph-launch,Launch readiness,group,,,,atlas,,,,,,,,,
+ws-launch-platform,Platform launch readiness,group,,,,ph-launch,,,,,,,,,
+lau-pla-1,Platform launch step 1,task,,,4wd,ws-launch-platform,build-complete,,,,,platform,low,false,del-portal
+lau-pla-2,Platform launch step 2,task,,,5wd,ws-launch-platform,lau-pla-1,,,,,platform,low,false,del-app
+lau-pla-3,Platform launch step 3,task,,,10wd,ws-launch-platform,lau-pla-2,,,,,platform,low,false,del-portal
+lau-pla-4,Platform launch step 4,task,,,10wd,ws-launch-platform,lau-pla-3,,,,,platform,low,false,del-portal
+lau-pla-5,Platform launch step 5,task,,,4wd,ws-launch-platform,lau-pla-4,2027-05-14,,,,platform,low,true,del-runbook
+ws-launch-payments,Payments launch readiness,group,,,,ph-launch,,,,,,,,,
+lau-pay-1,Payments launch step 1,task,,,8wd,ws-launch-payments,build-complete,,,,,payments,medium,false,del-app
+lau-pay-2,Payments launch step 2,task,,,3wd,ws-launch-payments,lau-pay-1,,,,,payments,high,false,del-runbook
+lau-pay-3,Payments launch step 3,task,,,4wd,ws-launch-payments,"lau-pay-2, lau-pla-2",,,,,payments,medium,true,del-app
+lau-pay-4,Payments launch step 4,task,,,3wd,ws-launch-payments,lau-pay-3,,,,,payments,medium,false,del-portal
+lau-pay-5,Payments launch step 5,task,,,4wd,ws-launch-payments,lau-pay-4,,,,,payments,high,false,del-portal
+ws-launch-mobile,Mobile launch readiness,group,,,,ph-launch,,,,,,,,,
+lau-mob-1,Mobile launch step 1,task,,,4wd,ws-launch-mobile,build-complete,,,,,mobile,high,true,del-report
+lau-mob-2,Mobile launch step 2,task,,,10wd,ws-launch-mobile,lau-mob-1,,,,,mobile,medium,true,del-report
+lau-mob-3,Mobile launch step 3,task,,,6wd,ws-launch-mobile,"lau-mob-2, lau-pay-2",,,,,mobile,medium,true,del-runbook
+lau-mob-4,Mobile launch step 4,task,,,6wd,ws-launch-mobile,lau-mob-3,,,,,mobile,low,true,del-runbook
+lau-mob-5,Mobile launch step 5,task,,,8wd,ws-launch-mobile,lau-mob-4,2027-05-14,,,,mobile,high,false,del-report
+ws-launch-web,Web launch readiness,group,,,,ph-launch,,,,,,,,,
+lau-web-1,Web launch step 1,task,,,10wd,ws-launch-web,build-complete,,,,,web,medium,true,del-api
+lau-web-2,Web launch step 2,task,,,8wd,ws-launch-web,lau-web-1,,,,,web,high,false,del-portal
+lau-web-3,Web launch step 3,task,,,10wd,ws-launch-web,"lau-web-2, lau-mob-2",,,,,web,low,false,del-runbook
+lau-web-4,Web launch step 4,task,,,5wd,ws-launch-web,lau-web-3,,,,,web,high,false,del-app
+lau-web-5,Web launch step 5,task,,,4wd,ws-launch-web,lau-web-4,,,,,web,medium,true,del-report
+ws-launch-data,Data launch readiness,group,,,,ph-launch,,,,,,,,,
+lau-dat-1,Data launch step 1,task,,,4wd,ws-launch-data,build-complete,,,,,data,medium,false,del-api
+lau-dat-2,Data launch step 2,task,,,6wd,ws-launch-data,lau-dat-1,,,,,data,medium,false,del-runbook
+lau-dat-3,Data launch step 3,task,,,10wd,ws-launch-data,"lau-dat-2, lau-web-2",,,,,data,high,false,del-runbook
+lau-dat-4,Data launch step 4,task,,,8wd,ws-launch-data,lau-dat-3,2027-05-14,,,,data,medium,true,del-app
+ws-launch-ops,Ops launch readiness,group,,,,ph-launch,,,,,,,,,
+lau-ops-1,Ops launch step 1,task,,,5wd,ws-launch-ops,build-complete,,,,,ops,high,true,del-report
+lau-ops-2,Ops launch step 2,task,,,6wd,ws-launch-ops,lau-ops-1,,,,,ops,medium,false,del-report
+lau-ops-3,Ops launch step 3,task,,,10wd,ws-launch-ops,"lau-ops-2, lau-dat-2",,,,,ops,medium,false,del-runbook
+lau-ops-4,Ops launch step 4,task,,,6wd,ws-launch-ops,lau-ops-3,,,,,ops,medium,false,del-runbook
+launch,Public launch,gate,,,,ph-launch,"lau-pla-5, lau-pay-5, lau-mob-5, lau-web-5, lau-dat-4, lau-ops-4",2027-05-28,,,,,,,

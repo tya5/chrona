@@ -1,0 +1,42 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-yuya
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-design-default
+      kind: view
+      path: view.yaml
+    theme:
+      id: yuya
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: yuya
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: yuya
+      kind: layout-profile
+      path: layout.yaml
+    detailProfile:
+      id: halcyon-yuya-legend
+      kind: review-detail-profile
+      path: detail.yaml
+    iconCatalogs:
+    - id: chrona-target-parts-v2026-10-09
+      kind: icon-catalog
+      path: catalogs/chrona-target-parts-v2026-10-09.yaml
+    - id: chrona-annotation-parts-v2026-10-09
+      kind: icon-catalog
+      path: catalogs/chrona-annotation-parts-v2026-10-09.yaml
+    fontSets:
+    - chrona.noto-sans+jp
+  compatibleColorSchemes:
+  - id: yuya
+    kind: color-scheme
+    path: scheme.yaml
+  visualProfile:
+    preferred: chrona-output/visual/v0.7-svg

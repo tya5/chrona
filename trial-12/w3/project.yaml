@@ -1,0 +1,2140 @@
+version: timeline/v0.7
+project:
+  id: atlas
+  title: Atlas programme
+  calendar: standard
+extensions:
+- packageId: atlas-delivery
+  path: atlas-profile.yaml
+  revision: git:0123456789abcdef0123456789abcdef01234567
+calendars:
+  standard:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    exceptions:
+    - date: '2026-12-24'
+      working: false
+    - date: '2026-12-25'
+      working: false
+    - date: '2026-12-31'
+      working: false
+    - date: '2027-01-01'
+      working: false
+entities:
+  del-api:
+    type: atlas.deliverable
+    title: Public API v2
+  del-app:
+    type: atlas.deliverable
+    title: Mobile app 3.0
+  del-portal:
+    type: atlas.deliverable
+    title: Partner portal
+  del-runbook:
+    type: atlas.deliverable
+    title: Operations runbook
+  del-report:
+    type: atlas.deliverable
+    title: Launch readiness report
+objects:
+  atlas:
+    type: group
+    title: Atlas programme
+    schedule:
+      mode: rollup
+  kickoff:
+    type: gate
+    title: Programme kickoff
+    parent: atlas
+    schedule:
+      mode: fixed-point
+      at: '2026-11-02'
+  ph-discover:
+    type: group
+    title: Discovery
+    parent: atlas
+    schedule:
+      mode: rollup
+  ws-discover-platform:
+    type: group
+    title: Platform discovery
+    parent: ph-discover
+    schedule:
+      mode: rollup
+  dis-pla-1:
+    type: atlas.work
+    title: Platform discovery step 1
+    parent: ws-discover-platform
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: platform
+      risk: medium
+      external: false
+      deliverable: del-app
+  dis-pla-2:
+    type: atlas.work
+    title: Platform discovery step 2
+    parent: ws-discover-platform
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: platform
+      risk: low
+      external: false
+      deliverable: del-runbook
+  dis-pla-3:
+    type: atlas.work
+    title: Platform discovery step 3
+    parent: ws-discover-platform
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    deadline: '2026-11-20'
+    fields:
+      team: platform
+      risk: high
+      external: false
+      deliverable: del-report
+  ws-discover-payments:
+    type: group
+    title: Payments discovery
+    parent: ph-discover
+    schedule:
+      mode: rollup
+  dis-pay-1:
+    type: atlas.work
+    title: Payments discovery step 1
+    parent: ws-discover-payments
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: payments
+      risk: high
+      external: true
+      deliverable: del-report
+  dis-pay-2:
+    type: atlas.work
+    title: Payments discovery step 2
+    parent: ws-discover-payments
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: payments
+      risk: medium
+      external: false
+      deliverable: del-app
+  dis-pay-3:
+    type: atlas.work
+    title: Payments discovery step 3
+    parent: ws-discover-payments
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: payments
+      risk: low
+      external: true
+      deliverable: del-report
+  ws-discover-mobile:
+    type: group
+    title: Mobile discovery
+    parent: ph-discover
+    schedule:
+      mode: rollup
+  dis-mob-1:
+    type: atlas.work
+    title: Mobile discovery step 1
+    parent: ws-discover-mobile
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: mobile
+      risk: low
+      external: false
+      deliverable: del-runbook
+  dis-mob-2:
+    type: atlas.work
+    title: Mobile discovery step 2
+    parent: ws-discover-mobile
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    deadline: '2026-11-20'
+    fields:
+      team: mobile
+      risk: low
+      external: true
+      deliverable: del-report
+  ws-discover-web:
+    type: group
+    title: Web discovery
+    parent: ph-discover
+    schedule:
+      mode: rollup
+  dis-web-1:
+    type: atlas.work
+    title: Web discovery step 1
+    parent: ws-discover-web
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: web
+      risk: low
+      external: false
+      deliverable: del-runbook
+  dis-web-2:
+    type: atlas.work
+    title: Web discovery step 2
+    parent: ws-discover-web
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: web
+      risk: high
+      external: false
+      deliverable: del-app
+  dis-web-3:
+    type: atlas.work
+    title: Web discovery step 3
+    parent: ws-discover-web
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: web
+      risk: medium
+      external: true
+      deliverable: del-api
+  ws-discover-data:
+    type: group
+    title: Data discovery
+    parent: ph-discover
+    schedule:
+      mode: rollup
+  dis-dat-1:
+    type: atlas.work
+    title: Data discovery step 1
+    parent: ws-discover-data
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: data
+      risk: low
+      external: true
+      deliverable: del-runbook
+  dis-dat-2:
+    type: atlas.work
+    title: Data discovery step 2
+    parent: ws-discover-data
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: data
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  dis-dat-3:
+    type: atlas.work
+    title: Data discovery step 3
+    parent: ws-discover-data
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    deadline: '2026-11-20'
+    fields:
+      team: data
+      risk: medium
+      external: true
+      deliverable: del-api
+  ws-discover-ops:
+    type: group
+    title: Ops discovery
+    parent: ph-discover
+    schedule:
+      mode: rollup
+  dis-ops-1:
+    type: atlas.work
+    title: Ops discovery step 1
+    parent: ws-discover-ops
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: ops
+      risk: high
+      external: false
+      deliverable: del-portal
+  dis-ops-2:
+    type: atlas.work
+    title: Ops discovery step 2
+    parent: ws-discover-ops
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: ops
+      risk: high
+      external: false
+      deliverable: del-portal
+  discovery-done:
+    type: gate
+    title: Discovery complete
+    parent: ph-discover
+    schedule:
+      mode: scheduled-point
+    deadline: '2026-12-18'
+  ph-build:
+    type: group
+    title: Build
+    parent: atlas
+    schedule:
+      mode: rollup
+  ws-build-platform:
+    type: group
+    title: Platform build
+    parent: ph-build
+    schedule:
+      mode: rollup
+  bui-pla-1:
+    type: atlas.work
+    title: Platform build step 1
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: platform
+      risk: medium
+      external: true
+      deliverable: del-portal
+  bui-pla-2:
+    type: atlas.work
+    title: Platform build step 2
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: platform
+      risk: medium
+      external: true
+      deliverable: del-api
+  bui-pla-3:
+    type: atlas.work
+    title: Platform build step 3
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: platform
+      risk: medium
+      external: true
+      deliverable: del-report
+  bui-pla-4:
+    type: atlas.work
+    title: Platform build step 4
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: platform
+      risk: low
+      external: false
+      deliverable: del-api
+  bui-pla-5:
+    type: atlas.work
+    title: Platform build step 5
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: platform
+      risk: low
+      external: true
+      deliverable: del-report
+  bui-pla-6:
+    type: atlas.work
+    title: Platform build step 6
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: platform
+      risk: low
+      external: true
+      deliverable: del-portal
+  bui-pla-7:
+    type: atlas.work
+    title: Platform build step 7
+    parent: ws-build-platform
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    deadline: '2027-03-19'
+    fields:
+      team: platform
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  ws-build-payments:
+    type: group
+    title: Payments build
+    parent: ph-build
+    schedule:
+      mode: rollup
+  bui-pay-1:
+    type: atlas.work
+    title: Payments build step 1
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: payments
+      risk: high
+      external: true
+      deliverable: del-report
+  bui-pay-2:
+    type: atlas.work
+    title: Payments build step 2
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: payments
+      risk: medium
+      external: true
+      deliverable: del-portal
+  bui-pay-3:
+    type: atlas.work
+    title: Payments build step 3
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: payments
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  bui-pay-4:
+    type: atlas.work
+    title: Payments build step 4
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: payments
+      risk: low
+      external: false
+      deliverable: del-report
+  bui-pay-5:
+    type: atlas.work
+    title: Payments build step 5
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: payments
+      risk: low
+      external: true
+      deliverable: del-app
+  bui-pay-6:
+    type: atlas.work
+    title: Payments build step 6
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: payments
+      risk: low
+      external: false
+      deliverable: del-portal
+  bui-pay-7:
+    type: atlas.work
+    title: Payments build step 7
+    parent: ws-build-payments
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: payments
+      risk: low
+      external: true
+      deliverable: del-report
+  ws-build-mobile:
+    type: group
+    title: Mobile build
+    parent: ph-build
+    schedule:
+      mode: rollup
+  bui-mob-1:
+    type: atlas.work
+    title: Mobile build step 1
+    parent: ws-build-mobile
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: mobile
+      risk: low
+      external: true
+      deliverable: del-portal
+  bui-mob-2:
+    type: atlas.work
+    title: Mobile build step 2
+    parent: ws-build-mobile
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: mobile
+      risk: high
+      external: true
+      deliverable: del-api
+  bui-mob-3:
+    type: atlas.work
+    title: Mobile build step 3
+    parent: ws-build-mobile
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: mobile
+      risk: high
+      external: false
+      deliverable: del-api
+  bui-mob-4:
+    type: atlas.work
+    title: Mobile build step 4
+    parent: ws-build-mobile
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: mobile
+      risk: high
+      external: false
+      deliverable: del-runbook
+  bui-mob-5:
+    type: atlas.work
+    title: Mobile build step 5
+    parent: ws-build-mobile
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: mobile
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  bui-mob-6:
+    type: atlas.work
+    title: Mobile build step 6
+    parent: ws-build-mobile
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    deadline: '2027-03-19'
+    fields:
+      team: mobile
+      risk: low
+      external: false
+      deliverable: del-portal
+  ws-build-web:
+    type: group
+    title: Web build
+    parent: ph-build
+    schedule:
+      mode: rollup
+  bui-web-1:
+    type: atlas.work
+    title: Web build step 1
+    parent: ws-build-web
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: web
+      risk: low
+      external: false
+      deliverable: del-portal
+  bui-web-2:
+    type: atlas.work
+    title: Web build step 2
+    parent: ws-build-web
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: web
+      risk: high
+      external: false
+      deliverable: del-app
+  bui-web-3:
+    type: atlas.work
+    title: Web build step 3
+    parent: ws-build-web
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: web
+      risk: medium
+      external: false
+      deliverable: del-api
+  bui-web-4:
+    type: atlas.work
+    title: Web build step 4
+    parent: ws-build-web
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: web
+      risk: low
+      external: true
+      deliverable: del-app
+  bui-web-5:
+    type: atlas.work
+    title: Web build step 5
+    parent: ws-build-web
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: web
+      risk: medium
+      external: false
+      deliverable: del-app
+  bui-web-6:
+    type: atlas.work
+    title: Web build step 6
+    parent: ws-build-web
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: web
+      risk: low
+      external: false
+      deliverable: del-runbook
+  ws-build-data:
+    type: group
+    title: Data build
+    parent: ph-build
+    schedule:
+      mode: rollup
+  bui-dat-1:
+    type: atlas.work
+    title: Data build step 1
+    parent: ws-build-data
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: data
+      risk: high
+      external: false
+      deliverable: del-api
+  bui-dat-2:
+    type: atlas.work
+    title: Data build step 2
+    parent: ws-build-data
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: data
+      risk: medium
+      external: true
+      deliverable: del-runbook
+  bui-dat-3:
+    type: atlas.work
+    title: Data build step 3
+    parent: ws-build-data
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: data
+      risk: high
+      external: false
+      deliverable: del-portal
+  bui-dat-4:
+    type: atlas.work
+    title: Data build step 4
+    parent: ws-build-data
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: data
+      risk: high
+      external: false
+      deliverable: del-report
+  bui-dat-5:
+    type: atlas.work
+    title: Data build step 5
+    parent: ws-build-data
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    deadline: '2027-03-19'
+    fields:
+      team: data
+      risk: low
+      external: true
+      deliverable: del-api
+  ws-build-ops:
+    type: group
+    title: Ops build
+    parent: ph-build
+    schedule:
+      mode: rollup
+  bui-ops-1:
+    type: atlas.work
+    title: Ops build step 1
+    parent: ws-build-ops
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: ops
+      risk: low
+      external: false
+      deliverable: del-report
+  bui-ops-2:
+    type: atlas.work
+    title: Ops build step 2
+    parent: ws-build-ops
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: ops
+      risk: medium
+      external: true
+      deliverable: del-portal
+  bui-ops-3:
+    type: atlas.work
+    title: Ops build step 3
+    parent: ws-build-ops
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: ops
+      risk: medium
+      external: false
+      deliverable: del-report
+  bui-ops-4:
+    type: atlas.work
+    title: Ops build step 4
+    parent: ws-build-ops
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: ops
+      risk: high
+      external: true
+      deliverable: del-app
+  bui-ops-5:
+    type: atlas.work
+    title: Ops build step 5
+    parent: ws-build-ops
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: ops
+      risk: high
+      external: false
+      deliverable: del-report
+  build-complete:
+    type: gate
+    title: Build complete
+    parent: ph-build
+    schedule:
+      mode: scheduled-point
+    deadline: '2027-03-26'
+  ph-launch:
+    type: group
+    title: Launch readiness
+    parent: atlas
+    schedule:
+      mode: rollup
+  ws-launch-platform:
+    type: group
+    title: Platform launch readiness
+    parent: ph-launch
+    schedule:
+      mode: rollup
+  lau-pla-1:
+    type: atlas.work
+    title: Platform launch step 1
+    parent: ws-launch-platform
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: platform
+      risk: low
+      external: false
+      deliverable: del-portal
+  lau-pla-2:
+    type: atlas.work
+    title: Platform launch step 2
+    parent: ws-launch-platform
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: platform
+      risk: low
+      external: false
+      deliverable: del-app
+  lau-pla-3:
+    type: atlas.work
+    title: Platform launch step 3
+    parent: ws-launch-platform
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: platform
+      risk: low
+      external: false
+      deliverable: del-portal
+  lau-pla-4:
+    type: atlas.work
+    title: Platform launch step 4
+    parent: ws-launch-platform
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: platform
+      risk: low
+      external: false
+      deliverable: del-portal
+  lau-pla-5:
+    type: atlas.work
+    title: Platform launch step 5
+    parent: ws-launch-platform
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    deadline: '2027-05-14'
+    fields:
+      team: platform
+      risk: low
+      external: true
+      deliverable: del-runbook
+  ws-launch-payments:
+    type: group
+    title: Payments launch readiness
+    parent: ph-launch
+    schedule:
+      mode: rollup
+  lau-pay-1:
+    type: atlas.work
+    title: Payments launch step 1
+    parent: ws-launch-payments
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: payments
+      risk: medium
+      external: false
+      deliverable: del-app
+  lau-pay-2:
+    type: atlas.work
+    title: Payments launch step 2
+    parent: ws-launch-payments
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: payments
+      risk: high
+      external: false
+      deliverable: del-runbook
+  lau-pay-3:
+    type: atlas.work
+    title: Payments launch step 3
+    parent: ws-launch-payments
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: payments
+      risk: medium
+      external: true
+      deliverable: del-app
+  lau-pay-4:
+    type: atlas.work
+    title: Payments launch step 4
+    parent: ws-launch-payments
+    schedule:
+      mode: scheduled
+      amount: 3wd
+    fields:
+      team: payments
+      risk: medium
+      external: false
+      deliverable: del-portal
+  lau-pay-5:
+    type: atlas.work
+    title: Payments launch step 5
+    parent: ws-launch-payments
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: payments
+      risk: high
+      external: false
+      deliverable: del-portal
+  ws-launch-mobile:
+    type: group
+    title: Mobile launch readiness
+    parent: ph-launch
+    schedule:
+      mode: rollup
+  lau-mob-1:
+    type: atlas.work
+    title: Mobile launch step 1
+    parent: ws-launch-mobile
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: mobile
+      risk: high
+      external: true
+      deliverable: del-report
+  lau-mob-2:
+    type: atlas.work
+    title: Mobile launch step 2
+    parent: ws-launch-mobile
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: mobile
+      risk: medium
+      external: true
+      deliverable: del-report
+  lau-mob-4:
+    type: atlas.work
+    title: Mobile launch step 4
+    parent: ws-launch-mobile
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: mobile
+      risk: low
+      external: true
+      deliverable: del-runbook
+  lau-mob-5:
+    type: atlas.work
+    title: Mobile launch step 5
+    parent: ws-launch-mobile
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    deadline: '2027-05-14'
+    fields:
+      team: mobile
+      risk: high
+      external: false
+      deliverable: del-report
+  ws-launch-web:
+    type: group
+    title: Web launch readiness
+    parent: ph-launch
+    schedule:
+      mode: rollup
+  lau-web-1:
+    type: atlas.work
+    title: Web launch step 1
+    parent: ws-launch-web
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: web
+      risk: medium
+      external: true
+      deliverable: del-api
+  lau-web-2:
+    type: atlas.work
+    title: Web launch step 2
+    parent: ws-launch-web
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    fields:
+      team: web
+      risk: high
+      external: false
+      deliverable: del-portal
+  lau-web-3:
+    type: atlas.work
+    title: Web launch step 3
+    parent: ws-launch-web
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: web
+      risk: low
+      external: false
+      deliverable: del-runbook
+  lau-web-4:
+    type: atlas.work
+    title: Web launch step 4
+    parent: ws-launch-web
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: web
+      risk: high
+      external: false
+      deliverable: del-app
+  lau-web-5:
+    type: atlas.work
+    title: Web launch step 5
+    parent: ws-launch-web
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: web
+      risk: medium
+      external: true
+      deliverable: del-report
+  ws-launch-data:
+    type: group
+    title: Data launch readiness
+    parent: ph-launch
+    schedule:
+      mode: rollup
+  lau-dat-1:
+    type: atlas.work
+    title: Data launch step 1
+    parent: ws-launch-data
+    schedule:
+      mode: scheduled
+      amount: 4wd
+    fields:
+      team: data
+      risk: medium
+      external: false
+      deliverable: del-api
+  lau-dat-2:
+    type: atlas.work
+    title: Data launch step 2
+    parent: ws-launch-data
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: data
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  lau-dat-3:
+    type: atlas.work
+    title: Data launch step 3
+    parent: ws-launch-data
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: data
+      risk: high
+      external: false
+      deliverable: del-runbook
+  lau-dat-4:
+    type: atlas.work
+    title: Data launch step 4
+    parent: ws-launch-data
+    schedule:
+      mode: scheduled
+      amount: 8wd
+    deadline: '2027-05-14'
+    fields:
+      team: data
+      risk: medium
+      external: true
+      deliverable: del-app
+  ws-launch-ops:
+    type: group
+    title: Ops launch readiness
+    parent: ph-launch
+    schedule:
+      mode: rollup
+  lau-ops-1:
+    type: atlas.work
+    title: Ops launch step 1
+    parent: ws-launch-ops
+    schedule:
+      mode: scheduled
+      amount: 5wd
+    fields:
+      team: ops
+      risk: high
+      external: true
+      deliverable: del-report
+  lau-ops-2:
+    type: atlas.work
+    title: Ops launch step 2
+    parent: ws-launch-ops
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: ops
+      risk: medium
+      external: false
+      deliverable: del-report
+  lau-ops-3:
+    type: atlas.work
+    title: Ops launch step 3
+    parent: ws-launch-ops
+    schedule:
+      mode: scheduled
+      amount: 10wd
+    fields:
+      team: ops
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  lau-ops-4:
+    type: atlas.work
+    title: Ops launch step 4
+    parent: ws-launch-ops
+    schedule:
+      mode: scheduled
+      amount: 6wd
+    fields:
+      team: ops
+      risk: medium
+      external: false
+      deliverable: del-runbook
+  launch:
+    type: gate
+    title: Public launch
+    parent: ph-launch
+    schedule:
+      mode: scheduled-point
+    deadline: '2027-05-28'
+  bui-web-hotfix:
+    type: atlas.work
+    title: Web checkout hotfix
+    schedule:
+      mode: scheduled
+      amount: 4wd
+      anchor:
+        start: '2026-12-15'
+    deadline: '2027-01-08'
+    fields:
+      team: web
+      risk: high
+      external: true
+      deliverable: del-portal
+    parent: ws-build-web
+relations:
+- id: kickoff-dis-pla-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: dis-pla-1
+    endpoint: start
+  lag: 0d
+- id: dis-pla-1-dis-pla-2
+  type: dependency
+  from:
+    object: dis-pla-1
+    endpoint: end
+  to:
+    object: dis-pla-2
+    endpoint: start
+  lag: 0d
+- id: dis-pla-2-dis-pla-3
+  type: dependency
+  from:
+    object: dis-pla-2
+    endpoint: end
+  to:
+    object: dis-pla-3
+    endpoint: start
+  lag: 0d
+- id: kickoff-dis-pay-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: dis-pay-1
+    endpoint: start
+  lag: 0d
+- id: dis-pay-1-dis-pay-2
+  type: dependency
+  from:
+    object: dis-pay-1
+    endpoint: end
+  to:
+    object: dis-pay-2
+    endpoint: start
+  lag: 0d
+- id: dis-pay-2-dis-pay-3
+  type: dependency
+  from:
+    object: dis-pay-2
+    endpoint: end
+  to:
+    object: dis-pay-3
+    endpoint: start
+  lag: 0d
+- id: kickoff-dis-mob-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: dis-mob-1
+    endpoint: start
+  lag: 0d
+- id: dis-mob-1-dis-mob-2
+  type: dependency
+  from:
+    object: dis-mob-1
+    endpoint: end
+  to:
+    object: dis-mob-2
+    endpoint: start
+  lag: 0d
+- id: kickoff-dis-web-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: dis-web-1
+    endpoint: start
+  lag: 0d
+- id: dis-web-1-dis-web-2
+  type: dependency
+  from:
+    object: dis-web-1
+    endpoint: end
+  to:
+    object: dis-web-2
+    endpoint: start
+  lag: 0d
+- id: dis-web-2-dis-web-3
+  type: dependency
+  from:
+    object: dis-web-2
+    endpoint: end
+  to:
+    object: dis-web-3
+    endpoint: start
+  lag: 0d
+- id: kickoff-dis-dat-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: dis-dat-1
+    endpoint: start
+  lag: 0d
+- id: dis-dat-1-dis-dat-2
+  type: dependency
+  from:
+    object: dis-dat-1
+    endpoint: end
+  to:
+    object: dis-dat-2
+    endpoint: start
+  lag: 0d
+- id: dis-dat-2-dis-dat-3
+  type: dependency
+  from:
+    object: dis-dat-2
+    endpoint: end
+  to:
+    object: dis-dat-3
+    endpoint: start
+  lag: 0d
+- id: kickoff-dis-ops-1
+  type: dependency
+  from:
+    object: kickoff
+    endpoint: at
+  to:
+    object: dis-ops-1
+    endpoint: start
+  lag: 0d
+- id: dis-ops-1-dis-ops-2
+  type: dependency
+  from:
+    object: dis-ops-1
+    endpoint: end
+  to:
+    object: dis-ops-2
+    endpoint: start
+  lag: 0d
+- id: dis-pla-3-discovery-done
+  type: dependency
+  from:
+    object: dis-pla-3
+    endpoint: end
+  to:
+    object: discovery-done
+    endpoint: at
+  lag: 0d
+- id: dis-pay-3-discovery-done
+  type: dependency
+  from:
+    object: dis-pay-3
+    endpoint: end
+  to:
+    object: discovery-done
+    endpoint: at
+  lag: 0d
+- id: dis-mob-2-discovery-done
+  type: dependency
+  from:
+    object: dis-mob-2
+    endpoint: end
+  to:
+    object: discovery-done
+    endpoint: at
+  lag: 0d
+- id: dis-web-3-discovery-done
+  type: dependency
+  from:
+    object: dis-web-3
+    endpoint: end
+  to:
+    object: discovery-done
+    endpoint: at
+  lag: 0d
+- id: dis-dat-3-discovery-done
+  type: dependency
+  from:
+    object: dis-dat-3
+    endpoint: end
+  to:
+    object: discovery-done
+    endpoint: at
+  lag: 0d
+- id: dis-ops-2-discovery-done
+  type: dependency
+  from:
+    object: dis-ops-2
+    endpoint: end
+  to:
+    object: discovery-done
+    endpoint: at
+  lag: 0d
+- id: discovery-done-bui-pla-1
+  type: dependency
+  from:
+    object: discovery-done
+    endpoint: at
+  to:
+    object: bui-pla-1
+    endpoint: start
+  lag: 0d
+- id: bui-pla-1-bui-pla-2
+  type: dependency
+  from:
+    object: bui-pla-1
+    endpoint: end
+  to:
+    object: bui-pla-2
+    endpoint: start
+  lag: 0d
+- id: bui-pla-2-bui-pla-3
+  type: dependency
+  from:
+    object: bui-pla-2
+    endpoint: end
+  to:
+    object: bui-pla-3
+    endpoint: start
+  lag: 0d
+- id: bui-pla-3-bui-pla-4
+  type: dependency
+  from:
+    object: bui-pla-3
+    endpoint: end
+  to:
+    object: bui-pla-4
+    endpoint: start
+  lag: 0d
+- id: bui-pla-4-bui-pla-5
+  type: dependency
+  from:
+    object: bui-pla-4
+    endpoint: end
+  to:
+    object: bui-pla-5
+    endpoint: start
+  lag: 0d
+- id: bui-pla-5-bui-pla-6
+  type: dependency
+  from:
+    object: bui-pla-5
+    endpoint: end
+  to:
+    object: bui-pla-6
+    endpoint: start
+  lag: 0d
+- id: bui-pla-6-bui-pla-7
+  type: dependency
+  from:
+    object: bui-pla-6
+    endpoint: end
+  to:
+    object: bui-pla-7
+    endpoint: start
+  lag: 0d
+- id: discovery-done-bui-pay-1
+  type: dependency
+  from:
+    object: discovery-done
+    endpoint: at
+  to:
+    object: bui-pay-1
+    endpoint: start
+  lag: 0d
+- id: bui-pay-1-bui-pay-2
+  type: dependency
+  from:
+    object: bui-pay-1
+    endpoint: end
+  to:
+    object: bui-pay-2
+    endpoint: start
+  lag: 0d
+- id: bui-pay-2-bui-pay-3
+  type: dependency
+  from:
+    object: bui-pay-2
+    endpoint: end
+  to:
+    object: bui-pay-3
+    endpoint: start
+  lag: 5wd
+- id: bui-pla-2-bui-pay-3
+  type: dependency
+  from:
+    object: bui-pla-2
+    endpoint: end
+  to:
+    object: bui-pay-3
+    endpoint: start
+  lag: 0d
+- id: bui-pay-3-bui-pay-4
+  type: dependency
+  from:
+    object: bui-pay-3
+    endpoint: end
+  to:
+    object: bui-pay-4
+    endpoint: start
+  lag: 0d
+- id: bui-pay-4-bui-pay-5
+  type: dependency
+  from:
+    object: bui-pay-4
+    endpoint: end
+  to:
+    object: bui-pay-5
+    endpoint: start
+  lag: 0d
+- id: bui-pay-5-bui-pay-6
+  type: dependency
+  from:
+    object: bui-pay-5
+    endpoint: end
+  to:
+    object: bui-pay-6
+    endpoint: start
+  lag: 0d
+- id: bui-pay-6-bui-pay-7
+  type: dependency
+  from:
+    object: bui-pay-6
+    endpoint: end
+  to:
+    object: bui-pay-7
+    endpoint: start
+  lag: 0d
+- id: discovery-done-bui-mob-1
+  type: dependency
+  from:
+    object: discovery-done
+    endpoint: at
+  to:
+    object: bui-mob-1
+    endpoint: start
+  lag: 0d
+- id: bui-mob-1-bui-mob-2
+  type: dependency
+  from:
+    object: bui-mob-1
+    endpoint: end
+  to:
+    object: bui-mob-2
+    endpoint: start
+  lag: 0d
+- id: bui-mob-2-bui-mob-3
+  type: dependency
+  from:
+    object: bui-mob-2
+    endpoint: end
+  to:
+    object: bui-mob-3
+    endpoint: start
+  lag: 0d
+- id: bui-pay-2-bui-mob-3
+  type: dependency
+  from:
+    object: bui-pay-2
+    endpoint: end
+  to:
+    object: bui-mob-3
+    endpoint: start
+  lag: 0d
+- id: bui-mob-3-bui-mob-4
+  type: dependency
+  from:
+    object: bui-mob-3
+    endpoint: end
+  to:
+    object: bui-mob-4
+    endpoint: start
+  lag: 0d
+- id: bui-mob-4-bui-mob-5
+  type: dependency
+  from:
+    object: bui-mob-4
+    endpoint: end
+  to:
+    object: bui-mob-5
+    endpoint: start
+  lag: 0d
+- id: bui-mob-5-bui-mob-6
+  type: dependency
+  from:
+    object: bui-mob-5
+    endpoint: end
+  to:
+    object: bui-mob-6
+    endpoint: start
+  lag: 0d
+- id: discovery-done-bui-web-1
+  type: dependency
+  from:
+    object: discovery-done
+    endpoint: at
+  to:
+    object: bui-web-1
+    endpoint: start
+  lag: 0d
+- id: bui-web-1-bui-web-2
+  type: dependency
+  from:
+    object: bui-web-1
+    endpoint: end
+  to:
+    object: bui-web-2
+    endpoint: start
+  lag: 0d
+- id: bui-web-2-bui-web-3
+  type: dependency
+  from:
+    object: bui-web-2
+    endpoint: end
+  to:
+    object: bui-web-3
+    endpoint: start
+  lag: 0d
+- id: bui-mob-2-bui-web-3
+  type: dependency
+  from:
+    object: bui-mob-2
+    endpoint: end
+  to:
+    object: bui-web-3
+    endpoint: start
+  lag: 0d
+- id: bui-web-3-bui-web-4
+  type: dependency
+  from:
+    object: bui-web-3
+    endpoint: end
+  to:
+    object: bui-web-4
+    endpoint: start
+  lag: 0d
+- id: bui-web-4-bui-web-5
+  type: dependency
+  from:
+    object: bui-web-4
+    endpoint: end
+  to:
+    object: bui-web-5
+    endpoint: start
+  lag: 0d
+- id: bui-web-5-bui-web-6
+  type: dependency
+  from:
+    object: bui-web-5
+    endpoint: end
+  to:
+    object: bui-web-6
+    endpoint: start
+  lag: 0d
+- id: discovery-done-bui-dat-1
+  type: dependency
+  from:
+    object: discovery-done
+    endpoint: at
+  to:
+    object: bui-dat-1
+    endpoint: start
+  lag: 0d
+- id: bui-dat-1-bui-dat-2
+  type: dependency
+  from:
+    object: bui-dat-1
+    endpoint: end
+  to:
+    object: bui-dat-2
+    endpoint: start
+  lag: 0d
+- id: bui-dat-2-bui-dat-3
+  type: dependency
+  from:
+    object: bui-dat-2
+    endpoint: end
+  to:
+    object: bui-dat-3
+    endpoint: start
+  lag: 0d
+- id: bui-web-2-bui-dat-3
+  type: dependency
+  from:
+    object: bui-web-2
+    endpoint: end
+  to:
+    object: bui-dat-3
+    endpoint: start
+  lag: 0d
+- id: bui-dat-3-bui-dat-4
+  type: dependency
+  from:
+    object: bui-dat-3
+    endpoint: end
+  to:
+    object: bui-dat-4
+    endpoint: start
+  lag: 0d
+- id: bui-dat-4-bui-dat-5
+  type: dependency
+  from:
+    object: bui-dat-4
+    endpoint: end
+  to:
+    object: bui-dat-5
+    endpoint: start
+  lag: 0d
+- id: discovery-done-bui-ops-1
+  type: dependency
+  from:
+    object: discovery-done
+    endpoint: at
+  to:
+    object: bui-ops-1
+    endpoint: start
+  lag: 0d
+- id: bui-ops-1-bui-ops-2
+  type: dependency
+  from:
+    object: bui-ops-1
+    endpoint: end
+  to:
+    object: bui-ops-2
+    endpoint: start
+  lag: 0d
+- id: bui-ops-2-bui-ops-3
+  type: dependency
+  from:
+    object: bui-ops-2
+    endpoint: end
+  to:
+    object: bui-ops-3
+    endpoint: start
+  lag: 0d
+- id: bui-dat-2-bui-ops-3
+  type: dependency
+  from:
+    object: bui-dat-2
+    endpoint: end
+  to:
+    object: bui-ops-3
+    endpoint: start
+  lag: 0d
+- id: bui-ops-3-bui-ops-4
+  type: dependency
+  from:
+    object: bui-ops-3
+    endpoint: end
+  to:
+    object: bui-ops-4
+    endpoint: start
+  lag: 0d
+- id: bui-ops-4-bui-ops-5
+  type: dependency
+  from:
+    object: bui-ops-4
+    endpoint: end
+  to:
+    object: bui-ops-5
+    endpoint: start
+  lag: 0d
+- id: bui-pla-7-build-complete
+  type: dependency
+  from:
+    object: bui-pla-7
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: bui-pay-7-build-complete
+  type: dependency
+  from:
+    object: bui-pay-7
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: bui-mob-6-build-complete
+  type: dependency
+  from:
+    object: bui-mob-6
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: bui-web-6-build-complete
+  type: dependency
+  from:
+    object: bui-web-6
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: bui-dat-5-build-complete
+  type: dependency
+  from:
+    object: bui-dat-5
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: bui-ops-5-build-complete
+  type: dependency
+  from:
+    object: bui-ops-5
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: build-complete-lau-pla-1
+  type: dependency
+  from:
+    object: build-complete
+    endpoint: at
+  to:
+    object: lau-pla-1
+    endpoint: start
+  lag: 0d
+- id: lau-pla-1-lau-pla-2
+  type: dependency
+  from:
+    object: lau-pla-1
+    endpoint: end
+  to:
+    object: lau-pla-2
+    endpoint: start
+  lag: 0d
+- id: lau-pla-2-lau-pla-3
+  type: dependency
+  from:
+    object: lau-pla-2
+    endpoint: end
+  to:
+    object: lau-pla-3
+    endpoint: start
+  lag: 0d
+- id: lau-pla-3-lau-pla-4
+  type: dependency
+  from:
+    object: lau-pla-3
+    endpoint: end
+  to:
+    object: lau-pla-4
+    endpoint: start
+  lag: 0d
+- id: lau-pla-4-lau-pla-5
+  type: dependency
+  from:
+    object: lau-pla-4
+    endpoint: end
+  to:
+    object: lau-pla-5
+    endpoint: start
+  lag: 0d
+- id: build-complete-lau-pay-1
+  type: dependency
+  from:
+    object: build-complete
+    endpoint: at
+  to:
+    object: lau-pay-1
+    endpoint: start
+  lag: 0d
+- id: lau-pay-1-lau-pay-2
+  type: dependency
+  from:
+    object: lau-pay-1
+    endpoint: end
+  to:
+    object: lau-pay-2
+    endpoint: start
+  lag: 0d
+- id: lau-pay-2-lau-pay-3
+  type: dependency
+  from:
+    object: lau-pay-2
+    endpoint: end
+  to:
+    object: lau-pay-3
+    endpoint: start
+  lag: 0d
+- id: lau-pla-2-lau-pay-3
+  type: dependency
+  from:
+    object: lau-pla-2
+    endpoint: end
+  to:
+    object: lau-pay-3
+    endpoint: start
+  lag: 0d
+- id: lau-pay-3-lau-pay-4
+  type: dependency
+  from:
+    object: lau-pay-3
+    endpoint: end
+  to:
+    object: lau-pay-4
+    endpoint: start
+  lag: 0d
+- id: lau-pay-4-lau-pay-5
+  type: dependency
+  from:
+    object: lau-pay-4
+    endpoint: end
+  to:
+    object: lau-pay-5
+    endpoint: start
+  lag: 0d
+- id: build-complete-lau-mob-1
+  type: dependency
+  from:
+    object: build-complete
+    endpoint: at
+  to:
+    object: lau-mob-1
+    endpoint: start
+  lag: 0d
+- id: lau-mob-1-lau-mob-2
+  type: dependency
+  from:
+    object: lau-mob-1
+    endpoint: end
+  to:
+    object: lau-mob-2
+    endpoint: start
+  lag: 0d
+- id: lau-mob-4-lau-mob-5
+  type: dependency
+  from:
+    object: lau-mob-4
+    endpoint: end
+  to:
+    object: lau-mob-5
+    endpoint: start
+  lag: 0d
+- id: build-complete-lau-web-1
+  type: dependency
+  from:
+    object: build-complete
+    endpoint: at
+  to:
+    object: lau-web-1
+    endpoint: start
+  lag: 0d
+- id: lau-web-1-lau-web-2
+  type: dependency
+  from:
+    object: lau-web-1
+    endpoint: end
+  to:
+    object: lau-web-2
+    endpoint: start
+  lag: 0d
+- id: lau-web-2-lau-web-3
+  type: dependency
+  from:
+    object: lau-web-2
+    endpoint: end
+  to:
+    object: lau-web-3
+    endpoint: start
+  lag: 0d
+- id: lau-mob-2-lau-web-3
+  type: dependency
+  from:
+    object: lau-mob-2
+    endpoint: end
+  to:
+    object: lau-web-3
+    endpoint: start
+  lag: 0d
+- id: lau-web-3-lau-web-4
+  type: dependency
+  from:
+    object: lau-web-3
+    endpoint: end
+  to:
+    object: lau-web-4
+    endpoint: start
+  lag: 0d
+- id: lau-web-4-lau-web-5
+  type: dependency
+  from:
+    object: lau-web-4
+    endpoint: end
+  to:
+    object: lau-web-5
+    endpoint: start
+  lag: 0d
+- id: build-complete-lau-dat-1
+  type: dependency
+  from:
+    object: build-complete
+    endpoint: at
+  to:
+    object: lau-dat-1
+    endpoint: start
+  lag: 0d
+- id: lau-dat-1-lau-dat-2
+  type: dependency
+  from:
+    object: lau-dat-1
+    endpoint: end
+  to:
+    object: lau-dat-2
+    endpoint: start
+  lag: 0d
+- id: lau-dat-2-lau-dat-3
+  type: dependency
+  from:
+    object: lau-dat-2
+    endpoint: end
+  to:
+    object: lau-dat-3
+    endpoint: start
+  lag: 0d
+- id: lau-web-2-lau-dat-3
+  type: dependency
+  from:
+    object: lau-web-2
+    endpoint: end
+  to:
+    object: lau-dat-3
+    endpoint: start
+  lag: 0d
+- id: lau-dat-3-lau-dat-4
+  type: dependency
+  from:
+    object: lau-dat-3
+    endpoint: end
+  to:
+    object: lau-dat-4
+    endpoint: start
+  lag: 0d
+- id: build-complete-lau-ops-1
+  type: dependency
+  from:
+    object: build-complete
+    endpoint: at
+  to:
+    object: lau-ops-1
+    endpoint: start
+  lag: 0d
+- id: lau-ops-1-lau-ops-2
+  type: dependency
+  from:
+    object: lau-ops-1
+    endpoint: end
+  to:
+    object: lau-ops-2
+    endpoint: start
+  lag: 0d
+- id: lau-ops-2-lau-ops-3
+  type: dependency
+  from:
+    object: lau-ops-2
+    endpoint: end
+  to:
+    object: lau-ops-3
+    endpoint: start
+  lag: 0d
+- id: lau-dat-2-lau-ops-3
+  type: dependency
+  from:
+    object: lau-dat-2
+    endpoint: end
+  to:
+    object: lau-ops-3
+    endpoint: start
+  lag: 0d
+- id: lau-ops-3-lau-ops-4
+  type: dependency
+  from:
+    object: lau-ops-3
+    endpoint: end
+  to:
+    object: lau-ops-4
+    endpoint: start
+  lag: 0d
+- id: lau-pla-5-launch
+  type: dependency
+  from:
+    object: lau-pla-5
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: lau-pay-5-launch
+  type: dependency
+  from:
+    object: lau-pay-5
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: lau-mob-5-launch
+  type: dependency
+  from:
+    object: lau-mob-5
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: lau-web-5-launch
+  type: dependency
+  from:
+    object: lau-web-5
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: lau-dat-4-launch
+  type: dependency
+  from:
+    object: lau-dat-4
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: lau-ops-4-launch
+  type: dependency
+  from:
+    object: lau-ops-4
+    endpoint: end
+  to:
+    object: launch
+    endpoint: at
+  lag: 0d
+- id: bui-web-hotfix-build-complete
+  type: dependency
+  from:
+    object: bui-web-hotfix
+    endpoint: end
+  to:
+    object: build-complete
+    endpoint: at
+  lag: 0d
+- id: lau-mob-2-lau-mob-4
+  type: dependency
+  from:
+    object: lau-mob-2
+    endpoint: end
+  to:
+    object: lau-mob-4
+    endpoint: start
+  lag: 0d
+fieldRoles:
+  responsible: team
