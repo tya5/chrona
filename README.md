@@ -86,6 +86,17 @@ chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.y
   --viewport 1600xauto --output my-chrona-project/plan.png
 ```
 
+The PNG is 1600 px wide at 1x. For more pixels, either render with a wider viewport (`--viewport 3200xauto` gives a 3200 px
+PNG laid out afresh, so text stays the same size and gains room), or magnify the finished SVG, which keeps the layout
+(`resvg_py` is installed with the `render` extra; `zoom=2` doubles every size):
+
+```bash
+python -c "import pathlib, resvg_py; pathlib.Path('my-chrona-project/plan@2x.png').write_bytes(resvg_py.svg_to_bytes(svg_path='my-chrona-project/plan.svg', zoom=2))"
+```
+
+The Today marker (the `as of` line) is drawn only when you pass an Actual Set with `asOf` (`--actual`, as above); without one
+the slide has no Today marker.
+
 The resulting SVG is a Draft for review, not immutable materializer evidence. The three generated
 source files are yours to edit. Pick a built-in design by name with `--preset` (`chrona preset list`
 shows them, `chrona preset copy` copies one to edit), or pass a preset YAML path; explicit
@@ -109,6 +120,28 @@ python -m chrona validate path/to/project.yaml
 After a week of work, record actuals, move `asOf`, re-plan and compare with the plan you started
 from: [Update a plan](docs/guides/update-a-plan.md). The same loop is a section of the agent
 skill (`chrona skill copy`).
+
+### How do I...
+
+| I want to... | Read |
+| --- | --- |
+| make my first plan and change its title, colour, legend or window | [First project](docs/guides/first-project.md) |
+| learn Project features one small step at a time | [Progressive project tutorial](docs/guides/progressive-project-tutorial.md) |
+| write a plan quickly, one line per task | [Terse plan card](docs/guides/terse-plan.md), and [what it compiles to](docs/guides/terse-plan-mapping.md) |
+| start from a spreadsheet, or colour bars by an owner column | [Import a CSV](docs/guides/csv-import.md) |
+| show a dependency graph instead of a timeline | [Network view](docs/guides/network-view.md) |
+| make a one-page summary for a steering committee | [Executive summary](docs/guides/executive-summary.md) |
+| colour by my own typed field (risk, team) | [Typed fields](docs/guides/typed-fields.md) |
+| record progress, move `asOf` and re-plan | [Update a plan](docs/guides/update-a-plan.md) |
+| render in Japanese or reword the built-in texts | [Locale and wording](docs/guides/locale-and-wording.md) |
+| choose and embed fonts | [Declared font assets](docs/guides/declared-font-assets.md) |
+| look up a command or option | [CLI reference](docs/guides/cli-reference.md) |
+| let an AI coding agent draft the plan | [Agent interface](docs/guides/agent-interface.md) |
+| organize View, Theme and Layout files for render-review | [Render-review YAML layout](docs/guides/render-review-yaml-layout.md) |
+| recover from a rejected guided-authoring command | [Revision recovery](docs/guides/guided-authoring-revision-recovery.md) |
+| move or migrate a local store | [Local-store compatibility](docs/guides/local-store-compatibility.md) |
+| browse the public examples as a learning path | [Example curriculum](docs/guides/example-curriculum.md), and [corpus policy](docs/guides/corpus-policy.md) |
+| change chrona's own source | [Source architecture](docs/guides/source-architecture.md) |
 
 To work on chrona itself, see [Develop chrona](CONTRIBUTING.md#development-setup).
 
