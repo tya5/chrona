@@ -83,6 +83,12 @@ def test_late_span_and_point_runs_end_at_forecast_and_warnings_name_the_same_fin
     assert len(captions) + sum(item.count for item in drops) == len(runs)
     assert all(item.surface_id == "table-timeline" for item in drops)
     assert {item.source_ref for item in captions} <= {"a", "gate"}
+    dropped_subjects = {subject.source_ref
+        for provenance in result.rendered.surface.diagnostic_provenance
+        if provenance.diagnostic in {item.scene_diagnostic() for item in drops}
+        for subject in provenance.subjects}
+    assert dropped_subjects == {f"/objects/{key}" for key in runs
+                                if key not in {item.source_ref for item in captions}}
     caption_counts = {"a": "2 days late", "gate": "3 days late"}
     assert all(item.text == caption_counts[item.source_ref] for item in captions)
     validate_scene_document(scene_document(result.rendered.scene))

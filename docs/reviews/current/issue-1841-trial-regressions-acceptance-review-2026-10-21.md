@@ -29,21 +29,31 @@ bypass or geometry leaking beyond Layout.
 .venv/bin/python -m pytest -q tests/cli/test_cli_characterization.py tests/unit/chrona/presentation/layout tests/unit/chrona/presentation/scene -k 'cli or relation or route or egress or forward_point' -m 'not corpus' --tb=short
 ```
 
-Release is **not accepted**. PR1849 CI39477068127 is red; shards1/3 failures
-are identified, while shard2 lost its runner before printing a failure summary.
+Release is **not accepted**. [CI39494511648](https://github.com/tya5/chrona/actions/runs/39494511648)
+at380632b76 has five identified failures across shards2/3. The existing role
+registry now distinguishes authored Theme properties from derived Scene paint
+owners; the comparison-host test proves the only legal shared corridor instead
+of demanding impossible nonoverlap (44 focused pass). Three integration tests
+now check the approved repair-footprint, equal-corridor translation, unsafe-hint
+rejection and counted optional-caption omission contracts (42 focused pass).
+No route/quality validator was weakened. Conformance, official snapshot and
+newest-Python reproduction passed; fresh CI remains required after corrections.
 Current controls:77 observer tests;107 observer/tools/recovery tests (overlap);
 all11 typed-fields commands; starter0errors;28 corrected synthetic integrations;
 19 egress controls; both balloon-tail regressions. All8 Sunday cases now pass;
 the previously over-ceiling protected case uses9,743 expansions under the
 unchanged86,016 test ceiling. Completed tail edges are reserved before note indices.
-[Old-head official snapshot audit](https://github.com/tya5/chrona/pull/1849#issuecomment-6298974541)
-records48 changed visual pairs,399 route changes,72 diagnosed halos and optional
-text omissions. Actual before/after SVG rasters for HALCYON02/21/22/24 were viewed
-with bundled fonts; the PDR path is unchanged. Corrected observation of that
-same50-Scene artifact gives0errors/11 recovery infos without rerendering.
-[Optional-label disposition](https://github.com/tya5/chrona/issues/1841#issuecomment-6299771283)
-keeps quality/contact and route-preservation guards; historical name counts are
-not permission to cross a mark. Forward-point admission preserves all31 neutral
+[Official snapshot audit](https://github.com/tya5/chrona/pull/1849#issuecomment-6301282206)
+of artifact12297471730 verifies109 baseline paths againstbe0dc4819,48 changed
+SVG/Scene pairs,389 route changes,0 logical relation losses and74 matching
+recovery halos/receipts. All50 Scenes have0observer errors. Actual before/after
+SVG rasters for HALCYON02/04/12/16/25 and roadmapSunday were viewed with bundled
+fonts. [Reviewer disposition](https://github.com/tya5/chrona/pull/1849#issuecomment-6301579399)
+accepts optional relation-name04 removal, route changes, halos and note-index
+moves, but **rejects six HALCYON member-name removals and Sunday's detached
+tail**. Both require structural Layout corrections and fresh SVG/count evidence
+within this PR; no corpus edits or limit relaxation. The earlier broad
+optional-label interpretation is superseded. Forward-point admission preserves all31 neutral
 relations and all5 left/top/bottom arrivals without backward right entry
 (27 focused tests). Optional label omissions have measured retry-footprint
 witnesses and truthful count diagnostics; the separate feasible-reservation
