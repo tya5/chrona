@@ -1182,6 +1182,16 @@ completed crossings as `E_SCENE_RELATION_THROUGH_MARK`; it does not repair route
 The inset interior rectangles used for conservative rectangular-detour quality
 lower-bound certificates remain unchanged. They are not the contact envelope
 for actual candidate, repair, reduction or final drawn-path safety checks.
+Normal proposals also cover outward endpoint corridors: derive their lead ends
+from the admitted port sides and existing terminal/stroke run lengths, then
+reuse the finite obstacle-channel shape grammar between those leads. Every
+proposal remains inside the normal routing bounds and passes the same completed
+port, contact, obstacle, terminal and quality checks; this is not relaxed-route
+acceptance. Revalidated prior hints retain priority. First-fit tries these after
+its existing finite shapes and before graph search. Best retains an accepted
+graph proposal; if that pair's bounded search finds no accepted route, it tries
+these finite proposals before obstacle relaxation, with the existing cross-pair
+rank. This closes a proposal gap, not a claim that bounded search was exhaustive.
 Remaining candidate order, bounds and comparison semantics are unchanged.
 
 Required, route-independent lane item names and deltas are measured and
