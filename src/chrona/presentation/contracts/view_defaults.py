@@ -23,6 +23,13 @@ from chrona.presentation.contracts.resources import DesignMergedView
 
 WHOLE_MEMBERS = ("visibility", "axis", "deadlines", "shading", "timePresentation", "annotationPresentation",
                  "backgroundDecoration", "progressFill", "annotationPlacement", "figureFormats", "heading")
+# View v0.28's dependency-network branch prohibits these presentation members.
+# A Layout may still carry them for its table-timeline use; they are inapplicable
+# defaults on a network surface, not authored network View declarations.
+NETWORK_INAPPLICABLE_MEMBERS = frozenset({
+    "tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "periods", "shading",
+    "timePresentation", "annotations", "annotationPresentation", "annotationBindings", "annotationPlacement",
+})
 SPLIT_MEMBERS: Mapping[str, tuple[str, ...]] = {
     "comparison": ("baselineMarks", "missingActualScope", "deltaUnit", "facets"),
     "rows": ("mode", "trackAllocation", "packing", "laneTable", "points", "items"),
@@ -84,19 +91,40 @@ def _column_source_kind(source: object) -> str | None:
     return None
 
 
+def _declares_value_bearing_grouping(body: Mapping[str, Any]) -> bool:
+    """Whether the View's own grouping connection can produce values for a tint."""
+    grouping = body.get("grouping")
+    by = grouping.get("by") if isinstance(grouping, Mapping) else None
+    return (isinstance(by, str) and by in {"field", "objectType"}
+            or isinstance(by, Mapping) and "fieldRole" in by)
+
+
 def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) -> dict[str, Any]:
     """The View with the design's defaults filled in under it (the View's own members win)."""
     merged = DesignMergedView(deepcopy(dict(view)))
     body = merged.get("body")
     if not isinstance(body, dict):
         return merged
+    effective_defaults = defaults
+    if body.get("surface") == "dependency-network":
+        effective_defaults = {name: value for name, value in defaults.items()
+                              if name not in NETWORK_INAPPLICABLE_MEMBERS}
+    grouping_defaults = effective_defaults.get("grouping")
+    if isinstance(grouping_defaults, Mapping) and not _declares_value_bearing_grouping(body):
+        # Tint is a paint default only; it cannot supply the grouping connection
+        # that gives it values. Preserve other grouping presentation defaults.
+        effective_defaults = dict(effective_defaults)
+        effective_defaults["grouping"] = {name: value for name, value in grouping_defaults.items()
+                                          if name != "tint"}
     supplied: set[str] = set()
+    origins: list[tuple[str, str]] = []
     for name in WHOLE_MEMBERS:
-        if name in defaults and name not in body:
-            body[name] = deepcopy(defaults[name])
+        if name in effective_defaults and name not in body:
+            body[name] = deepcopy(effective_defaults[name])
             supplied.add(name)
+            origins.append((f"/body/{name}", f"/viewDefaults/{name}"))
     for name, members in SPLIT_MEMBERS.items():
-        declared, offered = body.get(name), defaults.get(name)
+        declared, offered = body.get(name), effective_defaults.get(name)
         if not isinstance(offered, Mapping):
             continue
         if name not in body:
@@ -104,11 +132,14 @@ def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) ->
             if fragment:
                 body[name] = fragment
                 supplied.add(name)
+                origins.extend((f"/body/{name}/{member}", f"/viewDefaults/{name}/{member}")
+                               for member in fragment)
         elif isinstance(declared, dict):
             for member in members:
                 if member in offered and member not in declared:
                     declared[member] = deepcopy(offered[member])
-    styles = defaults.get("columnStyles")
+                    origins.append((f"/body/{name}/{member}", f"/viewDefaults/{name}/{member}"))
+    styles = effective_defaults.get("columnStyles")
     columns = body.get("tableColumns")
     if isinstance(styles, Mapping) and isinstance(columns, list):
         for column in columns:
@@ -118,9 +149,25 @@ def merge_view_defaults(view: Mapping[str, Any], defaults: Mapping[str, Any]) ->
             style = styles.get(name) if isinstance(name, str) else None
             if isinstance(style, Mapping):
                 _fill_presentation(column, style, COLUMN_PRESENTATION_MEMBERS)
-    _close_array_presentation(body, defaults)
+    _close_array_presentation(body, effective_defaults)
     merged.design_supplied = frozenset(supplied)
+    merged.design_origins = tuple(origins)
     return merged
+
+
+def inherited_layout_origin(view: Mapping[str, Any], source_ref: str) -> str | None:
+    """Map a semantic error path to its exact Layout-default pointer, if inherited.
+
+    Only whole and split members recorded while closing ``viewDefaults`` are
+    considered. Array-entry presentation and authored View paths are untouched.
+    """
+    origins = getattr(view, "design_origins", ())
+    matches = [(view_path, layout_path) for view_path, layout_path in origins
+               if source_ref == view_path or source_ref.startswith(view_path + "/")]
+    if not matches:
+        return None
+    view_path, layout_path = max(matches, key=lambda item: len(item[0]))
+    return layout_path + source_ref[len(view_path):]
 
 
 def collect_column_style_diagnostics(

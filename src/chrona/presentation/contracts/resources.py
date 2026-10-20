@@ -938,6 +938,7 @@ class DesignMergedView(dict):
     """A View mapping after a Layout profile's `viewDefaults` were laid under it; remembers which members it supplied."""
 
     design_supplied: frozenset[str] = frozenset()
+    design_origins: tuple[tuple[str, str], ...] = ()
 
 
 def _in_authors_words(violation: SchemaViolation, value: Mapping[str, Any]) -> SchemaViolation:
@@ -1415,7 +1416,9 @@ def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
     if raw is None:
         return None
     if _grouping_by_kind(raw_grouping) not in ("field", "objectType"):
-        raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE", "tint needs groups that have values (grouping by field or objectType)")
+        raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE",
+                            "tint needs groups that have values (grouping by field or objectType)",
+                            "/body/grouping/tint")
     domain = raw.get("domain", "firstAppearance")
     return ViewGroupTint(str(raw["scale"]), None if domain == "firstAppearance" else tuple(str(item) for item in domain))
 
@@ -1493,18 +1496,24 @@ def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
                              str(raw["first"]) if "first" in raw else None,
                              str(secondary["entityField"]) if secondary is not None else None)
     if raw_grouping.get("presentation") != "header" or _grouping_by_kind(raw_grouping) not in {"field", "objectType"}:
-        raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "header needs presentation header and grouping by field or objectType")
+        raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE",
+                            "header needs presentation header and grouping by field or objectType",
+                            "/body/grouping/header")
     if header.secondary_field is not None and _grouping_by_kind(raw_grouping) != "field":
-        raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "secondary needs grouping by field (an entity)")
+        raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "secondary needs grouping by field (an entity)",
+                            "/body/grouping/header/secondary")
     used: set[str] = set()
-    try:
-        for template in (header.text, header.first):
-            if template is not None:
-                used |= parse_template(template, allow_roles=True).fields
-    except GroupHeaderTextError as error:
-        raise ContractError(error.code, error.detail) from error
+    for member, template in (("text", header.text), ("first", header.first)):
+        if template is None:
+            continue
+        try:
+            used |= parse_template(template, allow_roles=True).fields
+        except GroupHeaderTextError as error:
+            raise ContractError(error.code, error.detail, f"/body/grouping/header/{member}") from error
     if ("secondary" in used) != (header.secondary_field is not None):
-        raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE", "{secondary} and the secondary declaration must appear together")
+        raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE",
+                            "{secondary} and the secondary declaration must appear together",
+                            "/body/grouping/header")
     return header
 
 
