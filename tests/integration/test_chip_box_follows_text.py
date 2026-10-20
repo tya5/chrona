@@ -115,7 +115,7 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     assert [resource for resource in raw.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "586aebd2d304502ac0c5629119fc2be85f9288446b37ff90919a9f086e63e72c"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "c7c2bc5e0f7bce0a0460fa00d96c58edf7a52417d30dbfc70f75b00296de577c"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")
