@@ -164,6 +164,18 @@ def table_text_measurer(theme_tokens: Any, font_metrics: Any) -> Callable[[str, 
     return measure
 
 
+def table_text_required_inline(text_advance: float, *, indent: float = 0.0,
+                               inset: float = 0.0) -> float:
+    """Compose the forward inline demand used by both table measurement and fit admission."""
+    return geometry_sum((text_advance, indent, inset))
+
+
+def table_text_fits_column(text_advance: float, column_inline_size: float, *,
+                           indent: float = 0.0, inset: float = 0.0) -> bool:
+    """Test a table text run against its column without inverse-subtraction rounding."""
+    return table_text_required_inline(text_advance, indent=indent, inset=inset) <= column_inline_size
+
+
 def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
                           cells: tuple[TableCellContent, ...],
                           measure_text: Callable[[str, str, str], float], minimum_inline: float,
@@ -182,9 +194,10 @@ def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
         indent = indents.get(cell.object_id, 0.0) if cell.column_id == hierarchy_column else 0.0
         content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal", indent))
     return tuple(
-        max(minimum_inline, max((measure_text(item, role, orientation) + indent
-                                 for item, role, orientation, indent in content_by_column[column.column_id]),
-                                default=minimum_inline) + minimum_inline)
+        max(minimum_inline, max((table_text_required_inline(
+            measure_text(item, role, orientation), indent=indent, inset=minimum_inline)
+            for item, role, orientation, indent in content_by_column[column.column_id]),
+                                default=minimum_inline))
         for column in columns
     )
 
@@ -216,13 +229,15 @@ def measure_table_column_minima(*, columns: tuple[TableColumnContent, ...],
             return natural
         return min(natural, measure_text(prefix + "…" + suffix, role, "horizontal"))
 
-    content_by_column = {column.column_id: [compact(column.header, header_role, column.header_orientation)]
+    content_by_column = {column.column_id: [(compact(column.header, header_role, column.header_orientation), 0.0)]
                          for column in columns}
     for cell in cells:
         indent = indents.get(cell.object_id, 0.0) if cell.column_id == hierarchy_column else 0.0
         content_by_column.setdefault(cell.column_id, []).append(
-            compact(cell.content, cell.typography_role, "horizontal", cell.affix_prefix, cell.affix_suffix) + indent)
-    return tuple(max(minimum_inline, max(content_by_column[column.column_id], default=0.0) + minimum_inline)
+            (compact(cell.content, cell.typography_role, "horizontal", cell.affix_prefix, cell.affix_suffix), indent))
+    return tuple(max(minimum_inline, max((table_text_required_inline(width, indent=indent, inset=minimum_inline)
+                                          for width, indent in content_by_column[column.column_id]),
+                                         default=0.0))
                  for column in columns)
 
 
