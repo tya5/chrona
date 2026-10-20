@@ -108,6 +108,44 @@ chrona render typed-plan.chrona --preset wallboard-dark --view typed-risk-view.y
 chrona render typed-plan-compiled.yaml --preset wallboard-dark --view typed-risk-view.yaml --output typed-terse-compiled.svg
 ```
 
+A field can also name another record. An `objectReference` field holds the id of an object or an entity, and
+`targetProfiles` limits which profiles may be named. A terse plan declares the entity it points at with
+`entity ID "Title" PROFILE`, after the calendars and before the objects. A mistyped id is rejected with the value
+and the nearest declared ids.
+
+<!-- chrona:doc-check file: typed-deliverable.yaml -->
+```yaml
+version: chrona/profile/v0.3
+packageId: team-deliverables
+contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  deliverable:
+    extends: entity
+  change:
+    extends: task
+    fields:
+      deliverable:
+        type: objectReference
+        targetProfiles: [deliverable]
+```
+
+<!-- chrona:doc-check file: typed-deliverable.chrona -->
+```text
+terse 0.1
+project typed-ref "Entity reference" calendar office extension team-deliverables "typed-deliverable.yaml" git:0123456789abcdef0123456789abcdef01234567
+calendar office mon-fri
+entity del-portal "Partner portal" deliverable
+hotfix "Web checkout hotfix" task profile change 4wd from 2026-11-02 deliverable=del-portal
+```
+
+```sh
+chrona validate typed-deliverable.chrona
+chrona compile typed-deliverable.chrona --output typed-deliverable-compiled.yaml
+chrona schedule typed-deliverable-compiled.yaml
+```
+
 ## 3. Colour by the declared field
 
 Colour is the View's job, not the plan's. `colorEncoding` names a Theme colour `scale`, the `source`
