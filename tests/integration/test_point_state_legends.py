@@ -93,7 +93,11 @@ def _svg_elements(rendered):
 
 
 def _ink_signature(item):
-    return tuple(command.kind for command in item.symbol.outline), item.paint
+    x, y, width, height = item.bounds
+    geometry = tuple((command.kind, tuple(
+        (round((px - x) / width, 4), round((py - y) / height, 4))
+        for px, py in command.points)) for command in item.symbol.outline)
+    return geometry, item.paint
 
 
 def test_milestone_owner_emits_final_actual_forecast_keys_and_svg_glyphs(tmp_path):
@@ -141,6 +145,8 @@ def test_point_specific_states_include_planned_and_actual_keys(tmp_path):
     assert {item.text for item in state_labels} == {"Gate · Planned", "Gate · Actual"}
     assert len(state_swatches) == len(state_labels) == 2
     assert {_ink_signature(item) for item in state_swatches} == {_ink_signature(item) for item in point_marks}
+    for mark in point_marks:
+        assert sum(_ink_signature(swatch) == _ink_signature(mark) for swatch in state_swatches) == 1
     svg = _svg_elements(rendered)
     assert all(item.scene_id in svg and svg[item.scene_id].tag.endswith("path") for item in state_swatches)
     assert all(svg[item.scene_id].attrib.get("fill") == item.paint.fill for item in (*state_swatches, *point_marks))
@@ -156,6 +162,7 @@ def test_single_final_point_state_keeps_owner_label_and_omits_hidden_keys(tmp_pa
     assert {item.purpose for item in point_marks} == {"planned"}
     assert {item.source_ref for item in point_marks} == {"planned", "observed", "forecast"}
     assert len(swatches) == len(labels) == 1
+    assert all(_ink_signature(mark) == _ink_signature(swatches[0]) for mark in point_marks)
     assert labels[0].text == "Gate"
     assert swatches[0].scene_id in _svg_elements(rendered)
     assert not any(text in rendered.artifact.content.decode("utf-8")
