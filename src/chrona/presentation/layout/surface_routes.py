@@ -48,7 +48,7 @@ from chrona.presentation.layout.relation_resolution import (
     relaxed_domain, search_relation_resolution,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
-from chrona.presentation.layout.relation_style import complete_relation_style, curved_path_segments
+from chrona.presentation.layout.relation_style import complete_relation_style, changed_path_segments
 from chrona.presentation.layout.relation_style_model import RelationStyleFallback
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 
@@ -1011,8 +1011,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         semantic_id=relation.semantic_id, source_ref=relation_id,
                         to_instance_id=target_id, terminal_label=True, fragment_endpoint="target"),
                 )
-                if context.layout_manifest.relation_style == "curved":
-                    receipt = RelationStyleFallback(scene_id, "recovery")
+                if context.layout_manifest.relation_style != "orthogonal":
+                    receipt = RelationStyleFallback(scene_id, "recovery",
+                        requested=context.layout_manifest.relation_style)
                     fragments = (replace(fragments[0], style_fallback=receipt), fragments[1])
                     diagnostics.append(receipt.diagnostic)
                 for fragment in fragments:
@@ -1097,16 +1098,16 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 marker_start=completed_start, marker_end=completed_end,
                 label_content=relation_label_content(relation), source_ref=relation_id,
                 from_instance_id=source_id, to_instance_id=target_id, paint_clip=plot_clip)
-            def reject_curve(candidate, cover):
+            def reject_style(candidate, cover):
                 if plot_clip is not None and not relation_geometry_inside_plot(
                         plot_clip, candidate.points, path_commands=candidate.path_commands,
                         marker_start=candidate.marker_start, marker_end=candidate.marker_end,
                         stroke_width=dependency_stroke):
                     return "bounds"
-                # Straight intervals are subsets of the selected safe skeleton.
-                # Only arcs change its ink; no whole-host exemption applies here.
+                # Only retained axis-aligned intervals are admitted subsets.
+                # Arcs and metro diagonals have no whole-host exemption here.
                 classes = tuple(dict.fromkeys((*route_classes, *LABEL_INK_OBSTACLE_CLASSES)))
-                for segment in curved_path_segments(candidate.path_commands, dependency_stroke):
+                for segment in changed_path_segments(candidate.path_commands, dependency_stroke):
                     if domain.obstacles.collisions(segment, classes=classes,
                             regions=("timeline", "group-header")):
                         return "clearance"
@@ -1119,7 +1120,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 style=context.layout_manifest.relation_style, stroke_width=dependency_stroke,
                 start_run=terminal_run(marker_start), end_run=terminal_run(marker_end),
                 recovery=fallback or domain.stage is RelationResolutionStage.OVERLAP,
-                reject=reject_curve)
+                join_radius=(float(context.metric_values["timeline.relation.cornerRadius"])
+                    if "timeline.relation.cornerRadius" in context.metric_values else None),
+                reject=reject_style)
             if placed.style_fallback is not None:
                 diagnostics.append(placed.style_fallback.diagnostic)
             if plot_clip is not None and not relation_geometry_inside_plot(plot_clip, placed.points,

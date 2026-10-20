@@ -27,6 +27,7 @@ class RelationRouteStyle(str, Enum):
 
     ORTHOGONAL = "orthogonal"
     CURVED = "curved"
+    METRO = "metro"
 
 
 class PointHostMode(str, Enum):
@@ -179,7 +180,8 @@ class LayoutManifest:
             style = RelationRouteStyle(self.relation_style)
         except (TypeError, ValueError) as error:
             raise ValueError(
-                f"E_LAYOUT_RELATION_STYLE_INVALID: expected orthogonal or curved; received {self.relation_style!r}"
+                f"E_LAYOUT_RELATION_STYLE_INVALID: expected one of "
+                f"{', '.join(value.value for value in RelationRouteStyle)}; received {self.relation_style!r}"
             ) from error
         object.__setattr__(self, "relation_style", style)
 
