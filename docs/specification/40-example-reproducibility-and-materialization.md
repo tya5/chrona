@@ -91,6 +91,16 @@ to the manifest root, as on the explicit materializer path. The composer does
 not read neighbouring files, latest revisions or host defaults. There are no
 recursive includes, implicit deck lookup or Layout/Scene/adapter merges.
 
+Existing deck consumers must use that same selected explicit source, including
+example initialization, derived Scene provenance checks, corpus/presentation
+coverage and design-purity inspection. They must not assume that every slide
+has an authored Context file, skip composed slides, or implement another merge.
+Inspection can consume the composed bytes without publishing a temporary file.
+Initialization retains its unavailable-provider filtering and never deletes an
+authored file merely because a composed source has a virtual address. A manifest
+ID is required for composition's owned address; explicit-only manifests that
+previously omitted an ID remain valid.
+
 `chrona materialize`, its library use case and the standalone tool reuse this
 one composer. `render-review` still consumes only explicit immutable Context
 references. A future authoring entry point must compose before calling that

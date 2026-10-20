@@ -53,6 +53,7 @@ Context validation still rejects missing required members.
 | Specs09/14 application entrypoints | One authoring composer reused by materialize CLI/library/tool; immutable render-review remains unchanged. Draft is not given an implicit deck lookup. |
 | Specs13/15 immutable identity | Expand before copying/pinning/closure. Pin the expanded bytes at an owned transient address, never the fragment's hash/address. Preserve every surviving resource pin and Store boundary. |
 | Specs40/50 materializer integrity | Explicit sources keep exact raw bytes. Composed source staging cannot collide with authored resources; no author files or pins are rewritten. |
+| Existing deck consumers | Initialization, derived Scene provenance, corpus/presentation coverage and design purity reuse the selected explicit source, not a guessed file path or a second merge. Provider deferral remains slide-aware and cannot delete an authored file at a virtual address. |
 | Spec56 schema/diagnostics | Formalize the existing materializer manifest contract in `schemas/example-materializer-v0.1.schema.yaml`, adding optional authoring properties in place. Reuse live Context property definitions; reject unknown/duplicate keys with exact origins. No canonical Context schema widening is needed. |
 | View/Theme/Layout/Scene/adapters | Receive only the same explicit evaluated inputs. No new scheduling, geometry, routing, paint or adapter policy. |
 
@@ -85,6 +86,15 @@ the expansion/provenance boundary itself.
    Verify its same-cohort reduction and output table, and the review-containing
    exact-main three-OS release before closing. A pending migration keeps415 open.
 
+Readiness audit found direct Context-path assumptions in `local_authoring.py`,
+`tools/derived_evidence.py`, `tools/corpus_coverage.py`,
+`tools/presentation_coverage.py` and `tools/check_design_purity.py`.
+Their adapters and synthetic twins belong to the feature before corpus migration;
+do not defer them until migrated examples break. Admission/composition is one
+application owner; inspections read its completed bytes. Require a manifest ID
+only for composition, preserving valid explicit-only no-ID manifests.
+Pointed failures reuse the application failure-report transport; strict loading
+must detect duplicate/merge keys and cycles before ordinary loading loses them.
+
 Implementation files, tests and acceptance/publication slices will be finalized
-after design review. This branch is not a second active landing PR while1794
-is in flight.
+after design review. This branch has no active PR;1792 is the next code landing.
