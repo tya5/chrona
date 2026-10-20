@@ -1219,8 +1219,10 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
     entries = legend_entries(detail, project, _scale_projection(), color_scale, closed_days_drawn=True)
 
     assert entries == (SurfaceLegendEntry("planned", "Planned"),
-                       SurfaceLegendEntry("scale:owner:bus", "Spacecraft bus"),
-                       SurfaceLegendEntry("scale:owner:ground", "ground"))
+                       SurfaceLegendEntry("scale:owner:bus", "Spacecraft bus",
+                                          view_scale_id="owner", view_scale_domain_value="bus"),
+                       SurfaceLegendEntry("scale:owner:ground", "ground",
+                                          view_scale_id="owner", view_scale_domain_value="ground"))
     drawn = normalize_v05_surface_content(_scale_projection(), project,
                                           typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                                           summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail,

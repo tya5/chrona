@@ -12,13 +12,13 @@ def _node(identity, *, parent=None, group=False):
                                  is_container=group, container_id=parent)
 
 
-def _place(nodes, horizontal):
+def _place(nodes, horizontal, *, member_gap=Decimal(16)):
     return place_network_bands(
         nodes, ranks={node.object_id: int(node.object_id in {"b", "c"}) for node in nodes},
         sizes={node.object_id: (Decimal(80), Decimal(40)) for node in nodes},
         insets={node.object_id: (Decimal(8), Decimal(8)) for node in nodes},
         bounds=Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(400)),
-        gap=Decimal(16), horizontal=horizontal)
+        gap=Decimal(16), member_gap=member_gap, horizontal=horizontal)
 
 
 def _contains(outer, inner):
@@ -67,6 +67,42 @@ def test_ordinary_nodes_keep_rank_packing_without_containers(horizontal):
                            else Rect(Decimal(16), Decimal(72), Decimal(80), Decimal(40)))
     assert boxes["c"] == (Rect(Decimal(112), Decimal(72), Decimal(80), Decimal(40)) if horizontal
                            else Rect(Decimal(112), Decimal(72), Decimal(80), Decimal(40)))
+
+
+@pytest.mark.parametrize("horizontal", (False, True))
+def test_member_gap_changes_only_secondary_axis_separation(horizontal):
+    nodes = (_node("a"), _node("b"), _node("c"))
+    legacy = _place(nodes, horizontal)
+    explicit_same = _place(nodes, horizontal, member_gap=Decimal(16))
+    compact = _place(nodes, horizontal, member_gap=Decimal(0))
+    assert legacy == explicit_same
+    legacy_boxes, _ = legacy
+    compact_boxes, _ = compact
+    # The second rank stays on the same primary coordinate while same-rank
+    # members close together on the orthogonal axis.
+    if horizontal:
+        assert compact_boxes["b"].inline == legacy_boxes["b"].inline
+        assert compact_boxes["b"].block == Decimal(0)
+        assert compact_boxes["c"].block == compact_boxes["b"].block + Decimal(40)
+    else:
+        assert compact_boxes["b"].block == legacy_boxes["b"].block
+        assert compact_boxes["b"].inline == Decimal(0)
+        assert compact_boxes["c"].inline == compact_boxes["b"].inline + Decimal(80)
+
+
+@pytest.mark.parametrize("horizontal", (False, True))
+def test_member_gap_separates_nested_groups_and_headers_independently(horizontal):
+    nodes = (_node("p", group=True), _node("q", parent="p", group=True),
+             _node("a", parent="q"), _node("b", group=True), _node("c", parent="b"))
+    legacy = _place(nodes, horizontal)
+    explicit_same = _place(nodes, horizontal, member_gap=Decimal(16))
+    assert legacy == explicit_same
+    zero_gap, groups = _place(nodes, horizontal, member_gap=Decimal(0))
+    assert set(zero_gap) == {node.object_id for node in nodes}
+    assert {group.group_id for group in groups} == {"p", "q", "b"}
+    for group in groups:
+        assert _contains(zero_gap[group.group_id], group.header_bounds)
+        assert _contains(zero_gap[group.group_id], group.content_bounds)
 
 
 @pytest.mark.parametrize("nodes", ((_node("a", parent="missing"),),

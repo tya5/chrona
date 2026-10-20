@@ -1,55 +1,51 @@
 {
   "candidate": {
-    "addedTotals": {
-      "hint": 15,
-      "plain": 16
-    },
     "byDesign": {
       "executive-light": {
         "hint": {
-          "added": 15,
-          "raw": 193,
-          "removed": 25,
-          "row-normalised": 33,
-          "unchangedTaskLabelToggleCount": 11
+          "added": 110,
+          "raw": 263,
+          "removed": 44,
+          "row-normalised": 103,
+          "unchangedTaskLabelToggleCount": 34
         },
         "plain": {
-          "added": 16,
-          "raw": 189,
-          "removed": 28,
-          "row-normalised": 38,
-          "unchangedTaskLabelToggleCount": 15
+          "added": 112,
+          "raw": 259,
+          "removed": 45,
+          "row-normalised": 108,
+          "unchangedTaskLabelToggleCount": 37
         }
       },
       "marquee": {
         "hint": {
-          "added": 0,
-          "raw": 240,
-          "removed": 0,
-          "row-normalised": 13,
+          "added": 38,
+          "raw": 336,
+          "removed": 2,
+          "row-normalised": 109,
           "unchangedTaskLabelToggleCount": 0
         },
         "plain": {
-          "added": 0,
-          "raw": 241,
-          "removed": 0,
-          "row-normalised": 11,
+          "added": 38,
+          "raw": 342,
+          "removed": 2,
+          "row-normalised": 113,
           "unchangedTaskLabelToggleCount": 0
         }
       },
       "target-b": {
         "hint": {
-          "added": 0,
-          "raw": 237,
-          "removed": 0,
-          "row-normalised": 8,
+          "added": 38,
+          "raw": 331,
+          "removed": 1,
+          "row-normalised": 103,
           "unchangedTaskLabelToggleCount": 0
         },
         "plain": {
-          "added": 0,
-          "raw": 237,
-          "removed": 0,
-          "row-normalised": 7,
+          "added": 38,
+          "raw": 331,
+          "removed": 1,
+          "row-normalised": 102,
           "unchangedTaskLabelToggleCount": 0
         }
       }
@@ -62,6 +58,8 @@
           "raw": 8,
           "removed": 1,
           "row-normalised": 1,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w1->w2",
@@ -70,6 +68,8 @@
           "raw": 8,
           "removed": 1,
           "row-normalised": 1,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       },
@@ -80,6 +80,17 @@
           "raw": 165,
           "removed": 22,
           "row-normalised": 18,
+          "unchangedTaskLabelGone": [
+            "be-hyper",
+            "mob-analytics",
+            "mob-hyper",
+            "mob-pay-ui",
+            "plat-hyper",
+            "plat-runbook",
+            "qa-e2e",
+            "qa-pay"
+          ],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 8
         },
         "pair": "w2->w3",
@@ -88,6 +99,20 @@
           "raw": 162,
           "removed": 25,
           "row-normalised": 23,
+          "unchangedTaskLabelGone": [
+            "be-hyper",
+            "mob-analytics",
+            "mob-hyper",
+            "mob-pay-ui",
+            "plat-hyper",
+            "plat-runbook",
+            "qa-e2e",
+            "qa-pay",
+            "qa-perf",
+            "qa-plan",
+            "qa-sec"
+          ],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 11
         }
       },
@@ -98,6 +123,13 @@
           "raw": 20,
           "removed": 2,
           "row-normalised": 14,
+          "unchangedTaskLabelGone": [
+            "qa-auto"
+          ],
+          "unchangedTaskLabelNew": [
+            "plat-runbook",
+            "qa-pay"
+          ],
           "unchangedTaskLabelToggleCount": 3
         },
         "pair": "w3->w4",
@@ -106,7 +138,86 @@
           "raw": 19,
           "removed": 2,
           "row-normalised": 14,
+          "unchangedTaskLabelGone": [
+            "plat-prod"
+          ],
+          "unchangedTaskLabelNew": [
+            "plat-runbook",
+            "qa-pay",
+            "qa-perf"
+          ],
           "unchangedTaskLabelToggleCount": 4
+        }
+      },
+      {
+        "design": "executive-light",
+        "hint": {
+          "added": 95,
+          "raw": 70,
+          "removed": 19,
+          "row-normalised": 70,
+          "unchangedTaskLabelGone": [
+            "be-api-spec",
+            "be-notif",
+            "be-ratelimit",
+            "mob-a11y",
+            "mob-android",
+            "mob-beta",
+            "mob-kit",
+            "mob-push",
+            "mob-store",
+            "plat-ci",
+            "plat-db",
+            "plat-prod",
+            "plat-runbook",
+            "qa-a11y",
+            "qa-perf",
+            "qa-signoff"
+          ],
+          "unchangedTaskLabelNew": [
+            "be-api-freeze",
+            "be-auth",
+            "be-cart",
+            "be-hyper",
+            "mob-addr",
+            "plat-hyper",
+            "plat-queue"
+          ],
+          "unchangedTaskLabelToggleCount": 23
+        },
+        "pair": "w4->w5",
+        "plain": {
+          "added": 96,
+          "raw": 70,
+          "removed": 17,
+          "row-normalised": 70,
+          "unchangedTaskLabelGone": [
+            "be-api-spec",
+            "be-notif",
+            "be-ratelimit",
+            "mob-a11y",
+            "mob-android",
+            "mob-beta",
+            "mob-kit",
+            "mob-push",
+            "mob-store",
+            "plat-ci",
+            "plat-db",
+            "plat-runbook",
+            "qa-a11y",
+            "qa-perf"
+          ],
+          "unchangedTaskLabelNew": [
+            "be-api-freeze",
+            "be-auth",
+            "be-cart",
+            "be-hyper",
+            "mob-addr",
+            "plat-hyper",
+            "plat-queue",
+            "qa-plan"
+          ],
+          "unchangedTaskLabelToggleCount": 22
         }
       },
       {
@@ -116,6 +227,8 @@
           "raw": 12,
           "removed": 0,
           "row-normalised": 4,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w1->w2",
@@ -124,6 +237,8 @@
           "raw": 12,
           "removed": 0,
           "row-normalised": 4,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       },
@@ -133,7 +248,9 @@
           "added": 0,
           "raw": 214,
           "removed": 0,
-          "row-normalised": 1,
+          "row-normalised": 2,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w2->w3",
@@ -141,7 +258,9 @@
           "added": 0,
           "raw": 214,
           "removed": 0,
-          "row-normalised": 0,
+          "row-normalised": 1,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       },
@@ -152,6 +271,8 @@
           "raw": 11,
           "removed": 0,
           "row-normalised": 3,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w3->w4",
@@ -160,6 +281,30 @@
           "raw": 11,
           "removed": 0,
           "row-normalised": 3,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
+          "unchangedTaskLabelToggleCount": 0
+        }
+      },
+      {
+        "design": "target-b",
+        "hint": {
+          "added": 38,
+          "raw": 94,
+          "removed": 1,
+          "row-normalised": 94,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
+          "unchangedTaskLabelToggleCount": 0
+        },
+        "pair": "w4->w5",
+        "plain": {
+          "added": 38,
+          "raw": 94,
+          "removed": 1,
+          "row-normalised": 94,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       },
@@ -170,6 +315,8 @@
           "raw": 14,
           "removed": 0,
           "row-normalised": 6,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w1->w2",
@@ -178,6 +325,8 @@
           "raw": 15,
           "removed": 0,
           "row-normalised": 7,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       },
@@ -187,7 +336,9 @@
           "added": 0,
           "raw": 214,
           "removed": 0,
-          "row-normalised": 2,
+          "row-normalised": 3,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w2->w3",
@@ -195,7 +346,9 @@
           "added": 0,
           "raw": 214,
           "removed": 0,
-          "row-normalised": 0,
+          "row-normalised": 1,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       },
@@ -205,7 +358,9 @@
           "added": 0,
           "raw": 12,
           "removed": 0,
-          "row-normalised": 5,
+          "row-normalised": 4,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         },
         "pair": "w3->w4",
@@ -214,59 +369,83 @@
           "raw": 12,
           "removed": 0,
           "row-normalised": 4,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
+          "unchangedTaskLabelToggleCount": 0
+        }
+      },
+      {
+        "design": "marquee",
+        "hint": {
+          "added": 38,
+          "raw": 96,
+          "removed": 2,
+          "row-normalised": 96,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
+          "unchangedTaskLabelToggleCount": 0
+        },
+        "pair": "w4->w5",
+        "plain": {
+          "added": 38,
+          "raw": 101,
+          "removed": 2,
+          "row-normalised": 101,
+          "unchangedTaskLabelGone": [],
+          "unchangedTaskLabelNew": [],
           "unchangedTaskLabelToggleCount": 0
         }
       }
     ],
-    "rawTotals": {
-      "hint": 670,
-      "plain": 667
-    },
-    "removedTotals": {
-      "hint": 25,
-      "plain": 28
-    },
-    "rowNormalizedTotals": {
-      "hint": 54,
-      "plain": 56
-    },
-    "scope": "three available transitions per design, w1\u21922 through w3\u21924; w1 hint reuses plain w1",
-    "unchangedTaskLabelToggles": {
-      "hint": 11,
-      "plain": 15
+    "totals": {
+      "hint": {
+        "added": 186,
+        "raw": 930,
+        "removed": 47,
+        "row-normalised": 315,
+        "unchangedTaskLabelToggleCount": 34
+      },
+      "plain": {
+        "added": 188,
+        "raw": 932,
+        "removed": 48,
+        "row-normalised": 323,
+        "unchangedTaskLabelToggleCount": 37
+      }
     }
   },
   "hintReceiptDispositions": {
     "executive-light": {
       "absent": 10,
-      "accepted": 311,
-      "invalidated": 77,
-      "unusable": 118
+      "accepted": 354,
+      "invalidated": 168,
+      "unusable": 158
     },
     "marquee": {
       "absent": 5,
-      "accepted": 85,
-      "invalidated": 51,
-      "unusable": 117
+      "accepted": 98,
+      "invalidated": 83,
+      "unusable": 159
     },
     "target-b": {
       "absent": 5,
-      "accepted": 93,
-      "invalidated": 47,
-      "unusable": 113
-    },
-    "total": {
-      "absent": 20,
-      "accepted": 489,
-      "invalidated": 175,
-      "unusable": 348
+      "accepted": 110,
+      "invalidated": 77,
+      "unusable": 153
     }
   },
   "issue": 1754,
   "pinnedInputCommit": "bf3940dbe9af487ac6cace5458554762594f3477",
+  "productBase": "d0dc06f6bc17227cda31cb9df8fbd7dc2dc3077c",
   "provenance": {
     "inputFiles": {
       "analyze.py": "4e96df0155f59b6a3490f15436e95e269e1f80db5449d9815d297d50f41fab14",
+      "check.py": "27f847f9ef4a7547b1b51ce29f3d981730fb5f033da8f8281e9eb12725966c7c",
+      "crops/exec-w1-vs-w2-backend.png": "0032288ae028f1d8f9bf7cb31f7a8780b825a9578babf72035bc9c7347744917",
+      "crops/target-b-w1-mobpush.png": "00a374ddd74765983ecc5753a351a83c9d0a0e9895f347ba7780aae0fafa309a",
+      "crops/target-b-w2-mobpush.png": "d8bb7e4aa6e3a37583e7f83403f7cee6e2fb941b4ab3dbe992df2cebec557c40",
+      "customise_colours.py": "f1c969c26266c4a7eef47e8b7d96397fc3cf7b9933c863fc192922c8252cfd42",
+      "gen_plan.py": "216e1f5d08379c630f5dd3e04a1f1fbdbd0c085326c1d10f0159f862c9ab775e",
       "label_churn.py": "302f9af311e7b0dec104d19caad07c452ffb3661354aad1fcc7bf2339c3ff3da",
       "looks/executive-light/detail.yaml": "ab27dd21f63ef47c79f2eec76e3af277fb1615ecb8769451385aef83767b41ea",
       "looks/executive-light/layout.yaml": "6d55a3fd9889b667895a2e9d8cc75e69db89f9e2335d696e32be00fe2c8b92fa",
@@ -288,8 +467,19 @@
       "looks/target-b/scheme.yaml": "89fa264a68ebb9992c69d591b613aab781cc7d83cf4ca2261a82c14d7dc9ef08",
       "looks/target-b/theme.yaml": "d4a9781b32453a3d1fde9b06b961ad10a3a3209fd61f6be8581938d8df88464d",
       "looks/target-b/view.yaml": "d1406d70fec8d7348eda09d6227ef57c2cb41ff640790e0d12c2323e26367b2e",
-      "out/plain/analysis.json": "53e06e4ba527e14847cbe9800b8531878fb1efb14b97033653c82b8b04b59d76",
+      "out-hint.log": "4900b6ea9bfd91141737bb002c7bcfb2282a37f175ce064f53c525d7ce31b602",
+      "out-plain.log": "f0499bd2c53234ba807ba3c9c751419719f32a4503198f44e372c89c5b595925",
+      "profile.yaml": "d4f2b20dee63847054f87c018ccd7d5d2880fcc394180ef8c408f5e63936f85d",
       "render.py": "bd7f52ebb759c3b3d084853ab8780c93eba4058f6b815ca335221494fce6278a",
+      "render_w5.py": "76a2224a73c4d3340150fd5d9dbec0d9f3a968d81089cfd994687cb1bc3e0dce",
+      "scratch/exf.err": "2dceb28df95cdc9385b611457e95c4dec607e312d0a7c86b0b8e5f8e6d38473f",
+      "scratch/exf.png": "3f46f58f94aded545fa2e3f2e66839eaf2735ca7dad7f088cd0a151325dbef4b",
+      "scratch/t.csv": "a211daf2cb639dd77bde0c7baa3e1c48e359cbf64eeaaf1c43437788383e3d42",
+      "scratch/t.yaml": "792232216b6cf79b24016109e928e9372c290efc0e99e8721b71ac110da68592",
+      "scratch/t1.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "scratch/t1.png": "c9fb9e371eed65560316c7407e87ff8d75ca5b66d73f9fb090137464059b59ee",
+      "w0/profile.yaml": "d4f2b20dee63847054f87c018ccd7d5d2880fcc394180ef8c408f5e63936f85d",
+      "w0/project.yaml": "0c499fa1e1ea18ff0053d5ba8252fd4c4441c0dfb6d16751d04d6734a1730b10",
       "w1/actual.yaml": "ffa856979278f7fb31eec2c7a5fb387c2225c13db372df789b1fb48ec8da0b8d",
       "w1/baseline.yaml": "807d52dddd10531abb1634d416f8dae1557b9e62ad51c6567dd93f0f516dc10e",
       "w1/profile.yaml": "d4f2b20dee63847054f87c018ccd7d5d2880fcc394180ef8c408f5e63936f85d",
@@ -314,32 +504,36 @@
       "w5/baseline.yaml": "807d52dddd10531abb1634d416f8dae1557b9e62ad51c6567dd93f0f516dc10e",
       "w5/profile.yaml": "d4f2b20dee63847054f87c018ccd7d5d2880fcc394180ef8c408f5e63936f85d",
       "w5/project.yaml": "35a4e51587a379c42dae2510d7e667378b89f562695fa299ceb512e5e6ab57bc",
-      "w5/schedule.json": "1aa7ff16b65fd5a0693e8ad6735732994d84edb54f9ad0a208b381d02a4e33a8"
+      "w5/schedule.json": "1aa7ff16b65fd5a0693e8ad6735732994d84edb54f9ad0a208b381d02a4e33a8",
+      "weeks.py": "fce7f862d0ee60129e190856c6ff34926dbd510e967a9735e1c37a173b0a73f1"
     },
-    "originalHintAnalysisBatchSha256": "2878094c145364075321559468381c585d070c954e22c7786e035e8aaf510c28",
-    "originalPlainAnalysisBatchSha256": "3827bf347b2c54f6c03da3fba5451a98c479e2ce54121057a16b69157bf01263",
-    "originalReceiptSha256": "cc2fe270f7bc2a6ac0e9073ddcd86c433dcd4b88f724b10a7e2cc705585a6b6b",
     "renderedOutputs": {
-      "hint/analysis-batch.json": "a8bd79bd0897d30acba0bdaa706782928a004b97d74b3a23b972d37ef5be5828",
+      "hint/analysis-batch.json": "8fb153f2cb433d83fffdf6bb5a89760ba1838ee3a8b9023f861cae878012cd4e",
       "hint/executive-light-w2.png": "b6523af7a780fbf35999b7540889545917b34f94a9c7840605150f7a15db86fd",
       "hint/executive-light-w2.scene.json": "92d02d0b543cfc1d80d58af42245258ef62876e50a6c57a017cf5be84566d3f0",
       "hint/executive-light-w3.png": "b94ef832d719291a717d5474cb39fcae47d5039c2070cf9657fd35ba7a7d75d4",
       "hint/executive-light-w3.scene.json": "3ab6689b5f9850952c956e7939df3a21019982fd102e3491f3b73ca7621460d1",
       "hint/executive-light-w4.png": "ff652ee48eea8b9df24c7923961ee831490501ffee3700eb822f990824e9e053",
       "hint/executive-light-w4.scene.json": "4bde810c0a9f104e580c6ba63365e72c1351b1febadfbc3ae859e37689702073",
+      "hint/executive-light-w5.png": "760120006ec35b0c1f46ca926748794a611fefa8fc84c31246d0711e314c7cd0",
+      "hint/executive-light-w5.scene.json": "b63808bc58bc5224c4dec9eaa2c18cac0fadceccf72f1889f2574762841cb884",
       "hint/marquee-w2.png": "1b2dc011376cd870d0ee06ec5ce263a0c5b8431ba2cb657fa507e44ecc312089",
       "hint/marquee-w2.scene.json": "3eadec3660da7403a4543ace10c3e91b934dbab36b88d017012555fdcd9cdef5",
-      "hint/marquee-w3.png": "b1651ee45c15c7b8b3d6504a12eea4488406ef37216f21aa59a241a3c144f3dd",
-      "hint/marquee-w3.scene.json": "2e056cc48759d63b1159513248cc05788f6da50ec58484e2695fab39d80fb732",
-      "hint/marquee-w4.png": "e443b93a499ed644a6b03941f231611c6fe4015f213b9cfa4e7323628c5d86a7",
-      "hint/marquee-w4.scene.json": "77d6ee3a66f991f3efe0aad9d409d913e7ae88efdf998f2568d89faa63bee3c9",
+      "hint/marquee-w3.png": "b4589275e55c5c1de298ecd5edb4df264e40b7cbb9784746a77c10ed056df6b1",
+      "hint/marquee-w3.scene.json": "90bbf2c44f06bba82a9c766cd9f2bb11c4807337da2f3ca1737c9ea3d130cf26",
+      "hint/marquee-w4.png": "908aef467bb53b4d00567d9c3d1abb7a48b6743486e357204b766e17e1dbff89",
+      "hint/marquee-w4.scene.json": "ef544302515bfaa30e8072fbea07b9807f91fccc1903efc1a604e70dd3c900ce",
+      "hint/marquee-w5.png": "4535ebd22f37f1f5cd0dbafc99bfb19bab4a0c7ffa2418599f5ad6223d300e86",
+      "hint/marquee-w5.scene.json": "cd32bda129554e31495898e095cf7dcdac42bba4c1fc1164c64175a496ce8de2",
       "hint/target-b-w2.png": "5cac622ee1b2878ba7d8dbe0d1601c802c64ab92d20e711edbc7366c63793893",
       "hint/target-b-w2.scene.json": "17092fe720387dc4243c400f2951d445e2cba6f00b964a8a8a305e3bc3140a90",
-      "hint/target-b-w3.png": "8b22e56ad67abb3b089477b2bf3ad11ba3443bcdd029bffe2e755252a1d81edb",
-      "hint/target-b-w3.scene.json": "015fa94872ba6c690def253d4332e1e2225e65ee3ec1b715a82b0193c572425c",
-      "hint/target-b-w4.png": "17a5c810905000f953c53770acda41ff95a554b6ca389911f68d2d466c67d7ce",
-      "hint/target-b-w4.scene.json": "308c1783422f1295482354b775bab641e8462e116bfcaff3d3cd4b2f1b7b5da9",
-      "plain/analysis-batch.json": "c578aed0eb6d73cb7ade59f2d5e9b212444b9b111d71a6ecc95e54aec4271caf",
+      "hint/target-b-w3.png": "a626aa2598259df9279f04361b0246d3645a175ce05635750763537f809be733",
+      "hint/target-b-w3.scene.json": "03f4161716cc556d65d8516743f3fb1148766cab2e94a8e61295706107808d45",
+      "hint/target-b-w4.png": "2d1667fce075011b51c154d99a37b08bfe0b2a7edaf004cabd7ca97683179266",
+      "hint/target-b-w4.scene.json": "da1919a46d956b944390e9575df5095916e2737111995c4879b109325f31099d",
+      "hint/target-b-w5.png": "cdff1684b8acafb39886c74ec2ebcbb2ed4c279af6b1a6ed21e8394df2fc29ce",
+      "hint/target-b-w5.scene.json": "2f3759fa2c73410c6a440c537ccd2c676c983de8ae151b77433531ac4a0b33cb",
+      "plain/analysis-batch.json": "cb6646370e236ee144fdd6995e4b19c9245c9df4695ee5a2728d063b19ccb51e",
       "plain/executive-light-w1.png": "8f6fb0dcd1983170f1e26db32c7ecccb981d10d40bf339e1ce5ade45c4efe761",
       "plain/executive-light-w1.scene.json": "52adbcb152372738d8ec80430e4a927a676b609a10ff140822b1e04e3e8fa63b",
       "plain/executive-light-w2.png": "3b7ea29398c8b1485c726e1e93668ef6e0b9cf592b24f64d2eeb254fec81ddd7",
@@ -348,135 +542,40 @@
       "plain/executive-light-w3.scene.json": "25c66c8cc2d7865eb40fe76e6e7dd05a6eb4eb2ad0ce387c2d05f646c9001fbf",
       "plain/executive-light-w4.png": "82f0db7e30d3b6a5c8bfc0d62d2739241a08c9f151a10c14756810b2248ae5d1",
       "plain/executive-light-w4.scene.json": "9a2a256dc01df184fff7a27835692773e7c5d799a9f019145cb10b9eee9b5866",
+      "plain/executive-light-w5.png": "ce1eaffa542d6d0ddd697f62174db39794874174982b97737d0438424c319d53",
+      "plain/executive-light-w5.scene.json": "a987c93bc8265311842f784ec7d03fb20d2afe913fc3768fafa5be6f7c473aa0",
       "plain/marquee-w1.png": "1ad6253bd61df79d783146fd97f57e089a4714b2f1564906f7019d822e001c7f",
       "plain/marquee-w1.scene.json": "9c0179a56356573c65fa3d324b9740ad8fbea6d5d46a7053a2b9c1e34b506ca2",
       "plain/marquee-w2.png": "9baad57b24b953a8086ef67871161412d18400089aa9ff2a2883bbfc90ae1455",
       "plain/marquee-w2.scene.json": "17174d657a474210b7845a8402b43a3b59c55491d451374cccf60e5dc84ef9d1",
-      "plain/marquee-w3.png": "a439fd33cc681f49f30b3ba8a6288c4bd68d2ed5a1c34f1091c4601996b12320",
-      "plain/marquee-w3.scene.json": "51e58ca3706c7cc87053d3825d21eb1d584e9111bf2862ba2311e4a5ef7df2f1",
-      "plain/marquee-w4.png": "b218ed95e28a1a4faf5309cc7d16f66aab139571153184ff8ff01f80f562b54d",
-      "plain/marquee-w4.scene.json": "d74f641a1fbdea6283661e5e5703e8e2114c314ef05980bc8afa58c2235998b3",
+      "plain/marquee-w3.png": "a58ce72c804802ea5cc01b7cca875849e14050f1128d39bc874e31e5b0ff39f2",
+      "plain/marquee-w3.scene.json": "83adce2e542b2afa2fbfaecdd943f658284147f54f242fdee3c866be7ad49541",
+      "plain/marquee-w4.png": "cea7f4044f90ee56a2f9d1c105fdedbb5671df03985e364df7318ef8bd5f9dd7",
+      "plain/marquee-w4.scene.json": "27ca51855bbccecdd388be83907efcf9f6cb24f8ea226e9dd4ab1df51ef2de65",
+      "plain/marquee-w5.png": "ab75d06ac81aa50c26843a61b38848484c7c41878ccbd1657e4fc192b686705d",
+      "plain/marquee-w5.scene.json": "bbb638adfd2144021661a107d354f657017c10e5c6f40f4a59e3ac07ed8c09ac",
       "plain/target-b-w1.png": "bb4c3fcef1b42bd2fb6c3d7ac90f65d03f54573b574f64e814a77982a8ad1dca",
       "plain/target-b-w1.scene.json": "92b2440b8a008a1af45421e17150a10c1ad913ed5719979078653bd06ff47f99",
       "plain/target-b-w2.png": "3703c0873a7d518d868dee769cddf99be379f38e0c35ed941578a4d2a1f5f922",
       "plain/target-b-w2.scene.json": "eab5f24db29323cadea007c28ee3f5a916a814ea5e76cab39ade73c75674fc20",
-      "plain/target-b-w3.png": "07d5c2a27f2ff63d590330b3140cbbbacdf7ffa24eb5e49edbcce76326ed6194",
-      "plain/target-b-w3.scene.json": "e2cd509df0615f1b3c69b7c0c85b4f9da9a146de2f5b8bb0081fa9a559e20f1f",
-      "plain/target-b-w4.png": "09c7b50f1fa78cffc396352472c8f2225addff646981dee362e96775ace98fd8",
-      "plain/target-b-w4.scene.json": "8e62ffc49791825d353eae2fd5dee1f4375d0e56924dc68a991274d60aea842f",
-      "receipt.json": "cc2fe270f7bc2a6ac0e9073ddcd86c433dcd4b88f724b10a7e2cc705585a6b6b"
+      "plain/target-b-w3.png": "dd37b3105004848c2c9b51a51a5ec3f49b750aa58691033bc94c489ea9fd7375",
+      "plain/target-b-w3.scene.json": "d1d219d3cc25d5f8328b45a2cd6afd6b992c8fa89cb6bd56f2d239b28fa6cb24",
+      "plain/target-b-w4.png": "f59e5e61376db567d25bde694eed969240b99344f62e561b1accb964f9f8b7e8",
+      "plain/target-b-w4.scene.json": "68f832300b6f69a361361792a9fc3a75adff2a47730bd6ed0238790d630426c7",
+      "plain/target-b-w5.png": "29900ab1b4779e0f092b90e14b0bb364306a9da213f0c2dd7eec90a9c7b2f67c",
+      "plain/target-b-w5.scene.json": "f117adb0d3dbae9840da9d814d3573ab913e5b7569b30a0965e97d02e72a6fba",
+      "receipt.json": "b17df386cf8a40e3ee70df007c53c804041b4c583af1531f9534071ad03d4df9"
     }
   },
-  "publicBaselineComparison": {
-    "analysis": "pinned trial-8/out/plain/analysis.json",
-    "byDesign": {
-      "executive-light": {
-        "added": 30,
-        "id-renumbered": 48,
-        "raw": 177,
-        "removed": 30,
-        "row-normalised": 18
-      },
-      "marquee": {
-        "added": 0,
-        "id-renumbered": 48,
-        "raw": 241,
-        "removed": 0,
-        "row-normalised": 11
-      },
-      "target-b": {
-        "added": 0,
-        "id-renumbered": 48,
-        "raw": 237,
-        "removed": 0,
-        "row-normalised": 7
-      }
-    },
-    "candidateNinePairRaw": {
-      "hint": 670,
-      "plain": 667
-    },
-    "candidateNinePairRowNormalized": {
-      "hint": 54,
-      "plain": 56
-    },
-    "scope": "same first three transitions only; identity renumbering remains a separate category, not part of geometry counts",
-    "sha256": "53e06e4ba527e14847cbe9800b8531878fb1efb14b97033653c82b8b04b59d76",
-    "totals": {
-      "added": 30,
-      "id-renumbered": 144,
-      "raw": 655,
-      "removed": 30,
-      "row-normalised": 36
-    }
-  },
+  "renderCount": 27,
   "reproduction": {
-    "analyzer": "analyze_trial.py",
     "analyzerSha256": "dac3eb1d2575374ff092f3ab42068656b9b0e68ead1b0b99a0bcdb6bcf32ac76",
-    "input": "trial-8 directory at pinned input commit",
-    "invocation": "python run_trial.py --input-root <pinned-checkout>/trial-8 --chrona <venv>/bin/chrona --output-dir <empty-dir>; then python analyze_trial.py --input-root <pinned-checkout>/trial-8 --output-dir <output-dir> --variant plain (repeat for hint)",
-    "runner": "run_trial.py",
-    "runnerSha256": "bfcf4b74bfab73c4f6d702c249a4d227324946f11421362570d4164760418459"
+    "designConcurrency": 3,
+    "invocation": "python run_trial.py --input-root <bf3940dbe>/trial-8 --chrona <worktree-venv>/bin/chrona --output-dir <empty-dir>; python analyze_trial.py --input-root <bf3940dbe>/trial-8 --output-dir <output-dir> --variant plain; repeat analysis for hint",
+    "runnerSha256": "bfcf4b74bfab73c4f6d702c249a4d227324946f11421362570d4164760418459",
+    "weekOrder": "sequential per design"
   },
-  "sourceCommit": "e1d1928905080cc8000794a239a11e0db3243f27",
-  "week5": {
-    "allSixFailForecastBaseline": true,
-    "failedCommands": [
-      {
-        "design": "executive-light",
-        "error": "E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit",
-        "png": false,
-        "returnCode": 1,
-        "scene": false,
-        "status": "rejected",
-        "variant": "plain"
-      },
-      {
-        "design": "executive-light",
-        "error": "E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit",
-        "png": false,
-        "returnCode": 1,
-        "scene": false,
-        "status": "rejected",
-        "variant": "hint"
-      },
-      {
-        "design": "target-b",
-        "error": "E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit",
-        "png": false,
-        "returnCode": 1,
-        "scene": false,
-        "status": "rejected",
-        "variant": "plain"
-      },
-      {
-        "design": "target-b",
-        "error": "E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit",
-        "png": false,
-        "returnCode": 1,
-        "scene": false,
-        "status": "rejected",
-        "variant": "hint"
-      },
-      {
-        "design": "marquee",
-        "error": "E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit",
-        "png": false,
-        "returnCode": 1,
-        "scene": false,
-        "status": "rejected",
-        "variant": "plain"
-      },
-      {
-        "design": "marquee",
-        "error": "E_FORECAST_BASELINE_UNAVAILABLE: be-ratelimit",
-        "png": false,
-        "returnCode": 1,
-        "scene": false,
-        "status": "rejected",
-        "variant": "hint"
-      }
-    ],
-    "successfulPngOrSceneCount": 0
-  }
+  "scope": "four transitions per design, all five weeks; same-candidate plain versus hinted; identical plain week 1 reused; week 5 keeps forecast",
+  "sourceCommit": "0270cddd19ac2f58abf7d51dc2529cf441105df0",
+  "successfulRenders": 27
 }

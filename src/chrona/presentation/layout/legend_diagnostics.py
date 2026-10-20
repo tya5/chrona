@@ -6,6 +6,9 @@ from decimal import Decimal
 from itertools import combinations
 
 from chrona.presentation.layout.legend_ink import mark_ink_keys, pattern_ink_identity
+from chrona.presentation.model.color_separability import (
+    MINIMUM_CATEGORY_DELTA_E, SIMULATED_VISIONS, delta_e_2000,
+)
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.theme_paint import (
     PaintFamily, mark_paint_family, resolve_legend_shape_ink, resolve_theme_paint_witness,
@@ -171,9 +174,98 @@ def _figure_signature(request, entry, marks, shapes, relations):
     return tuple(figures)
 
 
+def _figure_ink_colours(figure):
+    """Return the concrete visible inks for a completed figure, in paint order.
+
+    ``_figure_signature`` contains completed paint identities.  These
+    retain the completed fill/stroke channels, while the corresponding part
+    mode tells us which channel was actually emitted for that component.
+    Gradients count as visible fill, but are not sampled as a representative
+    colour.
+    """
+    if figure is None:
+        return ()
+    fills: list[str] = []
+    strokes: list[str] = []
+    has_visible_fill = False
+
+    for signature in figure:
+        parts, paints = signature[0], signature[1]
+        for index, paint in enumerate(paints):
+            if not isinstance(paint, tuple) or len(paint) != 5:
+                continue
+            fill, stroke, stroke_width, _dash, opacity = paint
+            if opacity is not None and opacity <= 0:
+                continue
+            mode = parts[index][0] if index < len(parts) and parts[index] else None
+            permits_fill = mode != "stroke"
+            permits_stroke = mode != "fill"
+
+            if permits_fill and fill is not None:
+                has_visible_fill = True
+                if (isinstance(fill, tuple) and len(fill) == 2 and fill[0] == "solid"
+                        and isinstance(fill[1], str) and fill[1].startswith("#")):
+                    fills.append(fill[1].upper())
+            if (permits_stroke and isinstance(stroke, str) and stroke.startswith("#")
+                    and stroke_width is not None and stroke_width > 0):
+                strokes.append(stroke.upper())
+
+    selected = fills if has_visible_fill else strokes
+    return tuple(dict.fromkeys(selected))
+
+
+def _palette_separation_failures(first_figure, second_figure, color_vision=()):
+    """Return the minimum below-floor distance once per affected vision."""
+    first, second = _figure_ink_colours(first_figure), _figure_ink_colours(second_figure)
+    if not first or not second:
+        return ()
+    visions = ("normal", *(vision for vision in SIMULATED_VISIONS if vision in color_vision))
+    failures = []
+    for vision in visions:
+        distance = min(delta_e_2000(left, right, vision=vision)
+                       for left in first for right in second)
+        if distance < MINIMUM_CATEGORY_DELTA_E:
+            failures.append((vision, round(distance, 3)))
+    return tuple(failures)
+
+
 def _subject(entry):
     key_id = entry.realized_key.key_id if entry.realized_key is not None else entry.source_identity
     return DiagnosticSubject(f"legend-key:{key_id}", f"{entry.label} ({entry.role})")
+
+
+def _colour_pair_diagnostics(encoded_entries, figures, color_vision=()):
+    """Compare completed legend ink across distinct encoded and semantic meanings."""
+    diagnostics: list[str] = []
+    provenance: list[DiagnosticProvenance] = []
+    for (left, left_scale), (right, right_scale) in combinations(tuple(encoded_entries), 2):
+        if left.source_identity == right.source_identity:
+            continue
+        if left_scale is None and right_scale is None:
+            continue
+        for vision, min_delta in _palette_separation_failures(
+                figures.get(left.source_identity), figures.get(right.source_identity), color_vision):
+            if _covered_by_scale_collision(left, left_scale, right, right_scale, vision, min_delta):
+                continue
+            identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{min_delta}"
+            diagnostics.append(identity)
+            provenance.append(DiagnosticProvenance(identity, (_subject(left), _subject(right))))
+    return tuple(diagnostics), tuple(provenance)
+
+
+def _covered_by_scale_collision(left, left_scale, right, right_scale, vision, min_delta):
+    """Whether an existing typed domain finding exactly covers this completed pair."""
+    left_value, right_value = left.encoding_domain_value, right.encoding_domain_value
+    if (not left_scale or left_scale != right_scale or left_value is None or right_value is None
+            or left_value == right_value):
+        return False
+    return any(
+        collision.scale_id == left_scale
+        and {collision.first, collision.second} == {left_value, right_value}
+        and collision.vision == vision
+        and collision.delta_e == min_delta
+        for collision in (*left.scale_collisions, *right.scale_collisions)
+    )
 
 
 def completed_legend_diagnostics(request, entries, marks, shapes, relations, text):
@@ -200,4 +292,10 @@ def completed_legend_diagnostics(request, entries, marks, shapes, relations, tex
         right_figure = figures[right.source_identity]
         if left_figure is not None and left_figure == right_figure:
             emit("W_LEGEND_SWATCH_COLLISION", left, right)
+    pair_diagnostics, pair_provenance = _colour_pair_diagnostics(
+        tuple((entry, entry.encoding_scale_id) for entry in visible), figures,
+        request.theme_tokens.color_vision if request.theme_tokens is not None else (),
+    )
+    diagnostics.extend(pair_diagnostics)
+    provenance.extend(pair_provenance)
     return tuple(diagnostics), tuple(provenance)

@@ -2,18 +2,17 @@
 
 ## Baseline and scope
 
-Implemented candidate; PR/release verification pending. Published planning base is ready main
-`bd6898017e3314bcfaffa3432d977d9a0f00fdd2`.
+Released and closed. PR1771 contains the implementation and literal review;
+review-containing main `9dca9c55a8df0d1e44149a0543fe892366d39930` passed exact
+three-OS release39256723703. The reviewer closed #806 in
+[comment 6268760253](https://github.com/tya5/chrona/issues/806#issuecomment-6268760253).
+This work record is archived for design and implementation provenance.
 [Owner decision](https://github.com/tya5/chrona/issues/806#issuecomment-6255826606)
 supersedes the old deferral: implement option B, not an overlay. Authority:
 [Spec 65](../../specification/65-terse-plan-syntax.md),
 [148 design §5.2](../../design/issue-148-terse-draft-syntax-design-2026-10-01.md),
 [typed-fields guide](../../guides/typed-fields.md), Project/profile contracts,
 and the shared extension validator introduced by 1682.
-
-Dev A owns this item. Started 1754 landed through PR 1769 at `3fba1804d`;
-full trial acceptance depends on B's 1755. Return to
-1754 immediately for actionable failures. Do not take B's forecast/locale work.
 
 Published facts: terse kinds are task/gate/group, the compiler emits neither
 fields nor extensions, and compile has no profile-selection flag. The generic
@@ -59,30 +58,17 @@ guard:
 | Determinism/migration | No schema bump/new dependency/reserved object names. No defaults or host metadata in YAML; old no-clause plans stay byte-identical. |
 | Presentation/storage | No View/Theme/Layout/Scene behavior or Store contract changes. Typed render consumes exactly the same Project/package bytes as YAML. |
 
-No owner decision remains open. Before product code, finalize and publish
-the implementation slices and evidence gates below. No product code has
-changed.
+No owner decision remains open. The approved design and implementation slices
+below were delivered; the release gate and all four literal criteria are met.
 
-## Design review and publication order
+## Design review and publication history
 
-1. Publish this design plan.
-2. Select the smallest complete declaration/typing/resource-origin contract;
-   update Spec 65 and the 148 design's obsolete scope statements. Review against
-   Specs 02/05/56, extension resolution, CLI dispatch, typed-fields validation,
-   deterministic emitter/importer and dependency-direction checks. Publish.
-3. Finalize an implementation plan here: parser/source ranges/emitter; shared
-   validation and dispatch; docs and literal acceptance. Name tests and files
-   for each slice, then publish before product edits.
-4. Implement approved slices with synthetic focused tests in this worktree's
-   venv. Batch actual adapter evidence; no corpus-specific conditions. CI owns
-   full shards/materializers and the three-OS release.
-5. Publish one implementation PR and concise four-row acceptance review. Close
-   only after every literal row and review-containing exact-main release pass.
+The selected design, normative Spec 65 and architecture review were published
+at `4294e23d8`; the implementation plan followed at `1c745b453`. PR1771
+delivered the product and literal review. The exact review-containing release
+passed before the reviewer closed the issue.
 
-Selected design, normative Spec 65 and architecture review were published at
-`4294e23d8`; implementation plan at `1c745b453`, before product code.
-
-## Implementation plan
+## Implementation slices (as delivered)
 
 One implementation PR, keeping the following source commits independently
 reviewable. No new schema, dependency, overlay or public materializer input.
@@ -93,27 +79,19 @@ reviewable. No new schema, dependency, overlay or public materializer input.
 | S2 resources and application / dev A | `extensions/profiles.py`, `usecases/terse_compile.py`, `app/cli.py`; extension and CLI integration tests. Expose typed local package snapshots containing declared relative path, raw bytes and decoded manifest; keep the existing manifest-only resolver as a projection over that acquisition. PlanCompilation carries successful snapshots for staging. `compile_plan` accepts explicit optional resource origin; typed plans without one reject rather than implicitly reading cwd. | Shared containment/identity/manifest/field checks stay authoritative. Fieldless unknown profiles and invalid/ambiguous packages reject with positions; authored extension-schema errors are input errors. Compile stdout/file/stdin origins, no partial output, output refusal, required fields, wrong type/enum/key, source mutation after validation, exact-byte staging and cleanup on success/failure. Existing validate/schedule/render and table importer remain valid. |
 | S3 docs and visual evidence / dev A | Terse guide/card and typed-fields guide; executable docs file markers/commands, CLI and render tests; concise literal review under `docs/reviews/current/`. | Reuse the typed-fields guide's package/encoding in an executable staged example. Actual SVG risk paint and Scene fields; direct terse SVG/Scene equal compile-then-YAML. Keep the one-page card and legacy examples. Run documented-plan/command checks and import-direction tests. |
 
-S1 and the shared snapshot helper may proceed in parallel only after this
-plan is published; S2 integration consumes S1's explicit binding identities
-and existing single source map. Keep all syntax work in `chrona.terse`, all
-package semantics in the shared validator, all file context/staging in the
-application. If a contract gap appears, amend/publish design before code.
+The slices were implemented in the stated ownership boundaries. S2 consumes
+S1's explicit binding identities and existing single source map; syntax stays
+in `chrona.terse`, package semantics in the shared validator, and file context
+and staging in the application.
 
-Verification batches: terse unit suite (including legacy bytes and seeded
-fuzz), compile CLI and terse dispatch tests, extension/profile validation,
-table import regressions, import-direction guards, and executable docs. Batch
-SVG/Scene inspection with the typed render tests. CI supplies full pytest
-shards, conformance and newest-Python public materializers; inspect the one
-official derived snapshot for unintended changes, never edit generated public
-outputs. After landing, require the review-containing exact-main three-OS
-full release and a met row for each of the four literal criteria before close.
+Verification included the terse unit suite, compile CLI/dispatch, extension
+and profile validation, table imports, import-direction guards, executable
+docs, SVG/Scene inspection and the official public snapshot. The review records
+the literal evidence. Exact review-containing release39256723703 passed the
+Ubuntu, macOS and Windows full matrix, conformance, wheel/smoke, MCP floor and
+newest-Python reproduction.
 
-Publish S1/S2/S3 code and tests coherently, then acceptance evidence. Follow
-the next ready main by a normal merge before the final PR push; coordinate
-the actual landing on 1718. Archive completed 1702 records in the next docs
-batch, not by moving main during another session's reservation.
-
-## Candidate evidence
+## Delivered evidence
 
 Shared snapshots `c276703a5`, syntax `60c4398a4`, application/CLI `ccda7bb51`,
 docs and actual SVG/Scene encoding tests `1a02e5837`. Normally merged ready
@@ -125,5 +103,6 @@ Latest-ready combined focused batch: 494 tests passed (terse, typed application,
 CLI dispatch, extension/profile checks, table import, docs and import-direction
 guards); closed-issue specification ledger: 3 passed. Documented-command check
 passed; all seven typed-guide commands executed in the disposable workspace.
-See the [literal review](../../reviews/current/issue-806-inline-typed-fields-acceptance-review-2026-10-19.md)
-for actual raster and release gates; local success does not close the issue.
+See the [literal review](../reviews/issue-806-inline-typed-fields-acceptance-review-2026-10-19.md)
+for actual raster and release evidence. The reviewer closed the issue after
+the required release passed.

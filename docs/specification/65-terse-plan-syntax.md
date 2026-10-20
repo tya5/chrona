@@ -1,7 +1,9 @@
 # Terse Plan Syntax
 
 **Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4), the derived gate of S3 and section 4 (#788, slice 2) and the `deadline` clause of S3 and section 4 (#822, I822-1).
-Section 12 specifies the selected design for #806; its implementation is not yet released.
+Section 12 specifies the selected design for #806, implemented in PR1771 and
+accepted on review-containing main `9dca9c55a8df0d1e44149a0543fe892366d39930`
+after [release39256723703](https://github.com/tya5/chrona/actions/runs/39256723703).
 **Owns:** the grammar of the terse plan (`terse 0.1`), its mapping to a `timeline/v0.7` Project, the id rules for
 compiled objects and relations, the compiler diagnostic fields and codes, the stream and exit-code rules of
 `chrona compile`, and the determinism contract of the compiler's YAML.

@@ -68,6 +68,9 @@ def resolve_field_role_view(view: ViewInput, project: Mapping[str, Any]
                             f"hierarchyColumn {view.hierarchy_column!r} names an omitted field-role column",
                             "/body/hierarchyColumn")
     rows = view.rows
+    if view.network is not None and isinstance(view.network.node_label_source, Mapping):
+        unavailable(view.network.node_label_source.get("fieldRole"),
+                    "/body/network/nodeLabel/source/fieldRole")
     if rows.lane_table is not None:
         rows = replace(rows, lane_table=replace(rows.lane_table,
             columns=columns(rows.lane_table.columns, "/body/rows/laneTable/columns")))

@@ -152,6 +152,65 @@ def test_a_ledger_record_carries_a_message_and_equal_causes_collapse_through_the
     assert payloads[2]["message"] == "an attached object is dated outside the planned span of its host h: o"
 
 
+@pytest.mark.parametrize(("vision", "min_delta"), [
+    ("normal", "0.0"), ("protanopia", "1.25"), ("deuteranopia", "2.5"), ("tritanopia", "4.5"),
+])
+def test_legend_separability_warning_names_both_meanings_vision_and_minimum_difference(vision, min_delta):
+    payload = {
+        "code": "W_LEGEND_COLOR_NOT_SEPARABLE",
+        "severity": "warning",
+        "diagnostic": f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{min_delta}",
+        "sourceSubjects": [
+            {"sourceRef": "/objects/high", "title": "High risk"},
+            {"sourceRef": "/objects/progress", "title": "Progress"},
+        ],
+    }
+
+    text = describe_warning(payload)
+    message = warning_message(text)
+    assert text.cause == f"two completed legend meanings are not separable under {vision} vision"
+    assert text.subject.endswith(f"minimum colour difference ΔE={min_delta}")
+    assert "'High risk' (/objects/high)" in message
+    assert "'Progress' (/objects/progress)" in message
+    assert vision in message and min_delta in message
+
+
+def test_legend_separability_warning_malformed_identity_keeps_pair_names_and_safe_detail():
+    text = describe_warning({
+        "code": "W_LEGEND_COLOR_NOT_SEPARABLE",
+        "diagnostic": "W_LEGEND_COLOR_NOT_SEPARABLE:normal",
+        "sourceSubjects": [
+            {"sourceRef": "/objects/one", "title": "One"},
+            {"sourceRef": "/objects/two", "title": "Two"},
+        ],
+    })
+    message = warning_message(text)
+    assert text.cause == "two completed legend meanings are not separable"
+    assert "minimum colour difference unavailable" in text.subject
+    assert "'One' (/objects/one)" in message and "'Two' (/objects/two)" in message
+
+
+def test_collapsed_legend_pair_warnings_keep_the_first_pair_subject_and_count():
+    def pair(first, second, min_delta):
+        return {
+            "code": "W_LEGEND_COLOR_NOT_SEPARABLE",
+            "severity": "warning",
+            "diagnostic": f"W_LEGEND_COLOR_NOT_SEPARABLE:normal:{min_delta}",
+            "sourceSubjects": [
+                {"sourceRef": f"/objects/{first.lower()}", "title": first},
+                {"sourceRef": f"/objects/{second.lower()}", "title": second},
+            ],
+        }
+
+    (row,) = collapse_warnings([pair("Risk", "Progress", "0.0"), pair("Gate", "Forecast", "2.0")])
+    assert row["count"] == 2
+    assert "'Risk' (/objects/risk)" in row["message"]
+    assert "'Progress' (/objects/progress)" in row["message"]
+    assert "ΔE=0.0" in row["message"]
+    assert "Gate" not in row["message"] and "Forecast" not in row["message"]
+    assert row["message"].endswith("and 1 more")
+
+
 def test_an_ellipsized_text_warning_says_what_was_shortened_and_by_how_much():
     # #497: the legend's shortened labels carry a typed fit warning with a plain-language cause.
     text = describe_warning({
