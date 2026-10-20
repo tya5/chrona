@@ -256,6 +256,13 @@ account; preserve original occurrence identity without inventing coordinates.
 An omitted lane keeps its source membership but no allocated row/subtracks.
 Final expected/admitted/absent validation still covers its original instances.
 An all-outside View has no fabricated minimum row or orphan group header.
+Final Layout completes one typed row-absence account per source lane member,
+joined to this exact admission result and original row/member identity. It
+proves that no mark, label, port or obstacle is emitted for that member and
+preserves the independent mark-absence partition. Scene receives only the
+completed row-absence reason and source membership (Spec 46 §7.1), not a cache
+from which to choose visibility. This permits no-temporal-facet rows to be
+accounted for without inventing a primary temporal mark.
 
 Final lane completion validates the original expected/admitted/absent partition
 against that cache before emission. The final mark inventory is restricted to
@@ -264,7 +271,7 @@ other unowned decorations remain outside the lane account. Any placement with
 lane row, member, or source-kind metadata participates in this validation;
 partial ownership, missing marks and duplicate marks cannot escape it. No
 placement-ID prefix or project-specific exception selects this inventory.
-A wholly omitted row retains its allocated
+A wholly mark-omitted row under `outside: keep` retains its allocated
 tracks; its `laneMarkBandBlock` is the minimum completed track block in that
 row, not an invented mark or temporal port. A row with visible marks keeps the
 existing minimum painted-mark block. Missing tracks or an unaccounted missing
