@@ -102,7 +102,7 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
 | `render_review` | `chrona render-review` | Pinned evidence: renders an immutable Render Context from a Store (see below); read-only. |
 | `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
-| `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
+| `check_command` | `chrona command-check` | Previews an inline Store command or contained command file; writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
 | `apply_authoring_command` | `chrona authoring-command-apply` | Applies an inline authoring command or contained command file; requires `--allow-write`. |
 | `create_workspace` | Library entry (no CLI equivalent) | Creates a new workspace directory from a builtin preset and compact project; requires `--allow-write`. |

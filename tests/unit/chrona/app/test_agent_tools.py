@@ -110,13 +110,28 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 def test_the_tool_set_lists_read_only_tools_and_gated_writers_in_order():
     assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command", "apply_authoring_command", "create_workspace", "validate_workspace", "workspace_revision", "render_workspace"]
     document = registry_document()
-    assert document["toolSet"] == "chrona/agent-tools/v0.7"
+    assert document["toolSet"] == "chrona/agent-tools/v0.8"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
         writes = tool["name"] in {"apply_command", "apply_authoring_command", "create_workspace"}
         assert tool["annotations"] == {"readOnlyHint": not writes, "destructiveHint": writes, "idempotentHint": True,
                                        "openWorldHint": False}
         assert tool["description"] and tool["title"]
+
+
+@pytest.mark.parametrize("name", ["check_command", "apply_command", "apply_authoring_command"])
+def test_command_metadata_names_both_forms_and_exact_embedded_versions(name):
+    spec = SPECS[name]
+    command = spec.input_schema["properties"]["command"]
+    variants = command["oneOf"]
+    assert any(option.get("type") == "string" for option in variants)
+    versions = {option["properties"]["version"]["const"]
+                for option in variants if option.get("type") == "object"}
+    assert versions == ({"chrona/authoring-command/v0.1"} if name == "apply_authoring_command"
+                        else {"chrona/command/v0.3", "chrona/command/v0.4"})
+    for description in (command["description"], spec.description):
+        assert "inline" in description.lower() and "file" in description.lower()
+        assert all(f"version: {version}" in description for version in versions)
 
 
 def test_every_schema_is_a_valid_closed_json_schema():
