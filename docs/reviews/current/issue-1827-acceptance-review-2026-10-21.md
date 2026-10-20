@@ -6,7 +6,7 @@ Observed on `main` at `2350a3c4d` (the derived-sync bot commit after [PR #1852](
 
 ## Method
 
-Private venv `/private/tmp/claude-501/venv1682`, `PYTHONPATH=<worktree>/src:<worktree>`, no shared install, worktree on `origin/main` `2350a3c4d`. Every picture, log and input is in [assets-1827](assets-1827/pytest-1827.txt) and was produced by the command written at the top of its log (not copied from the PRs). The error cases use a copy of the `mission-light` preset (`chrona preset copy`) with one deliberate edit each, and a three-line terse plan. Focused tests run: [pytest-1827.txt](assets-1827/pytest-1827.txt) (172 passed; the full suite was not run).
+Private venv `/private/tmp/claude-501/venv1682`, `PYTHONPATH=<worktree>/src:<worktree>`, no shared install, worktree on `origin/main` `2350a3c4d`. Every picture, log and input is in [assets-1827](assets-1827/pytest-1827.txt) and was produced by the command written at the top of its log (not copied from the PRs). The error cases use a copy of the `mission-light` preset (`chrona preset copy`) with one deliberate edit each, and a three-line terse plan. Files that are invalid on purpose (`detail-unkeyed-bad.yaml`) or valid only inside a preset directory (the copies' `view.yaml`) are stored with an added `.txt` suffix, because conformance validates every committed `.yaml`; rename them back to run them. Focused tests run: [pytest-1827.txt](assets-1827/pytest-1827.txt) (172 passed; the full suite was not run).
 
 ## Literal issue acceptance
 
