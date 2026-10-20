@@ -26,7 +26,6 @@ import sys
 import tempfile
 from typing import Any, Mapping
 
-import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -63,7 +62,7 @@ def _require(condition: bool, message: str) -> None:
 
 
 def _load(root: Path, relative: Path) -> Any:
-    return yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    return safe_load((root / relative).read_bytes())
 
 
 def _cell(text: str) -> str:
