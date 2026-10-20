@@ -47,5 +47,8 @@ has50SVG/50Scene unchanged. Only coverage adds metro and inventory moves one
 (same code/message). The coordinator independently checked hash, manifest and
 the whole generated tree. Join tests use absolute1e-12/relative0 coordinate
 tolerance across platform math libraries, exact topology and explicit45° checks.
-Exact-main full three-OS release and reviewer-owned Transit disposition remain
+Trusted review-containing main is
+`9faf700f29e6d685410a5d492fc5daab81db0637` after successful derived-sync39372770884.
+Its [native release39373223873](https://github.com/tya5/chrona/actions/runs/39373223873)
+is running; full three-OS success and reviewer-owned Transit disposition remain
 required. Keep issue1047 open.
