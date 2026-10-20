@@ -8,12 +8,12 @@ from chrona.presentation.layout.routing import select_relation_route
 
 
 def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_policy="first-fit", rank=None,
-            bounds=(-2., -2., 12., 12.), channels=None, protected_lead_runs=None,
+            bounds=(-2., -2., 12., 12.), channels=None, endpoint_lead_runs=None,
             max_bends=0, search_budget=1, prepare=None):
     pairs = pairs or ((ConnectorEgress("end", (0., 0.), (0., 0.), ()),
                        ConnectorEgress("start", (10., 10.), (10., 10.), ())),)
     return select_relation_route(pairs, obstacles=obstacles or SurfaceObstacleIndex(),
-        bounds=bounds, channels=channels, protected_lead_runs=protected_lead_runs,
+        bounds=bounds, channels=channels, endpoint_lead_runs=endpoint_lead_runs,
         source_host_id=None, target_host_id=None,
         relation_scene_id="critical", max_bends=max_bends, max_detour_ratio=2.,
         search_policy=search_policy, search_budget=search_budget, protected=protected, accept=accept, rank=rank,
@@ -184,7 +184,7 @@ def test_protected_graph_searches_between_minimum_lead_tips(monkeypatch):
         return (5., 0.) in points and points[0] == (0., 0.) and points[-1] == (20., 10.)
     selected = _select(pairs=pairs, obstacles=obstacles, protected=True, search_policy="best", search_budget=1,
         bounds=(0., 0., 20., 20.), channels=channels,
-        protected_lead_runs=lambda left, right: (3., 3.),
+        endpoint_lead_runs=lambda left, right: (3., 3.),
         max_bends=4,
         prepare=prepare, accept=accept)
 
@@ -212,7 +212,7 @@ def test_short_straight_protected_shape_precedes_overlapping_lead_query(monkeypa
     channels = RelationShapeChannels((0., 10.), (0., 10.))
     selected = _select(pairs=pairs, protected=True, search_policy="best", search_budget=1,
         bounds=(0., 0., 10., 10.), channels=channels,
-        protected_lead_runs=lambda left, right: (6., 6.),
+        endpoint_lead_runs=lambda left, right: (6., 6.),
         max_bends=0,
         prepare=lambda points, *_: points,
         accept=lambda points: points[0] == (0., 0.) and points[-1] == (10., 0.)

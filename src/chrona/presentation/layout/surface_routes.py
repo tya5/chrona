@@ -652,7 +652,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         reserve = marker.head_length / 2 if marker is not None and marker.centred else terminal_run(marker)
         return width + reserve
 
-    def protected_lead_run(egress: ConnectorEgress, width: float, marker) -> float:
+    def endpoint_lead_run(egress: ConnectorEgress, width: float, marker) -> float:
         corridor = hypot(egress.exposed_port[0] - egress.semantic_port[0],
                          egress.exposed_port[1] - egress.semantic_port[1])
         return max(0.0, endpoint_tangent_minimum(width, marker) - corridor)
@@ -1036,10 +1036,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     outward_runs=((dependency_stroke + terminal_length(marker_start),
                                    dependency_stroke + terminal_length(marker_end))
                                   if domain.stage is RelationResolutionStage.NORMAL else None),
-                    protected_lead_runs=(lambda source_exit, target_entry: (
-                        protected_lead_run(source_exit, dependency_stroke, marker_start),
-                        protected_lead_run(target_entry, dependency_stroke, marker_end)))
-                        if protected and domain.stage is RelationResolutionStage.NORMAL else None,
+                    endpoint_lead_runs=(lambda source_exit, target_entry: (
+                        endpoint_lead_run(source_exit, dependency_stroke, marker_start),
+                        endpoint_lead_run(target_entry, dependency_stroke, marker_end)))
+                        if domain.stage is RelationResolutionStage.NORMAL else None,
                     prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
                         (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side,
                         source_egress=source_exit, target_egress=target_entry,

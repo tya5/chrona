@@ -147,6 +147,8 @@ def test_padded_window_outward_candidate_passes_normal_pair_validators(monkeypat
     assert accepted is True
     assert short_prepared is None or not short_accepted
     assert selected_pair == (source, target)
-    assert settled_by_shape is True
+    # First-fit retains its finite proposal; best can now find the same legal
+    # endpoint domain through the minimum-lead-aware ordinary graph.
+    assert settled_by_shape is (policy == "first-fit")
     assert drawn.points == points
     assert len(points) == 6

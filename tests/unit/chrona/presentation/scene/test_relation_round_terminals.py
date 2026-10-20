@@ -131,11 +131,14 @@ def test_centred_terminals_remain_on_semantic_ports_with_outward_departure(layou
     assert _centre(path, "source") == pytest.approx(_end_port(_mark(marks, "a")))
     assert _centre(path, "target") == pytest.approx(_start_port(_mark(marks, "b")))
     radius = path.marker_start.head_length / 2
-    required_run = radius + path.paint.stroke_width
-    assert hypot(path.points[1][0] - path.points[0][0],
-                 path.points[1][1] - path.points[0][1]) >= required_run
-    assert hypot(path.points[-1][0] - path.points[-2][0],
-                 path.points[-1][1] - path.points[-2][1]) >= required_run
+    # Scene's line has already been set back by the radius. Completion needs
+    # one free stroke width beyond that setback, not a second radius reserve.
+    for endpoint, bend, centre, terminal in (
+            (path.points[0], path.points[1], _end_port(_mark(marks, "a")), path.marker_start),
+            (path.points[-1], path.points[-2], _start_port(_mark(marks, "b")), path.marker_end)):
+        assert hypot(bend[0] - endpoint[0], bend[1] - endpoint[1]) + 1e-6 >= path.paint.stroke_width
+        assert hypot(bend[0] - centre[0], bend[1] - centre[1]) + 1e-6 >= (
+            terminal.head_length / 2 + path.paint.stroke_width)
     first, last = path.points[0], path.points[-1]
     assert hypot(first[0] - _end_port(_mark(marks, "a"))[0], first[1] - _end_port(_mark(marks, "a"))[1]) == pytest.approx(radius)
     assert hypot(last[0] - _start_port(_mark(marks, "b"))[0], last[1] - _start_port(_mark(marks, "b"))[1]) == pytest.approx(radius)
