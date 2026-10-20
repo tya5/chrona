@@ -688,6 +688,12 @@ connections between the existing mandatory endpoint leads. Preserve the
 declared bend/detour limits, stage expansion budgets, port admission, terminal
 completion, hard member-name and completed-ink validators. Best compares eligible
 pair results with its existing rank; first-fit keeps its declared order.
+In recovery, retain existing cheap shapes first, then complete multi-turn
+channel connections before the ordinary bounded graph query. Channel-state
+expansions consume that pair's existing quota and the stage's shared search
+budget; the graph receives only the remainder. Use stable coordinate ordering
+and prune by the existing bend/detour limits. There is no independent proposal
+ceiling, nearest-N policy or free unbounded enumeration.
 This does not invoke or amend protected unbounded search, increase any budget,
 reposition labels, or claim that missed proposals prove infeasibility. If no
 eligible proposal completes, retain the existing visible diagnosed fallback
