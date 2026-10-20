@@ -170,6 +170,7 @@ def test_encoded_contrast_error_preserves_witness_in_render_failure_details(monk
 
 
 from tools.materialize_example import _copy_context_closure
+from tests.support.deck_contexts import slide_context
 
 ROOT = Path(__file__).resolve().parents[4]
 EXAMPLE = ROOT / "examples/halcyon-1"
@@ -186,10 +187,10 @@ def test_lane_visible_route_fallback_never_crosses_required_member_text():
     assert _lane_fallback_clears_required_labels(crossing, (replace(label, overflow="suppressed"),))
 
 
-def _closure(temporary: Path, context_name: str = "02-programme-board"):
+def _closure(temporary: Path, slide_id: str = "programme-board"):
     snapshot = temporary / "snapshot"
     snapshot.mkdir()
-    reference, _ = _copy_context_closure(EXAMPLE.resolve(), EXAMPLE / f"contexts/{context_name}.yaml", snapshot)
+    reference, _ = _copy_context_closure(EXAMPLE.resolve(), slide_context(EXAMPLE, slide_id), snapshot)
     # Canonical example Contexts leave their inner references unpinned by design (ADR-0030), so this read states the opt-out (#723).
     reader = LocalSnapshotReader(snapshot, reference["store"]["identity"], require_content_identity=False)
     return resolve_render_context(reference, reader), snapshot
@@ -337,7 +338,7 @@ def test_catalogue_pattern_crosses_layout_scene_and_svg_without_adapter_lookup()
 
 def test_catalogue_glyph_stroke_finish_crosses_layout_scene_and_svg():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary), "12-glyph-gates")
+        closure, snapshot = _closure(Path(temporary), "glyph-gates")
         resolved = json.loads(json.dumps(closure.resolved_theme.resolved_input))
         body = resolved["body"]
         body["values"]["milestone-symbol"]["value"] = {
@@ -365,7 +366,7 @@ def test_catalogue_glyph_stroke_finish_crosses_layout_scene_and_svg():
     validate_scene_document(scene_document(rendered.scene))
 
 
-@pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])
+@pytest.mark.parametrize("context_name", ["programme-board", "overlay-briefing", "glyph-gates"])
 def test_public_lane_layout_projects_fixed_membership(context_name):
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary), context_name)
@@ -416,7 +417,7 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
     assert {item.primitive_id for item in rendered.surface.lane_obstacles} == set(inventory_owners)
     progress_ids = {item.scene_id for item in rendered.surface.primitives
                     if item.scene_id.startswith("progress-fill:")}
-    if context_name == "02-programme-board":
+    if context_name == "programme-board":
         # This fixture has non-zero planned progress. Clipped fills are separate
         # Scene primitives, but their identity/owner must come from the typed
         # Layout handoff just like the host mark.
@@ -427,7 +428,7 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
     last_row = max(rendered.surface.rows, key=lambda row: row.bounds[1] + row.bounds[3])
     row_bottom = last_row.bounds[1] + last_row.bounds[3]
     slot_bottom = timeline_slot.bounds[1] + timeline_slot.bounds[3]
-    if context_name == "11-overlay-briefing":
+    if context_name == "overlay-briefing":
         # This profile fixes its review host. Spec 33 requires natural visible
         # fallback with a typed shortage, not an invented host expansion.
         shortage = next(warning for warning in rendered.surface.fit_warnings
@@ -449,7 +450,7 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
         assert row_bottom <= slot_bottom
 
 
-@pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])
+@pytest.mark.parametrize("context_name", ["programme-board", "overlay-briefing", "glyph-gates"])
 def test_public_lane_scene_routes_never_cross_required_lane_or_member_labels(context_name):
     """Check actual public Scene geometry, including the previously omitted 11."""
     with tempfile.TemporaryDirectory() as temporary:
@@ -478,7 +479,7 @@ def test_public_lane_scene_routes_never_cross_required_lane_or_member_labels(con
 
 def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
     outputs = []
-    for context_name in ("02-programme-board", "12-glyph-gates"):
+    for context_name in ("programme-board", "glyph-gates"):
         with tempfile.TemporaryDirectory() as temporary:
             closure, snapshot = _closure(Path(temporary), context_name)
             value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
@@ -652,7 +653,7 @@ def test_scene_validation_requires_layout_completed_canvas_bounds():
 
 def test_scene_lane_anchor_and_primitive_identity_are_optional_and_serialized_typed():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary), "04-tvac-slip")
+        closure, snapshot = _closure(Path(temporary), "tvac-slip")
         scene = render_review(_request(closure, snapshot)).scene
     original = serialize_scene(scene)
     surface = scene.surfaces[0]
@@ -688,7 +689,7 @@ def test_scene_lane_carrier_rejects_partial_or_unanchored_references():
 
 def test_scene_document_lane_reference_requires_an_in_bounds_anchor():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary), "04-tvac-slip")
+        closure, snapshot = _closure(Path(temporary), "tvac-slip")
         document = scene_document(render_review(_request(closure, snapshot)).scene)
     surface = document["surfaces"][0]
     row = surface["rows"][0]

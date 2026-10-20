@@ -17,6 +17,7 @@ from chrona.presentation.model.closure import ClosureError
 from chrona.core.ports import SnapshotReadError
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshot_paths import snapshot_directory
+from tests.support.deck_contexts import context_document
 
 
 def _write(root, token, address, value):
@@ -224,7 +225,7 @@ def _real_ingress_with_package_stores(tmp_path, primary_extensions, snapshot_ext
     historic_project["extensions"] = snapshot_extensions
     historic_ref = write_local("historic", "project.yaml", historic_project, "project")
 
-    original_context = yaml.safe_load((example_root / "contexts/02-programme-board.yaml").read_text(encoding="utf-8"))
+    original_context = context_document(example_root, "programme-board")
     body = original_context["body"]
     references = {"project": primary_ref}
     for key, kind in (("view", "view"), ("theme", "theme"),
@@ -343,7 +344,7 @@ def test_snapshot_stale_special_profile_versions_keep_version_diagnostic_after_i
 ):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     example_root = root / "examples/halcyon-1"
-    context = yaml.safe_load((example_root / "contexts/02-programme-board.yaml").read_text(encoding="utf-8"))
+    context = context_document(example_root, "programme-board")
     token = "stale-profile"
     refs = {}
     for key in ("project", "view", "theme", "colorScheme", "layout"):

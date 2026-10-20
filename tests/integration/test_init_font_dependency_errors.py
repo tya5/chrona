@@ -11,17 +11,19 @@ from chrona.presentation.contracts.resources import SchemaContractError
 from chrona.presentation.model import font_resources
 from chrona.resources import safe_load
 from chrona.usecases.materialize import UnavailableFontProviders, copy_context_closure
+from tests.support.deck_contexts import write_explicit_context
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTEXT_ADDRESS = "contexts/19-gallery-text-compression.yaml"
+CONTEXT_SLIDE = "gallery-text-compression"
 MISSING_PROVIDER = "chrona-fonts-noto-cjk"
 
 
 def _isolated_context(tmp_path: Path, mutate) -> tuple[Path, Path]:
     example = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples" / "halcyon-1", example)
-    context_path = example / CONTEXT_ADDRESS
+    context_path = write_explicit_context(example, CONTEXT_SLIDE, CONTEXT_ADDRESS)
     context = safe_load(context_path.read_bytes())
     mutate(context)
     context_path.write_text(yaml.safe_dump(context, allow_unicode=True, sort_keys=False), encoding="utf-8")

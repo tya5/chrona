@@ -6,6 +6,7 @@ import yaml
 
 from chrona.resources import schema_resource, validator_for_schema
 from chrona.presentation.model.font_resources import resolve_font_resource
+from tests.support.deck_contexts import context_document
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -13,23 +14,22 @@ PACKAGE_ROOT = ROOT / "src/chrona/resources"
 
 
 def test_current_example_contexts_bind_exact_source_bytes():
-    for relative in (
-        "tests/fixtures/controller-z/contexts/executive.yaml",
-        "tests/fixtures/aster-ssd/contexts/01-overview.yaml",
-        "examples/halcyon-1/contexts/01-mission-brief.yaml",
-        "examples/halcyon-1/contexts/02-programme-board.yaml",
-        "examples/halcyon-1/contexts/03-launch-campaign.yaml",
-        "examples/halcyon-1/contexts/16-gallery-editorial-lanes.yaml",
-    ):
-        path = ROOT / relative
-        context = yaml.safe_load(path.read_text(encoding="utf-8"))
+    halcyon = ROOT / "examples/halcyon-1"
+    sources = [
+        ((ROOT / relative).parents[1], yaml.safe_load((ROOT / relative).read_text(encoding="utf-8")))
+        for relative in ("tests/fixtures/controller-z/contexts/executive.yaml",
+                         "tests/fixtures/aster-ssd/contexts/01-overview.yaml")
+    ]
+    # HALCYON slides as the manifest selects them: explicit or composed from shared defaults (#415).
+    sources += [(halcyon, context_document(halcyon, slide_id)) for slide_id in (
+        "mission-brief", "programme-board", "launch-campaign", "gallery-editorial-lanes")]
+    for example_root, context in sources:
         version = context["version"].rsplit("/", 1)[-1]
         schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text(encoding="utf-8"))
         validator_for_schema(schema).validate(context)
         body = context["body"]
         references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
         references.extend(body["inputs"].values())
-        example_root = path.parents[1]
         for reference in references:
             store = reference["store"]
             root = PACKAGE_ROOT if (store["provider"], store["identity"]) == ("package", "chrona.resources") else example_root

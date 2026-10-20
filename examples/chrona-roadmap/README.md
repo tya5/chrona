@@ -20,7 +20,8 @@ grouping, columns, period, annotation bindings and the project's own wording.
 | `actual.yaml` | Observed actuals and the `asOf` date. |
 | `snapshots/plan-2026-10-10/project.yaml` | The 2026-10-10 plan, used as the baseline. |
 | `views/roadmap.yaml` | What the slide shows. |
-| `views/{yuya,titlecard,marquee,sunday}.yaml`, `contexts/` | The four thin Views and their Contexts. |
+| `views/{yuya,titlecard,marquee,sunday}.yaml` | The four thin Views. |
+| `manifest.yaml` | The slides and their Contexts: `contextDefaults` holds what every slide shares (Project, snapshot, actuals, viewport, fonts, target); each slide's `contextOverrides` states only its View, design and differences. |
 | `themes/`, `schemes/`, `layouts/`, `profiles/` | The target B appearance and composition. |
 
 ## Updating

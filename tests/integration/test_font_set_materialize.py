@@ -15,6 +15,7 @@ from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.contracts.font_sets import expand_font_set
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import _OverlayBuilder, copy_context_closure, materialize
+from tests.support.deck_contexts import write_explicit_context
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,7 +56,7 @@ def test_materializer_expands_font_set_without_rewriting_context_or_scene_proven
     manifest["slides"][0].pop("expectedScene", None)
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
 
-    context_path = example / context_address
+    context_path = write_explicit_context(example, slide_id, context_address)
     explicit_bytes = context_path.read_bytes()
     explicit_context = safe_load(explicit_bytes)
     explicit_assets = deepcopy(explicit_context["body"]["environment"]["fontMetrics"]["assets"])

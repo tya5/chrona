@@ -8,6 +8,7 @@ from chrona.resources import default_preset_resource, default_preset_root
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.local_authoring import initialize_project
 from chrona.usecases.render_review import RenderRequest, render_review
+from tests.support.deck_contexts import context_document
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -75,7 +76,7 @@ def test_advanced_tutorial_examples_select_their_declared_closure_edges():
     project = yaml.safe_load((halcyon / "project.yaml").read_bytes())
     scenario_view = yaml.safe_load((halcyon / "views/06-flight-readiness.yaml").read_bytes())
     snapshot_view = yaml.safe_load((halcyon / "views/07-replan-baseline.yaml").read_bytes())
-    context = yaml.safe_load((halcyon / "contexts/07-replan-baseline.yaml").read_bytes())
+    context = context_document(halcyon, "replan-baseline")
     assert scenario_view["body"]["comparison"]["scenario"] in project["scenarios"]
     assert scenario_view["body"]["comparison"]["baseline"] == "scenario"
     assert snapshot_view["body"]["comparison"]["baseline"] == "snapshot"
