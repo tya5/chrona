@@ -52,6 +52,13 @@ with the default SVG profile. `elevated-light` uses a visible flat fallback
 there; select `--visual-profile chrona-output/visual/v0.7-svg` explicitly
 when you want its gradient and shadow treatment.
 
+Which file do I edit? Run `chrona preset copy` as above, then: the **title** is the `project.title` member of `project.yaml`
+(the default heading prints it), or `heading.title` in the copied `view.yaml` to word the slide differently from the plan; the
+**colour** of the bars is `colorEncoding` in `view.yaml` (a [recipe](csv-import.md#colour-the-bars-by-owner)); the **legend position** is
+the order of the `legend` slot (`source: legend`; `wallboard-dark` has one) among `root.children` in `layout.yaml`, so moving it before the `review` row puts
+it above the chart; and the **window**, the dates the time axis spans, is `window` in `view.yaml` (`mode`, or explicit `start`
+and `end` dates, and `marginDays`). Pass the copy with `--preset`, as above.
+
 To draft a schedule faster than editing YAML, write a [terse plan](terse-plan.md): a `plan.chrona` file with one
 line per task, gate or group. `chrona render`, `validate` and `schedule` accept it where they accept `project.yaml`,
 and `chrona compile` turns it into the Project once it is final.

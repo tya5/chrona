@@ -67,6 +67,43 @@ build,Build,task,2027-03-08,2027-03-22,payments
 chrona import teams.csv --output teams.yaml --role responsible=team
 ```
 
+### Colour the bars by owner
+
+A plain CSV needs no profile package to colour by a column. Bind the role, then render with a preset whose View already
+colours by that role (`mission-light`, `control-room-dark`, `print-mono` and `wallboard-dark` do; the last also draws a legend):
+
+<!-- chrona:doc-check file: owners.csv -->
+```csv
+id,title,type,start,duration,predecessors,owner
+reqs,Requirements,task,2027-03-01,8wd,,Aiko
+vendor,Vendor selection,task,,10wd,reqs,Ben
+arch,Architecture,task,,6wd,reqs,Chen
+launch,Launch,gate,,,"vendor, arch",
+```
+
+```sh
+chrona import owners.csv --output owners.yaml --role responsible=owner --calendar "standard mon-fri"
+chrona render owners.yaml --preset mission-light --output owners.svg
+chrona preset copy mission-light --output looks/mission-light
+```
+
+To choose the values and their order yourself, replace the `colorEncoding` block of the copied `looks/mission-light/view.yaml`
+with these five lines (the copy is a plain file you own) and render with `--preset looks/mission-light/preset.yaml`:
+
+```yaml
+  colorEncoding:
+    scale: series
+    target: planned
+    source: {field: owner}
+    domain: [Aiko, Ben, Chen]
+```
+
+`domain` lists the values in the order they take the scale's colours; a value outside it is refused. A row with no owner
+(the gate `launch`) keeps the base paint and adds nothing to the legend; `missing: Aiko` would paint it with a domain colour
+instead. The `series` scale exists on the four presets above; on other presets, and for typed enum fields, follow
+[typed fields](typed-fields.md#3a-colour-by-field-on-a-preset-with-no-series-scale).
+`tests/integration/test_csv_import_guide.py` runs this recipe.
+
 ## Columns
 
 Headers match case-insensitively; spaces and hyphens read as underscores (`Actual Start` is `actual_start`). The vocabulary is
