@@ -21,6 +21,7 @@ from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
 from chrona.usecases.materialize import _OverlayBuilder, _reference_key, copy_context_closure
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 from tools.materialize_example import _copy_context_closure, materialize
+from tests.support.deck_contexts import context_document, write_explicit_context
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -105,7 +106,7 @@ def test_immutable_automatic_context_rejects_nonpositive_timeline_range(tmp_path
 def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tmp_path):
     example = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples/halcyon-1", example)
-    context_path = example / "contexts/02-programme-board.yaml"
+    context_path = write_explicit_context(example, "programme-board", "contexts/02-programme-board.yaml")
     context = yaml.safe_load(context_path.read_bytes())
     context["body"]["project"]["revision"]["token"] = "font-root-probe-v2"
     for asset in context["body"]["environment"]["fontMetrics"]["assets"]:
@@ -308,7 +309,7 @@ def test_halcyon_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     """Scale legend rows are part of the legend slot's measured size, so they stay on the canvas."""
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "gates", tmp_path / "gates", write=False)
     svg = (tmp_path / "gates/review.svg").read_text(encoding="utf-8")
-    context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/26-gates.yaml").read_text(encoding="utf-8"))
+    context = context_document(ROOT / "examples/halcyon-1", "gates")
     block = float(context["body"]["environment"]["viewport"]["blockSize"])
     baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
     assert len(baselines) == 6 and max(baselines) < block
@@ -513,7 +514,7 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
 def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
     copied_example = tmp_path / "halcyon"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
-    context_path = copied_example / "contexts/02-programme-board.yaml"
+    context_path = write_explicit_context(copied_example, "programme-board", "contexts/02-programme-board.yaml")
     context = yaml.safe_load(context_path.read_bytes())
     project_reference = context["body"]["project"]
     project_path = copied_example / "project.yaml"
@@ -533,11 +534,11 @@ HALCYON_PROJECT_REVISION = "example-v6"
 
 def test_every_halcyon_context_pins_current_project_without_repinning_theme():
     example = ROOT / "examples/halcyon-1"
-    contexts = sorted((example / "contexts").glob("*.yaml"))
     manifest = yaml.safe_load((example / "manifest.yaml").read_text(encoding="utf-8"))
-    assert {path.name for path in contexts} == {Path(slide["context"]).name for slide in manifest["slides"]}
-    for path in contexts:
-        body = yaml.safe_load(path.read_bytes())["body"]
+    authored = {path.name for path in (example / "contexts").glob("*.yaml")}
+    assert authored == {Path(slide["context"]).name for slide in manifest["slides"] if "context" in slide}
+    for path in (slide["id"] for slide in manifest["slides"]):
+        body = context_document(example, path)["body"]
         assert body["project"]["revision"]["token"] == HALCYON_PROJECT_REVISION, path.name
         assert "contentIdentity" not in body["project"], path.name  # no authored pins (#1567)
         if body["theme"]["store"]["provider"] == "package":
@@ -650,7 +651,7 @@ def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path)
 def test_svg_materializer_does_not_read_an_unused_font_byte_pin(tmp_path):
     copied_example = tmp_path / "halcyon-font"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
-    context = copied_example / "contexts/02-programme-board.yaml"
+    context = write_explicit_context(copied_example, "programme-board", "contexts/02-programme-board.yaml")
     value = yaml.safe_load(context.read_text(encoding="utf-8"))
     value["body"]["environment"]["fontMetrics"]["assets"][0]["font"]["contentIdentity"] = "sha256:" + "0" * 64
     context.write_text(yaml.safe_dump(value, sort_keys=False))
@@ -663,7 +664,7 @@ def test_svg_materializer_does_not_read_an_unused_font_byte_pin(tmp_path):
 def test_materializer_rejects_draft_substitution_before_evidence_emission(tmp_path):
     copied_example = tmp_path / "halcyon-substitute"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
-    context_path = copied_example / "contexts/02-programme-board.yaml"
+    context_path = write_explicit_context(copied_example, "programme-board", "contexts/02-programme-board.yaml")
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["environment"]["fontMetrics"]["missingFont"] = "substitute"
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
@@ -752,7 +753,7 @@ def test_materializer_records_selected_scenario_evidence_and_omits_unselected_sc
     changed = yaml.safe_load(project.read_text(encoding="utf-8"))
     changed["scenarios"]["tvac-slip"]["objects"]["tvac"]["schedule"]["amount"] = "20d"
     project.write_text(yaml.safe_dump(changed, sort_keys=False))
-    context_path = copied / "contexts/04-tvac-slip.yaml"
+    context_path = write_explicit_context(copied, "tvac-slip", "contexts/04-tvac-slip.yaml")
     context = yaml.safe_load(context_path.read_bytes())
     context["body"]["project"]["revision"]["token"] = "scenario-probe-v3"
     context["body"]["project"]["contentIdentity"] = "sha256:" + sha256(project.read_bytes()).hexdigest()

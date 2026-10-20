@@ -13,6 +13,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.core.relation_identity import relation_identities
+from tests.support.deck_contexts import context_document
 from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
 
@@ -384,9 +385,9 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
     shared_copy["reviewSurface"]["rowDistribution"] = "pack"
     assert shared_copy == shared
 
-    contexts = ROOT / "examples/halcyon-1/contexts"
-    for context_name in ("02-programme-board", "12-glyph-gates"):
-        context = yaml.safe_load((contexts / f"{context_name}.yaml").read_text(encoding="utf-8"))
+    halcyon = ROOT / "examples/halcyon-1"
+    for slide_id in ("programme-board", "glyph-gates"):
+        context = context_document(halcyon, slide_id)
         assert context["body"]["layout"] == {
             "id": "wallboard-programme-board",
             "kind": "layout-profile",
@@ -394,8 +395,8 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
             "address": "layouts/wallboard-programme-board.yaml",
             "revision": {"token": "example-v1"},
         }
-    for context_name in ("04-tvac-slip", "07-replan-baseline", "15-gallery-image-notes"):
-        context = yaml.safe_load((contexts / f"{context_name}.yaml").read_text(encoding="utf-8"))
+    for slide_id in ("tvac-slip", "replan-baseline", "gallery-image-notes"):
+        context = context_document(halcyon, slide_id)
         assert context["body"]["layout"] == {
             "id": "wallboard",
             "kind": "layout-profile",

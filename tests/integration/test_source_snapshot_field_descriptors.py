@@ -15,6 +15,7 @@ from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases import render_review as render_review_usecase
 from chrona.usecases.render_review import RenderRequest, render_review
 from tests.unit.chrona.presentation.model.test_snapshot_context_closure import _real_package_ref
+from tests.support.deck_contexts import context_document
 
 
 _ORIGINAL_BUILD_REVIEW_PROJECTION = render_review_usecase.build_review_projection
@@ -42,7 +43,7 @@ def _real_ingress_with_actual_and_package_stores(tmp_path, primary_extensions, s
     historic_project = yaml.safe_load((example_root / "project.yaml").read_text(encoding="utf-8"))
     historic_project["extensions"] = snapshot_extensions
     historic_ref = write_local("historic", "project.yaml", historic_project, "project")
-    context = yaml.safe_load((example_root / "contexts/02-programme-board.yaml").read_text(encoding="utf-8"))
+    context = context_document(example_root, "programme-board")
     body = context["body"]
     references = {"project": primary_ref}
     for key, kind in (("view", "view"), ("theme", "theme"),

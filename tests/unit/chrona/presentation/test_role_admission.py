@@ -12,6 +12,7 @@ from chrona.presentation.model.theme_role_consumers import unread_roles
 from chrona.presentation.scene.capabilities import theme_role_contract, theme_role_property_consumer
 from chrona.resources import safe_load
 from tests.support.context_references import reference_path
+from tests.support.deck_contexts import slide_context
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -178,16 +179,25 @@ def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():
                             path, primitive["visualRole"], property_name)
 
 
+def _public_context_bodies():
+    """Every authored Context file plus every slide Context a manifest composes from shared defaults (#415)."""
+    for context_path in sorted((ROOT / "examples").glob("*/contexts/*.yaml")):
+        yield context_path.parent.parent, safe_load(context_path.read_bytes()).get("body", {})
+    for manifest_path in sorted((ROOT / "examples").glob("*/manifest.yaml")):
+        for slide in safe_load(manifest_path.read_bytes()).get("slides", ()):
+            if "contextOverrides" in slide:
+                yield manifest_path.parent, slide_context(manifest_path.parent, slide["id"]).document["body"]
+
+
 def test_every_public_authored_theme_resolves_with_its_declared_scheme():
     observed = set()
     scheme_by_theme = {}
-    for context_path in sorted((ROOT / "examples").glob("*/contexts/*.yaml")):
-        body = safe_load(context_path.read_bytes()).get("body", {})
+    for example_root, body in _public_context_bodies():
         theme_ref, scheme_ref = body.get("theme", {}), body.get("colorScheme", {})
         if not theme_ref.get("address") or not scheme_ref.get("address"):
             continue
-        theme_path = reference_path(context_path.parent.parent, theme_ref)
-        scheme_path = reference_path(context_path.parent.parent, scheme_ref)
+        theme_path = reference_path(example_root, theme_ref)
+        scheme_path = reference_path(example_root, scheme_ref)
         scheme_by_theme[theme_path.resolve()] = scheme_path
         theme = safe_load(theme_path.read_bytes())
         if theme["version"] not in {"chrona/theme/v0.15"}:

@@ -11,6 +11,7 @@ import yaml
 from chrona.resources import safe_load, schema_resource, validator_for_schema
 from tools.check_example_reachability import reachable_view_paths
 from tools.presentation_coverage import effective_views
+from tests.support.deck_contexts import context_document
 from tests.support.preset_policy import assert_view_copy_except_axis as _assert_view_copy_except_axis
 
 
@@ -151,8 +152,8 @@ def test_halcyon_lane_slides_and_full_02_packing_policy():
     assert board["body"]["rows"]["packing"] == ["explicit", "attached", "chain", "dates"]
     assert "finishDelta" in board["body"]["visibility"]["labels"]["content"]
 
-    reference_context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/13-gallery-editorial.yaml").read_text(encoding="utf-8"))
-    lane_context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/16-gallery-editorial-lanes.yaml").read_text(encoding="utf-8"))
+    reference_context = context_document(ROOT / "examples/halcyon-1", "gallery-editorial")
+    lane_context = context_document(ROOT / "examples/halcyon-1", "gallery-editorial-lanes")
     assert reference_context["id"] == "halcyon-1-13-gallery-editorial"
     assert reference_context["body"]["view"]["id"] == "chrona-preset-editorial"
     assert lane_context["id"] == "halcyon-1-16-gallery-editorial-lanes"

@@ -13,6 +13,7 @@ from chrona.resources import safe_load
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.materialize import copy_context_closure, materialize
+from tests.support.deck_contexts import write_explicit_context
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -92,7 +93,7 @@ def test_two_projects_share_one_authored_design_through_materializer_and_render_
         manifest = _load(manifest_path)
         manifest["stores"] = [{"identity": "shared-designs", "root": "../designs/revision-example-v1"}]
         _write(manifest_path, manifest)
-        _share_design(project / sources[project.name][2])
+        _share_design(write_explicit_context(project, sources[project.name][1], sources[project.name][2]))
 
     config_dir = tmp_path / ".chrona"
     config_path = config_dir / "store.yaml"

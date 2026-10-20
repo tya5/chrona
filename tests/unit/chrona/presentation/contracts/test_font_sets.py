@@ -9,10 +9,11 @@ import pytest
 from chrona.presentation.contracts.font_sets import expand_font_set, font_set_ids
 from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 from chrona.resources import safe_load
+from tests.support.deck_contexts import context_document
 
 ROOT = Path(__file__).resolve().parents[5]
 DEFAULTS = ROOT / "src/chrona/resources/fonts/default-font-metrics.yaml"
-SEVEN = ROOT / "examples/halcyon-1/contexts/19-gallery-text-compression.yaml"
+HALCYON = ROOT / "examples/halcyon-1"
 BASIC = ROOT / "tests/fixtures/aster-ssd/contexts/01-overview.yaml"
 
 
@@ -48,9 +49,9 @@ def test_default_set_is_the_packaged_default_assets() -> None:
     assert expanded["body"]["environment"]["fontMetrics"]["assets"] == _load(DEFAULTS)["assets"]
 
 
-@pytest.mark.parametrize(("path", "name"), [(BASIC, "chrona.noto-sans"), (SEVEN, "chrona.noto-sans+jp")])
-def test_set_context_equals_explicit_list_context(path: Path, name: str) -> None:
-    explicit = _load(path)
+@pytest.mark.parametrize(("source", "name"), [("basic", "chrona.noto-sans"), ("seven", "chrona.noto-sans+jp")])
+def test_set_context_equals_explicit_list_context(source: str, name: str) -> None:
+    explicit = _load(BASIC) if source == "basic" else context_document(HALCYON, "gallery-text-compression")
     named = _without_pins(expand_font_set(_with_set(explicit, name)))
     explicit = _without_pins(explicit)
     assert parse_contract(_identity(named), named) == parse_contract(_identity(explicit), explicit)
