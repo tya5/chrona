@@ -213,19 +213,12 @@ def _validate_value(
     if spec.get("type") == "enum" and value not in spec.get("enumValues", []):
         return [Diagnostic("IDP-STATE-001", f"Invalid {name}", path)]
     if name == "assignees":
-        constraint = reference_constraint or reference_constraint_for_field(
-            PACKAGE_ID, "implementation-delivery.work-item", name, spec,
+        errors = _validate_delivery_assignees(
+            project, values, spec, path,
+            reference_constraint=reference_constraint, reference_catalog=reference_catalog,
         )
-        catalog = reference_catalog or ObjectReferenceCatalog.from_project(project)
-        try:
-            for entity_id in values:
-                catalog.resolve(
-                    entity_id,
-                    target_profiles=constraint.target_profiles,
-                    target_namespaces=constraint.target_namespaces,
-                )
-        except (ObjectReferenceError, TypeError, ValueError):
-            return [Diagnostic("IDP-PROFILE-003", "Invalid delivery assignee", path)]
+        if errors:
+            return errors
     if spec.get("type") == "resourceReference":
         validator = schema_validator("revision-store-resource-ref-v0.1.schema.yaml")
         for reference in values:
@@ -237,6 +230,28 @@ def _validate_value(
                 return [Diagnostic("IDP-EVIDENCE-001", f"Invalid immutable evidence reference: {violation.message}", path + violation.pointer)]
             if reference.get("kind") not in spec.get("resourceKinds", []):
                 return [Diagnostic("IDP-EVIDENCE-002", "Evidence kind is not allowed for this field", path)]
+    return []
+
+
+def _validate_delivery_assignees(
+    project: dict[str, Any], values: list[Any], spec: dict[str, Any], path: str,
+    *, reference_constraint: ObjectReferenceConstraint | None = None,
+    reference_catalog: ObjectReferenceCatalog | None = None,
+) -> list[Diagnostic]:
+    """Apply the delivery-owned entity domain without opening external targets."""
+    constraint = reference_constraint or reference_constraint_for_field(
+        PACKAGE_ID, "implementation-delivery.work-item", "assignees", spec,
+    )
+    catalog = reference_catalog or ObjectReferenceCatalog.from_project(project)
+    try:
+        for entity_id in values:
+            catalog.resolve(
+                entity_id,
+                target_profiles=constraint.target_profiles,
+                target_namespaces=constraint.target_namespaces,
+            )
+    except (ObjectReferenceError, TypeError, ValueError):
+        return [Diagnostic("IDP-PROFILE-003", "Invalid delivery assignee", path)]
     return []
 
 
@@ -436,15 +451,7 @@ def _generic_scalar(
             return [Diagnostic("E_PROFILE_FIELD_ENUM", f"{name} value {value!r} is outside {list(allowed)}{hint}", path)]
         return []
     if kind == "objectReference":
-        try:
-            (reference_catalog or ObjectReferenceCatalog.from_project(project)).resolve(
-                value, target_profiles=tuple(spec.get("targetProfiles", ())),
-            )
-        except (ObjectReferenceError, TypeError, ValueError):
-            targets = spec.get("targetProfiles")
-            constraint = f" of profile {list(targets)}" if targets else ""
-            return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must name one object or entity{constraint}", path)]
-        return []
+        return _generic_object_reference(project, name, value, spec, path, reference_catalog=reference_catalog)
     if kind == "resourceReference":
         errors = tuple(schema_validator("revision-store-resource-ref-v0.1.schema.yaml").iter_errors(value))
         if errors:
@@ -460,6 +467,22 @@ def _generic_scalar(
         "date": _is_date(value),
     }.get(kind, True)
     return [] if ok else [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must be {kind}, found {type(value).__name__}", path)]
+
+
+def _generic_object_reference(
+    project: dict[str, Any], name: str, value: Any, spec: dict[str, Any], path: str,
+    *, reference_catalog: ObjectReferenceCatalog | None = None,
+) -> list[Diagnostic]:
+    """Resolve an in-memory target, separately from shape-only resource references."""
+    try:
+        (reference_catalog or ObjectReferenceCatalog.from_project(project)).resolve(
+            value, target_profiles=tuple(spec.get("targetProfiles", ())),
+        )
+    except (ObjectReferenceError, TypeError, ValueError):
+        targets = spec.get("targetProfiles")
+        constraint = f" of profile {list(targets)}" if targets else ""
+        return [Diagnostic("E_PROFILE_FIELD_TYPE", f"{name} must name one object or entity{constraint}", path)]
+    return []
 
 
 def _is_date(value: Any) -> bool:
