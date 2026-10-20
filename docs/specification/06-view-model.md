@@ -492,8 +492,10 @@ A `table-timeline` View MAY declare `heading: {title?, subtitle?, dateForm?}`. E
 
 The heading `{asOf}` and as-of marker share one locale date formatter (#1810).
 An explicit marker `date` selects its form/name table for both; otherwise use
-the heading's `dateForm`, or `localized-date` in the context locale. Marker
-copy and Theme case treatment remain independent wording. A missing semantic
+the heading's `dateForm`, or `localized-date` in the context locale. Sharing
+the format does not add a date to an explicitly declared marker that omits
+`date`; it remains label-only. Marker copy and Theme case treatment remain
+independent wording. A missing semantic
 heading fact still substitutes empty text, but emits
 `W_PRESENTATION_HEADING_FACT_MISSING` naming the fact and heading source
 pointer. Invalid/unknown placeholders and figure references retain their
