@@ -476,7 +476,19 @@ A `table-timeline` View MAY give a fixed-unit `axis.tiers[]` band tier `fillScal
 
 ### 7.3 Deadline marks (#822)
 
-A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw each object's Project `deadline` (Spec 05 section 9). A deadline is drawn as a **tick** at its date, centred on the object's primary planned/forecast mark, and, when the selected finish is later than the deadline, a **run** from the tick to that finish (`at` of a point, exclusive `end` of a span, the date `W_DEADLINE` compares: Spec 04 section 10). `slipped` draws only the deadlines the selected schedule misses; `all` draws every deadline, the missed ones with their run, so a kept promise reads as slack. Slipped and kept differ by shape (the run), not only by colour. The Core decides which deadlines slipped (`deadline_statuses`); a deadline equal to the finish is kept. The View selects; the Project owns the date; the Theme owns paint and reach (Spec 07, role `deadline-mark`); Layout owns the geometry (Spec 50 section 3.4). Without the optional caption below, no text is drawn.
+A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw
+each object's Project `deadline` (Spec 05 section 9). The date is an inclusive
+promise. Its **tick** is at the boundary after that calendar day, centred on the
+object's primary planned/forecast mark. A missed promise adds a **run** over
+`[deadline + 1 day, inclusive finish + 1 day)`, using the completed Core
+boundaries of Spec04 §10. Thus finishing on the deadline draws no late stub;
+a one-day-late span or point has one late day. Point judgments still use `at`;
+span judgments use exclusive `end - 1 day`. `slipped` selects missed promises;
+`all` selects every promise, with a run only when missed. Slipped and kept
+differ by shape, not only colour. Core owns this verdict (`deadline_statuses`),
+View selects, Project owns the date, Theme owns paint and reach (Spec07,
+`deadline-mark`), and Layout owns geometry (Spec50 §3.4). Without the optional
+caption below, no text is drawn.
 
 In explicit forecast mode (§8.5), use the forecast finish for an object with a
 selected primary temporal occurrence in the final rows or folded members.
@@ -489,7 +501,15 @@ Project order. Hidden deadline overrides suppress marks, not the warning.
 Tick and run retain the existing `deadline-mark` paint. Estimated forecasts
 retain §8.5's delta/legend convention, not a new estimated stroke.
 
-A timeline deadline outside the View window draws nothing and is recorded as the Scene diagnostic `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`. A primary point folded into a group header hosts the same date-scaled tick/run as an ordinary point; Layout reserves its complete painted envelope while packing the header, before placing labels. A Theme that omits the role while a View shows deadlines fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member is optional and additive in `chrona/view/v0.28`. Without forecast or shown deadlines, existing geometry is unchanged. An author explains the mark with a Detail Profile legend entry whose role is `deadlineMark`.
+A timeline deadline whose completed tick boundary is outside the View window
+draws nothing and is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`.
+Layout clips a visible late run to the plot; clipping never changes the Core
+verdict or warning. A primary point folded into a group header hosts the same
+tick/run as an ordinary point; Layout reserves its complete painted envelope
+before labels. A Theme omitting the selected role fails with
+`E_THEME_ROLE_REQUIRED` at `/body/roles/deadline-mark`. The member remains in
+`chrona/view/v0.28`; no source syntax changes. Without shown deadlines, geometry
+is unchanged. A Detail Profile legend entry with role `deadlineMark` explains it.
 
 A `dependency-network` View MAY declare the same `deadlines` member. It shows
 a node-attached deadline footer, not a date-positioned timeline run. View

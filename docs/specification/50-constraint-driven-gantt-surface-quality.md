@@ -1444,13 +1444,16 @@ paint cannot be read stays `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
 A table-timeline deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
 carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge
 lateness). For every completed planned/forecast mark of the object (a snapshot or scenario mark never hosts one),
-including a point folded into a group header, the tick is the vertical segment at the deadline date, mapped through the scale that
+including a point folded into a group header, the tick is the vertical segment at the completed boundary after the inclusive deadline day, mapped through the scale that
 places marks, centred on the mark and `markReach` times its block size tall (placement id `deadline-tick:<mark instance>`);
-a slipped deadline adds the run, the horizontal segment from the tick's lower end to the selected forecast/planned finish
-carried on `ReviewDeadline` (Spec06 §7.3), clipped to the plot's
+a slipped deadline adds the run, the horizontal segment from the tick's lower end to the boundary after the selected inclusive finish day
+carried on `ReviewDeadline` (Core's integer day boundaries, Spec04 §10/Spec06 §7.3), clipped to the plot's
 inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object id, semantic `deadlineMark`, slot `timeline`
-and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
+and paint order the mark base plus Theme `markPaintOrder`. A completed tick boundary outside the View window (the closed range, both
 edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`.
+Use ordinal-based scale mapping rather than constructing a date beyond the
+supported range; Layout maps and clips completed boundaries, never normalizes
+inclusive finishes or recomputes the lateness verdict.
 Folded-header packing includes the tick/run maximum painted envelope (stroke,
 optional outline and declared wobble) in each occurrence's inline extent and
 block allocation, together with its existing mark/title/delta extent. Shared
