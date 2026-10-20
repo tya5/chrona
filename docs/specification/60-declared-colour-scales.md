@@ -73,6 +73,13 @@ A field declared by a resolved profile package (Spec 17, `E_PROFILE_FIELD_*`) is
 text `true` or `false`. Number and date sources are not admitted (binning is deferred) and fail with
 `E_PRESENTATION_SCALE_VALUE`.
 
+A declared scalar `objectReference` (#344) encodes its raw target ID, not its
+display title. Source-local semantic resolution retains logical Project ID,
+namespace and target ID (Spec17). Within one scale, the same raw domain value
+MUST NOT denote different resolved targets across matched occurrences: reject
+with `E_PRESENTATION_SCALE_VALUE`, rather than merging identities. Separate
+scale IDs can express independent domains without new qualified-ID syntax.
+
 ## 2. Total mapping and diagnostics
 
 For authored Style encodings (#419 S2), a named
@@ -94,6 +101,8 @@ for the source field must have a scalar value in that domain.  A present non-sca
 undeclared value rejects the presentation closure with `E_PRESENTATION_SCALE_VALUE`,
 including the object ID, field and value state.  Missing Theme mappings or
 Scheme slots reject closure with `E_PRESENTATION_SCALE_MAPPING`.
+Typed occurrence facts must retain a present-nonscalar state; it is not an
+absent/null value and must not silently take the missing/base-paint path.
 
 An object with no value for the source field, whether the field is absent from its
 source (typed by a profile or not, with no declared default) or its value is `null`,
@@ -149,6 +158,11 @@ swatches and text.  A manually authored entry cannot duplicate or override a
 scale-derived entry for the same scale.  Existing semantic legends retain their
 separate role/label ownership and may coexist; they do not claim to enumerate
 the scale domain.
+
+Reference-domain labels use the detached target title from the first matched
+source occurrence in stable View order (ID if untitled), while domain/key
+identity stays the raw ID. Renaming a target in a Snapshot does not create a
+second identity; distinct IDs with the same title remain distinct keys.
 
 Legend case treatment distinguishes wording from data (#1811). Theme
 `textTransform` applies to built-in and authored wording, including a Style

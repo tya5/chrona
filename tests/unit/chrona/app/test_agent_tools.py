@@ -845,7 +845,8 @@ def test_results_do_not_depend_on_the_hash_seed(workspace, tmp_path):
     """), encoding="utf-8")
     outputs = []
     for seed in ("1", "2", "3"):
-        env = {**os.environ, "PYTHONHASHSEED": seed}
+        # Match the parent's UTF-8 decoder even under a Windows legacy codepage.
+        env = {**os.environ, "PYTHONHASHSEED": seed, "PYTHONIOENCODING": "utf-8"}
         done = subprocess.run([sys.executable, str(script), str(workspace)], env=env, capture_output=True, text=True,
                               encoding="utf-8", check=False, cwd=tmp_path)
         assert done.returncode == 0, done.stderr

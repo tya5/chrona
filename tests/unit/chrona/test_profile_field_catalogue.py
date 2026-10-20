@@ -2,7 +2,9 @@ import pytest
 
 from chrona.extensions.profiles import (
     PACKAGE_ID,
+    reference_constraint_for_field,
     resolve_profile_field_catalogue,
+    resolve_profile_field_catalogue_with_owners,
     resolve_profile_field_definitions,
     validate_profiles,
 )
@@ -163,3 +165,35 @@ def test_delivery_profile_name_is_generic_when_delivery_package_is_not_declared(
     assert [(item.id, item.path) for item in validate_profiles(project, {"acme-fields": generic})] == [
         ("E_PROFILE_FIELD_UNKNOWN", "/objects/item/fields/unknown"),
     ]
+
+
+def test_reference_namespace_specialization_requires_delivery_package_ownership():
+    definition = {
+        "type": "objectReference",
+        "cardinality": "many",
+        "targetProfiles": ["implementation-delivery.person", "implementation-delivery.team"],
+    }
+    generic = _manifest(
+        "acme-fields", "implementation-delivery.work-item",
+        {"assignees": definition},
+    )
+    project = {"extensions": [{"packageId": "acme-fields"}], "objects": {}}
+    catalogue, owners, diagnostics = resolve_profile_field_catalogue_with_owners(
+        project, {"acme-fields": generic},
+    )
+
+    assert diagnostics == []
+    assert catalogue["implementation-delivery.work-item"]["assignees"] == definition
+    assert owners["implementation-delivery.work-item"] == "acme-fields"
+    generic_constraint = reference_constraint_for_field(
+        owners["implementation-delivery.work-item"],
+        "implementation-delivery.work-item", "assignees", definition,
+    )
+    assert generic_constraint.target_profiles == tuple(definition["targetProfiles"])
+    assert generic_constraint.target_namespaces == ("entities", "objects")
+
+    delivery_constraint = reference_constraint_for_field(
+        PACKAGE_ID, "implementation-delivery.work-item", "assignees", definition,
+    )
+    assert delivery_constraint.target_profiles == tuple(definition["targetProfiles"])
+    assert delivery_constraint.target_namespaces == ("entities",)

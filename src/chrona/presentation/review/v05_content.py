@@ -15,7 +15,7 @@ from chrona.presentation.model.projection import (ObservationState, ReviewProjec
     is_estimated_finish_delta, is_new_against_baseline, signed_delta_text)
 from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, entity_title_or_value, initials, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, initials, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
@@ -387,7 +387,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
                 value: Any = row_number
             else:
                 founder = next((item for item in row.items if lane.member_item_ids and item.item_id == lane.member_item_ids[0]), None)
-                value = (entity_title_or_value(founder.field_bindings.read(founder.fields, column.source), project)
+                value = (table_value(founder, project, column.source)
                          if founder is not None else None)
             cells.append(TableCellContent(row.lane_id, column.id,
                                           display_value(value, column.missing, "text", transform=column.transform,
@@ -453,8 +453,26 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
         return entries
     used = _used_scale_values(color_scale, projection)
     entities = project.get("entities", {})
+    reference_titles: dict[str, str] = {}
+    for item in projection.items:
+        if item.source_kind not in {"primary", "combined"}:
+            continue
+        result = item.field_bindings.read_result(
+            item.fields, {"field": color_scale.source_field}, object_id=item.object_id,
+        )
+        if (result.descriptor is not None and result.descriptor.kind == "objectReference"
+                and result.descriptor.cardinality == "one" and result.reference_targets):
+            reference_titles.setdefault(result.value, result.display_value)
+
+    def domain_label(value: str) -> str:
+        if value == OTHER_LABEL:
+            return other_label or value
+        if value in reference_titles:
+            return reference_titles[value]
+        return str(entities.get(value, {}).get("title", value))
+
     return entries + tuple(
-        SurfaceLegendEntry(ref, str(entities.get(label, {}).get("title", label)) if label != OTHER_LABEL else (other_label or label),
+        SurfaceLegendEntry(ref, domain_label(label),
                            view_scale_id=color_scale.scale_id, view_scale_domain_value=label,
                            scale_collisions=color_scale.collisions,
                            encoding_value_is_wording=ref == f"scale:{color_scale.scale_id}{OTHER_REF_SUFFIX}")
@@ -513,6 +531,7 @@ def _style_legend_entries(
     intents_by_rule: dict[str, list[tuple[StyleOccurrenceKey, str]]] = {
         rule.rule_id: [] for rule in authored
     }
+    reference_titles: dict[tuple[StyleOccurrenceKey, str], str] = {}
     for intent in intents.intents:
         if intent.fill is None:
             continue
@@ -520,11 +539,14 @@ def _style_legend_entries(
         if occurrence is None:
             continue
         field_name = intent.fill.source.field_name
-        value = next((fact.value for fact in occurrence.fields
-                      if fact.name == field_name and fact.present), None)
+        fact = next((fact for fact in occurrence.fields
+                     if fact.name == field_name and fact.present), None)
+        value = fact.value if fact is not None else None
         value_text = scale_text(value)
         if value_text is None:
             continue
+        if fact.reference_title is not None:
+            reference_titles[intent.key, value_text] = fact.reference_title
         for rule_id in intent.fill_rule_ids:
             if rule_id in intents_by_rule:
                 intents_by_rule[rule_id].append((intent.key, value_text))
@@ -562,11 +584,13 @@ def _style_legend_entries(
                 ensure_ascii=False, separators=(",", ":"),
             )
             identity = "scale:style:" + sha256(identity_payload.encode("utf-8")).hexdigest()
+            display_label = ((other_label or value_label) if is_other else
+                             reference_titles.get((value_keys[0], value_label), value_label))
             entries.append(SurfaceLegendEntry(
-                identity, (other_label or value_label) if is_other else value_label, source_ref=identity, style_scope=scope,
+                identity, display_label, source_ref=identity, style_scope=scope,
                 style_value=value_label, style_occurrences=value_keys, scale_collisions=scale.collisions,
                 encoding_value_is_wording=is_other,
-                style_display_value=(other_label or value_label) if is_other else value_label,
+                style_display_value=display_label,
             ))
             paints.append((identity, color))
     return tuple(entries), tuple(paints)

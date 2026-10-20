@@ -115,3 +115,61 @@ def test_legacy_bindings_without_object_metadata_keep_opaque_read_contract():
         "risk", True, 0, None
     )
     assert bindings.read({"risk": 0}, {"fieldRole": "risk"}) == 0
+
+
+def test_reference_reads_keep_raw_ids_and_expose_source_local_titles_in_order():
+    project = {
+        "project": {"id": "plan"},
+        "entities": {
+            "team-a": {"type": "team", "title": "Aiko"},
+            "team-b": {"type": "team", "title": "Aiko"},
+        },
+        "objects": {"work": {"type": "task", "title": "Work"}},
+        "fieldRoles": {"owner": "owners"},
+    }
+    bindings = FieldRoleBindings.from_project(
+        project,
+        object_descriptors={"work": (
+            FieldDescriptor("owner", "objectReference", target_profiles=("team",)),
+            FieldDescriptor("owners", "objectReference", "many", target_profiles=("team",)),
+        )},
+    )
+
+    scalar = bindings.read_result({"owner": "team-a"}, {"field": "owner"}, object_id="work")
+    many = bindings.read_result({"owners": ["team-b", "team-a"]}, {"fieldRole": "owner"}, object_id="work")
+
+    assert scalar.value == "team-a"
+    assert scalar.display_value == "Aiko"
+    assert scalar.reference_targets[0].identity == ("plan", "entities", "team-a")
+    assert many.value == ["team-b", "team-a"]
+    assert many.display_value == "Aiko, Aiko"
+    assert tuple(target.identity for target in many.reference_targets) == (
+        ("plan", "entities", "team-b"), ("plan", "entities", "team-a"),
+    )
+    empty_many = bindings.read_result({"owners": []}, {"field": "owners"}, object_id="work")
+    assert empty_many.display_value == ""
+
+
+def test_reference_read_preserves_absent_null_and_id_fallback_for_blank_title():
+    project = {"project": {"id": "plan"}, "entities": {"team": {"type": "team", "title": " "}}}
+    bindings = FieldRoleBindings.from_project(
+        project,
+        object_descriptors={"work": (FieldDescriptor("owner", "objectReference", target_profiles=("team",)),)},
+    )
+
+    absent = bindings.read_result({}, {"field": "owner"}, object_id="work")
+    null = bindings.read_result({"owner": None}, {"field": "owner"}, object_id="work")
+    present = bindings.read_result({"owner": "team"}, {"field": "owner"}, object_id="work")
+
+    assert (absent.present, absent.value, absent.display_value, absent.reference_targets) == (False, None, None, ())
+    assert (null.present, null.value, null.display_value, null.reference_targets) == (True, None, None, ())
+    assert present.value == "team"
+    assert present.display_value == "team"
+
+
+def test_non_reference_bindings_do_not_require_project_identity():
+    bindings = FieldRoleBindings.from_project(
+        {}, object_descriptors={"work": (FieldDescriptor("risk", "number"),)},
+    )
+
+    assert bindings.read_result({"risk": 3}, {"field": "risk"}, object_id="work").value == 3

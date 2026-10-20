@@ -338,6 +338,13 @@ corresponding Project group object's title and fields. Grouping, color eligibili
 selection retain their existing primary-item scope. Resolve these semantic
 facts before Layout; Scene and adapters do not look up roles.
 
+A declared `objectReference` field (#344) uses its source-local semantic binding
+(Spec17), not a lookup in the primary Project. Table and lane-table cells display
+the resolved target title, or its ID when untitled; `many` displays those titles
+in declared order joined by `, ` before the existing column formatting. Ordinary
+non-reference values keep their existing formatting/entity-title behavior. Stored
+IDs and Project fields are not rewritten, and no renderer resolves a reference.
+
 When a bound field-role grouping is resolved to its Project field, selected
 `type: group` summary objects are omitted from those field-grouped rows rather
 than receiving the missing-value group as ordinary bars. The projection reports

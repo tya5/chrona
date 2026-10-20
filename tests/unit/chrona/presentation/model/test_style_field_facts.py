@@ -63,7 +63,9 @@ def test_legacy_fields_stay_opaque_and_scalar_runtime_types_are_not_inferred():
     assert facts["flag"] == StyleFieldFact("flag", None, True, False, aliases=("flagRole",))
     assert facts["count"] == StyleFieldFact("count", None, True, 0)
     assert facts["ratio"] == StyleFieldFact("ratio", None, True, 1.5)
-    assert facts["labels"] == StyleFieldFact("labels", None, True, None)
+    assert facts["labels"] == StyleFieldFact(
+        "labels", None, True, None, non_scalar_value=True, non_scalar_type="list",
+    )
 
 
 def test_fact_snapshot_does_not_mutate_item_or_descriptor_inputs():
