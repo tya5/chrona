@@ -9,6 +9,7 @@ from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import (
     CountDependentHeadingFitError, LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
+    RelationRouteStyle,
     RelationUnroutableMode, PointHostMode,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
@@ -1045,6 +1046,7 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         relation_unroutable=RelationUnroutableMode(relation_routing.get("unroutable", "relax")),
         relation_search_budget=(int(relation_routing["searchBudget"])
                                 if "searchBudget" in relation_routing else None),
+        relation_style=RelationRouteStyle(relation_routing.get("style", "orthogonal")),
         annotation_max_bends=int(annotation_routing["maxBends"]),
         annotation_max_detour_ratio=float(annotation_routing["maxDetourRatio"]),
         row_distribution=str(profile.profile["reviewSurface"]["rowDistribution"]),

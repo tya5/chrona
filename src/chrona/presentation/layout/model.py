@@ -22,6 +22,13 @@ class RelationUnroutableMode(str, Enum):
     SUPPRESS = "suppress"
 
 
+class RelationRouteStyle(str, Enum):
+    """Global Layout-owned relation drawing style."""
+
+    ORTHOGONAL = "orthogonal"
+    CURVED = "curved"
+
+
 class PointHostMode(str, Enum):
     """Physical hosting policy for selected point marks."""
 
@@ -165,6 +172,16 @@ class LayoutManifest:
     # Staged implementation: flip only after recovery and target protection land.
     relation_unroutable: RelationUnroutableMode = RelationUnroutableMode.RELAX
     point_host_mode: PointHostMode | None = None
+    relation_style: RelationRouteStyle = RelationRouteStyle.ORTHOGONAL
+
+    def __post_init__(self) -> None:
+        try:
+            style = RelationRouteStyle(self.relation_style)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                f"E_LAYOUT_RELATION_STYLE_INVALID: expected orthogonal or curved; received {self.relation_style!r}"
+            ) from error
+        object.__setattr__(self, "relation_style", style)
 
     def source_decisions(self) -> dict[str, LayoutDecision]:
         """Resolve native source ownership in the established manifest order."""
@@ -218,6 +235,8 @@ class LayoutManifest:
                 **({"searchBudget": self.relation_search_budget} if self.relation_search_budget is not None else {}),
                 **({"unroutable": self.relation_unroutable.value}
                    if self.relation_unroutable != RelationUnroutableMode.SUPPRESS else {}),
+                **({"style": self.relation_style.value}
+                   if self.relation_style is not RelationRouteStyle.ORTHOGONAL else {}),
             },
             "annotationRouting": {
                 "maxBends": self.annotation_max_bends,

@@ -17,6 +17,10 @@ $defs:
     description: "Layout's declared relation search: shape-first first-fit or legacy ranked best."
     examples: [first-fit]
     enum: [first-fit, best]
+  relationRouteStyle:
+    description: "Global Layout-owned drawing style for table-timeline and dependency-network relations."
+    examples: [orthogonal]
+    enum: [orthogonal, curved]
   visualProfile:
     description: "Exact renderer-neutral visual capability profile."
     examples: ["chrona-output/visual/v0.5-baseline"]

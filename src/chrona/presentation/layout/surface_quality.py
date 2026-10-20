@@ -14,6 +14,7 @@ from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
+from chrona.presentation.layout.relation_style_model import RelationStyleFallback
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
@@ -587,6 +588,7 @@ class RelationPlacement:
     halo: RelationHaloPlacement | None = None
     # Optional for existing surfaces; native network paths complete this in Layout.
     paint_bounds: tuple[float, float, float, float] | None = None
+    style_fallback: RelationStyleFallback | None = None
 
     def __post_init__(self) -> None:
         if self.paint_bounds is not None and (
