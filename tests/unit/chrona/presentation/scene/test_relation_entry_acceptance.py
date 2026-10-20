@@ -8,10 +8,10 @@ import json
 import pytest
 
 import chrona.presentation.layout.surface_routes as surface_routes
-import chrona.presentation.layout.routing as routing
 import chrona.presentation.layout.ports as route_ports
 import tests.unit.chrona.presentation.scene.test_relation_node_approach as node_approach
 from chrona.presentation.contracts.resources import ViewWindow
+from chrona.presentation.layout.model import RelationUnroutableMode
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.surface_pipeline import compose_review_surface
@@ -34,7 +34,7 @@ ACTUAL = {"observations": [{"id": "a-observation", "sequence": 1, "projectObject
                             "actual": {"start": "2026-02-01", "finish": "2026-02-09"}}]}
 
 
-def _project(*, mirrored=False, baseline_ghost=False, ghost_finish=11):
+def _project(*, mirrored=False, baseline_ghost=False, ghost_finish=11, window=WINDOW):
     project = {**PROJECT_BASE, "relations": [deepcopy(RELATION)]}
     placed = dict(PLACED)
     actual = {"observations": [dict(ACTUAL["observations"][0])]}
@@ -50,7 +50,7 @@ def _project(*, mirrored=False, baseline_ghost=False, ghost_finish=11):
     comparison = view.comparison
     if not baseline_ghost:
         comparison = replace(comparison, baseline=None, baseline_marks=None)
-    view = replace(view, window=WINDOW, comparison=comparison)
+    view = replace(view, window=window, comparison=comparison)
     snapshot = None
     snapshot_placements = None
     if baseline_ghost:
@@ -78,19 +78,22 @@ def _theme_with_route_fixture_geometry(*, target_marker="triangle"):
 
 
 def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", target_marker="triangle",
-             ghost_finish=11, corner_radius=0, head_length=10, search="first-fit"):
+             ghost_finish=11, corner_radius=0, head_length=10, search="first-fit", max_bends=4,
+             max_detour_ratio=2, unroutable=RelationUnroutableMode.RELAX, window=WINDOW):
     project, placed, actual, view, projection = _project(mirrored=mirrored, baseline_ghost=baseline_ghost,
-                                                     ghost_finish=ghost_finish)
+                                                     ghost_finish=ghost_finish, window=window)
     metrics = {
         "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-        "timeline.row.minBlockSize": Decimal(22), "timeline.row.paddingBlock": Decimal(0),
-        "timeline.mark.blockSize": Decimal(20),
+        # Leave a genuine outward corridor beside the reserved finish delta;
+        # the old compact fixture could escape only along the plan's end face.
+        "timeline.row.minBlockSize": Decimal(60), "timeline.row.paddingBlock": Decimal(0),
+        "timeline.mark.blockSize": Decimal(50),
         "timeline.relation.cornerRadius": Decimal(corner_radius),
     }
     measured = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, metrics)
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
-        relation_entry=entry, row_distribution="pack", relation_max_bends=4, relation_max_detour_ratio=2,
-        relation_search=search)
+        relation_entry=entry, row_distribution="pack", relation_max_bends=max_bends,
+        relation_max_detour_ratio=max_detour_ratio, relation_search=search, relation_unroutable=unroutable)
     content = surface_content(relations=project["relations"], show_member_labels=True, label_placement="plot",
         label_content=("title",), label_side="end", label_overflow="visible-overflow")
     theme = _theme_with_route_fixture_geometry(target_marker=target_marker)
@@ -104,14 +107,19 @@ def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", ta
 
 @pytest.mark.parametrize("radius", range(7))
 def test_clipped_corner_preserves_head_and_side_entry_beside_detached_ghost(radius):
+    # A tighter explicit window leaves a real outward corridor before the
+    # finish-delta obstacle while preserving the detached ghost fixture.
     surface = _compose(baseline_ghost=True, ghost_finish=9, entry="side",
-                       corner_radius=radius, head_length=6)
+                       corner_radius=radius, head_length=6, max_bends=6,
+                       unroutable=RelationUnroutableMode.SUPPRESS,
+                       window=ViewWindow("explicit", "2026-01-15", "2026-03-01", 0))
     path = _relation_path(surface)
     assert path.points[-2][1] == path.points[-1][1]
     assert path.points[-1][0] - path.points[-2][0] >= 7 - 1e-6
     ghost = next(p for p in surface.primitives if p.scene_id == "planned:b:snapshot:b")
-    assert path.points[-2][0] >= ghost.bounds[0] + ghost.bounds[2]
+    assert not _path_crosses_rect(path.points, ghost.bounds)
     assert not any("ENTRY_FALLBACK" in diagnostic for diagnostic in surface.diagnostics)
+    assert not any(item.stage for item in surface.info_diagnostics if hasattr(item, "stage"))
     # The adapter receives a full straight head tangent after the completed turn.
     assert not radius or path.path_commands[-1].kind == "line"
     previous = path.path_commands[-2].points[-1] if path.path_commands else path.points[-2]
@@ -121,13 +129,16 @@ def test_clipped_corner_preserves_head_and_side_entry_beside_detached_ghost(radi
 
 def test_radius_clipping_does_not_shorten_a_head_to_cross_a_detached_ghost():
     surface = _compose(baseline_ghost=True, ghost_finish=11, entry="side",
-                       corner_radius=4, head_length=6)
-    assert any("reason=entry-stub-blocked" in diagnostic for diagnostic in surface.diagnostics)
+                       corner_radius=4, head_length=6, max_bends=6,
+                       unroutable=RelationUnroutableMode.SUPPRESS)
+    assert not any(item.kind == "Path" and item.source_kind == "relation" for item in surface.primitives)
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in surface.diagnostics)
 
 
 def _relation_path(surface):
     paths = [item for item in surface.primitives
-             if item.kind == "Path" and item.scene_id.startswith("relation:")]
+             if item.kind == "Path" and item.source_kind == "relation"
+             and item.scene_id.startswith("relation:")]
     assert len(paths) == 1, [item.scene_id for item in paths]
     return paths[0]
 
@@ -160,54 +171,37 @@ def _prior_source_first(monkeypatch):
     monkeypatch.setattr(surface_routes, "select_relation_route", select_first_eligible)
 
 
-def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizontally(monkeypatch):
+def test_blocked_nearest_exit_is_skipped_before_the_clear_end_entry(monkeypatch):
     attempts = []
-    nearest_candidates = []
     original = surface_routes.select_relation_route
-    original_pair = routing._select_pair_candidate
-    original_measure = routing.route_quality_attempt
-
-    def measure(*args, **kwargs):
-        result = original_measure(*args, **kwargs)
-        nearest_candidates.append(result)
-        return result
-
-    def capture_nearest(source, target, **kwargs):
-        if source.side == "below" and target.stub:
-            with monkeypatch.context() as local:
-                local.setattr(routing, "route_quality_attempt", measure)
-                return original_pair(source, target, **kwargs)
-        return original_pair(source, target, **kwargs)
-
     def capture(pairs, **kwargs):
         result = original(pairs, **kwargs)
         attempts.extend(result.attempts)
         return result
 
     monkeypatch.setattr(surface_routes, "select_relation_route", capture)
-    monkeypatch.setattr(routing, "_select_pair_candidate", capture_nearest)
     current = _compose(search="best")
     points = _relation_path(current).points
     assert _bends(points) == 4
     assert points[-2][1] == points[-1][1] and points[-2][0] < points[-1][0]
     assert points[-1][0] - points[-2][0] >= 11
-    assert nearest_candidates[0].bends == 5
-    assert min(item.bends for item in nearest_candidates
-               if item.length <= item.direct_length * item.max_detour_ratio) == 5
-    assert attempts[0].source_side == "below" and attempts[0].outcome == "quality-rejected"
-    assert (attempts[1].source_side, attempts[1].outcome, attempts[1].bends) == ("end", "accepted", 4)
+    assert attempts[0].source_side == "below" and attempts[0].outcome == "no-route-found"
+    accepted = next(item for item in attempts if item.outcome == "accepted")
+    assert (accepted.source_side, accepted.outcome, accepted.bends) == ("end", "accepted", 4)
 
     with monkeypatch.context() as old:
         _prior_source_first(old)
         prior = _relation_path(_compose(search="best")).points
-    # #1702 row 5: the finish delta now holds the end slot before routes, so the prior rule's route jogs around it
-    # (4 bends instead of 2); the current rule's route is unchanged.
-    assert _bends(prior) == 4
-    assert prior[-2][0] == prior[-1][0], "the previous source-first rule takes the vertical target entry"
+    # The old pair order no longer admits the formerly unsafe vertical face
+    # approach; it reaches the same safe horizontal end entry.
+    assert prior == points
+    assert prior[-2][1] == prior[-1][1] and prior[-2][0] < prior[-1][0]
 
 
 def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_content(monkeypatch):
-    surface = _compose(baseline_ghost=True, entry="side")
+    tight_window = ViewWindow("explicit", "2026-01-15", "2026-03-01", 0)
+    surface = _compose(baseline_ghost=True, ghost_finish=9, entry="side", search="best",
+                       max_bends=6, unroutable=RelationUnroutableMode.SUPPRESS, window=tight_window)
     path = _relation_path(surface)
     variance = next(item for item in surface.primitives if item.scene_id == "variance:a:a")
     assert variance.kind == "Text" and variance.text == "+1d"
@@ -222,28 +216,28 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
                    and json.loads(item.split(":", 1)[1])["placementId"] == variance.scene_id
                    for item in surface.diagnostics)
     ghost = next(item for item in surface.primitives if item.scene_id == "planned:b:snapshot:b")
-    target = next(item for item in surface.primitives if item.scene_id == "planned:b:b")
-    stub_tip = float(target.bounds[0]) - 11
-    target_start = float(target.bounds[0])
-    target_y = float(target.bounds[1] + target.bounds[3] / 2)
-    assert ghost.bounds[0] < target_start and ghost.bounds[0] + ghost.bounds[2] > stub_tip
-    assert ghost.bounds[1] < target_y < ghost.bounds[1] + ghost.bounds[3]
+    # The legal route runs just to the right of the detached ghost; the legacy
+    # same-source exemption below sends it through the ghost's closed bounds.
+    ghost_right = ghost.bounds[0] + ghost.bounds[2]
+    assert ghost.bounds[1] < path.points[2][1] < ghost.bounds[1] + ghost.bounds[3]
+    assert path.points[2][0] - ghost_right == pytest.approx(2)
     assert not _path_crosses_rect(path.points, ghost.bounds), "the detached snapshot remains a route obstacle"
-    assert any(item == f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{path.scene_id};reason=entry-stub-blocked"
-               for item in surface.diagnostics)
+    assert not any(item.startswith(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{path.scene_id};")
+                   for item in surface.diagnostics)
 
     original_overlap = route_ports._overlaps
     with monkeypatch.context() as old:
         old.setattr(route_ports, "_overlaps", lambda left, right:
                     left.source_ref == right.source_ref or original_overlap(left, right))
-        legacy = _compose(baseline_ghost=True, entry="side")
+        legacy = _compose(baseline_ghost=True, ghost_finish=9, entry="side", search="best",
+                          max_bends=6, unroutable=RelationUnroutableMode.SUPPRESS, window=tight_window)
     legacy_path = _relation_path(legacy)
     legacy_ghost = next(item for item in legacy.primitives if item.scene_id == "planned:b:snapshot:b")
     assert _path_crosses_rect(legacy_path.points, legacy_ghost.bounds), (
         "the prior all-same-object host exemption lets the route cross the detached baseline ghost")
 
 
-def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_and_old_order_does_not(monkeypatch):
+def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_with_old_pair_order(monkeypatch):
     current = _compose(mirrored=True, search="best")
     points = _relation_path(current).points
     assert points[-2][1] == points[-1][1] and points[-2][0] > points[-1][0]
@@ -251,7 +245,7 @@ def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_and_old_order_doe
 
     _prior_source_first(monkeypatch)
     prior = _relation_path(_compose(mirrored=True, search="best")).points
-    assert prior[-2][0] == prior[-1][0], "prior order drops vertically onto the target end"
+    assert prior[-2][1] == prior[-1][1] and prior[-2][0] > prior[-1][0]
 
 
 def test_round_target_terminal_keeps_semantic_entry_stub_after_paint_trimming():
