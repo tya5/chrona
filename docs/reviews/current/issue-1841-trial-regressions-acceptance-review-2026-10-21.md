@@ -23,6 +23,11 @@ shared native-surface heading contract. No Scene/adaptor routing or title logic.
 
 ## Programme-level criteria (optional)
 
-Official generated-artifact audit, PR CI and exact review-containing main
-three-OS release remain required. Public trial inputs and generated evidence
-are not edited to absorb failures. Parent1841 remains open for every unmet row.
+Rows1–3 merged through PR1844 as `f491f8d5ea7bd450e97019a7df07c615443313cf`;
+[CI39464378020](https://github.com/tya5/chrona/actions/runs/39464378020) passed
+all applicable checks at exact head `1595f0c82bed87e8e063e9f334d1f99f13440ef2`.
+The [official109-path audit](https://github.com/tya5/chrona/pull/1844#issuecomment-6296962743)
+finds all50 SVGs/all50 Scenes byte-identical; only74 existing inventory source
+anchors change. No redundant raster or authored corpus/derived edits.
+Exact review-containing main three-OS release remains required. Parent1841
+stays open for rows4–5 and their independently reviewed publication.

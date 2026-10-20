@@ -29,7 +29,7 @@ authoring preparation/transactions and rendering owners remain unchanged.
 | 2 | Inline and path forms produce identical revisions for the same command. | met | [Store parity and integrity](../../../tests/unit/chrona/app/test_agent_commands.py), [Store stdio](../../../tests/mcp/test_inline_store_commands_stdio.py), and [authoring twin-workspace stdio](../../../tests/mcp/test_workspace_lifecycle_stdio.py) compare revisions and mixed-form replay; stale/reused IDs and immutable outputs remain protected. | — |
 | 3 | The tool descriptions state both forms, with the exact version literal (as in #1807). | met | [Metadata test](../../../tests/unit/chrona/app/test_agent_tools.py) checks all three command tools against their embedded schema constants; existing stdio registry-equality test carries the same descriptions. | — |
 
-## Release result
+## Programme-level criteria (optional)
 
 The exact-main three-OS release and required MCP/newest-Python checks passed.
 All three literal criteria are met. Parent902 remains open for parked #815;
