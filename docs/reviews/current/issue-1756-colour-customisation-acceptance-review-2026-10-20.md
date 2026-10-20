@@ -1,8 +1,9 @@
 # Issue 1756 — customisation acceptance
 
 Status: dev A rows 1–2 implemented at `eca1ac1bf577a142e9f9cca48c00587b5fa7807c`;
-PR/public-snapshot and exact-main release gates pending. Dev B delivered rows
-3–5; the merged recipe and diagnostic criteria are independently checked below.
+PR1786 and its public snapshot passed; all five rows are implemented on main.
+Release remains pending the clean-wheel recipe correction below. Dev B's
+merged recipe and diagnostic criteria are independently checked below.
 Current design, architecture review and implementation plan:
 [issue Status](https://github.com/tya5/chrona/issues/1756#issuecomment-6256669837).
 Normative authority: Specs 28 and 60, including exact domain-warning coverage
@@ -53,11 +54,26 @@ PR1765 is merged and its two-preset recipe test passes on this candidate;
 the three additional B-row acceptance checks pass. All five rows have direct
 implementation evidence; the combined snapshot and exact-main release remain required.
 
-Local `conformance/run_conformance.py`: every check passes except
-`diagnostic-inventory`, which reports `E_DIAGNOSTIC_INVENTORY_STALE` for source
-line movements and the added typed Theme accessor error site. That report is
-derived-owned (`tools/derived_report_inventory.py`); do not author its snapshot.
-The CI-generated snapshot must pass inventory/conformance before acceptance.
+PR1786 CI39344125617 passed all three pytest shards, conformance, MCP floor,
+newest-Python reproduction and the exact ready-base gate. Official artifact
+12229874166 (SHA256 `344ae4de1838434a62bf418abad2585fe1bf58e72859820db1310537e1f5371e`)
+has 50 byte-identical SVG and 50 byte-identical Scene files; only the intended
+coverage and generated diagnostic-inventory reports change. No generated file
+was authored.
+
+Clean-wheel correction: release39342287509 on `12224ed89` passed full pytest
+and conformance on all three OS, but wheel documentation execution refused a
+duplicate `looks/executive-light` destination shared by the guide and Skill.
+The [published correction plan](https://github.com/tya5/chrona/issues/1756#issuecomment-6280331028)
+keeps the non-overwrite rule and gives the guide's two copies and Theme paths
+distinct `looks/typed-*` destinations. The real discovered-command regression
+fails before the path fix and passes after it; Skill/documented-command tests
+pass 36 cases. This is a documentation correction, not a CLI/checker contract
+change. A freshly built wheel (SHA256
+`ff38c18a54eb618239d86e0f8fa29ebbc42af256f6ab356001afc43587d3f36a`)
+passes `tools/wheel_doc_check.py` in a fresh venv and empty workspace, executing
+the documented commands rather than only inspecting their grammar. The
+corrected exact-main three-OS release remains required.
 Full pytest and newest-Python public materializers run in CI; do not duplicate
 the full suite locally. Keep issue1756 open until all five literal rows and the
 review-containing exact-main three-OS/conformance/wheel release are complete.
