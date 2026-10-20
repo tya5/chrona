@@ -1,8 +1,11 @@
 from dataclasses import replace
+import pytest
 
 from chrona.presentation.layout.legend_ink import point_key_owner, source_point_keys
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
-from chrona.presentation.model.style_rules import StyleOccurrence, StyleOccurrenceKey
+from chrona.presentation.model.style_rules import (
+    OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrence, StyleOccurrenceKey,
+)
 from chrona.presentation.model.surface_content import (
     SurfaceContentInput, SurfaceLegendEntry, SummaryContent,
 )
@@ -91,6 +94,26 @@ def test_source_point_keys_preserve_state_and_completed_glyph_structure():
     assert keys[0].glyph is not None
     assert keys[0].glyph.geometry_identity[0] == "circle"
     assert keys[0].occurrences == (occurrence.key,)
+
+
+@pytest.mark.parametrize("state", ("planned", "actual", "forecast"))
+@pytest.mark.parametrize("selected_role", ("planned", "actual", "forecast"))
+def test_explicit_builtin_style_role_owns_points_ahead_of_general_milestone(state, selected_role):
+    occurrence = _occurrence(state)
+    intent = OccurrenceStyleIntent(occurrence.key, selected_role, None,
+                                  ("select-role",), ("select-role",), ())
+    content = _content((SurfaceLegendEntry("milestone", "Milestones"),
+                        *(SurfaceLegendEntry(role, role.title())
+                          for role in ("planned", "actual", "forecast"))),
+                       (occurrence,), intents=OccurrenceStyleIndex((intent,)))
+
+    keys = source_point_keys(content, _tokens(), mark_block_size=20,
+                             paint_capabilities=PaintWitnessCapabilities())
+
+    assert len(keys) == 1
+    assert keys[0].family == selected_role
+    assert keys[0].point_state == state
+    assert keys[0].paint_role == selected_role
 
 
 def test_point_state_partitions_equal_ink_without_changing_nonpoint_identity():

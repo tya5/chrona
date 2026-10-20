@@ -69,7 +69,7 @@ def point_key_owner(content, point_state, selected_role):
                     and entry.view_scale_id is None and entry.encoding_scale_id is None
                     and not entry.encoding_value_is_wording
                     and not entry.role.startswith("scale:"))
-    if selected_role is not None and selected_role not in {"planned", "actual", "forecast"}:
+    if selected_role is not None:
         selected = next((entry.role for entry in entries if entry.role == selected_role), None)
         if selected is not None:
             return selected
