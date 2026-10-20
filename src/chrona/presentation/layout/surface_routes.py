@@ -89,6 +89,17 @@ def _primary_mark_contact_is_clear(parts, primary_bounds, *, route_start, route_
     return True
 
 
+def _primary_egress_blockers(egress: ConnectorEgress, primary_bounds) -> tuple[str, ...]:
+    """Reject an impossible mandatory corridor before searching its middle path."""
+    if not egress.corridor:
+        return ()
+    parts = split_route_at_physical_corridors(egress.corridor, egress, None)
+    return tuple(identifier for identifier, rect in primary_bounds
+                 if not _primary_mark_contact_is_clear(parts, ((identifier, rect),),
+                     route_start=egress.semantic_port, route_end=egress.exposed_port,
+                     source_egress=egress))
+
+
 def inset_route_bounds(bounds: tuple[float, float, float, float],
                        port_inlines: list[float]) -> tuple[float, float, float, float]:
     """The route region without the plot's own inline edges (#1683).
@@ -940,9 +951,15 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     return tuple(rect for identifier, rect in required_primary_interiors(
                         dependency_stroke, domain.required_primary_mark_ids) if identifier not in hosts)
 
+                def primary_egress_blockers(source_exit, target_entry):
+                    bounds = required_primary_bounds(domain.required_primary_mark_ids)
+                    return tuple(sorted(set(_primary_egress_blockers(source_exit, bounds))
+                                        | set(_primary_egress_blockers(target_entry, bounds))))
+
                 selection = select_relation_route(pairs, obstacles=domain.obstacles,
                     endpoint_preserving_prepare=True,
                     protected_quality_barriers=quality_barriers,
+                    primary_egress_blockers=primary_egress_blockers,
                     protected=(relation.critical and context.layout_manifest.relation_unroutable
                                is RelationUnroutableMode.SUPPRESS),
                     preferred_routes=(tuple((candidate.pair, candidate.middle) for candidate in hint_proposal.candidates)

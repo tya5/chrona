@@ -459,6 +459,7 @@ def select_relation_route(
     label_repair_obstacle_ids: frozenset[str] = frozenset(),
     route_stroke_width: float = 0.0,
     outward_runs: tuple[float, float] | None = None,
+    primary_egress_blockers: Callable[[ConnectorEgress, ConnectorEgress], tuple[str, ...]] | None = None,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -514,14 +515,16 @@ def select_relation_route(
             settled_by_hint=hinted, hint_rejection=hint_rejection)
 
     def pair_domain(source, target):
-        blockers = tuple(sorted({item.placement_id for egress in (source, target)
+        blockers = {item.placement_id for egress in (source, target)
             if egress.corridor for item in obstacles.egress_collisions(
                 ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
-                classes=classes, regions=regions)}))
+                classes=classes, regions=regions)}
+        if primary_egress_blockers is not None:
+            blockers.update(primary_egress_blockers(source, target))
         port_ids = tuple(port_id
             for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
             for port_id in (f"port:{host_id or relation_scene_id}:{side}",) if obstacles.has(port_id))
-        return blockers, port_ids
+        return tuple(sorted(blockers)), port_ids
 
     def outward_candidates(source, target):
         return outward_relation_shape_candidates((source, target),

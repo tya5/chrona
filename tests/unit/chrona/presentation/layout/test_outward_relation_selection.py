@@ -37,6 +37,20 @@ def _bounded_miss(*args, **kwargs):
 
 
 @pytest.mark.parametrize("policy", ["first-fit", "best"])
+def test_closed_egress_collision_never_enters_ordinary_or_protected_search(policy, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("an impossible mandatory corridor entered route selection")
+
+    monkeypatch.setattr(routing, "_select_pair_candidate", forbidden)
+    result = _select(_pair(), search_policy=policy, protected=True,
+                     primary_egress_blockers=lambda source, target: ("planned:source",))
+    assert result.selected_pair is None and not result.search_used
+    assert result.critical_evidence.exhausted
+    assert all(attempt.outcome == "egress-collision"
+               and attempt.blocker_ids == ("planned:source",) for attempt in result.attempts)
+
+
+@pytest.mark.parametrize("policy", ["first-fit", "best"])
 def test_outward_proposal_uses_normal_preparation_acceptance_and_quality(policy, monkeypatch):
     pair = _pair()
     prepared, accepted = [], []

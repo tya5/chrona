@@ -5,7 +5,7 @@ from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, segment_closed_rect_contact_interval,
 )
 from chrona.presentation.layout.ports import ConnectorEgress
-from chrona.presentation.layout.surface_routes import _primary_mark_contact_is_clear
+from chrona.presentation.layout.surface_routes import _primary_egress_blockers, _primary_mark_contact_is_clear
 
 
 def _bounds(placement_id="planned:source", *, left=0, top=0, right=100, bottom=10):
@@ -35,6 +35,24 @@ def test_temporal_tip_touch_and_outward_detour_are_allowed():
     assert _primary_mark_contact_is_clear(_parts(outward_detour), bounds,
         route_start=outward_detour[0], route_end=outward_detour[-1],
         source_egress=source, target_egress=target)
+
+
+def test_mandatory_end_face_corridor_is_rejected_before_middle_path_search():
+    invalid = ConnectorEgress("above", (100, 5), (100, 0), ("planned:source",))
+    outward = ConnectorEgress("end", (100, 5), (110, 5), ("planned:source",))
+    assert _primary_egress_blockers(invalid, _bounds()) == ("planned:source",)
+    assert _primary_egress_blockers(outward, _bounds()) == ()
+    assert _primary_egress_blockers(
+        ConnectorEgress("end", (100, 5), (100, 5), ("planned:source",)), _bounds()) == ()
+
+
+def test_egress_preflight_keeps_named_physical_scope_and_selected_stage_bounds():
+    hosted = ConnectorEgress("end", (50, 5), (100, 5), ("point",),
+                             corridor_host_ids=("planned:source",))
+    assert _primary_egress_blockers(hosted, _bounds()) == ()
+    foreign = _bounds("foreign", left=70, right=80)
+    assert _primary_egress_blockers(hosted, (*_bounds(), *foreign)) == ("foreign",)
+    assert _primary_egress_blockers(hosted, _bounds()) == ()
 
 
 def test_positive_length_source_top_edge_and_end_face_slides_are_blocked():
