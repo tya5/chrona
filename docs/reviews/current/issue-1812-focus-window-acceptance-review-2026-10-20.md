@@ -1,7 +1,7 @@
 # Issue 1812 — focus-window acceptance
 
 Status: implementation and parked-head artifact verified; final-base CI/release pending.
-Source: `f6e9802fe`; integrated trusted ready `ec8f27ed3` at `79de8b64e`.
+Source: `f6e9802fe`; integrated trusted ready `27d2fd8f2` at `4d47de165`.
 Design: [living issue record](https://github.com/tya5/chrona/issues/1812#issuecomment-6286331161),
 published specifications `7b2752dae` and row-absence correction `85756e601`.
 
@@ -44,6 +44,9 @@ pytest shards were inventoried: seven stale synthetic-fixture/schema expectation
 corrected by tests-only `fd3c8ae47`; the affected six modules pass 134 tests without
 product fallbacks or validator weakening.
 
-CI supplies full tests and release evidence. Follow the ready main containing
-[1818](https://github.com/tya5/chrona/issues/1818), then verify the final-base artifact
-and exact-main three-OS release. Parked-head evidence alone does not close the issue.
+Integration with [1818](https://github.com/tya5/chrona/issues/1818) preserves both
+row admission and declared precision through the shared Layout request/preflight.
+Window/precision/guide tests pass 61 cases; defaults/chip/lane tests pass 82 cases
+(overlapping suites). The subsequent ready-main merge changes only bot-owned
+evidence, without product conflicts. CI supplies full tests and release evidence;
+final-base artifact and exact-main three-OS verification remain required.
