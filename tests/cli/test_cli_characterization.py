@@ -386,7 +386,10 @@ _OS_ERROR = re.compile(r"\[(?:Errno|WinError) \d+\] [^:]*?: ")
 
 
 def _normalise(text: str, root: pathlib.Path) -> str:
-    for spelling in {str(root), root.as_posix(), str(root.resolve()), root.resolve().as_posix()}:
+    spellings = {str(root), root.as_posix(), str(root.resolve()), root.resolve().as_posix()}
+    # Resolve the longest alias first: replacing /tmp/... inside /private/tmp/...
+    # would otherwise leave /private<tmp>, depending on set/hash iteration order.
+    for spelling in sorted(spellings, key=len, reverse=True):
         text = text.replace(spelling, "<tmp>")
         text = text.replace(spelling.replace("\\", "\\\\"), "<tmp>")
     text = _OS_ERROR.sub("<os error>: ", text)
@@ -628,3 +631,13 @@ def test_normalise_does_not_strip_external_error_filename(tmp_path):
     message = json.dumps({"message": f"[WinError 2] File not found: '{filename}'"})
     expected = json.dumps({"message": f"<os error>: '{filename}'"})
     assert _normalise(message, root) == expected
+
+
+def test_normalise_handles_overlapping_posix_scratch_aliases(monkeypatch):
+    monkeypatch.setattr(pathlib.Path, "resolve", lambda path: pathlib.Path("/private") / path.relative_to("/"))
+    for suffix in range(32):
+        root = pathlib.Path(f"/tmp/chrona-characterization-alias-{suffix}")
+        expected = json.dumps({"message": "<os error>: 'nested/missing.yaml'"})
+        for spelling in (root, root.resolve()):
+            message = json.dumps({"message": f"[Errno 2] No such file: '{spelling}/nested/missing.yaml'"})
+            assert _normalise(message, root) == expected
