@@ -19,7 +19,7 @@ from tests.support import synthetic_review as sr
 # every locale; `--locale ja-JP` then has no English built-in wording for it.
 BUILT_IN_WORDING_KEYS = (
     "column.task", "column.plan", "column.lane", "column.items",
-    "marker.today", "marker.asOf",
+    "marker.today", "marker.asOf", "marker.baselineNew", "marker.baselineRemoved",
     "legend.planned", "legend.actual", "legend.milestone", "legend.dependency", "legend.asOf",
     "legend.calendar-closed", "legend.critical-edge", "legend.forecast", "legend.progressFill",
     "legend.actual-ahead", "legend.actual-on-track", "legend.actual-behind",

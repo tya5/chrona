@@ -7,6 +7,8 @@ tables:
     column.items: Items
     marker.today: TODAY
     marker.asOf: As of
+    marker.baselineNew: new
+    marker.baselineRemoved: removed
     legend.planned: Task duration
     legend.actual: Actual
     legend.milestone: Milestone
@@ -49,6 +51,8 @@ tables:
     column.items: 件数
     marker.today: 本日
     marker.asOf: 基準日
+    marker.baselineNew: 新規
+    marker.baselineRemoved: 削除
     legend.planned: 計画期間
     legend.actual: 実績
     legend.milestone: マイルストーン
