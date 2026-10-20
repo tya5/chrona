@@ -1,49 +1,29 @@
-# Issue344 — Level1 object-reference slice
+# Issue 344 — Level 1 object-reference slice
 
-[Active scope, design and implementation plan](https://github.com/tya5/chrona/issues/344#issuecomment-6291962311).
-The [reviewer acceptance](https://github.com/tya5/chrona/issues/344#issuecomment-6290785975)
-is the authority for this slice; the wider ecosystem issue remains open.
-Normative Specs06/07/17/60 were published in `08742fa44`, with the extension-owned
-namespace correction `201a4afc7`, before the respective product code.
-Corrected implementation: `518e27afb`.
+**Disposition:** the reviewer-selected Level 1 slice is released; the wider
+issue remains open. The [reviewer acceptance](https://github.com/tya5/chrona/issues/344#issuecomment-6290785975)
+defines this slice. Normative Specs 06/07/17/60 and the namespace correction
+preceded implementation.
 
-| Literal active-slice criterion | Disposition | Evidence |
-| --- | --- | --- |
-| Synthetic plan: a valid reference passes; a missing target, a wrong target profile and a cardinality error each fail with a pointer through validate, schedule and render. | met locally; release pending | `test_object_reference_validation.py` checks actual profile/Core validation, scheduler and render source closure, including valid references and per-element pointers. `test_object_references.py` and `test_generic_profile_fields.py` cover compatible-profile disambiguation, missing/incompatible/ambiguous targets and unconstrained references; existing delivery-profile controls pass. |
-| A column over a reference shows the target title, en-US and ja-JP. | met locally; release pending | `test_object_reference_projection.py`: actual SVG in both locales and ordinary/lane tables; ordered many titles, source-local primary/Snapshot/scenario bindings, and no second entity-title lookup. English Style-encoding and Japanese lane-table SVG rasters inspected: titles visible without clipping. |
-| Existing Projects unchanged (count table). | met on artifact12272058191; new-head confirmation pending | [Official50-slide count/byte audit](https://github.com/tya5/chrona/pull/1834#issuecomment-6292534493): all50 SVG and50 Scene bytes identical; only diagnostic-inventory source locations, two guard sites and three catalogue-owner names change. No authored public-corpus changes. Final-head artifact must retain these payloads. |
+**Review-containing main:** `53bbcc9900ebba3d6490ad0dfe1ccb81b84c7948`.
+**Release:** [39444807924](https://github.com/tya5/chrona/actions/runs/39444807924)
+passed full pytest, conformance and wheel on Ubuntu, macOS and Windows, plus
+MCP-floor and newest-Python reproduction.
 
-Additional scope controls: scalar reference Style equality reads the resolved
-title, not a raw-ID alias. Raw IDs remain encoding domains and legend identities;
-same-title targets keep distinct keys/colours. Snapshot title renaming keeps one
-identity, labelled from the first matched occurrence. Shared completion rejects
-present non-scalars and cross-namespace/logical-Project aliases with existing
-`E_PRESENTATION_SCALE_VALUE`; absent/null base paint remains unchanged.
+| Literal active-slice acceptance | Result and direct evidence |
+| --- | --- |
+| Synthetic plan: a valid reference passes; a missing target, a wrong target profile and a cardinality error each fail with a pointer through validate, schedule and render. | met — `test_object_reference_validation.py` checks source-closure validation and pointers through all three entry points; `test_object_references.py` and `test_generic_profile_fields.py` cover target/profile disambiguation and invalid cases. |
+| A column over a reference shows the target title, en-US and ja-JP. | met — `test_object_reference_projection.py` checks actual English and Japanese SVG output, ordinary and lane tables, ordered many-target titles, and source-local primary/Snapshot/scenario bindings. The two SVG rasters were inspected. |
+| Existing Projects unchanged (count table). | met — the [official artifact audit](https://github.com/tya5/chrona/pull/1834#issuecomment-6292534493) records all 50 public SVG and all 50 Scene files byte-identical, with no authored public-corpus changes. |
 
-Architecture review by root and two independent Luna reviewers: Core owns the
-single immutable indexed target catalogue; effective profile metadata is detached
-per source before presentation. Table and Style consume those facts. Layout,
-Scene and adapters gain no resolver or geometry responsibility. No schema version,
-derived expressions, default/inheritance evaluator, IDP diagnostic replacement or
-project-specific conditional. The old opaque-list fact expectation now retains
-bounded nonscalar state instead of masquerading as null.
+Core owns the immutable indexed target catalogue and canonical identity
+`(logicalProjectID, namespace, targetID)`; extensions own package-specific
+profile/namespace constraints; detached source bindings feed View and Style.
+Reference display uses the target title, falling back to the ID, while raw
+IDs remain encoding domains and legend identities. Layout, Scene and adapters
+do not resolve references. The IDP actor-entity rule remains extension-owned;
+generic object/entity ambiguity is rejected without changing the resource-
+reference shape-only guard.
 
-The corrected extension owner normalizes reference profiles and namespaces for
-both validation and binding descriptors. IDP actor entities remain authoritative
-when an actor object shares the ID; same-named profiles owned by other packages
-retain generic two-namespace semantics. The concrete validate-pass/projection-fail
-case now passes actual SVG rendering. Independent Core/adapter review and40/44
-focused tests pass (overlap); object-only assignees retain `IDP-PROFILE-003`.
-
-CI39437682736 exposed an evidence-reference AST guard collision: two mixed-type
-validators called the in-memory catalogue's `resolve`, which the guard treats as
-external resolution. Object-reference validation is now in dedicated helpers;
-resource references remain shape-only and the guard is unchanged. This extraction
-changes neither the catalogue, delivery domain nor diagnostics.
-
-Focused batches:166 tests across projection and adjacent Style/legend/formatting
-integration, then12 final projection controls;52 model/generic/IDP tests and24
-source-binding/parity/projection tests pass (overlap). Independent I2 focused
-suite87 passes. No local full-suite/corpus sweep; CI supplies the disposable
-public snapshot, full release matrix and materializer evidence. Final PR artifact
-audit and exact-main three-OS release links must be added before slice acceptance.
+The broader #344 profile/field work remains outside this released slice; this
+review does not claim the parent issue is closed.
