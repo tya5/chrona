@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from math import isfinite
 
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
-from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 
 Point = tuple[float, float]
 Path = tuple[Point, ...]
@@ -97,6 +97,31 @@ def relation_shape_candidates(start: Point, end: Point, *, bounds: Bounds,
         if (len(candidate) >= 2 and candidate not in result
                 and all(bounds[0] <= x <= bounds[2] and bounds[1] <= y <= bounds[3] for x, y in candidate)):
             result.append(candidate)
+    return tuple(result)
+
+
+def outward_relation_shape_candidates(
+    pair: tuple[ConnectorEgress, ConnectorEgress], *, source_run: float, target_run: float,
+    bounds: Bounds, channels: RelationShapeChannels,
+) -> tuple[Path, ...]:
+    """Propose channel shapes between the already-reserved outward endpoint leads.
+
+    The returned path begins/ends at the exposed ports; semantic-to-exposed
+    comparison corridors remain the caller's responsibility. All candidates
+    use the existing finite straight/L/Z/U grammar and are only proposals:
+    callers still run normal route preparation and acceptance.
+    """
+    _check_bounds(bounds)
+    source, target = pair
+    source_lead, target_lead = outward_corridor_ends(
+        pair, source_run=source_run, target_run=target_run)
+    middle_paths = relation_shape_candidates(source_lead, target_lead,
+                                            bounds=bounds, channels=channels)
+    result = []
+    for middle in middle_paths:
+        path = _canonical_shape_path((source.exposed_port, *middle, target.exposed_port), bounds)
+        if path is not None and path not in result:
+            result.append(path)
     return tuple(result)
 
 

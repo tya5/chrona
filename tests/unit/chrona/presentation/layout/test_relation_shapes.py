@@ -7,7 +7,8 @@ from chrona.presentation.layout import route_search as search
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.relation_shapes import (
-    RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
+    RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
+    relation_shape_candidates, shape_channels,
     supplemental_relation_channel_candidates,
 )
 from chrona.presentation.layout import routing
@@ -62,6 +63,32 @@ def test_shape_order_has_at_most_seven_raw_proposals_and_no_diagonal_or_outside_
     assert aligned.count(aligned[0]) == 1
     outside = relation_shape_candidates((-1, 1), (9, 9), bounds=(0, 0, 10, 10), channels=channels)
     assert outside == ()
+
+
+def test_outward_channel_proposal_reuses_finite_shape_grammar_for_four_bend_route():
+    source = ConnectorEgress("above", (5., 8.), (5., 6.), ("source-mark",))
+    target = ConnectorEgress("above", (15., 12.), (15., 10.), ("target-mark",))
+    channels = RelationShapeChannels((0., 10., 20.), (0., 20.))
+    proposals = outward_relation_shape_candidates((source, target), source_run=2., target_run=2.,
+        bounds=(0., 0., 20., 20.), channels=channels)
+    four_bend = ((5., 6.), (5., 4.), (10., 4.), (10., 8.), (15., 8.), (15., 10.))
+    assert four_bend in proposals
+    assert all(path[0] == source.exposed_port and path[-1] == target.exposed_port for path in proposals)
+    assert all(all(a[0] == b[0] or a[1] == b[1] for a, b in zip(path, path[1:]))
+               for path in proposals)
+    assert all(all(0 <= x <= 20 and 0 <= y <= 20 for x, y in path) for path in proposals)
+
+
+def test_outward_channel_proposals_reject_leads_outside_bounds_and_keep_physical_port_identity():
+    source = ConnectorEgress("end", (0., 5.), (2., 5.), ("source",), corridor_host_ids=("physical",))
+    target = ConnectorEgress("start", (20., 15.), (18., 15.), ("target",))
+    paths = outward_relation_shape_candidates((source, target), source_run=3., target_run=3.,
+        bounds=(0., 0., 20., 20.), channels=RelationShapeChannels((0., 10., 20.), (0., 10., 20.)))
+    assert paths
+    assert all(path[0] == source.exposed_port and path[-1] == target.exposed_port for path in paths)
+    assert all(path[0] != source.semantic_port and path[-1] != target.semantic_port for path in paths)
+    assert outward_relation_shape_candidates((source, target), source_run=19., target_run=3.,
+        bounds=(0., 0., 20., 20.), channels=RelationShapeChannels((0., 10., 20.), (0., 10., 20.))) == ()
 
 
 def test_repair_supplement_is_bounded_and_keeps_basic_candidates_first(monkeypatch):

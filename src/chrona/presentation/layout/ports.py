@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from math import isfinite
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
@@ -23,6 +24,34 @@ class ConnectorEgress:
     def corridor(self) -> tuple[tuple[float, float], ...]:
         return (() if self.semantic_port == self.exposed_port
                 else (self.semantic_port, self.exposed_port))
+
+
+_EGRESS_DIRECTIONS = {"end": (1., 0.), "start": (-1., 0.),
+                      "above": (0., -1.), "below": (0., 1.)}
+
+
+def outward_corridor_ends(pair: tuple[ConnectorEgress, ConnectorEgress], *,
+                          source_run: float, target_run: float) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Return points beyond each exposed port by its existing terminal/stroke reserve."""
+    source, target = pair
+    coordinates = (*source.semantic_port, *source.exposed_port,
+                   *target.semantic_port, *target.exposed_port)
+    if (source.side not in _EGRESS_DIRECTIONS or target.side not in _EGRESS_DIRECTIONS
+            or any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                   or not isfinite(value) for value in (*coordinates, source_run, target_run))
+            or min(source_run, target_run) < 0):
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: fixed connector corridors")
+    if any(egress.semantic_port[0] != egress.exposed_port[0]
+           and egress.semantic_port[1] != egress.exposed_port[1] for egress in pair):
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: non-orthogonal endpoint corridor")
+    sx, sy = source.exposed_port
+    tx, ty = target.exposed_port
+    sd, td = _EGRESS_DIRECTIONS[source.side], _EGRESS_DIRECTIONS[target.side]
+    a = (sx + sd[0] * source_run, sy + sd[1] * source_run)
+    b = (tx + td[0] * target_run, ty + td[1] * target_run)
+    if not all(isfinite(value) for value in (*a, *b)):
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: overflowing endpoint corridor")
+    return a, b
 
 
 def coincident_endpoint_port_ids(index: SurfaceObstacleIndex,

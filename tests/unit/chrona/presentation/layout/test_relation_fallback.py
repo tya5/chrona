@@ -3,7 +3,7 @@ from dataclasses import replace
 
 import pytest
 
-from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 from chrona.presentation.layout.relation_fallback import (
     complete_fixed_connector, fixed_connector_candidates, paired_stub_geometry,
 )
@@ -22,6 +22,15 @@ def test_finite_orthogonal_candidates_preserve_semantic_endpoints_and_outward_co
         assert path[0] == PAIR[0].semantic_port and path[-1] == PAIR[1].semantic_port
         assert path[1] == (6., 0.) and path[-2] == (91., 20.)
         assert all(a[0] == b[0] or a[1] == b[1] for a, b in zip(path, path[1:]))
+
+
+def test_shared_outward_leads_keep_endpoint_corridors_and_match_fixed_fallback():
+    pair = (replace(PAIR[0], exposed_port=(4., 0.)),
+            replace(PAIR[1], exposed_port=(95., 20.)))
+    leads = outward_corridor_ends(pair, source_run=16., target_run=12.)
+    assert leads == ((20., 0.), (83., 20.))
+    paths = fixed_connector_candidates(pair, source_run=16., target_run=12.)
+    assert paths[0] == ((0., 0.), (4., 0.), (20., 0.), (83., 0.), (83., 20.), (95., 20.), (100., 20.))
 
 
 def test_preparation_rejection_tries_next_fixed_candidate_without_graph_search():

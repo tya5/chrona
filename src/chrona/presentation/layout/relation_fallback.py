@@ -1,39 +1,13 @@
 """Finite fixed connector geometry; no graph search or safety/completeness claim."""
 from collections.abc import Callable
 from dataclasses import dataclass
-from math import isfinite
 
-from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 from chrona.presentation.layout.relation_shapes import first_fit_port_pairs
 
 Point = tuple[float, float]
 Path = tuple[Point, ...]
 Pair = tuple[ConnectorEgress, ConnectorEgress]
-_DIRECTIONS = {"end": (1., 0.), "start": (-1., 0.), "above": (0., -1.), "below": (0., 1.)}
-
-
-def _corridor_ends(pair: Pair, source_run: float, target_run: float) -> tuple[Point, Point]:
-    source, target = pair
-    coordinates = (*source.semantic_port, *source.exposed_port,
-                   *target.semantic_port, *target.exposed_port)
-    if (source.side not in _DIRECTIONS or target.side not in _DIRECTIONS
-            or any(not isinstance(value, (int, float)) or isinstance(value, bool)
-                   or not isfinite(value) for value in (*coordinates, source_run, target_run))
-            or min(source_run, target_run) < 0):
-        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: fixed connector corridors")
-    if any(egress.semantic_port[0] != egress.exposed_port[0]
-           and egress.semantic_port[1] != egress.exposed_port[1] for egress in pair):
-        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: non-orthogonal endpoint corridor")
-    sx, sy = source.exposed_port
-    tx, ty = target.exposed_port
-    sd, td = _DIRECTIONS[source.side], _DIRECTIONS[target.side]
-    a = (sx + sd[0] * source_run, sy + sd[1] * source_run)
-    b = (tx + td[0] * target_run, ty + td[1] * target_run)
-    if not all(isfinite(value) for value in (*a, *b)):
-        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: overflowing endpoint corridor")
-    return a, b
-
-
 def _without_duplicate_neighbours(points: Path) -> Path:
     return tuple(point for number, point in enumerate(points) if not number or point != points[number - 1])
 
@@ -41,7 +15,7 @@ def _without_duplicate_neighbours(points: Path) -> Path:
 def fixed_connector_candidates(pair: Pair, *, source_run: float, target_run: float) -> tuple[Path, ...]:
     """Preferred L/Z proposals retain independent outward endpoint corridors."""
     source, target = pair
-    a, b = _corridor_ends(pair, source_run, target_run)
+    a, b = outward_corridor_ends(pair, source_run=source_run, target_run=target_run)
     middle_x, middle_y = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
     clearance = max(source_run, target_run, 1.)
     centres = (
@@ -79,7 +53,7 @@ class PairedStubGeometry:
 
 def paired_stub_geometry(pair: Pair, *, source_run: float, target_run: float) -> PairedStubGeometry:
     source, target = pair
-    a, b = _corridor_ends(pair, source_run, target_run)
+    a, b = outward_corridor_ends(pair, source_run=source_run, target_run=target_run)
     outgoing = _without_duplicate_neighbours((source.semantic_port, source.exposed_port, a))
     incoming = _without_duplicate_neighbours((b, target.exposed_port, target.semantic_port))
     if len(outgoing) < 2 or len(incoming) < 2:
