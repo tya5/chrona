@@ -1,0 +1,7 @@
+$ chrona compile row1-with-entity.chrona
+16-      - {date: '2027-01-01', working: false}
+17:entities:
+18-  del-portal:
+19-    type: 'atlas.deliverable'
+20-    title: Partner portal
+21-objects:

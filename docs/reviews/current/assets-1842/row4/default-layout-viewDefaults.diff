@@ -1,0 +1,5 @@
+--- a/src/chrona/resources/presets/bundles/editorial-readable-default/layout.yaml
++++ b/src/chrona/resources/presets/bundles/editorial-readable-default/layout.yaml
+@@ -7,1 +7,2 @@
+ relationRouting: {maxBends: 4, maxDetourRatio: 2}
++viewDefaults: {columnStyles: {facet: {format: signedDays, missing: blank, align: end, width: content, headerOrientation: horizontal}}}

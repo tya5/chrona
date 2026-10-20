@@ -1,0 +1,3 @@
+$ chrona materialize deck-noexpected-manifest.yaml --slide overview --output o2 --write
+{"status": "rejected", "diagnostics": [{"code": "E_MATERIALIZER_MANIFEST_SCHEMA", "severity": "error", "component": "materializer", "sourceRef": "/slides/0", "revisionRefs": [], "message": "while selecting slide overview: missing required property 'expectedSvg' (line 32, column 3)"}]}
+rc=1

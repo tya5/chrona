@@ -1,0 +1,39 @@
+$ chrona preset copy target-b --output copy-plain
+{"status": "ok", "directory": "copy-plain", "created": ["detail.yaml", "layout.yaml", "preset.yaml", "scheme.yaml", "theme.yaml", "view.yaml"]}
+$ chrona preset copy target-b --id my-look --output copy-id
+{"status": "ok", "directory": "copy-id", "created": ["detail.yaml", "layout.yaml", "preset.yaml", "scheme.yaml", "theme.yaml", "view.yaml"]}
+
+# every id in the plain copy vs the --id copy (grep of id: / id fields)
+--- copy-plain
+copy-plain/preset.yaml:3:id: chrona-builtin-target-b
+copy-plain/preset.yaml:9:      id: chrona-preset-design-default
+copy-plain/preset.yaml:13:      id: target-b
+copy-plain/preset.yaml:17:      id: target-b
+copy-plain/preset.yaml:21:      id: target-b
+copy-plain/preset.yaml:25:      id: halcyon-target-b-legend
+copy-plain/scheme.yaml:3:id: target-b
+copy-plain/view.yaml:3:id: chrona-preset-design-default
+copy-plain/theme.yaml:3:id: target-b
+copy-plain/layout.yaml:2:id: target-b
+copy-plain/layout.yaml:5:requiredThemeTokens: [legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.non
+copy-plain/layout.yaml:65:  id: page
+--- copy-id
+copy-id/preset.yaml:3:id: my-look
+copy-id/preset.yaml:9:      id: my-look
+copy-id/preset.yaml:13:      id: my-look
+copy-id/preset.yaml:17:      id: my-look
+copy-id/preset.yaml:21:      id: my-look
+copy-id/preset.yaml:25:      id: my-look
+copy-id/scheme.yaml:3:id: "my-look"
+copy-id/layout.yaml:2:id: "my-look"
+copy-id/layout.yaml:5:requiredThemeTokens: [legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none]
+copy-id/layout.yaml:65:  id: page
+copy-id/view.yaml:3:id: "my-look"
+copy-id/theme.yaml:3:id: "my-look"
+
+$ chrona render plan.chrona --preset copy-id/preset.yaml --output copy-id.svg
+{"diagnostics": [], "status": "ok", "warnings": [{"code": "I
+$ chrona preset copy target-b --id 1bad --output copy-bad
+rejected
+  E_BUILTIN_PRESET_NEW_ID --id '1bad' is not a usable identifier; start with a letter, use only letters, digits, '.', '_' and '-', and keep it at 256 characters or fewer
+ls: copy-bad: No such file or directory

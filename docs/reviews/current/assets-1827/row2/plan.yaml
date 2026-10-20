@@ -1,0 +1,7 @@
+version: timeline/v0.7
+project: {id: ghost-demo, title: Ghost demo}
+extensions:
+- {packageId: ghost-demo, path: profile.yaml, revision: 'git:0123456789abcdef0123456789abcdef01234567'}
+objects:
+  a: {type: work, title: Alpha, fields: {team: x}, schedule: {mode: fixed-span, start: 2026-11-02, end: 2026-11-06}}
+  b: {type: work, title: Beta, fields: {team: y}, schedule: {mode: fixed-span, start: 2026-11-09, end: 2026-11-13}}

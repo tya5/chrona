@@ -1,0 +1,29 @@
+version: timeline/v0.7
+project:
+  id: plan
+  title: Launch plan
+  calendar: office
+calendars:
+  office:
+    working_days: [mon, tue, wed, thu, fri]
+objects:
+  design:
+    type: task
+    title: Design
+    schedule: {mode: fixed-span, start: 2026-11-02, end: 2026-11-13}
+  build:
+    type: task
+    title: Build
+    schedule: {mode: scheduled, amount: 15wd}
+  test:
+    type: task
+    title: Test
+    schedule: {mode: scheduled, amount: 5wd}
+  launch:
+    type: gate
+    title: Launch
+    schedule: {mode: scheduled-point}
+relations:
+- {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
+- {id: build-to-test, type: dependency, from: {object: build, endpoint: end}, to: {object: test, endpoint: start}, lag: 0d}
+- {id: test-to-launch, type: dependency, from: {object: test, endpoint: end}, to: {object: launch, endpoint: at}, lag: 0d}

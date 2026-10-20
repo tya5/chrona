@@ -1,0 +1,5 @@
+terse 0.1
+project demo "Theme errors demo" calendar standard
+calendar standard mon-fri
+kickoff "Kickoff" gate 2026-11-02
+build "Build" task 10wd from 2026-11-02
