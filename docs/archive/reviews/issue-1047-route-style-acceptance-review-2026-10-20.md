@@ -53,7 +53,12 @@ Trusted review-containing main is
 `9faf700f29e6d685410a5d492fc5daab81db0637` after successful derived-sync39372770884.
 Its [native release39373223873](https://github.com/tya5/chrona/actions/runs/39373223873)
 completed SUCCESS on Ubuntu, macOS and Windows (full pytest, conformance and
-wheel), MCP floor and newest-Python reproduction. The board's explicit
+wheel), MCP floor and newest-Python reproduction. The exact updated-review-
+containing main `37b3f5a988833b929509dfee3224e285bc2d51b2` also passed
+[release39382911887](https://github.com/tya5/chrona/actions/runs/39382911887)
+on all three OS, with conformance/wheel, MCP floor and newest-Python reproduction.
+The board's explicit
 reviewer-owned/non-gating disposition preserves the conditional target row;
-it is not marked met. Close the dev work after the exact updated-review-containing
-main release succeeds, without claiming an unperformed target reproduction.
+it is not marked met. No unperformed target reproduction is claimed. The row
+disposition and release were accepted in
+[the closing review](https://github.com/tya5/chrona/issues/1047#issuecomment-6286050847).

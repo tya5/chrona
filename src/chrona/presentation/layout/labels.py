@@ -272,6 +272,8 @@ class LabelRequest:
     subjects: tuple[DiagnosticSubject, ...] = ()
     required_before_routes: bool = False
     style_occurrence_key: StyleOccurrenceKey | None = None
+    # Typed source fact forwarded to the final TextPlacement, never parsed from content.
+    estimated_delta: bool = False
 
     @property
     def is_required_before_routes(self) -> bool:

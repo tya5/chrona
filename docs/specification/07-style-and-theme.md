@@ -375,6 +375,10 @@ or place source slots; they replace renderer defaults for source-internal visual
 
 ### 5.2 Tokens
 
+For legend `textTransform`, wording and literal data have separate treatment
+under [Specification 60 §4](60-declared-colour-scales.md#4-derived-legend)
+(#1811), including when wording uses small caps.
+
 A Theme binds visual roles to concrete tokens. Tokens may describe colour, typography, stroke, fill, marker, opacity, dash pattern, corner treatment, spacing, or accessible text alternatives. A role can resolve to several tokens, and a token can be shared by several roles.
 
 **Named-period role variants (#871).** A selected View period without `variant` consumes the existing `period-band` role and, when a label is consumed, `period-label`. With `variant: <slug>`, it consumes `period-band:<slug>` and, for a consumed label, `period-label:<slug>`, using the common lowercase slug grammar. These two bounded role families have the same property contracts as their unsuffixed roles: the band role owns completed background paint, pattern, opacity and paint order; the label role owns measured text treatment, ink and `contrastTreatment`. The selected band role is required whenever the View selects the period, including when clipping leaves no drawable extent or its treatment is `none`; a missing role is `E_THEME_ROLE_REQUIRED` at `/body/roles/<selected-band-role>`. A selected label role is required when Layout consumes a drawable label request; its absence is `E_THEME_ROLE_REQUIRED` at `/body/roles/<selected-label-role>`. A missing variant role never falls back to the unsuffixed role or another variant. Only these two period-role families gain slug suffixes; this is not a general dynamic-role contract. An absent `variant` preserves existing role resolution and output.
@@ -537,6 +541,16 @@ Ellipse fit requires positive padded dimensions; a zero axis fails with
 epsilon, circle fallback, text shrink or project-specific limit is introduced.
 Layout completes the geometry once for all four chip roles; allocation,
 placement and collision use that result, and Scene/adapters never refit it.
+
+Completed burst vertices use the Render Context's declared `scenePrecision`
+decimal places, rounded to nearest with ties to even after placement-origin
+translation (#1818). Layout retains the unrounded fit and reserves the extra
+half-quantum coordinate displacement before placement; completed bounds enclose
+the quantized ink. If that precision cannot preserve the padded text ground,
+fail `E_LAYOUT_CHIP_TEXT_GROUND_INVALID`, reason `precision-geometry`; increase
+`scenePrecision` rather than shrinking text or selecting a fallback shape.
+Rectangle/catalogue geometry is unchanged. Scene/adapters project the completed
+coordinates, not platform-specific trigonometry or a new rounding policy.
 
 Catalogue chips
 use the existing nine-slice geometry over padded text plus fixed borders;

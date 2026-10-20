@@ -87,6 +87,13 @@ def display_finish_delta(item: Any) -> int | None:
     return forecast.finish_delta if forecast is not None else item.finish_delta
 
 
+def is_estimated_finish_delta(item: Any) -> bool:
+    """Whether the selected finish-delta fact is forecast-estimated, not finalized."""
+    forecast = getattr(item, "forecast", None)
+    return (forecast is not None and forecast.finish_delta is not None
+            and not forecast.schedule.completed)
+
+
 NEW_MARKER = "new"  # the en-US default of ``marker.baselineNew``; localized text rides on ``ReviewItem.new_marker`` (#1781)
 
 

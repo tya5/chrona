@@ -119,27 +119,27 @@ objects:
     type: task
     title: 'Presets (#429, #1559–#1563)'
     fields: {owner: m4, lane: dev A}
-    schedule: {mode: fixed-span, start: '2026-10-14', end: '2026-10-17'}
+    schedule: {mode: fixed-span, start: '2026-10-14', end: '2026-10-16'}
   ai-design:
     type: task
     title: 'AI design procedure'
     fields: {owner: m4, lane: reviewer}
-    schedule: {mode: fixed-span, start: '2026-10-17', end: '2026-10-22'}
+    schedule: {mode: fixed-span, start: '2026-10-21', end: '2026-10-23'}
   io:
     type: task
     title: 'CSV import, Typst/TikZ (#982)'
     fields: {owner: m4, lane: dev B}
-    schedule: {mode: fixed-span, start: '2026-10-09', end: '2026-10-17'}
+    schedule: {mode: fixed-span, start: '2026-10-09', end: '2026-10-15'}
   m4-gate:
     type: gate
     title: 'New design built in YAML only'
     fields: {owner: m4, lane: reviewer}
-    schedule: {mode: fixed-point, at: '2026-10-22'}
+    schedule: {mode: fixed-point, at: '2026-10-23'}
   rerun:
     type: task
-    title: 'Re-run the 10-09 trial'
-    fields: {owner: rc, lane: reviewer}
-    schedule: {mode: fixed-span, start: '2026-10-22', end: '2026-10-26'}
+    title: 'Re-run the 10-09 trial, fix findings'
+    fields: {owner: rc, lane: all}
+    schedule: {mode: fixed-span, start: '2026-10-18', end: '2026-10-27'}
   rc-gate:
     type: gate
     title: 'Release candidate'
@@ -158,14 +158,14 @@ relations:
   - {id: m0-presets, type: dependency, from: {object: m0-gate, endpoint: at}, to: {object: presets, endpoint: start}, lag: 0d}
   - {id: m3-ai, type: dependency, from: {object: m3-gate, endpoint: at}, to: {object: ai-design, endpoint: start}, lag: 0d}
   - {id: io-m4, type: dependency, from: {object: io, endpoint: end}, to: {object: m4-gate, endpoint: at}, lag: 0d}
-  - {id: m4-rerun, type: dependency, from: {object: m4-gate, endpoint: at}, to: {object: rerun, endpoint: start}, lag: 0d}
+  - {id: m4-rc, type: dependency, from: {object: m4-gate, endpoint: at}, to: {object: rc-gate, endpoint: at}, lag: 0d}
   - {id: rerun-rc, type: dependency, from: {object: rerun, endpoint: end}, to: {object: rc-gate, endpoint: at}, lag: 0d}
 annotations:
   signoff:
     kind: note
-    text: 'RC re-runs the 10-09 trial from a clean install.'
+    text: 'Re-runs on 10-18 and 10-20 left #1781–#1792 and #1807 open.'
     anchor: {object: rerun}
   route:
     kind: risk
-    text: 'Not started; the last M4 item.'
+    text: 'Not started; no issue yet.'
     anchor: {object: ai-design}

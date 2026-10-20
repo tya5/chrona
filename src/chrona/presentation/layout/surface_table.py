@@ -266,7 +266,8 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                 overflow=overflow, collision_region="table",
                 collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                 available_inline_start=position[0] + indent, available_inline_size=available,
-                semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None)
+                semantic_id=cell.semantic_id, lines=closed.fit.lines if closed is not None else None,
+                estimated_delta=cell.estimated_delta)
             style_intent = (request.surface_content.style_intents.get(cell.style_key)
                             if cell.style_key is not None else None)
             if style_intent is not None:

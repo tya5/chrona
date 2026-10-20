@@ -142,7 +142,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                 metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
                                 visual_requests: tuple[Any, ...], font_metrics: Any,
                                 temporal_capacity: TemporalInlineCapacity,
-                                mark_visibility_index: ItemMarkVisibilityIndex | None = None
+                                mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+                                scene_precision: int = 3,
                                 ) -> FixedLanePreflight:
     """Close fixed-lane tracks before final allocation from fixed View rows and Layout inputs."""
     membership = getattr(projection, "lane_membership", None)
@@ -213,7 +214,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         projection, surface_content, timeline_inline_size=float(frame.timeline_inline_size),
         theme_tokens=theme_tokens, font_metrics=font_metrics,
         visual_requests=resolved_visuals, icon_assets=dict(icon_assets),
-        mark_visibility_index=mark_visibility_index)
+        mark_visibility_index=mark_visibility_index, scene_precision=scene_precision)
     physical_label_rows = {}
     measured_ids = {label.placement_id for label in measured_labels}
     for relation in point_host_plan.relations:

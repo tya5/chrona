@@ -98,7 +98,7 @@ chrona schedule update-plan.yaml
 ## 5. Render and read it
 
 Pass the edited plan, the actuals and the baseline. The `target-b` preset draws the
-baseline and the `Δ finish` column. The default preset accepts `--snapshot` but draws no
+baseline and the `Δ vs plan` column. The default preset accepts `--snapshot` but draws no
 baseline; `render` says so with a `W_SNAPSHOT_NOT_DRAWN` warning (status stays `ok`), so name
 a preset that draws one:
 
@@ -114,7 +114,7 @@ Reading `update-after.svg`:
   its plan did not change.
 - **Solid bar:** the current plan. **Dark line:** the actual. A striped bar is a task open
   at `asOf`.
-- **`Δ finish`:** the Actual finish minus the **current** plan's finish, in **working days** of
+- **`Δ vs plan`:** the Actual finish minus the **current** plan's finish, in **working days** of
   the object's calendar (the task's own `calendar`, else the project's `calendar`): the days
   from the planned finish up to, not including, the actual finish that the calendar marks
   working. A task still open is measured to `asOf`. If the plan declares no calendar every
@@ -124,7 +124,8 @@ Reading `update-after.svg`:
   (Friday and Monday), not `+4d`. This is the `target-b` preset's `deltaUnit: working-days`;
   a preset that sets `calendar-days` counts every day. Build reads a dash
   because it has no finish yet. Moving the plan to match an actual makes its delta `+0d`, so
-  the ghost, not the delta, shows how far the plan moved.
+  the ghost, not the delta, shows how far the plan moved. This ordinary Actual comparison is
+  against the current plan; it does not use the Snapshot as its delta baseline.
 
 To retain valid relation corridors across revisions, save the previous render
 with `--emit-scene` and pass that JSON to the next render with
@@ -134,9 +135,11 @@ reuse; an invalid route is searched again, never forced through a new obstacle.
 
 `render` replaces an existing `--output` file without asking (`--output` says "an existing file
 is replaced"). To keep the picture of an earlier update, choose a new name for each update, for
-example `plan-2026-11-16.svg`. Warnings (`W_...`) arrive as JSON lines on standard error with
-exit 0; [the diagnostics reference](../../skills/chrona/references/diagnostics.md) says what
-each means.
+example `plan-2026-11-16.svg`. Warnings (`W_...`) are in the final JSON result on standard
+output and do not change exit 0. Optional phase progress from `--progress` is written separately
+to standard error.
+[The diagnostics reference](../../skills/chrona/references/diagnostics.md) says what each
+warning means.
 
 ## The next update, a week later
 
@@ -161,12 +164,19 @@ body:
     - {id: build-2, sequence: 2, projectObjectId: build, actual: {start: '2026-11-12', openUntil: asOf, progress: 0.55}}
 ```
 
-2. Change the plan dates if what is left moved, then render again under a new output name:
+2. Change the plan dates if what is left moved, then show slip against the original plan by
+   rendering with `--forecast` under a new output name:
 
 ```bash
 chrona render update-plan.yaml --actual update-actual-week2.yaml --snapshot update-baseline.yaml \
-  --preset target-b --output update-after-week2.svg
+  --forecast --preset target-b --output update-after-week2.svg
 ```
+
+The forecast compares its estimated finish with the supplied Snapshot baseline, not the edited
+current plan. Its `Δ vs baseline` header names that reference. An unfinished forecast delta has
+an asterisk (`*`); the `Forecast (* estimated)` legend key explains that it is an estimate. When
+the forecast draws a different encoded colour, the key remains an explanation only and does not
+claim that the estimate has a separate colour swatch.
 
 What the draft path offers for writing actuals: edit or append to `actual.yaml` as above, or keep
 the observations as columns (`progress`, `actual_start`, `actual_finish`) of the sheet you

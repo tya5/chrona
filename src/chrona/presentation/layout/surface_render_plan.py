@@ -63,6 +63,7 @@ class SurfaceRenderPlanInput:
     progress: RenderProgress | None = None
     previous_route_hints: PreviousRouteHints | None = None
     paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
+    scene_precision: int = 3
 
 
 @dataclass(frozen=True)
@@ -123,7 +124,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         resolved_layout, layout_error = None, error
     claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])
                        if resolved_layout is not None else frozenset())
-    if view.surface == "dependency-network" and resolved_layout is not None and "title" not in claimed_sources:
+    if uses_independent_view_heading(view.surface, resolved_layout):
         network_heading = compose_heading(view, project, actual_observations, value.locale)
         if isinstance(network_heading, HeadingTextPrograms):
             network_heading = HeadingContent(*network_heading.bind(dict(projection.figures), view.figure_formats),
@@ -206,7 +207,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
     try:
         as_of_chip_measurement = measure_as_of_chip(selected_content, window=projection.window,
             theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
-            visual_requests=visual_requests, icon_assets=icon_assets)
+            visual_requests=visual_requests, icon_assets=icon_assets,
+            scene_precision=value.scene_precision)
     except FontMetricsError as error:
         raise SurfacePlanFontError(error) from error
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
@@ -235,6 +237,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
             progress=value.progress,
             previous_route_hints=value.previous_route_hints,
+            scene_precision=value.scene_precision,
         )
 
     if view.surface == "table-timeline":
@@ -319,6 +322,12 @@ def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_to
 def _layout_slot_sources(node: Mapping[str, Any]) -> frozenset[str]:
     own = frozenset((node["source"],)) if node.get("kind") == "slot" else frozenset()
     return own.union(*(_layout_slot_sources(child) for child in node.get("children", ())))
+
+
+def uses_independent_view_heading(surface: str, profile: ResolvedLayoutProfile | None) -> bool:
+    """Whether the selected native surface allocates the View heading as named parts."""
+    return (surface == "dependency-network" and profile is not None
+            and "title" not in _layout_slot_sources(profile.profile["root"]))
 
 def _narrow_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: MeasuredSources,
                            measured: MeasuredSources, *, viewport_inline: int, floor: int,

@@ -57,6 +57,47 @@ def small_caps_runs(content: str, scale: float) -> tuple[tuple[str, float], ...]
     return tuple(runs)
 
 
+@dataclass(frozen=True)
+class TextSegment:
+    """One authored or literal portion of a Layout-owned text placement."""
+
+    content: str
+    text_transform: str = "none"
+
+
+def measure_text_segments(segments: tuple[TextSegment, ...], *, font_size: float, font_metrics: Any,
+                          letter_spacing: float = 0, numeric_spacing: str = "proportional",
+                          horizontal_scale: float = 1.0
+                          ) -> tuple[str, float, tuple[TextRunPlacement, ...]]:
+    """Transform and measure typed fragments as one line, retaining exact completed runs."""
+    painted: list[str] = []
+    runs: list[TextRunPlacement] = []
+    for segment in segments:
+        painted.append(paint_text(segment.content, text_transform=segment.text_transform))
+        fallback = completed_fallback_face_runs(
+            (segment.content,), font_size=font_size, font_metrics=font_metrics,
+            letter_spacing=letter_spacing, text_transform=segment.text_transform,
+            numeric_spacing=numeric_spacing, horizontal_scale=horizontal_scale)
+        if fallback:
+            runs.extend(fallback[0])
+            continue
+        caps = small_caps_scale(segment.text_transform)
+        if caps is not None:
+            for text, factor in small_caps_runs(segment.content, caps):
+                size = font_size * factor
+                runs.append(TextRunPlacement(text, size, measure_text_width(
+                    text, font_size=size, font_metrics=font_metrics, letter_spacing=letter_spacing,
+                    numeric_spacing=numeric_spacing)))
+            continue
+        text = painted[-1]
+        runs.append(TextRunPlacement(text, font_size, measure_text_width(
+            text, font_size=font_size, font_metrics=font_metrics, letter_spacing=letter_spacing,
+            numeric_spacing=numeric_spacing)))
+    # TextRunPlacement widths include within-run spacing; add spacing at each run boundary.
+    width = geometry_sum([*(run.inline_size for run in runs), letter_spacing * max(0, len(runs) - 1)])
+    return "".join(painted), width, tuple(runs)
+
+
 def paint_text(content: str, *, text_transform: str = "none") -> str:
     """Apply the finite treatment before it becomes measured display text."""
     if small_caps_scale(text_transform) is not None:
@@ -377,36 +418,47 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                annotation: AnnotationPresentation | None = None,
                lane_row_id: str | None = None, lane_member_id: str | None = None,
                lane_source_kind: str | None = None,
-               orientation: str = "horizontal") -> TextPlacement:
+               orientation: str = "horizontal",
+               segments: tuple[TextSegment, ...] | None = None,
+               estimated_delta: bool = False) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     treatment = theme_tokens.text_treatment(typography_role)
     font_metrics = metric_for_role(theme_tokens, typography_role, font_metrics)
     font_size, leading = float(treatment.font_size), float(treatment.line_height)
     source = source_content if source_content is not None else content
-    resolved_lines = tuple(paint_text(line, text_transform=treatment.transform) for line in (lines or (content,)))
-    painted_content = paint_text(content, text_transform=treatment.transform)
     letter_spacing = float(treatment.letter_spacing)
-    caps = small_caps_scale(treatment.transform)
-    width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
-                                   letter_spacing=letter_spacing,
-                                   text_transform=treatment.transform,
-                                   numeric_spacing=treatment.numeric_spacing)
+    if segments:
+        painted_content, width, line_runs = measure_text_segments(
+            segments, font_size=font_size, font_metrics=font_metrics, letter_spacing=letter_spacing,
+            numeric_spacing=treatment.numeric_spacing, horizontal_scale=float(treatment.horizontal_scale))
+        resolved_lines = (painted_content,)
+        runs = (line_runs,)
+        placement_transform = "none"
+    else:
+        resolved_lines = tuple(paint_text(line, text_transform=treatment.transform) for line in (lines or (content,)))
+        painted_content = paint_text(content, text_transform=treatment.transform)
+        caps = small_caps_scale(treatment.transform)
+        width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
+                                       letter_spacing=letter_spacing,
+                                       text_transform=treatment.transform,
+                                       numeric_spacing=treatment.numeric_spacing)
+                    for line in (lines or (content,)))
+        runs = ()
+        if caps is not None:
+            # Each run is measured at its own size; the line's width is their sum plus the spacing between runs (#1285).
+            runs = tuple(tuple(TextRunPlacement(text, font_size * factor, measure_text_width(
+                text, font_size=font_size * factor, font_metrics=font_metrics, letter_spacing=letter_spacing,
+                numeric_spacing=treatment.numeric_spacing)) for text, factor in small_caps_runs(line, caps))
                 for line in (lines or (content,)))
-    runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
-    if caps is not None:
-        # Each run is measured at its own size; the line's width is their sum plus the spacing between runs (#1285).
-        runs = tuple(tuple(TextRunPlacement(text, font_size * factor, measure_text_width(
-            text, font_size=font_size * factor, font_metrics=font_metrics, letter_spacing=letter_spacing,
-            numeric_spacing=treatment.numeric_spacing)) for text, factor in small_caps_runs(line, caps))
-            for line in (lines or (content,)))
-    fallback_runs = completed_fallback_face_runs(
-        tuple(lines or (content,)), font_size=font_size, font_metrics=font_metrics,
-        letter_spacing=letter_spacing, text_transform=treatment.transform,
-        numeric_spacing=treatment.numeric_spacing, horizontal_scale=float(treatment.horizontal_scale))
-    if fallback_runs:
-        # Discovery is already closed. Split only affected text into exact measured faces,
-        # composing with existing size runs and transforms.
-        runs = fallback_runs
+        fallback_runs = completed_fallback_face_runs(
+            tuple(lines or (content,)), font_size=font_size, font_metrics=font_metrics,
+            letter_spacing=letter_spacing, text_transform=treatment.transform,
+            numeric_spacing=treatment.numeric_spacing, horizontal_scale=float(treatment.horizontal_scale))
+        if fallback_runs:
+            # Discovery is already closed. Split only affected text into exact measured faces,
+            # composing with existing size runs and transforms.
+            runs = fallback_runs
+        placement_transform = treatment.transform
     scale = float(treatment.horizontal_scale)
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
     if rotation is None:
@@ -424,7 +476,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         baseline=(inline, baseline_block), lines=resolved_lines,
         font_family=_resolved_family(treatment.family, font_metrics),
         font_weight=int(treatment.weight), font_size=font_size, line_height=leading,
-        letter_spacing=letter_spacing, text_transform=treatment.transform, numeric_spacing=treatment.numeric_spacing,
+        letter_spacing=letter_spacing, text_transform=placement_transform, numeric_spacing=treatment.numeric_spacing,
         orientation=orientation, rotation_degrees=rotation, horizontal_scale=scale,
         font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
         collision_domain=collision_domain,
@@ -438,4 +490,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         lane_member_id=lane_member_id,
         lane_source_kind=lane_source_kind,
         runs=runs,
+        estimated_delta=estimated_delta,
     )

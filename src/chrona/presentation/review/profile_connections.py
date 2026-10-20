@@ -105,7 +105,9 @@ def _legend_label(entry: Any, resolver: WordingResolver, known_keys: frozenset[s
 
 def _resolve_view_references(view: ViewInput, resolver: WordingResolver) -> ViewInput:
     """Replace `{wording: key}` column headers and marker labels by their locale text (#1724)."""
-    columns = tuple(replace(column, header=resolver.resolve(column.header)) if is_wording_ref(column.header) else column
+    columns = tuple(replace(column, header=resolver.resolve(column.header),
+                            header_wording_key=column.header["wording"])
+                    if is_wording_ref(column.header) else column
                     for column in view.table_columns)
     markers = tuple(freeze({**marker, "label": resolver.resolve(marker["label"])})
                     if is_wording_ref(marker.get("label")) else marker

@@ -11,8 +11,8 @@ from chrona.presentation.layout.model import CountDependentHeadingFitError, Layo
 from chrona.presentation.layout.presentation import (
     header_group_cell_indent, measure_table_columns, place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
-from chrona.presentation.layout.text import (completed_fallback_face_runs, fit_text_lines,
-                                             measure_text_width, metric_for_role, paint_text)
+from chrona.presentation.layout.text import (TextSegment, completed_fallback_face_runs, fit_text_lines,
+                                             measure_text_segments, measure_text_width, metric_for_role, paint_text)
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
 from chrona.presentation.layout.table_measurement import BoundedTableMeasurement, measure_bounded_table
 from chrona.presentation.layout.summary_flow import MeasuredSummary, measure_summary
@@ -30,6 +30,7 @@ class SourceTextRun:
     source_ref: str | None = None
     inline_advance: Decimal = Decimal(0)
     figure_dependencies: frozenset[str] = frozenset()
+    segments: tuple[TextSegment, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -250,18 +251,32 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             run_metrics = metric_for_role(typography, run.typography_role, font_metrics)
             family, weight, run_size, run_line_height = (treatment.family, treatment.weight,
                                                          treatment.font_size, treatment.line_height)
-            width = Decimal(str(measure_text_width(
-                run.content, font_size=float(run_size), font_metrics=run_metrics,
-                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                numeric_spacing=(treatment.numeric_spacing if value.run_flow == "block" or value.summary is not None
-                                 else "proportional")))) + run.inline_advance
+            numeric_spacing = (treatment.numeric_spacing if run.segments or value.run_flow == "block" or value.summary is not None
+                               else "proportional")
+            if run.segments:
+                painted, segment_width, segment_runs = measure_text_segments(
+                    run.segments, font_size=float(run_size), font_metrics=run_metrics,
+                    letter_spacing=float(treatment.letter_spacing), numeric_spacing=numeric_spacing,
+                    horizontal_scale=float(treatment.horizontal_scale))
+                width = Decimal(str(segment_width)) + run.inline_advance
+                measured_content, measured_transform = painted, "none"
+                segment_fallback = (segment_runs,)
+            else:
+                width = Decimal(str(measure_text_width(
+                    run.content, font_size=float(run_size), font_metrics=run_metrics,
+                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                    numeric_spacing=numeric_spacing))) + run.inline_advance
+                measured_content, measured_transform = paint_text(run.content, text_transform=treatment.transform), treatment.transform
+                segment_fallback = ()
             baseline = Decimal(str(run_metrics.baseline(0, float(run_size), float(run_line_height))))
             measured_runs.append(MeasuredTextRun(
-                run.source_ref, paint_text(run.content, text_transform=treatment.transform), run.typography_role, width,
+                run.source_ref, measured_content, run.typography_role, width,
                 run_size * run_line_height, baseline, family, int(weight),
                 float(run_size), float(run_line_height), str(run_metrics.content_identity),
-                float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing,
+                float(treatment.letter_spacing), measured_transform, treatment.numeric_spacing,
                 float(treatment.horizontal_scale)))
+            if run.segments:
+                measured_runs[-1] = replace(measured_runs[-1], fallback_runs=segment_fallback)
             if heading_budget is not None:
                 heading_shortage = heading_shortage or width > heading_budget
                 ellipse = Decimal(str(measure_text_width(
@@ -289,13 +304,14 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                         lines=tuple(paint_text(line, text_transform=treatment.transform) for line in fit.lines),
                         overflow="ellipsized" if fit.ellipsized else "fit")
             closed_run = measured_runs[-1]
-            fallback_runs = completed_fallback_face_runs(
-                fallback_source_lines, font_size=float(run_size), font_metrics=run_metrics,
-                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                numeric_spacing=treatment.numeric_spacing,
-                horizontal_scale=float(treatment.horizontal_scale))
-            if fallback_runs:
-                measured_runs[-1] = replace(closed_run, fallback_runs=fallback_runs)
+            if not run.segments:
+                fallback_runs = completed_fallback_face_runs(
+                    fallback_source_lines, font_size=float(run_size), font_metrics=run_metrics,
+                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                    numeric_spacing=treatment.numeric_spacing,
+                    horizontal_scale=float(treatment.horizontal_scale))
+                if fallback_runs:
+                    measured_runs[-1] = replace(closed_run, fallback_runs=fallback_runs)
         run_measurements[source] = tuple(measured_runs)
         grid_block: Decimal | None = None
         if value.run_flow == "grid" and measured_runs and value.columns:

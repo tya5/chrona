@@ -72,7 +72,8 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                                timeline_inline_size: float, theme_tokens: Any,
                                font_metrics: Any, visual_requests: tuple[Any, ...],
                                icon_assets: dict[str, Any],
-                               mark_visibility_index: Any = None) -> tuple[MeasuredLaneMemberLabel, ...]:
+                               mark_visibility_index: Any = None,
+                               scene_precision: int = 3) -> tuple[MeasuredLaneMemberLabel, ...]:
     """Normalize lane member text once and measure the exact placement box.
 
     The wrap allowance, Theme text treatment, selected icon advances, chip
@@ -158,7 +159,8 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                                         float(treatment.font_size), text_height)
                 chip_measurement = measure_label_chip(theme_tokens, "memberLabel",
                     text_inline=leading + text_width + trailing, text_block=text_height,
-                    font_size=float(treatment.font_size), padding=chip_pad)
+                    font_size=float(treatment.font_size), padding=chip_pad,
+                    scene_precision=scene_precision)
                 width = (float(chip_measurement.footprint.inline_size) if chip_measurement is not None
                          else leading + text_width + trailing + 2 * chip_pad[0])
                 height = (float(chip_measurement.footprint.block_size) if chip_measurement is not None

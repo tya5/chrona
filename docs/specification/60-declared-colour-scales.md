@@ -150,6 +150,14 @@ scale-derived entry for the same scale.  Existing semantic legends retain their
 separate role/label ownership and may coexist; they do not claim to enumerate
 the scale domain.
 
+Legend case treatment distinguishes wording from data (#1811). Theme
+`textTransform` applies to built-in and authored wording, including a Style
+legend title and the synthetic folded `Other` key, never to domain values or
+entity titles. Layout composes these parts once and uses the same treatment
+for source sizing, fitting and completed text runs; Scene and adapters do not
+reconstruct this distinction. Thus a lower-case design may draw `owner: Aiko`,
+not `owner: aiko`.
+
 Scale-derived and semantic candidates are included only when a final completed
 painted-occurrence witness establishes that their meaning and paint are
 visible. The pure presentation model and Layout share this paint/visibility
@@ -170,6 +178,9 @@ Layout recomposes the candidates once in the conservatively allocated legend
 slot. Final canvas completion releases candidate-only legend growth while
 preserving the declared allocation; it does not retry route, row or annotation
 layout.
+An independent text-only estimate explanation may remain under Spec06's
+forecast rule when the base forecast swatch is replaced. It is not an encoding
+or paint key and makes no claim about scale colours or their separability.
 
 ## 5. Migration boundary
 
