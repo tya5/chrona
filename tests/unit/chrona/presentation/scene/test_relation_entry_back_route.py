@@ -83,7 +83,7 @@ def test_the_mirrored_end_endpoint_enters_from_the_right():
     assert enters_from_side(points, start=False) and not reverses(points) and _bends(points) <= 4
 
 
-def test_a_gate_target_is_entered_at_its_start_vertex_horizontally_only_with_side():
+def test_a_gate_target_can_use_the_safe_horizontal_route_with_both_side_preferences():
     target = gate("b", date(2026, 2, 8))
     side, marks, diagnostics = run(A, target)
     assert enters_from_side(side) and not reverses(side)
@@ -93,23 +93,15 @@ def test_a_gate_target_is_entered_at_its_start_vertex_horizontally_only_with_sid
     assert not fell_back(diagnostics)
 
 
-def test_a_back_leg_never_crosses_a_marked_row():
+def test_a_marked_row_that_blocks_the_back_leg_causes_declared_suppression():
     # Rows a, c, b: the gap line before b's row is clear, but the drop beside a passes through c's long mark.
     blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    points, marks, diagnostics = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side",
+    points, _, diagnostics = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side",
                                         distribution="pack", max_detour=6.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
                                         diagnostics=True, allow_suppressed=True)
-    if not points:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
-        return
-    assert not reverses(points)
-    assert not fell_back(diagnostics)
-    _assert_closed_contact_free(points, marks)
-    left, top, width, height = marks["planned:c:c"].bounds
-    for (x1, y1), (x2, y2) in zip(points, points[1:]):
-        crosses = (x1 == x2 and left < x1 < left + width and min(y1, y2) < top + height and max(y1, y2) > top)
-        assert not crosses, "no route segment crosses the blocking mark"
+    assert points == ()
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
 
 
 @pytest.mark.parametrize("kwargs", [{"max_bends": 2}, {"max_detour": 0.5}], ids=["max-bends", "max-detour"])
@@ -122,14 +114,11 @@ def test_over_quality_back_route_uses_an_alternative_or_declared_suppression(kwa
         assert not points
         assert any(d.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for d in diagnostics)
         return
-    points, marks, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
+    points, _, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
         distribution="pack", max_bends=kwargs["max_bends"], max_detour=6.0,
         window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True, allow_suppressed=True)
-    if points:
-        assert not reverses(points) and _bends(points) <= kwargs["max_bends"]
-        _assert_closed_contact_free(points, marks)
-    else:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+    assert points == ()
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
 
 
 @pytest.mark.parametrize("entry", ["any", "side-when-free"])
@@ -139,10 +128,9 @@ def test_the_other_entry_values_never_back_route_and_never_report(entry):
         distribution="pack", max_detour=6.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
         diagnostics=True, allow_suppressed=True)
     assert not fell_back(diagnostics)
-    if points:
-        _assert_closed_contact_free(points, marks)
-    else:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+    assert points
+    assert points == run(A, target, entry="side")[0]
+    _assert_closed_contact_free(points, marks)
 
 
 @pytest.mark.parametrize("target_start", [D(2026, 2, 8), D(2026, 2, 5), D(2026, 2, 9)],
@@ -165,15 +153,11 @@ def test_a_source_just_left_of_the_start_is_back_routed_when_the_forward_entry_h
 
 def test_unroutable_quality_limit_has_a_declared_suppression_1084():
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    points, marks, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
+    points, _, diagnostics = _route((A, target), _rows((A,), (target,)), DEP, "side",
         distribution="pack", max_bends=2, max_detour=6.0,
         window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True, allow_suppressed=True)
-    if points:
-        assert _bends(points) <= 2
-        _assert_closed_contact_free(points, marks)
-        assert not fell_back(diagnostics)
-    else:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
+    assert points == ()
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
     blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
     _, _, blocked = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side", distribution="pack",
                            max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True,
@@ -182,20 +166,13 @@ def test_unroutable_quality_limit_has_a_declared_suppression_1084():
     assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in blocked)
 
 
-def test_a_mark_after_the_source_end_uses_a_clear_vertical_egress_instead_of_crossing_it():
-    # A proxy for a delta label beside the source end: a mark in the exit stub (the stub check treats mark, text and
-    # label classes alike).
+def test_a_mark_occupying_the_source_exit_causes_declared_suppression():
+    # The adjacent same-lane mark occupies the only available outward exit.
     source = _item("a", D(2026, 2, 1), D(2026, 2, 8), "shared")
     beside = _item("c", D(2026, 2, 8), D(2026, 2, 12), "shared")
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    points, marks, diagnostics = _route((source, beside, target), _rows((source, beside), (target,)), DEP, "side",
+    points, _, diagnostics = _route((source, beside, target), _rows((source, beside), (target,)), DEP, "side",
                                     distribution="pack", max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
                                     diagnostics=True, allow_suppressed=True)
-    if not points:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
-        return
-    assert not reverses(points)
-    assert enters_from_side(points) and not fell_back(diagnostics)
-    assert points[0][0] == points[1][0]
-    x, y, width, height = next(mark.bounds for mark in marks.values() if mark.source_ref == "c")
-    _assert_closed_contact_free(points, marks, source="a", target="b")
+    assert points == ()
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)

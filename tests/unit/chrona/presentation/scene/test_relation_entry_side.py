@@ -65,7 +65,7 @@ def _bends(points):
     return sum(1 for a, b, c in zip(points, points[1:], points[2:]) if (a[0] == b[0]) != (b[0] == c[0]))
 
 
-def _assert_closed_contact_free(points, marks, *, source="a", target="b", target_endpoint="start"):
+def _assert_closed_contact_free(points, marks, *, source="a", target="b"):
     """Assert only the declared terminal point may touch its own primary mark."""
     from chrona.presentation.layout.obstacles import (
         ObstacleRect, ObstacleSegment, segment_closed_rect_contact_interval,
@@ -116,7 +116,7 @@ def test_a_source_on_the_right_of_a_finish_endpoint_enters_the_end_horizontally_
     mark = marks["planned:b:b"]
     assert points[-1][0] == pytest.approx(mark.bounds[0] + mark.bounds[2])
     assert points[-2][0] > points[-1][0]
-    _assert_closed_contact_free(points, marks, target_endpoint="end")
+    _assert_closed_contact_free(points, marks)
 
 
 def test_a_source_not_on_the_approach_side_keeps_the_order():
@@ -138,10 +138,9 @@ def test_a_blocked_corridor_keeps_the_order():
                                          allow_suppressed=True)
     second, _, second_diagnostics = _route((A, shared_b, blocker), rows, DEP, "side-when-free",
                                            diagnostics=True, allow_suppressed=True)
-    assert first == second
-    if not first:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in first_diagnostics)
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in second_diagnostics)
+    assert first == second == ()
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in first_diagnostics)
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in second_diagnostics)
 
 
 def test_no_room_between_the_start_and_the_timeline_edge_keeps_the_order():
@@ -149,10 +148,12 @@ def test_no_room_between_the_start_and_the_timeline_edge_keeps_the_order():
     edge = _item("b", D(2026, 2, 1), D(2026, 2, 6))
     source = _item("a", D(2026, 1, 20), D(2026, 1, 25))
     window = (D(2026, 2, 1), D(2026, 2, 6))
-    first, _ = _route((source, edge), _rows((source,), (edge,)), DEP, "any", window=window, allow_suppressed=True)
+    first, _, first_diagnostics = _route((source, edge), _rows((source,), (edge,)), DEP, "any", window=window,
+                                        diagnostics=True, allow_suppressed=True)
     second, _, diagnostics = _route((source, edge), _rows((source,), (edge,)), DEP, "side-when-free", window=window,
                                     diagnostics=True, allow_suppressed=True)
     assert first == second == ()  # Layout suppress does not invoke legacy visible overflow.
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in first_diagnostics)
     assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in diagnostics)
 
 
@@ -173,7 +174,5 @@ def test_a_narrow_gap_requires_extra_bends_for_the_declared_stub_and_obeys_max_b
     limited, _, limited_diagnostics = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free",
                                               max_bends=3, window=window, search="best", diagnostics=True,
                                               allow_suppressed=True)
-    if limited:
-        assert _bends(limited) <= 3
-    else:
-        assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in limited_diagnostics)
+    assert limited == ()
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in limited_diagnostics)
