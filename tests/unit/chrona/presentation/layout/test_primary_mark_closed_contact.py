@@ -94,12 +94,18 @@ def test_padded_window_outward_candidate_passes_normal_pair_validators(monkeypat
             x0, y0 = source.semantic_port
             x1, y1 = target.semantic_port
             middle_y = (y0 + y1) / 2
-            candidate = ((x0, y0), (x0 - 2, y0), (x0 - 2, middle_y),
-                         (x1 + 2, middle_y), (x1 + 2, y1), (x1, y1))
+            source_run, target_run = kwargs["outward_runs"]
+            candidate = ((x0, y0), (x0 - source_run, y0),
+                         (x0 - source_run, middle_y), (x1 + target_run, middle_y),
+                         (x1 + target_run, y1), (x1, y1))
+            short_candidate = ((x0, y0), (x0 - 2, y0), (x0 - 2, middle_y),
+                               (x1 + 2, middle_y), (x1 + 2, y1), (x1, y1))
             captured.append((kwargs["bounds"], source, target, candidate,
                              kwargs["prepare"](candidate, source, target),
                              kwargs["accept"](candidate), result.selected_pair,
-                             result.settled_by_shape, result.points))
+                             result.settled_by_shape, result.points,
+                             kwargs["prepare"](short_candidate, source, target),
+                             kwargs["accept"](short_candidate)))
         return result
 
     monkeypatch.setattr(fixture, "ReviewProjection", padded_projection)
@@ -111,7 +117,8 @@ def test_padded_window_outward_candidate_passes_normal_pair_validators(monkeypat
                 "to": {"object": "b", "endpoint": "end"}}
     _, drawn = fixture._drawn(0, relation=relation)
 
-    bounds, source, target, candidate, prepared, accepted, selected_pair, settled_by_shape, points = captured[0]
+    (bounds, source, target, candidate, prepared, accepted, selected_pair,
+     settled_by_shape, points, short_prepared, short_accepted) = captured[0]
     assert bounds == (504.0, 48.0, 996.0, 1000.0)
     assert source.semantic_port == source.exposed_port == (688.8888888888889, 286.0)
     assert target.semantic_port == target.exposed_port == (900.0, 762.0)
@@ -120,6 +127,7 @@ def test_padded_window_outward_candidate_passes_normal_pair_validators(monkeypat
     assert len(candidate) == 6
     assert prepared == candidate
     assert accepted is True
+    assert short_prepared is None or not short_accepted
     assert selected_pair == (source, target)
     assert settled_by_shape is True
     assert drawn.points == points

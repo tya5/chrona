@@ -184,14 +184,26 @@ def test_every_shape_renders_in_svg_and_png_and_the_adapter_draws_exactly_the_la
 
 
 @pytest.mark.parametrize("shape", NEW_SHAPES)
-def test_the_legend_key_draws_the_same_terminal_as_the_relation(shape):
+def test_the_legend_key_draws_the_same_terminal_as_the_relation(shape, monkeypatch):
+    from dataclasses import replace
+    import tests.unit.chrona.presentation.scene.test_v05_builder as builder
     from tests.unit.chrona.presentation.scene.test_v05_builder import _legend_surface, _theme
+
+    original_projection = builder.ReviewProjection
+
+    def extent_projection(items, *_args, **_kwargs):
+        projected = tuple(items)
+        value = original_projection(projected, (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+        return replace(value, window=(min(item.planned["start"] for item in projected),
+                                     max(item.planned["end"] for item in projected)))
+
+    monkeypatch.setattr(builder, "ReviewProjection", extent_projection)
     theme = _theme()
     theme["body"]["values"]["dependency-marker"] = {"type": "marker", "value": {"shape": shape, **TOKEN}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
     items = (
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
-        ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+        ReviewItem("b", "B", "span", {"start": date(2026, 1, 10), "end": date(2026, 1, 11)}, None, None, ()),
     )
     relation = {"id": "a-to-b", "from": {"object": "a", "endpoint": "end"},
                 "to": {"object": "b", "endpoint": "start"}}
