@@ -43,3 +43,29 @@ def test_guide_says_start_with_predecessors_conflicts_at_schedule_time_and_the_p
     assert diagnostic["message"] == quoted
     for named in ("b.start", "2027-01-04", "a-b", "2027-01-18"):
         assert named in quoted
+
+
+def test_guide_colour_by_owner_recipe_runs_on_a_plain_csv(tmp_path, monkeypatch, capsys):
+    text = GUIDE.read_text(encoding="utf-8")
+    csv = re.search(r"<!-- chrona:doc-check file: owners.csv -->\s*```csv\n(?P<body>.*?)\n```", text, re.DOTALL)["body"]
+    block = re.search(r"```yaml\n(?P<body>  colorEncoding:\n.*?)\n```", text, re.DOTALL)["body"]
+    assert len(block.splitlines()) == 5
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "owners.csv").write_text(csv + "\n", encoding="utf-8")
+    assert _run(monkeypatch, capsys, "import", "owners.csv", "--output", "owners.yaml", "--role", "responsible=owner",
+                "--calendar", "standard mon-fri")["status"] == "ok"
+    assert _run(monkeypatch, capsys, "preset", "copy", "mission-light", "--output", "looks/m")["status"] == "ok"
+    view = tmp_path / "looks/m/view.yaml"
+    original = re.search(r"  colorEncoding:\n(?:    .*\n)+?(?=  \S)", view.read_text(encoding="utf-8"))[0]
+    view.write_text(view.read_text(encoding="utf-8").replace(original, block + "\n"), encoding="utf-8")
+
+    def fills(preset: str) -> set[str]:
+        result = _run(monkeypatch, capsys, "render", "owners.yaml", "--preset", preset, "--output", "out.svg")
+        assert result["status"] == "ok", result
+        assert not [d for d in result["diagnostics"] if d.get("severity") == "error"]
+        return set(re.findall(r'<rect[^>]*fill="(#[0-9A-Fa-f]{6})"', (tmp_path / "out.svg").read_text(encoding="utf-8")))
+
+    packaged = fills("mission-light")
+    edited = fills("looks/m/preset.yaml")
+    assert len(packaged) >= 4 and len(edited) >= 4
