@@ -1,19 +1,21 @@
 # Issue 1754 — revision stability acceptance
 
-Status: all four literal criteria have implementation evidence; publication
-of this follow-up and its exact-main three-OS release remain required.
+Status: all four literal criteria are met and released; issue1754 is closed.
+Exact review-containing main `1abfa2fef03ae407e3691068454ff61df98e0605` passed
+[release39352901914](https://github.com/tya5/chrona/actions/runs/39352901914):
+three-OS full pytest/conformance/wheel, MCP floor and newest-Python reproduction.
 Implementation landed in [1769](https://github.com/tya5/chrona/pull/1769).
 Rows 1–3 are released on
 [39256723703](https://github.com/tya5/chrona/actions/runs/39256723703),
 exact `9dca9c55a8df0d1e44149a0543fe892366d39930`.
-Current [work record](../../planning/active/issue-1754-revision-stability-work-record-2026-10-19.md).
+Archived [work record](../planning/issue-1754-revision-stability-work-record-2026-10-19.md).
 
 | # | Literal acceptance criterion | Status and direct evidence |
 | ---: | --- | --- |
 | 1 | Synthetic: removing one relation and appending another keeps every other relation's primitive id; hints are accepted for all unchanged relations. | Met and released: `tests/integration/test_revision_relation_identity.py`, first-fit and best; anonymous and duplicate identity tests. Reviewer acceptance [6268761101](https://github.com/tya5/chrona/issues/1754#issuecomment-6268761101). |
 | 2 | target-b with `--previous-scene` uses the hints (receipts show accepted hints), or reports why not. | Met and released. The current full trial accepts 110 target-b relation-instance hints across weeks 2–5; all other attempts have invalidated, unusable or absent dispositions. |
 | 3 | A synthetic slip that does not touch a relation's endpoints keeps that relation's route; no new through-mark crossing appears where a detour exists. | Met and released: `tests/integration/test_revision_route_corridor.py`, both policies, unchanged endpoints, retained corridor, obstructed-hint negative twin and actual mark-clear replacement path. |
-| 4 | Re-running trial 8 with hints: the changed-primitive count of unchanged objects falls, and the table is posted on the issue. executive-light labels of unchanged tasks do not toggle with the as-of line. | Met in the full rerun below: raw changes 932 → 930; row-normalized changes 323 → 315. Issue table linked below. The controlled as-of invariant covers six line positions in six placement modes; unrelated label toggles are not described as resolved. Follow-up release pending. |
+| 4 | Re-running trial 8 with hints: the changed-primitive count of unchanged objects falls, and the table is posted on the issue. executive-light labels of unchanged tasks do not toggle with the as-of line. | Met and released: raw changes 932 → 930; row-normalized changes 323 → 315. Issue table linked below. The controlled as-of invariant covers six line positions in six placement modes; unrelated label toggles are not described as resolved. |
 
 ## Full trial evidence
 
@@ -87,8 +89,8 @@ source `693c3eb38c5649ead1ce26091167128b291a70ea`, artifact `12227948859`, ZIP S
 `64ba4c09c8ae198ad13d304943faf979acc289df010d6f347335a5f6d19bcd13`.
 All 109 before/after paths are byte-identical (50 SVG, 50 Scene, 9 reports);
 zero changes or retirements. All validation/test jobs pass; only the exact-base
-gate fails after reviewer1785 advances main. That guard is retained; final CI
-must follow the next coordinated ready main before landing.
+gate fails after reviewer1785 advances main. That guard was retained; final
+PR1786 CI39344125617 succeeded before landing on the coordinated ready base.
 
 The original PR's official snapshot
 [39174351117](https://github.com/tya5/chrona/actions/runs/39174351117)
@@ -99,8 +101,7 @@ added and 4 removed. The
 public before/after PNGs retain that evidence. The old locale-wheel failure
 is superseded by successful exact-main release 39256723703, not ignored.
 
-The issue remains open until this follow-up review and controlled tests land
-and the required full three-OS/conformance/wheel/newest-Python release succeeds
-on their exact published main. The integrated candidate passes 532 focused
-tests across all three slices, including this issue's controlled labels.
-Full pytest is delegated to CI.
+PR1786 published this review and controlled tests; PR1788 corrected the shared
+wheel-documentation destination conflict without changing this issue's policy.
+The integrated candidate passed 532 focused tests; the corrected exact-main
+release linked above supplies full acceptance. No full local pytest duplicated CI.

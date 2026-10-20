@@ -2,8 +2,9 @@
 
 ## Published baseline and scope
 
-S1–S4 are implemented, merged and released. Full trial evidence now covers all
-five weeks; this follow-up's publication and exact-main release remain open.
+Closed: S1–S4 and the five-week follow-up are published and released on exact
+main `1abfa2fef03ae407e3691068454ff61df98e0605`,
+[release39352901914](https://github.com/tya5/chrona/actions/runs/39352901914).
 Source: [issue 1754](https://github.com/tya5/chrona/issues/1754), including its later comments, on ready main `6c3b4e4e2d4064e924a8b9703c3f31ab7a62bc39`.
 Trial evidence is reference-only: [`reviewer/trial-8-inputs@bf3940dbe9af487ac6cace5458554762594f3477`](https://github.com/tya5/chrona/tree/bf3940dbe9af487ac6cace5458554762594f3477/trial-8).
 
@@ -282,7 +283,7 @@ row-normalized changes fall 323 → 315. This is an aggregate improvement, not
 a per-design guarantee. Added/removed primitives and residual label toggles
 remain separate measures. The
 [issue table](https://github.com/tya5/chrona/issues/1754#issuecomment-6279258773)
-and [acceptance review](../../reviews/current/issue-1754-revision-stability-acceptance-review-2026-10-19.md)
+and [acceptance review](../reviews/issue-1754-revision-stability-acceptance-review-2026-10-19.md)
 give all literal rows, source/input/output hashes, commands and inspected PNGs.
 
 The controlled line-only invariant adds six placement modes × six as-of
@@ -290,10 +291,6 @@ positions with fixed other obstacles, marks and routes. Both label unit modules
 pass 38 tests on the rerun base. No additional product policy, budget,
 validator, preset or trial input change is needed.
 
-Next publication: controlled tests plus the updated acceptance evidence,
-batched with already-closed 806/1763 archival records and the independently
-reviewed 1756/416 slices in PR1786. Each issue retains its own commits and
-literal review; one shared final snapshot/release establishes acceptance.
-CI supplies full pytest
-and release evidence; close 1754 only after the exact published main containing
-this follow-up passes three-OS/conformance/wheel/newest-Python gates.
+Publication is complete in PR1786, retaining independent1756/416 source commits
+and literal reviews. PR1788 repaired the shared wheel-documentation gate; the
+exact review-containing release above completes acceptance for all four rows.

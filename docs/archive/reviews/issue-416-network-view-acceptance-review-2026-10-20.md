@@ -2,8 +2,12 @@
 
 Implementation `8240e85c0`; design/architecture/plan published at `2e2117331`
 and shared-role clarification `e7fb83df7`, before affected code. Current
-[work record](../../planning/active/issue-416-network-view-work-record-2026-10-19.md);
-normative Specs 06/07/50. Status: locally verified, **not release accepted**.
+[work record](../planning/issue-416-network-view-work-record-2026-10-19.md);
+normative Specs 06/07/50. Status: all six rows released; issue416 closed.
+Exact review-containing main `1abfa2fef03ae407e3691068454ff61df98e0605` passed
+[release39352901914](https://github.com/tya5/chrona/actions/runs/39352901914):
+three-OS full pytest/conformance/wheel, MCP floor and newest-Python reproduction.
+The local findings below are accepted by that release, not provisional claims.
 
 | Literal acceptance criterion | Status and direct evidence |
 | --- | --- |
@@ -51,6 +55,6 @@ transport preserves typed model failures. Theme metrics retain one channel;
 no parallel Layout Profile override, scheduler change, Scene/adapter placement
 logic, corpus tuning or new layout algorithm is introduced.
 
-Release pending: exact-ready-main PR, CI-generated inventory/public snapshot
-and all full checks, then the exact published review-containing main's
-three-OS/conformance/wheel/newest-Python run. Keep issue416 open until these pass.
+PR1786 CI39344125617 and its generated snapshot passed; all public SVG/Scene
+bytes were unchanged. PR1788 corrected only the shared wheel-doc destination
+conflict. The exact review-containing release above completes all required gates.
