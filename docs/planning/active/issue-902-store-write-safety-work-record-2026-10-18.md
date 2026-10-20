@@ -1,12 +1,15 @@
 # Issue 902 — MCP command work record
 
-Status: items5/3/2 and consolidated814 are released. Item4 merged in
+Status: items5/3/2, consolidated814, and item4 are released. Item4 merged in
 [PR1839](https://github.com/tya5/chrona/pull/1839) at
 `b6b1738c4829f688b63edf03951ca9b97631b40b`; exact ready main
 `073a38224718a0a17001a9bff58f3f9d95370688` is published.
 [Release39458042291](https://github.com/tya5/chrona/actions/runs/39458042291)
-must complete before item4 is release-accepted. Parent902 stays open for parked
-#815 (HTTP and other later options); board454 is read-only.
+passed on that exact main commit, including all three OS matrices, MCP-floor,
+and newest-Python materializer reproduction. The [item4 acceptance review](../../reviews/current/issue-902-inline-commands-acceptance-review-2026-10-21.md)
+records all three literal criteria as met and links the official artifact audit.
+Parent902 stays open for parked #815 (HTTP and other later options); board454
+is read-only.
 
 ## Released predecessors
 
@@ -52,6 +55,5 @@ existing diagnostic-inventory source anchors changed. This disposes of the
 source-only local inventory-staleness result without authoring generated files.
 
 [Literal review](../../reviews/current/issue-902-inline-commands-acceptance-review-2026-10-21.md)
-owns row evidence. Next: verify the exact-main three-OS pytest/conformance/wheel,
-MCP and newest-Python release, update this status/review once, then accept item4.
-No parent closure or #815 completion is implied.
+owns row evidence and the exact-main release result. Item4 is accepted; no
+parent closure or #815 completion is implied.
