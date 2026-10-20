@@ -7,6 +7,7 @@ import pytest
 import yaml
 
 from chrona.presentation.scene.serialization import scene_document, validate_scene_document
+from chrona.presentation.model.info_diagnostics import DeadlineCaptionsDropped
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft, warning_payloads
 from tests.support import synthetic_review as sr
 
@@ -77,8 +78,10 @@ def test_late_span_and_point_runs_end_at_forecast_and_warnings_name_the_same_fin
         assert "d" in elements[run.scene_id].attrib
     captions = [item for item in result.rendered.surface.primitives if item.purpose == "deadline-caption"]
     # Optional captions keep their existing collision/omission policy.
-    if not folded:
-        assert captions
+    drops = [item for item in result.rendered.info_diagnostics
+             if isinstance(item, DeadlineCaptionsDropped)]
+    assert len(captions) + sum(item.count for item in drops) == len(runs)
+    assert all(item.surface_id == "table-timeline" for item in drops)
     assert {item.source_ref for item in captions} <= {"a", "gate"}
     caption_counts = {"a": "2 days late", "gate": "3 days late"}
     assert all(item.text == caption_counts[item.source_ref] for item in captions)

@@ -32,6 +32,15 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
         return required, optional
 
     monkeypatch.setattr(SurfaceMemberLabelRequests, "routing_phases", phases_spy)
+    original_trial = surface_route_label_plan._run_trial
+
+    def trial_spy(context, reservations, requests, **kwargs):
+        seen["repair_obstacle_ids"] = frozenset(
+            obstacle.placement_id for reservation in reservations
+            for obstacle in reservation.obstacles)
+        return original_trial(context, reservations, requests, **kwargs)
+
+    monkeypatch.setattr(surface_route_label_plan, "_run_trial", trial_spy)
 
     def spy(name: str, original):
         def wrapper(*args, **kwargs):
@@ -51,10 +60,13 @@ def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(t
                 expected = seen["required_obstacle_ids"]
                 if route_context.progress_pass == "route-label-recovery":
                     retained = {item.placement_id for item in route_context.text
-                                if item.required and item.placement_id in seen["first_visible_ids"]}
+                                if item.placement_id in seen["first_visible_ids"]}
                     expected = expected | frozenset(identifier for placement_id in retained
                         for identifier in (placement_id, f"label-footprint:{placement_id}"))
+                    expected = expected | seen["repair_obstacle_ids"]
+                    assert route_context.label_repair_obstacle_ids == seen["repair_obstacle_ids"]
                 else:
+                    assert not route_context.label_repair_obstacle_ids
                     assert route_context.required_label_obstacle_ids.isdisjoint(seen["optional_label_ids"])
                 assert route_context.required_label_obstacle_ids == expected
             obstacles = args[0].obstacles

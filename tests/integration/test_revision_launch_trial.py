@@ -35,7 +35,6 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
     actual_path = tmp_path / "actual.yaml"
     actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
     previous_scene = tmp_path / "v1.scene.json"
-    old_spec_points = None
     old_routes = None
     for revision in (1, 2):
         if revision == 2:
@@ -71,7 +70,6 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
                        for diagnostic in result.scene.diagnostics)
         if revision == 1:
             previous_scene.write_bytes(serialize_scene(result.scene))
-            old_spec_points = routes[0].points
             old_routes = {
                 route.scene_id: (route.from_instance_id, route.to_instance_id, route.points)
                 for route in result.surface.primitives
@@ -103,11 +101,16 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
                 assert route.scene_id in old_routes, relation_id
                 old_source, old_target, old_points = old_routes[route.scene_id]
                 assert (route.from_instance_id, route.to_instance_id) == (old_source, old_target)
-                # Reanchoring moves endpoints with their marks and adjusts the
-                # first/last elbows. Every interior route point stays pinned.
+                # Equal endpoint translations move the whole route (Spec50);
+                # otherwise reanchoring keeps its interior bends pinned.
                 points = route.points
                 assert len(points) == len(old_points), relation_id
-                if len(points) > 2:
+                start_delta = tuple(new - old for new, old in zip(points[0], old_points[0]))
+                end_delta = tuple(new - old for new, old in zip(points[-1], old_points[-1]))
+                if start_delta == pytest.approx(end_delta):
+                    for point, (x, y) in zip(points, old_points):
+                        assert point == pytest.approx((x + start_delta[0], y + start_delta[1])), relation_id
+                elif len(points) > 2:
                     assert points[2:-2] == old_points[2:-2], relation_id
                 assert tuple((b[0] == a[0], b[1] == a[1]) for a, b in zip(points, points[1:])) == tuple(
                     (b[0] == a[0], b[1] == a[1]) for a, b in zip(old_points, old_points[1:])), relation_id
@@ -116,13 +119,14 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
                 assert route.scene_id in elements, relation_id
                 assert elements[route.scene_id].get("d"), relation_id
             receipt = next(info for info in receipts if ":spec-build:" in info.relation_id)
-            assert receipt.disposition == "accepted", receipt
+            # The old interior bend now crosses the current build mark. A
+            # hint is a proposal, never permission to bypass closed contact.
+            assert receipt.disposition == "invalidated", receipt
+            assert receipt.reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
+            assert receipt.searched
             assert receipt.relation_id in current_routes
             points = hinted_routes[0].points
-            assert len(points) == len(old_spec_points)
-            translation = (points[0][0] - old_spec_points[0][0], points[0][1] - old_spec_points[0][1])
-            for old, new in zip(old_spec_points, points):
-                assert new == pytest.approx((old[0] + translation[0], old[1] + translation[1]))
+            assert points == routes[0].points  # same safe fallback as the fresh render
             svg = ET.fromstring(hinted.artifact.content)
             assert any(element.get("data-scene-id", element.get("id")) == hinted_routes[0].scene_id
                        for element in svg.iter())
