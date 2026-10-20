@@ -1165,10 +1165,12 @@ then bends and length, preserving stable egress order for ties. A blocked
 horizontal exit is not proof that the other legal egresses are blocked.
 
 **Primary-mark safety (#1114).** In every row mode and entry policy, completed
-relation paths MUST NOT traverse primary planned-mark interiors, including
-their own endpoint marks. Interior bounds are inset by half the relation stroke
-width to allow boundary ink contact. The exemption is terminal contact on the
-outward side, never permission to route through the primary mark. A span's
+relation paths MUST NOT traverse primary planned marks, including their own
+endpoint marks. Positive-length contact with their full closed bounds, including
+travel along an edge, is blocked (#1841). An isolated terminal-point touch on the
+outward side remains necessary, never permission to slide along or pass through
+the primary mark. Existing temporal-tip outward exits may detour above/below;
+an above/below exit that slides along the end face is not a safe candidate. A span's
 far-side exit is not a candidate; start/end retain their temporal ports with
 outward or above/below egress. Spec 33's named comparison-host corridor
 exemption remains scoped to that corridor. This applies after repair, to
@@ -1177,6 +1179,9 @@ the broad own-mark exemptions above. An unsafe direct fallback is suppressed
 with `W_LAYOUT_RELATION_SUPPRESSED` and `I_LAYOUT_RELATION_MARK_BLOCKED:<relation id>`.
 Lane attempts retain `E_LAYOUT_ROUTE_THROUGH_MARK` evidence. Scene observes
 completed crossings as `E_SCENE_RELATION_THROUGH_MARK`; it does not repair routes.
+The inset interior rectangles used for conservative rectangular-detour quality
+lower-bound certificates remain unchanged. They are not the contact envelope
+for actual candidate, repair, reduction or final drawn-path safety checks.
 Remaining candidate order, bounds and comparison semantics are unchanged.
 
 Required, route-independent lane item names and deltas are measured and
