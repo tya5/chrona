@@ -1,0 +1,118 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-preset-wallboard-dark
+body:
+  deadlines: {show: all}
+  heading: {text: {wrap: allow}}
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+    exclude:
+      objectTypes:
+      - group
+  colorEncoding:
+    scale: series
+    target: planned
+    source:
+      fieldRole: responsible
+    domain: firstAppearance
+  grouping:
+    by: none
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: working-days
+    facets:
+    - planned
+  visibility:
+    labels:
+      placement: both
+      content:
+      - path
+      - finishDelta
+      side: end
+      overflow: suppress
+    fallback:
+      labels:
+      - end
+      - start
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+      typographyRole: axisQuarter
+      fillScale: {scale: axis-quarter, key: alternating}
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      typographyRole: axisQuarter
+      label:
+        form: quarter
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: band
+      typographyRole: axisMonth
+      fillScale: {scale: axis-month, key: alternating, containingTier: 0}
+    - unit: month
+      every: 1
+      role: labels
+      typographyRole: axisMonth
+      label:
+        form: short-month
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: alternate
+    groups: all
+  tableColumns:
+  - id: Task
+    header: {wording: column.task}
+    text: {wrap: allow}
+    source: path
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Owner
+    header: {wording: column.owner}
+    text: {wrap: allow}
+    source: {fieldRole: responsible}
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic
+  markers:
+  - kind: asOf
+    source: actual
+    label: {wording: legend.asOf}
+  shading:
+    nonWorking: true
+    exceptions: true

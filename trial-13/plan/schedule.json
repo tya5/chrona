@@ -1,0 +1,531 @@
+{
+  "status": "ok",
+  "placements": {
+    "kickoff": {
+      "at": "2027-03-01"
+    },
+    "discovery": {
+      "start": "2027-03-01",
+      "end": "2027-04-08"
+    },
+    "disc-1": {
+      "start": "2027-03-01",
+      "end": "2027-03-09"
+    },
+    "disc-2": {
+      "start": "2027-03-01",
+      "end": "2027-03-08"
+    },
+    "disc-3": {
+      "start": "2027-03-09",
+      "end": "2027-03-19"
+    },
+    "disc-4": {
+      "start": "2027-03-08",
+      "end": "2027-03-12"
+    },
+    "disc-5": {
+      "start": "2027-03-19",
+      "end": "2027-03-31"
+    },
+    "disc-6": {
+      "start": "2027-03-12",
+      "end": "2027-03-19"
+    },
+    "disc-7": {
+      "start": "2027-03-31",
+      "end": "2027-04-08"
+    },
+    "disc-8": {
+      "start": "2027-03-19",
+      "end": "2027-03-25"
+    },
+    "scope-gate": {
+      "at": "2027-04-08"
+    },
+    "design": {
+      "start": "2027-04-08",
+      "end": "2027-05-18"
+    },
+    "desi-1": {
+      "start": "2027-04-08",
+      "end": "2027-04-15"
+    },
+    "desi-2": {
+      "start": "2027-04-08",
+      "end": "2027-04-20"
+    },
+    "desi-3": {
+      "start": "2027-04-15",
+      "end": "2027-04-21"
+    },
+    "desi-4": {
+      "start": "2027-04-20",
+      "end": "2027-04-29"
+    },
+    "desi-5": {
+      "start": "2027-04-21",
+      "end": "2027-04-28"
+    },
+    "desi-6": {
+      "start": "2027-04-29",
+      "end": "2027-05-10"
+    },
+    "desi-7": {
+      "start": "2027-04-28",
+      "end": "2027-05-05"
+    },
+    "desi-8": {
+      "start": "2027-05-10",
+      "end": "2027-05-18"
+    },
+    "design-gate": {
+      "at": "2027-05-18"
+    },
+    "build": {
+      "start": "2027-05-18",
+      "end": "2027-06-25"
+    },
+    "buil-1": {
+      "start": "2027-05-18",
+      "end": "2027-05-28"
+    },
+    "buil-2": {
+      "start": "2027-05-18",
+      "end": "2027-05-24"
+    },
+    "buil-3": {
+      "start": "2027-05-28",
+      "end": "2027-06-09"
+    },
+    "buil-4": {
+      "start": "2027-05-24",
+      "end": "2027-06-01"
+    },
+    "buil-5": {
+      "start": "2027-06-09",
+      "end": "2027-06-17"
+    },
+    "buil-6": {
+      "start": "2027-06-01",
+      "end": "2027-06-07"
+    },
+    "buil-7": {
+      "start": "2027-06-17",
+      "end": "2027-06-25"
+    },
+    "buil-8": {
+      "start": "2027-06-07",
+      "end": "2027-06-14"
+    },
+    "code-complete": {
+      "at": "2027-06-25"
+    },
+    "verify": {
+      "start": "2027-06-25",
+      "end": "2027-08-05"
+    },
+    "veri-1": {
+      "start": "2027-06-25",
+      "end": "2027-07-01"
+    },
+    "veri-2": {
+      "start": "2027-06-25",
+      "end": "2027-07-08"
+    },
+    "veri-3": {
+      "start": "2027-07-01",
+      "end": "2027-07-12"
+    },
+    "veri-4": {
+      "start": "2027-07-08",
+      "end": "2027-07-16"
+    },
+    "veri-5": {
+      "start": "2027-07-12",
+      "end": "2027-07-16"
+    },
+    "veri-6": {
+      "start": "2027-07-16",
+      "end": "2027-07-26"
+    },
+    "veri-7": {
+      "start": "2027-07-16",
+      "end": "2027-07-23"
+    },
+    "veri-8": {
+      "start": "2027-07-26",
+      "end": "2027-08-05"
+    },
+    "go-no-go": {
+      "at": "2027-08-05"
+    },
+    "launch-prep": {
+      "start": "2027-08-05",
+      "end": "2027-09-13"
+    },
+    "laun-1": {
+      "start": "2027-08-05",
+      "end": "2027-08-16"
+    },
+    "laun-2": {
+      "start": "2027-08-05",
+      "end": "2027-08-12"
+    },
+    "laun-3": {
+      "start": "2027-08-16",
+      "end": "2027-08-24"
+    },
+    "laun-4": {
+      "start": "2027-08-12",
+      "end": "2027-08-18"
+    },
+    "laun-5": {
+      "start": "2027-08-24",
+      "end": "2027-09-01"
+    },
+    "laun-6": {
+      "start": "2027-08-18",
+      "end": "2027-08-25"
+    },
+    "laun-7": {
+      "start": "2027-09-01",
+      "end": "2027-09-13"
+    },
+    "laun-8": {
+      "start": "2027-08-25",
+      "end": "2027-08-31"
+    },
+    "launch": {
+      "at": "2027-09-13"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [
+    {
+      "code": "W_DEADLINE",
+      "severity": "warning",
+      "component": "core",
+      "sourceRef": "/objects/desi-8/deadline",
+      "revisionRefs": [],
+      "message": "desi-8 finishes 2027-05-17, 10 days after its deadline 2027-05-07",
+      "details": {
+        "object": "desi-8",
+        "endpoint": "end",
+        "finish": "2027-05-17",
+        "deadline": "2027-05-07",
+        "daysLate": 10
+      },
+      "sourceRange": {
+        "line": 145,
+        "column": 5,
+        "endLine": 145,
+        "endColumn": 13
+      }
+    },
+    {
+      "code": "W_DEADLINE",
+      "severity": "warning",
+      "component": "core",
+      "sourceRef": "/objects/veri-8/deadline",
+      "revisionRefs": [],
+      "message": "veri-8 finishes 2027-08-04, 5 days after its deadline 2027-07-30",
+      "details": {
+        "object": "veri-8",
+        "endpoint": "end",
+        "finish": "2027-08-04",
+        "deadline": "2027-07-30",
+        "daysLate": 5
+      },
+      "sourceRange": {
+        "line": 277,
+        "column": 5,
+        "endLine": 277,
+        "endColumn": 13
+      }
+    },
+    {
+      "code": "W_DEADLINE",
+      "severity": "warning",
+      "component": "core",
+      "sourceRef": "/objects/launch/deadline",
+      "revisionRefs": [],
+      "message": "launch finishes 2027-09-13, 13 days after its deadline 2027-08-31",
+      "details": {
+        "object": "launch",
+        "endpoint": "at",
+        "finish": "2027-09-13",
+        "deadline": "2027-08-31",
+        "daysLate": 13
+      },
+      "sourceRange": {
+        "line": 351,
+        "column": 5,
+        "endLine": 351,
+        "endColumn": 13
+      }
+    }
+  ],
+  "analysis": {
+    "criticalObjectIds": [
+      "kickoff",
+      "disc-1",
+      "disc-3",
+      "disc-5",
+      "disc-7",
+      "scope-gate",
+      "desi-2",
+      "desi-4",
+      "desi-6",
+      "desi-8",
+      "design-gate",
+      "buil-1",
+      "buil-3",
+      "buil-5",
+      "buil-7",
+      "code-complete",
+      "veri-2",
+      "veri-4",
+      "veri-6",
+      "veri-8",
+      "go-no-go",
+      "laun-1",
+      "laun-3",
+      "laun-5",
+      "laun-7",
+      "launch"
+    ],
+    "totalFloat": {
+      "kickoff": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-2": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-4": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-6": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-7": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "disc-8": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "scope-gate": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-1": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-3": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-4": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-5": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-6": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-7": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "desi-8": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "design-gate": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-2": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-4": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-6": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-7": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "buil-8": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "code-complete": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-1": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-3": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-4": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-5": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-6": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-7": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "veri-8": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "go-no-go": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-2": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-4": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-6": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-7": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "laun-8": {
+        "value": 9,
+        "unit": "working-days",
+        "calendar": "standard"
+      },
+      "launch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "standard"
+      }
+    }
+  }
+}

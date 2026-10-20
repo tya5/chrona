@@ -1,0 +1,92 @@
+{
+ "mission-light": {
+  "total": 10,
+  "codes": {
+   "W_SCENE_ENCODING_CONTRAST": 10
+  }
+ },
+ "control-room-dark": {
+  "total": 11,
+  "codes": {
+   "W_SCENE_MARK_CONTRAST": 1,
+   "W_SCENE_ENCODING_CONTRAST": 10
+  }
+ },
+ "print-mono": {
+  "total": 10,
+  "codes": {
+   "W_SCENE_ENCODING_CONTRAST": 10
+  }
+ },
+ "executive-light": {
+  "total": 0,
+  "codes": {}
+ },
+ "elevated-light": {
+  "total": 0,
+  "codes": {}
+ },
+ "editorial": {
+  "total": 4,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 4
+  }
+ },
+ "technical-print": {
+  "total": 2,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 2
+  }
+ },
+ "chrona-default-draft": {
+  "total": 7,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 7
+  }
+ },
+ "marquee": {
+  "total": 0,
+  "codes": {}
+ },
+ "sunday": {
+  "total": 3,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 1,
+   "W_SCENE_MARK_CONTRAST": 2
+  }
+ },
+ "target-b": {
+  "total": 3,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 2,
+   "W_SCENE_STATE_TEXT_CONTRAST": 1
+  }
+ },
+ "titlecard": {
+  "total": 2,
+  "codes": {
+   "W_SCENE_MARK_CONTRAST": 2
+  }
+ },
+ "yuya": {
+  "total": 51,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 1,
+   "W_SCENE_MARK_CONTRAST": 50
+  }
+ },
+ "muted-executive": {
+  "total": 1,
+  "codes": {
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 1
+  }
+ },
+ "wallboard-dark": {
+  "total": 3,
+  "codes": {
+   "W_LEGEND_SWATCH_COLLISION": 1,
+   "W_LEGEND_COLOR_NOT_SEPARABLE": 1,
+   "W_SCENE_MARK_CONTRAST": 1
+  }
+ }
+}

@@ -1,0 +1,37 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-sunday
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-design-default
+      kind: view
+      path: view.yaml
+    theme:
+      id: sunday
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: sunday
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: sunday
+      kind: layout-profile
+      path: layout.yaml
+    detailProfile:
+      id: halcyon-sunday-legend
+      kind: review-detail-profile
+      path: detail.yaml
+    iconCatalogs:
+    - id: chrona-target-parts-v2026-10-09
+      kind: icon-catalog
+      path: catalogs/chrona-target-parts-v2026-10-09.yaml
+  compatibleColorSchemes:
+  - id: sunday
+    kind: color-scheme
+    path: scheme.yaml
+  visualProfile:
+    preferred: chrona-output/visual/v0.7-svg

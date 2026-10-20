@@ -1,0 +1,27 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-control-room-dark
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-control-room-dark
+      kind: view
+      path: view.yaml
+    theme:
+      id: chrona-builtin-control-room-dark
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: control-room-dark
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: chrona-builtin-control-room-dark
+      kind: layout-profile
+      path: layout.yaml
+  compatibleColorSchemes:
+  - id: control-room-dark
+    kind: color-scheme
+    path: scheme.yaml

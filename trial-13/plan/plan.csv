@@ -1,0 +1,52 @@
+id,title,type,start,duration,parent,predecessors,deadline,owner
+kickoff,Kickoff (milestone),gate,2027-03-01,,,,,
+discovery,Discovery,group,,,,,,
+disc-1,Stakeholder interviews,task,,6wd,discovery,kickoff,,Aiko
+disc-2,Market scan,task,,5wd,discovery,kickoff,,Ben
+disc-3,Requirements draft,task,,8wd,discovery,disc-1,,Chen
+disc-4,Data audit,task,,4wd,discovery,disc-2,,Dana
+disc-5,Risk register,task,,7wd,discovery,disc-3,,Eli
+disc-6,Budget estimate,task,,5wd,discovery,disc-4,,Aiko
+disc-7,Vendor shortlist,task,,6wd,discovery,disc-5,,Ben
+disc-8,Scope sign-off pack,task,,4wd,discovery,disc-6,2027-04-02,Chen
+scope-gate,Scope gate,gate,,,discovery,"disc-7, disc-8",,
+design,Design,group,,,,,,
+desi-1,Information architecture,task,,5wd,design,scope-gate,,Dana
+desi-2,Service blueprint,task,,8wd,design,scope-gate,,Eli
+desi-3,API contract,task,,4wd,design,desi-1,,Aiko
+desi-4,Data model,task,,7wd,design,desi-2,,Ben
+desi-5,UI wireframes,task,,5wd,design,desi-3,,Chen
+desi-6,Visual design,task,,6wd,design,desi-4,,Dana
+desi-7,Security design,task,,4wd,design,desi-5,,Eli
+desi-8,Design hand-off,task,,6wd,design,desi-6,2027-05-07,Aiko
+design-gate,Design review gate,gate,,,design,"desi-7, desi-8",,
+build,Build,group,,,,,,
+buil-1,Auth service,task,,8wd,build,design-gate,,Ben
+buil-2,Billing service,task,,4wd,build,design-gate,,Chen
+buil-3,Catalogue service,task,,7wd,build,buil-1,,Dana
+buil-4,Search index,task,,5wd,build,buil-2,,Eli
+buil-5,Web front end,task,,6wd,build,buil-3,,Aiko
+buil-6,Mobile app,task,,4wd,build,buil-4,,Ben
+buil-7,Admin console,task,,6wd,build,buil-5,,Chen
+buil-8,Integration glue,task,,5wd,build,buil-6,2027-06-25,Dana
+code-complete,Code complete (milestone),gate,,,build,"buil-7, buil-8",,
+verify,Verify,group,,,,,,
+veri-1,Unit test hardening,task,,4wd,verify,code-complete,,Eli
+veri-2,Integration tests,task,,7wd,verify,code-complete,,Aiko
+veri-3,Performance tests,task,,5wd,verify,veri-1,,Ben
+veri-4,Accessibility audit,task,,6wd,verify,veri-2,,Chen
+veri-5,Security pen test,task,,4wd,verify,veri-3,,Dana
+veri-6,User acceptance,task,,6wd,verify,veri-4,,Eli
+veri-7,Defect burn-down,task,,5wd,verify,veri-5,,Aiko
+veri-8,Release candidate,task,,8wd,verify,veri-6,2027-07-30,Ben
+go-no-go,Go/no-go gate,gate,,,verify,"veri-7, veri-8",2027-08-06,
+launch-prep,Launch prep,group,,,,,,
+laun-1,Training material,task,,7wd,launch-prep,go-no-go,,Chen
+laun-2,Support runbooks,task,,5wd,launch-prep,go-no-go,,Dana
+laun-3,Marketing site,task,,6wd,launch-prep,laun-1,,Eli
+laun-4,Data migration,task,,4wd,launch-prep,laun-2,,Aiko
+laun-5,Pilot rollout,task,,6wd,launch-prep,laun-3,,Ben
+laun-6,Comms plan,task,,5wd,launch-prep,laun-4,,Chen
+laun-7,Go-live rehearsal,task,,8wd,launch-prep,laun-5,,Dana
+laun-8,Hypercare plan,task,,4wd,launch-prep,laun-6,,Eli
+launch,Launch (milestone),gate,,,launch-prep,"laun-7, laun-8",2027-08-31,

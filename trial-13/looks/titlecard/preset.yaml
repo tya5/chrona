@@ -1,0 +1,43 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-titlecard
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-design-default
+      kind: view
+      path: view.yaml
+    theme:
+      id: titlecard
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: titlecard
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: titlecard
+      kind: layout-profile
+      path: layout.yaml
+    detailProfile:
+      id: halcyon-titlecard-legend
+      kind: review-detail-profile
+      path: detail.yaml
+    summaryProfile:
+      id: halcyon-titlecard-countdown
+      kind: summary-profile
+      path: summary.yaml
+    iconCatalogs:
+    - id: chrona-target-parts-v2026-10-09
+      kind: icon-catalog
+      path: catalogs/chrona-target-parts-v2026-10-09.yaml
+    fontSets:
+    - chrona.noto-sans+jp
+  compatibleColorSchemes:
+  - id: titlecard
+    kind: color-scheme
+    path: scheme.yaml
+  visualProfile:
+    preferred: chrona-output/visual/v0.7-svg

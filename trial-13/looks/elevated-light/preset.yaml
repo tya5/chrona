@@ -1,0 +1,33 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-elevated-light
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-elevated-light
+      kind: view
+      path: view.yaml
+    theme:
+      id: chrona-builtin-elevated-light
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: executive-light
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: chrona-builtin-elevated-light
+      kind: layout-profile
+      path: layout.yaml
+    detailProfile:
+      id: chrona-builtin-legend
+      kind: review-detail-profile
+      path: detail.yaml
+  compatibleColorSchemes:
+  - id: executive-light
+    kind: color-scheme
+    path: scheme.yaml
+  visualProfile:
+    preferred: chrona-output/visual/v0.7-svg

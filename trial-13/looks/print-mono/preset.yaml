@@ -1,0 +1,27 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-print-mono
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-print-mono
+      kind: view
+      path: view.yaml
+    theme:
+      id: chrona-builtin-print-mono
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: print-mono
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: chrona-builtin-print-mono
+      kind: layout-profile
+      path: layout.yaml
+  compatibleColorSchemes:
+  - id: print-mono
+    kind: color-scheme
+    path: scheme.yaml

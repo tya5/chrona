@@ -1,0 +1,37 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-builtin-marquee
+body:
+  package:
+    version: '1'
+  resources:
+    view:
+      id: chrona-preset-design-default
+      kind: view
+      path: view.yaml
+    theme:
+      id: marquee
+      kind: theme
+      path: theme.yaml
+    colorScheme:
+      id: marquee
+      kind: color-scheme
+      path: scheme.yaml
+    layout:
+      id: marquee
+      kind: layout-profile
+      path: layout.yaml
+    detailProfile:
+      id: halcyon-marquee-legend
+      kind: review-detail-profile
+      path: detail.yaml
+    iconCatalogs:
+    - id: chrona-target-parts-v2026-10-09
+      kind: icon-catalog
+      path: catalogs/chrona-target-parts-v2026-10-09.yaml
+  compatibleColorSchemes:
+  - id: marquee
+    kind: color-scheme
+    path: scheme.yaml
+  visualProfile:
+    preferred: chrona-output/visual/v0.7-svg

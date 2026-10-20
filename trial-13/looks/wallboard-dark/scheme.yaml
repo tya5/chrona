@@ -1,0 +1,39 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: chrona-builtin-wallboard-dark
+body:
+  colors:
+    surface: "#0D1117"
+    surfaceRaised: "#1C2430"
+    text: "#F0F6FC"
+    textMuted: "#9BA7B4"
+    accent: "#FFD23F"
+    positive: "#3FB950"
+    negative: "#FF7B72"
+    warning: "#E3B341"
+    neutral: "#30363D"
+    insideLabelPlanned: "#0D1117"
+    insideLabelActual: "#0D1117"
+    insideLabelSnapshot: "#F0F6FC"
+    insideLabelScenario: "#F0F6FC"
+  categories:
+    default: "#1C2430"
+    series-1: "#2F81F7"
+    series-2: "#2A9D43"
+    series-3: "#D2691E"
+    series-4: "#8957E5"
+    series-5: "#D1478C"
+    series-6: "#1B9AAA"
+    axis-quarter-a: "#1A5FD0"
+    axis-quarter-b: "#1F7A31"
+    axis-month-a: "#143F85"
+    axis-month-b: "#1A5C27"
+  suitability:
+    background: dark
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona preset catalogue, Wallboard dark direction (#425, #429)
+    license: MIT

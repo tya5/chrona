@@ -1,0 +1,23 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: launch-programme-observed
+body:
+  asOf: '2027-05-10'
+  observations:
+    - {id: kickoff-obs, sequence: 1, projectObjectId: kickoff, actual: {at: '2027-03-02'}}
+    - {id: disc-1-obs, sequence: 1, projectObjectId: disc-1, actual: {start: '2027-03-02', finish: '2027-03-11', progress: 1}}
+    - {id: disc-2-obs, sequence: 1, projectObjectId: disc-2, actual: {start: '2027-03-01', finish: '2027-03-08', progress: 1}}
+    - {id: disc-3-obs, sequence: 1, projectObjectId: disc-3, actual: {start: '2027-03-10', finish: '2027-03-22', progress: 1}}
+    - {id: disc-4-obs, sequence: 1, projectObjectId: disc-4, actual: {start: '2027-03-08', finish: '2027-03-11', progress: 1}}
+    - {id: disc-5-obs, sequence: 1, projectObjectId: disc-5, actual: {start: '2027-03-19', finish: '2027-04-01', progress: 1}}
+    - {id: disc-6-obs, sequence: 1, projectObjectId: disc-6, actual: {start: '2027-03-12', finish: '2027-03-19', progress: 1}}
+    - {id: disc-7-obs, sequence: 1, projectObjectId: disc-7, actual: {start: '2027-03-31', finish: '2027-04-09', progress: 1}}
+    - {id: disc-8-obs, sequence: 1, projectObjectId: disc-8, actual: {start: '2027-03-20', finish: '2027-03-27', progress: 1}}
+    - {id: scope-gate-obs, sequence: 1, projectObjectId: scope-gate, actual: {at: '2027-04-08'}}
+    - {id: desi-1-obs, sequence: 1, projectObjectId: desi-1, actual: {start: '2027-04-09', finish: '2027-04-18', progress: 1}}
+    - {id: desi-2-obs, sequence: 1, projectObjectId: desi-2, actual: {start: '2027-04-08', finish: '2027-04-19', progress: 1}}
+    - {id: desi-3-obs, sequence: 1, projectObjectId: desi-3, actual: {start: '2027-04-15', finish: '2027-04-22', progress: 1}}
+    - {id: desi-4-obs, sequence: 1, projectObjectId: desi-4, actual: {start: '2027-04-20', finish: '2027-04-29', progress: 1}}
+    - {id: desi-5-obs, sequence: 1, projectObjectId: desi-5, actual: {start: '2027-04-21', finish: '2027-04-29', progress: 1}}
+    - {id: desi-6-obs, sequence: 1, projectObjectId: desi-6, actual: {start: '2027-04-30', openUntil: asOf, progress: 0.85}}
+    - {id: desi-7-obs, sequence: 1, projectObjectId: desi-7, actual: {start: '2027-04-28', finish: '2027-05-05', progress: 1}}

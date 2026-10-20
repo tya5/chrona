@@ -1,0 +1,2776 @@
+[
+ {
+  "preset": "mission-light",
+  "page": "#FFFFFF",
+  "swatches": [],
+  "worst": {},
+  "flagged": {
+   "normal": [],
+   "deutan": [],
+   "protan": [],
+   "tritan": []
+  }
+ },
+ {
+  "preset": "control-room-dark",
+  "page": "#0B1220",
+  "swatches": [],
+  "worst": {},
+  "flagged": {
+   "normal": [],
+   "deutan": [],
+   "protan": [],
+   "tritan": []
+  }
+ },
+ {
+  "preset": "print-mono",
+  "page": "#FFFFFF",
+  "swatches": [],
+  "worst": {},
+  "flagged": {
+   "normal": [],
+   "deutan": [],
+   "protan": [],
+   "tritan": []
+  }
+ },
+ {
+  "preset": "executive-light",
+  "page": "#FFFFFF",
+  "swatches": [
+   {
+    "key": "deadlineMark",
+    "label": "Deadline",
+    "colour": "#172033",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "forecast",
+    "label": "Forecast (* estimated)",
+    "colour": "#3986E6",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:1f3fcaa4cc2095e6",
+    "label": "Actual",
+    "colour": "#269D79",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:ff20d4fbbb7c74d9",
+    "label": "Progress",
+    "colour": "#8D530F",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "snapshot",
+    "label": "Baseline",
+    "colour": "#C9CED8",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "snapshot"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 28.88,
+    "a": "Forecast (* estimated)",
+    "b": "Baseline",
+    "ca": "#3986E6",
+    "cb": "#C9CED8"
+   },
+   "deutan": {
+    "de": 22.31,
+    "a": "Actual",
+    "b": "Progress",
+    "ca": "#269D79",
+    "cb": "#8D530F"
+   },
+   "protan": {
+    "de": 24.11,
+    "a": "Actual",
+    "b": "Baseline",
+    "ca": "#269D79",
+    "cb": "#C9CED8"
+   },
+   "tritan": {
+    "de": 9.67,
+    "a": "Forecast (* estimated)",
+    "b": "Actual",
+    "ca": "#3986E6",
+    "cb": "#269D79"
+   }
+  },
+  "flagged": {
+   "normal": [],
+   "deutan": [],
+   "protan": [],
+   "tritan": [
+    {
+     "de": 9.67,
+     "a": "Forecast (* estimated)",
+     "b": "Actual",
+     "ca": "#3986E6",
+     "cb": "#269D79",
+     "same_shape": true
+    }
+   ]
+  }
+ },
+ {
+  "preset": "elevated-light",
+  "page": "#FFFFFF",
+  "swatches": [
+   {
+    "key": "deadlineMark",
+    "label": "Deadline",
+    "colour": "#172033",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "forecast",
+    "label": "Forecast (* estimated)",
+    "colour": "#3986E6",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:1f3fcaa4cc2095e6",
+    "label": "Actual",
+    "colour": "#269D79",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:ff20d4fbbb7c74d9",
+    "label": "Progress",
+    "colour": "#8D530F",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "snapshot",
+    "label": "Baseline",
+    "colour": "#C9CED8",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "snapshot"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 28.88,
+    "a": "Forecast (* estimated)",
+    "b": "Baseline",
+    "ca": "#3986E6",
+    "cb": "#C9CED8"
+   },
+   "deutan": {
+    "de": 22.31,
+    "a": "Actual",
+    "b": "Progress",
+    "ca": "#269D79",
+    "cb": "#8D530F"
+   },
+   "protan": {
+    "de": 24.11,
+    "a": "Actual",
+    "b": "Baseline",
+    "ca": "#269D79",
+    "cb": "#C9CED8"
+   },
+   "tritan": {
+    "de": 9.67,
+    "a": "Forecast (* estimated)",
+    "b": "Actual",
+    "ca": "#3986E6",
+    "cb": "#269D79"
+   }
+  },
+  "flagged": {
+   "normal": [],
+   "deutan": [],
+   "protan": [],
+   "tritan": [
+    {
+     "de": 9.67,
+     "a": "Forecast (* estimated)",
+     "b": "Actual",
+     "ca": "#3986E6",
+     "cb": "#269D79",
+     "same_shape": true
+    }
+   ]
+  }
+ },
+ {
+  "preset": "editorial",
+  "page": "#F5F5F1",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "MILESTONE",
+    "colour": "#293E56",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "dependency",
+    "label": "DEPENDENCY",
+    "colour": "#5B6675",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "asOf",
+    "label": "TODAY",
+    "colour": "#E2603D",
+    "shape": "Path",
+    "dashed": true,
+    "role": "as-of"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "DEADLINE",
+    "colour": "#293E56",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "planned",
+    "label": "TASK DURATION",
+    "colour": "#293E56",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:976a22327959f6fd",
+    "label": "ACTUAL",
+    "colour": "#293E56",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:c3b7e8c42c100995",
+    "label": "PROGRESS",
+    "colour": "#E2603D",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "NON-WORKING DAY",
+    "colour": "#E3E5E9",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-closed"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ]
+  }
+ },
+ {
+  "preset": "technical-print",
+  "page": "#FFFFFF",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "Milestone",
+    "colour": "#0D0D0D",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "dependency",
+    "label": "Dependency",
+    "colour": "#444444",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "asOf",
+    "label": "Today",
+    "colour": "#B3241C",
+    "shape": "Path",
+    "dashed": true,
+    "role": "as-of"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "Deadline",
+    "colour": "#0D0D0D",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "forecast",
+    "label": "Forecast (* estimated)",
+    "colour": "#0D0D0D",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:3df70f81545ae22b",
+    "label": "Behind",
+    "colour": "#B3241C",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "actual:52ce363891c2955d",
+    "label": "Actual",
+    "colour": "#0D0D0D",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "Non-working day",
+    "colour": "#BFBFBF",
+    "shape": "Path",
+    "dashed": false,
+    "role": "calendar-closed"
+   },
+   {
+    "key": "snapshot",
+    "label": "Baseline",
+    "colour": "#BFBFBF",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "snapshot"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Deadline",
+    "ca": "#0D0D0D",
+    "cb": "#0D0D0D"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Deadline",
+    "ca": "#0D0D0D",
+    "cb": "#0D0D0D"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Deadline",
+    "ca": "#0D0D0D",
+    "cb": "#0D0D0D"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Deadline",
+    "ca": "#0D0D0D",
+    "cb": "#0D0D0D"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Deadline",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Today",
+     "b": "Behind",
+     "ca": "#B3241C",
+     "cb": "#B3241C",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "Non-working day",
+     "b": "Baseline",
+     "ca": "#BFBFBF",
+     "cb": "#BFBFBF",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Deadline",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Today",
+     "b": "Behind",
+     "ca": "#B3241C",
+     "cb": "#B3241C",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "Non-working day",
+     "b": "Baseline",
+     "ca": "#BFBFBF",
+     "cb": "#BFBFBF",
+     "same_shape": false
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Deadline",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Today",
+     "b": "Behind",
+     "ca": "#B3241C",
+     "cb": "#B3241C",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "Non-working day",
+     "b": "Baseline",
+     "ca": "#BFBFBF",
+     "cb": "#BFBFBF",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Deadline",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Today",
+     "b": "Behind",
+     "ca": "#B3241C",
+     "cb": "#B3241C",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Forecast (* estimated)",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Deadline",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Actual",
+     "ca": "#0D0D0D",
+     "cb": "#0D0D0D",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "Non-working day",
+     "b": "Baseline",
+     "ca": "#BFBFBF",
+     "cb": "#BFBFBF",
+     "same_shape": false
+    }
+   ]
+  }
+ },
+ {
+  "preset": "chrona-default-draft",
+  "page": "#F5F5F1",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "MILESTONE",
+    "colour": "#293E56",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "dependency",
+    "label": "DEPENDENCY",
+    "colour": "#5B6675",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "asOf",
+    "label": "TODAY",
+    "colour": "#E2603D",
+    "shape": "Path",
+    "dashed": true,
+    "role": "as-of"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "DEADLINE",
+    "colour": "#293E56",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "planned",
+    "label": "TASK DURATION",
+    "colour": "#293E56",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:976a22327959f6fd",
+    "label": "ACTUAL",
+    "colour": "#293E56",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:c3b7e8c42c100995",
+    "label": "PROGRESS",
+    "colour": "#E2603D",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "NON-WORKING DAY",
+    "colour": "#293E56",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-closed"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "MILESTONE",
+    "b": "DEADLINE",
+    "ca": "#293E56",
+    "cb": "#293E56"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "ACTUAL",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "ACTUAL",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "ACTUAL",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "DEADLINE",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "MILESTONE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TODAY",
+     "b": "PROGRESS",
+     "ca": "#E2603D",
+     "cb": "#E2603D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "TASK DURATION",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "DEADLINE",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "ACTUAL",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "TASK DURATION",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    },
+    {
+     "de": 0.0,
+     "a": "ACTUAL",
+     "b": "NON-WORKING DAY",
+     "ca": "#293E56",
+     "cb": "#293E56",
+     "same_shape": true
+    }
+   ]
+  }
+ },
+ {
+  "preset": "marquee",
+  "page": "#0D0A09",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "GATE",
+    "colour": "#D9A93D",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "gate"
+   },
+   {
+    "key": "dependency",
+    "label": "DEPENDENCY",
+    "colour": "#8A8075",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "DEADLINE",
+    "colour": "#EFE4CF",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "snapshot",
+    "label": "BASELINE",
+    "colour": "#D9A93D",
+    "shape": "Rect",
+    "dashed": true,
+    "role": "snapshot"
+   },
+   {
+    "key": "forecast",
+    "label": "FORECAST (* ESTIMATED)",
+    "colour": "#A3202A",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:6f8e0dfcd79118bf",
+    "label": "ACTUAL",
+    "colour": "#EADCC0",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:54edda289964d274",
+    "label": "PROGRESS",
+    "colour": "#FF6B6B",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "calendar-exception",
+    "label": "HOLIDAY",
+    "colour": "#A3202A",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-exception"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "BASELINE",
+    "ca": "#D9A93D",
+    "cb": "#D9A93D"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "BASELINE",
+    "ca": "#D9A93D",
+    "cb": "#D9A93D"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "BASELINE",
+    "ca": "#D9A93D",
+    "cb": "#D9A93D"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "BASELINE",
+    "ca": "#D9A93D",
+    "cb": "#D9A93D"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "BASELINE",
+     "ca": "#D9A93D",
+     "cb": "#D9A93D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "FORECAST (* ESTIMATED)",
+     "b": "HOLIDAY",
+     "ca": "#A3202A",
+     "cb": "#A3202A",
+     "same_shape": true
+    },
+    {
+     "de": 2.98,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#EFE4CF",
+     "cb": "#EADCC0",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "BASELINE",
+     "ca": "#D9A93D",
+     "cb": "#D9A93D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "FORECAST (* ESTIMATED)",
+     "b": "HOLIDAY",
+     "ca": "#A3202A",
+     "cb": "#A3202A",
+     "same_shape": true
+    },
+    {
+     "de": 2.96,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#EFE4CF",
+     "cb": "#EADCC0",
+     "same_shape": false
+    },
+    {
+     "de": 8.85,
+     "a": "GATE",
+     "b": "PROGRESS",
+     "ca": "#D9A93D",
+     "cb": "#FF6B6B",
+     "same_shape": false
+    },
+    {
+     "de": 8.85,
+     "a": "BASELINE",
+     "b": "PROGRESS",
+     "ca": "#D9A93D",
+     "cb": "#FF6B6B",
+     "same_shape": false
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "BASELINE",
+     "ca": "#D9A93D",
+     "cb": "#D9A93D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "FORECAST (* ESTIMATED)",
+     "b": "HOLIDAY",
+     "ca": "#A3202A",
+     "cb": "#A3202A",
+     "same_shape": true
+    },
+    {
+     "de": 3.07,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#EFE4CF",
+     "cb": "#EADCC0",
+     "same_shape": false
+    },
+    {
+     "de": 7.22,
+     "a": "DEPENDENCY",
+     "b": "PROGRESS",
+     "ca": "#8A8075",
+     "cb": "#FF6B6B",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "BASELINE",
+     "ca": "#D9A93D",
+     "cb": "#D9A93D",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "FORECAST (* ESTIMATED)",
+     "b": "HOLIDAY",
+     "ca": "#A3202A",
+     "cb": "#A3202A",
+     "same_shape": true
+    },
+    {
+     "de": 2.67,
+     "a": "DEADLINE",
+     "b": "ACTUAL",
+     "ca": "#EFE4CF",
+     "cb": "#EADCC0",
+     "same_shape": false
+    }
+   ]
+  }
+ },
+ {
+  "preset": "sunday",
+  "page": "#F6EFDC",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "gate",
+    "colour": "#F7C948",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "gate"
+   },
+   {
+    "key": "dependency",
+    "label": "depends on",
+    "colour": "#8F887A",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "deadline",
+    "colour": "#1A1A1A",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "snapshot",
+    "label": "baseline",
+    "colour": "#FFFDF5",
+    "shape": "Rect",
+    "dashed": true,
+    "role": "snapshot"
+   },
+   {
+    "key": "forecast",
+    "label": "forecast (* estimated)",
+    "colour": "#7EC8E3",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:f9eb1c4db74f5d41",
+    "label": "actual",
+    "colour": "#D13A26",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "calendar-exception",
+    "label": "holiday",
+    "colour": "#F7C948",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-exception"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "holiday",
+    "ca": "#F7C948",
+    "cb": "#F7C948"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "holiday",
+    "ca": "#F7C948",
+    "cb": "#F7C948"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "holiday",
+    "ca": "#F7C948",
+    "cb": "#F7C948"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "holiday",
+    "ca": "#F7C948",
+    "cb": "#F7C948"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "holiday",
+     "ca": "#F7C948",
+     "cb": "#F7C948",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "holiday",
+     "ca": "#F7C948",
+     "cb": "#F7C948",
+     "same_shape": false
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "holiday",
+     "ca": "#F7C948",
+     "cb": "#F7C948",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "holiday",
+     "ca": "#F7C948",
+     "cb": "#F7C948",
+     "same_shape": false
+    }
+   ]
+  }
+ },
+ {
+  "preset": "target-b",
+  "page": "#FFFFFF",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "gate",
+    "colour": "#101828",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "gate"
+   },
+   {
+    "key": "dependency",
+    "label": "dependency",
+    "colour": "#7C8999",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "deadline",
+    "colour": "#101828",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "snapshot",
+    "label": "baseline",
+    "colour": "#1D5FD1",
+    "shape": "Rect",
+    "dashed": true,
+    "role": "snapshot"
+   },
+   {
+    "key": "forecast",
+    "label": "forecast (* estimated)",
+    "colour": "#C7D6F3",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:0c57abe9145636fd",
+    "label": "actual",
+    "colour": "#101828",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:f0c97fce73ac5139",
+    "label": "progress",
+    "colour": "#C77A12",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "non-working day",
+    "colour": "#F4F6F9",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-closed"
+   },
+   {
+    "key": "calendar-exception",
+    "label": "calendar exception",
+    "colour": "#F8E4C9",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-exception"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "deadline",
+    "ca": "#101828",
+    "cb": "#101828"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "deadline",
+    "ca": "#101828",
+    "cb": "#101828"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "deadline",
+    "ca": "#101828",
+    "cb": "#101828"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "gate",
+    "b": "deadline",
+    "ca": "#101828",
+    "cb": "#101828"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "deadline",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "deadline",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "deadline",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "deadline",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "deadline",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "deadline",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "deadline",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "gate",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "deadline",
+     "b": "actual",
+     "ca": "#101828",
+     "cb": "#101828",
+     "same_shape": false
+    }
+   ]
+  }
+ },
+ {
+  "preset": "titlecard",
+  "page": "#050505",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "GATE",
+    "colour": "#FF7A1A",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "gate"
+   },
+   {
+    "key": "dependency",
+    "label": "DEPENDENCY",
+    "colour": "#8C8A86",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "DEADLINE",
+    "colour": "#F2F0EA",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "snapshot",
+    "label": "BASELINE",
+    "colour": "#9A7BFF",
+    "shape": "Rect",
+    "dashed": true,
+    "role": "snapshot"
+   },
+   {
+    "key": "forecast",
+    "label": "FORECAST (* ESTIMATED)",
+    "colour": "#FF7A1A",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:c6c8bd9b98d4ba13",
+    "label": "ACTUAL",
+    "colour": "#54E06A",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:fe8291d10269acd7",
+    "label": "PROGRESS",
+    "colour": "#FF4A3D",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "HOLIDAY",
+    "colour": "#16132F",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-closed"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "FORECAST (* ESTIMATED)",
+    "ca": "#FF7A1A",
+    "cb": "#FF7A1A"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "FORECAST (* ESTIMATED)",
+    "ca": "#FF7A1A",
+    "cb": "#FF7A1A"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "FORECAST (* ESTIMATED)",
+    "ca": "#FF7A1A",
+    "cb": "#FF7A1A"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "GATE",
+    "b": "FORECAST (* ESTIMATED)",
+    "ca": "#FF7A1A",
+    "cb": "#FF7A1A"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "FORECAST (* ESTIMATED)",
+     "ca": "#FF7A1A",
+     "cb": "#FF7A1A",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "FORECAST (* ESTIMATED)",
+     "ca": "#FF7A1A",
+     "cb": "#FF7A1A",
+     "same_shape": false
+    },
+    {
+     "de": 6.67,
+     "a": "GATE",
+     "b": "PROGRESS",
+     "ca": "#FF7A1A",
+     "cb": "#FF4A3D",
+     "same_shape": false
+    },
+    {
+     "de": 6.67,
+     "a": "FORECAST (* ESTIMATED)",
+     "b": "PROGRESS",
+     "ca": "#FF7A1A",
+     "cb": "#FF4A3D",
+     "same_shape": true
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "FORECAST (* ESTIMATED)",
+     "ca": "#FF7A1A",
+     "cb": "#FF7A1A",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "GATE",
+     "b": "FORECAST (* ESTIMATED)",
+     "ca": "#FF7A1A",
+     "cb": "#FF7A1A",
+     "same_shape": false
+    },
+    {
+     "de": 8.35,
+     "a": "GATE",
+     "b": "PROGRESS",
+     "ca": "#FF7A1A",
+     "cb": "#FF4A3D",
+     "same_shape": false
+    },
+    {
+     "de": 8.35,
+     "a": "FORECAST (* ESTIMATED)",
+     "b": "PROGRESS",
+     "ca": "#FF7A1A",
+     "cb": "#FF4A3D",
+     "same_shape": true
+    }
+   ]
+  }
+ },
+ {
+  "preset": "yuya",
+  "page": "#0E2B31",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "gate",
+    "colour": "#E0512F",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "gate"
+   },
+   {
+    "key": "dependency",
+    "label": "dependency",
+    "colour": "#9C8B74",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "deadline",
+    "colour": "#1B1512",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "snapshot",
+    "label": "baseline",
+    "colour": "#EFE3C8",
+    "shape": "Rect",
+    "dashed": true,
+    "role": "snapshot"
+   },
+   {
+    "key": "forecast",
+    "label": "forecast (* estimated)",
+    "colour": "#2F6F5E",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "actual:84510d640ea7a7d0",
+    "label": "actual",
+    "colour": "#B22D1B",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "actual"
+   },
+   {
+    "key": "progressFill:6194e25e14c9aeb0",
+    "label": "progress",
+    "colour": "#D6A444",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "progress-fill"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "non-working day",
+    "colour": "#E9DEC3",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-closed"
+   },
+   {
+    "key": "calendar-exception",
+    "label": "calendar exception",
+    "colour": "#E6CD9A",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-exception"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 1.24,
+    "a": "baseline",
+    "b": "non-working day",
+    "ca": "#EFE3C8",
+    "cb": "#E9DEC3"
+   },
+   "deutan": {
+    "de": 1.17,
+    "a": "baseline",
+    "b": "non-working day",
+    "ca": "#EFE3C8",
+    "cb": "#E9DEC3"
+   },
+   "protan": {
+    "de": 1.15,
+    "a": "baseline",
+    "b": "non-working day",
+    "ca": "#EFE3C8",
+    "cb": "#E9DEC3"
+   },
+   "tritan": {
+    "de": 1.24,
+    "a": "baseline",
+    "b": "non-working day",
+    "ca": "#EFE3C8",
+    "cb": "#E9DEC3"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 1.24,
+     "a": "baseline",
+     "b": "non-working day",
+     "ca": "#EFE3C8",
+     "cb": "#E9DEC3",
+     "same_shape": false
+    },
+    {
+     "de": 8.16,
+     "a": "non-working day",
+     "b": "calendar exception",
+     "ca": "#E9DEC3",
+     "cb": "#E6CD9A",
+     "same_shape": true
+    },
+    {
+     "de": 8.6,
+     "a": "baseline",
+     "b": "calendar exception",
+     "ca": "#EFE3C8",
+     "cb": "#E6CD9A",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 1.17,
+     "a": "baseline",
+     "b": "non-working day",
+     "ca": "#EFE3C8",
+     "cb": "#E9DEC3",
+     "same_shape": false
+    },
+    {
+     "de": 7.84,
+     "a": "non-working day",
+     "b": "calendar exception",
+     "ca": "#E9DEC3",
+     "cb": "#E6CD9A",
+     "same_shape": true
+    },
+    {
+     "de": 8.33,
+     "a": "baseline",
+     "b": "calendar exception",
+     "ca": "#EFE3C8",
+     "cb": "#E6CD9A",
+     "same_shape": false
+    }
+   ],
+   "protan": [
+    {
+     "de": 1.15,
+     "a": "baseline",
+     "b": "non-working day",
+     "ca": "#EFE3C8",
+     "cb": "#E9DEC3",
+     "same_shape": false
+    },
+    {
+     "de": 8.15,
+     "a": "non-working day",
+     "b": "calendar exception",
+     "ca": "#E9DEC3",
+     "cb": "#E6CD9A",
+     "same_shape": true
+    },
+    {
+     "de": 8.77,
+     "a": "baseline",
+     "b": "calendar exception",
+     "ca": "#EFE3C8",
+     "cb": "#E6CD9A",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 1.24,
+     "a": "baseline",
+     "b": "non-working day",
+     "ca": "#EFE3C8",
+     "cb": "#E9DEC3",
+     "same_shape": false
+    },
+    {
+     "de": 7.98,
+     "a": "non-working day",
+     "b": "calendar exception",
+     "ca": "#E9DEC3",
+     "cb": "#E6CD9A",
+     "same_shape": true
+    },
+    {
+     "de": 8.22,
+     "a": "baseline",
+     "b": "calendar exception",
+     "ca": "#EFE3C8",
+     "cb": "#E6CD9A",
+     "same_shape": false
+    }
+   ]
+  }
+ },
+ {
+  "preset": "muted-executive",
+  "page": "#F4F2EE",
+  "swatches": [
+   {
+    "key": "milestone",
+    "label": "Milestone",
+    "colour": "#3F6593",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "dependency",
+    "label": "Dependency",
+    "colour": "#6A645C",
+    "shape": "Path",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "asOf",
+    "label": "Today",
+    "colour": "#B8761F",
+    "shape": "Path",
+    "dashed": true,
+    "role": "as-of"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "Deadline",
+    "colour": "#2E2A26",
+    "shape": "Path",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "forecast",
+    "label": "Forecast (* estimated)",
+    "colour": "#3F6593",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "snapshot",
+    "label": "Baseline",
+    "colour": "#6A645C",
+    "shape": "Rect",
+    "dashed": true,
+    "role": "snapshot"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "Non-working day",
+    "colour": "#E6E2DA",
+    "shape": "Rect",
+    "dashed": false,
+    "role": "calendar-closed"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Forecast (* estimated)",
+    "ca": "#3F6593",
+    "cb": "#3F6593"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Forecast (* estimated)",
+    "ca": "#3F6593",
+    "cb": "#3F6593"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Forecast (* estimated)",
+    "ca": "#3F6593",
+    "cb": "#3F6593"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "Milestone",
+    "b": "Forecast (* estimated)",
+    "ca": "#3F6593",
+    "cb": "#3F6593"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#3F6593",
+     "cb": "#3F6593",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Dependency",
+     "b": "Baseline",
+     "ca": "#6A645C",
+     "cb": "#6A645C",
+     "same_shape": false
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#3F6593",
+     "cb": "#3F6593",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Dependency",
+     "b": "Baseline",
+     "ca": "#6A645C",
+     "cb": "#6A645C",
+     "same_shape": false
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#3F6593",
+     "cb": "#3F6593",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Dependency",
+     "b": "Baseline",
+     "ca": "#6A645C",
+     "cb": "#6A645C",
+     "same_shape": false
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "Milestone",
+     "b": "Forecast (* estimated)",
+     "ca": "#3F6593",
+     "cb": "#3F6593",
+     "same_shape": false
+    },
+    {
+     "de": 0.0,
+     "a": "Dependency",
+     "b": "Baseline",
+     "ca": "#6A645C",
+     "cb": "#6A645C",
+     "same_shape": false
+    }
+   ]
+  }
+ },
+ {
+  "preset": "wallboard-dark",
+  "page": "#0D1117",
+  "swatches": [
+   {
+    "key": "forecast",
+    "label": "Forecast (* estimated)",
+    "colour": "#2F81F7",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "milestone",
+    "label": "Milestone",
+    "colour": "#2F81F7",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "dependency",
+    "label": "Dependency",
+    "colour": "#9BA7B4",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "dependency"
+   },
+   {
+    "key": "asOf",
+    "label": "Today",
+    "colour": "#FFD23F",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "as-of"
+   },
+   {
+    "key": "calendar-closed",
+    "label": "Non-working day",
+    "colour": "#1C2430",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "calendar-closed"
+   },
+   {
+    "key": "deadlineMark",
+    "label": "Deadline",
+    "colour": "#F0F6FC",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "deadline-mark"
+   },
+   {
+    "key": "scale:series:Aiko",
+    "label": "Aiko",
+    "colour": "#2A9D43",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "scale:series:Ben",
+    "label": "Ben",
+    "colour": "#D2691E",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "scale:series:Dana",
+    "label": "Dana",
+    "colour": "#8957E5",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "scale:series:Chen",
+    "label": "Chen",
+    "colour": "#D1478C",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   },
+   {
+    "key": "scale:series:Eli",
+    "label": "Eli",
+    "colour": "#1B9AAA",
+    "shape": "Symbol",
+    "dashed": false,
+    "role": "planned"
+   }
+  ],
+  "worst": {
+   "normal": {
+    "de": 0.0,
+    "a": "Forecast (* estimated)",
+    "b": "Milestone",
+    "ca": "#2F81F7",
+    "cb": "#2F81F7"
+   },
+   "deutan": {
+    "de": 0.0,
+    "a": "Forecast (* estimated)",
+    "b": "Milestone",
+    "ca": "#2F81F7",
+    "cb": "#2F81F7"
+   },
+   "protan": {
+    "de": 0.0,
+    "a": "Forecast (* estimated)",
+    "b": "Milestone",
+    "ca": "#2F81F7",
+    "cb": "#2F81F7"
+   },
+   "tritan": {
+    "de": 0.0,
+    "a": "Forecast (* estimated)",
+    "b": "Milestone",
+    "ca": "#2F81F7",
+    "cb": "#2F81F7"
+   }
+  },
+  "flagged": {
+   "normal": [
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Milestone",
+     "ca": "#2F81F7",
+     "cb": "#2F81F7",
+     "same_shape": true
+    }
+   ],
+   "deutan": [
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Milestone",
+     "ca": "#2F81F7",
+     "cb": "#2F81F7",
+     "same_shape": true
+    },
+    {
+     "de": 3.7,
+     "a": "Forecast (* estimated)",
+     "b": "Dana",
+     "ca": "#2F81F7",
+     "cb": "#8957E5",
+     "same_shape": true
+    },
+    {
+     "de": 3.7,
+     "a": "Milestone",
+     "b": "Dana",
+     "ca": "#2F81F7",
+     "cb": "#8957E5",
+     "same_shape": true
+    },
+    {
+     "de": 8.79,
+     "a": "Aiko",
+     "b": "Ben",
+     "ca": "#2A9D43",
+     "cb": "#D2691E",
+     "same_shape": true
+    }
+   ],
+   "protan": [
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Milestone",
+     "ca": "#2F81F7",
+     "cb": "#2F81F7",
+     "same_shape": true
+    },
+    {
+     "de": 7.13,
+     "a": "Dependency",
+     "b": "Eli",
+     "ca": "#9BA7B4",
+     "cb": "#1B9AAA",
+     "same_shape": true
+    },
+    {
+     "de": 8.23,
+     "a": "Forecast (* estimated)",
+     "b": "Dana",
+     "ca": "#2F81F7",
+     "cb": "#8957E5",
+     "same_shape": true
+    },
+    {
+     "de": 8.23,
+     "a": "Milestone",
+     "b": "Dana",
+     "ca": "#2F81F7",
+     "cb": "#8957E5",
+     "same_shape": true
+    },
+    {
+     "de": 8.89,
+     "a": "Aiko",
+     "b": "Ben",
+     "ca": "#2A9D43",
+     "cb": "#D2691E",
+     "same_shape": true
+    }
+   ],
+   "tritan": [
+    {
+     "de": 0.0,
+     "a": "Forecast (* estimated)",
+     "b": "Milestone",
+     "ca": "#2F81F7",
+     "cb": "#2F81F7",
+     "same_shape": true
+    },
+    {
+     "de": 5.94,
+     "a": "Aiko",
+     "b": "Eli",
+     "ca": "#2A9D43",
+     "cb": "#1B9AAA",
+     "same_shape": true
+    },
+    {
+     "de": 6.89,
+     "a": "Ben",
+     "b": "Chen",
+     "ca": "#D2691E",
+     "cb": "#D1478C",
+     "same_shape": true
+    },
+    {
+     "de": 8.32,
+     "a": "Forecast (* estimated)",
+     "b": "Eli",
+     "ca": "#2F81F7",
+     "cb": "#1B9AAA",
+     "same_shape": true
+    },
+    {
+     "de": 8.32,
+     "a": "Milestone",
+     "b": "Eli",
+     "ca": "#2F81F7",
+     "cb": "#1B9AAA",
+     "same_shape": true
+    }
+   ]
+  }
+ }
+]

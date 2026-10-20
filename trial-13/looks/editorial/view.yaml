@@ -1,0 +1,79 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-preset-editorial-lanes
+body:
+  deadlines: {show: all}
+  heading: {text: {wrap: allow}}
+  surface: table-timeline
+  selection:
+    include:
+      types: [span, point]
+    exclude:
+      objectTypes: [group]
+  grouping:
+    by: none
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned]
+  progressFill:
+    source: actual
+  visibility:
+    labels:
+      placement: plot
+      content: [path]
+      side: end
+      overflow: suppress
+    fallback:
+      labels: [end, start, suppress]
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  axis:
+    tiers:
+    - unit: year
+      every: 1
+      role: band
+      typographyRole: axisQuarter
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: auto
+      every: 1
+      role: labels
+      typographyRole: axisQuarter
+      label:
+        forms:
+          month: short-month-year
+          quarter: year-quarter
+          half: half-year
+          year: year
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: none
+    groups: all
+  rows:
+    mode: lanes
+    packing: [explicit, attached]
+    laneTable: {label: lane, count: auto, text: {wrap: allow}}
+  markers:
+  - kind: asOf
+    source: actual
+    label: {wording: marker.today}
+  shading:
+    nonWorking: true
+    exceptions: true
