@@ -209,20 +209,25 @@ partially materializable resource set is retained.
 ## 5.1 Domain separability (#421)
 
 Scale resolution compares every pair of resolved domain colours with
-CIEDE2000 on sRGB. The comparison is made under normal vision, and under each
-deficiency the Color Scheme claims in `suitability.colorVision`, simulated
-with the Machado, Oliveira and Fernandes (2009) matrices at severity 1.0;
-`none-claimed` adds no simulated vision. A pair below
+CIEDE2000 on sRGB. Every render compares normal vision and all three
+deficiencies (`protanopia`, `deuteranopia`, `tritanopia`), simulated with the
+Machado, Oliveira and Fernandes (2009) matrices at severity 1.0. Checks do not
+depend on the Scheme's claims. A pair below
 `MINIMUM_CATEGORY_DELTA_E = 5.0`, including an exact duplicate, is a
-non-fatal `W_PRESENTATION_SCALE_NOT_SEPARABLE` naming the scale, both values,
+`W_PRESENTATION_SCALE_NOT_SEPARABLE` by default, naming the scale, both values,
 the vision and the difference. It is reported in the CLI and as the Scene
 diagnostic `W_PRESENTATION_SCALE_NOT_SEPARABLE:<scale>:<first>:<second>:<vision>`.
-Rendering continues. Committed evidence carries no such diagnostic.
+Rendering continues unless the Scheme claims the failing simulated vision in
+`suitability.colorVision`. Such a claim makes that finding an
+`E_PRESENTATION_SCALE_NOT_SEPARABLE`; `none-claimed` opts out of enforcement,
+not measurement. Normal-vision findings remain warnings. This does not alter
+palette allocation or folding, repaint a mark, or imply that committed evidence
+must be warning-free.
 
 After final legend filtering and placement, every pair of drawn swatches with
 distinct surviving legend meanings is compared, whether either key comes from
 a colour scale or both are ordinary semantic keys (#1826).
-Use this same floor, normal vision and the Scheme's claimed simulations;
+Use this same floor, normal vision and all three simulations;
 explicit slots are not exempt. Retain a domain diagnostic instead of duplicating
 it only when its closed `ScaleCollision` covers both realized domain values,
 the same scale, vision and measured minimum difference. Sharing a scale name
@@ -235,17 +240,28 @@ does not make two differently filled keys collide. Multipart keys contribute
 their visible fill colours. Do not invent a representative colour for a
 gradient or infer colours from source fields, role names or drawing IDs.
 
-A pair below the floor emits non-fatal `W_LEGEND_COLOR_NOT_SEPARABLE`, identifying
+A pair below the floor emits `W_LEGEND_COLOR_NOT_SEPARABLE` by default, identifying
 both completed key meanings, labels and source identities, the vision and
 minimum colour difference. This is a colour warning, independent of exact
 whole-figure equality in Spec 28. Hidden candidate keys do not participate.
-It neither repaints the keys nor changes palette folding, placement or render
-success. Presentation carries explicit scale identity with encoded keys;
+It neither repaints the keys nor changes palette folding or placement. A Scheme
+claim of the failing simulated vision instead requires
+`E_LEGEND_COLOR_NOT_SEPARABLE`. Presentation carries explicit scale identity with encoded keys;
 Layout checks final completed ink and labels, Scene transports the diagnostics,
 and adapters do not reinterpret them. Encoded keys carry their explicit domain
 value as well as scale identity, and presentation supplies existing typed
 scale-collision facts for duplicate detection. Layout does not reconstruct
 either fact from drawing IDs or rerun source-field/scale resolution.
+
+Measurements and claim enforcement have separate owners. Pure presentation
+code measures scale pairs; Layout measures completed visible legend pairs and
+carries typed findings with their existing diagnostic subjects/provenance.
+The render use case applies Scheme-derived claims to those facts before
+creating or invoking an adapter. A blocking diagnostic identifies the pair,
+vision, measured difference and Scheme claim; it is not inferred by parsing a
+warning string. The below-floor decision precedes display rounding, so rounding
+a measured difference to5.000 cannot erase a finding. Scene/adapters do not
+choose severity, and Theme `contrastPolicy` is not a colour-separability policy.
 
 ## 6. Non-goals
 

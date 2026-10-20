@@ -178,9 +178,11 @@ same realized key figure. Both warnings identify the two meanings, roles and
 completed key identities. Repeated witnesses of one coalesced meaning do not
 warn, and filtered-away candidates participate in neither check.
 
-Encoded keys additionally use [Spec 60 §5.1](60-declared-colour-scales.md#51-domain-separability-421)
-for colour separability against other surviving legend meanings
-(`W_LEGEND_COLOR_NOT_SEPARABLE`). Exact whole-figure equality and perceptual
+All surviving semantic and encoded keys additionally use
+[Spec 60 §5.1](60-declared-colour-scales.md#51-domain-separability-421)
+for colour separability under normal vision and all three simulated deficiencies
+(`W_LEGEND_COLOR_NOT_SEPARABLE` by default; a Scheme claim enforces that mode).
+Exact whole-figure equality and perceptual
 colour similarity are distinct findings; neither substitutes for the other.
 
 Swatch comparison uses completed glyph/path geometry relative to its key box
