@@ -73,7 +73,7 @@ actual-trait/Style ink. A declared comparison with no available bound source
 contributes no comparison key; a supplied source with blank values retains its
 declared missing-value behavior.
 
-Actual grouping identity is semantic meaning plus the set of effective emitted
+Span Actual grouping identity is semantic meaning plus the set of effective emitted
 ink colours, including opacity, admitted gradients and pattern treatment.
 For a filled figure these are its visible fill inks; borders do not introduce
 another meaning. Only a figure with no visible fill uses its stroke inks.
@@ -86,7 +86,7 @@ The full paint witness is retained for projection, not weakened to this grouping
 identity. Distinct semantic families otherwise remain separate. Existing finite
 key shapes remain deliberate ink projections, not copies of source geometry.
 
-A multipart Actual glyph is one realized mark, not several independent
+A multipart point glyph is one realized mark, not several independent
 coloured marks. Its key preserves the ordered completed part paints and the
 glyph geometry as one miniature figure with one label. Composite identity
 retains the ordered effective paints and canonical glyph geometry/part
@@ -135,6 +135,61 @@ replaces candidate-only legend growth with the final caption-restored extent,
 retaining the declared allocation minimum and all other completed geometry.
 It does not retry route, row, or annotation layout.
 
+### Realized point-state keys (#1847)
+
+Point occurrences retain their distinct `planned`, `actual` and `forecast`
+meanings. A point key's grouping identity includes its declared legend owner
+and canonical glyph/ordered state-paint witness, for simple and multipart
+glyphs alike. A colour encoding already explained by another admitted legend
+group is orthogonal to state meaning: its encoded channel uses the selected
+Theme role's default paint in the state key, not one key per encoded value.
+This requires exact occurrence, encoding scale/value and legend-coverage
+provenance, never a colour match, field name or a presumed lane convention.
+Without that separately admitted coverage the full realized paint still splits
+keys. Explicit glyph colours, geometry, nonencoded channels, effects and paint
+that encodes state itself remain significant. Identical state figures under
+one owner share one key with typed coverage of all their visible states;
+differing state figures never coalesce.
+State coverage does not change that visual identity. Span Actual's existing
+ink/variance grouping and Progress semantics are unchanged.
+
+A declared Detail entry matching an explicitly Style-selected point role owns
+those points, ahead of the general `milestone` entry. Otherwise `milestone`
+owns point states; when absent, the corresponding declared `planned`, `actual`
+or `forecast` entry may own its state's points separately from range keys.
+No declared owner means no synthesized point key. Ownership is explicit role
+and occurrence data, never a title, project name or inferred profile value.
+More-specific ownership prevents duplicate coverage by the generic entries.
+
+Expand each owner at its authored position, preserving unrelated entry order,
+with groups ordered by their first covered state (Planned, Actual, Forecast)
+and variants in first-seen order. A point-specific owner keeps its
+authored/wording label for one final visual group. Multiple final groups append
+` · ` and their covered states' localized `planned-plain`, `actual` or
+`forecast` wording, joined in that order by ` / `. A range-semantic owner's point keys append the
+localized `milestone` wording to distinguish them from its range key. Repeated
+variant labels remain subject to the existing duplicate-label diagnostic; do
+not invent colour names or hashes. All potential qualified labels and maximum
+glyph footprints are reserved before measurement, including every nonempty
+visible-state subset's label and the unqualified label. Final visible point
+witnesses alone admit keys and determine labels/coverage, without rerunning
+row, route or annotation layout. Source and final coalescing use one shared
+state-figure identity and the same encoding-coverage predicate; equal colours
+alone never establish equality. Retain the actual occurrence paint and encoding
+witnesses alongside the representative Theme-default key, so final admission
+proves both state and orthogonal encoding coverage. If a separate encoding key
+is filtered out, it cannot justify suppressing a state-paint distinction.
+
+Chart and key glyphs use the same selected-symbol and outline kernels, including
+normalized shape traits and ordered part paints; only the explicitly covered
+orthogonal encoding channel is neutralized in the state key. Chart paint is
+unchanged. Canonical identity excludes
+resource names and placement translations/bounds. Scene/adapters receive
+completed figures, not point-state inference. Explicit circle/rule-pair shapes
+remain intentional projections and still participate in ambiguity checks.
+Migration: the former combined milestone key and point/range Actual coalescing
+are replaced by these state-aware keys; schemas and scheduling kinds do not change.
+
 A View visual targeting a legend role binds to each completed label of that
 role, including realized colour groups with stable hashed identities. Layout
 passes this explicit role-to-label mapping to text-visual composition; Scene
@@ -178,10 +233,14 @@ same realized key figure. Both warnings identify the two meanings, roles and
 completed key identities. Repeated witnesses of one coalesced meaning do not
 warn, and filtered-away candidates participate in neither check.
 
-Encoded keys additionally use [Spec 60 §5.1](60-declared-colour-scales.md#51-domain-separability-421)
-for colour separability against other surviving legend meanings
-(`W_LEGEND_COLOR_NOT_SEPARABLE`). Exact whole-figure equality and perceptual
-colour similarity are distinct findings; neither substitutes for the other.
+All surviving semantic and encoded keys additionally use
+[Spec 60 §5.1](60-declared-colour-scales.md#51-domain-separability-421)
+for colour separability under normal vision and all three simulated deficiencies
+(`W_LEGEND_COLOR_NOT_SEPARABLE` by default; a Scheme claim enforces that mode).
+Exact whole-figure equality and perceptual colour similarity are distinct
+findings; neither substitutes for the other. Colour separability applies when
+the completed keys do not already differ in glyph shape or line pattern
+(Spec60); every failing pair remains individually identifiable in CLI output.
 
 A completed Scene that draws a legend and also draws a closed-day band
 (`calendar-closed`), a calendar-exception band (`calendar-exception`) or a

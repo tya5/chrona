@@ -8,9 +8,11 @@ from itertools import combinations
 
 from chrona.presentation.layout.legend_ink import mark_ink_keys, pattern_ink_identity
 from chrona.presentation.model.color_separability import (
-    MINIMUM_CATEGORY_DELTA_E, SIMULATED_VISIONS, delta_e_2000,
+    CHECKED_VISIONS, MINIMUM_CATEGORY_DELTA_E, delta_e_2000,
 )
-from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.model.diagnostic_sources import (
+    ColorPairFinding, DiagnosticProvenance, DiagnosticSubject,
+)
 from chrona.presentation.model.theme_paint import (
     PaintFamily, mark_paint_family, resolve_legend_shape_ink, resolve_theme_paint_witness,
 )
@@ -29,6 +31,15 @@ def _commands(commands, bounds):
     x, y, width, height = bounds
     return tuple((command.kind, tuple((_unit(px, x, width), _unit(py, y, height))
                                       for px, py in command.points)) for command in commands)
+
+
+def _completed_parts(parts):
+    """Use one part representation for canonical point and placed figure witnesses."""
+    if len(parts) == 2 and isinstance(parts[0], str):
+        # The canonical shape tag is not another drawn part or a colour channel.
+        parts = parts[1]
+    return tuple((part[0], part[1] if part[0] == "stroke" else None,
+                  part[2] if part[0] == "stroke" else None, part[-1]) for part in parts)
 
 
 def _role_paint(request, role, *, family=None, fill_override=None, completed_catalog=False):
@@ -74,7 +85,7 @@ def _mark_signature(request, entry, mark):
         shape = "Rect" if mark.mark_shape == "span" else mark.mark_shape
         radius = _unit(mark.corner_radius, 0, min(bounds[2:])) if min(bounds[2:]) else 0.0
         parts = ((None, None, None, ((shape, radius),)),)
-    return (parts, tuple(paint.identity for paint in paints), patterns)
+    return (_completed_parts(parts), tuple(paint.identity for paint in paints), patterns)
 
 
 def _shape_signature(request, entry, shape):
@@ -226,7 +237,7 @@ def _figure_ink_colours(figure):
     has_visible_fill = False
 
     for signature in figure:
-        parts, paints = signature[0], signature[1]
+        parts, paints = _completed_parts(signature[0]), signature[1]
         for index, paint in enumerate(paints):
             if not isinstance(paint, tuple) or len(paint) != 5:
                 continue
@@ -250,18 +261,48 @@ def _figure_ink_colours(figure):
     return tuple(dict.fromkeys(selected))
 
 
-def _palette_separation_failures(first_figure, second_figure, color_vision=()):
+def _non_colour_figure(figure):
+    """Keep completed shape/channel and line-pattern distinctions, never palette values."""
+    if not figure:
+        return None
+    components = []
+    for signature in figure:
+        parts, paints, patterns = _completed_parts(signature[0]), signature[1], signature[2]
+        visible = []
+        for index, paint in enumerate(paints):
+            fill, stroke, width, dash, opacity = paint
+            if opacity is not None and opacity <= 0:
+                continue
+            if index >= len(parts) or not parts[index][-1]:
+                return None  # no completed geometry means no proven distinction
+            mode, cap, join, geometry = parts[index]
+            filled = mode != "stroke" and fill is not None
+            stroked = mode != "fill" and stroke is not None and width is not None and width > 0
+            if not filled and not stroked:
+                continue
+            visible.append((filled, stroked, width if stroked else None, geometry,
+                            cap if stroked else None, join if stroked else None,
+                            tuple(dash) if stroked and dash else (),
+                            patterns[index] if index < len(patterns) else None))
+        if visible:
+            components.append(tuple(visible))
+    return tuple(components) or None
+
+
+def _palette_separation_failures(first_figure, second_figure):
     """Return the minimum below-floor distance once per affected vision."""
+    first_shape, second_shape = _non_colour_figure(first_figure), _non_colour_figure(second_figure)
+    if first_shape is not None and second_shape is not None and first_shape != second_shape:
+        return ()
     first, second = _figure_ink_colours(first_figure), _figure_ink_colours(second_figure)
     if not first or not second:
         return ()
-    visions = ("normal", *(vision for vision in SIMULATED_VISIONS if vision in color_vision))
     failures = []
-    for vision in visions:
+    for vision in CHECKED_VISIONS:
         distance = min(delta_e_2000(left, right, vision=vision)
                        for left in first for right in second)
         if distance < MINIMUM_CATEGORY_DELTA_E:
-            failures.append((vision, round(distance, 3)))
+            failures.append((vision, distance))
     return tuple(failures)
 
 
@@ -270,7 +311,7 @@ def _subject(entry):
     return DiagnosticSubject(f"legend-key:{key_id}", f"{entry.label} ({entry.role})")
 
 
-def _colour_pair_diagnostics(key_entries, figures, color_vision=()):
+def _colour_pair_diagnostics(key_entries, figures):
     """Compare completed legend ink across distinct encoded and semantic meanings."""
     diagnostics: list[str] = []
     provenance: list[DiagnosticProvenance] = []
@@ -278,12 +319,14 @@ def _colour_pair_diagnostics(key_entries, figures, color_vision=()):
         if left.source_identity == right.source_identity:
             continue
         for vision, min_delta in _palette_separation_failures(
-                figures.get(left.source_identity), figures.get(right.source_identity), color_vision):
+                figures.get(left.source_identity), figures.get(right.source_identity)):
             if _covered_by_scale_collision(left, left_scale, right, right_scale, vision, min_delta):
                 continue
-            identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{min_delta}"
+            display_delta = round(min_delta, 3)
+            identity = f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{display_delta}"
             diagnostics.append(identity)
-            provenance.append(DiagnosticProvenance(identity, (_subject(left), _subject(right))))
+            provenance.append(DiagnosticProvenance(
+                identity, (_subject(left), _subject(right)), ColorPairFinding(vision, min_delta)))
     return tuple(diagnostics), tuple(provenance)
 
 
@@ -327,10 +370,7 @@ def completed_legend_diagnostics(request, entries, marks, shapes, relations, tex
         if left_figure is not None and left_figure == right_figure:
             emit("W_LEGEND_SWATCH_COLLISION", left, right)
     key_entries = tuple((entry, entry.encoding_scale_id) for entry in visible)
-    pair_diagnostics, pair_provenance = _colour_pair_diagnostics(
-        key_entries, figures,
-        request.theme_tokens.color_vision if request.theme_tokens is not None else (),
-    )
+    pair_diagnostics, pair_provenance = _colour_pair_diagnostics(key_entries, figures)
     diagnostics.extend(pair_diagnostics)
     provenance.extend(pair_provenance)
     return tuple(diagnostics), tuple(provenance)

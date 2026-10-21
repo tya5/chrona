@@ -112,7 +112,8 @@ def test_months_inherit_the_exact_later_declared_quarter_parent_and_emit_both_ti
 def test_domain_separability_warning_is_reported_for_mapping_not_repeated_cells(tmp_path):
     rendered = _render(tmp_path, _parts(tiers=_alternating_tiers("same"), scales={"same": SLOTS["same"]}))
     assert len(_bands(rendered)) == 6
-    assert [(item.first, item.second) for item in rendered.scale_collisions] == [("0", "1")]
+    assert [(item.first, item.second, item.vision) for item in rendered.scale_collisions] == [
+        ("0", "1", vision) for vision in ("normal", "protanopia", "deuteranopia", "tritanopia")]
     assert any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:same:0:1")
                for item in rendered.scene.diagnostics)
 

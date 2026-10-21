@@ -79,6 +79,40 @@ def _glyph_parts(rendered, *, source_kind: str, source_ref: str):
             if item.kind == "Symbol" and item.source_kind == source_kind and item.source_ref == source_ref]
 
 
+def _close_geometry(left, right):
+    """Compare normalized completed geometry within serialization float noise."""
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        return left == pytest.approx(right, abs=1e-4)
+    if isinstance(left, (tuple, list)) and isinstance(right, (tuple, list)):
+        return len(left) == len(right) and all(_close_geometry(a, b) for a, b in zip(left, right))
+    return left == right
+
+
+def _witnessed_key_parts(rendered, mark_parts):
+    """Select the key witnessed by this owner's completed role, geometry, and paint."""
+    assert mark_parts
+    owner_role = mark_parts[0].visual_role
+    groups = {}
+    for item in rendered.surface.primitives:
+        if (item.kind == "Symbol" and item.source_kind == "legend"
+                and item.visual_role == owner_role and item.source_ref is not None):
+            identity = (item.source_ref, item.purpose, item.visual_role, item.bounds)
+            groups.setdefault(identity, []).append(item)
+
+    mark_identity = tuple(_local_symbol(item)[1:] for item in mark_parts)
+
+    def same_witness(parts):
+        identity = tuple(_local_symbol(item)[1:] for item in parts)
+        return (len(identity) == len(mark_identity)
+                and all(paint_a == paint_b and _close_geometry(geometry_a, geometry_b)
+                        for (_, paint_a, *geometry_a), (_, paint_b, *geometry_b)
+                        in zip(identity, mark_identity)))
+
+    matches = [parts for parts in groups.values() if same_witness(parts)]
+    assert len(matches) == 1, f"expected one completed legend key witnessed by owner role {owner_role!r}"
+    return matches[0]
+
+
 def _local_symbol(item):
     x, y, width, height = item.bounds
     commands = tuple((command.kind, tuple((px - x, py - y) for px, py in command.points))
@@ -94,6 +128,13 @@ def _local_symbol(item):
     return item.scene_id, item.paint, (width, height), commands, local_clip
 
 
+def _disable_point_outline(monkeypatch):
+    from chrona.presentation.layout import legend_ink, mark_geometry, surface_legend
+
+    for module in (mark_geometry, surface_legend, legend_ink):
+        monkeypatch.setattr(module, "complete_point_outline", lambda parts, **_kwargs: parts)
+
+
 @pytest.mark.parametrize(("row_mode", "glyph"), [
     ("lanes", "diamond"), ("automatic", "diamond"),
     ("lanes", "inline"), ("automatic", "inline"),
@@ -103,7 +144,7 @@ def test_bound_point_outline_reaches_mark_legend_svg_and_external_ground_contras
 ):
     rendered = _render(tmp_path / "rendered", row_mode=row_mode, glyph=glyph)
     mark = _glyph_parts(rendered, source_kind="object", source_ref="gate")
-    swatch = _glyph_parts(rendered, source_kind="legend", source_ref="milestone")
+    swatch = _witnessed_key_parts(rendered, mark)
 
     assert len(mark) == len(swatch) == 2
     contour_ink = mark[1].paint.stroke
@@ -123,9 +164,7 @@ def test_bound_point_outline_reaches_mark_legend_svg_and_external_ground_contras
     assert winner.ground_id is not None and winner.ground_id != mark[0].scene_id
     assert winner.contrast_ratio >= winner.floor == 3.0
 
-    from chrona.presentation.layout import mark_geometry, surface_legend
-    monkeypatch.setattr(mark_geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
-    monkeypatch.setattr(surface_legend, "complete_point_outline", lambda parts, **_kwargs: parts)
+    _disable_point_outline(monkeypatch)
     plain = _render(tmp_path / "plain", row_mode=row_mode, glyph=glyph)
     plain_mark = _glyph_parts(plain, source_kind="object", source_ref="gate")
     (fill_finding,) = (item for item in evaluate_scene_contrast(scene_document(plain.scene))
@@ -144,8 +183,6 @@ def test_bound_point_outline_reaches_mark_legend_svg_and_external_ground_contras
 def test_completed_contour_obeys_point_role_alignment_without_changing_source_parts(
     tmp_path, monkeypatch, alignment, outside,
 ):
-    from chrona.presentation.layout import mark_geometry, surface_legend
-
     rendered = _render(tmp_path / alignment, alignment=alignment, glyph="bulb")
     mark = _glyph_parts(rendered, source_kind="object", source_ref="gate")
     active_routes = [(item.scene_id, item.bounds, item.path_commands, item.points, item.marker_start, item.marker_end)
@@ -156,8 +193,7 @@ def test_completed_contour_obeys_point_role_alignment_without_changing_source_pa
                     for item in rendered.surface.primitives if item.source_ref == "work-to-gate"
                     and item.source_kind == "relation"]
 
-    monkeypatch.setattr(mark_geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
-    monkeypatch.setattr(surface_legend, "complete_point_outline", lambda parts, **_kwargs: parts)
+    _disable_point_outline(monkeypatch)
     legacy = _render(tmp_path / f"{alignment}-legacy", alignment=alignment, glyph="bulb")
     legacy_mark = _glyph_parts(legacy, source_kind="object", source_ref="gate")
     legacy_routes = [(item.scene_id, item.bounds, item.path_commands, item.points, item.marker_start, item.marker_end)
@@ -202,12 +238,9 @@ def test_completed_contour_obeys_point_role_alignment_without_changing_source_pa
 
 
 def test_width_without_ink_keeps_the_existing_scene_paint_refusal(tmp_path, monkeypatch):
-    from chrona.presentation.layout import mark_geometry, surface_legend
-
     with pytest.raises(RenderFailed) as active:
         _render(tmp_path / "active", stroke=False, width=True)
-    monkeypatch.setattr(mark_geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
-    monkeypatch.setattr(surface_legend, "complete_point_outline", lambda parts, **_kwargs: parts)
+    _disable_point_outline(monkeypatch)
     with pytest.raises(RenderFailed) as legacy:
         _render(tmp_path / "legacy", stroke=False, width=True)
 
@@ -221,6 +254,7 @@ def _install_legacy_point_projection(monkeypatch):
     """Freeze pre-#1287 projection from 8ba462d8, independent of the new builder."""
     import chrona.presentation.layout.mark_geometry as geometry
     import chrona.presentation.layout.surface_legend as legend
+    import chrona.presentation.layout.legend_ink as ink
     import chrona.presentation.scene.v05_builder as builder
 
     def project(scene_id, source_ref, source_kind, purpose, visual_role,
@@ -243,6 +277,7 @@ def _install_legacy_point_projection(monkeypatch):
 
     monkeypatch.setattr(geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
     monkeypatch.setattr(legend, "complete_point_outline", lambda parts, **_kwargs: parts)
+    monkeypatch.setattr(ink, "complete_point_outline", lambda parts, **_kwargs: parts)
     monkeypatch.setattr(builder, "_symbol_primitives", project)
 
 
@@ -265,5 +300,6 @@ def test_inactive_or_existing_outline_treatment_is_exactly_the_no_contour_path(
 
     assert actual.artifact.content == legacy.artifact.content
     assert serialize_scene(actual.scene) == serialize_scene(legacy.scene)
-    assert all(len(_glyph_parts(actual, source_kind=kind, source_ref=ref)) == 1
-               for kind, ref in (("object", "gate"), ("legend", "milestone")))
+    mark = _glyph_parts(actual, source_kind="object", source_ref="gate")
+    assert len(mark) == 1
+    assert len(_witnessed_key_parts(actual, mark)) == 1

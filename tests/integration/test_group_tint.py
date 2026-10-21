@@ -157,7 +157,8 @@ def test_a_palette_slot_a_reader_cannot_tell_apart_is_skipped_and_the_remainder_
     def mutate(parts):  # a scale of its own, so the mark scale's diagnostics cannot stand in for it (#1628)
         parts["theme"]["body"]["colorScales"]["groups"] = {"palette": ["series-1", "series-1", "series-3"]}
     rendered = _render(tmp_path, _parts({"scale": "groups"}, mutate=mutate))
-    assert not any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:groups:") for item in rendered.scene.diagnostics)
+    assert not any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:groups:")
+                   and item.endswith(":normal") for item in rendered.scene.diagnostics)
     folded = [item for item in rendered.scene.diagnostics if item.startswith("I_PRESENTATION_SCALE_FOLDED:")]
     assert len(folded) == 1 and '"scaleId":"groups"' in folded[0] and '"distinctColors":2' in folded[0]
 
