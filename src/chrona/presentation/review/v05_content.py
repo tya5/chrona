@@ -1024,8 +1024,13 @@ def _heading_calendar_name(project: Mapping[str, Any]) -> str:
     return title if isinstance(title, str) and title else str(calendar_id)
 
 
+def _heading_presence(actual_set: Mapping[str, Any] | None, snapshot_present: bool) -> dict[str, bool]:
+    """Which data a render supplies, for heading parts with a presence condition (#1880)."""
+    return {"actualSet": actual_set is not None, "snapshot": snapshot_present}
+
+
 def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
-                    locale: str) -> HeadingContent | HeadingTextPrograms:
+                    locale: str, *, snapshot_present: bool = False) -> HeadingContent | HeadingTextPrograms:
     """Compose the optional kicker, title and subtitle a table-timeline surface draws (#991, #1189).
 
     Without a declared `heading` the title is the Project title and there is no kicker or subtitle, as before.
@@ -1046,19 +1051,21 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
         form, name_table = _as_of_date_spec(_as_of_marker(view), heading.date_form, locale)
         as_of_text = _format_as_of_date(as_of, form, name_table)
     facts = {"project": project_title, "asOf": as_of_text, "calendar": _heading_calendar_name(project)}
+    present = _heading_presence(actual_set, snapshot_present)
     text_of = wording_resolver(locale, view.wording).text
     programs = HeadingTextPrograms(
-        title=(close_heading(heading.title, facts, text_of) if heading.title is not None
+        title=(close_heading(heading.title, facts, text_of, present) if heading.title is not None
                else FigureTextProgram(HeaderTemplate((("text", project_title),)))),
-        subtitle=close_heading(heading.subtitle, facts, text_of) if heading.subtitle is not None else None,
-        kicker=close_heading(heading.kicker, facts, text_of) if heading.kicker is not None else None,
+        subtitle=close_heading(heading.subtitle, facts, text_of, present) if heading.subtitle is not None else None,
+        kicker=close_heading(heading.kicker, facts, text_of, present) if heading.kicker is not None else None,
         text_wrap=heading.text_wrap,
     )
     return programs if programs.figure_ids else HeadingContent(*programs.bind({}, {}), text_wrap=programs.text_wrap)
 
 
 def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
-                                 actual_set: Mapping[str, Any] | None) -> tuple[HeadingFactMissing, ...]:
+                                 actual_set: Mapping[str, Any] | None, *,
+                                 snapshot_present: bool = False) -> tuple[HeadingFactMissing, ...]:
     """Report missing semantic facts used by a View heading without changing its empty fallback (#1810)."""
     heading = view.heading
     if heading is None:
@@ -1069,6 +1076,7 @@ def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
         "asOf": isinstance(actual_body.get("asOf"), str) and bool(actual_body.get("asOf")),
         "calendar": bool(calendar),
     }
+    presence = _heading_presence(actual_set, snapshot_present)
     warnings: list[HeadingFactMissing] = []
     seen: set[tuple[str, str]] = set()
     for member in ("title", "subtitle", "kicker"):
@@ -1077,6 +1085,8 @@ def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
             continue
         parts = (source,) if isinstance(source, str) else tuple(source)
         for index, part in enumerate(parts):
+            if not isinstance(part, str) and part.present_when is not None and not presence[part.present_when]:
+                continue  # a part the render omits says nothing about the facts it would read
             text = part if isinstance(part, str) else part.text
             template = parse_template(text, placeholders=HEADING_PLACEHOLDERS, code="E_VIEW_HEADING_TEMPLATE",
                                       allow_wording=True)

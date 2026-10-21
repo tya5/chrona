@@ -44,7 +44,7 @@ schemas:
       tableColumnPresentation: "sha256:d0d04c6397bf11adce0eae952fa4718c82a583e043d10c87721e338e1c26bcff"
       viewHeading: "sha256:0427c4b8d37d8091a25f631875f18e712663e86f34be4a0604a0468c508e07ac"
       viewHeadingWithParts: "sha256:c2a4b15a543fa448f60be80ece90bc9197aee27575b5fe5c1f1f3461afaf6509"
-      headingText: "sha256:d626bde608ec792df4cce7f7a651f3cc84729e9a4798cd98ed8ebf68571fd210"
+      headingText: "sha256:b587c7c8d26920ec16e9f7c160b610d17acdd7a8b3908af07bc47fbe24c994da"
       groupHeaderPresentation: "sha256:62ef5647e4958df074ede5edbd5b391ceba64ef7188104107d0359b4d920484f"
       groupTintPresentation: "sha256:960a377472b608f544f256ea168bdb5df89642e368b6212e5db24b8c72e55e27"
       groupPresentation: "sha256:61b58cc43fde669693e6e643515f17be6593930e82aba0087375da55f1d331cb"

@@ -653,6 +653,16 @@ member contributes no text. String shorthand retains its existing behavior.
 The shared heading schema admits this optional form in place for both Views and
 Layout `viewDefaults` (Spec 56 §3.2); Scene and adapters receive only completed text.
 
+**Presence conditions on heading parts (#1880).** A heading part may also declare
+`presentWhen: actualSet | snapshot`. The part is kept only when the render supplies an
+Actual Set (`actualSet`) or a Snapshot (`snapshot`, a baseline Project or package); otherwise
+it is omitted silently when the heading is composed, before figure binding and text
+measurement, as an `omitWhenZero` part is at zero. A part may declare both, and both must
+hold. A part that is omitted for lack of data reports no missing-fact warning for the
+`{asOf}` it would have read (`W_PRESENTATION_HEADING_FACT_MISSING`). Any other value is a View/Layout schema
+error. A heading whose parts are all omitted contributes no text. String shorthand and
+parts without `presentWhen` are unchanged.
+
 ### 7.5 Slot caption copy (#1100)
 
 A View MAY declare `slotHeadingText: {<Layout slot node id>: <literal copy>}`. Each target must be a slot

@@ -20,7 +20,8 @@ from chrona.presentation.style import StyleRule, StyleRuleError, parse_style_rul
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
 from chrona.presentation.wording_markers import WordingMarkerError, wording_marker_keys
-from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, heading_wording_keys, validate_heading_template
+from chrona.presentation.heading_text import (HeadingPart, PRESENCE_CONDITIONS, heading_figure_ids,
+                                              heading_wording_keys, validate_heading_template)
 from chrona.presentation.table_presentation import (
     AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
 )
@@ -1490,7 +1491,12 @@ def _view_heading(raw: Any, figures: tuple[FigureSpec, ...] = ()) -> ViewHeading
                 if guard is not None and not isinstance(guard, str):
                     raise ContractError("E_VIEW_HEADING_TEMPLATE", "omitWhenZero must name a figure",
                                         f"{path}/{index}/omitWhenZero")
-                closed_parts.append(HeadingPart(item["text"], guard))
+                presence = item.get("presentWhen")
+                if presence is not None and presence not in PRESENCE_CONDITIONS:
+                    raise ContractError("E_VIEW_HEADING_TEMPLATE",
+                                        f"presentWhen must be one of {', '.join(PRESENCE_CONDITIONS)}",
+                                        f"{path}/{index}/presentWhen")
+                closed_parts.append(HeadingPart(item["text"], guard, presence))
             parts = tuple(closed_parts)
             result = parts
         else:

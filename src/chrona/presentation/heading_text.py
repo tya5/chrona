@@ -18,6 +18,8 @@ from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, 
 from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, WORDING_PREFIX, parse_template
 
 PLACEHOLDERS = ("project", "asOf", "calendar")
+# Data a heading part can require (#1880): an Actual Set supplied to the render, a Snapshot supplied to the render.
+PRESENCE_CONDITIONS = ("actualSet", "snapshot")
 CODE = "E_VIEW_HEADING_TEMPLATE"
 
 
@@ -27,6 +29,7 @@ class HeadingPart:
 
     text: str
     omit_when_zero: str | None = None
+    present_when: str | None = None
 
 
 @dataclass(frozen=True)
@@ -121,16 +124,20 @@ def _close_heading_source(source: str, facts: Mapping[str, str],
 
 
 def close_heading(source: str | tuple[HeadingPart, ...], facts: Mapping[str, str],
-                  wording: Callable[[str], str] | None = None) -> FigureTextProgram | ClosedHeadingProgram:
+                  wording: Callable[[str], str] | None = None,
+                  present: Mapping[str, bool] | None = None) -> FigureTextProgram | ClosedHeadingProgram:
     """Close semantic text while retaining ordered omission guards for Layout.
 
     ``wording`` maps a built-in wording key to the Render Context locale's text for ``{wording:<key>}`` (#1880).
+    A part with a presence condition (``present_when``) is dropped here, silently, when the render does not
+    supply that data; ``present`` maps each condition to whether it holds (#1880).
     """
     if isinstance(source, str):
         return _close_heading_source(source, facts, wording)
+    present = present or {}
     return ClosedHeadingProgram(tuple(
         ClosedHeadingPart(_close_heading_source(part.text, facts, wording), part.omit_when_zero)
-        for part in source))
+        for part in source if part.present_when is None or present.get(part.present_when, False)))
 
 
 def heading_figure_ids(source: str) -> frozenset[str]:
@@ -144,5 +151,5 @@ def render_heading(source: str, facts: Mapping[str, str], *, figures: Mapping[st
 
 
 __all__ = ["CODE", "GroupHeaderTextError", "PLACEHOLDERS", "close_heading", "heading_figure_ids", "heading_wording_keys",
-           "HeadingPart", "ClosedHeadingProgram", "HeadingTextPrograms", "render_heading",
+           "HeadingPart", "PRESENCE_CONDITIONS", "ClosedHeadingProgram", "HeadingTextPrograms", "render_heading",
            "validate_heading_template"]
