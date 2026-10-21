@@ -186,6 +186,13 @@ an existing task or Actual with its inverse command at the current revision (sen
 the previous values back). No CLI call, manual file read or deliberately stale
 command is needed to discover a revision.
 
+**Retrying a command.** Sending the same `commandId` and request again writes nothing and returns the first result
+with `replayed: true` and `revisionIsCurrent`: `true` when `resultRevision` is still the workspace revision, `false`
+when later commands changed it (take the next base from `workspace_revision`, not from the replay). A result without
+`replayed` is a fresh application. If the same `commandId` is rejected with `E_AUTHORING_COMMAND_ID_REUSE` (for
+example a resend at the latest revision after a crash), the earlier command was applied: the row carries
+`firstApplied: true`, `appliedRevision` and `revisionIsCurrent`. Use a new `commandId` for a new edit.
+
 **Switch preset.** `selectPresentationPreset` only re-pins the workspace to a
 preset directory that is already inside it, and it checks the binding when you
 send it: `id` and `version` must equal the `id` and `body.package.version` of the

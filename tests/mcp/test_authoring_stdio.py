@@ -60,7 +60,9 @@ def test_authoring_stdio_write_gate_containment_replay_and_no_overwrite(tmp_path
     assert "outside.yaml" not in escaped.content[0].text and outside.read_text(encoding="utf-8") == "outside sentinel"
     assert not accepted.is_error and accepted.structured_content["status"] == "ok"
     assert accepted.structured_content["authoringResult"]["status"] == "accepted"
-    assert replay.structured_content["authoringResult"] == accepted.structured_content["authoringResult"]
+    assert "replayed" not in accepted.structured_content["authoringResult"]
+    assert replay.structured_content["authoringResult"] == accepted.structured_content["authoringResult"] | {
+        "replayed": True, "revisionIsCurrent": True}
     assert stale.structured_content["status"] == "rejected" and not stale.is_error
     assert stale.structured_content["authoringResult"]["diagnostics"][0]["code"] == "E_AUTHORING_BASE_REVISION"
     assert stale.structured_content["diagnostics"][0]["sourceRef"] == "/baseRevision"
