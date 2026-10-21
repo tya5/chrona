@@ -10,12 +10,12 @@ supply the facts.
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
 from chrona.presentation.count_text import CountTextError, CountTextFormat
 from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError
-from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, parse_template
+from chrona.presentation.group_header_text import GroupHeaderTextError, HeaderTemplate, WORDING_PREFIX, parse_template
 
 PLACEHOLDERS = ("project", "asOf", "calendar")
 # Data a heading part can require (#1880): an Actual Set supplied to the render, a Snapshot supplied to the render.
@@ -95,38 +95,53 @@ class HeadingTextPrograms:
 
 def validate_heading_template(source: str) -> frozenset[str]:
     """Return the placeholders `source` uses, or raise `GroupHeaderTextError(E_VIEW_HEADING_TEMPLATE)`."""
-    return parse_template(source, placeholders=PLACEHOLDERS, code=CODE).fields
+    return parse_template(source, placeholders=PLACEHOLDERS, code=CODE, allow_wording=True).fields
 
 
-def _close_heading_source(source: str, facts: Mapping[str, str]) -> FigureTextProgram:
+def heading_wording_keys(source: str) -> frozenset[str]:
+    """The ``{wording:<key>}`` keys a heading template shows (#1880)."""
+    return parse_template(source, placeholders=PLACEHOLDERS, code=CODE, allow_wording=True).wording_keys
+
+
+def _close_heading_source(source: str, facts: Mapping[str, str],
+                          wording: Callable[[str], str] | None = None) -> FigureTextProgram:
     """Freeze semantic text now, leaving only declared figure reads for Layout binding.
 
     Fact text becomes literal parts, never reparsed as authored template syntax.
     No number names are required before a completed candidate reads the program.
     """
-    template = parse_template(source, placeholders=PLACEHOLDERS, code=CODE)
-    parts = tuple((kind, value) if kind == "text" or value.startswith("figure:")
-                  else ("text", facts.get(value, "")) for kind, value in template.parts)
+    template = parse_template(source, placeholders=PLACEHOLDERS, code=CODE, allow_wording=True)
+
+    def close(kind: str, value: str) -> tuple[str, str]:
+        if kind == "text" or value.startswith("figure:"):
+            return kind, value
+        if value.startswith(WORDING_PREFIX):
+            return "text", wording(value[len(WORDING_PREFIX):]) if wording is not None else ""
+        return "text", facts.get(value, "")
+
+    parts = tuple(close(kind, value) for kind, value in template.parts)
     return FigureTextProgram(HeaderTemplate(parts))
 
 
 def close_heading(source: str | tuple[HeadingPart, ...], facts: Mapping[str, str],
+                  wording: Callable[[str], str] | None = None,
                   present: Mapping[str, bool] | None = None) -> FigureTextProgram | ClosedHeadingProgram:
     """Close semantic text while retaining ordered omission guards for Layout.
 
+    ``wording`` maps a built-in wording key to the Render Context locale's text for ``{wording:<key>}`` (#1880).
     A part with a presence condition (``present_when``) is dropped here, silently, when the render does not
     supply that data; ``present`` maps each condition to whether it holds (#1880).
     """
     if isinstance(source, str):
-        return _close_heading_source(source, facts)
+        return _close_heading_source(source, facts, wording)
     present = present or {}
     return ClosedHeadingProgram(tuple(
-        ClosedHeadingPart(_close_heading_source(part.text, facts), part.omit_when_zero)
+        ClosedHeadingPart(_close_heading_source(part.text, facts, wording), part.omit_when_zero)
         for part in source if part.present_when is None or present.get(part.present_when, False)))
 
 
 def heading_figure_ids(source: str) -> frozenset[str]:
-    return parse_template(source, placeholders=PLACEHOLDERS, code=CODE).figure_ids
+    return parse_template(source, placeholders=PLACEHOLDERS, code=CODE, allow_wording=True).figure_ids
 
 
 def render_heading(source: str, facts: Mapping[str, str], *, figures: Mapping[str, int] | None = None,
@@ -135,6 +150,6 @@ def render_heading(source: str, facts: Mapping[str, str], *, figures: Mapping[st
     return close_heading(source, facts).bind(figures or {}, formats)
 
 
-__all__ = ["CODE", "GroupHeaderTextError", "PLACEHOLDERS", "close_heading", "heading_figure_ids",
+__all__ = ["CODE", "GroupHeaderTextError", "PLACEHOLDERS", "close_heading", "heading_figure_ids", "heading_wording_keys",
            "HeadingPart", "PRESENCE_CONDITIONS", "ClosedHeadingProgram", "HeadingTextPrograms", "render_heading",
            "validate_heading_template"]

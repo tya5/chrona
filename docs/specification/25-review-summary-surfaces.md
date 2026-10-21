@@ -17,6 +17,13 @@ Scene/Output. A panel is not a Project field, does not create risk workflow, and
 not infer progress, health, probability, or forecast. Layout is profile geometry;
 Theme supplies only declared panel roles and tokens.
 
+**Wording placeholders in a panel title (#1880).** A panel `title` may show `{wording:<key>}`, the
+built-in wording entry of the Render Context locale with the View `wording.keys` override (Spec 63; View
+Model §7.2), for example `title: "{wording:summary.days}"`. A title with that marker is read as a template
+(`{{` and `}}` are literal braces); any other title is plain text, braces included. Layout and Scene
+receive the resolved text. An unknown key is `E_WORDING_KEY_UNKNOWN` at `/body/panels/<i>/title`. A
+metric `label` keeps its `{wording: <key>}` reference form.
+
 **Panel arrangement (#1190).** A Summary Profile panel may declare
 `arrangement: stack | inline`; omission means `stack`. Stack retains the existing
 run order, placement identities, content and typography. Inline arranges that
