@@ -761,7 +761,7 @@ A completed legend swatch may carry optional
 the exact encoded occurrence values it explains or deliberately neutralizes
 under Spec28. The existing witness shape and pinned-resource joins apply.
 Only filled MARK-classified legend Rect/Symbol/Path primitives with purpose
-`legend-entry` admit it; text, chart marks and unrelated decorations do not.
+`legend-swatch` admit it; text, chart marks and unrelated decorations do not.
 Layout supplies this passive evidence after final visibility and coverage
 selection. Scene copies it, never evaluates fields or selects coverage.
 An encoded scale key retains all represented raw witnesses, including values
