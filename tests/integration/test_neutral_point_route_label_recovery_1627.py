@@ -16,7 +16,6 @@ import chrona.presentation.layout.surface_composer as surface_composer
 from chrona.presentation.layout.obstacles import ObstacleSegment, obstacles_intersect
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.core.relation_identity import relation_identities
-from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.layout.surface_routes import prepare_normal_relation_routes
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 
@@ -155,9 +154,15 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_memb
                              if item.placement_id.startswith("label-footprint:member-label:"))
     assert label_footprints
     route_context = context.routes_for(options.obstacles, context.base_text)
+    declared_identities = relation_identities(_project()["relations"])
+    declared_identity_set = set(declared_identities)
+    scene_routes = [item for item in primitives
+                    if item.get("kind") == "Path" and item.get("purpose") == "dependency"
+                    and item.get("sourceRef") in declared_identity_set]
+    scene_routes_by_id = {item["id"]: item for item in scene_routes}
     for route in actual_routes:
-        stroke_width = float(route_context.request.theme_tokens.number(
-            semantic_binding(route.semantic_id).theme_role, "strokeWidth"))
+        scene_route = scene_routes_by_id[route.relation_id]
+        stroke_width = float(scene_route["paint"]["strokeWidth"])
         assert stroke_width > 0
         collisions = tuple(footprint.placement_id for footprint in label_footprints
             if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance)
@@ -170,36 +175,34 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_memb
                         for item in label_footprints if item.placement_id in collisions)
         assert not collisions, (route.relation_id, route.source_ref, stage, details)
 
-    routes = [item for item in primitives
-              if item.get("kind") == "Path" and item.get("purpose") == "dependency"
-              and item.get("sourceRef", "").startswith("relation:id:edge-")]
+    routes = scene_routes
     route_groups = {}
     for item in routes:
         route_groups.setdefault(item["sourceRef"], []).append(item)
-    declared_identities = relation_identities(_project()["relations"])
-    expected_relation_refs = set(declared_identities)
-    assert set(route_groups) == expected_relation_refs
+    assert set(route_groups) == declared_identity_set
+    stub_edge_identity = declared_identities[
+        _EDGES.index(("item-15", "end", "item-19", "start", "0d"))]
     assert all(len(group) == 1 and group[0].get("toInstanceId") is not None
-               for source_ref, group in route_groups.items() if source_ref != "relation:id:edge-25")
-    paired = route_groups["relation:id:edge-25"]
+               for source_ref, group in route_groups.items() if source_ref != stub_edge_identity)
+    paired = route_groups[stub_edge_identity]
     assert len(paired) == 2
-    assert {item["id"].rsplit(":", 1)[-1] for item in paired} == {"stub-source", "stub-target"}
+    edge_25_layout = [item for item in actual_routes if item.source_ref == stub_edge_identity]
+    assert {item["id"] for item in paired} == {item.relation_id for item in edge_25_layout}
+    assert {item.fragment_endpoint for item in edge_25_layout} == {"source", "target"}
     assert all(item.get("fromInstanceId") is None and item.get("toInstanceId") is None for item in paired)
     assert all(item.get("fanIn") is None for item in paired)
     assert sum(item.get("markerStart") is not None for item in paired) == 1
     assert sum(item.get("markerEnd") is not None for item in paired) == 1
-    edge_25_layout = [item for item in actual_routes if item.source_ref == "relation:id:edge-25"]
-    assert {item.fragment_endpoint for item in edge_25_layout} == {"source", "target"}
     assert all(item.terminal_label for item in edge_25_layout)
     assert {item.label_content for item in edge_25_layout} == {
         "-> App Store / Google Play review", "QA regression ->",
     }
     edge_25_labels = [item for item in options.relation_labels.text
-                      if item.source_ref == "relation:id:edge-25"]
+                      if item.source_ref == stub_edge_identity]
     assert {item.content for item in edge_25_labels} == {
         "-> App Store / Google Play review", "QA regression ->",
     }
-    assert any("edge-25" in getattr(item, "relation_id", "") and item.stage.value == "stub"
+    assert any(stub_edge_identity in getattr(item, "relation_id", "") and item.stage.value == "stub"
                for item in options.routes.resolution_info)
     point_targets = {target for _, _, target, endpoint, _ in _EDGES if endpoint == "at"}
     marks = {item["id"]: item for item in primitives
