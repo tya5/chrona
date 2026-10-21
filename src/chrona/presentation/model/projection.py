@@ -198,6 +198,8 @@ class ReviewItem:
     new_vs_baseline: bool = False
     # The localized ``marker.baselineNew`` text a new object shows in its empty Δ (#1781).
     new_marker: str = NEW_MARKER
+    # Snapshot/current planned finish comparison, independent of Actual and forecast delta.
+    snapshot_finish_delta: int | None = None
 
     @property
     def at_delta(self) -> int | None:
@@ -563,6 +565,12 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         date_basis = ItemDateBasis.from_project(project, object_id)
         finish_delta = _finish_delta(planned, actual, as_of, basis=date_basis,
                                      delta_unit=view.comparison.delta_unit or "calendar-days")
+        snapshot_placement = (snapshot_placements.get(object_id)
+                              if snapshot_project is not None and snapshot_placements is not None
+                              and object_id in snapshot_project.get("objects", {}) else None)
+        snapshot_finish_delta = _snapshot_finish_delta(
+            planned, snapshot_placement, basis=date_basis,
+            delta_unit=view.comparison.delta_unit or "calendar-days")
         float_value = active_analysis.total_float.get(object_id) if active_analysis is not None else None
         total_float = float_value.value if float_value is not None else None
         critical = object_id in active_analysis.critical if active_analysis is not None else False
@@ -591,7 +599,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             delta_affix=delta_affix,
             new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
                              and object_id not in snapshot_placements),
-            new_marker=resolver.text("marker.baselineNew")))
+            new_marker=resolver.text("marker.baselineNew"),
+            snapshot_finish_delta=snapshot_finish_delta))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if forecast is not None:
@@ -1017,6 +1026,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             intent = spec.presentation if spec.presentation is not None else row.presentation
             members.append(replace(base, item_id=item_id, source_kind=kind, track=track, scenario_id=spec.scenario_id,
                                    forecast=base.forecast if kind == "primary" else None,
+                                   snapshot_finish_delta=(base.snapshot_finish_delta if kind == "primary" else None),
                                    presentation=dict(intent) if intent is not None else None))
         subject = row.table_subject or (members[0].item_id if members else "")
         if subject not in member_ids:
@@ -1286,6 +1296,18 @@ def _finish_delta(planned: dict[str, date], actual: dict[str, date | float] | No
                   delta_unit: str = "calendar-days") -> int | None:
     """The canonical known finish variance, including a started open Actual at as-of."""
     return finish_variance(planned, actual, as_of, basis=basis, delta_unit=delta_unit)
+
+
+def _snapshot_finish_delta(planned: Mapping[str, Any], snapshot: Mapping[str, Any] | None, *,
+                           basis: ItemDateBasis, delta_unit: str) -> int | None:
+    """Current planned finish minus a matching Snapshot finish, with no Actual/forecast policy."""
+    if snapshot is None:
+        return None
+    endpoint = "at" if "at" in planned else "end"
+    current_finish, snapshot_finish = planned.get(endpoint), snapshot.get(endpoint)
+    if not isinstance(current_finish, date) or not isinstance(snapshot_finish, date):
+        return None
+    return endpoint_distance(snapshot_finish, current_finish, basis, delta_unit)
 
 
 def _order(rows: list[ReviewItem], view: ViewInput, project: Mapping[str, Any]) -> None:

@@ -431,6 +431,9 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
         declared = project.get("scenarios", {}).get(item.scenario_id, {})
         return declared.get("title") if isinstance(declared, dict) else None
     facet = source["comparisonFacet"]
+    if facet == "snapshotFinishDelta":
+        return (getattr(item, "snapshot_finish_delta", None)
+                if item.source_kind in {"primary", "combined"} else None)
     missing_actual = (True if item.observation_state == ObservationState.DUE_UNOBSERVED else
                       False if item.observation_state == ObservationState.RECORDED else None)
     return {"finishDelta": display_finish_delta(item), "missingActual": missing_actual,

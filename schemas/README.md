@@ -28,6 +28,7 @@ record.
 | theme-asset-source | theme-asset-source-v0.2.schema.yaml |
 | presentation-resource-foundation | presentation-resource-v0.1.schema.yaml |
 | schema-part-common | common-v0.1.schema.yaml |
+| schema-part-common | common-v0.2.schema.yaml |
 | schema-part-graphics | graphics-v0.1.schema.yaml |
 | presentation-preset | presentation-preset-v0.1.schema.yaml |
 | builtin-preset-library | preset-library-v0.2.schema.yaml |
