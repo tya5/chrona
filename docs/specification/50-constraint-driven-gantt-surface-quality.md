@@ -741,7 +741,9 @@ hosts, preserving temporal anchors and terminal fit, and expands the completed
 canvas when necessary. It does not clip a stub as though it were a full route.
 Scene fragments omit paired graph-instance references: the existing Scene
 contract requires both references or neither, and neither fragment is a full
-connected edge. Layout retains each actual endpoint in its typed fragment
+connected edge. Layout therefore excludes fragments from connected-route
+fan-in grouping; each fragment retains its own completed terminal rather than
+claiming a shared connected arrival. Layout retains each actual endpoint in its typed fragment
 placement. Shared relation provenance and terminal text retain the linkage
 without falsely declaring a connected source-to-target route. These are ordinary
 completed path/text primitives, not a new Scene schema or scheduling edge.
