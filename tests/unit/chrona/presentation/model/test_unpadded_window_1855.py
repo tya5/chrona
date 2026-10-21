@@ -50,3 +50,17 @@ def test_selected_comparison_envelope_includes_actual_dates_but_explicit_does_no
 
     assert comparison.unpadded_window == (date(2026, 9, 28), date(2026, 10, 20))
     assert explicit.unpadded_window is None
+
+
+def test_selected_comparison_actual_point_envelope_includes_its_date_day():
+    project = {"objects": {"gate": {"title": "Gate", "fields": {}}}, "entities": {}}
+    placements = {"gate": {"start": date(2026, 10, 5), "end": date(2026, 10, 15)}}
+    actual = {"body": {"asOf": "2026-10-22", "observations": [{
+        "id": "obs", "projectObjectId": "gate", "sequence": 1,
+        "actual": {"at": "2026-10-20"},
+    }]}}
+
+    comparison = build_review_projection(
+        project, placements, _view("selected-comparison"), actual)
+
+    assert comparison.unpadded_window == (date(2026, 10, 5), date(2026, 10, 21))
