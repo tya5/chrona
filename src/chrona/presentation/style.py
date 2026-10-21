@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 import json
 import math
-from typing import Any
+from typing import Any, Literal
 
 
 Scalar = str | bool | int | float
@@ -134,6 +134,48 @@ class EncodingWitness:
             raise ValueError("encoding witness sources must be an array")
         return cls(raw["channel"], raw["scaleId"], raw["field"], raw["value"],
                    tuple(EncodingSource.from_mapping(source) for source in sources))
+
+
+@dataclass(frozen=True)
+class LegendEncodingCoverage:
+    """Passive coverage claim for one completed legend-swatch figure."""
+
+    kind: Literal["state", "encoding"]
+    witnesses: tuple[EncodingWitness, ...]
+    paint_channel: Literal["fill", "stroke"] = "fill"
+
+    def __post_init__(self) -> None:
+        if self.kind not in {"state", "encoding"}:
+            raise ValueError("legend encoding coverage kind must be 'state' or 'encoding'")
+        if self.paint_channel not in {"fill", "stroke"}:
+            raise ValueError("legend encoding coverage paint channel must be 'fill' or 'stroke'")
+        if self.kind == "state" and self.paint_channel != "fill":
+            raise ValueError("state legend encoding coverage cannot declare a paint channel")
+        if (not isinstance(self.witnesses, tuple) or not self.witnesses
+                or any(not isinstance(item, EncodingWitness) for item in self.witnesses)
+                or len(set(self.witnesses)) != len(self.witnesses)):
+            raise ValueError("legend encoding coverage needs a non-empty unique witness tuple")
+
+    def as_mapping(self) -> dict[str, Any]:
+        return {"kind": self.kind,
+                "witnesses": [witness.as_mapping() for witness in self.witnesses],
+                **({"paintChannel": self.paint_channel} if self.paint_channel != "fill" else {})}
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "LegendEncodingCoverage":
+        if (not isinstance(raw, Mapping)
+                or not {"kind", "witnesses"} <= set(raw)
+                or set(raw) - {"kind", "witnesses", "paintChannel"}):
+            raise ValueError("legend encoding coverage has missing or unsupported members")
+        if raw["kind"] == "state" and "paintChannel" in raw:
+            raise ValueError("state legend encoding coverage cannot declare a paint channel")
+        if "paintChannel" in raw and raw["paintChannel"] != "stroke":
+            raise ValueError("legend encoding coverage paintChannel, when present, must be 'stroke'")
+        witnesses = raw["witnesses"]
+        if not isinstance(witnesses, (tuple, list)):
+            raise ValueError("legend encoding coverage witnesses must be an array")
+        return cls(raw["kind"], tuple(EncodingWitness.from_mapping(item) for item in witnesses),
+                   raw.get("paintChannel", "fill"))
 
 
 @dataclass(frozen=True)

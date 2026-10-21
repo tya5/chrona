@@ -174,6 +174,7 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     projects each part and delegates its paint conversion.
     """
     base_paint_order = shared.pop("paint_order", 0)
+    legend_coverage = shared.pop("legend_encoding_coverage", None)
     # Parts stack in ascending paint order, except where the whole glyph is one layer (a note's artwork, #848).
     order_step = shared.pop("part_order_step", 1)
     if primitive_ids is not None and len(primitive_ids) != len(completed_parts):
@@ -190,7 +191,11 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
                            glyph_stroke_width=(part.stroke_width
                                                if part.line_cap is not None and part.line_join is not None
                                                else None),
-                           glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
+                           glyph_line_cap=part.line_cap, glyph_line_join=part.line_join,
+                           # ``None`` is the normal role-bound filled glyph part;
+                           # only an explicit stroke-only contour excludes coverage.
+                           legend_encoding_coverage=(legend_coverage if part.paint_mode != "stroke" else None),
+                           **shared)
             for index, part in enumerate(completed_parts)]
 
 
@@ -269,7 +274,8 @@ def _completed_shape_primitive(placement: ShapePlacement, source_kind: str, purp
               float(placement.bounds.inline_size), float(placement.bounds.block_size))
     shared.update(slot_id=placement.slot_id, paint_order=placement.paint_order,
                   paint_channels=placement.paint_channels,
-                  legend_swatch_shape=placement.legend_swatch_shape)
+                  legend_swatch_shape=placement.legend_swatch_shape,
+                  legend_encoding_coverage=placement.legend_encoding_coverage)
     if placement.kind == "Path":
         return ScenePrimitive(placement.placement_id, PrimitiveKind.PATH, placement.source_ref,
                               source_kind, purpose, visual_role, bounds, points=placement.points,
@@ -1037,11 +1043,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
                                                  _legend_mark_role(mark, value.theme_tokens),
                                                  bounds, mark.symbol_parts,
                                                  corner_radius=mark.corner_radius, slot_id=mark.slot_id,
-                                                 paint_order=mark.paint_order))
+                                                 paint_order=mark.paint_order,
+                                                 legend_encoding_coverage=mark.legend_encoding_coverage))
         else:
             primitives.append(ScenePrimitive(mark.placement_id, PrimitiveKind.RECT, mark.source_ref, "legend",
                                              legend_binding.purpose, mark.source_ref, bounds,
-                                             corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
+                                             corner_radius=mark.corner_radius, slot_id=mark.slot_id,
+                                             paint_order=mark.paint_order,
+                                             legend_encoding_coverage=mark.legend_encoding_coverage))
     for relation in placed_surface.relations:
         if relation.suppressed or relation.relation_id.startswith("annotation-leader:"):
             continue
@@ -1584,7 +1593,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.extend(_symbol_primitives(
                 mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
                 _legend_mark_role(mark, value.theme_tokens), bounds, mark.symbol_parts,
-                corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
+                corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order,
+                legend_encoding_coverage=mark.legend_encoding_coverage))
         for shape in legend.shapes:
             role = (semantic_binding("scaleLegendEntry").scene_role
                     if shape.source_ref.startswith("scale:") else

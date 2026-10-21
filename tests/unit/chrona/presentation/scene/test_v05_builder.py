@@ -702,10 +702,17 @@ def _legend_surface(entries, theme, *, items=None, content_overrides=None):
     facts = collect_surface_style_facts(projection, content, gate_declared="gate" in theme["body"]["roles"])
     content = replace(content, legend_mark_occurrences=tuple(
         item for item in facts.occurrences if item.primitive_family == "mark"))
+    from chrona.presentation.layout.legend_candidates import prepare_realized_legend_candidates
+    from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
+    measurement = _legend_measurement()
+    content = prepare_realized_legend_candidates(
+        content, ThemeTokenView(theme),
+        mark_block_size=float(measurement.metric_values["timeline.mark.blockSize"]),
+        paint_capabilities=PaintWitnessCapabilities())
     value = build_surface_input(projection=projection,
                               surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
-                              resolved_theme=theme, font_metrics=_Font(), measured_sources=_legend_measurement(),
+                              resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
     return compose_review_surface(value)
 
@@ -722,7 +729,9 @@ def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
         gate,
     ))
 
-    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")
+    swatch = next(node for node in surface.primitives
+                  if node.purpose == "legend-swatch" and node.kind == "Symbol"
+                  and node.visual_role == "planned")
     assert swatch.kind == "Symbol"
     assert swatch.visual_role == "planned"  # painted as the chart's planned point, as the milestones are (#499)
     # planned's own markHeight ratio (mark-full = 1) times timeline.mark.blockSize (8).

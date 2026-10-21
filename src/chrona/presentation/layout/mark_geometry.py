@@ -94,6 +94,34 @@ def complete_point_outline(parts: tuple[SymbolPartPlacement, ...], *,
     return (*parts, SymbolPartPlacement(contour, paint_mode="stroke", stroke_width=width))
 
 
+def canonical_point_geometry(theme_tokens: Any, token: Mapping[str, Any], *,
+                             paint_role: str, corner_fraction: float) -> tuple[object, ...]:
+    """Return the shared unit-space symbol/outline identity, excluding mark placement floats."""
+    outline = (rounded_diamond_path(inline=0.0, block=0.0, inline_size=1.0,
+                                    block_size=1.0, radius=corner_fraction)
+               if corner_fraction > 0 and token.get("shape") == "diamond" else ())
+    parts = symbol_parts(token, (0.0, 0.0, 1.0, 1.0), outline,
+                         catalog_glyphs=getattr(theme_tokens, "catalog_glyphs", None))
+    if any(part.paint_mode == "fill" for part in parts):
+        parts = complete_point_outline(parts, paint_role=paint_role, theme_tokens=theme_tokens)
+    return token.get("shape"), tuple((part.paint_mode, part.line_cap, part.line_join, part.stroke_width,
+        tuple((command.kind, command.points) for command in part.commands)) for part in parts)
+
+
+def place_canonical_point_geometry(geometry_identity: tuple[object, ...],
+                                   bounds: tuple[float, float, float, float]) -> tuple[SymbolPartPlacement, ...]:
+    """Place a reserved normalized point glyph without re-resolving its Theme geometry."""
+    inline, block, width, height = map(float, bounds)
+    _, geometry_parts = geometry_identity
+    placed = []
+    for mode, cap, join, stroke_width, commands in geometry_parts:
+        path = tuple(PathCommand(kind, tuple((inline + x * width, block + y * height)
+                                             for x, y in points))
+                     for kind, points in commands)
+        placed.append(SymbolPartPlacement(path, mode, None, stroke_width, cap, join))
+    return tuple(placed)
+
+
 @dataclass(frozen=True)
 class MarkItemComposition:
     """Complete item mark closure, including observable omissions and warnings."""
@@ -344,6 +372,7 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
                                      inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                 if shape == "point" and radius > 0 and token is not None and token.get("shape") == "diamond" else ())
     completed_symbols = ()
+    point_paint_role = None
     if shape == "open-span":
         commands = open_span_path(inline=float(bounds.inline), block=float(bounds.block),
                                   inline_size=float(bounds.inline_size), block_size=float(bounds.block_size),
@@ -362,19 +391,29 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
             )
         except ValueError as error:
             raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
-        if shape == "point" and any(part.paint_mode == "fill" for part in completed_symbols):
-            paint_role = (selected_theme_role if selected_theme_role is not None else
-                          resolve_point_paint_role(
-                              geometry_role,
-                              gate_declared=semantic_id != "forecast" and theme_tokens.has_role("gate")))
+        if any(part.paint_mode == "fill" for part in completed_symbols):
+            point_paint_role = (selected_theme_role if selected_theme_role is not None else
+                                resolve_point_paint_role(
+                                    geometry_role,
+                                    gate_declared=semantic_id != "forecast" and theme_tokens.has_role("gate")))
             completed_symbols = complete_point_outline(
-                completed_symbols, paint_role=paint_role, theme_tokens=theme_tokens)
+                completed_symbols, paint_role=point_paint_role, theme_tokens=theme_tokens)
+        else:
+            point_paint_role = selected_theme_role or geometry_role
+    legend_geometry_identity = None
+    if (shape == "point" and semantic_id in {"planned", "actual", "forecast"}
+            and token is not None and point_paint_role is not None):
+        legend_geometry_identity = canonical_point_geometry(
+            theme_tokens, token, paint_role=point_paint_role,
+            corner_fraction=radius / min(float(bounds.inline_size), float(bounds.block_size))
+            if min(float(bounds.inline_size), float(bounds.block_size)) > 0 else 0.0)
     return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                          mark_shape=shape, corner_radius=radius, path_commands=commands,
                          slot_id=slot_id, semantic_id=semantic_id,
                          paint_order=paint_order_base + geometry.paint_order,
                          end_treatment=end_treatment, symbol_parts=completed_symbols,
-                         theme_role=selected_theme_role, style_occurrence_key=style_occurrence_key)
+                         theme_role=selected_theme_role, style_occurrence_key=style_occurrence_key,
+                         legend_geometry_identity=legend_geometry_identity)
 
 
 @dataclass(frozen=True)

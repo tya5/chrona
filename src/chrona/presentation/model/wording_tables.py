@@ -20,7 +20,10 @@ DEFAULT_LOCALE = "en-US"
 _ERROR = "E_WORDING_TABLE_RESOURCE"
 _LEGEND_PREFIX = "legend."
 # Legend roles whose default label Layout (not the content builder) picks; carried as locale text (#1724).
-LAYOUT_DEFAULT_LEGEND_ROLES = ("progressFill", "actual-ahead", "actual-on-track", "actual-behind")
+LAYOUT_DEFAULT_LEGEND_ROLES = (
+    "progressFill", "actual-ahead", "actual-on-track", "actual-behind",
+    "planned-plain", "actual", "forecast", "milestone",
+)
 
 
 def _invalid(location: str, actual: str, expected: str) -> ValueError:
