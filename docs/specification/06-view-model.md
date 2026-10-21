@@ -667,6 +667,20 @@ or with an empty map, the profile's copy and output remain unchanged.
 
 ### 7.2 Derived figures (#586)
 
+**Restricted counts (#1880).** A `count` figure may declare `objectTypes` (non-empty list of
+domain object types), `temporalKind` (`point` or `span`, the planned shape) and, with the
+`groups` source only, `excludeUnassigned: true`. The restrictions narrow the distinct
+selected Primary/combined identities before any source is counted, so `selected`,
+`recorded`, `behind` and the other sources count only the matching objects; `groups`
+counts the distinct nonempty group identities of the matching objects, and
+`excludeUnassigned` also leaves out the group that collects objects with no grouping value
+(the grouping `missing` fallback, whether a plain field grouping or a role-bound one).
+Omission keeps today's count of every selected object and group. A group-scoped figure
+applies the restriction to the members of the current group. `placedNotes` cannot be
+restricted, and `excludeUnassigned` with another source is `E_VIEW_FIGURE_INVALID` at the
+property (`/source` for `placedNotes`). Slot-binding figures (`bindings`) do not take the
+restrictions.
+
 **Reusable heading counts (#1346).** Heading
 parts additionally admit existing `{figure:<id>}` markers. Slot headings may
 declare `template` instead of literal `text` (Spec33); `slotHeadingText` stays
@@ -700,7 +714,7 @@ and their own format. Validate every format declaration's shape and target
 eagerly, but require number names only when a template reads it; an unused
 count remains a raw integer. Theme's existing text treatment applies afterwards.
 
-A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
+A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?, objectTypes?, temporalKind?, excludeUnassigned?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
 Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); an undeclared Summary figure is omitted with `I_SUMMARY_FIGURE_UNBOUND` under #1344, while other template consumers retain `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before except that explicitly approved Summary omission.
 

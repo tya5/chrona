@@ -137,3 +137,13 @@ def test_unknown_figure_kind_is_rejected():
             default_calendar=None,
             counts=COUNTS,
         )
+
+
+def test_a_restricted_count_reads_its_own_bundle_not_the_shared_one():
+    restricted = FigureCounts(3, 0, 0, 0, 0, 0, 0, 0, 0, groups=2)
+    result = resolve_figures(
+        (FigureSpec("tasks", "count", source="selected", path="/body/figures/0", object_types=("task",)),
+         FigureSpec("all", "count", source="selected", path="/body/figures/1")),
+        as_of=None, placements={}, periods=(), calendars={}, default_calendar=None,
+        counts=COUNTS, filtered_counts={"tasks": restricted})
+    assert dict(result.values) == {"tasks": 3, "all": 11}
