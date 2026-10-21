@@ -64,6 +64,12 @@ true`, `destructiveHint: false`; for mutating tools `readOnlyHint: false`, `dest
 not understate a write, whatever it overwrites); `idempotentHint: true` and `openWorldHint: false` for every tool.
 
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
+  Like `chrona validate` it dispatches on the document's `kind` (or its `chrona/<kind>/vN` version): a Theme, Color
+  Scheme, Layout Profile, View, Style, Actual Set, Summary Profile or Review Detail Profile is checked against its own
+  schema and contract and an `ok` result adds `resource` (the kind). Any other kind is `E_CLOSURE_KIND` (`sourceRef`
+  `/kind`) naming the accepted kinds and, for a guided workspace, Command Request or Authoring Command, the tool to
+  use (`validate_workspace`, `check_command`, `apply_authoring_command`). A View's `--layout` defaults are not
+  available over MCP.
   Mirrors `chrona validate`: it reports the dependency cycles the reference scheduler cannot place (`E_UNSUPPORTED_CYCLE`,
   or `E_UNSATISFIABLE_DEPENDENCIES`; Spec 04 section 16) and computes no dates, so a fixed date that contradicts its
   dependencies is found only by `schedule_project`.
@@ -283,8 +289,17 @@ present only when `status` is `ok` (a field a call had already produced, such as
   invented. `diagnostics` is empty when `status` is `ok`.
 - A failure that is not one of the typed families is `E_TOOL_FAILURE` with the fixed message
   `internal error: <ExceptionClass>`; the traceback goes to the log (standard error), never to the result.
-- Unknown tool names and arguments that do not satisfy the input schema (a wrong type, a missing or extra property,
-  an enum or `viewport` mismatch, an empty or over-long path string) are protocol errors, never an envelope.
+- Only an unknown tool name is a protocol error. Arguments that do not satisfy the input schema (a wrong type, a missing
+  or extra property, an enum or `viewport` mismatch, an empty or over-long path string, an inline command or
+  authoring payload of the wrong shape) are a result: status `rejected`, one `E_MCP_INPUT_INVALID` row per violating
+  node (at most 8), whose `sourceRef` is the RFC 6901 pointer of that node in the tool arguments (`/` for the
+  arguments object; an unexpected property is pointed at itself, `/command/payload/constraints`) and whose `message`
+  names the tool, the expected shape (the expected type, the permitted values, the required or permitted properties)
+  and, for an unexpected property, where else in the input it is permitted. A union is reduced to the branch the input
+  was written for (an inline command, not the path form). The message never echoes the supplied value.
+- An authoring rejection of a `setPresentationOverride` payload is `E_RESOURCE_SCHEMA` whose `sourceRef` is the
+  pointer inside the command (`/payload/overrides/theme/surprise`) and whose `message` is the expected shape; the
+  Authoring Result's `detail` leads with the same pointer and `: `. No schema changes.
 - The `render_draft` payloads that travel beside the structured result are an `image` (PNG bytes) for `inline:
   image` and an `svg` (UTF-8 text with the URI `chrona://render/<sha256 of the svg>.svg`) for `inline: svg`. A PNG
   preview without the `render` extra is omitted and `pngAvailable` is `false`. An inline SVG over 1 MiB or PNG over
@@ -326,6 +341,7 @@ rasterizer of the `render` extra.
 | `E_MCP_PATH_SYNTAX` | A path argument fails the syntax rules or names a reserved device. |
 | `E_MCP_PATH_CONTAINMENT` | A path resolves outside the workspace. |
 | `E_MCP_INPUT_TOO_LARGE` | An input file exceeds 2 MiB. |
+| `E_MCP_INPUT_INVALID` | A tool argument violates the input schema (status `rejected`); `sourceRef` is the pointer of the violating node. |
 | `E_MCP_RESULT_TOO_LARGE` | An inline payload, or a `compare_baseline` result, exceeds its cap; lower the viewport (`render_draft`), use `inline: none`, or use the command line. |
 | `E_MCP_WORKSPACE_TOO_BROAD` | The workspace is a filesystem root. |
 | `E_MCP_WRITE_DISABLED` | A write tool is called on a server started without `--allow-write` (status `failed`). |
@@ -341,8 +357,8 @@ and the registry is unchanged. The binding is the one module that imports the SD
 - `tools/list` is the registry: names, titles, descriptions, input and output schemas and the annotations of section 2.
   `tools/call` is `call_tool` with its result in content blocks: block 0 is the structured result as JSON text; an
   `image` block carries the PNG preview; an embedded resource carries the SVG. The structured content equals block 0.
-- The error flag is set only when `status` is `failed`. Unknown tool names and malformed arguments are protocol errors
-  (`INVALID_PARAMS`), never an envelope.
+- The error flag is set only when `status` is `failed`. An unknown tool name is a protocol error (`INVALID_PARAMS`),
+  never an envelope; malformed arguments are a `rejected` result (above), not `-32602`.
 - Calls are handled one at a time (a render cannot be cancelled) in a worker thread; the server holds no state between
   calls and writes nothing to standard output but protocol frames. Logging goes to standard error.
 - `initialize` carries `instructions` (under 1 KB: the model in three sentences, that a rejection is a result, whether writes are on, and that

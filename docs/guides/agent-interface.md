@@ -144,7 +144,10 @@ The following table is checked directly against the server registry.
 
 Every result carries a `status`: `ok`, `rejected` (the plan is refused: read each diagnostic's `code` and
 `sourceRef`) or `failed` (the call could not run, for example a path outside the workspace). A rejection is a
-normal result, so read `status`, not only the tool's error flag. The server also serves the agent skill's text as
+normal result, so read `status`, not only the tool's error flag. A call whose arguments break a tool's input schema is
+also `rejected`, not a protocol error: `E_MCP_INPUT_INVALID` with the JSON pointer of the violating node in `sourceRef`
+and the expected shape in `message`. `validate_project` checks a Theme, Scheme, Layout Profile, View, Style, Actual Set
+or profile file by its `kind`, as `chrona validate` does. The server also serves the agent skill's text as
 two resources, `chrona://guide/authoring` and `chrona://guide/diagnostics`, so a client without skill support gets
 the same guidance.
 
