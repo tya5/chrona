@@ -1,8 +1,8 @@
 """Perceptual separability of categorical colours (Specification 60).
 
-Pure colour arithmetic: CIEDE2000 on sRGB and colour-vision-deficiency
-simulation with the Machado, Oliveira and Fernandes (2009) matrices at
-severity 1.0.  No Theme, Layout or renderer knowledge lives here.
+Pure colour arithmetic: CIEDE2000 on sRGB, grayscale projection, and
+colour-vision-deficiency simulation with the Machado, Oliveira and Fernandes
+(2009) matrices at severity 1.0. No Theme, Layout or renderer knowledge lives here.
 """
 from __future__ import annotations
 
@@ -65,6 +65,12 @@ def _lab(linear: tuple[float, float, float]) -> tuple[float, float, float]:
 def _simulate(linear: tuple[float, float, float], vision: str) -> tuple[float, float, float]:
     if vision == "normal":
         return linear
+    if vision == "grayscale":
+        # A full-precision linear-sRGB grey has the same value in every
+        # channel; this is equivalent to sRGB-encoding and decoding Y without
+        # quantizing the intermediate colour to an 8-bit palette.
+        luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+        return luminance, luminance, luminance
     matrix = _MACHADO[vision]
     red, green, blue = (sum(row[index] * linear[index] for index in range(3)) for row in matrix)
     return red, green, blue
@@ -115,7 +121,7 @@ def chroma(hex_colour: str) -> float:
 
 def delta_e_2000(first: str, second: str, *, vision: str = "normal") -> float:
     """Return the CIEDE2000 difference of two sRGB colours as seen under ``vision``."""
-    if vision != "normal" and vision not in _MACHADO:
+    if vision not in ("normal", "grayscale", *_MACHADO):
         raise ValueError(f"E_COLOR_VISION_UNKNOWN:{vision}")
     return _ciede2000(_lab(_simulate(_linear(first), vision)), _lab(_simulate(_linear(second), vision)))
 
