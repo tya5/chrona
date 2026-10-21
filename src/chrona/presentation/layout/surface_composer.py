@@ -39,7 +39,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_header_strips, compose_group_tabs,
     compose_row_group_backgrounds, replace_group_header_band,
 )
-from chrona.presentation.layout.surface_axis import complete_axis_plot
+from chrona.presentation.layout.surface_axis import axis_label_thinned_provenance, complete_axis_plot
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
@@ -143,7 +143,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     axis_label_targets = axis_batch.label_targets
     axis_band_targets = axis_batch.band_targets
     diagnostics = list(axis_batch.diagnostics)
-    diagnostic_provenance: list[DiagnosticProvenance] = []
+    diagnostic_provenance: list[DiagnosticProvenance] = list(
+        axis_label_thinned_provenance(diagnostics, axis_tier_outcomes))
     diagnostics.extend(headings.diagnostics)
     diagnostics.extend(heading_batch.diagnostics)
     visible_label_overflows = list(axis_batch.visible_label_overflows)

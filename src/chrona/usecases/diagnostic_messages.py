@@ -219,6 +219,23 @@ def encoding_contrast_detail(payload: Mapping[str, object]) -> str:
     return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}{occurrences}"
 
 
+_AXIS_THINNED_REASONS: Mapping[str, str] = {
+    "label-does-not-fit": "the label does not fit its interval",
+    "regular-cadence": "dropped to keep every label of the tier evenly spaced",
+    "phase-unavailable": "dropped because no even spacing of the tier's labels fits",
+}
+
+
+def _axis_thinned_subject(tail: str, *, named: bool) -> str:
+    """``axis-label:<tier>:<interval>:<reason>`` in words; the ledger names the label text beside it (#1854)."""
+    candidate, _, reason = tail.rpartition(":")
+    said = _AXIS_THINNED_REASONS.get(reason, reason)
+    parts = candidate.split(":")
+    if named or len(parts) != 3 or parts[0] != "axis-label":
+        return said
+    return f"axis tier {parts[1]}, interval {parts[2]}: {said}"
+
+
 def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
     code = str(payload.get("code", ""))
@@ -232,8 +249,17 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
                            f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
                            f"{payload.get('rowCount')} rows, block size {_number(payload.get('actualBlockSize'))}, "
                            f"limit {_number(payload.get('maxBlockSize'))}")
+    if code == "W_LAYOUT_AXIS_LABEL_THINNED":
+        return WarningText(_SURFACE_CAUSES[code], _axis_thinned_subject(identity.removeprefix(code).removeprefix(":"),
+                                                                       named="sourceTitle" in payload
+                                                                       or "sourceSubjects" in payload))
     if code in _SURFACE_CAUSES:
         return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
+    if code == "W_LAYOUT_ROUTE_FALLBACK" and str(payload.get("placementId", "")).startswith("annotation-leader:"):
+        # A note's leader is not a relation: name it as the author's note (#1854).
+        note = str(payload["placementId"]).removeprefix("annotation-leader:")
+        return WarningText("a note's leader could not be routed around the marks and was drawn as a direct path",
+                           f"leader of note {note}")
     if code in _FIT_CAUSES:
         if code == "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT":
             declared = payload.get("declared")
