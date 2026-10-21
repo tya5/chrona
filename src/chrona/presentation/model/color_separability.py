@@ -14,6 +14,7 @@ MINIMUM_CATEGORY_DELTA_E = 5.0
 # CIELAB chroma below which a colour is a grey and carries no hue to reserve (#1628).
 MINIMUM_RESERVED_CHROMA = 12.0
 SIMULATED_VISIONS = ("protanopia", "deuteranopia", "tritanopia")
+CHECKED_VISIONS = ("normal", *SIMULATED_VISIONS)
 
 _MACHADO = {
     "protanopia": ((0.152286, 1.052583, -0.204868), (0.114503, 0.786281, 0.099216), (-0.003882, -0.048116, 1.051998)),
@@ -126,14 +127,12 @@ def delta_e_2000(first: str, second: str, *, vision: str = "normal") -> float:
     return _ciede2000(_lab(_simulate(_linear(first), vision)), _lab(_simulate(_linear(second), vision)))
 
 
-def scale_collisions(scale_id: str, colours: tuple[tuple[str, str], ...],
-                     color_vision: tuple[str, ...] = ()) -> tuple[ScaleCollision, ...]:
-    """Return every domain pair below the minimum, in domain order, then vision order."""
-    visions = ("normal", *(vision for vision in SIMULATED_VISIONS if vision in color_vision))
+def scale_collisions(scale_id: str, colours: tuple[tuple[str, str], ...]) -> tuple[ScaleCollision, ...]:
+    """Return every pair below the minimum under normal and all CVD simulations."""
     collisions = []
     for (first, first_colour), (second, second_colour) in combinations(colours, 2):
-        for vision in visions:
+        for vision in CHECKED_VISIONS:
             distance = delta_e_2000(first_colour, second_colour, vision=vision)
             if distance < MINIMUM_CATEGORY_DELTA_E:
-                collisions.append(ScaleCollision(scale_id, first, second, vision, round(distance, 3)))
+                collisions.append(ScaleCollision(scale_id, first, second, vision, distance))
     return tuple(collisions)

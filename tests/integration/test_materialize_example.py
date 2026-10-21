@@ -31,6 +31,13 @@ def _require_cjk_provider() -> None:
     pytest.importorskip("chrona_fonts_noto_cjk", reason="requires the optional local CJK font provider")
 
 
+def _materialize_fixture_example(example_id: str, slide_id: str, output: Path, staging: Path) -> None:
+    """Render frozen authoring input in isolation; CI owns public byte evidence."""
+    example = staging / example_id
+    shutil.copytree(ROOT / "tests/fixtures" / example_id, example)
+    materialize(example / "manifest.yaml", slide_id, output, write=True)
+
+
 class _FixedProjectStore:
     def __init__(self, snapshot: ProjectSnapshot):
         self.snapshot = snapshot
@@ -173,7 +180,7 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
-    materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
+    _materialize_fixture_example("controller-z", "executive", tmp_path / "controller", tmp_path / "staging")
     artifact = (tmp_path / "controller/review.svg").read_text(encoding="utf-8")
     elements = {item.get("data-scene-id"): item for item in ET.fromstring(artifact).iter()}
     assert "member-label:firmware:firmware" in elements
@@ -204,8 +211,7 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 
 def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):
-    example = ROOT / "tests/fixtures/controller-z"
-    materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
+    _materialize_fixture_example("controller-z", "annotations", tmp_path / "annotations", tmp_path / "staging")
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
     for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact
@@ -234,7 +240,7 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
 
 def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_path):
     _require_cjk_provider()
-    materialize(ROOT / "tests/fixtures/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    _materialize_fixture_example("controller-z-ja", "executive", tmp_path / "controller-z-ja", tmp_path / "staging")
     artifact = (tmp_path / "controller-z-ja/review.svg").read_text(encoding="utf-8")
     assert "コントローラZ — シリコン立ち上げから量産まで" in artifact
     assert "量産検証（PVT）および工場工程バリデーション" in artifact
@@ -242,7 +248,7 @@ def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_
 
 def test_controller_japanese_detail_panels_are_completed_native_blocks(tmp_path):
     _require_cjk_provider()
-    materialize(ROOT / "tests/fixtures/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    _materialize_fixture_example("controller-z-ja", "executive", tmp_path / "controller-z-ja", tmp_path / "staging")
     scene = json.loads((tmp_path / "controller-z-ja/review.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {item["id"]: item["bounds"] for item in surface["slots"]}
@@ -265,7 +271,7 @@ def test_controller_japanese_detail_panels_are_completed_native_blocks(tmp_path)
 
 
 def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
-    materialize(ROOT / "tests/fixtures/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
+    _materialize_fixture_example("controller-z", "elevated", tmp_path / "elevated", tmp_path / "staging")
     artifact = (tmp_path / "elevated/review.svg").read_text(encoding="utf-8")
     assert '<linearGradient id="gradient-' in artifact and '<feDropShadow ' in artifact
     assert 'fill="url(#gradient-' in artifact and 'filter="url(#shadow-' in artifact
@@ -311,17 +317,21 @@ def test_halcyon_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     svg = (tmp_path / "gates/review.svg").read_text(encoding="utf-8")
     context = context_document(ROOT / "examples/halcyon-1", "gates")
     block = float(context["body"]["environment"]["viewport"]["blockSize"])
+    scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
+    completed_block = scene["surfaces"][0]["canvasBounds"]["blockSize"]
     baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
-    assert len(baselines) == 6 and max(baselines) < block
+    # Realized point figures add keys; every measured label must fit the
+    # completed canvas, with declared viewport growth explicitly diagnosed.
+    assert len(baselines) >= 6 and max(baselines) < completed_block
     svg_root = ET.fromstring(svg)
     legend_labels = [item for item in svg_root.iter() if item.get("data-purpose") == "legend-label"]
     snapshot = next(item for item in legend_labels if item.get("data-scene-id") == "legend:snapshot")
     assert "Baseline" in "".join(snapshot.itertext())
-    assert 'data-scene-id="legend:scale:model:FM"' in svg
+    assert all(f'data-scene-id="legend:scale:model:{value}"' in svg for value in ("EM", "QM", "FM"))
     assert 'data-purpose="progress-fill"' in svg
-    scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
-    assert not any(diagnostic.startswith(("W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT", "W_THEME_ROLE_UNREAD"))
-                   for diagnostic in scene["diagnostics"])
+    assert not any(diagnostic.startswith("W_THEME_ROLE_UNREAD") for diagnostic in scene["diagnostics"])
+    assert any(diagnostic.startswith("W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT")
+               for diagnostic in scene["diagnostics"]) == (completed_block > block)
     primitives = {primitive["id"]: primitive for primitive in scene["surfaces"][0]["primitives"]}
     # The compared scenario's negative lag (-3wd) starts payload TVAC before the current plan does.
     ghost = primitives["planned:payload-tvac:scenario:payload-fast-track:payload-tvac"]["bounds"]
@@ -597,21 +607,20 @@ def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tm
     with Image.open(raster) as image:
         assert image.size == (24, 24)
         assert image.getbbox() is not None
-    materialize(example / "manifest.yaml", "icons", tmp_path / "icons", write=False)
+    _materialize_fixture_example("controller-z", "icons", tmp_path / "icons", tmp_path / "staging")
     artifact = (tmp_path / "icons/review.svg").read_bytes()
     assert len(artifact) <= 64 * 1024
     assert b'data:image/png;base64,' in artifact
 
 
 def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_text_slots(tmp_path):
-    example = ROOT / "tests/fixtures/controller-z"
-    context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text(encoding="utf-8"))
+    # Keep the fixture's explicit content-identity pin in its isolated rendering.
+    context = yaml.safe_load((ROOT / "tests/fixtures/controller-z/contexts/material-icons.yaml").read_text(encoding="utf-8"))
     reference = context["body"]["inputs"]["iconCatalogs"][0]
     assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}
     assert reference["contentIdentity"] == "sha256:c9550b8542dcc586757cee41e4d9ce90a3e12f2b8613056e4fabbc680b271b17"
-    materialize(example / "manifest.yaml", "material-icons", tmp_path / "material-icons", write=False)
+    _materialize_fixture_example("controller-z", "material-icons", tmp_path / "material-icons", tmp_path / "staging")
     artifact = (tmp_path / "material-icons/review.svg").read_text(encoding="utf-8")
-    assert artifact == (example / "generated/material-icons.svg").read_text(encoding="utf-8")
     assert artifact.count('data-purpose="label-visual"') == 4
     assert 'data-scene-id="visual:column:Workstream:leading"' in artifact
     assert 'data-scene-id="visual:cell:firmware:Workstream:leading"' in artifact

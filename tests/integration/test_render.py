@@ -1019,6 +1019,9 @@ def test_unexpanded_detail_footer_leaves_annotation_successor_at_manifest_positi
     detail = yaml.safe_load((example / "profiles/review-detail.yaml").read_text(encoding="utf-8"))
     detail["body"].pop("groupDetails")
     detail["body"].pop("milestones")
+    # Keep this an unexpanded footer control: realized point-key footprints
+    # are independently allowed to expand a populated legend.
+    detail["body"].pop("legend")
     detail_path = tmp_path / "no-detail-panels.yaml"
     detail_path.write_text(yaml.safe_dump(detail, sort_keys=False), encoding="utf-8")
 

@@ -21,11 +21,20 @@ class DiagnosticSubject:
 
 
 @dataclass(frozen=True)
+class ColorPairFinding:
+    """A completed below-floor pair; display rounding does not undo the finding."""
+
+    vision: str
+    delta_e: float
+
+
+@dataclass(frozen=True)
 class DiagnosticProvenance:
     """Subjects captured alongside one unchanged diagnostic occurrence."""
 
     diagnostic: str
     subjects: tuple[DiagnosticSubject, ...] = ()
+    color_pair: ColorPairFinding | None = None
 
 
 @dataclass(frozen=True)

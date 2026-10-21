@@ -1363,6 +1363,65 @@ def test_without_a_scale_or_a_detail_profile_there_are_no_legend_entries():
     assert legend_entries(None, {}, _scale_projection(), None, closed_days_drawn=True) == ()
 
 
+@pytest.mark.parametrize("owner", ("planned", "actual", "forecast", "milestone"))
+def test_point_state_owners_collect_mark_facts_and_carry_localized_state_wording(monkeypatch, owner):
+    from chrona.presentation.review import v05_content
+
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 8)), (), ())
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}}})
+    detail = ReviewDetailInput((), (), (LegendEntry(owner, "Gate"),), None)
+    calls = []
+    original = v05_content.collect_surface_style_facts
+
+    def observed(*args, **kwargs):
+        calls.append((args, kwargs))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(v05_content, "collect_surface_style_facts", observed)
+    content = normalize_v05_surface_content(projection, {"relations": ()}, view,
+                                            summary=EMPTY_SUMMARY, detail=detail)
+
+    assert len(calls) == 1
+    defaults = dict(content.legend_defaults)
+    assert {role: defaults[role] for role in ("planned-plain", "actual", "forecast", "milestone")} == {
+        "planned-plain": "Planned", "actual": "Actual",
+        "forecast": "Forecast (* estimated)", "milestone": "Milestone",
+    }
+
+
+def test_point_state_wording_defaults_keep_locale_and_view_override_precedence():
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 8)), (), ())
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}}})
+    japanese = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY,
+                                             locale="ja-JP")
+    ja_defaults = dict(japanese.legend_defaults)
+    assert tuple(ja_defaults[role] for role in ("planned-plain", "actual", "forecast", "milestone")) == (
+        "予定", "実績", "予測（*は推定）", "マイルストーン")
+
+    overridden = replace(view, wording=freeze({
+        "keys": {"legend.planned-plain": "Plan state"},
+        "legend": {"actual": "Observed", "forecast": "Expected", "milestone": "Gate"},
+    }))
+    content = normalize_v05_surface_content(projection, {}, overridden, summary=EMPTY_SUMMARY)
+    defaults = dict(content.legend_defaults)
+    assert tuple(defaults[role] for role in ("planned-plain", "actual", "forecast", "milestone")) == (
+        "Plan state", "Observed", "Expected", "Gate")
+
+
+def test_non_point_legend_roles_keep_the_no_style_facts_fast_path(monkeypatch):
+    from chrona.presentation.review import v05_content
+
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 8)), (), ())
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}}})
+    detail = ReviewDetailInput((), (), (LegendEntry("calendar-closed", "Weekend"),), None)
+    monkeypatch.setattr(v05_content, "collect_surface_style_facts",
+                        lambda *_args, **_kwargs: pytest.fail("unrelated legend role should not collect facts"))
+
+    content = normalize_v05_surface_content(projection, {"relations": ()}, view,
+                                            summary=EMPTY_SUMMARY, detail=detail)
+    assert content.legend_mark_occurrences == ()
+
+
 def test_period_legend_identity_is_source_based_while_visual_role_can_repeat():
     from types import SimpleNamespace
 

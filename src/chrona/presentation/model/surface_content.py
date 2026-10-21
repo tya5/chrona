@@ -17,7 +17,7 @@ from chrona.presentation.model.style_fills import StyleFillIndex
 from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.hierarchy_names import NameKey, member_name_key, source_path
-from chrona.presentation.style import StyleLegendScope
+from chrona.presentation.style import LegendEncodingCoverage, StyleLegendScope
 
 
 def _diagnostic_error(code: str, detail: str) -> ValueError:
@@ -245,6 +245,9 @@ class SurfaceLegendEntry:
     style_display_value: str | None = None
     # Text-only explanatory entries keep their identity/label but emit no ink.
     swatch_visible: bool = True
+    # Potential localized state-coverage labels, consumed only by conservative sizing.
+    label_variants: tuple[str, ...] = ()
+    legend_encoding_coverage: LegendEncodingCoverage | None = None
 
     def __post_init__(self) -> None:
         if self.view_scale_id is not None:

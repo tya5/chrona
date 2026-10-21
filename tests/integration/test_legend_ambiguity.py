@@ -38,8 +38,10 @@ def test_realized_equal_actual_and_planned_figures_warn_with_both_semantic_keys(
     svg = ElementTree.fromstring(rendered.artifact.content)
     serialized_ids = {node.attrib.get("data-scene-id") for node in svg.iter()}
     assert {item.scene_id for item in matching} <= serialized_ids
-    assert {subject["sourceRef"].removeprefix("legend-key:") for subject in subjects} == {
-        item.source_ref for item in matching}
+    collision_refs = {subject["sourceRef"].removeprefix("legend-key:") for subject in subjects}
+    assert collision_refs == {"planned", next(item.source_ref for item in matching
+                                               if item.visual_role == "actual")}
+    assert len(tuple(item for item in matching if item.source_ref in collision_refs)) == 2
 
 
 def test_duplicate_displayed_label_is_checked_after_scope_text_and_filters(tmp_path):
@@ -73,8 +75,8 @@ def test_filtered_away_duplicate_candidates_do_not_warn(tmp_path):
     assert "W_LEGEND_LABEL_DUPLICATE" not in _codes(rendered)
 
 
-def test_black_actual_and_gate_diamonds_warn_and_remain_faithful(tmp_path):
-    """Actual and milestone meanings must not silently share a black diamond key."""
+def test_equal_black_point_states_share_one_complete_faithful_key(tmp_path):
+    """One owner and identical completed figure cover both states without duplicate keys."""
     parts = _parts()
     colors = parts["scheme"]["body"]["colors"]
     colors.update(text="#101828", accent="#101828", positive="#101828",
@@ -97,21 +99,18 @@ def test_black_actual_and_gate_diamonds_warn_and_remain_faithful(tmp_path):
     rendered = sr.render(tmp_path, source, presentation=parts, actual=actual,
                          detail=detail, viewport=(1600, 900))
 
-    collision = next(item for item in rendered.warning_records
-                     if item.payload["code"] == "W_LEGEND_SWATCH_COLLISION")
-    assert {subject["title"] for subject in collision.payload["sourceSubjects"]} == {
-        "Actual (actual)", "Gate (milestone)"}
+    assert "W_LEGEND_SWATCH_COLLISION" not in _codes(rendered)
+    assert [item.text for item in rendered.surface.primitives
+            if item.purpose == "legend-label" and item.source_ref.startswith("milestone:")] == ["Gate"]
 
     swatches = tuple(item for item in rendered.surface.primitives
                      if item.purpose == "legend-swatch"
                      and item.scene_id.startswith(("legend-swatch:actual:", "legend-swatch:milestone")))
-    assert len(swatches) == 6  # Two complete, three-part diamond keys.
-    assert {item.source_ref.split(":", 1)[0] for item in swatches} == {"actual", "milestone"}
-    assert {source_ref: sum(item.source_ref == source_ref for item in swatches)
-            for source_ref in {item.source_ref for item in swatches}} == {
-        next(item.source_ref for item in swatches if item.source_ref.startswith("actual:")): 3,
-        "milestone": 3,
-    }
+    assert len(swatches) == 3  # One complete three-part diamond key, not a palette union.
+    assert {item.source_ref.split(":", 1)[0] for item in swatches} == {"milestone"}
+    figures = {source_ref: tuple(item for item in swatches if item.source_ref == source_ref)
+               for source_ref in {item.source_ref for item in swatches}}
+    assert len(figures) == 1 and {len(parts) for parts in figures.values()} == {3}
     assert all(item.paint.fill == "#101828" or item.paint.stroke == "#101828" for item in swatches)
     svg = ElementTree.fromstring(rendered.artifact.content)
     serialized = {node.get("data-scene-id"): node for node in svg.iter()
