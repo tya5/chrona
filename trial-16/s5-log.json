@@ -1,0 +1,755 @@
+[
+ {
+  "i": 0,
+  "tool": "validate_project",
+  "sec": 0.18,
+  "isError": false,
+  "content": [
+   "{\"status\":\"rejected\",\"diagnostics\":[{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/\",\"message\":\"unexpected property 'body'\"},{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/\",\"message\":\"missing required property 'project'\"},{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/version\",\"message\":\"expected exactly 'timeline/v0.7', got 'chrona/actual-set/v0.3'\"}],\"projectIdentity\":\"sha256:748f68f4f67eb1d3df77d84c063c76bf844941e4c7f1c84464c1023e01c93bb8\"}"
+  ],
+  "structured": {
+   "status": "rejected",
+   "diagnostics": [
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/",
+     "message": "unexpected property 'body'"
+    },
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/",
+     "message": "missing required property 'project'"
+    },
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/version",
+     "message": "expected exactly 'timeline/v0.7', got 'chrona/actual-set/v0.3'"
+    }
+   ],
+   "projectIdentity": "sha256:748f68f4f67eb1d3df77d84c063c76bf844941e4c7f1c84464c1023e01c93bb8"
+  }
+ },
+ {
+  "i": 1,
+  "tool": "schedule_project",
+  "sec": 0.1,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"placements\":{\"android-api\":{\"start\":\"2027-03-09\",\"end\":\"2027-03-16\"},\"android-ui\":{\"start\":\"2027-02-15\",\"end\":\"2027-03-09\"},\"api-integration\":{\"start\":\"2027-02-05\",\"end\":\"2027-02-15\"},\"api-spec\":{\"start\":\"2027-01-12\",\"end\":\"2027-01-19\"},\"auth-api\":{\"start\":\"2027-01-22\",\"end\":\"2027-02-05\"},\"beta-ops\":{\"start\":\"2027-03-16\",\"end\":\"2027-03-31\"},\"beta-start\":{\"at\":\"2027-03-16\"},\"bugfix\":{\"start\":\"2027-03-16\",\"end\":\"2027-03-31\"},\"data-api\":{\"start\":\"2027-01-22\",\"end\":\"2027-02-15\"},\"design-review\":{\"at\":\"2027-01-22\"},\"ios-api\":{\"start\":\"2027-03-09\",\"end\":\"2027-03-16\"},\"ios-ui\":{\"start\":\"2027-02-15\",\"end\":\"2027-03-09\"},\"release\":{\"start\":\"2027-03-31\",\"end\":\"2027-04-01\"},\"release-decision\":{\"at\":\"2027-03-31\"},\"release-notes\":{\"start\":\"2027-03-16\",\"end\":\"2027-03-19\"},\"requirements\":{\"start\":\"2027-01-04\",\"end\":\"2027-01-12\"},\"store-prep\":{\"start\":\"2027-03-16\",\"end\":\"2027-03-24\"},\"ux-design\":{\"start\":\"2027-01-04\",\"end\":\"2027-01-22\"}},\"warnings\":[],\"analysis\":{\"criticalObjectIds\":[\"ux-design\",\"design-review\",\"data-api\",\"ios-ui\",\"ios-api\",\"android-ui\",\"android-api\",\"beta-start\",\"beta-ops\",\"bugfix\",\"release-decision\",\"release\"],\"totalFloat\":{\"android-api\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"android-ui\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"api-integration\":{\"value\":20,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"api-spec\":{\"value\":3,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"auth-api\":{\"value\":20,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"beta-ops\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"beta-start\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"bugfix\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"data-api\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"design-review\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"ios-api\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"ios-ui\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"release\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"release-decision\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"release-notes\":{\"value\":8,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"requirements\":{\"value\":3,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"store-prep\":{\"value\":6,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"ux-design\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"}}}}"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "placements": {
+    "android-api": {
+     "start": "2027-03-09",
+     "end": "2027-03-16"
+    },
+    "android-ui": {
+     "start": "2027-02-15",
+     "end": "2027-03-09"
+    },
+    "api-integration": {
+     "start": "2027-02-05",
+     "end": "2027-02-15"
+    },
+    "api-spec": {
+     "start": "2027-01-12",
+     "end": "2027-01-19"
+    },
+    "auth-api": {
+     "start": "2027-01-22",
+     "end": "2027-02-05"
+    },
+    "beta-ops": {
+     "start": "2027-03-16",
+     "end": "2027-03-31"
+    },
+    "beta-start": {
+     "at": "2027-03-16"
+    },
+    "bugfix": {
+     "start": "2027-03-16",
+     "end": "2027-03-31"
+    },
+    "data-api": {
+     "start": "2027-01-22",
+     "end": "2027-02-15"
+    },
+    "design-review": {
+     "at": "2027-01-22"
+    },
+    "ios-api": {
+     "start": "2027-03-09",
+     "end": "2027-03-16"
+    },
+    "ios-ui": {
+     "start": "2027-02-15",
+     "end": "2027-03-09"
+    },
+    "release": {
+     "start": "2027-03-31",
+     "end": "2027-04-01"
+    },
+    "release-decision": {
+     "at": "2027-03-31"
+    },
+    "release-notes": {
+     "start": "2027-03-16",
+     "end": "2027-03-19"
+    },
+    "requirements": {
+     "start": "2027-01-04",
+     "end": "2027-01-12"
+    },
+    "store-prep": {
+     "start": "2027-03-16",
+     "end": "2027-03-24"
+    },
+    "ux-design": {
+     "start": "2027-01-04",
+     "end": "2027-01-22"
+    }
+   },
+   "warnings": [],
+   "analysis": {
+    "criticalObjectIds": [
+     "ux-design",
+     "design-review",
+     "data-api",
+     "ios-ui",
+     "ios-api",
+     "android-ui",
+     "android-api",
+     "beta-start",
+     "beta-ops",
+     "bugfix",
+     "release-decision",
+     "release"
+    ],
+    "totalFloat": {
+     "android-api": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "android-ui": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "api-integration": {
+      "value": 20,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "api-spec": {
+      "value": 3,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "auth-api": {
+      "value": 20,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "beta-ops": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "beta-start": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "bugfix": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "data-api": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "design-review": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "ios-api": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "ios-ui": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "release": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "release-decision": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "release-notes": {
+      "value": 8,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "requirements": {
+      "value": 3,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "store-prep": {
+      "value": 6,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "ux-design": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     }
+    }
+   }
+  }
+ },
+ {
+  "i": 2,
+  "tool": "render_draft",
+  "sec": 9.37,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"format\":\"png\",\"contentIdentity\":\"sha256:7c7a152b62a5949cef6614e8391adc19b45c582e72bbb681d81c2913b5fc67e5\",\"byteLength\":99556,\"pngAvailable\":true,\"warnings\":[{\"code\":\"W_LAYOUT_AXIS_LABEL_THINNED\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/view/body/axis/tiers/2\",\"message\":\"an axis label was dropped because the labels of its tier do not all fit: '2026年Q4' (/view/body/axis/tiers/2); the label does not fit its interval\",\"detail\":{\"diagnostic\":\"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit\",\"sourceTitle\":\"2026年Q4\"}},{\"code\":\"W_LAYOUT_AXIS_DENSITY\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\",\"detail\":{\"diagnostic\":\"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\"}},{\"code\":\"W_LAYOUT_OPEN_ACTUAL_INVALID\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/auth-api\",\"message\":\"an open actual does not start before the as-of date, so its bar is not drawn: '認証API実装' (/objects/auth-api); auth-api\",\"detail\":{\"diagnostic\":\"W_LAYOUT_OPEN_ACTUAL_INVALID:auth-api\",\"sourceTitle\":\"認証API実装\"}},{\"code\":\"W_LEGEND_COLOR_NOT_SEPARABLE\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"legend-key:snapshot\",\"message\":\"two completed legend meanings are not separable under normal vision: '基準計画 (snapshot)' (legend-key:snapshot), '休業日 (calendar-closed)' (legend-key:calendar-closed); minimum colour difference ΔE=1.24\",\"detail\":{\"diagnostic\":\"W_LEGEND_COLOR_NOT_SEPARABLE:normal:1.24\",\"sourceSubjects\":[{\"sourceRef\":\"legend-key:snapshot\",\"title\":\"基準計画 (snapshot)\"},{\"sourceRef\":\"legend-key:calendar-closed\",\"title\":\"休業日 (calendar-closed)\"}],\"sourceTitle\":\"基準計画 (snapshot)\"}},{\"code\":\"W_LAYOUT_VISIBLE_OVERFLOW\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"title\",\"message\":\"text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1) and 1 more\",\"count\":2,\"occurrences\":[\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"title\\\",\\\"sourceRef\\\":\\\"title\\\"}\",\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"annotations\\\",\\\"sourceRef\\\":\\\"annotations\\\"}\"],\"detail\":{\"availableBlock\":39.1,\"availableInline\":456.0,\"behaviour\":\"visible-overflow\",\"diagnostic\":\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"title\\\",\\\"sourceRef\\\":\\\"title\\\"}\",\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"requiredBlock\":39.1,\"requiredInline\":497.08}},{\"code\":\"W_LAYOUT_TEXT_ELLIPSIZED\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"QA・リリース\",\"message\":\"text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.0611) and 1 more\",\"count\":2,\"occurrences\":[\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:未割り当て:0\\\",\\\"sourceRef\\\":\\\"未割り当て\\\"}\"],\"detail\":{\"availableBlock\":64.0611111111111,\"availableInline\":15.225,\"behaviour\":\"ellipsize-with-source\",\"diagnostic\":\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"requiredBlock\":67.3155,\"requiredInline\":15.225}},{\"code\":\"W_LAYOUT_ROUTE_FALLBACK\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/ux-design\",\"message\":\"a note's leader could not be routed around the marks and was drawn as a direct path: 'UI/UX設計' (/objects/ux-design); leader of note ux-slip-note\",\"detail\":{\"availableBlock\":380.9,\"availableInline\":825.3333333333334,\"behaviour\":\"direct-path\",\"diagnostic\":\"W_LAYOUT_ROUTE_FALLBACK:{\\\"failureKind\\\":\\\"relation-route\\\",\\\"placementId\\\":\\\"annotation-leader:ux-slip-note\\\",\\\"sourceRef\\\":\\\"ux-slip-note\\\"}\",\"failureKind\":\"relation-route\",\"placementId\":\"annotation-leader:ux-slip-note\",\"requiredBlock\":0.0,\"requiredInline\":0.0,\"sourceTitle\":\"UI/UX設計\"}},{\"code\":\"W_SCENE_RELATION_THROUGH_MARK\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/data-api\",\"message\":\"a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"detail\":{\"diagnostic\":\"W_SCENE_RELATION_THROUGH_MARK:{\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"findingCode\":\"E_SCENE_RELATION_THROUGH_MARK\",\"measuredFacts\":{\"inside\":7.0,\"relation\":\"relation:id:r08\"},\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\",\"sourceTitle\":\"データAPI実装\"}},{\"code\":\"W_SCENE_MARK_CONTRAST\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:design-review:design-review:part0 and 18 more\",\"count\":19,\"occurrences\":[\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"actual:design-review:design-review:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"legend-swatch:progressFill:6194e25e14c9aeb0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"legend-swatch:snapshot\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:android-api:snapshot:android-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:android-ui:snapshot:android-ui\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:api-integration:snapshot:api-integration\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:auth-api:snapshot:auth-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:beta-ops:snapshot:beta-ops\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:beta-start:snapshot:beta-start:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:bugfix:snapshot:bugfix\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:data-api:snapshot:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:design-review:snapshot:design-review:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:ios-api:snapshot:ios-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:ios-ui:snapshot:ios-ui\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:release-decision:snapshot:release-decision:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:release-notes:snapshot:release-notes\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:release:snapshot:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:store-prep:snapshot:store-prep\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:ux-design:snapshot:ux-design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"],\"detail\":{\"diagnostic\":\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"actual:design-review:design-review:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"disposition\":\"required\",\"findingCode\":\"E_SCENE_MARK_CONTRAST\",\"measuredFacts\":{\"contrastRatio\":1.640435001795102,\"floor\":3.0,\"groundId\":\"planned:design-review:design-review:part1\",\"groundKind\":\"flat\",\"paintChannel\":\"fill\"},\"primitiveIds\":[\"actual:design-review:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}},{\"code\":\"I_PRESET_VISUAL_PROFILE_FALLBACK\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"preset chrona-builtin-yuya prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png\",\"detail\":{\"preferredProfile\":\"chrona-output/visual/v0.7-svg\",\"presetId\":\"chrona-builtin-yuya\",\"selectedProfile\":\"chrona-output/visual/v0.7-png\",\"targetKind\":\"png\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim\",\"detail\":{\"critical\":false,\"relationId\":\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"stage\":\"marks\",\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION_SUMMARY\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"1 relations on table-timeline use recovery\",\"detail\":{\"count\":1,\"stages\":{\"marks\":1},\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_POLICY_SUPERSEDED\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\",\"detail\":{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}}]}",
+   "<image /private/tmp/claude-501/-Users-yasudatetsuya-Workspace-chrona-dev-reviewer/39ee1687-b031-406f-8a42-9fbcd8537e66/scratchpad/t16-out/s5-2-v2-yuya.png>"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:7c7a152b62a5949cef6614e8391adc19b45c582e72bbb681d81c2913b5fc67e5",
+   "byteLength": 99556,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "W_LAYOUT_AXIS_LABEL_THINNED",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/view/body/axis/tiers/2",
+     "message": "an axis label was dropped because the labels of its tier do not all fit: '2026年Q4' (/view/body/axis/tiers/2); the label does not fit its interval",
+     "detail": {
+      "diagnostic": "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit",
+      "sourceTitle": "2026年Q4"
+     }
+    },
+    {
+     "code": "W_LAYOUT_AXIS_DENSITY",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1",
+     "detail": {
+      "diagnostic": "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1"
+     }
+    },
+    {
+     "code": "W_LAYOUT_OPEN_ACTUAL_INVALID",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/auth-api",
+     "message": "an open actual does not start before the as-of date, so its bar is not drawn: '認証API実装' (/objects/auth-api); auth-api",
+     "detail": {
+      "diagnostic": "W_LAYOUT_OPEN_ACTUAL_INVALID:auth-api",
+      "sourceTitle": "認証API実装"
+     }
+    },
+    {
+     "code": "W_LEGEND_COLOR_NOT_SEPARABLE",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "legend-key:snapshot",
+     "message": "two completed legend meanings are not separable under normal vision: '基準計画 (snapshot)' (legend-key:snapshot), '休業日 (calendar-closed)' (legend-key:calendar-closed); minimum colour difference ΔE=1.24",
+     "detail": {
+      "diagnostic": "W_LEGEND_COLOR_NOT_SEPARABLE:normal:1.24",
+      "sourceSubjects": [
+       {
+        "sourceRef": "legend-key:snapshot",
+        "title": "基準計画 (snapshot)"
+       },
+       {
+        "sourceRef": "legend-key:calendar-closed",
+        "title": "休業日 (calendar-closed)"
+       }
+      ],
+      "sourceTitle": "基準計画 (snapshot)"
+     }
+    },
+    {
+     "code": "W_LAYOUT_VISIBLE_OVERFLOW",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "title",
+     "message": "text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1) and 1 more",
+     "count": 2,
+     "occurrences": [
+      "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"sourceRef\":\"title\"}",
+      "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"annotations\",\"sourceRef\":\"annotations\"}"
+     ],
+     "detail": {
+      "availableBlock": 39.1,
+      "availableInline": 456.0,
+      "behaviour": "visible-overflow",
+      "diagnostic": "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"sourceRef\":\"title\"}",
+      "failureKind": "layout-track",
+      "placementId": "title",
+      "requiredBlock": 39.1,
+      "requiredInline": 497.08
+     }
+    },
+    {
+     "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "QA・リリース",
+     "message": "text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.0611) and 1 more",
+     "count": 2,
+     "occurrences": [
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:未割り当て:0\",\"sourceRef\":\"未割り当て\"}"
+     ],
+     "detail": {
+      "availableBlock": 64.0611111111111,
+      "availableInline": 15.225,
+      "behaviour": "ellipsize-with-source",
+      "diagnostic": "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "failureKind": "group-tag-text",
+      "placementId": "group-tag:QA・リリース:0",
+      "requiredBlock": 67.3155,
+      "requiredInline": 15.225
+     }
+    },
+    {
+     "code": "W_LAYOUT_ROUTE_FALLBACK",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/ux-design",
+     "message": "a note's leader could not be routed around the marks and was drawn as a direct path: 'UI/UX設計' (/objects/ux-design); leader of note ux-slip-note",
+     "detail": {
+      "availableBlock": 380.9,
+      "availableInline": 825.3333333333334,
+      "behaviour": "direct-path",
+      "diagnostic": "W_LAYOUT_ROUTE_FALLBACK:{\"failureKind\":\"relation-route\",\"placementId\":\"annotation-leader:ux-slip-note\",\"sourceRef\":\"ux-slip-note\"}",
+      "failureKind": "relation-route",
+      "placementId": "annotation-leader:ux-slip-note",
+      "requiredBlock": 0.0,
+      "requiredInline": 0.0,
+      "sourceTitle": "UI/UX設計"
+     }
+    },
+    {
+     "code": "W_SCENE_RELATION_THROUGH_MARK",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/data-api",
+     "message": "a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "detail": {
+      "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+      "measuredFacts": {
+       "inside": 7.0,
+       "relation": "relation:id:r08"
+      },
+      "primitiveIds": [
+       "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+       "planned:data-api:data-api"
+      ],
+      "scenePath": "/surfaces/0:table-timeline",
+      "sourceTitle": "データAPI実装"
+     }
+    },
+    {
+     "code": "W_SCENE_MARK_CONTRAST",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:design-review:design-review:part0 and 18 more",
+     "count": 19,
+     "occurrences": [
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:design-review:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"legend-swatch:progressFill:6194e25e14c9aeb0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"legend-swatch:snapshot\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:android-api:snapshot:android-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:android-ui:snapshot:android-ui\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:api-integration:snapshot:api-integration\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:auth-api:snapshot:auth-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:beta-ops:snapshot:beta-ops\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:beta-start:snapshot:beta-start:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:bugfix:snapshot:bugfix\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:data-api:snapshot:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:design-review:snapshot:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:ios-api:snapshot:ios-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:ios-ui:snapshot:ios-ui\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:release-decision:snapshot:release-decision:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:release-notes:snapshot:release-notes\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:release:snapshot:release\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:store-prep:snapshot:store-prep\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:ux-design:snapshot:ux-design\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+     ],
+     "detail": {
+      "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:design-review:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "disposition": "required",
+      "findingCode": "E_SCENE_MARK_CONTRAST",
+      "measuredFacts": {
+       "contrastRatio": 1.640435001795102,
+       "floor": 3.0,
+       "groundId": "planned:design-review:design-review:part1",
+       "groundKind": "flat",
+       "paintChannel": "fill"
+      },
+      "primitiveIds": [
+       "actual:design-review:design-review:part0"
+      ],
+      "scenePath": "/surfaces/0:table-timeline"
+     }
+    },
+    {
+     "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "preset chrona-builtin-yuya prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+     "detail": {
+      "preferredProfile": "chrona-output/visual/v0.7-svg",
+      "presetId": "chrona-builtin-yuya",
+      "selectedProfile": "chrona-output/visual/v0.7-png",
+      "targetKind": "png"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim",
+     "detail": {
+      "critical": false,
+      "relationId": "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+      "stage": "marks",
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "1 relations on table-timeline use recovery",
+     "detail": {
+      "count": 1,
+      "stages": {
+       "marks": 1
+      },
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "i": 3,
+  "tool": "render_draft",
+  "sec": 8.95,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"format\":\"png\",\"contentIdentity\":\"sha256:87e145e307e31fd0f9465ee12ff8afb9993d84d719dfe6f8f5a7982f7a8f250d\",\"byteLength\":108282,\"pngAvailable\":true,\"warnings\":[{\"code\":\"W_LAYOUT_AXIS_LABEL_THINNED\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/view/body/axis/tiers/2\",\"message\":\"an axis label was dropped because the labels of its tier do not all fit: '2026年Q4' (/view/body/axis/tiers/2); the label does not fit its interval\",\"detail\":{\"diagnostic\":\"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit\",\"sourceTitle\":\"2026年Q4\"}},{\"code\":\"W_LAYOUT_AXIS_DENSITY\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1\",\"detail\":{\"diagnostic\":\"W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1\"}},{\"code\":\"W_LAYOUT_OPEN_ACTUAL_INVALID\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/auth-api\",\"message\":\"an open actual does not start before the as-of date, so its bar is not drawn: '認証API実装' (/objects/auth-api); auth-api\",\"detail\":{\"diagnostic\":\"W_LAYOUT_OPEN_ACTUAL_INVALID:auth-api\",\"sourceTitle\":\"認証API実装\"}},{\"code\":\"W_LEGEND_COLOR_NOT_SEPARABLE\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"legend-key:snapshot\",\"message\":\"two completed legend meanings are not separable under normal vision: '基準計画 (snapshot)' (legend-key:snapshot), '休業日 (calendar-closed)' (legend-key:calendar-closed); minimum colour difference ΔE=1.24\",\"detail\":{\"diagnostic\":\"W_LEGEND_COLOR_NOT_SEPARABLE:normal:1.24\",\"sourceSubjects\":[{\"sourceRef\":\"legend-key:snapshot\",\"title\":\"基準計画 (snapshot)\"},{\"sourceRef\":\"legend-key:calendar-closed\",\"title\":\"休業日 (calendar-closed)\"}],\"sourceTitle\":\"基準計画 (snapshot)\"}},{\"code\":\"W_LAYOUT_VISIBLE_OVERFLOW\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"title\",\"message\":\"text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1) and 1 more\",\"count\":2,\"occurrences\":[\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"title\\\",\\\"sourceRef\\\":\\\"title\\\"}\",\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"annotations\\\",\\\"sourceRef\\\":\\\"annotations\\\"}\"],\"detail\":{\"availableBlock\":39.1,\"availableInline\":456.0,\"behaviour\":\"visible-overflow\",\"diagnostic\":\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"title\\\",\\\"sourceRef\\\":\\\"title\\\"}\",\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"requiredBlock\":39.1,\"requiredInline\":497.08}},{\"code\":\"W_LAYOUT_TEXT_ELLIPSIZED\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"QA・リリース\",\"message\":\"text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.0611) and 1 more\",\"count\":2,\"occurrences\":[\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:未割り当て:0\\\",\\\"sourceRef\\\":\\\"未割り当て\\\"}\"],\"detail\":{\"availableBlock\":64.0611111111111,\"availableInline\":15.225,\"behaviour\":\"ellipsize-with-source\",\"diagnostic\":\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"requiredBlock\":67.3155,\"requiredInline\":15.225}},{\"code\":\"W_LAYOUT_ROUTE_FALLBACK\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/ux-design\",\"message\":\"a note's leader could not be routed around the marks and was drawn as a direct path: 'UI/UX設計' (/objects/ux-design); leader of note ux-slip-note\",\"detail\":{\"availableBlock\":380.9,\"availableInline\":825.3333333333334,\"behaviour\":\"direct-path\",\"diagnostic\":\"W_LAYOUT_ROUTE_FALLBACK:{\\\"failureKind\\\":\\\"relation-route\\\",\\\"placementId\\\":\\\"annotation-leader:ux-slip-note\\\",\\\"sourceRef\\\":\\\"ux-slip-note\\\"}\",\"failureKind\":\"relation-route\",\"placementId\":\"annotation-leader:ux-slip-note\",\"requiredBlock\":0.0,\"requiredInline\":0.0,\"sourceTitle\":\"UI/UX設計\"}},{\"code\":\"W_SCENE_RELATION_THROUGH_MARK\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/data-api\",\"message\":\"a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"detail\":{\"diagnostic\":\"W_SCENE_RELATION_THROUGH_MARK:{\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"findingCode\":\"E_SCENE_RELATION_THROUGH_MARK\",\"measuredFacts\":{\"inside\":7.0,\"relation\":\"relation:id:r08\"},\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\",\"sourceTitle\":\"データAPI実装\"}},{\"code\":\"W_SCENE_MARK_CONTRAST\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:design-review:design-review:part0 and 20 more\",\"count\":21,\"occurrences\":[\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"actual:design-review:design-review:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"legend-swatch:progressFill:6194e25e14c9aeb0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"legend-swatch:snapshot\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:android-api:snapshot:android-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:android-ui:snapshot:android-ui\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:api-integration:snapshot:api-integration\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:api-spec:snapshot:api-spec\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:auth-api:snapshot:auth-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:beta-ops:snapshot:beta-ops\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:beta-start:snapshot:beta-start:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:bugfix:snapshot:bugfix\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:data-api:snapshot:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:design-review:snapshot:design-review:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:ios-api:snapshot:ios-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:ios-ui:snapshot:ios-ui\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:release-decision:snapshot:release-decision:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:release-notes:snapshot:release-notes\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:release:snapshot:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:requirements:snapshot:requirements\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"planned:store-prep:snapshot:store-prep\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"],\"detail\":{\"diagnostic\":\"W_SCENE_MARK_CONTRAST:{\\\"primitiveIds\\\":[\\\"actual:design-review:design-review:part0\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"disposition\":\"required\",\"findingCode\":\"E_SCENE_MARK_CONTRAST\",\"measuredFacts\":{\"contrastRatio\":1.082851044952528,\"floor\":3.0,\"groundId\":\"planned:design-review:design-review:part1\",\"groundKind\":\"flat\",\"paintChannel\":\"fill\"},\"primitiveIds\":[\"actual:design-review:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}},{\"code\":\"I_PRESET_VISUAL_PROFILE_FALLBACK\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"preset chrona-builtin-yuya prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png\",\"detail\":{\"preferredProfile\":\"chrona-output/visual/v0.7-svg\",\"presetId\":\"chrona-builtin-yuya\",\"selectedProfile\":\"chrona-output/visual/v0.7-png\",\"targetKind\":\"png\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim\",\"detail\":{\"critical\":false,\"relationId\":\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"stage\":\"marks\",\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION_SUMMARY\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"1 relations on table-timeline use recovery\",\"detail\":{\"count\":1,\"stages\":{\"marks\":1},\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_POLICY_SUPERSEDED\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\",\"detail\":{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}},{\"code\":\"I_FORECAST_MOVED\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Forecast moved 0 Project objects\",\"detail\":{\"details\":{\"count\":0},\"path\":\"/objects\"}}]}",
+   "<image /private/tmp/claude-501/-Users-yasudatetsuya-Workspace-chrona-dev-reviewer/39ee1687-b031-406f-8a42-9fbcd8537e66/scratchpad/t16-out/s5-3-v2-forecast.png>"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:87e145e307e31fd0f9465ee12ff8afb9993d84d719dfe6f8f5a7982f7a8f250d",
+   "byteLength": 108282,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "W_LAYOUT_AXIS_LABEL_THINNED",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/view/body/axis/tiers/2",
+     "message": "an axis label was dropped because the labels of its tier do not all fit: '2026年Q4' (/view/body/axis/tiers/2); the label does not fit its interval",
+     "detail": {
+      "diagnostic": "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit",
+      "sourceTitle": "2026年Q4"
+     }
+    },
+    {
+     "code": "W_LAYOUT_AXIS_DENSITY",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "an axis tier was thinned because its labels do not all fit: axis-tier:2:thinned=1",
+     "detail": {
+      "diagnostic": "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1"
+     }
+    },
+    {
+     "code": "W_LAYOUT_OPEN_ACTUAL_INVALID",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/auth-api",
+     "message": "an open actual does not start before the as-of date, so its bar is not drawn: '認証API実装' (/objects/auth-api); auth-api",
+     "detail": {
+      "diagnostic": "W_LAYOUT_OPEN_ACTUAL_INVALID:auth-api",
+      "sourceTitle": "認証API実装"
+     }
+    },
+    {
+     "code": "W_LEGEND_COLOR_NOT_SEPARABLE",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "legend-key:snapshot",
+     "message": "two completed legend meanings are not separable under normal vision: '基準計画 (snapshot)' (legend-key:snapshot), '休業日 (calendar-closed)' (legend-key:calendar-closed); minimum colour difference ΔE=1.24",
+     "detail": {
+      "diagnostic": "W_LEGEND_COLOR_NOT_SEPARABLE:normal:1.24",
+      "sourceSubjects": [
+       {
+        "sourceRef": "legend-key:snapshot",
+        "title": "基準計画 (snapshot)"
+       },
+       {
+        "sourceRef": "legend-key:calendar-closed",
+        "title": "休業日 (calendar-closed)"
+       }
+      ],
+      "sourceTitle": "基準計画 (snapshot)"
+     }
+    },
+    {
+     "code": "W_LAYOUT_VISIBLE_OVERFLOW",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "title",
+     "message": "text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1) and 1 more",
+     "count": 2,
+     "occurrences": [
+      "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"sourceRef\":\"title\"}",
+      "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"annotations\",\"sourceRef\":\"annotations\"}"
+     ],
+     "detail": {
+      "availableBlock": 39.1,
+      "availableInline": 456.0,
+      "behaviour": "visible-overflow",
+      "diagnostic": "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"sourceRef\":\"title\"}",
+      "failureKind": "layout-track",
+      "placementId": "title",
+      "requiredBlock": 39.1,
+      "requiredInline": 497.08
+     }
+    },
+    {
+     "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "QA・リリース",
+     "message": "text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.0611) and 1 more",
+     "count": 2,
+     "occurrences": [
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:未割り当て:0\",\"sourceRef\":\"未割り当て\"}"
+     ],
+     "detail": {
+      "availableBlock": 64.0611111111111,
+      "availableInline": 15.225,
+      "behaviour": "ellipsize-with-source",
+      "diagnostic": "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "failureKind": "group-tag-text",
+      "placementId": "group-tag:QA・リリース:0",
+      "requiredBlock": 67.3155,
+      "requiredInline": 15.225
+     }
+    },
+    {
+     "code": "W_LAYOUT_ROUTE_FALLBACK",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/ux-design",
+     "message": "a note's leader could not be routed around the marks and was drawn as a direct path: 'UI/UX設計' (/objects/ux-design); leader of note ux-slip-note",
+     "detail": {
+      "availableBlock": 380.9,
+      "availableInline": 825.3333333333334,
+      "behaviour": "direct-path",
+      "diagnostic": "W_LAYOUT_ROUTE_FALLBACK:{\"failureKind\":\"relation-route\",\"placementId\":\"annotation-leader:ux-slip-note\",\"sourceRef\":\"ux-slip-note\"}",
+      "failureKind": "relation-route",
+      "placementId": "annotation-leader:ux-slip-note",
+      "requiredBlock": 0.0,
+      "requiredInline": 0.0,
+      "sourceTitle": "UI/UX設計"
+     }
+    },
+    {
+     "code": "W_SCENE_RELATION_THROUGH_MARK",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/data-api",
+     "message": "a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "detail": {
+      "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+      "measuredFacts": {
+       "inside": 7.0,
+       "relation": "relation:id:r08"
+      },
+      "primitiveIds": [
+       "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+       "planned:data-api:data-api"
+      ],
+      "scenePath": "/surfaces/0:table-timeline",
+      "sourceTitle": "データAPI実装"
+     }
+    },
+    {
+     "code": "W_SCENE_MARK_CONTRAST",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "a mark is fainter than its 3:1 visibility floor against the ground it lies on: actual:design-review:design-review:part0 and 20 more",
+     "count": 21,
+     "occurrences": [
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:design-review:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"legend-swatch:progressFill:6194e25e14c9aeb0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"legend-swatch:snapshot\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:android-api:snapshot:android-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:android-ui:snapshot:android-ui\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:api-integration:snapshot:api-integration\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:api-spec:snapshot:api-spec\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:auth-api:snapshot:auth-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:beta-ops:snapshot:beta-ops\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:beta-start:snapshot:beta-start:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:bugfix:snapshot:bugfix\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:data-api:snapshot:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:design-review:snapshot:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:ios-api:snapshot:ios-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:ios-ui:snapshot:ios-ui\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:release-decision:snapshot:release-decision:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:release-notes:snapshot:release-notes\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:release:snapshot:release\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:requirements:snapshot:requirements\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"planned:store-prep:snapshot:store-prep\"],\"scenePath\":\"/surfaces/0:table-timeline\"}"
+     ],
+     "detail": {
+      "diagnostic": "W_SCENE_MARK_CONTRAST:{\"primitiveIds\":[\"actual:design-review:design-review:part0\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "disposition": "required",
+      "findingCode": "E_SCENE_MARK_CONTRAST",
+      "measuredFacts": {
+       "contrastRatio": 1.082851044952528,
+       "floor": 3.0,
+       "groundId": "planned:design-review:design-review:part1",
+       "groundKind": "flat",
+       "paintChannel": "fill"
+      },
+      "primitiveIds": [
+       "actual:design-review:design-review:part0"
+      ],
+      "scenePath": "/surfaces/0:table-timeline"
+     }
+    },
+    {
+     "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "preset chrona-builtin-yuya prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+     "detail": {
+      "preferredProfile": "chrona-output/visual/v0.7-svg",
+      "presetId": "chrona-builtin-yuya",
+      "selectedProfile": "chrona-output/visual/v0.7-png",
+      "targetKind": "png"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim",
+     "detail": {
+      "critical": false,
+      "relationId": "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+      "stage": "marks",
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "1 relations on table-timeline use recovery",
+     "detail": {
+      "count": 1,
+      "stages": {
+       "marks": 1
+      },
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    },
+    {
+     "code": "I_FORECAST_MOVED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Forecast moved 0 Project objects",
+     "detail": {
+      "details": {
+       "count": 0
+      },
+      "path": "/objects"
+     }
+    }
+   ]
+  }
+ }
+]

@@ -1,0 +1,2 @@
+[{"tool":"validate_project","args":{"project":"plan/project.yaml"}},
+ {"tool":"schedule_project","args":{"project":"plan/project.yaml"},"max":6000}]

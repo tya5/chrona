@@ -1,0 +1,2 @@
+[{"tool":"render_draft","args":{"project":"plan/project.yaml","preset":"yuya","locale":"ja-JP","format":"png"},"name":"v1-yuya"},
+ {"tool":"render_draft","args":{"project":"plan/project.yaml","preset":"yuya","locale":"ja-JP","format":"svg","inline":"svg"},"name":"v1-svg","max":300}]

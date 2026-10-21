@@ -1,0 +1,106 @@
+version: chrona/authoring-workspace/v0.1
+kind: authoring-workspace
+id: mobile-app-v2-workspace
+body:
+  project:
+    id: mobile-app-v2
+    title: モバイルアプリ v2 リリース計画
+    tasks:
+    - id: requirements
+      title: 要件整理
+      planned:
+        start: '2027-01-04'
+        finish: '2027-01-12'
+    - id: ux-design
+      title: UI/UX設計
+      planned:
+        start: '2027-01-04'
+        finish: '2027-01-19'
+    - id: api-spec
+      title: API仕様設計
+      planned:
+        start: '2027-01-12'
+        finish: '2027-01-19'
+    - id: auth-api
+      title: 認証API実装
+      planned:
+        start: '2027-01-19'
+        finish: '2027-02-02'
+    - id: data-api
+      title: データAPI実装
+      planned:
+        start: '2027-01-19'
+        finish: '2027-02-09'
+    - id: api-integration
+      title: API結合テスト
+      planned:
+        start: '2027-02-02'
+        finish: '2027-02-09'
+    - id: ios-ui
+      title: iOS画面実装
+      planned:
+        start: '2027-02-09'
+        finish: '2027-03-04'
+    - id: ios-api
+      title: iOS API連携
+      planned:
+        start: '2027-03-04'
+        finish: '2027-03-11'
+    - id: android-ui
+      title: Android画面実装
+      planned:
+        start: '2027-02-09'
+        finish: '2027-03-04'
+    - id: android-api
+      title: Android API連携
+      planned:
+        start: '2027-03-04'
+        finish: '2027-03-11'
+    - id: beta-ops
+      title: βテスト運用
+      planned:
+        start: '2027-03-11'
+        finish: '2027-03-26'
+    - id: bugfix
+      title: 不具合修正
+      planned:
+        start: '2027-03-11'
+        finish: '2027-03-26'
+    - id: store-prep
+      title: ストア申請準備
+      planned:
+        start: '2027-03-11'
+        finish: '2027-03-18'
+    - id: release-notes
+      title: リリースノート作成
+      planned:
+        start: '2027-03-11'
+        finish: '2027-03-16'
+    - id: release
+      title: 本番リリース
+      planned:
+        start: '2027-03-26'
+        finish: '2027-03-29'
+  presentation:
+    mode: guided
+    binding:
+      preset:
+        id: chrona-builtin-yuya
+        version: '1'
+        path: preset/preset.yaml
+  actuals:
+  - taskId: requirements
+    actual:
+      start: '2027-01-04'
+      finish: '2027-01-12'
+    progress: 1
+  - taskId: api-spec
+    actual:
+      start: '2027-01-12'
+      finish: '2027-01-19'
+    progress: 1
+  - taskId: ux-design
+    actual:
+      start: '2027-01-04'
+      finish: '2027-01-22'
+    progress: 1

@@ -1,0 +1,257 @@
+[
+ {
+  "i": 0,
+  "tool": "render_draft",
+  "sec": 6.25,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"format\":\"png\",\"contentIdentity\":\"sha256:75b5596b57b017a19ca82bdfd55dd44276625983b87d118ed267d8439b9ff0a8\",\"byteLength\":67556,\"pngAvailable\":true,\"warnings\":[{\"code\":\"W_LAYOUT_VISIBLE_OVERFLOW\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"title\",\"message\":\"text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1)\",\"detail\":{\"availableBlock\":39.1,\"availableInline\":456.0,\"behaviour\":\"visible-overflow\",\"diagnostic\":\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"title\\\",\\\"sourceRef\\\":\\\"title\\\"}\",\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"requiredBlock\":39.1,\"requiredInline\":497.08}},{\"code\":\"W_LAYOUT_TEXT_ELLIPSIZED\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"QA・リリース\",\"message\":\"text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.1444) and 1 more\",\"count\":2,\"occurrences\":[\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:未割り当て:0\\\",\\\"sourceRef\\\":\\\"未割り当て\\\"}\"],\"detail\":{\"availableBlock\":64.14444444444445,\"availableInline\":15.225,\"behaviour\":\"ellipsize-with-source\",\"diagnostic\":\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"requiredBlock\":67.3155,\"requiredInline\":15.225}},{\"code\":\"W_SCENE_RELATION_THROUGH_MARK\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/data-api\",\"message\":\"a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"detail\":{\"diagnostic\":\"W_SCENE_RELATION_THROUGH_MARK:{\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"findingCode\":\"E_SCENE_RELATION_THROUGH_MARK\",\"measuredFacts\":{\"inside\":7.0,\"relation\":\"relation:id:r08\"},\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\",\"sourceTitle\":\"データAPI実装\"}},{\"code\":\"I_PRESET_VISUAL_PROFILE_FALLBACK\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"preset chrona-builtin-yuya prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png\",\"detail\":{\"preferredProfile\":\"chrona-output/visual/v0.7-svg\",\"presetId\":\"chrona-builtin-yuya\",\"selectedProfile\":\"chrona-output/visual/v0.7-png\",\"targetKind\":\"png\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim\",\"detail\":{\"critical\":false,\"relationId\":\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"stage\":\"marks\",\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION_SUMMARY\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"1 relations on table-timeline use recovery\",\"detail\":{\"count\":1,\"stages\":{\"marks\":1},\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_POLICY_SUPERSEDED\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\",\"detail\":{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}}]}",
+   "<image /private/tmp/claude-501/-Users-yasudatetsuya-Workspace-chrona-dev-reviewer/39ee1687-b031-406f-8a42-9fbcd8537e66/scratchpad/t16-out/s4-0-v1-yuya.png>"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "png",
+   "contentIdentity": "sha256:75b5596b57b017a19ca82bdfd55dd44276625983b87d118ed267d8439b9ff0a8",
+   "byteLength": 67556,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "W_LAYOUT_VISIBLE_OVERFLOW",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "title",
+     "message": "text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1)",
+     "detail": {
+      "availableBlock": 39.1,
+      "availableInline": 456.0,
+      "behaviour": "visible-overflow",
+      "diagnostic": "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"sourceRef\":\"title\"}",
+      "failureKind": "layout-track",
+      "placementId": "title",
+      "requiredBlock": 39.1,
+      "requiredInline": 497.08
+     }
+    },
+    {
+     "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "QA・リリース",
+     "message": "text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.1444) and 1 more",
+     "count": 2,
+     "occurrences": [
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:未割り当て:0\",\"sourceRef\":\"未割り当て\"}"
+     ],
+     "detail": {
+      "availableBlock": 64.14444444444445,
+      "availableInline": 15.225,
+      "behaviour": "ellipsize-with-source",
+      "diagnostic": "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "failureKind": "group-tag-text",
+      "placementId": "group-tag:QA・リリース:0",
+      "requiredBlock": 67.3155,
+      "requiredInline": 15.225
+     }
+    },
+    {
+     "code": "W_SCENE_RELATION_THROUGH_MARK",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/data-api",
+     "message": "a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "detail": {
+      "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+      "measuredFacts": {
+       "inside": 7.0,
+       "relation": "relation:id:r08"
+      },
+      "primitiveIds": [
+       "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+       "planned:data-api:data-api"
+      ],
+      "scenePath": "/surfaces/0:table-timeline",
+      "sourceTitle": "データAPI実装"
+     }
+    },
+    {
+     "code": "I_PRESET_VISUAL_PROFILE_FALLBACK",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "preset chrona-builtin-yuya prefers chrona-output/visual/v0.7-svg; selected chrona-output/visual/v0.7-png for png",
+     "detail": {
+      "preferredProfile": "chrona-output/visual/v0.7-svg",
+      "presetId": "chrona-builtin-yuya",
+      "selectedProfile": "chrona-output/visual/v0.7-png",
+      "targetKind": "png"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim",
+     "detail": {
+      "critical": false,
+      "relationId": "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+      "stage": "marks",
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "1 relations on table-timeline use recovery",
+     "detail": {
+      "count": 1,
+      "stages": {
+       "marks": 1
+      },
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "i": 1,
+  "tool": "render_draft",
+  "sec": 4.93,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"format\":\"svg\",\"contentIdentity\":\"sha256:dd425e9ea6f9d1241c30fcc79722af880c21762c61b6aacf5e0a7186486710f3\",\"byteLength\":62687,\"pngAvailable\":true,\"warnings\":[{\"code\":\"W_LAYOUT_VISIBLE_OVERFLOW\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"title\",\"message\":\"text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1)\",\"detail\":{\"availableBlock\":39.1,\"availableInline\":456.0,\"behaviour\":\"visible-overflow\",\"diagnostic\":\"W_LAYOUT_VISIBLE_OVERFLOW:{\\\"failureKind\\\":\\\"layout-track\\\",\\\"placementId\\\":\\\"title\\\",\\\"sourceRef\\\":\\\"title\\\"}\",\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"requiredBlock\":39.1,\"requiredInline\":497.08}},{\"code\":\"W_LAYOUT_TEXT_ELLIPSIZED\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"QA・リリース\",\"message\":\"text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.1444) and 1 more\",\"count\":2,\"occurrences\":[\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:未割り当て:0\\\",\\\"sourceRef\\\":\\\"未割り当て\\\"}\"],\"detail\":{\"availableBlock\":64.14444444444445,\"availableInline\":15.225,\"behaviour\":\"ellipsize-with-source\",\"diagnostic\":\"W_LAYOUT_TEXT_ELLIPSIZED:{\\\"failureKind\\\":\\\"group-tag-text\\\",\\\"placementId\\\":\\\"group-tag:QA・リリース:0\\\",\\\"sourceRef\\\":\\\"QA・リリース\\\"}\",\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"requiredBlock\":67.3155,\"requiredInline\":15.225}},{\"code\":\"W_SCENE_RELATION_THROUGH_MARK\",\"severity\":\"warning\",\"component\":\"render\",\"sourceRef\":\"/objects/data-api\",\"message\":\"a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"detail\":{\"diagnostic\":\"W_SCENE_RELATION_THROUGH_MARK:{\\\"primitiveIds\\\":[\\\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\\\",\\\"planned:data-api:data-api\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\",\"findingCode\":\"E_SCENE_RELATION_THROUGH_MARK\",\"measuredFacts\":{\"inside\":7.0,\"relation\":\"relation:id:r08\"},\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\",\"sourceTitle\":\"データAPI実装\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim\",\"detail\":{\"critical\":false,\"relationId\":\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"stage\":\"marks\",\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_RESOLUTION_SUMMARY\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"1 relations on table-timeline use recovery\",\"detail\":{\"count\":1,\"stages\":{\"marks\":1},\"surfaceId\":\"table-timeline\"}},{\"code\":\"I_LAYOUT_RELATION_POLICY_SUPERSEDED\",\"severity\":\"info\",\"component\":\"render\",\"sourceRef\":\"/\",\"message\":\"Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing\",\"detail\":{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}}]}",
+   "<resource>"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "format": "svg",
+   "contentIdentity": "sha256:dd425e9ea6f9d1241c30fcc79722af880c21762c61b6aacf5e0a7186486710f3",
+   "byteLength": 62687,
+   "pngAvailable": true,
+   "warnings": [
+    {
+     "code": "W_LAYOUT_VISIBLE_OVERFLOW",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "title",
+     "message": "text or content is drawn past its box (layout-track, visible-overflow): title (needs 497.08x39.1, has 456x39.1)",
+     "detail": {
+      "availableBlock": 39.1,
+      "availableInline": 456.0,
+      "behaviour": "visible-overflow",
+      "diagnostic": "W_LAYOUT_VISIBLE_OVERFLOW:{\"failureKind\":\"layout-track\",\"placementId\":\"title\",\"sourceRef\":\"title\"}",
+      "failureKind": "layout-track",
+      "placementId": "title",
+      "requiredBlock": 39.1,
+      "requiredInline": 497.08
+     }
+    },
+    {
+     "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "QA・リリース",
+     "message": "text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x64.1444) and 1 more",
+     "count": 2,
+     "occurrences": [
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:未割り当て:0\",\"sourceRef\":\"未割り当て\"}"
+     ],
+     "detail": {
+      "availableBlock": 64.14444444444445,
+      "availableInline": 15.225,
+      "behaviour": "ellipsize-with-source",
+      "diagnostic": "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:QA・リリース:0\",\"sourceRef\":\"QA・リリース\"}",
+      "failureKind": "group-tag-text",
+      "placementId": "group-tag:QA・リリース:0",
+      "requiredBlock": 67.3155,
+      "requiredInline": 15.225
+     }
+    },
+    {
+     "code": "W_SCENE_RELATION_THROUGH_MARK",
+     "severity": "warning",
+     "component": "render",
+     "sourceRef": "/objects/data-api",
+     "message": "a dependency line runs through a primary mark: 'データAPI実装' (/objects/data-api); {\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+     "detail": {
+      "diagnostic": "W_SCENE_RELATION_THROUGH_MARK:{\"primitiveIds\":[\"relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration\",\"planned:data-api:data-api\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+      "findingCode": "E_SCENE_RELATION_THROUGH_MARK",
+      "measuredFacts": {
+       "inside": 7.0,
+       "relation": "relation:id:r08"
+      },
+      "primitiveIds": [
+       "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+       "planned:data-api:data-api"
+      ],
+      "scenePath": "/surfaces/0:table-timeline",
+      "sourceTitle": "データAPI実装"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Relation relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration uses marks resolution; critical=False; not a safety/completeness claim",
+     "detail": {
+      "critical": false,
+      "relationId": "relation:relation:id:r08:auth-api:auth-api:api-integration:api-integration",
+      "stage": "marks",
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_RESOLUTION_SUMMARY",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "1 relations on table-timeline use recovery",
+     "detail": {
+      "count": 1,
+      "stages": {
+       "marks": 1
+      },
+      "surfaceId": "table-timeline"
+     }
+    },
+    {
+     "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED",
+     "severity": "info",
+     "component": "render",
+     "sourceRef": "/",
+     "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
+     "detail": {
+      "layoutMember": "relationRouting.unroutable",
+      "layoutValue": "relax",
+      "surfaceId": "table-timeline",
+      "viewMember": "visibility.relations.overflow",
+      "viewValue": "suppress"
+     }
+    }
+   ]
+  }
+ }
+]

@@ -1,0 +1,87 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-preset-design-default
+# Generic connector for the packaged shared designs (designs/<name>). It names no project field, group order or
+# wording; the design members (axis, column styles, annotation placement, grouping presentation, decoration) come
+# from the selected Layout profile's `viewDefaults`, and a member declared here replaces the design's.
+body:
+  periods: {select: all, label: {}}
+  annotationBindings:
+  - {kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}
+  - {kind: risk, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  - {kind: risk, temporalKind: point, purpose: note, facet: planned, endpoint: at}
+  - {kind: note, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  surface: table-timeline
+  bindings:
+    countdown:
+      figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
+  wording:
+    summary:
+      countdown.title: 完了まで
+  figures:
+  - {id: selected-count, kind: count, source: selected}
+  - {id: group-count, kind: count, source: groups}
+  - {id: note-count, kind: count, source: placedNotes}
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: {fieldRole: responsible}
+    fallback: hierarchy
+    missing: {wording: grouping.unassigned}
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+  comparison:
+    baseline: snapshot
+    actual: optional
+    observationSelection: latest
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - path
+      - finishDelta
+      side: end
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: none
+  markers:
+  - kind: asOf
+    source: actual
+  tableColumns:
+  - id: Task
+    header: {wording: column.task}
+    source: path
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Phase
+    header: {wording: column.phase}
+    source: {fieldRole: phase}
+  - id: Δ finish
+    header: {wording: column.finishDelta}
+    source:
+      facet: finishDelta
+    missing: blank
+    align: end
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

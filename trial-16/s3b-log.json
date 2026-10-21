@@ -1,0 +1,59 @@
+[
+ {
+  "i": 0,
+  "tool": "validate_project",
+  "sec": 0.22,
+  "isError": false,
+  "content": [
+   "{\"status\":\"rejected\",\"diagnostics\":[{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/objects/requirements\",\"message\":\"unexpected property 'constraints'\"},{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/objects/ux-design\",\"message\":\"unexpected property 'constraints'\"}],\"projectIdentity\":\"sha256:48a069a4c3f7466f8005c156e48160c35b11d549f6a047155aec5d97100b4090\"}"
+  ],
+  "structured": {
+   "status": "rejected",
+   "diagnostics": [
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/objects/requirements",
+     "message": "unexpected property 'constraints'"
+    },
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/objects/ux-design",
+     "message": "unexpected property 'constraints'"
+    }
+   ],
+   "projectIdentity": "sha256:48a069a4c3f7466f8005c156e48160c35b11d549f6a047155aec5d97100b4090"
+  }
+ },
+ {
+  "i": 1,
+  "tool": "schedule_project",
+  "sec": 0.11,
+  "isError": false,
+  "content": [
+   "{\"status\":\"rejected\",\"diagnostics\":[{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/objects/requirements\",\"message\":\"unexpected property 'constraints'\"},{\"code\":\"E_SCHEMA\",\"severity\":\"error\",\"component\":\"core\",\"sourceRef\":\"/objects/ux-design\",\"message\":\"unexpected property 'constraints'\"}]}"
+  ],
+  "structured": {
+   "status": "rejected",
+   "diagnostics": [
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/objects/requirements",
+     "message": "unexpected property 'constraints'"
+    },
+    {
+     "code": "E_SCHEMA",
+     "severity": "error",
+     "component": "core",
+     "sourceRef": "/objects/ux-design",
+     "message": "unexpected property 'constraints'"
+    }
+   ]
+  }
+ }
+]

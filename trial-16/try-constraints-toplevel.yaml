@@ -1,0 +1,128 @@
+version: timeline/v0.7
+project:
+  id: mobile-app-v2
+  title: モバイルアプリ v2 リリース計画
+  calendar: jp-office
+fieldRoles:
+  responsible: team
+calendars:
+  jp-office:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: 2027-01-01, working: false}
+      - {date: 2027-01-11, working: false}
+      - {date: 2027-02-11, working: false}
+      - {date: 2027-02-23, working: false}
+      - {date: 2027-03-22, working: false}
+objects:
+  requirements:
+    type: task
+    title: 要件整理
+    fields: {team: 基盤チーム, owner: 佐藤}
+    schedule: {mode: scheduled, amount: 5wd}
+    constraints: {start: {min: 2027-01-04}}
+  ux-design:
+    type: task
+    title: UI/UX設計
+    fields: {team: モバイルチーム, owner: 鈴木}
+    schedule: {mode: scheduled, amount: 10wd}
+    constraints: {start: {min: 2027-01-04}}
+  api-spec:
+    type: task
+    title: API仕様設計
+    fields: {team: 基盤チーム, owner: 佐藤}
+    schedule: {mode: scheduled, amount: 5wd}
+  design-review:
+    type: gate
+    title: 設計レビュー
+    schedule: {mode: scheduled-point}
+  auth-api:
+    type: task
+    title: 認証API実装
+    fields: {team: 基盤チーム, owner: 高橋}
+    schedule: {mode: scheduled, amount: 10wd}
+  data-api:
+    type: task
+    title: データAPI実装
+    fields: {team: 基盤チーム, owner: 高橋}
+    schedule: {mode: scheduled, amount: 15wd}
+  api-integration:
+    type: task
+    title: API結合テスト
+    fields: {team: 基盤チーム, owner: 佐藤}
+    schedule: {mode: scheduled, amount: 5wd}
+  ios-ui:
+    type: task
+    title: iOS画面実装
+    fields: {team: モバイルチーム, owner: 鈴木}
+    schedule: {mode: scheduled, amount: 15wd}
+  ios-api:
+    type: task
+    title: iOS API連携
+    fields: {team: モバイルチーム, owner: 鈴木}
+    schedule: {mode: scheduled, amount: 5wd}
+  android-ui:
+    type: task
+    title: Android画面実装
+    fields: {team: モバイルチーム, owner: 田中}
+    schedule: {mode: scheduled, amount: 15wd}
+  android-api:
+    type: task
+    title: Android API連携
+    fields: {team: モバイルチーム, owner: 田中}
+    schedule: {mode: scheduled, amount: 5wd}
+  beta-start:
+    type: gate
+    title: β開始
+    schedule: {mode: scheduled-point}
+  beta-ops:
+    type: task
+    title: βテスト運用
+    fields: {team: QA・リリース, owner: 伊藤}
+    schedule: {mode: scheduled, amount: 10wd}
+  bugfix:
+    type: task
+    title: 不具合修正
+    fields: {team: モバイルチーム, owner: 田中}
+    schedule: {mode: scheduled, amount: 10wd}
+  store-prep:
+    type: task
+    title: ストア申請準備
+    fields: {team: QA・リリース, owner: 伊藤}
+    schedule: {mode: scheduled, amount: 5wd}
+  release-notes:
+    type: task
+    title: リリースノート作成
+    fields: {team: QA・リリース, owner: 伊藤}
+    schedule: {mode: scheduled, amount: 3wd}
+  release-decision:
+    type: gate
+    title: リリース判定
+    deadline: 2027-03-31
+    schedule: {mode: scheduled-point}
+  release:
+    type: task
+    title: 本番リリース
+    fields: {team: QA・リリース, owner: 伊藤}
+    schedule: {mode: scheduled, amount: 1wd}
+relations:
+- {id: r03, type: dependency, from: {object: requirements, endpoint: end}, to: {object: api-spec, endpoint: start}, lag: 0d}
+- {id: r04, type: dependency, from: {object: api-spec, endpoint: end}, to: {object: design-review, endpoint: at}, lag: 0d}
+- {id: r05, type: dependency, from: {object: ux-design, endpoint: end}, to: {object: design-review, endpoint: at}, lag: 0d}
+- {id: r06, type: dependency, from: {object: design-review, endpoint: at}, to: {object: auth-api, endpoint: start}, lag: 0d}
+- {id: r07, type: dependency, from: {object: design-review, endpoint: at}, to: {object: data-api, endpoint: start}, lag: 0d}
+- {id: r08, type: dependency, from: {object: auth-api, endpoint: end}, to: {object: api-integration, endpoint: start}, lag: 0d}
+- {id: r09, type: dependency, from: {object: data-api, endpoint: end}, to: {object: ios-ui, endpoint: start}, lag: 0d}
+- {id: r10, type: dependency, from: {object: data-api, endpoint: end}, to: {object: android-ui, endpoint: start}, lag: 0d}
+- {id: r11, type: dependency, from: {object: ios-ui, endpoint: end}, to: {object: ios-api, endpoint: start}, lag: 0d}
+- {id: r12, type: dependency, from: {object: android-ui, endpoint: end}, to: {object: android-api, endpoint: start}, lag: 0d}
+- {id: r13, type: dependency, from: {object: ios-api, endpoint: end}, to: {object: beta-start, endpoint: at}, lag: 0d}
+- {id: r14, type: dependency, from: {object: android-api, endpoint: end}, to: {object: beta-start, endpoint: at}, lag: 0d}
+- {id: r15, type: dependency, from: {object: api-integration, endpoint: end}, to: {object: beta-start, endpoint: at}, lag: 0d}
+- {id: r16, type: dependency, from: {object: beta-start, endpoint: at}, to: {object: beta-ops, endpoint: start}, lag: 0d}
+- {id: r17, type: dependency, from: {object: beta-start, endpoint: at}, to: {object: bugfix, endpoint: start}, lag: 0d}
+- {id: r18, type: dependency, from: {object: beta-start, endpoint: at}, to: {object: store-prep, endpoint: start}, lag: 0d}
+- {id: r19, type: dependency, from: {object: beta-start, endpoint: at}, to: {object: release-notes, endpoint: start}, lag: 0d}
+- {id: r20, type: dependency, from: {object: beta-ops, endpoint: end}, to: {object: release-decision, endpoint: at}, lag: 0d}
+- {id: r21, type: dependency, from: {object: bugfix, endpoint: end}, to: {object: release-decision, endpoint: at}, lag: 0d}
+- {id: r22, type: dependency, from: {object: release-decision, endpoint: at}, to: {object: release, endpoint: start}, lag: 0d}

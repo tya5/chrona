@@ -1,0 +1,3 @@
+[{"tool":"check_command","args":{"command":{"version":"chrona/command/v0.4","commandId":"snap-1","type":"captureSnapshot","target":{"id":"mobile-app-v2","kind":"project","store":"local","address":"plan/project.yaml","revision":"r1"},"baseRevision":"r1","payload":{"snapshotId":"baseline-2027-01","registry":{"provider":"local","identity":"main"}}}}},
+ {"tool":"render_draft","args":{"project":"plan/project.yaml","actual":"plan/actual.yaml","snapshot":"plan/baseline.yaml","preset":"yuya","locale":"xx"}},
+ {"tool":"render_draft","args":{"project":"plan/missing.yaml","preset":"yuya"}}]

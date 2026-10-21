@@ -1,0 +1,4 @@
+[{"tool":"validate_project","args":{"project":"plan/actual.yaml"}},
+ {"tool":"schedule_project","args":{"project":"plan/project.yaml"},"max":400},
+ {"tool":"render_draft","args":{"project":"plan/project.yaml","actual":"plan/actual.yaml","snapshot":"plan/baseline.yaml","preset":"yuya","locale":"ja-JP","format":"png"},"name":"v2-yuya","max":200},
+ {"tool":"render_draft","args":{"project":"plan/project.yaml","actual":"plan/actual.yaml","snapshot":"plan/baseline.yaml","forecast":true,"preset":"yuya","locale":"ja-JP","format":"png"},"name":"v2-forecast","max":200}]

@@ -1,0 +1,23 @@
+[
+ {
+  "i": 2,
+  "tool": "render_draft",
+  "sec": 0.06,
+  "isError": true,
+  "content": [
+   "{\"status\":\"failed\",\"diagnostics\":[{\"code\":\"E_INPUT_IO\",\"severity\":\"error\",\"component\":\"mcp\",\"sourceRef\":\"/project\",\"message\":\"no regular file exists at this workspace path\"}]}"
+  ],
+  "structured": {
+   "status": "failed",
+   "diagnostics": [
+    {
+     "code": "E_INPUT_IO",
+     "severity": "error",
+     "component": "mcp",
+     "sourceRef": "/project",
+     "message": "no regular file exists at this workspace path"
+    }
+   ]
+  }
+ }
+]

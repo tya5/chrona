@@ -1,0 +1,11 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: mobile-app-v2-observed
+body:
+  asOf: '2027-01-22'
+  observations:
+    - {id: requirements-1, sequence: 1, projectObjectId: requirements, actual: {start: '2027-01-04', finish: '2027-01-12', progress: 1}}
+    - {id: api-spec-1, sequence: 1, projectObjectId: api-spec, actual: {start: '2027-01-12', finish: '2027-01-19', progress: 1}}
+    - {id: ux-design-1, sequence: 1, projectObjectId: ux-design, actual: {start: '2027-01-04', finish: '2027-01-22', progress: 1}}
+    - {id: design-review-1, sequence: 1, projectObjectId: design-review, actual: {at: '2027-01-22'}}
+    - {id: auth-api-1, sequence: 1, projectObjectId: auth-api, actual: {start: '2027-01-22', openUntil: asOf, progress: 0.1}}

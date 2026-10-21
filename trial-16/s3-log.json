@@ -1,0 +1,220 @@
+[
+ {
+  "i": 0,
+  "tool": "validate_project",
+  "sec": 0.19,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"projectIdentity\":\"sha256:54b5cd860d7dc987934789c68914fad188c9d81fbe5191be323e5d5511f5f6b9\"}"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "projectIdentity": "sha256:54b5cd860d7dc987934789c68914fad188c9d81fbe5191be323e5d5511f5f6b9"
+  }
+ },
+ {
+  "i": 1,
+  "tool": "schedule_project",
+  "sec": 0.09,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"placements\":{\"android-api\":{\"start\":\"2027-03-04\",\"end\":\"2027-03-11\"},\"android-ui\":{\"start\":\"2027-02-09\",\"end\":\"2027-03-04\"},\"api-integration\":{\"start\":\"2027-02-02\",\"end\":\"2027-02-09\"},\"api-spec\":{\"start\":\"2027-01-12\",\"end\":\"2027-01-19\"},\"auth-api\":{\"start\":\"2027-01-19\",\"end\":\"2027-02-02\"},\"beta-ops\":{\"start\":\"2027-03-11\",\"end\":\"2027-03-26\"},\"beta-start\":{\"at\":\"2027-03-11\"},\"bugfix\":{\"start\":\"2027-03-11\",\"end\":\"2027-03-26\"},\"data-api\":{\"start\":\"2027-01-19\",\"end\":\"2027-02-09\"},\"design-review\":{\"at\":\"2027-01-19\"},\"ios-api\":{\"start\":\"2027-03-04\",\"end\":\"2027-03-11\"},\"ios-ui\":{\"start\":\"2027-02-09\",\"end\":\"2027-03-04\"},\"kickoff\":{\"at\":\"2027-01-04\"},\"release\":{\"start\":\"2027-03-26\",\"end\":\"2027-03-29\"},\"release-decision\":{\"at\":\"2027-03-26\"},\"release-notes\":{\"start\":\"2027-03-11\",\"end\":\"2027-03-16\"},\"requirements\":{\"start\":\"2027-01-04\",\"end\":\"2027-01-12\"},\"store-prep\":{\"start\":\"2027-03-11\",\"end\":\"2027-03-18\"},\"ux-design\":{\"start\":\"2027-01-04\",\"end\":\"2027-01-19\"}},\"warnings\":[],\"analysis\":{\"criticalObjectIds\":[\"kickoff\",\"requirements\",\"ux-design\",\"api-spec\",\"design-review\",\"data-api\",\"ios-ui\",\"ios-api\",\"android-ui\",\"android-api\",\"beta-start\",\"beta-ops\",\"bugfix\",\"release-decision\",\"release\"],\"totalFloat\":{\"android-api\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"android-ui\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"api-integration\":{\"value\":20,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"api-spec\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"auth-api\":{\"value\":20,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"beta-ops\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"beta-start\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"bugfix\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"data-api\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"design-review\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"ios-api\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"ios-ui\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"kickoff\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"release\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"release-decision\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"release-notes\":{\"value\":8,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"requirements\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"store-prep\":{\"value\":6,\"unit\":\"working-days\",\"calendar\":\"jp-office\"},\"ux-design\":{\"value\":0,\"unit\":\"working-days\",\"calendar\":\"jp-office\"}}}}"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "placements": {
+    "android-api": {
+     "start": "2027-03-04",
+     "end": "2027-03-11"
+    },
+    "android-ui": {
+     "start": "2027-02-09",
+     "end": "2027-03-04"
+    },
+    "api-integration": {
+     "start": "2027-02-02",
+     "end": "2027-02-09"
+    },
+    "api-spec": {
+     "start": "2027-01-12",
+     "end": "2027-01-19"
+    },
+    "auth-api": {
+     "start": "2027-01-19",
+     "end": "2027-02-02"
+    },
+    "beta-ops": {
+     "start": "2027-03-11",
+     "end": "2027-03-26"
+    },
+    "beta-start": {
+     "at": "2027-03-11"
+    },
+    "bugfix": {
+     "start": "2027-03-11",
+     "end": "2027-03-26"
+    },
+    "data-api": {
+     "start": "2027-01-19",
+     "end": "2027-02-09"
+    },
+    "design-review": {
+     "at": "2027-01-19"
+    },
+    "ios-api": {
+     "start": "2027-03-04",
+     "end": "2027-03-11"
+    },
+    "ios-ui": {
+     "start": "2027-02-09",
+     "end": "2027-03-04"
+    },
+    "kickoff": {
+     "at": "2027-01-04"
+    },
+    "release": {
+     "start": "2027-03-26",
+     "end": "2027-03-29"
+    },
+    "release-decision": {
+     "at": "2027-03-26"
+    },
+    "release-notes": {
+     "start": "2027-03-11",
+     "end": "2027-03-16"
+    },
+    "requirements": {
+     "start": "2027-01-04",
+     "end": "2027-01-12"
+    },
+    "store-prep": {
+     "start": "2027-03-11",
+     "end": "2027-03-18"
+    },
+    "ux-design": {
+     "start": "2027-01-04",
+     "end": "2027-01-19"
+    }
+   },
+   "warnings": [],
+   "analysis": {
+    "criticalObjectIds": [
+     "kickoff",
+     "requirements",
+     "ux-design",
+     "api-spec",
+     "design-review",
+     "data-api",
+     "ios-ui",
+     "ios-api",
+     "android-ui",
+     "android-api",
+     "beta-start",
+     "beta-ops",
+     "bugfix",
+     "release-decision",
+     "release"
+    ],
+    "totalFloat": {
+     "android-api": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "android-ui": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "api-integration": {
+      "value": 20,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "api-spec": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "auth-api": {
+      "value": 20,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "beta-ops": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "beta-start": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "bugfix": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "data-api": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "design-review": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "ios-api": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "ios-ui": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "kickoff": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "release": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "release-decision": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "release-notes": {
+      "value": 8,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "requirements": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "store-prep": {
+      "value": 6,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     },
+     "ux-design": {
+      "value": 0,
+      "unit": "working-days",
+      "calendar": "jp-office"
+     }
+    }
+   }
+  }
+ }
+]

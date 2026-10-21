@@ -1,0 +1,80 @@
+[
+ {
+  "i": 0,
+  "tool": "list_presets",
+  "sec": 0.24,
+  "isError": false,
+  "content": [
+   "{\"status\":\"ok\",\"diagnostics\":[],\"presets\":[{\"id\":\"mission-light\",\"description\":\"lane rows with a bold blue time band, light; --snapshot baseline not drawn; draws actuals and finish delta\"},{\"id\":\"control-room-dark\",\"description\":\"lane rows with a bright blue time band on a navy page, dark; --snapshot baseline not drawn; draws actuals and finish delta\"},{\"id\":\"print-mono\",\"description\":\"black-and-white lane rows with grey bars for print, light; --snapshot baseline not drawn; draws actuals and finish delta\"},{\"id\":\"executive-light\",\"description\":\"lane rows with wide rounded bars and a navy time band, light; --snapshot baseline not drawn; draws actuals and finish delta\",\"gallerySet\":\"controller-z-treatment-ladder\"},{\"id\":\"elevated-light\",\"description\":\"blue lane rows with a soft raised shading and a legend, light; --snapshot baseline not drawn; draws actuals and finish delta\",\"gallerySet\":\"controller-z-treatment-ladder\"},{\"id\":\"editorial\",\"description\":\"blue lane rows with a centred title and a legend, light; --snapshot baseline not drawn; draws actuals as progress fill\"},{\"id\":\"technical-print\",\"description\":\"numbered table with owner column, black axis and outlined bars for print, light; --snapshot baseline not drawn; draws actuals\"},{\"id\":\"chrona-default-draft\",\"description\":\"plain readable table and timeline used when no preset is named, light; --snapshot baseline not drawn; draws actuals as progress fill\"},{\"id\":\"marquee\",\"description\":\"theatre marquee with gold lamps and act headings, dark; baseline drawn from --snapshot; draws actuals\"},{\"id\":\"sunday\",\"description\":\"newspaper comics page with a key and panel headings, light; baseline drawn from --snapshot; draws actuals\"},{\"id\":\"target-b\",\"description\":\"clean table and timeline with tinted group bands, light; baseline drawn from --snapshot; draws actuals\"},{\"id\":\"titlecard\",\"description\":\"broadcast title card with a countdown box, dark; baseline drawn from --snapshot; draws actuals\"},{\"id\":\"yuya\",\"description\":\"cream chart in a red frame on a dark teal page, dark; baseline drawn from --snapshot; draws actuals\"},{\"id\":\"muted-executive\",\"description\":\"numbered table with owner column, slate bars and warm grey bands, light; --snapshot baseline not drawn; draws actuals\"},{\"id\":\"wallboard-dark\",\"description\":\"large-type table with owner column and blue axis for a shared screen, dark; --snapshot baseline not drawn; draws actuals\"}],\"default\":\"chrona-default-draft\"}"
+  ],
+  "structured": {
+   "status": "ok",
+   "diagnostics": [],
+   "presets": [
+    {
+     "id": "mission-light",
+     "description": "lane rows with a bold blue time band, light; --snapshot baseline not drawn; draws actuals and finish delta"
+    },
+    {
+     "id": "control-room-dark",
+     "description": "lane rows with a bright blue time band on a navy page, dark; --snapshot baseline not drawn; draws actuals and finish delta"
+    },
+    {
+     "id": "print-mono",
+     "description": "black-and-white lane rows with grey bars for print, light; --snapshot baseline not drawn; draws actuals and finish delta"
+    },
+    {
+     "id": "executive-light",
+     "description": "lane rows with wide rounded bars and a navy time band, light; --snapshot baseline not drawn; draws actuals and finish delta",
+     "gallerySet": "controller-z-treatment-ladder"
+    },
+    {
+     "id": "elevated-light",
+     "description": "blue lane rows with a soft raised shading and a legend, light; --snapshot baseline not drawn; draws actuals and finish delta",
+     "gallerySet": "controller-z-treatment-ladder"
+    },
+    {
+     "id": "editorial",
+     "description": "blue lane rows with a centred title and a legend, light; --snapshot baseline not drawn; draws actuals as progress fill"
+    },
+    {
+     "id": "technical-print",
+     "description": "numbered table with owner column, black axis and outlined bars for print, light; --snapshot baseline not drawn; draws actuals"
+    },
+    {
+     "id": "chrona-default-draft",
+     "description": "plain readable table and timeline used when no preset is named, light; --snapshot baseline not drawn; draws actuals as progress fill"
+    },
+    {
+     "id": "marquee",
+     "description": "theatre marquee with gold lamps and act headings, dark; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "sunday",
+     "description": "newspaper comics page with a key and panel headings, light; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "target-b",
+     "description": "clean table and timeline with tinted group bands, light; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "titlecard",
+     "description": "broadcast title card with a countdown box, dark; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "yuya",
+     "description": "cream chart in a red frame on a dark teal page, dark; baseline drawn from --snapshot; draws actuals"
+    },
+    {
+     "id": "muted-executive",
+     "description": "numbered table with owner column, slate bars and warm grey bands, light; --snapshot baseline not drawn; draws actuals"
+    },
+    {
+     "id": "wallboard-dark",
+     "description": "large-type table with owner column and blue axis for a shared screen, dark; --snapshot baseline not drawn; draws actuals"
+    }
+   ],
+   "default": "chrona-default-draft"
+  }
+ }
+]

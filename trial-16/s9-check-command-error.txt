@@ -1,0 +1,1 @@
+== [0] EXC MCPError(-32602, "check_command: command: {'version': 'chrona/command/v0.4', 'commandId': 'snap-1', 'type': 'captureSnapshot', 'target': {'id': 'mobile-app-v2', 'kind': 'project', 'store': 'local', 'address': 'plan/project.yaml', 'revision': ...", None)
