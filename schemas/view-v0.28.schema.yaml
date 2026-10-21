@@ -510,6 +510,7 @@ allOf:
                 align: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/align"}
                 headerOrientation: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/headerOrientation"}
                 width: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/width"}
+                priority: {description: "Whether a comparison column (finishDelta, startDelta, atDelta, progress, missingActual, actual, scenario) whose data source is unbound (no Actual Set, no bound scenario) stays (#1869). Absent or `optional`: the column is omitted, as before. `preferred` or `required`: it keeps its header and blank cells at its declared width, so the time scale does not change when the data arrives.", examples: [preferred], enum: [optional, preferred, required]}
           annotationBindings:
             description: "Ordered finite Project-kind/temporal-shape bindings to ordinary annotation intent (#1343)."
             examples: [[{kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}]]

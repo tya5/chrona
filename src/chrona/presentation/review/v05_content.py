@@ -87,7 +87,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return replace(_lane_table_content(projection, project, view, resolver), member_names=member_names)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     active_columns = tuple(column for column in view.table_columns
-                           if _table_column_source_available(column.source, projection, actual_set))
+                           if column.priority != "optional"
+                           or _table_column_source_available(column.source, projection, actual_set))
     columns = tuple(TableColumnContent(column.id, _table_column_header(column, projection, view, resolver),
                                        column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
