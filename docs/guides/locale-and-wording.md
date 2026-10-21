@@ -59,6 +59,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | `column.no` | No | 番号 |
 | `delta.unit.calendarDay`, `delta.unit.workingDay` | d, d | 日, 営業日 |
 | `slot.notes` | Notes | 注記 |
+| `grouping.unassigned`, `grouping.other` | Unassigned, Other | 未割り当て, その他 |
 | `annotation.note`, `annotation.risk` | Note, Risk | 注記, リスク |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
@@ -90,6 +91,11 @@ heading's role `textTransform` styles the resolved text as before.
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
+
+**The group for a missing field value.** A View `grouping.missing` is a literal or `{wording: <key>}`, for example
+`missing: {wording: grouping.unassigned}` (`Unassigned` / `未割り当て`); `grouping.other` reads `Other` / `その他`. It names the group
+of items whose grouping field is absent, for a field grouping and for a role grouping (`by: {fieldRole: responsible}`). A literal
+stays as written under every locale, and the `wording.keys` override reaches the reference like any key.
 
 **An annotation kind header.** A Theme `annotationKinds` entry (the header a Project annotation of kind `note` or `risk` wears) takes
 `label` and `secondary` as a literal or `{wording: <key>}`, for example `label: {wording: annotation.risk}` (`Risk` / `リスク`) and

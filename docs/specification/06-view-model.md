@@ -1049,7 +1049,8 @@ looked up by a closed key in the bundled wording table of
 [Axis Name Tables](63-axis-name-tables.md#built-in-wording-tables), one complete
 table per supported locale (`en-US`, `ja-JP`), selected by the Render Context locale
 only. A preset, View or Detail Profile references an entry as `{wording: <key>}` in
-`tableColumns[].header`, `markers[].label` and a Detail legend `label`; each also
+`tableColumns[].header`, `markers[].label`, a Detail legend `label` and the
+field-grouping `grouping.missing` label (#1865: `grouping.unassigned`, `grouping.other`); each also
 accepts a literal. The text of one built-in label resolves, lowest to highest:
 (1) the table entry for the locale; (2) a literal authored in the preset (never
 translated); (3) the View `wording.keys: {<key>: <text>}` override of that key;
