@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+from datetime import date
 
 import pytest
 import yaml
@@ -66,6 +67,8 @@ def _source():
     source = legends._source()
     for key, title in {"ahead": "設計", "track": "試験", "behind": "製造", "gate": "出荷"}.items():
         source["objects"][key]["title"] = title
+    # A finished Actual draws no progress fill (#1869), so one open Actual keeps the Progress key on the legend.
+    source["objects"]["open"] = sr.span("open", date(2026, 2, 2), 5, title="保守")
     source["entities"] = {"a": {"type": "team", "title": "チームA"}}
     source["relations"] = [{"id": "r1", "type": "dependency", "lag": "0d", "from": {"object": "ahead", "endpoint": "end"},
                             "to": {"object": "gate", "endpoint": "at"}}]
@@ -107,7 +110,7 @@ def _render(tmp_path, preset, locale, *, lanes):
     else:  # the Task column header is the built-in wording, not the column id
         parts["view"]["body"]["tableColumns"][0]["header"] = {"wording": "column.task"}
         parts["view"]["body"]["tableColumns"][1]["header"] = "変化"
-    review = sr.render(tmp_path, _source(), presentation=parts, actual=legends.ACTUAL, detail=detail,
+    review = sr.render(tmp_path, _source(), presentation=parts, actual=legends.ACTUAL_WITH_OPEN, detail=detail,
                        viewport=(1800, 1000), icon_catalogs=icons, locale=locale,
                        font_metrics_path=_font_descriptor(tmp_path))
     return _scene_texts(review), _authored_labels(parts["view"], parts["layout"])
