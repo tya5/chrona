@@ -12,6 +12,7 @@ it reads strings.
 """
 from __future__ import annotations
 
+import json
 import re
 from typing import Iterable, Mapping
 
@@ -81,6 +82,11 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_PRESENTATION_ANNOTATION_NOT_DRAWN": (
+        "a Project annotation on a drawn object is not drawn: no View annotation binding matches its kind and "
+        "the shape of its target, and the layout has no notes slot; add an annotationBindings entry for that "
+        "kind and temporalKind to the View"
+    ),
     "W_PRESENTATION_HEADING_FACT_MISSING": (
         "a heading placeholder has no source fact and renders empty; supply the named fact or remove the placeholder"
     ),
@@ -253,6 +259,15 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
         return WarningText(_SURFACE_CAUSES[code], _axis_thinned_subject(identity.removeprefix(code).removeprefix(":"),
                                                                        named="sourceTitle" in payload
                                                                        or "sourceSubjects" in payload))
+    if code == "W_PRESENTATION_ANNOTATION_NOT_DRAWN":
+        try:
+            fields = json.loads(identity.removeprefix(code).removeprefix(":"))
+        except ValueError:
+            fields = {}
+        return WarningText(
+            _SURFACE_CAUSES[code],
+            f"{fields.get('kind', '?')} {fields.get('annotation', '?')} on {fields.get('target', '?')} "
+            f"({fields.get('targetShape', '?')} target)")
     if code in _SURFACE_CAUSES:
         return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
     if code == "W_LAYOUT_ROUTE_FALLBACK" and str(payload.get("placementId", "")).startswith("annotation-leader:"):

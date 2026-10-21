@@ -41,6 +41,7 @@ from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
     ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, RoutingCostAdvisory,
+    AnnotationNotDrawn,
 )
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
@@ -76,7 +77,9 @@ from chrona.presentation.model.style_rules import StyleEvaluationError
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
-from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
+from chrona.presentation.review.annotation_expansion import (
+    AnnotationExpansionError, undrawn_project_annotations,
+)
 from chrona.presentation.model.wording_tables import wording_resolver
 from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
@@ -293,6 +296,30 @@ def render_review(request: RenderRequest) -> RenderedReview:
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
         raise RenderFailed(error.diagnostic_id, f"{message} ({node})" if node else message,
                            "presentation", error.path or "/") from error
+
+
+def _layout_has_source(node: object, source: str) -> bool:
+    if not isinstance(node, Mapping):
+        return False
+    if node.get("kind") == "slot" and node.get("source") == source:
+        return True
+    children = node.get("children")
+    return isinstance(children, list) and any(_layout_has_source(child, source) for child in children)
+
+
+def _undrawn_annotation_warnings(view: Any, project: Mapping[str, Any], projection: Any,
+                                 plan: Any) -> tuple[AnnotationNotDrawn, ...]:
+    """Name each Project annotation on a drawn target that no binding or notes slot draws (#1870)."""
+    visible = view.visibility.annotations
+    mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
+    notes = project.get("annotations", {})
+    if mode == "none" or not isinstance(notes, Mapping) or not notes:
+        return ()
+    if _layout_has_source(plan.profile.profile.get("root"), "notes"):
+        return ()  # the notes slot draws every note a binding left over
+    unplaced = (key for key, _ in plan.content.notes)
+    return tuple(AnnotationNotDrawn(*item)
+                 for item in undrawn_project_annotations(notes, projection, unplaced))
 
 
 def _render_review(request: RenderRequest) -> RenderedReview:
@@ -522,6 +549,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
         if (view.surface == "table-timeline" or view.surface == "dependency-network"):
             profile_info += missing_heading_fact_warnings(view, project, actual_observations)
+        if view.surface == "table-timeline":
+            profile_info += _undrawn_annotation_warnings(view, project, projection, plan)
         if routing_advisory is not None:
             profile_info += (routing_advisory,)
         if profile_info:
