@@ -4,7 +4,7 @@ id: halcyon-titlecard-countdown
 body:
   panels:
     - id: countdown
-      title: 発射まで
+      title: "{wording:caption.untilFinish}"
       presentation: figures
       arrangement: inline
       metrics:

@@ -11,18 +11,19 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # one below. The heading and the notes heading read the count figures `selected-count`,
 # `group-count` and `note-count`, which the View declares (the packaged design-default View counts
 # span objects and groups other than the unassigned fallback). BASELINE and ACTUAL are printed only
-# when the render supplies a Snapshot or an Actual Set.
+# when the render supplies a Snapshot or an Actual Set. Heading and caption words are wording keys,
+# so they follow the render locale.
 viewDefaults:
   heading:
-    kicker: 第弐面
-    title: 計画表、{project}
+    kicker: "{wording:heading.kicker}"
+    title: "{wording:heading.schedule}、{project}"
     subtitle:
-      - {text: "SCHEDULE · {figure:selected-count} WORK PACKAGES"}
-      - {text: " · {figure:group-count} SECTIONS", omitWhenZero: group-count}
+      - {text: "{wording:heading.schedule} · {figure:selected-count} {wording:count.workPackages}"}
+      - {text: " · {figure:group-count} {wording:count.sections}", omitWhenZero: group-count}
       - {text: " · "}
-      - {text: "BASELINE / ", presentWhen: snapshot}
-      - {text: "PLAN"}
-      - {text: " / ACTUAL", presentWhen: actualSet}
+      - {text: "{wording:legend.baseline} / ", presentWhen: snapshot}
+      - {text: "{wording:legend.plan}"}
+      - {text: " / {wording:legend.actual}", presentWhen: actualSet}
     dateForm: day-month-year
   figureFormats:
     note-count: {form: digits, minimumDigits: 2}
@@ -184,7 +185,7 @@ root:
         - id: annotations
           kind: slot
           source: annotations
-          heading: {template: "STATUS REPORTS : {figure:note-count}", align: start, block: header-row}
+          heading: {template: "{wording:caption.statusReports} : {figure:note-count}", align: start, block: header-row}
           inlineSize: {fixed: {token: note-rail-width}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}

@@ -15,9 +15,6 @@ body:
   bindings:
     countdown:
       figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
-  wording:
-    summary:
-      countdown.title: 完了まで
   figures:
   - {id: selected-count, kind: count, source: selected, temporalKind: span}
   - {id: group-count, kind: count, source: groups, excludeUnassigned: true}
