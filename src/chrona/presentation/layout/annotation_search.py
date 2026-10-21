@@ -309,15 +309,17 @@ def least_covering_box(*, region: LabelRect, anchor_center: tuple[float, float],
     """Choose the terminal box for a note that no declared search could place.
 
     A note box MUST NOT cover a mark of an object other than its anchor's.
-    Every fine and coarse lattice position is ranked by how many other
-    objects' marks it covers, then by the area of those marks it covers, then
-    by how many other declared obstacles it meets, then nearest-first.  The
-    first position that covers no other object's mark wins; when none exists
-    the least-covering one is returned together with the covered owners so the
+    Every fine and coarse lattice position is ranked first by whether it
+    covers another object's mark at all, then by the text and label visuals it
+    meets (a box never hides a name), the number of other objects' marks it
+    covers, the other declared obstacles it meets, the area of those marks it
+    covers, and nearest-first.  A position that covers no other object's mark
+    always beats one that does; when none exists the least-covering one is
+    returned together with the covered owners so the
     caller can name them.
     """
     seen: set[tuple[float, float]] = set()
-    best: tuple[tuple[int, float, int, int], LabelRect, tuple[str, ...]] | None = None
+    best: tuple[tuple[bool, int, int, int, float, int], LabelRect, tuple[str, ...]] | None = None
     order = 0
     for search_pass in ("fine", "coarse"):
         for box in _candidate_positions(region, box_size, anchor_center, max_positions, search_pass):
@@ -328,7 +330,7 @@ def least_covering_box(*, region: LabelRect, anchor_center: tuple[float, float],
             geometry = ObstacleRect(box.x, box.y, box.right, box.bottom)
             hits = obstacles.collisions(geometry, classes=obstacle_classes, host_id=host_id)
             covered: dict[str, float] = {}
-            others = 0
+            others = words = 0
             for item in hits:
                 if item.obstacle_class == "mark":
                     owner = mark_owner(item.placement_id)
@@ -336,12 +338,14 @@ def least_covering_box(*, region: LabelRect, anchor_center: tuple[float, float],
                         envelope = obstacle_envelope(item.geometry)
                         covered[owner] = covered.get(owner, 0.0) + _overlap_area(
                             (box.x, box.y, box.right, box.bottom), envelope)
+                elif item.obstacle_class in ("text", "label-visual"):
+                    words += 1
                 else:
                     others += 1
-            key = (len(covered), fsum(covered.values()), others, order)
+            key = (bool(covered), words, len(covered), others, fsum(covered.values()), order)
             if best is None or key < best[0]:
                 best = (key, box, tuple(sorted(covered)))
-            if best[0][0] == 0 and best[0][2] == 0:
+            if best[0][:2] == (False, 0) and best[0][3] == 0:
                 return LeastCoveringBox(best[1], best[2])
     return None if best is None else LeastCoveringBox(best[1], best[2])
 

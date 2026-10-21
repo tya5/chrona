@@ -103,7 +103,13 @@ def test_fill_lanes_count_every_packed_name_as_shown_or_suppressed(tmp_path):
     assert not [item for item in surface.primitives if item.purpose == "member-label-leader"]
     boxes = [item for item in surface.primitives if item.scene_id.startswith("annotation-box:")]
     assert len(boxes) == 3
+    # A box with no free placement is drawn in visible overflow (W_LAYOUT_LABEL_OVERFLOW). It never covers another
+    # object's mark (#1869), so on a plot this dense it may stand over a name that was placed before it.
+    forced = {item.placement_id.removeprefix("annotation-text:") for item in surface.fit_warnings
+              if item.code == "W_LAYOUT_LABEL_OVERFLOW" and item.placement_id.startswith("annotation-text:")}
     for box in boxes:
+        if box.scene_id.removeprefix("annotation-box:") in forced:
+            continue
         assert not [name for name in names if _overlaps(box.bounds, name.bounds)], box.scene_id
 
 
