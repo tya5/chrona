@@ -4,6 +4,7 @@ from datetime import date
 import pytest
 
 from chrona.resources import builtin_preset_source_root, safe_load
+from tests.integration.test_ja_jp_builtin_wording import _font_descriptor
 from tests.support.synthetic_review import bundle, project, render, span
 
 
@@ -20,7 +21,7 @@ def test_october_plan_does_not_emit_a_thinned_padding_only_q3_axis_label(tmp_pat
     rendered = render(
         tmp_path,
         project({"task": span("task", date(2026, 10, 5), 220)}),
-        presentation=parts, locale="ja-JP",
+        presentation=parts, locale="ja-JP", font_metrics_path=_font_descriptor(tmp_path),
     )
     svg = rendered.artifact.content.decode("utf-8")
     diagnostics = rendered.scene.diagnostics
@@ -69,6 +70,7 @@ def test_target_design_axis_keeps_padding_only_period_out_of_actual_svg(tmp_path
         project({"task": span("task", date(2026, 10, 5), 220)}),
         presentation=parts, summary=summary, icon_catalogs=catalogs,
         visual_profile="chrona-output/visual/v0.7-svg", locale="ja-JP",
+        font_metrics_path=_font_descriptor(design_tmp),
     )
     svg = rendered.artifact.content.decode("utf-8")
     surface = rendered.scene.surfaces[0]

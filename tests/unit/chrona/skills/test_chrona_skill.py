@@ -199,8 +199,17 @@ def test_the_skill_links_notes_risks_and_lanes_and_the_page_snippet_renders(tmp_
     status, out, _err = run_cli(monkeypatch, capsys, "render", str(plan), "--preset", "target-b", "--output", str(output))
     rendered = json.loads(out)
     assert status == 0 and rendered["status"] == "ok"
-    codes = {item["code"] for item in rendered["warnings"]}
-    assert not {code for code in codes if code.startswith("W_")}, codes
+    # Spec60 now reports scale collisions under every supported vision even
+    # when the Scheme claims none; this example's existing palette yields one.
+    scale_warnings = [item for item in rendered["warnings"]
+                      if item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
+    assert len(scale_warnings) == 1
+    scale_warning = scale_warnings[0]
+    assert (scale_warning["scaleId"], scale_warning["values"], scale_warning["vision"]) == (
+        "owner", ["Platform", "Product"], "tritanopia")
+    unexpected = [item for item in rendered["warnings"]
+                  if item["code"].startswith("W_") and item is not scale_warning]
+    assert not unexpected, unexpected
     painted = output.read_text(encoding="utf-8")
     for lane in ("Platform", "Product", "Unassigned"):  # one lane per owner, and the gates without one
         assert f">{lane}<" in painted
