@@ -67,7 +67,9 @@ def _render(path, *, shape=None, role="planned", parts=None):
 def test_circle_borrows_keyed_fill_or_stroke_ink_and_has_completed_geometry(tmp_path, role):
     before = _render(tmp_path / "before", role=role)
     after = _render(tmp_path / "after", shape="circle", role=role)
-    old = next(item for item in before.surface.primitives if item.scene_id == f"legend-swatch:{role}")
+    old = next(item for item in before.surface.primitives
+               if item.scene_id == f"legend-swatch:{role}"
+               or item.scene_id.startswith(f"legend-swatch:{role}:"))
     circle = next(item for item in after.surface.primitives if item.scene_id == old.scene_id)
     assert circle.kind == "Symbol"
     assert circle.symbol.outline[-1].points[-1] == circle.symbol.outline[0].points[0]

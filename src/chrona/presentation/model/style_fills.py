@@ -189,7 +189,6 @@ def complete_style_fills(
                  "domain": policy, "missing": "base"},
                 body.get("colorScales"), body.get("categorySlots"),
                 source_ref=references[scale_id],
-                color_vision=tuple(body.get("colorVision", ())),
                 observed=observed_domain,
                 reserved=reserved, other_color=other_color,
             )

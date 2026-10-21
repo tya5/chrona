@@ -191,11 +191,48 @@ def test_fill_palette_ignores_decorative_border_for_grouping_and_progress_suppre
     assert outlined.identity != fill.identity
     assert outlined.grouping_identity == fill.grouping_identity
 
-    host = SimpleNamespace(placement_id="host", semantic_id="actual")
+    host = SimpleNamespace(placement_id="host", semantic_id="actual", mark_shape="span")
     shape = SimpleNamespace(host_placement_id="host")
     monkeypatch.setattr(realized_legend, "actual_mark_keys", lambda *args: (outlined,))
     assert not realized_legend._progress_adds_actual_ink(progress, (shape,), (host,), _content(()), tokens,
                                                          PaintWitnessCapabilities())
+
+
+def test_point_states_expand_at_owner_position_without_overriding_authored_labels(monkeypatch):
+    tokens = _tokens()
+    keys = tuple(replace(_key(tokens, color, occurrence_id=state, family="milestone"),
+                         point_state=state) for state, color in (
+                             ("forecast", "#123456"), ("planned", "#654321"), ("actual", "#ABCDEF")))
+    monkeypatch.setattr(legend_candidates, "source_point_keys", lambda *args, **kwargs: keys)
+    content = _content((SurfaceLegendEntry("planned", "Timeline"),
+                        SurfaceLegendEntry("milestone", "Review"), SurfaceLegendEntry("background", "Canvas")),
+                       legend_defaults=(("planned-plain", "Plan"), ("actual", "Actual"),
+                                        ("forecast", "Estimate"), ("milestone", "Milestone")))
+    result = prepare_realized_legend_candidates(content, tokens, mark_block_size=10,
+                                               paint_capabilities=PaintWitnessCapabilities())
+    assert [entry.label for entry in result.legend_entries] == [
+        "Timeline", "Review · Plan", "Review · Actual", "Review · Estimate", "Canvas"]
+    assert len({entry.source_identity for entry in result.legend_entries[1:4]}) == 3
+
+
+def test_point_owner_single_state_keeps_label_and_actual_span_stays_separate(monkeypatch):
+    tokens = _tokens()
+    span = _key(tokens, "#123456")
+    point = replace(span, point_state="actual")
+    monkeypatch.setattr(legend_candidates, "source_actual_keys", lambda *args, **kwargs: (span,))
+    monkeypatch.setattr(legend_candidates, "source_point_keys", lambda *args, **kwargs: (point,))
+    content = _content((SurfaceLegendEntry("actual", "Observed"),),
+                       legend_defaults=(("actual", "Actual"), ("milestone", "Gate")))
+    result = prepare_realized_legend_candidates(content, tokens, mark_block_size=10,
+                                               paint_capabilities=PaintWitnessCapabilities())
+    assert [entry.label for entry in result.legend_entries] == ["Observed", "Observed · Gate"]
+    assert result.legend_entries[0].source_identity != result.legend_entries[1].source_identity
+
+    monkeypatch.setattr(legend_candidates, "source_point_keys", lambda *args, **kwargs: (
+        replace(point, family="review"),))
+    result = prepare_realized_legend_candidates(_content((SurfaceLegendEntry("review", "Decision"),)),
+        tokens, mark_block_size=10, paint_capabilities=PaintWitnessCapabilities())
+    assert [entry.label for entry in result.legend_entries] == ["Decision"]
 
 
 def test_multipart_fill_palette_uses_all_fill_parts_not_outline_inks():
@@ -256,7 +293,7 @@ def test_actual_ink_identity_normalizes_implicit_and_explicit_full_opacity():
 
 
 def test_final_actual_selection_keeps_premeasured_representative_geometry():
-    from chrona.presentation.layout.realized_legend import _final_actual_representative
+    from chrona.presentation.layout.realized_legend import _final_representative
 
     tokens = _tokens()
     reserved = _key(tokens, "#123456", ("ahead",), "reserved")
@@ -264,7 +301,7 @@ def test_final_actual_selection_keeps_premeasured_representative_geometry():
                               glyph=RealizedGlyphInk(None, (("circle",),),
                                                      (_key(tokens, "#123456").paint,), (18, 16)))
 
-    selected = _final_actual_representative(reserved, realized_glyph)
+    selected = _final_representative(reserved, realized_glyph)
 
     assert selected.glyph is None
     assert selected.paint is reserved.paint
@@ -274,7 +311,7 @@ def test_final_actual_selection_keeps_premeasured_representative_geometry():
     reserved_glyph = replace(reserved, glyph=RealizedGlyphInk(
         None, (("diamond",),), (reserved.paint,), (22, 20)))
     realized_scalar = _key(tokens, "#123456", ("behind",), "visible-scalar")
-    selected_glyph = _final_actual_representative(reserved_glyph, realized_scalar)
+    selected_glyph = _final_representative(reserved_glyph, realized_scalar)
     assert selected_glyph.glyph == reserved_glyph.glyph
     assert selected_glyph.glyph.footprint == (22, 20)
 
@@ -300,7 +337,7 @@ def test_progress_key_is_distinct_only_when_its_completed_host_actual_ink_differ
     actual = _key(tokens, "#123456")
     progress = _key(tokens, "#123456", family="progressFill")
     shape = SimpleNamespace(host_placement_id="host")
-    host = SimpleNamespace(placement_id="host", semantic_id="actual")
+    host = SimpleNamespace(placement_id="host", semantic_id="actual", mark_shape="span")
     monkeypatch.setattr(realized_legend, "actual_mark_keys", lambda *args: (actual,))
     assert not realized_legend._progress_adds_actual_ink(progress, (shape,), (host,), _content(()), tokens,
                                                          PaintWitnessCapabilities())

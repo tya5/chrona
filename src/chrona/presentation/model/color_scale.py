@@ -152,14 +152,13 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
                         scales: Mapping[str, object] | None,
                         categories: Mapping[str, object] | None,
                         *, source_ref: str = "/body/colorEncoding",
-                        color_vision: tuple[str, ...] = (),
                         observed: tuple[str, ...] = (),
                         reserved: tuple[str, ...] = (),
                         other_color: str | None = None) -> ResolvedColorScale | None:
     """Resolve an admitted encoding against exact Theme and Scheme declarations.
 
-    Domain values whose colours a reader cannot separate, under normal vision
-    or a vision the Scheme claims, are returned as non-fatal collisions.
+    Domain values whose colours a reader cannot separate under normal vision
+    or any supported colour-vision simulation are returned as collisions.
     A ``firstAppearance`` domain is the distinct ``observed`` source values in
     projection order; a Theme ``palette`` assigns them its distinct slots in order and
     folds every value beyond them into one neutral ``other_color`` (#1628).  ``reserved``
@@ -247,5 +246,5 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
                                    f"/body/categories/{_pointer_token(slot)}")
         colors.append((value, color))
     return ResolvedColorScale(scale_id, target, source["field"], tuple(domain), tuple(colors),
-                              scale_collisions(scale_id, tuple(colors[:len(colors) - len(folded)]), color_vision),
+                              scale_collisions(scale_id, tuple(colors[:len(colors) - len(folded)])),
                               derived, source_ref, folded, palette_size, missing)

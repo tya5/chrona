@@ -56,15 +56,13 @@ def _sub(tmp_path, name):
 def _entries(rendered, roles=ROLES):
     found = {}
     for role in roles:
-        if role == "actual":
-            swatch = next(item for item in rendered.surface.primitives
-                          if item.purpose == "legend-swatch" and item.visual_role == "actual")
-            label = next(item for item in rendered.surface.primitives
-                         if item.purpose == "legend-label" and item.source_ref == swatch.source_ref)
-        else:
-            swatch = next(item for item in rendered.surface.primitives
-                          if item.scene_id.startswith(f"legend-swatch:{role}"))
-            label = next(item for item in rendered.surface.primitives if item.scene_id == f"legend:{role}")
+        prefix = f"legend-swatch:{role}"
+        expected_kind = "Symbol" if role == "milestone" else "Rect"
+        swatch = next(item for item in rendered.surface.primitives
+                      if item.purpose == "legend-swatch" and item.kind == expected_kind
+                      and (item.scene_id == prefix or item.scene_id.startswith(prefix + ":")))
+        label = next(item for item in rendered.surface.primitives
+                     if item.purpose == "legend-label" and item.source_ref == swatch.source_ref)
         found[role] = (swatch.bounds, label.bounds)
     return found
 

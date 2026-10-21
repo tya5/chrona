@@ -3,7 +3,9 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, PrimitiveProvenance
+from chrona.presentation.model.diagnostic_sources import (
+    ColorPairFinding, DiagnosticProvenance, DiagnosticSubject, PrimitiveProvenance,
+)
 from chrona.usecases.diagnostic_messages import collapse_warnings
 from chrona.usecases.warning_ledger import collect_render_warnings
 from chrona.usecases.render_review import _finding_subjects
@@ -95,3 +97,42 @@ def test_fit_payload_pointer_changes_without_changing_existing_raw_identity():
     assert before.identity == after.identity
     assert after.payload["sourceRef"] == "/objects/original" and "Visible name" in after.payload["message"]
     assert "needs 30x10" in after.payload["message"]
+
+
+def test_legend_pair_measurements_and_subjects_follow_each_duplicate_diagnostic_occurrence():
+    diagnostic = "W_LEGEND_COLOR_NOT_SEPARABLE:normal:5.0"
+    pairs = (("risk", "Risk", "progress", "Progress"),
+             ("gate", "Gate", "forecast", "Forecast"),
+             ("plan", "Plan", "actual", "Actual"))
+    provenance = tuple(DiagnosticProvenance(
+        diagnostic,
+        (DiagnosticSubject.project_object(left_id, left), DiagnosticSubject.project_object(right_id, right)),
+        ColorPairFinding("normal", 4.9991),
+    ) for left_id, left, right_id, right in pairs)
+    records = _collect((diagnostic,) * len(pairs), provenance)
+
+    assert [record.payload["vision"] for record in records] == ["normal"] * 3
+    assert [record.payload["deltaE"] for record in records] == [4.9991] * 3
+    rows = collapse_warnings(record.payload for record in records)
+    assert len(rows) == 3
+    for row, pair in zip(rows, pairs, strict=True):
+        assert [item["sourceRef"] for item in row["sourceSubjects"]] == [
+            f"/objects/{pair[0]}", f"/objects/{pair[2]}"]
+        assert "ΔE=4.9991" in row["message"]
+        assert "5.0" in row["diagnostic"]
+
+
+def test_legend_pair_reporting_does_not_truncate_large_pair_inventory():
+    diagnostic = "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:2.0"
+    provenances = tuple(DiagnosticProvenance(
+        diagnostic,
+        (DiagnosticSubject.project_object(f"left-{index}", f"Left {index}"),
+         DiagnosticSubject.project_object(f"right-{index}", f"Right {index}")),
+        ColorPairFinding("deuteranopia", 2.0),
+    ) for index in range(25))
+    records = _collect((diagnostic,) * len(provenances), provenances)
+
+    rows = collapse_warnings(record.payload for record in records)
+    assert len(rows) == 25
+    assert all("count" not in row and "occurrences" not in row for row in rows)
+    assert rows[-1]["sourceSubjects"][0]["sourceRef"] == "/objects/left-24"

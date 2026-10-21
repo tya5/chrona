@@ -66,16 +66,20 @@ def collect_render_warnings(
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
     records = []
-    subjects_by_diagnostic: dict[str, list[tuple[DiagnosticSubject, ...]]] = {}
+    subjects_by_diagnostic: dict[str, list[DiagnosticProvenance]] = {}
     for item in surface_provenance:
-        subjects_by_diagnostic.setdefault(item.diagnostic, []).append(item.subjects)
+        subjects_by_diagnostic.setdefault(item.diagnostic, []).append(item)
     for diagnostic in surface_diagnostics:
         if diagnostic.startswith("W_"):
             provenance = subjects_by_diagnostic.get(diagnostic, [])
-            subjects = provenance.pop(0) if provenance else ()
-            records.append(_with_subjects(RenderWarning(diagnostic, {
+            item = provenance.pop(0) if provenance else None
+            subjects = item.subjects if item is not None else ()
+            payload = {
                 "code": diagnostic.split(":", 1)[0], "severity": "warning", "diagnostic": diagnostic,
-            }), subjects))
+            }
+            if item is not None and item.color_pair is not None:
+                payload.update(vision=item.color_pair.vision, deltaE=item.color_pair.delta_e)
+            records.append(_with_subjects(RenderWarning(diagnostic, payload), subjects))
     for item in tabular_warnings:
         records.append(_record("W_FONT_TABULAR_UNAVAILABLE",
                                {"role": item.role, "family": item.family, "weight": item.weight},
