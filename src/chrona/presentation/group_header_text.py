@@ -20,6 +20,7 @@ from chrona.presentation.number_names import kanji_number
 ORDINAL_FORMS = ("arabic", "zero-padded", "roman", "kanji", "kanji-formal")
 PLACEHOLDERS = ("ordinal", "title", "secondary")
 FIGURE_PREFIX = "figure:"
+WORDING_PREFIX = "wording:"
 ROLE_SEPARATOR = "|"
 ROLE_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
 
@@ -59,9 +60,17 @@ class HeaderTemplate:
         """The identifiers of the derived figures this template shows."""
         return frozenset(value[len(FIGURE_PREFIX):] for value in self.fields if value.startswith(FIGURE_PREFIX))
 
+    @property
+    def wording_keys(self) -> frozenset[str]:
+        """The built-in wording keys this template shows, ``{wording:<key>}`` (#1880)."""
+        return frozenset(value[len(WORDING_PREFIX):] for value in self.fields if value.startswith(WORDING_PREFIX))
 
-def _is_placeholder(name: str, placeholders: tuple[str, ...] = PLACEHOLDERS, allow_figures: bool = True) -> bool:
-    return name in placeholders or (allow_figures and name.startswith(FIGURE_PREFIX) and len(name) > len(FIGURE_PREFIX))
+
+def _is_placeholder(name: str, placeholders: tuple[str, ...] = PLACEHOLDERS, allow_figures: bool = True,
+                    allow_wording: bool = False) -> bool:
+    return (name in placeholders
+            or (allow_figures and name.startswith(FIGURE_PREFIX) and len(name) > len(FIGURE_PREFIX))
+            or (allow_wording and name.startswith(WORDING_PREFIX) and len(name) > len(WORDING_PREFIX)))
 
 
 @dataclass(frozen=True)
@@ -78,7 +87,8 @@ def template_roles(source: str) -> frozenset[str]:
 
 
 def parse_template(source: str, *, placeholders: tuple[str, ...] = PLACEHOLDERS, code: str = "E_VIEW_GROUP_HEADER_TEMPLATE",
-                   allow_figures: bool = True, allow_roles: bool = False) -> HeaderTemplate:
+                   allow_figures: bool = True, allow_roles: bool = False,
+                   allow_wording: bool = False) -> HeaderTemplate:
     """Parse ``source`` or raise ``code`` for any other brace use.
 
     The grammar (literal text, closed ``{name}`` placeholders, ``{{`` and ``}}``) is shared with the
@@ -103,7 +113,7 @@ def parse_template(source: str, *, placeholders: tuple[str, ...] = PLACEHOLDERS,
                 name, _, role = name.partition(ROLE_SEPARATOR)
                 if ROLE_PATTERN.fullmatch(role) is None:
                     raise GroupHeaderTextError(code, f"malformed role mark in {source!r}")
-            if not _is_placeholder(name, placeholders, allow_figures):
+            if not _is_placeholder(name, placeholders, allow_figures, allow_wording):
                 raise GroupHeaderTextError(code, f"unknown or unterminated placeholder in {source!r}")
             if literal:
                 parts.append(("text", "".join(literal)))

@@ -32,9 +32,9 @@ _FIGURE_MARKER = "{figure:"
 _CODE = "E_VIEW_FIGURE_TEMPLATE"
 
 
-def _template(source: str):
+def _template(source: str, *, allow_wording: bool = False):
     try:
-        return parse_template(source, placeholders=(), code=_CODE, allow_figures=True)
+        return parse_template(source, placeholders=(), code=_CODE, allow_figures=True, allow_wording=allow_wording)
     except GroupHeaderTextError as error:
         raise FigureTextError(_CODE, error.detail) from error
 
@@ -60,8 +60,9 @@ class FigureTextProgram:
         return _bind(self.template, figures, formats)
 
 
-def compile_figure_text(source: str) -> FigureTextProgram:
-    return FigureTextProgram(_template(source))
+def compile_figure_text(source: str, *, allow_wording: bool = False) -> FigureTextProgram:
+    """Close a figure template; ``allow_wording`` admits ``{wording:<key>}`` the caller resolves before binding (#1880)."""
+    return FigureTextProgram(_template(source, allow_wording=allow_wording))
 
 
 def _bind(template: HeaderTemplate, figures: Mapping[str, int],
@@ -72,6 +73,8 @@ def _bind(template: HeaderTemplate, figures: Mapping[str, int],
         if kind == "text":
             parts.append(value)
             continue
+        if value.startswith("wording:"):
+            raise FigureTextError(_CODE, f"unresolved wording placeholder {value!r}")
         figure_id = value[len("figure:"):]
         if figure_id not in figures:
             raise FigureTextError("E_VIEW_FIGURE_UNKNOWN",

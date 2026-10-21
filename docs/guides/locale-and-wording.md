@@ -89,6 +89,13 @@ layout that keeps `text: Notes` still draws English under `--locale ja-JP`; refe
 The View's `wording.keys` override reaches it like any key, and a View `slotHeadingText` copy for the slot still wins. The
 heading's role `textTransform` styles the resolved text as before.
 
+**A wording key inside a longer text.** A heading part or heading template of a View, a slot caption `heading.template` and a
+Summary panel `title` can show a table entry in the middle of their text with the placeholder `{wording:<key>}`, for example
+`subtitle: [{text: "{wording:column.task} · {figure:items}"}]`, `heading: {template: "{wording:slot.notes} {figure:n}"}` and
+`title: "{wording:summary.days}"`. The text follows the render locale like any reference, and the View's `wording.keys` override
+reaches it. Braces stay grammar in heading parts and caption templates (`{{` and `}}` are literal braces); a Summary `title` is
+read as a template only when it contains a `{wording:` marker. An unknown key is `E_WORDING_KEY_UNKNOWN`.
+
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
 

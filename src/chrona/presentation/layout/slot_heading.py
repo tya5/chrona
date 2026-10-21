@@ -18,6 +18,7 @@ from typing import Any, TYPE_CHECKING
 from chrona.presentation.count_text import CountTextError
 from chrona.presentation.figure_text import FigureTextError, FigureTextProgram, FigureTextReadError, compile_figure_text
 from chrona.presentation.model.wording_tables import is_wording_ref
+from chrona.presentation.wording_markers import MARKER, resolve_figure_template_wording
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
@@ -54,6 +55,9 @@ class SlotHeadings:
 def resolve_heading_wording(resolved_layout: ResolvedLayoutProfile, resolver: Any) -> ResolvedLayoutProfile:
     """Replace each slot heading `text: {wording: key}` by the locale's text (#1827).
 
+    A heading `template` may show `{wording:<key>}`; it is replaced the same way and the template keeps its
+    `{figure:<id>}` markers (#1880). An unknown key is `E_WORDING_KEY_UNKNOWN`.
+
     `resolver` is the `WordingResolver` of the Render Context locale and the View's `wording.keys`, the same one
     every other wording reference reads. The result carries a literal caption, so measurement, placement and the
     Scene never see a reference. A profile with no reference is returned as it came.
@@ -67,6 +71,14 @@ def resolve_heading_wording(resolved_layout: ResolvedLayoutProfile, resolver: An
             heading = result.get("heading")
             if isinstance(heading, Mapping) and is_wording_ref(heading.get("text")):
                 result["heading"] = {**heading, "text": resolver.resolve(heading["text"])}
+                changed = True
+            if isinstance(heading, Mapping) and isinstance(heading.get("template"), str) and MARKER in heading["template"]:
+                try:
+                    template = resolve_figure_template_wording(heading["template"], resolver.text)
+                except ValueError as error:  # E_WORDING_KEY_UNKNOWN names the key
+                    raise LayoutError("E_WORDING_KEY_UNKNOWN", "/heading/template", str(result.get("id")),
+                                      detail=str(error)) from error
+                result["heading"] = {**result["heading"], "template": template}
                 changed = True
             return result
         if isinstance(value, (list, tuple)):
@@ -136,7 +148,7 @@ def compile_slot_heading_programs(root: Mapping[str, Any], figures: Any) -> tupl
         if isinstance(heading, Mapping) and "template" in heading:
             pointer = f"{path}/heading/template"
             try:
-                program = compile_figure_text(heading["template"])
+                program = compile_figure_text(heading["template"], allow_wording=True)
                 for identifier in sorted(program.figure_ids):
                     target = declared.get(identifier)
                     if target is None:

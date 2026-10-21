@@ -693,6 +693,16 @@ not selected Project notes. This late source is table-timeline-only and read
 only by heading parts/slot captions; other consumers refuse it with
 `E_FIGURE_LAYOUT_SCOPE` at their reference. Unused late figures still resolve.
 
+**Wording placeholders in heading text (#1880).** Heading text (a string, or the `text` of a
+part) admits `{wording:<key>}` beside `{project}`, `{asOf}`, `{calendar}` and `{figure:<id>}`: the
+built-in wording-table entry of the Render Context locale, with the View `wording.keys`
+override applied (Spec 63). It is closed to literal text when the heading is composed, so
+Layout measures the resolved text. An unknown key is `E_WORDING_KEY_UNKNOWN` at the part's
+`text` pointer. A Summary panel `title` admits the same placeholder (Spec 25): a title with a
+`{wording:` marker is read as a template (`{{`/`}}` are literal braces; `{figure:..}` is not
+admitted), any other title is plain text as before; an unknown key is
+`E_WORDING_KEY_UNKNOWN` at `/body/panels/<i>/title`.
+
 Optional `figureFormats` maps declared count-figure IDs to closed text formats.
 Layout `viewDefaults.figureFormats` offers whole-member replacement; a View
 map, including `{}`, replaces it. Malformed shapes/options retain the schema
