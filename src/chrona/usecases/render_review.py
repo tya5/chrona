@@ -454,7 +454,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
-    selected_content = _complete_annotation_headers(selected_content, theme, projection, view)
+    selected_content = _complete_annotation_headers(selected_content, theme, projection, view,
+                                                       wording_resolver(environment.locale, view.wording))
     routing_advisory: RoutingCostAdvisory | None = None
 
     def observe_layout_work(event: RenderEvent) -> None:
@@ -1048,7 +1049,7 @@ def _require_forecast_occurrence_coverage(view: ViewInput, projection: Any) -> N
 
 
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],
-                                 projection: Any, view: ViewInput) -> SurfaceContentInput:
+                                 projection: Any, view: ViewInput, resolver: Any = None) -> SurfaceContentInput:
     """Compose kind text with explicit View facts before source measurement or Layout."""
     tokens = ThemeTokenView(theme)
     figures = dict(projection.figures)
@@ -1056,7 +1057,7 @@ def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[st
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     annotations = []
     for annotation in content.annotations:
-        token = tokens.annotation_kind(annotation.kind)
+        token = tokens.annotation_kind(annotation.kind, resolver)
         if token is None:
             annotations.append(annotation)
             continue

@@ -561,8 +561,18 @@ properties:
           required: [label]
           additionalProperties: false
           properties:
-            label: {description: "Primary label of the kind; the first header line unless the title template changes it.", type: string, minLength: 1}
-            secondary: {description: "Optional second-script label, set as a second header line unless the title template shows it.", type: string, minLength: 1}
+            label:
+              description: "Primary label of the kind; the first header line unless the title template changes it. A literal, shown as written, or a `{wording: <key>}` reference resolved for the Render Context locale from the built-in wording table (#1865); an unknown key is E_WORDING_KEY_UNKNOWN when the Theme is resolved."
+              examples: [RISK, {wording: annotation.risk}]
+              oneOf:
+                - {type: string, minLength: 1}
+                - {$ref: "#/$defs/annotationKindWordingRef"}
+            secondary:
+              description: "Optional second-script label, set as a second header line unless the title template shows it. A literal or a `{wording: <key>}` reference, as for `label` (#1865)."
+              examples: [WARNING, {wording: annotation.note}]
+              oneOf:
+                - {type: string, minLength: 1}
+                - {$ref: "#/$defs/annotationKindWordingRef"}
             title: {description: "Optional header template of literal text and the closed placeholders {label}, {secondary}, {subject} (the anchored object's title), {subjectId} (its id) and {figure:id} (a global figure declared by the View); {{ and }} are literal braces. Default is {label}.", type: string, minLength: 1, examples: ["{label} {figure:countdown}"]}
             heading: {description: "Optional separate heading template using the title grammar, between the bar and body in annotation-heading typography.", type: string, minLength: 1}
             color: {description: "Optional Scheme intent or explicit category slot that paints the kind's bar, accent and stamp; checked at Theme resolution.", type: string, minLength: 1}
@@ -603,6 +613,13 @@ properties:
         propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
         additionalProperties: {description: "Named source-measurement metric.", type: string, minLength: 1}
 $defs:
+  annotationKindWordingRef:
+    description: "A `{wording: <key>}` reference to a built-in wording-table entry (#1865). The key is checked against the table when the Theme is resolved, so an unknown key fails with E_WORDING_KEY_UNKNOWN naming it."
+    type: object
+    required: [wording]
+    additionalProperties: false
+    properties:
+      wording: {description: "The wording key.", type: string, minLength: 1}
   seededPatternTile:
     description: "Positive finite physical-pixel extent of one repeating seeded tile (#888)."
     type: object
