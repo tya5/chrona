@@ -47,7 +47,7 @@ from chrona.usecases.authoring_commands import apply_authoring_command, parse_au
 from chrona.usecases.authoring_workspace import create_workspace, validate_workspace
 from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
-from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
+from chrona.usecases.draft_render import DraftRenderRequest, render_draft, warning_payloads
 from chrona.usecases.failure_report import (
     FailureReport, StableFailure, collapse_records, diagnostic_record, rejection_report, report_failure,
 )
@@ -239,8 +239,7 @@ def _workspace_command_schema() -> dict[str, Any]:
 
 
 def _draft_options() -> dict[str, Any]:
-    return {"viewport": {"type": "string", "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$",
-                         "default": DEFAULT_VIEWPORT},
+    return {"viewport": {"type": "string", "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$"},
             "locale": {"enum": ["en-US", "ja-JP"], "default": "en-US"},
             "format": {"enum": ["svg", "png"], "default": "svg"},
             "inline": {"enum": ["none", "image", "svg"], "default": "image"}}
@@ -434,9 +433,11 @@ def _rasterizer_importable() -> bool:
     return True
 
 
-def _tool_viewport(arguments: dict[str, Any]) -> str:
-    viewport = arguments.get("viewport", DEFAULT_VIEWPORT)
-    if not _VIEWPORT.fullmatch(viewport):
+def _tool_viewport(arguments: dict[str, Any]) -> str | None:
+    if "viewport" not in arguments:
+        return None
+    viewport = arguments["viewport"]
+    if not isinstance(viewport, str) or not _VIEWPORT.fullmatch(viewport):
         raise InvalidArgumentsError("viewport must match WIDTHxHEIGHT or WIDTHxauto (3 to 5 digits, no leading zero)")
     return viewport
 

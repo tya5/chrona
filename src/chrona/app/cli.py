@@ -19,7 +19,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml
-from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_render_context
+from chrona.presentation.model.closure import RenderClosure, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress, RenderProgressEvent
 from chrona.usecases.diagnostic_messages import describe_warning, warning_message
@@ -335,7 +335,7 @@ def _parser() -> JsonArgumentParser:
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
     command.add_argument("--system-fonts", action="store_true", help="require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)")
-    command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
+    command.add_argument("--viewport", help="explicit Draft viewport WIDTHxHEIGHT or WIDTHxauto; omit to use the Layout Profile page size, or 1600xauto when none is declared")
     command.add_argument("--progress", action="store_true",
                          help="report render phases and routing counts on stderr (automatic for terminal stderr)")
     command.add_argument("--relations", choices=("none", "semantic"),
@@ -398,7 +398,7 @@ def _parser() -> JsonArgumentParser:
     command = sub.add_parser("render-workspace", help="draw a slide from a guided authoring workspace (a draft)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
     command.add_argument("--forecast", action="store_true", help="derive the explicit forecast from the workspace Actual input")
-    command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
+    command.add_argument("--viewport", help="explicit Draft viewport WIDTHxHEIGHT or WIDTHxauto; omit to use the Layout Profile page size, or 1600xauto when none is declared")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
