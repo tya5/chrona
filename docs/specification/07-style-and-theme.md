@@ -455,7 +455,11 @@ the concrete role's `strokeWidth` pointer; there is no raw-path fallback.
 This authoring form is Theme v0.15; derived Theme inheritance is v0.16.
 
 **Derived Theme members (#1401).** A derived Theme (v0.16) names its pinned base (`extends`: id, path, `sourceContentIdentity`,
-`contentIdentity`) and may declare `values`, `roles`, `colorBindings`, `colorScales`, `annotationKinds` and `metrics`. An entry it
+`contentIdentity`) and may declare `values`, `roles`, `colorBindings`, `colorScales`, `annotationKinds`, `metrics`,
+`contrastPolicy` and `markStack` (#1854: every body member of a standalone v0.15 Theme is accepted; none is non-inheritable).
+`contrastPolicy` merges class by class: a class the derived Theme declares (`mark`, `stateText`, `groundText`, `decoration`,
+`unsupportedGround`, `asOfConeGround`, `exceptions`) replaces the base's, and an omitted class keeps the base's value;
+`exceptions` is replaced as a whole list. `markStack` replaces the base's stack as a whole, because a stack is one ordered unit. An entry it
 declares replaces the base's entry of that name as a whole, or is added when the base declares none of that name; nothing is
 removed. Roles merge one level further: each declared role member replaces or
 adds that member; omitted members of the base role remain. A member's value is

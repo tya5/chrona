@@ -191,6 +191,7 @@ SCHEMA_PARTS: tuple[str, ...] = (
 # vocabulary parts. Keep this list small and independent from SCHEMA_PARTS.
 SCHEMA_REFERENCE_TARGETS: tuple[str, ...] = (
     "render-context-v0.17.schema.yaml",
+    "theme-v0.15.schema.yaml",  # the derived Theme v0.16 reuses its markStack and contrastPolicy members (#1854)
 )
 
 
