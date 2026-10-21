@@ -578,6 +578,20 @@ successful opposite-side placement emits
 reason `other-side-of-as-of`, including when the first candidate fits. If the
 pass fails, retain the existing fallback and diagnostics.
 
+When every declared `nearest-free` candidate has failed, the terminal visible
+placement of an annotation box (#1869) MUST NOT cover a mark of an object other
+than the annotation's anchor while any lattice position within the first
+declared candidate's `maxPositions` budget (fine, then coarse) avoids one. Positions are
+ranked by the number of other objects' marks covered, then the area of those
+marks covered, then the number of other declared obstacles met, then nearest
+first. When every position covers another object's mark, the least-covering
+one is used and Layout emits `W_LAYOUT_ANNOTATION_COVERS_MARK:<annotation-id>:<object-id>`
+once per covered object, naming that object. The `W_LAYOUT_LABEL_OVERFLOW` of
+such a box reports the box size as the size required and, as the size
+available, the largest free rectangle of the candidate's region (on the
+anchor's side of an in-window as-of rule, and connected to the anchor when the
+candidate has a connector), not the region itself.
+
 ### 8.2 Annotation connector topology after the shared inventory
 
 The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)

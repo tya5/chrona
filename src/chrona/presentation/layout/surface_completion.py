@@ -343,11 +343,15 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                 max(0.0, float(timeline_end - mark.bounds.block)),
                 subjects=mark.subjects,
             ))
-    for item, available in visible_label_overflows:
+    for item, available, *declared in visible_label_overflows:
+        # A forced note box reports its own size against the free space its
+        # search actually had (#1869), not the text it carries against the region.
+        required = declared[0] if declared and declared[0] is not None else (
+            float(item.bounds.inline_size), float(item.bounds.block_size))
         fit_warnings.append(FitWarning(
             "W_LAYOUT_LABEL_OVERFLOW", item.placement_id, item.source_ref,
-            "label-collision", "visible-overflow", float(item.bounds.inline_size),
-            float(item.bounds.block_size), available.width, available.height,
+            "label-collision", "visible-overflow", required[0],
+            required[1], available.width, available.height,
             subjects=context.visible_label_subjects.get(
                 item.placement_id, annotation_subjects.get(item.source_ref, ())),
         ))
