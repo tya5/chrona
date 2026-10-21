@@ -180,30 +180,35 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_memb
     for item in routes:
         route_groups.setdefault(item["sourceRef"], []).append(item)
     assert set(route_groups) == declared_identity_set
-    stub_edge_identity = declared_identities[
-        _EDGES.index(("item-15", "end", "item-19", "start", "0d"))]
+    stub_edge_indices = (23, 25)  # edge-23 now correctly recovers after the normal temporal-hull rejection.
+    stub_identities = {declared_identities[index] for index in stub_edge_indices}
     assert all(len(group) == 1 and group[0].get("toInstanceId") is not None
-               for source_ref, group in route_groups.items() if source_ref != stub_edge_identity)
-    paired = route_groups[stub_edge_identity]
-    assert len(paired) == 2
-    edge_25_layout = [item for item in actual_routes if item.source_ref == stub_edge_identity]
-    assert {item["id"] for item in paired} == {item.relation_id for item in edge_25_layout}
-    assert {item.fragment_endpoint for item in edge_25_layout} == {"source", "target"}
-    assert all(item.get("fromInstanceId") is None and item.get("toInstanceId") is None for item in paired)
-    assert all(item.get("fanIn") is None for item in paired)
-    assert sum(item.get("markerStart") is not None for item in paired) == 1
-    assert sum(item.get("markerEnd") is not None for item in paired) == 1
-    assert all(item.terminal_label for item in edge_25_layout)
-    assert {item.label_content for item in edge_25_layout} == {
-        "-> App Store / Google Play review", "QA regression ->",
-    }
-    edge_25_labels = [item for item in options.relation_labels.text
-                      if item.source_ref == stub_edge_identity]
-    assert {item.content for item in edge_25_labels} == {
-        "-> App Store / Google Play review", "QA regression ->",
-    }
-    assert any(stub_edge_identity in getattr(item, "relation_id", "") and item.stage.value == "stub"
-               for item in options.routes.resolution_info)
+               for source_ref, group in route_groups.items() if source_ref not in stub_identities)
+    titles = {identity: title for identity, kind, title, *_ in _OBJECTS if kind != "group"}
+    for index in stub_edge_indices:
+        source, _, target, _, _ = _EDGES[index]
+        relation_identity = declared_identities[index]
+        paired = route_groups[relation_identity]
+        assert len(paired) == 2
+        layout_fragments = [item for item in actual_routes if item.source_ref == relation_identity]
+        assert {item["id"] for item in paired} == {item.relation_id for item in layout_fragments}
+        assert {item.fragment_endpoint for item in layout_fragments} == {"source", "target"}
+        assert all(item.get("fromInstanceId") is None and item.get("toInstanceId") is None for item in paired)
+        assert all(item.get("fanIn") is None for item in paired)
+        assert sum(item.get("markerStart") is not None for item in paired) == 1
+        assert sum(item.get("markerEnd") is not None for item in paired) == 1
+        assert all(item.terminal_label for item in layout_fragments)
+        assert {item.label_content for item in layout_fragments} == {
+            f"-> {titles[target]}", f"{titles[source]} ->",
+        }
+        fragment_labels = [item for item in options.relation_labels.text
+                           if item.source_ref == relation_identity]
+        assert {item.content for item in fragment_labels} == {
+            f"-> {titles[target]}", f"{titles[source]} ->",
+        }
+        assert any(relation_identity in getattr(item, "relation_id", "")
+                   and getattr(item, "stage", None).value == "stub"
+                   for item in options.routes.resolution_info)
     point_targets = {target for _, _, target, endpoint, _ in _EDGES if endpoint == "at"}
     marks = {item["id"]: item for item in primitives
              if item.get("purpose") == "planned" and item.get("sourceRef") in point_targets}

@@ -13,6 +13,9 @@ from chrona.presentation.layout.network_routes import (
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, obstacles_intersect
 from chrona.presentation.layout.path_geometry import flatten_path
+from chrona.presentation.layout.relation_hint_model import (
+    HintMark, HintRelation, HintSurface, HintMarker, PreviousRouteHints,
+)
 from chrona.presentation.layout.relation_style import changed_path_segments
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.surface_content import RelationPresentationFact
@@ -125,6 +128,153 @@ def test_omitted_and_explicit_orthogonal_table_surfaces_and_svg_are_identical():
 
     assert default_scene == explicit_scene
     assert render_v05_svg(default_scene) == render_v05_svg(explicit_scene)
+
+
+def test_surface_hint_outside_temporal_hull_is_invalidated_by_normal_prepare(monkeypatch):
+    import chrona.presentation.layout.surface_routes as surface_routes
+    from chrona.presentation.layout.surface_composer import compose_surface_layout
+    from chrona.presentation.model.info_diagnostics import RelationHintReceipt
+
+    request = _table_case()
+    request = replace(request, layout_manifest=replace(request.layout_manifest,
+        relation_max_bends=8, relation_max_detour_ratio=3.0))
+    baseline = compose_surface_layout(request).placement
+    relation = next(item for item in baseline.relations if item.source_ref == "dep")
+    marks = tuple(HintMark(mark.placement_id, mark.source_ref, "Rect", "planned",
+        (float(mark.bounds.inline), float(mark.bounds.block), float(mark.bounds.inline_size),
+         float(mark.bounds.block_size))) for mark in baseline.marks)
+
+    def hint_marker(marker):
+        if marker is None:
+            return None
+        return HintMarker(tuple((command.kind, command.points) for command in marker.outline),
+            marker.head_length, marker.head_width, marker.attachment_offset, marker.paint_mode)
+
+    points = relation.points
+    # This orthogonal path has a three-pixel right excursion beyond the target
+    # temporal anchor, while remaining inside the plot and clear of the bars.
+    prior_points = (points[0], points[1], points[2], (points[2][0], 500.),
+        (780., 500.), (780., 510.), (points[-2][0], 510.), points[-2], points[-1])
+    hints = PreviousRouteHints(True, (HintSurface("table-timeline", marks, (HintRelation(
+        "dep", relation.from_instance_id, relation.to_instance_id, prior_points,
+        hint_marker(relation.marker_start), hint_marker(relation.marker_end)),)),), None, True)
+    request = replace(request, previous_route_hints=hints)
+
+    # Keep the candidate as proposed so this isolates the completed-route
+    # predicate; the same orthogonal candidate passes all other checks below.
+    monkeypatch.setattr(surface_routes, "remove_substroke_jogs", lambda points, *args, **kwargs: tuple(points))
+    monkeypatch.setattr(surface_routes, "simplify_relation_route", lambda points, **kwargs: tuple(points))
+    strict = compose_surface_layout(request).placement
+    strict_receipt = next(item for item in strict.info_diagnostics
+                          if isinstance(item, RelationHintReceipt))
+    assert strict_receipt.disposition == "invalidated"
+    assert strict_receipt.searched
+
+    monkeypatch.setattr(surface_routes, "temporal_route_inline_hull", lambda *args, **kwargs: (0., 2000.))
+    without_hull = compose_surface_layout(request).placement
+    loose_receipt = next(item for item in without_hull.info_diagnostics
+                         if isinstance(item, RelationHintReceipt))
+    assert loose_receipt.disposition == "accepted"
+    assert not loose_receipt.searched
+
+
+def test_surface_protected_pass_emits_excursion_fact_and_keeps_hard_safety(monkeypatch):
+    from types import SimpleNamespace
+
+    import chrona.presentation.layout.route_search as route_search
+    import chrona.presentation.layout.routing as routing
+    import chrona.presentation.layout.surface_routes as surface_routes
+    from chrona.presentation.layout.model import RelationUnroutableMode
+    from chrona.presentation.layout.surface_composer import compose_surface_layout
+    from chrona.presentation.model.info_diagnostics import CriticalRelationTemporalExcursion
+    from chrona.usecases.draft_render import warning_payloads
+
+    request = _table_case()
+    fact = replace(request.surface_content.relations[0], critical=True)
+    request = replace(request,
+        surface_content=replace(request.surface_content, relations=(fact,)),
+        layout_manifest=replace(request.layout_manifest,
+            relation_unroutable=RelationUnroutableMode.SUPPRESS,
+            relation_max_bends=6, relation_max_detour_ratio=3.0))
+
+    real_select = surface_routes.select_relation_route
+    def one_admitted_pair(port_pairs, **kwargs):
+        selected = tuple(pair for pair in port_pairs
+                         if pair[0].side == "end" and pair[1].side == "start")[:1]
+        return real_select(selected, **{**kwargs, "preferred_routes": (), "preferred_port_pairs": ()})
+    monkeypatch.setattr(surface_routes, "select_relation_route", one_admitted_pair)
+    # Keep this deliberately post-reduction candidate intact so the test can
+    # distinguish the NORMAL hull check from the protected exception.
+    monkeypatch.setattr(surface_routes, "remove_substroke_jogs",
+                        lambda points, *args, **kwargs: tuple(points))
+    monkeypatch.setattr(surface_routes, "simplify_relation_route",
+                        lambda points, **kwargs: tuple(points))
+    monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: ())
+    monkeypatch.setattr(routing, "outward_relation_shape_candidates", lambda *args, **kwargs: ())
+    blocked = [False]
+    graph_queries = []
+
+    def candidate_graph(start, end, obstacles, **kwargs):
+        bounds = kwargs["bounds"]
+        graph_queries.append(kwargs.get("limit"))
+        if kwargs.get("budget") is not None:
+            kwargs["budget"].charge()
+        if kwargs.get("on_expansion") is not None:
+            kwargs["on_expansion"]()
+        if blocked[0]:
+            yield (start, end)  # straight through the intervening required mark
+            return
+        outer_x = min(bounds[2] - 1., max(start[0], end[0]) + 14.)
+        top = max(bounds[1] + 1., min(start[1], end[1]) - 24.)
+        lower = max(top + 10., min(start[1], end[1]) - 14.)
+        yield (start, (start[0], top), (outer_x, top), (outer_x, lower),
+               (end[0], lower), end)
+
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", candidate_graph)
+    completed = compose_surface_layout(request).placement
+    excursions = [item for item in completed.info_diagnostics
+                  if isinstance(item, CriticalRelationTemporalExcursion)]
+    assert len(excursions) == 1
+    fact_info = excursions[0]
+    assert fact_info.actual_inline[0] <= fact_info.allowed_inline[0]
+    assert fact_info.actual_inline[1] > fact_info.allowed_inline[1]
+    assert fact_info.actual_inline[1] - fact_info.allowed_inline[1] == pytest.approx(3.)
+    assert any(code.startswith("I_LAYOUT_CRITICAL_RELATION_SEARCH:")
+               for code in completed.diagnostics)
+    assert not any(code.startswith("I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK:")
+                   for code in completed.diagnostics)
+    assert graph_queries and None in graph_queries  # the selected path came from the protected finite pass
+
+    # The adapter-facing InspectionScene is the layer that projects typed
+    # Layout facts into passive Scene diagnostics; the low-level SceneSurface
+    # helper above intentionally does not perform that use-case aggregation.
+    from chrona.usecases.render_review import _inspection_scene
+    scene_surface = replace(_scene(request), info_diagnostics=completed.info_diagnostics)
+    identity = SimpleNamespace(revision="draft", id="draft", content_identity="draft")
+    closure = SimpleNamespace(context=SimpleNamespace(version="draft", identity=identity), resources=())
+    scene = _inspection_scene(closure, scene_surface, request.projection,
+                              request.surface_content, (1200., 800.))
+    assert any(item.startswith(f"{fact_info.code}:") for item in scene.diagnostics), scene.diagnostics
+    payload, = [item for item in warning_payloads(SimpleNamespace(
+        warning_records=(), info_diagnostics=completed.info_diagnostics))
+        if item["code"] == fact_info.code]
+    assert payload["allowedInline"] == list(fact_info.allowed_inline)
+    assert payload["actualInline"] == list(fact_info.actual_inline)
+    assert payload["severity"] == "info"
+
+    over_quality = replace(request, layout_manifest=replace(
+        request.layout_manifest, relation_max_bends=0))
+    over_quality_result = compose_surface_layout(over_quality).placement
+    assert any(isinstance(item, CriticalRelationTemporalExcursion)
+               for item in over_quality_result.info_diagnostics)
+    assert any(code.startswith("I_LAYOUT_CRITICAL_RELATION_QUALITY_FALLBACK:")
+               for code in over_quality_result.diagnostics)
+
+    blocked[0] = True
+    blocked_result = compose_surface_layout(request).placement
+    assert not any(isinstance(item, CriticalRelationTemporalExcursion)
+                   for item in blocked_result.info_diagnostics)
+    assert any(item.suppressed for item in blocked_result.relations)
 
 
 def _network_routes(*, style=None, obstacle=None):

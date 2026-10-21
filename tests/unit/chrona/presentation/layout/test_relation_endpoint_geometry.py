@@ -1,8 +1,10 @@
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.layout.relation_endpoint_geometry import (
     endpoint_lead_run, endpoint_tangent_minimum, intrinsic_span_endpoint_ink,
+    temporal_route_inline_hull,
 )
 from chrona.presentation.layout.relation_terminals import centred_on_route, marker_geometry
+from chrona.presentation.layout.ports import ConnectorEgress
 import pytest
 
 
@@ -77,3 +79,42 @@ def test_point_or_body_has_no_intrinsic_span_endpoint_geometry():
 
     with pytest.raises(ValueError, match="span endpoint"):
         intrinsic_span_endpoint_ink((10, 20), "at", 1, None, terminal_side="source")
+
+
+def test_temporal_hull_includes_admitted_corridors_and_only_outward_horizontal_leads():
+    marker = centred_on_route(marker_geometry(
+        {"shape": "circle", "headLength": 5, "headWidth": 5}, stroke_width=1), "source")
+    source = ConnectorEgress("end", (10., 20.), (14., 20.), ("comparison-host",),
+                             corridor_host_ids=("comparison-host",))
+    target = ConnectorEgress("above", (30., 35.), (30., 32.), ("target",))
+    # The host corridor already contributes four inline units, so the 3.5px
+    # minimum terminal reserve is fully covered at the source. The target's
+    # vertical corridor/lead contributes no inline reserve.
+    assert temporal_route_inline_hull((source, target), 1., marker, None,
+                                      ((10., 20.), (30., 35.))) == (10., 30.)
+
+
+def test_temporal_hull_adds_residual_outward_lead_but_not_for_zero_residual():
+    marker = marker_geometry({"shape": "triangle", "headLength": 8, "headWidth": 6,
+                              "attachmentOffset": 0}, stroke_width=2)
+    source = ConnectorEgress("end", (10., 20.), (15., 20.), ("host",))
+    target = ConnectorEgress("start", (30., 20.), (20., 20.), ("host2",))
+    # The first endpoint needs 5px after its 5px corridor; the second's 10px
+    # corridor already covers its full terminal minimum.
+    assert temporal_route_inline_hull((source, target), 2., marker, marker,
+                                      ((10., 20.), (30., 20.))) == (10., 30.)
+
+
+def test_vertical_egress_and_comparison_corridor_keep_semantic_inline_hull():
+    source = ConnectorEgress("below", (10., 20.), (10., 28.), ("base",),
+                             corridor_host_ids=("comparison",))
+    target = ConnectorEgress("start", (40., 30.), (40., 30.), ("target",))
+    assert temporal_route_inline_hull((source, target), 1., None, None,
+                                      ((10., 20.), (40., 30.))) == (10., 40.)
+
+
+def test_temporal_hull_includes_point_nominal_anchor_when_selected_port_is_offset():
+    source = ConnectorEgress("start", (14., 20.), (14., 20.), ("point",))
+    target = ConnectorEgress("end", (40., 20.), (40., 20.), ("span",))
+    assert temporal_route_inline_hull((source, target), 1., None, None,
+                                      ((10., 20.), (40., 20.))) == (10., 41.)

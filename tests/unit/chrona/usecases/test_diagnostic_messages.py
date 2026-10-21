@@ -15,6 +15,13 @@ def test_stack_overflow_warning_explains_completed_row_expansion():
     assert "row space was expanded" in text.cause
 
 
+def test_protected_temporal_excursion_has_an_honest_nonfailure_message():
+    text = describe_warning({"code": "I_LAYOUT_CRITICAL_RELATION_TEMPORAL_EXCURSION",
+                             "diagnostic": "I_LAYOUT_CRITICAL_RELATION_TEMPORAL_EXCURSION"})
+    assert "protected critical relation" in text.cause
+    assert "declared safety exception" in text.cause
+
+
 def test_skipped_font_warning_names_requested_missing_and_selected_families():
     text = describe_warning({"code": "W_FONT_FAMILY_SKIPPED", "diagnostic":
         "W_FONT_FAMILY_SKIPPED:role=heading;requested=Missing Family, Noto Sans;"

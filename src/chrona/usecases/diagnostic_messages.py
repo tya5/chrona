@@ -111,6 +111,8 @@ _SURFACE_CAUSES: Mapping[str, str] = {
         "declared finite port/event search domain; this does not establish impossibility outside that domain"),
     "I_LAYOUT_RELATION_MARK_BLOCKED": "a relation was left out because its fallback would cross a primary mark",
     "I_LAYOUT_RELATION_SEGMENT_TOO_SHORT": "a relation was left out because its fallback would have a segment shorter than its stroke width",
+    "I_LAYOUT_CRITICAL_RELATION_TEMPORAL_EXCURSION": (
+        "a selected protected critical relation extends beyond its temporal endpoint hull under the declared safety exception"),
     "E_LAYOUT_ROUTE_THROUGH_MARK": "a relation route crosses a primary mark interior",
     "W_SCENE_RELATION_THROUGH_MARK": "a dependency line runs through a primary mark",
     "W_LAYOUT_RELATION_LABEL_SUPPRESSED": "a relation label was left out of the picture because it does not fit",

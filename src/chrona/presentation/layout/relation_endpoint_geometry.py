@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from math import hypot
+from math import isfinite
 
 from chrona.presentation.layout.obstacles import ObstacleGeometry, ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.relation_terminals import (
     complete_centred_terminals, marker_ink_bounds, terminal_run,
 )
+from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 from chrona.presentation.layout.surface_quality import MarkerGeometry
 
 
@@ -21,6 +23,31 @@ def endpoint_lead_run(exposed_port: tuple[float, float], semantic_port: tuple[fl
     """Mandatory free lead remaining after an already completed host corridor."""
     corridor = hypot(exposed_port[0] - semantic_port[0], exposed_port[1] - semantic_port[1])
     return max(0.0, endpoint_tangent_minimum(width, marker) - corridor)
+
+
+def temporal_route_inline_hull(pair: tuple[ConnectorEgress, ConnectorEgress], width: float,
+                               source_marker: MarkerGeometry | None,
+                               target_marker: MarkerGeometry | None,
+                               temporal_anchors: tuple[tuple[float, float] | None,
+                                                       tuple[float, float] | None]
+                               ) -> tuple[float, float]:
+    """Smallest inline interval containing temporal anchors, corridors and mandatory outward leads."""
+    if (len(pair) != 2 or isinstance(width, bool) or not isinstance(width, (int, float))
+            or not isfinite(width) or width < 0):
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: temporal endpoint hull inputs")
+    source, target = pair
+    source_run = endpoint_lead_run(source.exposed_port, source.semantic_port, width, source_marker)
+    target_run = endpoint_lead_run(target.exposed_port, target.semantic_port, width, target_marker)
+    source_out, target_out = outward_corridor_ends(pair, source_run=source_run, target_run=target_run)
+    if len(temporal_anchors) != 2 or any(anchor is not None and (
+            len(anchor) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                                    or not isfinite(value) for value in anchor))
+            for anchor in temporal_anchors):
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: temporal endpoint anchors")
+    xs = [source.semantic_port[0], source.exposed_port[0], source_out[0],
+          target.semantic_port[0], target.exposed_port[0], target_out[0]]
+    xs.extend(anchor[0] for anchor in temporal_anchors if anchor is not None)
+    return min(xs), max(xs)
 
 
 def intrinsic_span_endpoint_ink(port: tuple[float, float], endpoint: str, width: float,

@@ -6,7 +6,7 @@ import pytest
 
 from chrona.presentation.model.info_diagnostics import (
     RelationResolutionInfo, RelationResolutionStage as Stage, RelationResolutionSummary,
-    RelationPolicySupersession,
+    RelationPolicySupersession, CriticalRelationTemporalExcursion,
 )
 from chrona.usecases.draft_render import warning_payloads
 
@@ -52,6 +52,32 @@ def test_policy_supersession_names_the_two_declared_members_in_every_adapter():
     assert payload["viewMember"] == "visibility.relations.overflow"
     assert payload["layoutMember"] == "relationRouting.unroutable"
     assert payload["severity"] == "info"
+
+
+def test_protected_temporal_excursion_is_typed_scene_cli_and_mcp_info():
+    fact = CriticalRelationTemporalExcursion("table-timeline", "relation:edge-1",
+                                             (10., 40.), (8., 40.))
+    expected = {"surfaceId": "table-timeline", "relationId": "relation:edge-1",
+                "allowedInline": [10., 40.], "actualInline": [8., 40.]}
+    assert fact.code == "I_LAYOUT_CRITICAL_RELATION_TEMPORAL_EXCURSION"
+    assert fact.payload() == expected
+    assert json.loads(fact.scene_diagnostic().split(":", 1)[1]) == expected
+    payload, = warning_payloads(SimpleNamespace(warning_records=(), info_diagnostics=(fact,)))
+    assert {key: value for key, value in payload.items() if key != "message"} == {
+        "code": fact.code, "severity": "info", **expected}
+    assert "leaves its temporal inline hull" in payload["message"]
+
+
+@pytest.mark.parametrize("args", (
+    ("s", "r", (0., 1.), (0., 1.)),
+    ("s", "r", (1., 0.), (2., 3.)),
+    ("s", "r", (0., float("inf")), (0., 2.)),
+    ("s", "r", (0., 2.), (True, 3.)),
+    ("", "r", (0., 1.), (2., 3.)),
+))
+def test_invalid_or_nonexcursion_temporal_evidence_is_rejected(args):
+    with pytest.raises(ValueError, match="E_PRESENTATION_INFO_INVALID"):
+        CriticalRelationTemporalExcursion(*args)
 
 
 @pytest.mark.parametrize("args", (("", "suppress", "relax"), ("s", "bad", "relax"),

@@ -9,7 +9,7 @@ from chrona.presentation.layout.routing import select_relation_route
 
 def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_policy="first-fit", rank=None,
             bounds=(-2., -2., 12., 12.), channels=None, endpoint_lead_runs=None,
-            max_bends=0, search_budget=1, prepare=None):
+            max_bends=0, search_budget=1, prepare=None, prepare_protected=None):
     pairs = pairs or ((ConnectorEgress("end", (0., 0.), (0., 0.), ()),
                        ConnectorEgress("start", (10., 10.), (10., 10.), ())),)
     return select_relation_route(pairs, obstacles=obstacles or SurfaceObstacleIndex(),
@@ -17,7 +17,7 @@ def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_p
         source_host_id=None, target_host_id=None,
         relation_scene_id="critical", max_bends=max_bends, max_detour_ratio=2.,
         search_policy=search_policy, search_budget=search_budget, protected=protected, accept=accept, rank=rank,
-        prepare=prepare)
+        prepare=prepare, prepare_protected=prepare_protected)
 
 
 def test_safe_quality_fallback_outlives_ordinary_budget_and_keeps_measurements():
@@ -62,6 +62,69 @@ def test_completed_safety_rejection_is_never_waived_by_quality_fallback():
     selected = _select(accept=lambda path: False)
     assert selected.selected_pair is None
     assert selected.critical_evidence.exhausted
+
+
+def test_protected_preparation_is_separate_from_ordinary_acceptance():
+    ordinary_calls, protected_calls = [], []
+
+    def reject_ordinary(points, *_):
+        ordinary_calls.append(points)
+        return None
+
+    def accept_protected(points, *_):
+        protected_calls.append(points)
+        return points
+
+    pairs = ((ConnectorEgress("end", (0., 0.), (0., 0.), ()),
+              ConnectorEgress("start", (10., 0.), (10., 0.), ())),)
+    selected = _select(pairs=pairs, prepare=reject_ordinary, prepare_protected=accept_protected,
+                       max_bends=0, search_budget=1)
+    assert selected.selected_pair is not None
+    assert selected.critical_evidence is not None
+    assert selected.critical_evidence.quality_fallback is None
+    assert selected.critical_evidence.attempts
+    assert ordinary_calls
+    assert protected_calls
+
+
+def test_nonprotected_route_never_invokes_protected_preparation():
+    protected_calls = []
+    selected = _select(protected=False, prepare=lambda points, *_: points,
+                       prepare_protected=lambda points, *_: protected_calls.append(points) or points,
+                       max_bends=1, search_budget=1)
+    assert selected.selected_pair is not None
+    assert not protected_calls
+
+
+def test_protected_temporal_exception_does_not_waive_completed_safety():
+    selected = _select(prepare=lambda points, *_: None,
+        prepare_protected=lambda points, *_: points,
+        accept=lambda _points: False, max_bends=0, search_budget=1)
+    assert selected.selected_pair is None
+    assert selected.critical_evidence is not None
+    assert selected.critical_evidence.exhausted
+    assert selected.critical_evidence.quality_fallback is None
+
+
+def test_protected_quality_bound_is_not_proved_through_non_endpoint_preserving_hook(monkeypatch):
+    import chrona.presentation.layout.routing as routing
+
+    stop_values = []
+    original = routing._select_pair_candidate
+
+    def observe(*args, **kwargs):
+        if "stop_on_safe" in kwargs:
+            stop_values.append(kwargs["stop_on_safe"])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(routing, "_select_pair_candidate", observe)
+    _select(prepare=lambda points, *_: points,
+            prepare_protected=lambda points, *_: points[:-1] + ((points[-1][0] + 1., points[-1][1]),),
+            max_bends=0, search_budget=1)
+
+    # A transformed protected endpoint invalidates the untransformed geometric
+    # lower-bound proof, so candidate enumeration must not stop on that proof.
+    assert stop_values and not any(stop_values)
 
 
 def test_protected_best_compares_eligible_pairs_with_existing_rank():

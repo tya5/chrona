@@ -448,6 +448,8 @@ def select_relation_route(
     accept: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
     prepare: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
                       tuple[tuple[float, float], ...] | None] | None = None,
+    prepare_protected: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
+                                tuple[tuple[float, float], ...] | None] | None = None,
     rank: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress], tuple] | None = None,
     search_policy: str = "best",
     channels: RelationShapeChannels | None = None,
@@ -496,6 +498,8 @@ def select_relation_route(
         raise _route_attempt_error("outward endpoint runs", outward_runs=outward_runs)
     if endpoint_lead_runs is not None and not callable(endpoint_lead_runs):
         raise _route_attempt_error("endpoint lead runs", endpoint_lead_runs=endpoint_lead_runs)
+    if prepare_protected is not None and not callable(prepare_protected):
+        raise _route_attempt_error("protected route preparation", prepare_protected=prepare_protected)
     if ((recovery_channels is None) != (recovery_lead_runs is None)
             or (recovery_lead_runs is not None and not callable(recovery_lead_runs))):
         raise _route_attempt_error("recovery channel inputs")
@@ -788,8 +792,9 @@ def select_relation_route(
         shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                            bounds=bounds, channels=protected_channels)
         candidates = _chain(shapes, protected_candidates(source, target, port_ids))
+        protected_prepare = prepare_protected or prepare
         quality_impossible = False
-        if prepare is None or endpoint_preserving_prepare:
+        if protected_prepare is None or endpoint_preserving_prepare:
             quality_impossible = max_bends < int(source.semantic_port[0] != target.semantic_port[0]
                                                  and source.semantic_port[1] != target.semantic_port[1])
             if protected_quality_barriers is not None:
@@ -799,7 +804,7 @@ def select_relation_route(
                 quality_impossible |= direct > 0 and lower > direct * max_detour_ratio
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
-            max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+            max_detour_ratio=max_detour_ratio, prepare=protected_prepare, accept=accept,
             limit=None, candidate_paths=candidates, stop_on_safe=quality_impossible)
         attempts.append(measured)
         if measured.outcome == "accepted":

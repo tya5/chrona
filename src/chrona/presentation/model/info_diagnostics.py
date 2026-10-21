@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import json
+from math import isfinite
 from typing import ClassVar
 
 from chrona.core.diagnostics import Diagnostic
@@ -210,6 +211,38 @@ class RelationRoutingSummary:
         return self.code + ":" + json.dumps({"surfaceId": self.surface_id,
             "relationInstances": self.relation_instances, "shapeSettled": self.shape_settled,
             "fallbackSearch": self.fallback_search}, sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
+class CriticalRelationTemporalExcursion:
+    """A selected protected relation whose completed centreline leaves the temporal hull."""
+
+    surface_id: str
+    relation_id: str
+    allowed_inline: tuple[float, float]
+    actual_inline: tuple[float, float]
+
+    def __post_init__(self) -> None:
+        intervals = (self.allowed_inline, self.actual_inline)
+        if (any(not isinstance(value, str) or not value for value in (self.surface_id, self.relation_id))
+                or any(not isinstance(interval, tuple) or len(interval) != 2
+                       or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                              or not isfinite(value) for value in interval)
+                       or interval[0] > interval[1] for interval in intervals)
+                or (self.actual_inline[0] >= self.allowed_inline[0]
+                    and self.actual_inline[1] <= self.allowed_inline[1])):
+            raise _diagnostic_error("CriticalRelationTemporalExcursion requires finite ordered intervals and an actual extent outside the allowed hull")
+
+    @property
+    def code(self) -> str:
+        return "I_LAYOUT_CRITICAL_RELATION_TEMPORAL_EXCURSION"
+
+    def payload(self) -> dict[str, object]:
+        return {"surfaceId": self.surface_id, "relationId": self.relation_id,
+                "allowedInline": list(self.allowed_inline), "actualInline": list(self.actual_inline)}
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
 
 
 
@@ -538,7 +571,7 @@ class ScaleValuesFolded:
         return self.code + ":" + json.dumps(self.payload(), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
-PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | ForecastInfo | RelationRoutingSummary | RelationSearchBudgetHit
+PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels | DeadlineCaptionsDropped | PaintOmission | ForecastInfo | RelationRoutingSummary | RelationSearchBudgetHit | CriticalRelationTemporalExcursion
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | FieldGroupingSummariesOmitted
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole
