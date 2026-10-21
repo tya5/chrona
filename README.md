@@ -94,6 +94,14 @@ PNG laid out afresh, so text stays the same size and gains room), or magnify the
 python -c "import pathlib, resvg_py; pathlib.Path('my-chrona-project/plan@2x.png').write_bytes(resvg_py.svg_to_bytes(svg_path='my-chrona-project/plan.svg', zoom=2))"
 ```
 
+`resvg_py` draws text with the fonts installed on the machine. A slide with Japanese text on a machine without a
+Japanese font comes out as empty boxes. Give `resvg_py` the Noto Sans JP files of the `packages/chrona-fonts-noto-cjk`
+package (install it from a clone, as for the HALCYON example below) with `font_dirs`:
+
+```bash
+python -c "import pathlib, resvg_py, chrona_fonts_noto_cjk as cjk; pathlib.Path('my-chrona-project/plan@2x.png').write_bytes(bytes(resvg_py.svg_to_bytes(svg_path='my-chrona-project/plan.svg', zoom=2, font_dirs=[str(cjk.resource_root() / 'fonts')])))"
+```
+
 The Today marker (the `as of` line) is drawn only when you pass an Actual Set with `asOf` (`--actual`, as above); without one
 the slide has no Today marker.
 
