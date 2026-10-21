@@ -60,6 +60,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | `delta.unit.calendarDay`, `delta.unit.workingDay` | d, d | 日, 営業日 |
 | `slot.notes` | Notes | 注記 |
 | `grouping.unassigned`, `grouping.other` | Unassigned, Other | 未割り当て, その他 |
+| `annotation.note`, `annotation.risk` | Note, Risk | 注記, リスク |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
@@ -95,6 +96,13 @@ heading's role `textTransform` styles the resolved text as before.
 `missing: {wording: grouping.unassigned}` (`Unassigned` / `未割り当て`); `grouping.other` reads `Other` / `その他`. It names the group
 of items whose grouping field is absent, for a field grouping and for a role grouping (`by: {fieldRole: responsible}`). A literal
 stays as written under every locale, and the `wording.keys` override reaches the reference like any key.
+
+**An annotation kind header.** A Theme `annotationKinds` entry (the header a Project annotation of kind `note` or `risk` wears) takes
+`label` and `secondary` as a literal or `{wording: <key>}`, for example `label: {wording: annotation.risk}` (`Risk` / `リスク`) and
+`label: {wording: annotation.note}` (`Note` / `注記`). The `title` and `heading` templates show the resolved text through `{label}` and
+`{secondary}`. A literal stays as written under every locale, so a copied Theme that keeps `label: RISK` still draws English under
+`--locale ja-JP`. An unknown key
+is `E_WORDING_KEY_UNKNOWN` naming it.
 
 **The day unit of a delta.** A signed finish delta reads `+3d` in English and `+3日` in Japanese. The View's
 `comparison.deltaUnit` picks the key: `calendar-days` reads `delta.unit.calendarDay`, `working-days` reads

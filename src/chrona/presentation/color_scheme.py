@@ -163,14 +163,14 @@ def _role_color(roles: Mapping[str, Any], values: Mapping[str, Any], role: str, 
     return None
 
 
-def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, dict[str, str]]:
+def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, dict[str, Any]]:
     """Validate the Theme's `annotationKinds` and resolve each kind colour (#584)."""
     if declared is None:
         return {}
     if not isinstance(declared, Mapping):
         raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", "/body/annotationKinds",
                                f"valueType={type(declared).__name__}; expected mapping of kind identifiers to declarations")
-    resolved: dict[str, dict[str, str]] = {}
+    resolved: dict[str, dict[str, Any]] = {}
     for kind, declaration in declared.items():
         pointer = f"/body/annotationKinds/{kind}"
         if not isinstance(kind, str) or not kind or not isinstance(declaration, Mapping):
@@ -180,7 +180,8 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
             kind_header(kind, declaration)
         except AnnotationKindTextError as error:
             raise ColorSchemeError(error.code, pointer, error.detail) from error
-        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title", "heading", "stamp") if name in declaration}
+        entry = {name: (dict(declaration[name]) if isinstance(declaration[name], Mapping) else str(declaration[name]))
+                 for name in ("label", "secondary", "title", "heading", "stamp") if name in declaration}
         intent = declaration.get("color")
         if intent is not None:
             if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):
