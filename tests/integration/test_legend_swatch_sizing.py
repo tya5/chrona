@@ -62,15 +62,13 @@ def _entries(rendered):
     primitives = rendered.surface.primitives
     found = {}
     for role in ROLES:
-        if role == "actual":
-            swatch = next((item for item in primitives
-                           if item.purpose == "legend-swatch" and item.visual_role == "actual"), None)
-            label = next((item for item in primitives
-                          if item.purpose == "legend-label" and swatch is not None
-                          and item.source_ref == swatch.source_ref), None)
-        else:
-            swatch = next((item for item in primitives if item.scene_id.startswith(f"legend-swatch:{role}")), None)
-            label = next((item for item in primitives if item.scene_id == f"legend:{role}"), None)
+        prefix = f"legend-swatch:{role}"
+        expected_kind = "Symbol" if role == "milestone" else "Rect"
+        swatch = next((item for item in primitives if item.purpose == "legend-swatch"
+                       and item.kind == expected_kind
+                       and (item.scene_id == prefix or item.scene_id.startswith(prefix + ":"))), None)
+        label = next((item for item in primitives if item.purpose == "legend-label"
+                      and swatch is not None and item.source_ref == swatch.source_ref), None)
         if swatch is not None and label is not None:
             found[role] = (swatch.bounds, label.bounds)
     return found

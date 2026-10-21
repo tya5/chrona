@@ -13,6 +13,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.core.relation_identity import relation_identities
+from chrona.presentation.model.color_separability import MINIMUM_CATEGORY_DELTA_E
 from tests.support.deck_contexts import context_document
 from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
@@ -124,10 +125,11 @@ def test_public_relations_do_not_start_with_their_target_arrowhead() -> None:
 
 
 def test_no_committed_scene_ships_an_inseparable_colour_scale() -> None:
-    """#421: every committed colour scale separates its domain."""
+    """#421 normal-vision palette gate; default CVD findings belong to #1848."""
     for scene_path in PUBLIC_SCENES:
         diagnostics = json.loads(scene_path.read_text(encoding="utf-8")).get("diagnostics", [])
-        assert not [item for item in diagnostics if item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE")], scene_path
+        assert not [item for item in diagnostics
+                    if item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE") and item.endswith(":normal")], scene_path
 
 
 def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None:
@@ -145,7 +147,12 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert envelope["status"] == "ok" and envelope["diagnostics"] == []
     warnings = envelope["warnings"]
     collisions = [item for item in warnings if item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
-    assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
+    assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions
+            if item["vision"] == "normal"] == [(["bus", "launch"], "normal", 0.0)]
+    identical = [item for item in collisions if item["values"] == ["bus", "launch"]]
+    assert {(item["vision"], item["deltaE"]) for item in identical} == {
+        (vision, 0.0) for vision in ("normal", "protanopia", "deuteranopia", "tritanopia")}
+    assert all(item["deltaE"] < MINIMUM_CATEGORY_DELTA_E and item["severity"] == "warning" for item in collisions)
 
 
 def _assert_automatic_default_keeps_plot_names_and_row_guides(

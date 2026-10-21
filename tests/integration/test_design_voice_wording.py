@@ -81,8 +81,11 @@ def _render_legend(tmp_path, locale, *, lowercase=False):
 def test_every_new_legend_key_is_japanese_under_ja_jp_and_the_scan_knows_the_english(tmp_path):
     texts, parts = _render_legend(tmp_path, "ja-JP")
     table = wording_catalog()["ja-JP"]
-    for key in ("legend.depends-on", "legend.in-the-wings"):  # the roles this Project draws; an unused role draws no key
-        assert table[key] in texts, (key, texts)
+    assert table["legend.depends-on"] in texts
+    # The realized point figures differ, so the translated owner label has
+    # translated state qualifiers rather than an unqualified duplicate key.
+    assert {table["legend.in-the-wings"] + " · " + table[key]
+            for key in ("legend.planned-plain", "legend.actual")} <= set(texts)
     resolver = wording_resolver("ja-JP", None)
     assert all(resolver.text(key) == table[key] and not re.search("[A-Za-z]", table[key])
                for key in (*NEW_LEGEND_KEYS, "column.no"))

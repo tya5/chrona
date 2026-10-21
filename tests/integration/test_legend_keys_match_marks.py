@@ -46,7 +46,8 @@ def test_every_legend_key_agrees_with_its_marks(tmp_path, preset):
 def test_the_bundled_default_keys_are_the_ones_the_issue_asked_for(tmp_path):
     items = {item["id"]: item for item in _scene(tmp_path)["surfaces"][0]["primitives"]}
 
-    milestone, planned = items["legend-swatch:milestone"], items["legend-swatch:planned"]
+    milestone = next(item for key, item in items.items() if key.startswith("legend-swatch:milestone:"))
+    planned = items["legend-swatch:planned"]
     assert milestone["kind"] == "Symbol" and milestone["paint"].get("fill") is None and milestone["paint"].get("stroke") is not None  # hollow
     assert planned["bounds"]["inlineSize"] > planned["bounds"]["blockSize"]  # a horizontal capsule
     progress = next(item for key, item in items.items() if key.startswith("legend-swatch:progressFill:"))
@@ -91,7 +92,8 @@ def test_the_check_reports_each_kind_of_disagreement(tmp_path):
             change(by_id[identifier])
         return legend_key_findings(copy)
 
-    assert any("fill/stroke" in item for item in broken(**{"legend-swatch:milestone": lambda i: i["paint"].update(fill="#000000")}))
+    milestone_id = next(key for key in primitives if key.startswith("legend-swatch:milestone:"))
+    assert any("fill/stroke" in item for item in broken(**{milestone_id: lambda i: i["paint"].update(fill="#000000")}))
     assert any("landscape" in item for item in broken(**{"legend-swatch:planned": lambda i: i["bounds"].update(inlineSize=9.6)}))
     assert any("enclose" in item for item in broken(**{"legend-swatch:dependency": lambda i: i["bounds"].update(inlineSize=0, blockSize=0)}))
     copy = deepcopy(document)

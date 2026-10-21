@@ -834,9 +834,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
-    needs_actual_candidates = any(entry.role == "actual" for entry in content.legend_entries)
+    point_state_owners = {"planned", "actual", "forecast", "milestone"}
+    needs_point_state_candidates = any(entry.role in point_state_owners for entry in content.legend_entries)
     facts = (collect_surface_style_facts(projection, content, gate_declared=gate_declared)
-             if style_rules or encoding_rules or needs_actual_candidates else None)
+             if style_rules or encoding_rules or needs_point_state_candidates else None)
     potential_roles = (frozenset(item.key.semantic_id for item in facts.occurrences
                                 if item.primitive_family == "mark") if facts is not None
                        else surface_comparison_mark_semantics(projection, content, gate_declared=gate_declared))

@@ -6,6 +6,7 @@ from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_i
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
 from chrona.presentation.layout.surface_quality import PathCommand, ScalePlacement
 from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.style import EncodingSource, EncodingWitness, LegendEncodingCoverage
 
 
 def test_scene_projects_intrinsic_finish_metadata_without_reclassifying_role_outline_width():
@@ -31,6 +32,50 @@ def test_scene_projects_intrinsic_finish_metadata_without_reclassifying_role_out
     assert projected[1].glyph_paint_mode == "stroke" and projected[1].visual_role == "gate"
     assert projected[1].symbol.outline == commands
     assert role_outline.stroke_width == 2.0
+
+
+def test_legend_coverage_projects_only_to_filled_parts_of_composite_symbol():
+    from chrona.presentation.layout.mark_geometry import SymbolPartPlacement
+    from chrona.presentation.scene.v05_builder import _symbol_primitives
+
+    commands = (PathCommand("move", ((0.0, 0.0),)),
+                PathCommand("line", ((10.0, 0.0),)),
+                PathCommand("line", ((0.0, 10.0),)),
+                PathCommand("line", ((0.0, 0.0),)))
+    coverage = LegendEncodingCoverage("state", (
+        EncodingWitness("fill", "scale", "status", "active",
+                        (EncodingSource("view", "view-id", "/encodings/status"),)),
+    ))
+    parts = (SymbolPartPlacement(commands), SymbolPartPlacement(commands, "fill"),
+             SymbolPartPlacement(commands, "stroke", stroke_width=1.0))
+
+    projected = _symbol_primitives(
+        "legend-swatch:status", "scale:status", "legend", "legend-swatch", "state-key",
+        (0, 0, 10, 10), parts, legend_encoding_coverage=coverage,
+    )
+
+    assert projected[0].legend_encoding_coverage is coverage
+    assert projected[1].legend_encoding_coverage is coverage
+    assert projected[2].legend_encoding_coverage is None
+
+
+def test_legend_coverage_projects_directly_from_shape_placement():
+    from chrona.presentation.scene.v05_builder import _completed_shape_primitive
+
+    coverage = LegendEncodingCoverage("encoding", (
+        EncodingWitness("fill", "scale", "status", "active",
+                        (EncodingSource("view", "view-id", "/encodings/status"),)),
+    ))
+    placement = SimpleNamespace(
+        placement_id="legend-swatch:status", source_ref="scale:status", kind="Rect",
+        bounds=SimpleNamespace(inline=2, block=3, inline_size=10, block_size=6),
+        points=(), path_commands=(), paint_clip=None, slot_id="legend", paint_order=0,
+        paint_channels=None, legend_swatch_shape=None, legend_encoding_coverage=coverage,
+    )
+
+    primitive = _completed_shape_primitive(placement, "legend", "legend-swatch", "scale-key")
+
+    assert primitive.legend_encoding_coverage is coverage
 
 
 def _glyph(*parts):

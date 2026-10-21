@@ -119,12 +119,12 @@ def test_executive_light_actual_and_progress_keys_match_distinct_completed_paint
     progress_marks = tuple(item for item in rendered.surface.primitives if item.purpose == "progress-fill")
     progress_keys = _swatches(rendered, "progress-fill")
 
-    # Four marks realize three distinct paint tuples; equal-painted Track and Gate share one key.
+    # Span ink still coalesces; an equal-painted point has its own semantic key.
     marks_by_ink = {_paint_ink(item.paint): item.paint for item in actual_marks}
     keys_by_ink = {_paint_ink(item.paint): item.paint for item in actual_keys}
     assert len(actual_marks) == 4 and len(marks_by_ink) == 3
     assert set(keys_by_ink) == set(marks_by_ink)
-    assert len(actual_keys) == 3
+    assert len(actual_keys) == 4
     assert {item.source_ref: item.paint.fill for item in actual_marks} == ACTUAL_COLORS
     assert all(_paint_ink(item.paint) in marks_by_ink for item in actual_keys)
     assert progress_marks and len(progress_keys) == 1
@@ -133,7 +133,7 @@ def test_executive_light_actual_and_progress_keys_match_distinct_completed_paint
 
     labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
     assert {labels[item.source_ref] for item in actual_keys} == {
-        "Ahead", "On track", "Behind"}
+        "Ahead", "On track", "Behind", "Actual · Milestone"}
     svg_fills = _svg_fills(rendered)
     for item in (*actual_marks, *actual_keys, *progress_marks, *progress_keys):
         assert svg_fills[item.scene_id] == item.paint.fill
@@ -259,7 +259,7 @@ def test_final_actual_qualifiers_follow_visible_paint_groups_after_clip(tmp_path
     actual_keys = _swatches(rendered, "actual")
     labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
     assert {item.paint.fill for item in actual_keys} == {"#4B5563", "#269D79"}
-    assert {labels[item.source_ref] for item in actual_keys} == {"Ahead", "On track"}
+    assert {labels[item.source_ref] for item in actual_keys} == {"Ahead", "On track", "Actual · Milestone"}
 
 
 def test_fully_clipped_actual_groups_leave_one_unqualified_key_and_no_progress_key(tmp_path):
@@ -350,7 +350,7 @@ def _ink_colors(paint):
     return frozenset(color for color in (paint.fill, paint.stroke) if color is not None)
 
 
-def test_equal_red_actual_span_point_and_outline_share_one_key_and_same_ink_progress_is_omitted(tmp_path):
+def test_equal_red_actual_span_and_point_keep_distinct_keys_and_same_ink_progress_is_omitted(tmp_path):
     parts = _parts(progress=True)
     bindings = parts["theme"]["body"]["colorBindings"]
     parts["scheme"]["body"]["categories"]["legend-red"] = "#FF0000"
@@ -378,8 +378,10 @@ def test_equal_red_actual_span_point_and_outline_share_one_key_and_same_ink_prog
 
     assert {item.kind.value for item in marks} >= {"Rect", "Symbol"}
     assert all(item.paint.fill == "#FF0000" for item in marks)
-    assert len(keys) == 1
-    assert keys[0].paint.fill == "#FF0000"
+    assert len(keys) == 2
+    assert {key.paint.fill for key in keys} == {"#FF0000"}
+    labels = {item.source_ref: item.text for item in rendered.surface.primitives if item.purpose == "legend-label"}
+    assert {labels[key.source_ref] for key in keys} == {"Actual", "Actual · Milestone"}
     assert any(item.kind.value == "Symbol" and item.paint.stroke != item.paint.fill for item in marks)
     assert progress_marks and all(item.paint.fill == next(
         mark.paint.fill for mark in marks if mark.source_ref == item.source_ref) for item in progress_marks)

@@ -6,8 +6,10 @@ from tests.support import synthetic_review as sr
 from tests.integration.test_deadline_mark import MIXED, _parts, _source
 
 
-def _render(tmp_path, *, dash, shape="rule-pair", capture=None):
-    parts = deepcopy(_parts())
+def _render(tmp_path, *, dash, shape="rule-pair"):
+    # Match the default Planned rule-pair's completed stroke width for the
+    # equal-geometry positive control; the dashed case still differs by dash.
+    parts = deepcopy(_parts(width=1))
     theme = parts["theme"]["body"]
     if dash:
         theme["values"]["deadline-dash"] = {"type": "dashPattern", "value": [5, 3]}
@@ -22,12 +24,19 @@ def _render(tmp_path, *, dash, shape="rule-pair", capture=None):
               ]}}
 
     return sr.render(tmp_path, sr.with_calendar(_source(**MIXED)),
-                      presentation=parts, detail=detail)
+                     presentation=parts, detail=detail)
 
 
 def _elements(rendered):
     svg = ElementTree.fromstring(rendered.artifact.content)
     return {node.attrib.get("data-scene-id"): node for node in svg.iter()}
+
+
+def _pair_warnings(rendered):
+    return [item for item in rendered.warning_records
+            if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
+            and {subject["title"] for subject in item.payload["sourceSubjects"]}
+            == {"Planned (planned)", "Deadline (deadlineMark)"}]
 
 
 def test_deadline_rule_pair_key_matches_tick_and_run_dash(tmp_path):
@@ -48,6 +57,8 @@ def test_deadline_rule_pair_key_matches_tick_and_run_dash(tmp_path):
     for scene_id in (*[item.scene_id for item in deadline_marks], key.scene_id):
         assert elements[scene_id].attrib["stroke-dasharray"] == "5 3"
     assert "stroke-dasharray" not in elements[planned_key.scene_id].attrib
+    # The completed dash distinguishes these otherwise equal-ink rule-pair keys.
+    assert not _pair_warnings(rendered)
     assert not any(item.payload["code"] == "W_LEGEND_SWATCH_COLLISION"
                    and {subject["title"] for subject in item.payload.get("sourceSubjects", ())}
                    == {"Planned (planned)", "Deadline (deadlineMark)"}
@@ -75,12 +86,13 @@ def test_explicit_circle_swatch_stays_flat_with_dashed_role(tmp_path):
 
 def test_completed_key_stroke_is_exposed_typed(tmp_path, monkeypatch):
     from chrona.presentation.layout import legend_diagnostics as ld
+
     captured = {}
     original = ld._colour_pair_diagnostics
 
-    def spy(key_entries, figures, color_vision=()):
+    def spy(key_entries, figures):
         captured.update(figures)
-        return original(key_entries, figures, color_vision)
+        return original(key_entries, figures)
 
     monkeypatch.setattr(ld, "_colour_pair_diagnostics", spy)
     rendered = _render(tmp_path, dash=True)
@@ -95,10 +107,11 @@ def test_completed_key_stroke_is_exposed_typed(tmp_path, monkeypatch):
     assert undashed
 
 
-def test_dash_leaves_the_deadline_key_in_the_separability_check(tmp_path):
-    for dash in (False, True):
-        rendered = _render(tmp_path, dash=dash)
-        assert any(item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
-                   and {subject["title"] for subject in item.payload["sourceSubjects"]}
-                   == {"Planned (planned)", "Deadline (deadlineMark)"}
-                   for item in rendered.warning_records)
+def test_equal_completed_dash_keeps_pair_in_all_vision_checks(tmp_path):
+    # Both keys have identical geometry, width and dash, so their identical ink
+    # must still be checked under normal vision and all three simulations.
+    rendered = _render(tmp_path, dash=False)
+    warnings = _pair_warnings(rendered)
+    assert {item.payload["vision"] for item in warnings} == {
+        "normal", "protanopia", "deuteranopia", "tritanopia"}
+    assert len(warnings) == 4
