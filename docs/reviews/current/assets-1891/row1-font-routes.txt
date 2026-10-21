@@ -1,0 +1,8 @@
+$ python -m pytest -s -o python_files=compare_font_routes.py docs/reviews/current/assets-1891/compare_font_routes.py
+[titlecard] render_draft: 27 W_FONT_FAMILY_SKIPPED notes; render_workspace: 27; identical lists: True
+   first note: W_FONT_FAMILY_SKIPPED:role=font-set;requested=chrona.noto-sans+jp;skipped=chrona-fonts-noto-cjk;face=installed fonts
+.
+[yuya] render_draft: 20 W_FONT_FAMILY_SKIPPED notes; render_workspace: 20; identical lists: True
+   first note: W_FONT_FAMILY_SKIPPED:role=font-set;requested=chrona.noto-sans+jp;skipped=chrona-fonts-noto-cjk;face=installed fonts
+.
+2 passed in 8.29s

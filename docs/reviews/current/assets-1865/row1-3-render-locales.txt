@@ -1,0 +1,10 @@
+$ chrona render skills/chrona/examples/notes-and-lanes/plan.yaml --preset target-b --locale en-US --output notes-en-US.svg   (status: ok)
+  drawn text in the lane and kind headers:
+    >Unassigned<
+    >RISK · test<
+    >NOTE · build<
+$ chrona render skills/chrona/examples/notes-and-lanes/plan.yaml --preset target-b --locale ja-JP --output notes-ja-JP.svg   (status: ok)
+  drawn text in the lane and kind headers:
+    >未割り当て<
+    >RISK · test<
+    >NOTE · build<

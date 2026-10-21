@@ -1,0 +1,21 @@
+$ chrona validate src/chrona/resources/designs/marquee/theme.yaml
+{"status": "ok", "diagnostics": [], "resource": "theme"}
+exit 0
+$ chrona validate src/chrona/resources/designs/marquee/scheme.yaml
+{"status": "ok", "diagnostics": [], "resource": "color-scheme"}
+exit 0
+$ chrona validate src/chrona/resources/designs/marquee/layout.yaml
+{"status": "ok", "diagnostics": [], "resource": "layout-profile"}
+exit 0
+$ chrona validate skills/chrona/examples/launch.yaml
+{"status": "ok", "diagnostics": []}
+exit 0
+$ chrona validate widget.yaml  (kind: widget)
+{"status": "rejected", "diagnostics": [{"code": "E_CLOSURE_KIND", "severity": "error", "component": "core", "sourceRef": "/kind", "revisionRefs": [], "message": "validate does not check a document of kind 'widget'; the accepted kinds are project, theme, color-scheme, layout-profile, view, style, actual-set, summary-profile, review-detail-profile"}]}
+exit 1
+$ chrona validate src/chrona/resources/presets/bundles/design-default/view.yaml   (no --layout)
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/comparison", "revisionRefs": [], "message": "missing required property 'deltaUnit'"}, {"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/markers/0", "revisionRefs": [], "message": "missing required property 'label'"}, {"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/periods/label", "revisionRefs": [], "message": "missing required property 'placement'"}, {"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/tableColumns/1", "revisionRefs": [], "message": "missing required property 'align'"}, {"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/tableColumns/1", "revisionRefs": [], "message": "missing required property 'headerOrientation'"}, {"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/tableColumns/1", "revisionRefs": [], "message": "missing required property 'missing'"}, {"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/tableColumns/1", "revisionRefs": [], "message": "missing required property 'width'"}]}
+exit 1
+$ chrona validate src/chrona/resources/presets/bundles/design-default/view.yaml --layout src/chrona/resources/designs/marquee/layout.yaml
+{"status": "ok", "diagnostics": [], "resource": "view"}
+exit 0

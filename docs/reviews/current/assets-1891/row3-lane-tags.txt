@@ -1,0 +1,11 @@
+$ chrona render plan-lane-tags.yaml --preset yuya --locale ja-JP --output plan-lane-tags.svg
+  status ok
+   W_LAYOUT_TEXT_ELLIPSIZED text was shortened with an ellipsis to fit its box (group-tag-text, ellipsize-with-source): 'QA・リリース' (QA・リリース); group-tag:QA・リリース:0 (needs 15.225x67.3155, has 15.225x23.8)
+   W_LAYOUT_TEXT_ELLIPSIZED text was shortened with an ellipsis to fit its box (group-tag-text, suppress-with-source): '未割り当て' (未割り当て); group-tag:未割り当て:0 (needs 15.225x52.5, has 15.225x3.65)
+  drawn vertical tag for 開発: 開発
+  drawn vertical tag for QA・リリース: Q…
+$ chrona render plan-lane-tags-tall.yaml --preset yuya --locale ja-JP --output plan-lane-tags-tall.svg
+  status ok
+  drawn vertical tag for 開発: 開発
+  drawn vertical tag for QA・リリース: QA・リリース
+  drawn vertical tag for 未割り当て: 未割り当て
