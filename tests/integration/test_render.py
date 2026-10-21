@@ -1118,15 +1118,15 @@ def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp
     view_path.write_text(yaml.safe_dump(actual_view, sort_keys=False), encoding="utf-8")
 
     svg = render_review(_draft_request(view_path=view_path)).artifact.content.decode()
-    assert 'data-scene-id="progress-fill:actual:firmware:firmware"' in svg
+    assert 'data-scene-id="progress-fill:actual:performance:performance"' in svg
     assert 'data-purpose="progress-fill"' in svg
 
     actual = yaml.safe_load((root / "tests/fixtures/controller-z/actual.yaml").read_text(encoding="utf-8"))
-    actual["body"]["observations"][0]["actual"] = {"progress": 0.5}
+    actual["body"]["observations"][3]["actual"] = {"progress": 0.5}
     missing_host_path = tmp_path / "missing-host.yaml"
     missing_host_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
     without_host = render_review(_draft_request(view_path=view_path, actual_path=missing_host_path)).artifact.content.decode()
-    assert 'data-scene-id="progress-fill:actual:firmware:firmware"' not in without_host
+    assert 'data-scene-id="progress-fill:actual:performance:performance"' not in without_host
 
 
 def test_open_actual_is_a_layout_completed_continuation_host_with_progress(tmp_path):

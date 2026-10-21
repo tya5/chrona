@@ -388,7 +388,7 @@ def test_actual_progress_overlays_only_its_own_combined_planned_facet():
     item = ReviewItem(
         "work", "Work", "span",
         {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
-        {"start": date(2026, 1, 2), "finish": date(2026, 1, 4), "progress": 0.5},
+        {"start": date(2026, 1, 2), "finish": None, "progress": 0.5},
         None, ("planned", "actual"), group_id="systems", item_id="work",
         source_kind="combined", observation_state=ObservationState.RECORDED,
     )
@@ -408,7 +408,7 @@ def test_actual_progress_overlays_only_its_own_combined_planned_facet():
     units = compose_lane_item_footprints(
         projection,
         scale=ScalePlacement("timeline", "scale:test", date(2026, 1, 1), date(2026, 2, 1), 0, 100, 0, 2),
-        as_of=None, theme_tokens=_Theme(), mark_band_size=10,
+        as_of=date(2026, 1, 4), theme_tokens=_Theme(), mark_band_size=10,
         role_geometries={
             "planned": MarkGeometry(0.8, 0.1, 0, 0),
             "actual": MarkGeometry(0.4, 0.3, 1, 0),
