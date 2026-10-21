@@ -245,7 +245,16 @@ def _cjk(character: str) -> bool:
             or 0xAC00 <= codepoint <= 0xD7AF)
 
 
-_CLOSING = frozenset("、。，．・：；？！ー）］｝」』】〉》")
+# Characters JIS X 4051 keeps off the start of a line (#1891): closing brackets and quotes, sentence and clause
+# punctuation, the prolonged sound mark, small kana, iteration marks and the wave dash. Each stays with the
+# preceding break unit, so the break moves before that unit instead.
+_CLOSING = frozenset(
+    "、。，．・：；？！‼⁇⁈⁉ー〜゠"
+    "）］｝」』】〉》〕〗〙〛｠"
+    "’”"
+    "ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"
+    "々〻ゝゞヽヾ"
+)
 _OPENING = frozenset("（［｛「『【〈《")
 
 

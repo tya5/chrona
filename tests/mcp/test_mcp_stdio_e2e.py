@@ -225,16 +225,19 @@ def test_protocol_errors_and_resources_over_stdio(workspace):
     async def scenario(client, init):
         errors = []
         for name, arguments in [("apply_command", {}), ("validate_project", {}), ("render_draft", {"project": "launch.yaml", "format": "pdf"})]:
-            with pytest.raises(MCPError) as raised:
-                await client.call_tool(name, arguments)
-            errors.append(raised.value.code)
+            rejected = await client.call_tool(name, arguments)  # a bad input is a result, not a protocol error (#1892)
+            assert rejected.structured_content["status"] == "rejected" and not rejected.is_error
+            errors.append(rejected.structured_content["diagnostics"][0]["sourceRef"])
+        with pytest.raises(MCPError) as raised:
+            await client.call_tool("no_such_tool", {})
+        errors.append(raised.value.code)
         authoring = await client.read_resource("chrona://guide/authoring")
         diagnostics = await client.read_resource("chrona://guide/diagnostics")
         listed = await client.list_resources()
         return errors, authoring, diagnostics, listed
 
     errors, authoring, diagnostics, listed = session(workspace, scenario)
-    assert errors == [types.INVALID_PARAMS] * 3
+    assert errors == ["/", "/", "/format", types.INVALID_PARAMS]
     assert [resource.uri for resource in listed.resources] == ["chrona://guide/authoring", "chrona://guide/diagnostics"]
     assert "chrona schedule" in authoring.contents[0].text and "E_UNSUPPORTED_CYCLE" in diagnostics.contents[0].text
 

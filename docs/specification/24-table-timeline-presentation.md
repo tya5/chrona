@@ -266,7 +266,11 @@ the implicit full-share budget closes at the actual allocation, not the
 unbroken natural width. An explicit table share takes precedence.
 Layout
 uses the existing measured word/CJK wrapping mechanism and typography/run
-metrics. Fitting text returns its exact source unchanged, without whitespace
+metrics. A wrapped line does not start with a character JIS X 4051 keeps off
+the start of a line (closing brackets and quotes, sentence and clause
+punctuation such as 、。・：？！, small kana, the prolonged sound mark, iteration
+marks, the wave dash): it stays with the preceding unit and the break moves
+before that unit (#1891). The source text is not altered. Fitting text returns its exact source unchanged, without whitespace
 normalization. An indivisible overlong unit uses source-preserving ellipsis
 and `W_LAYOUT_TEXT_ELLIPSIZED` naming that text and its measured shortage;
 no abbreviation dictionary or font-size reduction is implied.

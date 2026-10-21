@@ -100,6 +100,22 @@ def _selected_branch(error: ValidationError) -> list[ValidationError] | None:
     return by_branch[selected[0]]
 
 
+def violation_node(violation: SchemaViolation) -> str:
+    """The pointer of the node to fix: an unexpected property is reported at that property, not at its parent."""
+    match = re.match(r"unexpected property '(.+?)'", violation.message)
+    if violation.rule != "additionalProperties" or match is None:
+        return violation.pointer
+    escaped = match.group(1).replace("~", "~0").replace("/", "~1")
+    return (violation.pointer.rstrip("/") + "/" + escaped)
+
+
+def violation_sentence(violation: SchemaViolation) -> str:
+    """The message with the expected shape: the permitted members after an unexpected one, the required one when missing."""
+    if violation.rule == "additionalProperties" and violation.expected:
+        return f"{violation.message}; permitted properties: {', '.join(violation.expected)}"
+    return violation.message
+
+
 def json_pointer(path: Iterable[Any]) -> str:
     """Encode an instance path as an RFC 6901 pointer."""
     parts = tuple(str(item).replace("~", "~0").replace("/", "~1") for item in path)

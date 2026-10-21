@@ -78,12 +78,15 @@ def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: s
     def extent(segments: tuple[tuple[str, str], ...]) -> float:
         return geometry_sum(advance(item) for item in segments) + spacing * max(0, len(segments) - 1)
 
-    # Half an em of clear space at each end keeps the tags of neighbouring groups apart.
-    inset = size / 2
-    block_start, available_block = block_start + inset, available_block - 2 * inset
     segments = segment_vertical(painted)
     overflow = "fit"
     required = extent(segments)
+    # Half an em of clear space at each end keeps the tags of neighbouring groups apart. A label that fits its room
+    # whole is never cut for that clear space: it keeps as much of it as the room leaves (#1891).
+    inset = size / 2
+    if required <= available_block:
+        inset = min(inset, (available_block - required) / 2)
+    block_start, available_block = block_start + inset, available_block - 2 * inset
     if required <= available_block and align != "start":
         # A label that fits stands at the start, middle or end of the room the clear space leaves (#981).
         block_start += (available_block - required) / (2 if align == "center" else 1)

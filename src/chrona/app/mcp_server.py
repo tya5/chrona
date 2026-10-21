@@ -5,8 +5,8 @@ It registers the SDK-free tool core (``chrona.app.agent_tools``) with the SDK's 
 (``chrona mcp --allow-write``), which it hands to the core and which no call can change: a ``tools/list`` is the tool registry,
 a ``tools/call`` is ``call_tool`` with its result moved into content blocks, and the two
 resources are the packaged skill's own text. The tool core owns the input schemas, so the
-binding passes the registry's schemas to the SDK and maps the core's two protocol errors
-(unknown tool, malformed arguments) to ``INVALID_PARAMS``; a ``rejected`` or ``failed`` tool
+binding passes the registry's schemas to the SDK and maps the core's one protocol error
+(an unknown tool) to ``INVALID_PARAMS``; malformed arguments are a ``rejected`` result; a ``rejected`` or ``failed`` tool
 result is a result, and the SDK's error flag is set only for ``failed``.
 
 Nothing here prints: the protocol owns standard output (the SDK also points file descriptor 1
@@ -33,7 +33,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.shared.exceptions import MCPError
 
-from chrona.app.agent_tools import InvalidArgumentsError, ToolResult, UnknownToolError, call_tool, tool_specs
+from chrona.app.agent_tools import ToolResult, UnknownToolError, call_tool, tool_specs
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.resources import skill_resource
 
@@ -131,8 +131,6 @@ def build_server(workspace: str | Path, *, allow_write: bool = False) -> Server:
             result = await anyio.to_thread.run_sync(locked_call, params.name, params.arguments)
         except UnknownToolError as error:
             raise MCPError(types.INVALID_PARAMS, f"unknown tool: {error}") from None
-        except InvalidArgumentsError as error:
-            raise MCPError(types.INVALID_PARAMS, str(error)) from None
         return types.CallToolResult(content=_content(result), structured_content=result.structured,
                                     is_error=result.is_error)
 

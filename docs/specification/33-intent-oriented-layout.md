@@ -190,6 +190,9 @@ children; Scene never fits the run or changes content allocation.
 **Heading counts (#1346).** A slot heading uses
 exactly one of literal `text` or figure `template`; alignment, presence,
 reservation and overflow rules stay unchanged. Literal View overrides win.
+A `template` may also show `{wording:<key>}` (#1880, Spec 63): the Render Context locale's wording entry, with the View
+`wording.keys` override, replaces the placeholder before the template is compiled, so `{figure:<id>}` reads are unchanged; an unknown
+key is `E_WORDING_KEY_UNKNOWN` at the slot's `heading/template`.
 Presentation supplies closed programs; Layout binds before natural measurement.
 Layout records one typed receipt per completed annotation body, full narrative
 rail summary, or unconsumed note occurrence. Marker/index/status/kind fragments

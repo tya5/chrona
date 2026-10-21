@@ -32,6 +32,8 @@ BUILT_IN_WORDING_KEYS = (
     "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
     "delta.unit.calendarDay", "delta.unit.workingDay", "slot.notes",
     "grouping.unassigned", "grouping.other", "annotation.note", "annotation.risk",
+    "heading.kicker", "heading.schedule", "count.workPackages", "count.sections",
+    "caption.statusReports", "caption.untilFinish",
 )
 LOCALES = ("en-US", "ja-JP")
 

@@ -61,6 +61,9 @@ The keys, with their `en-US` and `ja-JP` text:
 | `slot.notes` | Notes | 注記 |
 | `grouping.unassigned`, `grouping.other` | Unassigned, Other | 未割り当て, その他 |
 | `annotation.note`, `annotation.risk` | Note, Risk | 注記, リスク |
+| `heading.kicker`, `heading.schedule` | The plan, Schedule | 計画, 計画表 |
+| `count.workPackages`, `count.sections` | Work packages, Sections | 作業パッケージ, セクション |
+| `caption.statusReports`, `caption.untilFinish` | Status reports, Until finish | 状況報告, 完了まで |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
@@ -88,6 +91,13 @@ case variant. A new lower-case `en-US` value is a bug unless it is added to this
 layout that keeps `text: Notes` still draws English under `--locale ja-JP`; reference `slot.notes` to follow the locale.
 The View's `wording.keys` override reaches it like any key, and a View `slotHeadingText` copy for the slot still wins. The
 heading's role `textTransform` styles the resolved text as before.
+
+**A wording key inside a longer text.** A heading part or heading template of a View, a slot caption `heading.template` and a
+Summary panel `title` can show a table entry in the middle of their text with the placeholder `{wording:<key>}`, for example
+`subtitle: [{text: "{wording:column.task} · {figure:items}"}]`, `heading: {template: "{wording:slot.notes} {figure:n}"}` and
+`title: "{wording:summary.days}"`. The text follows the render locale like any reference, and the View's `wording.keys` override
+reaches it. Braces stay grammar in heading parts and caption templates (`{{` and `}}` are literal braces); a Summary `title` is
+read as a template only when it contains a `{wording:` marker. An unknown key is `E_WORDING_KEY_UNKNOWN`.
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.

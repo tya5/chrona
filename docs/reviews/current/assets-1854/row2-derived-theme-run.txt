@@ -1,0 +1,12 @@
+# body members: standalone v0.15 vs derived v0.16 (schemas/)
+v0.15 members: ['annotationKinds', 'colorBindings', 'colorScales', 'contrastPolicy', 'markStack', 'metrics', 'roles', 'values']
+v0.16 members: ['annotationKinds', 'colorBindings', 'colorScales', 'contrastPolicy', 'extends', 'markStack', 'metrics', 'roles', 'values']
+missing in derived: []
+derived-only: ['extends']
+
+$ chrona preset copy target-b --output look  (its Theme declares contrastPolicy decoration: none)
+$ chrona render skills/chrona/examples/launch.yaml --preset look/preset.yaml --theme look/derived.yaml   [derived: contrastPolicy {decoration: error}]
+{"status": "rejected", "diagnostics": [{"code": "E_SCENE_DECORATION_CONTRAST", "severity": "error", "component": "presentation", "sourceRef": "/body/contrastPolicy/decoration", "revisionRefs": [], "message": "calendar-closed:2026-10-31 (calendar-closed), contrast 1.083 against 1.1 and 13 more; the Theme declares contrastPolicy.decoration: error"}]}
+
+$ same command   [derived: contrastPolicy {mark: warning}; base decoration none is kept]
+{"diagnostics": [], "status": "ok", "warnings": [{"code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED", "layoutMember": "relationRouting.unroutable", "layoutValue": "relax", "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routi
