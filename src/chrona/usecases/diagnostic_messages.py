@@ -138,6 +138,7 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK": "an annotation was placed at a later candidate than the first one declared",
     "W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE": "an annotation was placed on the other side of the as-of rule because no anchor-side fit was found",
     "W_LAYOUT_ANNOTATION_FILL_NOT_SLOT": "a note box declared inlineSize fill but was not placed in an annotations slot, so it keeps the size of its text",
+    "W_LAYOUT_ANNOTATION_COVERS_MARK": "an annotation box covers a mark of another object because no free placement exists",
     "W_LAYOUT_ANNOTATION_SUPPRESSED": "an annotation was left out because it does not fit",
     "W_LAYOUT_NOTE_INDEX_SUPPRESSED": "a note index mark was left out because it does not fit",
     "W_VIEWER_FIT_NOT_HONOURED": "a box role declared a viewer-fit mode that the output target cannot honour, so it is drawn as raw",

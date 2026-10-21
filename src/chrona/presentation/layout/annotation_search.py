@@ -10,13 +10,15 @@ measures text, reads a Theme or serializes a primitive.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import fsum, log
+from math import ceil, fsum, log
 from typing import Callable, Iterator
 
 from chrona.presentation.layout.annotations import nearest_box_port
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
 from chrona.presentation.layout.labels import LabelRect
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
+)
 from chrona.presentation.layout.annotation_topology import (
     AnnotationRouteTrial, route_strict_bounded, strict_route_candidates,
 )
@@ -284,6 +286,133 @@ def nearest_free_box(*, region: LabelRect, anchor_center: tuple[float, float],
         if not collisions and (candidate_validator is None or candidate_validator(box)):
             return box, trials
     return None, trials
+
+
+@dataclass(frozen=True)
+class LeastCoveringBox:
+    """The terminal box of a note with no free placement, and what it still covers."""
+
+    box: LabelRect
+    covered_owners: tuple[str, ...]
+
+
+def _overlap_area(first: tuple[float, float, float, float], second: tuple[float, float, float, float]) -> float:
+    return (max(0.0, min(first[2], second[2]) - max(first[0], second[0]))
+            * max(0.0, min(first[3], second[3]) - max(first[1], second[1])))
+
+
+def least_covering_box(*, region: LabelRect, anchor_center: tuple[float, float],
+                       box_size: tuple[float, float], max_positions: int,
+                       obstacles: SurfaceObstacleIndex, obstacle_classes: tuple[str, ...],
+                       mark_owner: Callable[[str], str], own_owner: str,
+                       host_id: str | None = None) -> LeastCoveringBox | None:
+    """Choose the terminal box for a note that no declared search could place.
+
+    A note box MUST NOT cover a mark of an object other than its anchor's.
+    Every fine and coarse lattice position is ranked first by whether it
+    covers another object's mark at all, then by the text and label visuals it
+    meets (a box never hides a name), the number of other objects' marks it
+    covers, the other declared obstacles it meets, the area of those marks it
+    covers, and nearest-first.  A position that covers no other object's mark
+    always beats one that does; when none exists the least-covering one is
+    returned together with the covered owners so the
+    caller can name them.
+    """
+    seen: set[tuple[float, float]] = set()
+    best: tuple[tuple[bool, int, int, int, float, int], LabelRect, tuple[str, ...]] | None = None
+    order = 0
+    for search_pass in ("fine", "coarse"):
+        for box in _candidate_positions(region, box_size, anchor_center, max_positions, search_pass):
+            if (box.x, box.y) in seen:
+                continue
+            seen.add((box.x, box.y))
+            order += 1
+            geometry = ObstacleRect(box.x, box.y, box.right, box.bottom)
+            hits = obstacles.collisions(geometry, classes=obstacle_classes, host_id=host_id)
+            covered: dict[str, float] = {}
+            others = words = 0
+            for item in hits:
+                if item.obstacle_class == "mark":
+                    owner = mark_owner(item.placement_id)
+                    if owner != own_owner:
+                        envelope = obstacle_envelope(item.geometry)
+                        covered[owner] = covered.get(owner, 0.0) + _overlap_area(
+                            (box.x, box.y, box.right, box.bottom), envelope)
+                elif item.obstacle_class in ("text", "label-visual"):
+                    words += 1
+                else:
+                    others += 1
+            key = (bool(covered), words, len(covered), others, fsum(covered.values()), order)
+            if best is None or key < best[0]:
+                best = (key, box, tuple(sorted(covered)))
+            if best[0][:2] == (False, 0) and best[0][3] == 0:
+                return LeastCoveringBox(best[1], best[2])
+    return None if best is None else LeastCoveringBox(best[1], best[2])
+
+
+def largest_free_extent(*, region: LabelRect, box_size: tuple[float, float],
+                        obstacles: SurfaceObstacleIndex, obstacle_classes: tuple[str, ...],
+                        host_id: str | None = None,
+                        reach_from: LabelRect | None = None) -> tuple[float, float]:
+    """The inline and block size of the largest obstacle-free rectangle in ``region``.
+
+    The region is cut into cells of half the box on each axis (the lattice
+    step of the box search, never finer than 1/48 of the region) and every
+    cell meeting a declared obstacle is blocked.  With ``reach_from`` (a box
+    that needs a connector to its anchor) only the free cells connected to the
+    anchor's own cells count, since a box that cannot be joined to its anchor
+    is not available to it.  The largest free rectangle of whole cells is the
+    space the failed candidate actually had.
+    """
+    width, height = box_size
+    if region.width <= 0 or region.height <= 0:
+        return (0.0, 0.0)
+    step_x = max(width / 2, 1.0, region.width / 48)
+    step_y = max(height / 2, 1.0, region.height / 48)
+    columns, rows = max(1, ceil(region.width / step_x)), max(1, ceil(region.height / step_y))
+    free = [[not obstacles.collisions(
+        ObstacleRect(region.x + column * step_x, region.y + row * step_y,
+                     min(region.right, region.x + (column + 1) * step_x),
+                     min(region.bottom, region.y + (row + 1) * step_y)),
+        classes=obstacle_classes, host_id=host_id)
+        for column in range(columns)] for row in range(rows)]
+    if reach_from is not None:
+        seeds = [(row, column) for row in range(rows) for column in range(columns)
+                 if (region.x + column * step_x < reach_from.right
+                     and region.x + (column + 1) * step_x > reach_from.x
+                     and region.y + row * step_y < reach_from.bottom
+                     and region.y + (row + 1) * step_y > reach_from.y)]
+        reachable = [[False] * columns for _ in range(rows)]
+        pending = list(seeds)
+        for row, column in seeds:
+            reachable[row][column] = True
+        while pending:
+            row, column = pending.pop()
+            for next_row, next_column in ((row - 1, column), (row + 1, column),
+                                          (row, column - 1), (row, column + 1)):
+                if (0 <= next_row < rows and 0 <= next_column < columns
+                        and free[next_row][next_column] and not reachable[next_row][next_column]):
+                    reachable[next_row][next_column] = True
+                    pending.append((next_row, next_column))
+        free = reachable
+    heights = [0] * columns
+    best = (0.0, 0.0)
+    best_area = 0.0
+    for row in range(rows):
+        for column in range(columns):
+            heights[column] = heights[column] + 1 if free[row][column] else 0
+        stack: list[tuple[int, int]] = []
+        for column in range(columns + 1):
+            current = heights[column] if column < columns else 0
+            start = column
+            while stack and stack[-1][1] >= current:
+                start, level = stack.pop()
+                span_x = min(region.width, (column - start) * step_x)
+                span_y = min(region.height, level * step_y)
+                if span_x * span_y > best_area:
+                    best, best_area = (span_x, span_y), span_x * span_y
+            stack.append((start, current))
+    return best
 
 
 def nearest_free_tail_box(*, region: LabelRect, anchor: LabelRect,
