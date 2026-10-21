@@ -56,7 +56,8 @@ def complete_fan_in(relations: tuple[RelationPlacement, ...]) -> tuple[RelationP
     """Preserve declared order and all routes; emit each shared head once."""
     groups: list[list[RelationPlacement]] = []
     for relation in relations:
-        if relation.suppressed or relation.to_instance_id is None or len(relation.points) < 2:
+        if (relation.suppressed or relation.fragment_endpoint is not None
+                or relation.to_instance_id is None or len(relation.points) < 2):
             continue
         candidate = _arrival(relation)
         group = next((items for items in groups

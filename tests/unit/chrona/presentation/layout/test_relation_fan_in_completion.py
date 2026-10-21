@@ -70,6 +70,28 @@ def test_headless_group_stays_headless():
     assert all(item.fan_in is not None and item.marker_end is None for item in result)
 
 
+def test_disconnected_target_stub_does_not_join_connected_arrival_group():
+    stub = replace(_route("stub", marker=_head()), from_instance_id=None,
+                   label_content="Source ->", terminal_label=True, fragment_endpoint="target")
+    connected = (_route("connected-one", marker=_head()), _route("connected-two", marker=_head()))
+
+    result = complete_fan_in((stub, *connected))
+
+    assert result[0].fan_in is None and result[0].marker_end is stub.marker_end
+    assert all(item.fan_in is not None for item in result[1:])
+    assert result[1].marker_end is not None and result[2].marker_end is None
+
+
+def test_disconnected_target_stubs_keep_independent_completed_terminals():
+    stubs = tuple(replace(_route(f"stub-{index}", marker=_head()), from_instance_id=None,
+                          label_content="Source ->", terminal_label=True, fragment_endpoint="target")
+                  for index in range(2))
+
+    result = complete_fan_in(stubs)
+
+    assert all(item.fan_in is None and item.marker_end is not None for item in result)
+
+
 def test_centered_heads_group_by_semantic_port_not_painted_setback():
     circle = _head("circle")
     first = _route("one", marker=circle)
