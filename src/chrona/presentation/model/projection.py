@@ -203,6 +203,8 @@ class ReviewItem:
     # True when a role-bound field grouping sent this item to the `missing` group because it carries no value of the
     # role's field and nothing it is attached to supplies one (#1870 row 4). The group is then ordered last.
     group_unassigned: bool = False
+    # The Project object's domain type (`task`, `gate`, ...), for count figures restricted by type (#1880).
+    object_type: str = ""
 
     @property
     def at_delta(self) -> int | None:
@@ -615,7 +617,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
                              and object_id not in snapshot_placements),
             new_marker=resolver.text("marker.baselineNew"), group_unassigned=unassigned,
-            snapshot_finish_delta=snapshot_finish_delta))
+            snapshot_finish_delta=snapshot_finish_delta, object_type=project_type))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if forecast is not None:

@@ -1,6 +1,7 @@
 import pytest
 
-from chrona.app.agent_tools import InvalidArgumentsError, _tool_viewport, tool_specs
+from chrona.app.agent_tools import _tool_viewport, tool_specs
+from chrona.usecases.failure_report import StableFailure
 from chrona.app.cli import _parser
 
 
@@ -29,5 +30,5 @@ def test_mcp_viewport_is_optional_without_a_schema_default():
         assert "default" not in property_schema
     assert _tool_viewport({}) is None
     assert _tool_viewport({"viewport": "1200x700"}) == "1200x700"
-    with pytest.raises(InvalidArgumentsError, match="viewport must match"):
+    with pytest.raises(StableFailure, match="viewport must match"):
         _tool_viewport({"viewport": None})

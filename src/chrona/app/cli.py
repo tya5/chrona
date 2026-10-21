@@ -5,7 +5,6 @@ import copy
 from hashlib import sha256
 import importlib.util
 import json
-import re
 import sys
 import tempfile
 from datetime import date
@@ -28,6 +27,7 @@ from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, ren
 from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
+from chrona.usecases.resource_checks import document_kind, unknown_kind, validate_resource_mapping
 from chrona.usecases.render_review import RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.loader import load_project
@@ -1059,53 +1059,21 @@ def _run(args: argparse.Namespace) -> None:
     print(json.dumps(_with_warning_positions(args, outcome), indent=2, default=_json_default))
 
 
-# The resource kinds `chrona validate` checks against their own schema (#1630, #1854). A Project is the default.
-VALIDATE_RESOURCE_KINDS = ("theme", "color-scheme", "layout-profile", "view", "style", "actual-set",
-                           "summary-profile", "review-detail-profile")
-
-
 def _resource_kind(value: Any) -> str | None:
-    """The kind of a resource document, or None for a Project; an unknown kind names the accepted ones (#1854).
-
-    The `kind` member decides; a document without one (a Layout profile, an Actual Set or Detail profile
-    written without it) is told by its `version` (`chrona/<kind>/vN`). A Project has neither.
-    """
-    if not isinstance(value, dict):
-        return None
-    kind = value.get("kind")
-    if kind is None:
-        match = re.fullmatch(r"chrona/([a-z][a-z-]*)/v[0-9.]+", str(value.get("version", "")))
-        kind = match.group(1) if match else None
-    if kind is None or kind == "project":
-        return None
-    if kind not in VALIDATE_RESOURCE_KINDS:
-        accepted = ", ".join(("project",) + VALIDATE_RESOURCE_KINDS)
-        _reject([Diagnostic("E_CLOSURE_KIND", f"validate does not check a document of kind {str(kind)!r}; "
-                            f"the accepted kinds are {accepted}", "/kind")])
-    return str(kind)
+    """The kind of a resource document, or None for a Project; an unknown kind names the accepted ones (#1854)."""
+    kind = document_kind(value)
+    refused = unknown_kind(kind) if kind is not None else None
+    if refused is not None:
+        _reject([refused])
+    return kind
 
 
 def _validate_resource(kind: str, value: dict[str, Any], layout_path: str | None = None) -> None:
     """`chrona validate <resource>.yaml`: that kind's schema and contract checks, not a Project's (a render checks ids)."""
-    from chrona.presentation.contracts.resources import (
-        ClosureIdentity, ContractError, explain_schema_errors, parse_contract,
-    )
-    identity = ClosureIdentity(kind, str(value.get("id", kind)), "", "")
-    if kind == "view" and layout_path:
-        from chrona.presentation.contracts.view_defaults import merge_view_defaults
-        defaults = load_yaml(layout_path).get("viewDefaults")
-        if isinstance(defaults, dict):
-            value = merge_view_defaults(value, defaults)
-    try:
-        violations = explain_schema_errors(identity, value)
-        if violations:
-            _reject([Diagnostic("E_SCHEMA", item.message, item.pointer) for item in violations])
-        parse_contract(identity, value)
-    except ContractError as error:
-        violation = getattr(error, "violation", None)
-        code = "E_SCHEMA" if violation is not None else str(error.diagnostic_id).split(":")[0]
-        message = violation.message if violation is not None else (error.detail or str(error.diagnostic_id))
-        _reject([Diagnostic(code, message, error.source_ref)])
+    defaults = load_yaml(layout_path).get("viewDefaults") if kind == "view" and layout_path else None
+    found = validate_resource_mapping(kind, value, defaults)
+    if found:
+        _reject(list(found))
     print(json.dumps({"status": "ok", "diagnostics": [], "resource": kind}))
 
 

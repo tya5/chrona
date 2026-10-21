@@ -574,9 +574,12 @@ def resolve_guided_draft_render(
     _validate_icon_catalog_set(catalog_resources)
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
+    # The preset's font sets join the guided render exactly as they join an ordinary Draft (#1891), so both routes
+    # resolve the same faces and emit the same font warnings.
+    preset_metrics, preset_notes = _preset_font_metrics(preset_resource)
     draft = _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
-                                        forecast=forecast,
+                                        forecast=forecast, font_metrics=preset_metrics, font_notes=preset_notes,
                                         profile_package_edges=package_edges,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)))

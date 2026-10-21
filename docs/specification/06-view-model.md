@@ -665,6 +665,16 @@ member contributes no text. String shorthand retains its existing behavior.
 The shared heading schema admits this optional form in place for both Views and
 Layout `viewDefaults` (Spec 56 §3.2); Scene and adapters receive only completed text.
 
+**Presence conditions on heading parts (#1880).** A heading part may also declare
+`presentWhen: actualSet | snapshot`. The part is kept only when the render supplies an
+Actual Set (`actualSet`) or a Snapshot (`snapshot`, a baseline Project or package); otherwise
+it is omitted silently when the heading is composed, before figure binding and text
+measurement, as an `omitWhenZero` part is at zero. A part may declare both, and both must
+hold. A part that is omitted for lack of data reports no missing-fact warning for the
+`{asOf}` it would have read (`W_PRESENTATION_HEADING_FACT_MISSING`). Any other value is a View/Layout schema
+error. A heading whose parts are all omitted contributes no text. String shorthand and
+parts without `presentWhen` are unchanged.
+
 ### 7.5 Slot caption copy (#1100)
 
 A View MAY declare `slotHeadingText: {<Layout slot node id>: <literal copy>}`. Each target must be a slot
@@ -679,6 +689,20 @@ or with an empty map, the profile's copy and output remain unchanged.
 
 ### 7.2 Derived figures (#586)
 
+**Restricted counts (#1880).** A `count` figure may declare `objectTypes` (non-empty list of
+domain object types), `temporalKind` (`point` or `span`, the planned shape) and, with the
+`groups` source only, `excludeUnassigned: true`. The restrictions narrow the distinct
+selected Primary/combined identities before any source is counted, so `selected`,
+`recorded`, `behind` and the other sources count only the matching objects; `groups`
+counts the distinct nonempty group identities of the matching objects, and
+`excludeUnassigned` also leaves out the group that collects objects with no grouping value
+(the grouping `missing` fallback, whether a plain field grouping or a role-bound one).
+Omission keeps today's count of every selected object and group. A group-scoped figure
+applies the restriction to the members of the current group. `placedNotes` cannot be
+restricted, and `excludeUnassigned` with another source is `E_VIEW_FIGURE_INVALID` at the
+property (`/source` for `placedNotes`). Slot-binding figures (`bindings`) do not take the
+restrictions.
+
 **Reusable heading counts (#1346).** Heading
 parts additionally admit existing `{figure:<id>}` markers. Slot headings may
 declare `template` instead of literal `text` (Spec33); `slotHeadingText` stays
@@ -690,6 +714,16 @@ selected memberships. Placed notes are Spec33 completed narrative occurrences,
 not selected Project notes. This late source is table-timeline-only and read
 only by heading parts/slot captions; other consumers refuse it with
 `E_FIGURE_LAYOUT_SCOPE` at their reference. Unused late figures still resolve.
+
+**Wording placeholders in heading text (#1880).** Heading text (a string, or the `text` of a
+part) admits `{wording:<key>}` beside `{project}`, `{asOf}`, `{calendar}` and `{figure:<id>}`: the
+built-in wording-table entry of the Render Context locale, with the View `wording.keys`
+override applied (Spec 63). It is closed to literal text when the heading is composed, so
+Layout measures the resolved text. An unknown key is `E_WORDING_KEY_UNKNOWN` at the part's
+`text` pointer. A Summary panel `title` admits the same placeholder (Spec 25): a title with a
+`{wording:` marker is read as a template (`{{`/`}}` are literal braces; `{figure:..}` is not
+admitted), any other title is plain text as before; an unknown key is
+`E_WORDING_KEY_UNKNOWN` at `/body/panels/<i>/title`.
 
 Optional `figureFormats` maps declared count-figure IDs to closed text formats.
 Layout `viewDefaults.figureFormats` offers whole-member replacement; a View
@@ -712,7 +746,7 @@ and their own format. Validate every format declaration's shape and target
 eagerly, but require number names only when a template reads it; an unused
 count remains a raw integer. Theme's existing text treatment applies afterwards.
 
-A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
+A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?, objectTypes?, temporalKind?, excludeUnassigned?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
 Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); an undeclared Summary figure is omitted with `I_SUMMARY_FIGURE_UNBOUND` under #1344, while other template consumers retain `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before except that explicitly approved Summary omission.
 

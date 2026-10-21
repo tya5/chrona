@@ -13,7 +13,7 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
-from chrona.app.agent_tools import InvalidArgumentsError, call_tool, tool_specs
+from chrona.app.agent_tools import call_tool, tool_specs
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.commands.actual_commands import LocalActualStore
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -223,10 +223,11 @@ def test_the_preview_works_with_the_write_flag_off(work):
     assert call(work, "check_command", {"command": path}, allow_write=False).structured["status"] == "ok"
 
 
-def test_malformed_arguments_are_a_protocol_error_even_with_the_flag_off(work):
+def test_malformed_arguments_are_a_rejected_result_even_with_the_flag_off(work):
     for allow in (False, True):
-        with pytest.raises(InvalidArgumentsError):
-            call_tool(WorkspaceScope(work.root), "apply_command", {}, allow_write=allow)
+        result = call_tool(WorkspaceScope(work.root), "apply_command", {}, allow_write=allow)
+        assert result.structured["status"] == "rejected" and not result.is_error
+        assert result.structured["diagnostics"][0]["sourceRef"] == "/"
 
 
 @pytest.mark.parametrize("command", [
@@ -234,16 +235,19 @@ def test_malformed_arguments_are_a_protocol_error_even_with_the_flag_off(work):
     {"version": "chrona/command/v9.9", "commandId": "unknown-version"},
     {"version": "chrona/command/v0.4", "commandId": "extra", "extra": True},
 ])
-def test_invalid_inline_command_is_a_protocol_argument_error(work, command):
-    with pytest.raises(InvalidArgumentsError):
-        call_tool(WorkspaceScope(work.root), "check_command", {"command": command})
+def test_invalid_inline_command_is_a_rejected_result_with_the_node(work, command):
+    result = call_tool(WorkspaceScope(work.root), "check_command", {"command": command})
+    assert result.structured["status"] == "rejected" and not result.is_error
+    rows = result.structured["diagnostics"]
+    assert rows and all(row["code"] == "E_MCP_INPUT_INVALID" and row["sourceRef"].startswith("/command") for row in rows)
+    assert len(json.dumps(result.structured)) < 4000  # no truncated echo of the input
 
 
 @pytest.mark.parametrize("extra", ["allowMissingContentIdentity", "storeRoot", "output", "allowWrite", "confirm"])
 def test_no_argument_lowers_integrity_names_a_root_or_an_output_or_enables_writes(work, extra):
     for tool in ("check_command", "apply_command"):
-        with pytest.raises(InvalidArgumentsError):
-            call_tool(WorkspaceScope(work.root), tool, {"command": "c.yaml", extra: True}, allow_write=True)
+        result = call_tool(WorkspaceScope(work.root), tool, {"command": "c.yaml", extra: True}, allow_write=True)
+        assert result.structured["status"] == "rejected" and result.structured["diagnostics"][0]["sourceRef"] == f"/{extra}"
 
 
 # --- replay -----------------------------------------------------------------------------------------------------

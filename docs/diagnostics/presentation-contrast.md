@@ -47,7 +47,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
 | group-header | `group-header` | required | 4.500 | 2 | 24 | 7.627 | 7.627 | 0 | 0 |
 | group-header | `group-ordinal` | required | 4.500 | 5 | 27 | 6.982 | 7.583 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 36 | 180 | 6.703 | 15.981 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 36 | 181 | 6.703 | 15.981 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | group-header-band | `group-header-band` | enabled | 1.100 | 8 | 48 | 1.013 | 1.132 | 0 | 11 |
 | group-header-strip | `group-header-strip` | enabled | 1.100 | 2 | 36 | 1.000 | 1.350 | 0 | 12 |
@@ -1205,8 +1205,9 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:m4:0` | `text` | 52.612, 678.277 | `group-tab:m4` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:m4:1` | `text` | 52.612, 688.777 | `group-tab:m4` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:m4:2` | `text` | 52.612, 701.603 | `group-tab:m4` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:rc:0` | `text` | 52.612, 770.842 | `group-tab:rc` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:rc:1` | `text` | 52.612, 781.342 | `group-tab:rc` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:rc:0` | `text` | 52.612, 768.209 | `group-tab:rc` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:rc:1` | `text` | 52.612, 778.709 | `group-tab:rc` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tag:rc:2` | `text` | 52.612, 790.984 | `group-tab:rc` | flat | `#C89A5E` | fill | — | 6.703 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tab:m0` | `group-tab` | 52.612, 271.374 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 2.001 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tab:m1` | `group-tab` | 52.612, 410.222 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 2.001 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tab:m2` | `group-tab` | 52.612, 525.929 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 2.001 | 1.100 | info |
@@ -8653,4 +8654,4 @@ Every independently required decoration role has committed Scene or explicit syn
 
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8571; observations: 8674; errors: 0; warnings: 460.
+Findings: 8572; observations: 8675; errors: 0; warnings: 460.

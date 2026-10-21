@@ -53,6 +53,12 @@ tables:
     grouping.other: Other
     annotation.note: Note
     annotation.risk: Risk
+    heading.kicker: The plan
+    heading.schedule: Schedule
+    count.workPackages: Work packages
+    count.sections: Sections
+    caption.statusReports: Status reports
+    caption.untilFinish: Until finish
   ja-JP:
     column.task: タスク
     column.plan: 計画
@@ -106,3 +112,9 @@ tables:
     grouping.other: その他
     annotation.note: 注記
     annotation.risk: リスク
+    heading.kicker: 計画
+    heading.schedule: 計画表
+    count.workPackages: 作業パッケージ
+    count.sections: セクション
+    caption.statusReports: 状況報告
+    caption.untilFinish: 完了まで

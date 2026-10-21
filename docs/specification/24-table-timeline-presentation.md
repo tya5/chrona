@@ -190,6 +190,15 @@ takes its columns from the View's `tableColumns`. A View with no column source h
 so that slot is measured empty and collapses to zero width: an `fr` share of the free space is never reserved for a blank
 table, and the plot takes the room. Declare `tableColumns` to show a table.
 
+**Declared comparison columns and `priority` (#1869).** A comparison column (`facet` or `comparisonFacet` of
+`finishDelta`, `startDelta`, `atDelta`, `progress`, `missingActual`, `actual`, or a `scenario` source) is omitted
+when its data source is unbound (no Actual Set, no bound scenario), so the table and the time scale change width
+when the data arrives. A column MAY declare `priority`: `optional` (the default, and the value when absent) keeps
+that omission; `preferred` or `required` keeps the column, with its header and blank cells, at the width its
+`width` declares, so the scale is the same before and after the data. The member is additive and
+behaviour-preserving when absent (Spec 56 §3.2). It does not affect an unbound field-role column, which is always
+omitted (Spec 06), nor a column whose source is bound.
+
 ### 2.1 Table and row metrics (#480)
 
 Layout measures a table once. The same measure sizes the `table` source and
@@ -257,7 +266,11 @@ the implicit full-share budget closes at the actual allocation, not the
 unbroken natural width. An explicit table share takes precedence.
 Layout
 uses the existing measured word/CJK wrapping mechanism and typography/run
-metrics. Fitting text returns its exact source unchanged, without whitespace
+metrics. A wrapped line does not start with a character JIS X 4051 keeps off
+the start of a line (closing brackets and quotes, sentence and clause
+punctuation such as 、。・：？！, small kana, the prolonged sound mark, iteration
+marks, the wave dash): it stays with the preceding unit and the break moves
+before that unit (#1891). The source text is not altered. Fitting text returns its exact source unchanged, without whitespace
 normalization. An indivisible overlong unit uses source-preserving ellipsis
 and `W_LAYOUT_TEXT_ELLIPSIZED` naming that text and its measured shortage;
 no abbreviation dictionary or font-size reduction is implied.

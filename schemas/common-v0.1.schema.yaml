@@ -212,7 +212,7 @@ $defs:
       dateForm: {$ref: "#/$defs/viewHeading/properties/dateForm"}
       text: {$ref: "#/$defs/viewHeading/properties/text"}
   headingText:
-    description: "A template string or ordered template parts, concatenated verbatim. A guarded part is omitted silently when its declared global count figure is zero."
+    description: "A template string or ordered template parts, concatenated verbatim. A guarded part is omitted silently when its declared global count figure is zero or when the data it requires is not supplied."
     examples: ["{project}", [{text: "in {figure:group-count} panels", omitWhenZero: group-count}]]
     oneOf:
       - {$ref: "#/$defs/viewHeading/properties/title"}
@@ -227,6 +227,7 @@ $defs:
           properties:
             text: {description: "Heading template with the existing semantic and figure placeholders; separators and spaces are literal.", type: string, minLength: 1}
             omitWhenZero: {description: "Declared global count figure whose raw zero value omits this part before text measurement.", $ref: "#/$defs/profileFigureIdentity"}
+            presentWhen: {description: "Data this part requires: actualSet keeps it only when the render supplies an Actual Set, snapshot only when it supplies a Snapshot. Otherwise the part is omitted silently, before text measurement; it combines with omitWhenZero (both must hold).", enum: [actualSet, snapshot]}
   groupHeaderPresentation:
     description: "Group-header text template; usable only with presentation header and grouping by field or object type."
     type: object
@@ -393,7 +394,7 @@ $defs:
     additionalProperties: {$ref: "#/$defs/profileBinding"}
   wordingKey:
     description: "Closed key of one built-in wording-table entry (the bundled `wording-tables-v0.1` resource holds the text per locale)."
-    enum: [column.task, column.plan, column.lane, column.items, marker.today, marker.asOf, marker.baselineNew, marker.baselineRemoved, legend.planned, legend.actual, legend.milestone, legend.dependency, legend.asOf, legend.calendar-closed, legend.critical-edge, legend.forecast, legend.progressFill, legend.actual-ahead, legend.actual-on-track, legend.actual-behind, legend.snapshot, legend.deadlineMark, missing.unknown, missing.inProgress, legend.planned-plain, legend.baseline, legend.current-plan, legend.gate, legend.holiday, column.owner, column.number, column.phase, column.finishDelta, column.finishDeltaPlan, column.finishDeltaBaseline, summary.days, legend.plan, legend.missing-actual, legend.missing-actual-in-progress, legend.in-the-wings, legend.calendar-exception, legend.period, legend.depends-on, legend.other, column.no, delta.unit.calendarDay, delta.unit.workingDay, slot.notes, grouping.unassigned, grouping.other, annotation.note, annotation.risk]
+    enum: [column.task, column.plan, column.lane, column.items, marker.today, marker.asOf, marker.baselineNew, marker.baselineRemoved, legend.planned, legend.actual, legend.milestone, legend.dependency, legend.asOf, legend.calendar-closed, legend.critical-edge, legend.forecast, legend.progressFill, legend.actual-ahead, legend.actual-on-track, legend.actual-behind, legend.snapshot, legend.deadlineMark, missing.unknown, missing.inProgress, legend.planned-plain, legend.baseline, legend.current-plan, legend.gate, legend.holiday, column.owner, column.number, column.phase, column.finishDelta, column.finishDeltaPlan, column.finishDeltaBaseline, summary.days, legend.plan, legend.missing-actual, legend.missing-actual-in-progress, legend.in-the-wings, legend.calendar-exception, legend.period, legend.depends-on, legend.other, column.no, delta.unit.calendarDay, delta.unit.workingDay, slot.notes, grouping.unassigned, grouping.other, annotation.note, annotation.risk, heading.kicker, heading.schedule, count.workPackages, count.sections, caption.statusReports, caption.untilFinish]
   wordingRef:
     description: "A reference to a built-in wording-table entry; the text is the entry for the Render Context locale."
     examples: [{wording: column.task}]

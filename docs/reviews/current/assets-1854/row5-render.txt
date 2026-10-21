@@ -1,0 +1,4 @@
+$ chrona render skills/chrona/examples/notes-and-lanes/plan.yaml --preset target-b --output notes-and-lanes.svg
+{"diagnostics": [], "status": "ok", "warnings": [{"code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED", "layoutMember": "relationRouting.unroutable", "layoutValue": "relax", "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing", "severity": "info", "surfaceId": "table-timeline", "viewMember": "visibility.relations.overflow", "viewValue": "suppress"}]}
+1
+1
