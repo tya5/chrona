@@ -420,6 +420,9 @@ available, otherwise its planned mark. Its canonical side order is `end`,
 side-neighborhood search. Translating that mark does not choose a different
 side unless the translated slot collides or leaves its allocation. Combined
 member-name/delta labels retain their authored member-name side policy.
+The mark's completed intrinsic relation-terminal ink participates in this
+collision query, including when the delta is required before routing; it does
+not change the canonical side order or create a provisional route reservation.
 Layout retains the rejected canonical slots' typed obstruction evidence.
 When the canonical end slot is blocked or outside the allocation and a
 fallback position is selected (even on the same side), it emits
@@ -517,8 +520,13 @@ that planner as well, rather than retain another route-priority path.
 Before this actual placement, Layout completes the intrinsic mandatory
 terminal-lead footprint of each exposed temporal span port used by a relation.
 That finite stroke/terminal ink belongs to the mark's endpoint, not a selected
-route. The existing name ladder avoids it as it avoids the mark, retaining
-declared sides, association, bounds and overflow. Placement and routing MUST
+route. Every member-label placement query uses this same inventory, including
+required finish deltas and other route-independent plot labels, rather than
+only requests whose semantic role is `memberLabel`. Existing label ladders
+avoid it as they avoid the mark, retaining declared sides, own-host/rule
+exemptions, association, bounds and overflow. Intrinsic ink is added to each
+query snapshot, not published as a provisional route or relaxed with text.
+Placement and routing MUST
 reuse one endpoint-geometry source for the mandatory lead and its painted
 extent; do not duplicate terminal arithmetic. Reserve only this intrinsic
 footprint, not a detour, graph corridor or provisional route. Multi-port point
