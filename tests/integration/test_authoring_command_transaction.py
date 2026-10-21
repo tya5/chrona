@@ -70,7 +70,12 @@ def test_same_authoring_command_process_race_publishes_one_revision_and_receipt(
                 process.join(2)
 
     results = [output.get(timeout=5) for _ in range(2)]
-    assert results[0] == results[1]
+    # The process that lost the race replays the winner's result and says so (#1892 row 3).
+    assert sorted("replayed" in item for item in results) == [False, True]
+    fresh, = [item for item in results if "replayed" not in item]
+    replay, = [item for item in results if "replayed" in item]
+    assert replay == fresh | {"replayed": True, "revisionIsCurrent": True}
+    results = [fresh, fresh]
     assert results[0]["status"] == "accepted"
     stored = yaml.safe_load(path.read_text(encoding="utf-8"))
     assert stored["body"]["project"]["tasks"][0]["title"] == "Changed"
