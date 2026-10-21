@@ -789,6 +789,18 @@ View relation intent is `none` or an object with `mode: semantic` and
 Normal Layout routing uses completed ports and deterministic orthogonal candidates.
 A normal route stays in the timeline, avoids required obstacles, has at most
 `maxBends`, and has Manhattan length at most `maxDetourRatio × directDistance`.
+Its completed centreline also stays in the temporal inline hull (#1841,
+trial16): the smallest x interval containing both semantic temporal anchors,
+the admitted semantic-to-exposed port corridors and their minimum outward
+terminal leads. Reuse the shared endpoint-lead kernel, subtracting completed
+host corridors once; a vertical lead adds no horizontal reserve. This is a
+centreline constraint, not a new stroke/head clearance or plot-ink exemption.
+Apply the same completed predicate to ordinary hints, finite shapes, graph
+proposals and side/backroutes, after reduction and terminal completion. Curved
+and metro completion must retain that hull. An out-of-hull ordinary candidate
+is ineligible, not silently classified as normal; declared diagnosed recovery
+stages may leave the hull. Do not change graph bounds, quotas, quality limits,
+port admission or hard-name/host safety to manufacture an eligible candidate.
 Eligible candidates use the ranking below. The declared resolution mode owns
 table-timeline failure; network View visible-overflow retains its deterministic
 direct fallback and `W_LAYOUT_ROUTE_FALLBACK`. Explicit suppression records
@@ -828,6 +840,21 @@ limits. This intentional exception does not waive resolved endpoint admission,
 timeline bounds, required mark/text/label clearance, terminal and stroke
 validity, or self-overlap rejection. A blocked egress or endpoint outside the
 declared window is not repaired by moving the semantic endpoint.
+
+The temporal hull is hard for ordinary NORMAL selection, not for this
+protected finite-domain pass. Its admitted domain and hard-safe-path priority
+remain unchanged. Layout supplies a separate completed acceptance path that
+waives only the temporal hull, never the safety checks. A selected protected
+route outside the hull emits typed
+`I_LAYOUT_CRITICAL_RELATION_TEMPORAL_EXCURSION` evidence containing `surfaceId`,
+`relationId`, `allowedInline: [min, max]` and `actualInline: [min, max]` in
+completed CSS-pixel coordinates. The intervals are finite, ordered, and the
+actual completed centreline extends outside the allowed interval. Emit the
+fact independently of bend/detour fallback: a within-quality excursion still
+needs it. This is an explicit protected exception, not an ordinary eligible
+route or an assertion that it crosses obstacles. Existing quality-fallback
+and search evidence remain truthful and unchanged. Scene, CLI and MCP project
+Layout's typed fact without measuring, choosing a route or reclassifying it.
 
 The over-quality selection retains the declared limits and actual completed
 measurements in typed Layout evidence; do not raise the limits or label it a
