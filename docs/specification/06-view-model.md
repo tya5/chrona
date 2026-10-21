@@ -949,8 +949,10 @@ retain their prior references. It belongs to primary
 items only; a missing counterpart or finish has no numeric value and follows
 the column's declared missing-value treatment. Do not fabricate zero, an
 estimated asterisk or the forecast `new` marker. Without a supplied Snapshot,
-omit the comparison-dependent column under section10's source-availability
-rule, not a scan for blank cells. A supplied Snapshot with unmatched objects
+the default `priority: optional` omits the comparison-dependent column under
+section10's source-availability rule, not a scan for blank cells. Explicit
+`preferred` or `required` retains the column with its missing-value treatment,
+as for other comparison sources (Spec24). A supplied Snapshot with unmatched objects
 keeps the column and its missing-value treatment.
 
 An authored `column.finishDelta` header reference resolves to

@@ -8,7 +8,7 @@ from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
 
-def _request(tmp_path, *, snapshot):
+def _request(tmp_path, *, snapshot, priority=None):
     current = sr.project({
         "task": sr.span("task", date(2026, 2, 2), 10),
         "gate": sr.point("gate", date(2026, 2, 12)),
@@ -32,6 +32,8 @@ def _request(tmp_path, *, snapshot):
         {"id": "Actual", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays",
          "missing": "blank", "align": "end", "width": "content", "headerOrientation": "horizontal"},
     ]
+    if priority is not None:
+        view["tableColumns"][1]["priority"] = priority
     paths = {kind: sr._write(tmp_path / f"{kind}.yaml", value) for kind, value in parts.items()}
     return DraftRenderRequest(project=sr._write(tmp_path / "project.yaml", current),
         target_kind="svg", view=paths["view"], theme=paths["theme"], scheme=paths["scheme"],
@@ -59,3 +61,20 @@ def test_view_snapshot_delta_reaches_actual_svg_without_actual_or_forecast(tmp_p
                if item.attrib.get("data-scene-id")}
     assert visible[headers[0].scene_id] == "Δ vs baseline"
     assert sum(visible.get(item.scene_id) == "+3d" for item in cells) == 2
+
+
+@pytest.mark.parametrize("priority", ["preferred", "required"])
+def test_declared_priority_keeps_unbound_snapshot_column_without_fabricating_values(tmp_path, priority):
+    rendered = render_draft(_request(tmp_path, snapshot=False, priority=priority)).rendered
+    primitives = rendered.surface.primitives
+    header = next(item for item in primitives if item.scene_id == "column:Baseline")
+    assert header.text == "Δ vs baseline"
+    cells = tuple(item for item in primitives
+                  if item.purpose == "table-cell" and item.table_column_id == "Baseline")
+    assert len(cells) == 3 and all(item.text == "" for item in cells)
+    assert not any(item.scene_id == "column:Actual" for item in primitives)
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    visible = {item.attrib.get("data-scene-id"): "".join(item.itertext()) for item in svg.iter()
+               if item.attrib.get("data-scene-id")}
+    assert visible[header.scene_id] == "Δ vs baseline"
+    assert all(visible.get(item.scene_id, "") == "" for item in cells)
