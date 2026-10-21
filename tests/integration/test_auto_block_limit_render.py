@@ -51,6 +51,10 @@ def test_bundled_limit_is_declared_in_standalone_default_not_catalogue():
     original = deepcopy(default)
     original["id"] = catalogue["id"]
     original["reviewSurface"].pop("maxBlockSize")
+    # #1857: the default also declares the signed-days facet column style; the catalogue mirrors HALCYON-1.
+    assert original.pop("viewDefaults") == {"columnStyles": {"facet": {
+        "format": "signedDays", "missing": "blank", "align": "end", "width": "content",
+        "headerOrientation": "horizontal"}}}
     assert original == catalogue
 
 
