@@ -190,3 +190,4 @@ schemas:
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
       visualProfile: "sha256:3b45edfe10cbaed5d3c483496052a4e641e1dd87c4c01d3a340738c31e0c692c"
+      pageSize: "sha256:f3de3415b4a1a18af5b0476ab6b8eff38c59b360a566cf4b0d773ff20074e931"
