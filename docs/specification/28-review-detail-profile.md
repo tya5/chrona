@@ -139,9 +139,17 @@ It does not retry route, row, or annotation layout.
 
 Point occurrences retain their distinct `planned`, `actual` and `forecast`
 meanings. A point key's grouping identity includes its declared legend owner
-and complete canonical glyph/ordered-paint witness, for simple and multipart
-glyphs alike. Identical completed figures under one owner share one key with
-typed coverage of all their visible states; differing figures never coalesce.
+and canonical glyph/ordered state-paint witness, for simple and multipart
+glyphs alike. A colour encoding already explained by another admitted legend
+group is orthogonal to state meaning: its encoded channel uses the selected
+Theme role's default paint in the state key, not one key per encoded value.
+This requires exact occurrence, encoding scale/value and legend-coverage
+provenance, never a colour match, field name or a presumed lane convention.
+Without that separately admitted coverage the full realized paint still splits
+keys. Explicit glyph colours, geometry, nonencoded channels, effects and paint
+that encodes state itself remain significant. Identical state figures under
+one owner share one key with typed coverage of all their visible states;
+differing state figures never coalesce.
 State coverage does not change that visual identity. Span Actual's existing
 ink/variance grouping and Progress semantics are unchanged.
 
@@ -166,10 +174,16 @@ glyph footprints are reserved before measurement, including every nonempty
 visible-state subset's label and the unqualified label. Final visible point
 witnesses alone admit keys and determine labels/coverage, without rerunning
 row, route or annotation layout. Source and final coalescing use one shared
-full-figure identity; equal colours alone never establish equality.
+state-figure identity and the same encoding-coverage predicate; equal colours
+alone never establish equality. Retain the actual occurrence paint and encoding
+witnesses alongside the representative Theme-default key, so final admission
+proves both state and orthogonal encoding coverage. If a separate encoding key
+is filtered out, it cannot justify suppressing a state-paint distinction.
 
 Chart and key glyphs use the same selected-symbol and outline kernels, including
-normalized shape traits and ordered part paints. Canonical identity excludes
+normalized shape traits and ordered part paints; only the explicitly covered
+orthogonal encoding channel is neutralized in the state key. Chart paint is
+unchanged. Canonical identity excludes
 resource names and placement translations/bounds. Scene/adapters receive
 completed figures, not point-state inference. Explicit circle/rule-pair shapes
 remain intentional projections and still participate in ambiguity checks.
