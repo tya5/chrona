@@ -761,7 +761,7 @@ A completed legend swatch may carry optional
 a closed tagged record with a non-empty unique list of the exact encoded
 occurrence values it explains (`encoding`) or deliberately neutralizes
 (`state`) under Spec28. The existing witness shape and pinned-resource joins apply.
-Only filled MARK-classified legend Rect/Symbol/Path primitives with purpose
+Only filled legend Rect/Symbol/Path primitives with purpose
 `legend-swatch` admit it; text, chart marks and unrelated decorations do not.
 Layout supplies this passive evidence after final visibility and coverage
 selection. Scene copies it, never evaluates fields or selects coverage.
