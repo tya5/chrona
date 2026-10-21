@@ -181,3 +181,12 @@ def test_network_rejects_new_intent_instead_of_ignoring_it(member, value):
     body[member] = deepcopy(value)
     with pytest.raises(SchemaContractError):
         parse_contract(identity, raw)
+
+
+def test_undrawn_project_annotations_name_only_notes_on_a_drawn_target():
+    from chrona.presentation.review.annotation_expansion import undrawn_project_annotations
+    notes = {"b": note("gate", "risk"), "a": note("task"), "c": note("hidden"), "d": note("task")}
+    shown = projection(item("task"), item("gate", "point"), item("hidden", source="context"))
+
+    assert undrawn_project_annotations(notes, shown, ["d", "c", "b", "a", "missing"]) == (
+        ("a", "note", "task", "span"), ("b", "risk", "gate", "point"), ("d", "note", "task", "span"))
