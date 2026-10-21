@@ -47,9 +47,12 @@ Portrait physical dimensions are A3 297×420mm, A4 210×297mm, A5 148×210mm,
 Letter 8.5×11in and Legal 8.5×14in; landscape exchanges the axes.
 Use the [CSS named media sizes](https://www.w3.org/TR/css-page-3/#page-size-prop)
 and [absolute-unit relation](https://www.w3.org/TR/css-values-4/#absolute-lengths)
-of 96 CSS px per inch and 25.4mm per inch. Keep fractional viewport dimensions;
-do not round a physical page to integer pixels before Layout. Existing Scene
-precision and adapter pixel discretization remain authoritative at export.
+of 96 CSS px per inch and 25.4mm per inch. At Draft ingress, convert each
+physical axis once to the nearest positive integer CSS pixel (half pixels round
+up) to close the existing integer Render Context viewport. For example, A4
+landscape is 1123×794. This is named-default conversion, not a fractional
+Render Context schema change or content-driven fit. Layout geometry and Scene
+precision remain unchanged; neither layer rounds or replaces a closed viewport.
 
 Draft ingress resolves the effective profile, including its normal top-level
 inheritance/replacement, before closing an omitted viewport from `pageSize`.
