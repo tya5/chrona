@@ -493,6 +493,24 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
     return None
 
 
+def unsupported_role_property_detail(pointer: str) -> str | None:
+    """The sentence for ``E_THEME_ROLE_PROPERTY_UNSUPPORTED`` at ``/body/roles/<role>/<property>``.
+
+    Names the role's supported properties from the same contract table the validators read
+    (``theme_role_contract``). None for a pointer that is not a role property or a role with
+    no registered contract (its property set is open), so the caller keeps its own message.
+    """
+    match = fullmatch(r"/body/roles/([^/]+)/([^/]+)", pointer)
+    if match is None:
+        return None
+    role, property_name = match.groups()
+    contract = theme_role_contract(role)
+    if contract is None:
+        return None
+    return (f"the Theme role '{role}' does not read the property '{property_name}'; "
+            f"supported properties: {', '.join(sorted(contract.properties))}")
+
+
 def theme_catalog_pattern_consumer(role: str, property_name: str) -> str | None:
     """Return the completed-Rect owner allowed to consume a catalogue pattern.
 

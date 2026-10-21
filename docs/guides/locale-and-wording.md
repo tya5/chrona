@@ -59,6 +59,8 @@ The keys, with their `en-US` and `ja-JP` text:
 | `column.no` | No | 番号 |
 | `delta.unit.calendarDay`, `delta.unit.workingDay` | d, d | 日, 営業日 |
 | `slot.notes` | Notes | 注記 |
+| `grouping.unassigned`, `grouping.other` | Unassigned, Other | 未割り当て, その他 |
+| `annotation.note`, `annotation.risk` | Note, Risk | 注記, リスク |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
@@ -73,6 +75,14 @@ for the as-of marker) and references the same key; it does not need a key of its
 `TASK DURATION` this way. A transform belongs to a role, so it applies to every entry of that legend and, for the as-of marker, to the
 date after the label too (`as of 20 feb`). Japanese has no case and is unchanged by a transform.
 
+**The fragment exception.** Exactly six `en-US` values are not sentence case, and they are named, not open-ended.
+Four are wording keys that are drawn inside another text and read as a fragment of it: `marker.baselineNew` (`new`, the
+empty Δ cell of a new object), `marker.baselineRemoved` (`removed`, the `(removed)` suffix of a removed baseline row),
+`missing.unknown` (`unknown`) and `missing.inProgress` (`in progress`) (cell fillers). Two are unit symbols, not words:
+`delta.unit.calendarDay` and `delta.unit.workingDay` (both `d`). A fragment in sentence case would read `Gone (Removed)`.
+A design that wants one of the four fragments capitalised sets `textTransform` on the role that draws it, as for any other
+case variant. A new lower-case `en-US` value is a bug unless it is added to this list; a unit test pins the list.
+
 **A slot heading.** A Layout Profile slot `heading.text` is a literal or `{wording: <key>}`, for example
 `heading: {text: {wording: slot.notes}}` (`Notes` / `注記`). A literal stays as written under every locale, so a copied
 layout that keeps `text: Notes` still draws English under `--locale ja-JP`; reference `slot.notes` to follow the locale.
@@ -81,6 +91,18 @@ heading's role `textTransform` styles the resolved text as before.
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
+
+**The group for a missing field value.** A View `grouping.missing` is a literal or `{wording: <key>}`, for example
+`missing: {wording: grouping.unassigned}` (`Unassigned` / `未割り当て`); `grouping.other` reads `Other` / `その他`. It names the group
+of items whose grouping field is absent, for a field grouping and for a role grouping (`by: {fieldRole: responsible}`). A literal
+stays as written under every locale, and the `wording.keys` override reaches the reference like any key.
+
+**An annotation kind header.** A Theme `annotationKinds` entry (the header a Project annotation of kind `note` or `risk` wears) takes
+`label` and `secondary` as a literal or `{wording: <key>}`, for example `label: {wording: annotation.risk}` (`Risk` / `リスク`) and
+`label: {wording: annotation.note}` (`Note` / `注記`). The `title` and `heading` templates show the resolved text through `{label}` and
+`{secondary}`. A literal stays as written under every locale, so a copied Theme that keeps `label: RISK` still draws English under
+`--locale ja-JP`. An unknown key
+is `E_WORDING_KEY_UNKNOWN` naming it.
 
 **The day unit of a delta.** A signed finish delta reads `+3d` in English and `+3日` in Japanese. The View's
 `comparison.deltaUnit` picks the key: `calendar-days` reads `delta.unit.calendarDay`, `working-days` reads

@@ -259,3 +259,13 @@ def test_text_paint_is_admitted_on_the_legend_role_and_on_a_view_named_text_role
     assert theme_role_property_consumer("authored-style-text", "pattern") is None
     assert theme_role_property_consumer("text", "shadowBlur") is None
     assert theme_role_property_consumer("text", "shadowColor") is None
+
+
+def test_unsupported_property_detail_reads_the_role_contract_table():
+    from chrona.presentation.scene.capabilities import theme_role_contract, unsupported_role_property_detail
+
+    detail = unsupported_role_property_detail("/body/roles/calendar-closed/pattern")
+    assert detail.startswith("the Theme role 'calendar-closed' does not read the property 'pattern'; supported properties: ")
+    assert all(name in detail for name in theme_role_contract("calendar-closed").properties)
+    assert unsupported_role_property_detail("/body/roles/calendar-closed") is None
+    assert unsupported_role_property_detail("/body/colorBindings/x") is None

@@ -200,6 +200,9 @@ class ReviewItem:
     new_marker: str = NEW_MARKER
     # Snapshot/current planned finish comparison, independent of Actual and forecast delta.
     snapshot_finish_delta: int | None = None
+    # True when a role-bound field grouping sent this item to the `missing` group because it carries no value of the
+    # role's field and nothing it is attached to supplies one (#1870 row 4). The group is then ordered last.
+    group_unassigned: bool = False
 
     @property
     def at_delta(self) -> int | None:
@@ -539,7 +542,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if item.get("type") == "group"
     }
     hierarchy_root_ids: set[str] = set()
-    omitted_group_summary_count = 0
+    omitted_group_ids: list[str] = []
+    role_bound = (grouping is not None and grouping.by == "field" and grouping.field_role is not None)
     declared = {object_id: index for index, object_id in enumerate(project["objects"])}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
@@ -556,7 +560,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             continue
         if (grouping is not None and grouping.by == "field" and grouping.field_role is not None
                 and project_type == "group"):
-            omitted_group_summary_count += 1
+            omitted_group_ids.append(object_id)
             continue
         if hierarchy and object_id in ids and source_type in types and (not object_types or project_type in object_types) and project_type not in excluded_object_types:
             hierarchy_root_ids.add(object_id)
@@ -579,6 +583,14 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         hierarchy_path = entry.path if entry else ()
         group_id = (_root_group_ancestor(hierarchy_entries.get(object_id), root_groups)
                     if root_grouping else _group_id(project, object_id, source_type, grouping))
+        unassigned = False
+        if role_bound and grouping.field not in project["objects"][object_id].get("fields", {}):
+            donor = (_point_group_donor(project, object_id, entry, grouping.field)
+                     if source_type == "point" and view.rows.points in _FOLDING_POINT_POLICIES else None)
+            if donor is not None:
+                group_id = donor
+            else:
+                unassigned = True
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, actual, finish_delta, _roles(observation_state, finish_delta, critical),
@@ -599,7 +611,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             delta_affix=delta_affix,
             new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
                              and object_id not in snapshot_placements),
-            new_marker=resolver.text("marker.baselineNew"),
+            new_marker=resolver.text("marker.baselineNew"), group_unassigned=unassigned,
             snapshot_finish_delta=snapshot_finish_delta))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
@@ -632,7 +644,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
             and all(grouping.field not in (item.fields or {}) for item in selected)):
         # A header that distinguishes nothing is not drawn (Specification 45).
-        selected = [replace(item, group_id="", group_label="") for item in selected]
+        selected = [replace(item, group_id="", group_label="", group_unassigned=False) for item in selected]
+    omitted_group_summary_count = _unattributable_summaries(omitted_group_ids, selected, view)
     if hierarchy and not explicit:
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view, project)
         selected = [replace(item, temporal_paint=not (
@@ -1069,7 +1082,9 @@ def _in_baseline_group(item: ReviewItem, snapshot_project: dict[str, Any] | None
     if not group_id:
         return item
     label = next((current.group_label for current in selected if current.group_id == group_id), label)
-    return replace(item, group_id=group_id, group_label=label)
+    unassigned = (not root_grouping and grouping.by == "field" and grouping.field_role is not None
+                  and grouping.field not in snapshot_project["objects"][item.object_id].get("fields", {}))
+    return replace(item, group_id=group_id, group_label=label, group_unassigned=unassigned)
 
 
 def _removed_ghost(item: ReviewItem, marker: str) -> ReviewItem:
@@ -1326,7 +1341,8 @@ def _order(rows: list[ReviewItem], view: ViewInput, project: Mapping[str, Any]) 
             start = item.planned.get("start", item.planned.get("at"))
             if start is not None and (item.group_id not in earliest or start < earliest[item.group_id]):
                 earliest[item.group_id] = start
-        rows.sort(key=lambda item: (item.group_id not in earliest, earliest.get(item.group_id, date.min), item.group_id))
+        rows.sort(key=lambda item: (item.group_unassigned, item.group_id not in earliest,
+                                    earliest.get(item.group_id, date.min), item.group_id))
         return
     group_order = view.grouping.order if view.grouping is not None else ()
     if group_order:
@@ -1341,8 +1357,50 @@ def _order(rows: list[ReviewItem], view: ViewInput, project: Mapping[str, Any]) 
             0 if not item.group_id else 1,
             declared_group_order.get(item.group_id, len(declared_group_order)),
             item.group_id))
+    elif view.grouping is not None and view.grouping.by == "field" and view.grouping.field_role is not None:
+        # Role-bound grouping (#1870 row 4, Spec 06 §6.3): headers in first appearance in the Project's declared
+        # object order among the selected rows, the `missing` group last. A direct field key stays alphabetical.
+        first_seen: dict[str, int] = {}
+        for item in rows:
+            first_seen[item.group_id] = min(item.source_index, first_seen.get(item.group_id, item.source_index))
+        rows.sort(key=lambda item: (item.group_unassigned, first_seen[item.group_id], item.group_id))
     else:
         rows.sort(key=lambda item: (len(group_order), item.group_id))
+
+
+# Point policies that fold a point into another row or a header; a point without the role value follows them (#1870).
+_FOLDING_POINT_POLICIES = frozenset({"attached", "predecessor", "group-header"})
+
+
+def _point_group_donor(project: Mapping[str, Any], object_id: str, entry: HierarchyEntry | None,
+                       field: str) -> str | None:
+    """The group a point lacking the role's value is attached to: its `attachesTo` host, else its nearest container."""
+    objects = project.get("objects", {})
+    host = objects[object_id].get("attachesTo")
+    candidates = [host] if isinstance(host, str) else []
+    candidates += reversed(entry.path[:-1]) if entry is not None else []
+    for candidate in candidates:
+        value = objects.get(candidate, {}).get("fields", {}).get(field)
+        if value is not None:
+            return str(value)
+    return None
+
+
+def _unattributable_summaries(group_ids: list[str], selected: list[ReviewItem], view: ViewInput) -> int:
+    """Parent groups whose selected descendants span more than one header (#1870 row 4, R4).
+
+    A role-bound grouping drops `type: group` summary rows. A parent whose descendants all sit under one header loses
+    nothing, since its span is that header's members' union. Only a parent spread over several headers has a summary no
+    header can carry. A point the key row takes out of the headers belongs to none.
+    """
+    counted = 0
+    key_row = view.rows.points == "key-row"
+    for group_id in group_ids:
+        headers = {item.group_id for item in selected
+                   if group_id in item.hierarchy_path[:-1]
+                   and not (key_row and item.group_unassigned and item.source_type == "point")}
+        counted += len(headers) > 1
+    return counted
 
 
 def _group_id(project: dict[str, Any], object_id: str, source_type: str, grouping: Any) -> str:

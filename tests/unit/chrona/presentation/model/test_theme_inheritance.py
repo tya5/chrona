@@ -211,3 +211,37 @@ def test_malformed_derived_role_uses_effective_schema_diagnostic(members):
     with pytest.raises(ThemeInheritanceError) as error:
         _resolve(derived, "derived.yaml", lambda *_: (base, _pin(source), "base.yaml"))
     assert error.value.code == "E_THEME_INHERITANCE_EFFECTIVE_SCHEMA"
+
+
+def _resolved(tmp_path: Path, base: dict, **members) -> dict:
+    source = yaml.safe_dump(base).encode(); (tmp_path / "base.yaml").write_bytes(source)
+    derived = _derived(base, source)
+    del derived["body"]["values"]
+    derived["body"].update(members)
+    path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
+    return resolve_draft_theme(path)["body"]
+
+
+def test_derived_theme_declares_contrast_policy_and_merges_it_class_by_class(tmp_path: Path):
+    base = _base(); base["body"]["contrastPolicy"] = {"decoration": "none", "mark": "warning"}
+    body = _resolved(tmp_path, base, contrastPolicy={"mark": "error", "groundText": "warning"})
+    assert body["contrastPolicy"] == {"decoration": "none", "mark": "error", "groundText": "warning"}
+
+
+def test_derived_theme_adds_contrast_policy_when_the_base_declares_none(tmp_path: Path):
+    body = _resolved(tmp_path, _base(), contrastPolicy={"stateText": "error"})
+    assert body["contrastPolicy"] == {"stateText": "error"}
+
+
+def test_derived_theme_contrast_policy_is_validated_like_a_standalone_theme(tmp_path: Path):
+    with pytest.raises(ThemeInheritanceError) as error:
+        _resolved(tmp_path, _base(), contrastPolicy={"mark": "loud"})
+    assert error.value.code == "E_THEME_INHERITANCE_SCHEMA"
+    assert "loud" in error.value.detail
+
+
+def test_derived_theme_replaces_the_mark_stack_as_a_whole(tmp_path: Path):
+    base = _base(); base["body"]["markStack"] = {"members": [["planned"], ["actual"]], "gap": "spacing.m"}
+    body = _resolved(tmp_path, base, markStack={"members": [["actual", "planned"]], "gap": "spacing.m"})
+    assert body["markStack"] == {"members": [["actual", "planned"]], "gap": "spacing.m"}
+    assert _resolved(tmp_path, base)["markStack"] == base["body"]["markStack"]  # omitted: inherited

@@ -5,7 +5,7 @@ from bisect import bisect_right
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from chrona.presentation.axis_intervals import axis_band_placement_id
 from chrona.presentation.layout.axis import (
@@ -32,6 +32,7 @@ from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, semantic_binding,
 )
 from chrona.presentation.model.axis_names import axis_name_table
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.surface_content import AxisTier
 from chrona.presentation.model.theme_tokens import TextTreatment
 
@@ -1162,3 +1163,24 @@ def _prepare_surface_axis_local(request: SurfaceLayoutRequest, frame: SurfaceAxi
         label_targets, band_targets, tuple(diagnostics), tuple(visible_overflows), calendar,
         tuple(label_tiers))
     return SurfaceAxisPreparation(placements, tuple(shapes))
+
+
+def axis_label_thinned_provenance(diagnostics: Iterable[str],
+                                  tier_outcomes: Iterable[AxisTierOutcome]) -> tuple[DiagnosticProvenance, ...]:
+    """Name the dropped label text of each ``W_LAYOUT_AXIS_LABEL_THINNED`` (#1854).
+
+    The diagnostic identity (``axis-label:<tier>:<interval>:<reason>``) stays as it was; the text of the
+    interval it names rides beside it as the warning's subject, with the tier's declaration pointer.
+    """
+    labels = {interval.candidate_id: (outcome.source_ref, interval.label)
+              for outcome in tier_outcomes for interval in outcome.intervals if interval.label}
+    found = []
+    for diagnostic in diagnostics:
+        code, _, rest = diagnostic.partition(":")
+        if code != "W_LAYOUT_AXIS_LABEL_THINNED":
+            continue
+        candidate_id = rest.rpartition(":")[0]
+        if candidate_id in labels:
+            source_ref, label = labels[candidate_id]
+            found.append(DiagnosticProvenance(diagnostic, (DiagnosticSubject(source_ref, label),)))
+    return tuple(found)

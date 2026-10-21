@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from chrona.presentation.group_header_text import FIGURE_PREFIX, GroupHeaderTextError, parse_template
+from chrona.presentation.model.wording_tables import WordingResolver, is_wording_ref, wording_resolver
 
 PLACEHOLDERS = ("label", "secondary", "subject", "subjectId")
 DEFAULT_TITLE = "{label}"
@@ -58,14 +59,30 @@ def parse_title(source: str) -> tuple[tuple[str, str], ...]:
         raise AnnotationKindTextError(error.code, error.detail) from error
 
 
-def kind_header(kind_id: str, declaration: Mapping[str, object]) -> KindHeader:
-    """Validate one ``annotationKinds`` entry's text declaration."""
-    label = declaration.get("label")
-    if not isinstance(label, str) or not label.strip():
-        raise AnnotationKindTextError(CODE, f"{kind_id}: label must be a non-empty string")
+def _kind_label(kind_id: str, member: str, value: object, resolver: WordingResolver) -> str:
+    """A kind's label text: a literal as written, or a ``{wording: key}`` reference read for the locale (#1865)."""
+    if is_wording_ref(value):
+        try:
+            return resolver.text(value["wording"])  # type: ignore[index]
+        except ValueError as error:  # E_WORDING_KEY_UNKNOWN names the key
+            raise AnnotationKindTextError("E_WORDING_KEY_UNKNOWN", f"{kind_id}: {member}: {error}") from error
+    if not isinstance(value, str) or not value.strip():
+        raise AnnotationKindTextError(CODE, f"{kind_id}: {member} must be a non-empty string or a {{wording: key}} reference")
+    return value
+
+
+def kind_header(kind_id: str, declaration: Mapping[str, object],
+                resolver: WordingResolver | None = None) -> KindHeader:
+    """Validate one ``annotationKinds`` entry's text declaration.
+
+    ``label`` and ``secondary`` are literals or ``{wording: key}`` references; a reference reads the
+    ``resolver``'s locale table (en-US without one) and an unknown key is ``E_WORDING_KEY_UNKNOWN``.
+    """
+    resolver = resolver if resolver is not None else wording_resolver("en-US", None)
+    label = _kind_label(kind_id, "label", declaration.get("label"), resolver)
     secondary = declaration.get("secondary")
-    if secondary is not None and (not isinstance(secondary, str) or not secondary.strip()):
-        raise AnnotationKindTextError(CODE, f"{kind_id}: secondary must be a non-empty string")
+    if secondary is not None:
+        secondary = _kind_label(kind_id, "secondary", secondary, resolver)
     title = declaration.get("title", DEFAULT_TITLE)
     if not isinstance(title, str) or not title:
         raise AnnotationKindTextError(CODE, f"{kind_id}: title must be a non-empty template")

@@ -15,7 +15,7 @@ import yaml
 
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
-from chrona.presentation.scene.capabilities import theme_catalog_pattern_consumer
+from chrona.presentation.scene.capabilities import theme_catalog_pattern_consumer, unsupported_role_property_detail
 from chrona.presentation.scene.visual_capabilities import PDF_PROFILE, preferred_target_visual_profile
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
@@ -58,6 +58,8 @@ class ClosureError(ValueError):
     def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None,
                  *, declaring_preset_id: str | None = None):
         super().__init__(diagnostic_id)
+        if detail is None and diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED":
+            detail = unsupported_role_property_detail(source_ref)
         self.diagnostic_id = diagnostic_id
         self.source_ref = source_ref
         self.detail = detail

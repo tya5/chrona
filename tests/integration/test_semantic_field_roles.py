@@ -88,13 +88,24 @@ def test_unbound_roles_use_fallback_omit_phase_and_count_declarations_not_rows(t
     assert not any(item.text == "Phase" for item in rendered.surface.primitives)
     info = {item.role: item for item in rendered.info_diagnostics if isinstance(item, UnboundFieldRole)}
     assert info["responsible"].count == 1
-    assert info["phase"].count == 1
-    assert info["phase"].code == "I_VIEW_FIELD_ROLE_UNBOUND"
-    assert all("source/fieldRole" in path for path in info["phase"].source_refs)
+    # An omitted column is not reported (#1870): the optional role a shared design names disappears quietly.
+    assert "phase" not in info
     cli = {item["fieldRole"]: item for item in warning_payloads(rendered)
            if item["code"] == "I_VIEW_FIELD_ROLE_UNBOUND"}
-    assert cli["phase"]["severity"] == "info" and cli["phase"]["count"] == 1
-    assert cli["phase"]["sourceRefs"] == list(info["phase"].source_refs)
+    assert set(cli) == {"responsible"}
+    assert cli["responsible"]["severity"] == "info" and cli["responsible"]["count"] == 1
+
+
+def test_an_unbound_role_that_is_not_a_column_is_still_reported(tmp_path):
+    source, parts = _source(roles=False), _parts()
+    parts["view"]["body"]["grouping"] = {"by": {"fieldRole": "phase"}, "fallback": "objectType",
+                                        "missing": "Unassigned", "presentation": "band"}
+
+    view = parse_contract(ClosureIdentity("view", "v", "r", "sha256:" + "a" * 64), {
+        **parts["view"], "body": parts["view"]["body"]}).view
+    _, info = resolve_field_role_view(view, source)
+
+    assert {item.role: item.source_refs for item in info}["phase"] == ("/body/grouping/by/fieldRole",)
 
 
 def test_declared_role_with_missing_item_value_keeps_the_column_missing_policy(tmp_path):
