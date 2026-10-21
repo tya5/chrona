@@ -131,31 +131,52 @@ $defs:
     dependentRequired: {fromInstanceId: [toInstanceId], toInstanceId: [fromInstanceId], semanticId: [themeRole], themeRole: [semanticId]}
     dependentSchemas:
       legendEncodingCoverage:
+        description: "A primitive carrying coverage is constrained to a completed legend swatch with its visible paint."
+        examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
         required: [sourceKind, purpose, paint]
         properties:
-          kind: {enum: [Rect, Symbol, Path]}
-          sourceKind: {const: legend}
-          purpose: {const: legend-swatch}
+          kind: {description: "A completed geometric legend mark that can carry visible fill or stroke.", enum: [Rect, Symbol, Path]}
+          sourceKind: {description: "Coverage belongs to a legend-owned primitive.", const: legend}
+          purpose: {description: "Coverage belongs only to a completed legend swatch.", const: legend-swatch}
         allOf:
-          - if:
+          - description: "Encoding-key legend swatches preserve their visible fill."
+            examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+            if:
+              description: "Select encoding-key coverage for the filled-swatch rule."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
               properties:
                 legendEncodingCoverage:
-                  properties: {kind: {const: encoding}}
-                  required: [kind]
-              required: [legendEncodingCoverage]
-            then: {properties: {paint: {required: [fill]}}}
-          - if:
-              properties:
-                legendEncodingCoverage:
-                  properties: {kind: {const: state}}
+                  properties: {kind: {description: "The coverage category tested by this condition.", const: encoding}}
                   required: [kind]
               required: [legendEncodingCoverage]
             then:
+              description: "An encoding key must retain a visible fill."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+              properties:
+                paint: {description: "The completed paint carrying encoding-key ink.", required: [fill]}
+          - description: "State-key legend swatches preserve a visible fill or stroke."
+            examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+            if:
+              description: "Select state-key coverage for the visible-fill-or-stroke rule."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+              properties:
+                legendEncodingCoverage:
+                  properties: {kind: {description: "The coverage category tested by this condition.", const: state}}
+                  required: [kind]
+              required: [legendEncodingCoverage]
+            then:
+              description: "A state key must retain a visible fill or stroke."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
               properties:
                 paint:
+                  description: "The completed paint carrying state-key ink."
                   anyOf:
-                    - required: [fill]
-                    - required: [stroke, strokeWidth]
+                    - description: "A visible fill is sufficient state-key ink."
+                      examples: [{fill: '#336699'}]
+                      required: [fill]
+                    - description: "A visible stroke with width is sufficient state-key ink."
+                      examples: [{stroke: '#336699', strokeWidth: 1}]
+                      required: [stroke, strokeWidth]
     if: {required: [strokeClip]}
     then:
       required: [paint]
