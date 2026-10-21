@@ -97,6 +97,28 @@ class AnnotationNotDrawn:
 
 
 @dataclass(frozen=True)
+class LegendRoleUnkeyed:
+    """A drawn band or fill role the drawn legend does not key (#1870)."""
+
+    role: str
+    drawn_as: str
+
+    def __post_init__(self) -> None:
+        if any(not isinstance(value, str) or not value for value in (self.role, self.drawn_as)):
+            raise _diagnostic_error(
+                f"LegendRoleUnkeyed role={_shown(self.role)}, drawnAs={_shown(self.drawn_as)}; expected nonempty strings")
+
+    @property
+    def code(self) -> str:
+        return "W_LEGEND_ROLE_UNKEYED"
+
+    def scene_diagnostic(self) -> str:
+        return self.code + ":" + json.dumps(
+            {"drawnAs": self.drawn_as, "role": self.role},
+            ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
 class ForecastInfo:
     """One published informational finding produced by the forecast analysis."""
 
@@ -569,4 +591,4 @@ PresentationInfo = (ScaleValuesFolded | FontGlyphFallback | SuppressedPlotLabels
                     | RelationResolutionInfo | RelationResolutionSummary | RelationPolicySupersession
                     | FieldGroupingSummariesOmitted
                     | RelationHintReceipt | RelationHintSummary | UnboundSummarySource | UnboundFieldRole
-                    | HeadingFactMissing | AnnotationNotDrawn)
+                    | HeadingFactMissing | AnnotationNotDrawn | LegendRoleUnkeyed)

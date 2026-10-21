@@ -41,8 +41,9 @@ from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
     ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, RoutingCostAdvisory,
-    AnnotationNotDrawn,
+    AnnotationNotDrawn, LegendRoleUnkeyed,
 )
+from chrona.presentation.model.legend_role_coverage import unkeyed_band_and_fill_roles
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
@@ -551,6 +552,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             profile_info += missing_heading_fact_warnings(view, project, actual_observations)
         if view.surface == "table-timeline":
             profile_info += _undrawn_annotation_warnings(view, project, projection, plan)
+        profile_info += tuple(LegendRoleUnkeyed(role, purpose)
+                              for purpose, role in unkeyed_band_and_fill_roles(surface.primitives))
         if routing_advisory is not None:
             profile_info += (routing_advisory,)
         if profile_info:
