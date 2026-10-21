@@ -142,8 +142,10 @@ Reading `update-after.svg`:
   against the current plan; it does not use the Snapshot as its delta baseline.
 
 **A `Δ` column of your own.** The `Δ vs plan` column above is the design's: it declares its cell format. A column
-you write in a View with `source: {facet: finishDelta}` and no `format` draws the bare number (`5*` for an
-estimated forecast), without sign or unit. Add `format: signedDays` to the column to read `+5d*`; the unit text
+you write in a View with `source: {facet: finishDelta}` and no `format` takes the design's `facet` column
+style: the bundled presets except `editorial` (whose Layout mirrors the HALCYON-1 corpus) declare `format: signedDays`, so it reads `+5d*` for an estimated forecast. A design
+of your own without that style draws the bare number (`5*`), without sign or unit; add `format: signedDays` to the
+column or a `facet` style to its Layout Profile's `viewDefaults.columnStyles`. The unit text
 follows `comparison.deltaUnit` and the locale (`d`, or `日` and `営業日` in `ja-JP`; see
 [Locale and wording](locale-and-wording.md)):
 
