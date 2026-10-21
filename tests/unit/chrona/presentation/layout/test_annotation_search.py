@@ -419,3 +419,41 @@ def test_as_of_fallback_continues_after_body_free_box_has_no_route(monkeypatch) 
     assert result.route is not None and result.egress is not None
     assert result.box_trials == 2
     assert 0 < result.route_states <= 1024
+
+
+def _marks(*items):
+    index = SurfaceObstacleIndex()
+    for placement_id, rect in items:
+        index.add(SurfaceObstacle(placement_id, "mark", "plot", ObstacleRect(*rect)))
+    return index
+
+
+def test_least_covering_box_takes_a_position_that_covers_no_other_object() -> None:
+    region = LabelRect(0, 0, 400, 100)
+    index = _marks(("planned:a", (0, 0, 150, 100)), ("planned:b", (150, 0, 250, 100)))
+    owner = {"planned:a": "a", "planned:b": "b"}.__getitem__
+    choice = search.least_covering_box(
+        region=region, anchor_center=(75, 50), box_size=(100, 30), max_positions=1024, obstacles=index,
+        obstacle_classes=("mark",), mark_owner=owner, own_owner="a")
+    assert choice is not None and choice.covered_owners == ()
+    # The anchor's own mark may stay under the box; the other object's may not.
+    assert choice.box.x < 150 and choice.box.right <= 150 + 1e-9 or choice.box.x >= 250 - 1e-9
+
+
+def test_least_covering_box_names_the_fewest_covered_objects_when_none_is_free() -> None:
+    region = LabelRect(0, 0, 200, 40)
+    index = _marks(("planned:a", (0, 0, 40, 40)), ("planned:b", (40, 0, 120, 40)), ("planned:c", (120, 0, 200, 40)))
+    owner = {"planned:a": "a", "planned:b": "b", "planned:c": "c"}.__getitem__
+    choice = search.least_covering_box(
+        region=region, anchor_center=(20, 20), box_size=(60, 20), max_positions=1024, obstacles=index,
+        obstacle_classes=("mark",), mark_owner=owner, own_owner="a")
+    assert choice is not None
+    assert len(choice.covered_owners) == 1 and choice.covered_owners[0] in {"b", "c"}
+
+
+def test_largest_free_extent_is_smaller_than_the_box_that_failed() -> None:
+    region = LabelRect(0, 0, 300, 100)
+    index = _marks(("planned:a", (100, 0, 110, 100)), ("planned:b", (200, 0, 210, 100)))
+    width, height = search.largest_free_extent(
+        region=region, box_size=(120, 30), obstacles=index, obstacle_classes=("mark",))
+    assert (width < 120 or height < 30) and width > 0 and height > 0
