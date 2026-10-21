@@ -739,6 +739,15 @@ All names and terminal labels use that same measured obstacle inventory.
 Visible overflow permits leaving the plot, not crossing completed text or
 label visuals. A caller's hard candidate filter also constrains visible
 fallbacks in the existing side order, without extra search passes or quotas.
+During the existing bounded label-neighborhood search, retain its first
+already-examined candidate that satisfies bounds, association and the caller's
+hard filter, even when ordinary mark/route clearance rejects it. Retain only
+the declared visible-fallback side when one is specified. A fully clear
+candidate still wins; after the normal search, canonical visible fallbacks
+retain priority. Only if those fail the hard filter may the retained neighbor
+be emitted as diagnosed visible overflow. Do not enumerate a second search,
+increase its quota, cross completed text/label visuals, or describe that
+fallback as collision-free. Route geometry and its validators are unchanged.
 When no terminal candidate clears those reservations, report
 `E_PRESENTATION_LABEL_UNPLACEABLE` with the label identity, never suppression
 or an overlap-assertion exemption. An unplaceable required terminal reports
