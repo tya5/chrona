@@ -1219,6 +1219,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     view_overflow = request.surface_content.relation_overflow
     layout_mode = context.layout_manifest.relation_unroutable.value
     if (request.surface_content.relation_overflow_declared
+            and request.surface_content.relations  # no relation is drawn (mode: none): nothing was superseded (#1854)
             and not (view_overflow == layout_mode == "suppress")):
         completed_resolution_info = (*completed_resolution_info,
             RelationPolicySupersession("table-timeline", view_overflow, layout_mode))
