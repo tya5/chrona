@@ -10,6 +10,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.actual_variance_paint import select_actual_variance_paints
 from chrona.presentation.model.date_basis import DisplayDateRange, ItemDateBasis, date_range_display
 from chrona.presentation.model.hierarchy_names import close_member_names, member_name_key, path_name_selected
+from chrona.presentation.wording_markers import resolve_plain_wording
 from chrona.presentation.model.wording_tables import LAYOUT_DEFAULT_LEGEND_ROLES, WordingResolver, wording_resolver
 from chrona.presentation.model.projection import (ObservationState, ReviewProjection, display_finish_delta,
     is_estimated_finish_delta, is_new_against_baseline, signed_delta_text)
@@ -87,7 +88,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return replace(_lane_table_content(projection, project, view, resolver), member_names=member_names)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     active_columns = tuple(column for column in view.table_columns
-                           if _table_column_source_available(column.source, projection, actual_set))
+                           if column.priority != "optional"
+                           or _table_column_source_available(column.source, projection, actual_set))
     columns = tuple(TableColumnContent(column.id, _table_column_header(column, projection, view, resolver),
                                        column.align, _column_width(column.width), column.header_orientation,
                                        text_wrap=column.text_wrap, column_source=column.source)
@@ -1023,8 +1025,13 @@ def _heading_calendar_name(project: Mapping[str, Any]) -> str:
     return title if isinstance(title, str) and title else str(calendar_id)
 
 
+def _heading_presence(actual_set: Mapping[str, Any] | None, snapshot_present: bool) -> dict[str, bool]:
+    """Which data a render supplies, for heading parts with a presence condition (#1880)."""
+    return {"actualSet": actual_set is not None, "snapshot": snapshot_present}
+
+
 def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
-                    locale: str) -> HeadingContent | HeadingTextPrograms:
+                    locale: str, *, snapshot_present: bool = False) -> HeadingContent | HeadingTextPrograms:
     """Compose the optional kicker, title and subtitle a table-timeline surface draws (#991, #1189).
 
     Without a declared `heading` the title is the Project title and there is no kicker or subtitle, as before.
@@ -1045,18 +1052,21 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
         form, name_table = _as_of_date_spec(_as_of_marker(view), heading.date_form, locale)
         as_of_text = _format_as_of_date(as_of, form, name_table)
     facts = {"project": project_title, "asOf": as_of_text, "calendar": _heading_calendar_name(project)}
+    present = _heading_presence(actual_set, snapshot_present)
+    text_of = wording_resolver(locale, view.wording).text
     programs = HeadingTextPrograms(
-        title=(close_heading(heading.title, facts) if heading.title is not None
+        title=(close_heading(heading.title, facts, text_of, present) if heading.title is not None
                else FigureTextProgram(HeaderTemplate((("text", project_title),)))),
-        subtitle=close_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
-        kicker=close_heading(heading.kicker, facts) if heading.kicker is not None else None,
+        subtitle=close_heading(heading.subtitle, facts, text_of, present) if heading.subtitle is not None else None,
+        kicker=close_heading(heading.kicker, facts, text_of, present) if heading.kicker is not None else None,
         text_wrap=heading.text_wrap,
     )
     return programs if programs.figure_ids else HeadingContent(*programs.bind({}, {}), text_wrap=programs.text_wrap)
 
 
 def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
-                                 actual_set: Mapping[str, Any] | None) -> tuple[HeadingFactMissing, ...]:
+                                 actual_set: Mapping[str, Any] | None, *,
+                                 snapshot_present: bool = False) -> tuple[HeadingFactMissing, ...]:
     """Report missing semantic facts used by a View heading without changing its empty fallback (#1810)."""
     heading = view.heading
     if heading is None:
@@ -1067,6 +1077,7 @@ def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
         "asOf": isinstance(actual_body.get("asOf"), str) and bool(actual_body.get("asOf")),
         "calendar": bool(calendar),
     }
+    presence = _heading_presence(actual_set, snapshot_present)
     warnings: list[HeadingFactMissing] = []
     seen: set[tuple[str, str]] = set()
     for member in ("title", "subtitle", "kicker"):
@@ -1075,8 +1086,11 @@ def missing_heading_fact_warnings(view: ViewInput, project: Mapping[str, Any],
             continue
         parts = (source,) if isinstance(source, str) else tuple(source)
         for index, part in enumerate(parts):
+            if not isinstance(part, str) and part.present_when is not None and not presence[part.present_when]:
+                continue  # a part the render omits says nothing about the facts it would read
             text = part if isinstance(part, str) else part.text
-            template = parse_template(text, placeholders=HEADING_PLACEHOLDERS, code="E_VIEW_HEADING_TEMPLATE")
+            template = parse_template(text, placeholders=HEADING_PLACEHOLDERS, code="E_VIEW_HEADING_TEMPLATE",
+                                      allow_wording=True)
             source_ref = (f"/body/heading/{member}" if isinstance(source, str)
                           else f"/body/heading/{member}/{index}/text")
             for fact in ("asOf", "calendar"):
@@ -1256,7 +1270,9 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
         caption_semantic = "summaryCaption" if inline else ""
         title_id = (f"summary:/panels/{panel_index}/title" if grouped_ids else f"summary:{panel.id}")
         title_semantic = caption_semantic or ("summaryHeader" if grouped_ids else "")
-        runs = [SummaryTextRun(title_id, panel.id, panel.title or panel.id, caption_role, title_semantic)]
+        title_text = resolve_plain_wording(panel.title, (resolver or wording_resolver("en-US", None)).text,
+                                           code="E_SUMMARY_TITLE_TEMPLATE") if panel.title else ""
+        runs = [SummaryTextRun(title_id, panel.id, title_text or panel.id, caption_role, title_semantic)]
         for metric_index, definition in enumerate(panel.metrics):
             if (panel_index, metric_index) in omitted_metrics:
                 continue

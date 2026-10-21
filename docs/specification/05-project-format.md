@@ -468,6 +468,8 @@ A fact is exactly one of: the Actual Set as-of; a named period's `start`, `end` 
 bundle additionally admits `groups` and `placedNotes`. Projection supplies
 selected groups; Layout supplies completed narrative occurrences (Spec33).
 Core reads integers only: it never inspects groups, geometry, text or Scene.
+A restricted count figure (Spec 06 §7.2, #1880) reads its own caller-gathered bundle, built from the
+selected objects that match its restriction; Core still only reads the integer.
 Presentation defers `placedNotes` until that fact exists, then uses the same
 integer resolver. An unavailable late fact is not zero; formatting is not Core.
 

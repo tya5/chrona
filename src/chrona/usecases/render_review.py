@@ -77,7 +77,8 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.style_rules import StyleEvaluationError
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
-from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
+from chrona.presentation.review.figure_facts import (deferred_layout_figures, filtered_figure_counts, projected_counts,
+                                                     projected_last_planned_finish)
 from chrona.presentation.review.annotation_expansion import (
     AnnotationExpansionError, undrawn_project_annotations,
 )
@@ -499,7 +500,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     # Both native surfaces use the same composed View heading. A network's
     # whole-title slot is the heading host; profiles without that slot admit
     # the same named heading parts as before.
-    heading_content = compose_heading(view, project, actual_observations, environment.locale)
+    snapshot_present = render_closure.snapshot is not None or render_closure.snapshot_project is not None
+    heading_content = compose_heading(view, project, actual_observations, environment.locale,
+                                      snapshot_present=snapshot_present)
     try:
         count_input = inspect_count_reads(SurfaceRenderPlanInput(
             previous_route_hints=previous_scene.route_hints if previous_scene is not None else None,
@@ -509,7 +512,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
-            scene_precision=environment.scene_precision,
+            scene_precision=environment.scene_precision, snapshot_present=snapshot_present,
             paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=layout_progress))
@@ -548,7 +551,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
         if (view.surface == "table-timeline" or view.surface == "dependency-network"):
-            profile_info += missing_heading_fact_warnings(view, project, actual_observations)
+            profile_info += missing_heading_fact_warnings(view, project, actual_observations,
+                                                          snapshot_present=snapshot_present)
         if view.surface == "table-timeline":
             profile_info += _undrawn_annotation_warnings(view, project, projection, plan)
         profile_info += tuple(LegendRoleUnkeyed(role, purpose)
@@ -1038,7 +1042,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
                                        and item.figure_id not in late_ids)), actual,
             project_last_finish=projected_last_planned_finish(projection.items),
             counts=projected_counts(projection.items, as_of_available=
-                                   ((actual or {}).get("body") or {}).get("asOf") is not None))
+                                   ((actual or {}).get("body") or {}).get("asOf") is not None),
+            filtered_counts=filtered_figure_counts(view.figures, projection.items, grouping=view.grouping,
+                                                   as_of_available=((actual or {}).get("body") or {}).get("asOf") is not None))
         global_figures = tuple(resolution.values.items())
         binding_ids = {item.figure.figure_id for item in view.profile_bindings if item.figure is not None}
         unavailable_figures = tuple(item for item in resolution.diagnostics
@@ -1194,9 +1200,11 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
                       actual: Mapping[str, Any] | None, *,
                       group_first_start: date | None = None,
                       project_last_finish: date | None = None,
-                      counts: FigureCounts | None = None) -> tuple[tuple[str, int], ...]:
+                      counts: FigureCounts | None = None,
+                      filtered_counts: Mapping[str, FigureCounts] | None = None) -> tuple[tuple[str, int], ...]:
     resolution = _figure_resolution(project, placements, view, actual,
-                                   group_first_start=group_first_start, project_last_finish=project_last_finish, counts=counts)
+                                   group_first_start=group_first_start, project_last_finish=project_last_finish,
+                                   counts=counts, filtered_counts=filtered_counts)
     if resolution.diagnostics:
         raise RenderRejected(list(resolution.diagnostics))
     return tuple(resolution.values.items())
@@ -1205,7 +1213,8 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
 def _figure_resolution(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
                        actual: Mapping[str, Any] | None, *, group_first_start: date | None = None,
                        project_last_finish: date | None = None,
-                       counts: FigureCounts | None = None) -> FigureResolution:
+                       counts: FigureCounts | None = None,
+                       filtered_counts: Mapping[str, FigureCounts] | None = None) -> FigureResolution:
     """Every figure the View declares, computed by the Core from the facts gathered here (#586).
 
     This is the one place the as-of, the placements, the resolved periods and the Project calendars are
@@ -1220,7 +1229,7 @@ def _figure_resolution(project: dict[str, Any], placements: dict[str, dict[str, 
         periods=resolve_periods(project, placements),
         calendars={key: Calendar.from_mapping(value) for key, value in (project.get("calendars") or {}).items()},
         default_calendar=(project.get("project") or {}).get("calendar"), group_first_start=group_first_start,
-        counts=counts, project_last_finish=project_last_finish)
+        counts=counts, project_last_finish=project_last_finish, filtered_counts=filtered_counts)
 
 
 def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
@@ -1250,6 +1259,9 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
                                          group_first_start=min(dates) if dates else None,
                                          project_last_finish=projected_last_planned_finish(projection.items),
                                          counts=projected_counts(members, as_of_available=
+                                             ((actual or {}).get("body") or {}).get("asOf") is not None),
+                                         filtered_counts=filtered_figure_counts(
+                                             specs, members, grouping=view.grouping, as_of_available=
                                              ((actual or {}).get("body") or {}).get("asOf") is not None))
             values.append((group_id, resolved))
         except RenderRejected as error:

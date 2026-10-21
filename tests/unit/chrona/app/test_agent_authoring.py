@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.app.agent_tools import InvalidArgumentsError, call_tool, registry_document
+from chrona.app.agent_tools import call_tool, registry_document
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.app.cli import main
 from chrona.core.identity import content_identity
@@ -87,16 +87,18 @@ def test_agent_authoring_metadata_matches_command_version_and_path_forms(tmp_pat
     valid = _command(workspace)
     wrong_version = json.loads(json.dumps(valid))
     wrong_version["version"] = "authoring-command/v0.1"
-    with pytest.raises(InvalidArgumentsError, match="command/version"):
-        call_tool(WorkspaceScope(root), "apply_authoring_command",
-                  {"workspace": "guided/workspace.yaml", "command": wrong_version}, allow_write=True)
+    rejected = call_tool(WorkspaceScope(root), "apply_authoring_command",
+                         {"workspace": "guided/workspace.yaml", "command": wrong_version}, allow_write=True)
+    assert rejected.structured["status"] == "rejected" and not rejected.is_error
+    assert rejected.structured["diagnostics"][0]["sourceRef"] == "/command/version"
     assert _tree(root) == before
 
     wrong_target = json.loads(json.dumps(valid))
     wrong_target["target"]["path"] = "guided/workspace.yaml"
-    with pytest.raises(InvalidArgumentsError, match="command/target/path"):
-        call_tool(WorkspaceScope(root), "apply_authoring_command",
-                  {"workspace": "guided/workspace.yaml", "command": wrong_target}, allow_write=True)
+    rejected = call_tool(WorkspaceScope(root), "apply_authoring_command",
+                         {"workspace": "guided/workspace.yaml", "command": wrong_target}, allow_write=True)
+    assert rejected.structured["status"] == "rejected"
+    assert rejected.structured["diagnostics"][0]["sourceRef"].startswith("/command/target/path")
     assert _tree(root) == before
 
     accepted = call_tool(WorkspaceScope(root), "apply_authoring_command",
@@ -242,3 +244,56 @@ def test_agent_authoring_tool_cli_parity_replay_stale_and_id_reuse(tmp_path, mon
     assert stale.structured["diagnostics"][0]["sourceRef"] == "/baseRevision"
     assert _tree(tool_root) == before_stale
     assert "traceback" not in capsys.readouterr().err.lower()
+
+
+def _apply(root: Path, command: dict):
+    return call_tool(WorkspaceScope(root), "apply_authoring_command",
+                     {"workspace": "guided/workspace.yaml", "command": command}, allow_write=True)
+
+
+def test_authoring_input_rejections_carry_the_pointer_and_expected_shape(tmp_path):
+    root = tmp_path / "ws"
+    workspace = _seed(root / "guided")
+    before = _tree(root)
+
+    open_actual = _command(workspace)
+    open_actual["type"] = "setWorkspaceActual"
+    open_actual["payload"] = {"actual": {"taskId": "one", "actual": {"start": "2026-01-01"}}}
+    result = _apply(root, open_actual)
+    row = result.structured["diagnostics"][0]
+    assert (result.structured["status"], result.is_error) == ("rejected", False)
+    assert row["sourceRef"] == "/command/payload/actual/actual" and "missing required property 'finish'" in row["message"]
+
+    misplaced = _command(workspace)
+    misplaced["payload"]["task"]["constraints"] = {"at": {"min": "2026-01-02"}}
+    row = _apply(root, misplaced).structured["diagnostics"][0]
+    assert row["sourceRef"] == "/command/payload/task/constraints"
+    assert "permitted properties: id, title, planned" in row["message"] and "not accepted anywhere" in row["message"]
+
+    wrong_level = _command(workspace)
+    wrong_level["payload"]["task"]["planned"]["start"] = "2026-01-03"
+    wrong_level["payload"]["start"] = "2026-01-03"
+    row = _apply(root, wrong_level).structured["diagnostics"][0]
+    assert row["sourceRef"] == "/command/payload/start" and "is permitted at /command/payload/task/planned" in row["message"]
+    assert _tree(root) == before
+
+
+@pytest.mark.parametrize(("overrides", "pointer", "words"), [
+    ({"theme": {"surprise": 1}}, "/payload/overrides/theme/surprise", "permitted properties: colorScheme"),
+    ({"layout": {}}, "/payload/overrides/layout", "permitted properties: view, theme"),
+    ({"theme": 3}, "/payload/overrides/theme", "expected type object"),
+])
+def test_a_bad_presentation_override_names_the_node_in_the_payload(tmp_path, overrides, pointer, words):
+    root = tmp_path / "ws"
+    workspace = _seed(root / "guided")
+    before = (root / "guided" / "workspace.yaml").read_bytes()
+    command = _command(workspace)
+    command["type"] = "setPresentationOverride"
+    command["payload"] = {"overrides": overrides}
+    result = _apply(root, command)
+    assert (result.structured["status"], result.is_error) == ("rejected", False)
+    row = result.structured["diagnostics"][0]
+    assert row["code"] == "E_RESOURCE_SCHEMA" and row["sourceRef"] == pointer and words in row["message"]
+    assert "expected one permitted form" not in row["message"]
+    assert result.structured["authoringResult"]["diagnostics"][0]["detail"].startswith(pointer + ": ")
+    assert (root / "guided" / "workspace.yaml").read_bytes() == before

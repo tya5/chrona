@@ -19,7 +19,9 @@ from chrona.resources.semantic_vocabulary import SemanticVocabularyBinding
 from chrona.presentation.style import StyleRule, StyleRuleError, parse_style_rules
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
-from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, validate_heading_template
+from chrona.presentation.wording_markers import WordingMarkerError, wording_marker_keys
+from chrona.presentation.heading_text import (HeadingPart, PRESENCE_CONDITIONS, heading_figure_ids,
+                                              heading_wording_keys, validate_heading_template)
 from chrona.presentation.table_presentation import (
     AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
 )
@@ -203,6 +205,7 @@ class TableColumn:
     suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
     header: str | FrozenDict | None = None  # a literal or `{wording: key}`; absent, the header is the id (#1724)
     header_wording_key: str | None = None  # original `{wording: key}` identity, retained after locale resolution
+    priority: str = "optional"  # `preferred`/`required` keep an unbound comparison column; `optional` drops it (#1869)
 
 
 @dataclass(frozen=True)
@@ -915,25 +918,30 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     return version
 
 
-def explain_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[SchemaViolation, ...]:
+def explain_schema_errors(
+    identity: ClosureIdentity, value: Mapping[str, Any], *, select_branches: bool = False,
+) -> tuple[SchemaViolation, ...]:
     """Explain every resource-schema error without constructing a contract.
 
     The single-error ``_validate`` path remains the compatibility boundary for
     existing callers.  Presentation ingress collection uses this separate
     function before it decides whether a resource is safe to parse.
     """
-    report = explain_resource_schema_errors(identity, value)
+    report = explain_resource_schema_errors(identity, value, select_branches=select_branches)
     return report.aggregate if report is not None else ()
 
 
-def explain_resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> SchemaErrorExplanations | None:
+def explain_resource_schema_errors(
+    identity: ClosureIdentity, value: Mapping[str, Any], *, select_branches: bool = False,
+) -> SchemaErrorExplanations | None:
     """Return aggregate and legacy explanations for one resource, if invalid."""
     errors = _resource_schema_errors(identity, value)
     if not errors:
         return None
     return SchemaErrorExplanations(
         tuple(_in_authors_words(item, value) for item in
-              explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id)),
+              explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id,
+                                 select_branches=select_branches)),
         _in_authors_words(explain_errors(errors, resource_kind=identity.kind, resource_identity=identity.id), value),
         len(errors),
     )
@@ -1146,7 +1154,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       header_wording_key=(str(column["header"]["wording"])
                                                           if isinstance(column.get("header"), Mapping)
                                                           and isinstance(column["header"].get("wording"), str)
-                                                          else None))
+                                                          else None),
+                                      priority=str(column.get("priority", "optional")))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -1379,6 +1388,25 @@ def _view_profile_bindings(raw: Mapping[str, Any], explicit_figures: tuple[Figur
     return tuple(bindings)
 
 
+def _known_wording_keys() -> tuple[str, ...]:
+    # Imported late: the wording tables live in `presentation.model`, which imports these contracts.
+    from chrona.presentation.model.wording_tables import wording_keys
+    return wording_keys()
+
+
+def _check_title_wording(title: str, path: str) -> None:
+    """A Summary panel title may show `{wording:<key>}`; a malformed marker or unknown key is refused (#1880)."""
+    try:
+        keys = wording_marker_keys(title, code="E_SUMMARY_TITLE_TEMPLATE")
+    except WordingMarkerError as error:
+        raise ContractError(error.code, error.detail, path) from error
+    known = _known_wording_keys()
+    for key in sorted(keys):
+        if key not in known:
+            raise ContractError("E_WORDING_KEY_UNKNOWN",
+                                f"title names unknown wording key {key!r}; expected one of {known!r}", path)
+
+
 def _pointer_token(value: str) -> str:
     return value.replace("~", "~0").replace("/", "~1")
 
@@ -1406,8 +1434,17 @@ def _view_figure(item: Mapping[str, Any], path: str, *, figure_id: str | None = 
         if item["source"] in ("groups", "placedNotes") and item.get("scope", "global") != "global":
             raise ContractError("E_VIEW_FIGURE_INVALID", "groups and placedNotes counts require global scope",
                                 f"{path}/scope")
+        object_types = tuple(str(value) for value in item.get("objectTypes", ()))
+        temporal_kind = str(item["temporalKind"]) if "temporalKind" in item else None
+        exclude_unassigned = bool(item.get("excludeUnassigned", False))
+        if item["source"] == "placedNotes" and (object_types or temporal_kind or exclude_unassigned):
+            raise ContractError("E_VIEW_FIGURE_INVALID", "a placedNotes count cannot be restricted", f"{path}/source")
+        if exclude_unassigned and item["source"] != "groups":
+            raise ContractError("E_VIEW_FIGURE_INVALID", "excludeUnassigned applies only to the groups count",
+                                f"{path}/excludeUnassigned")
         return FigureSpec(figure_id, "count", source=str(item["source"]),
-                          scope=str(item.get("scope", "global")), path=path)
+                          scope=str(item.get("scope", "global")), path=path, object_types=object_types,
+                          temporal_kind=temporal_kind, exclude_unassigned=exclude_unassigned)
     return FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days,
                       calendar_id=calendar, path=path)
 
@@ -1459,7 +1496,12 @@ def _view_heading(raw: Any, figures: tuple[FigureSpec, ...] = ()) -> ViewHeading
                 if guard is not None and not isinstance(guard, str):
                     raise ContractError("E_VIEW_HEADING_TEMPLATE", "omitWhenZero must name a figure",
                                         f"{path}/{index}/omitWhenZero")
-                closed_parts.append(HeadingPart(item["text"], guard))
+                presence = item.get("presentWhen")
+                if presence is not None and presence not in PRESENCE_CONDITIONS:
+                    raise ContractError("E_VIEW_HEADING_TEMPLATE",
+                                        f"presentWhen must be one of {', '.join(PRESENCE_CONDITIONS)}",
+                                        f"{path}/{index}/presentWhen")
+                closed_parts.append(HeadingPart(item["text"], guard, presence))
             parts = tuple(closed_parts)
             result = parts
         else:
@@ -1470,8 +1512,15 @@ def _view_heading(raw: Any, figures: tuple[FigureSpec, ...] = ()) -> ViewHeading
             try:
                 validate_heading_template(part.text)
                 references = heading_figure_ids(part.text)
+                wording_keys_used = heading_wording_keys(part.text)
             except GroupHeaderTextError as error:
                 raise ContractError(error.code, error.detail, template_path) from error
+            known_keys = _known_wording_keys()
+            for key in sorted(wording_keys_used):
+                if key not in known_keys:
+                    raise ContractError("E_WORDING_KEY_UNKNOWN",
+                                        f"heading names unknown wording key {key!r}; expected one of {known_keys!r}",
+                                        template_path)
             for identifier in sorted(references):
                 if identifier not in declared:
                     raise ContractError("E_VIEW_FIGURE_UNKNOWN", f"heading names undeclared figure {identifier!r}",
@@ -1706,6 +1755,8 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
                                              declaration_path=path))
             else:
                 metrics.append((str(metric_id), str(definition)))
+        if "title" in panel:
+            _check_title_wording(str(panel["title"]), f"/body/panels/{panel_index}/title")
         panels.append(SummaryPanelInput(str(panel["id"]), str(panel["title"]) if "title" in panel else None,
                                         str(panel.get("presentation", "lines")), tuple(metrics),
                                         str(panel.get("arrangement", "stack"))))

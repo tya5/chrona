@@ -9,7 +9,9 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # declaring its selection, window, grouping key/order, column captions/sources, period and marker
 # sources, figures, slot bindings and annotation bindings; any member the View declares replaces the
 # one below. The heading and the notes heading read the count figures `selected-count`,
-# `group-count` and `note-count`, which the View declares.
+# `group-count` and `note-count`, which the View declares (the packaged design-default View counts
+# span objects and groups other than the unassigned fallback). BASELINE and ACTUAL are printed only
+# when the render supplies a Snapshot or an Actual Set.
 viewDefaults:
   heading:
     kicker: 第弐面
@@ -17,7 +19,10 @@ viewDefaults:
     subtitle:
       - {text: "SCHEDULE · {figure:selected-count} WORK PACKAGES"}
       - {text: " · {figure:group-count} SECTIONS", omitWhenZero: group-count}
-      - {text: " · BASELINE / PLAN / ACTUAL"}
+      - {text: " · "}
+      - {text: "BASELINE / ", presentWhen: snapshot}
+      - {text: "PLAN"}
+      - {text: " / ACTUAL", presentWhen: actualSet}
     dateForm: day-month-year
   figureFormats:
     note-count: {form: digits, minimumDigits: 2}

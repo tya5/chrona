@@ -70,6 +70,7 @@ class SurfaceRenderPlanInput:
     previous_route_hints: PreviousRouteHints | None = None
     paint_capabilities: PaintWitnessCapabilities = field(default_factory=PaintWitnessCapabilities)
     scene_precision: int = 3
+    snapshot_present: bool = False
 
 
 @dataclass(frozen=True)
@@ -143,7 +144,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         # The use case supplies the shared composed heading. Keep this fallback
         # for direct plan callers, which may construct the plan without one.
         if value.heading is None:
-            network_heading = compose_heading(view, project, actual_observations, value.locale)
+            network_heading = compose_heading(view, project, actual_observations, value.locale,
+                                              snapshot_present=value.snapshot_present)
             if isinstance(network_heading, HeadingTextPrograms):
                 network_heading = HeadingContent(*network_heading.bind(dict(projection.figures), view.figure_formats),
                                                  text_wrap=network_heading.text_wrap)

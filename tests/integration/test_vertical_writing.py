@@ -337,3 +337,28 @@ def test_a_suppressed_tag_keeps_its_covered_ancestor_name_in_the_path_column(tmp
     warnings = [item for item in rendered.surface.fit_warnings if item.failure_kind == "group-tag-text"]
     assert [(item.source_ref, item.code, item.behaviour) for item in warnings] == [
         ("atlas", "W_LAYOUT_TEXT_ELLIPSIZED", "suppress-with-source")]
+
+
+def test_a_cut_tag_names_its_text_in_the_warning(tmp_path):
+    rendered = _render(tmp_path, header_text=LONG)
+    warnings = [item for item in rendered.surface.fit_warnings if item.failure_kind == "group-tag-text"]
+
+    assert warnings and all(item.subjects and item.subjects[0].title == LONG for item in warnings)
+
+
+def test_a_tag_that_fits_its_rows_is_not_cut_for_the_clear_space(tmp_path):
+    """The half-em clear space gives way before a label that fits the group's rows is shortened (#1891)."""
+    grown, extent, limit = "WWW", None, None
+    for index in range(40):
+        rendered = _render(_sub(tmp_path, f"grow-{index}"), header_text=grown)
+        cut = [item for item in rendered.surface.fit_warnings if item.failure_kind == "group-tag-text"]
+        if cut:
+            limit = cut[0].available_block  # the room the clear space leaves: the old rule's budget
+            break
+        tags = _tags(rendered, "team-0")
+        extent = tags[-1].bounds[1] + tags[-1].bounds[3] - tags[0].bounds[1]
+        assert [item.text for item in tags] == [grown]  # whole, not an ellipsis
+        grown += "i"
+    assert extent is not None and limit is not None
+    # The last label kept is longer than the old budget, so the old rule had cut it to an ellipsis.
+    assert extent > limit
