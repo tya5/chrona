@@ -88,7 +88,9 @@ def _source_identity(payload: bytes) -> str:
 
 
 # The Theme body members a derived Theme may replace or add to, entry by entry (Specification 07 section 5).
-MERGED_MEMBERS = ("values", "roles", "colorBindings", "colorScales", "annotationKinds", "metrics")
+MERGED_MEMBERS = ("values", "roles", "colorBindings", "colorScales", "annotationKinds", "metrics", "contrastPolicy")
+# Members whose declared value replaces the base's as a whole (a stack is one ordered unit, #1854).
+REPLACED_MEMBERS = ("markStack",)
 
 BaseLoader = Callable[[str, Mapping[str, Any]], tuple[dict[str, Any], str, str]]
 
@@ -146,6 +148,9 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
                     target[role] = deepcopy(members)
         else:
             target.update(deepcopy(replacement))
+    for name in REPLACED_MEMBERS:
+        if name in value["body"]:
+            body[name] = deepcopy(value["body"][name])
     effective_schema = "theme-v0.15.schema.yaml"
     problems = tuple(schema_validator(effective_schema).iter_errors(effective))
     if problems:

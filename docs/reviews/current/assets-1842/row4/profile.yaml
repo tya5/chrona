@@ -1,0 +1,9 @@
+version: chrona/profile/v0.3
+packageId: ghost-demo
+contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000
+requires: {projectFormat: timeline/v0.7}
+profiles:
+  work:
+    extends: task
+    fields:
+      team: {type: enum, enumValues: [x, y], required: true}

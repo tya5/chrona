@@ -484,32 +484,16 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
     envelope = json.loads(capsys.readouterr().out)
     assert envelope["status"] == "ok"
     warnings = envelope["warnings"]
-    legend_warning, = [item for item in warnings if item["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
-    assert legend_warning["diagnostic"] == "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0"
-    assert legend_warning["severity"] == "warning"
-    assert legend_warning["sourceRef"] == "legend-key:planned"
-    assert legend_warning["sourceTitle"] == "Task duration (planned)"
-    assert legend_warning["sourceSubjects"] == [
-        {"sourceRef": "legend-key:planned", "title": "Task duration (planned)"},
-        {"sourceRef": "legend-key:actual:976a22327959f6fd" if with_actual else "legend-key:milestone",
-         "title": "Actual (actual)" if with_actual else "Milestone (milestone)"},
-    ]
-    if with_actual:
-        assert legend_warning["count"] == 4
-    else:
-        assert "count" not in legend_warning
-
-    assert [item for item in warnings if item["code"] != "W_LEGEND_COLOR_NOT_SEPARABLE"] == [{
+    # Equal-ink point and span keys have distinct completed glyphs, so they
+    # remain independently labelled without an ink-only collision warning.
+    assert not [item for item in warnings if item["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
+    assert [item for item in warnings if item["code"] in {
+        "I_LAYOUT_RELATION_ROUTING", "I_LAYOUT_RELATION_POLICY_SUPERSEDED"}] == [{
         "code": "I_LAYOUT_RELATION_ROUTING", "fallbackSearch": 0,
         "message": "0 relations on table-timeline settled without search; 0 used fallback search",
         "relationInstances": 0, "severity": "info", "shapeSettled": 0,
         "surfaceId": "table-timeline",
-    }, {
-        "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED", "severity": "info",
-        "surfaceId": "table-timeline", "layoutMember": "relationRouting.unroutable",
-        "layoutValue": "relax", "viewMember": "visibility.relations.overflow", "viewValue": "suppress",
-        "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
-    }]
+    }]  # no relation is drawn, so no relation policy was superseded (#1854)
 
     svg_bytes = output.read_bytes()
     assert svg_bytes.startswith(b"<svg")
@@ -1585,7 +1569,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("a Project (a YAML file or a saved snapshot)", "from a Project file", "a saved render context in a Store"):
+    for phrase in ("check a Project, or a Theme, Layout Profile, View", "from a Project file", "a saved render context in a Store"):
         assert phrase in help_text
 
 

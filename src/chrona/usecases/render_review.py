@@ -21,7 +21,7 @@ from chrona.usecases.contrast_grouping import group_contrast_findings
 from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.diagnostic_messages import encoding_contrast_detail, error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
-from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, PrimitiveProvenance
 from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
@@ -37,11 +37,13 @@ from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, group_glyph_substitutions, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
-from chrona.presentation.model.color_separability import ScaleCollision
+from chrona.presentation.model.color_separability import SIMULATED_VISIONS, ScaleCollision
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
     ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, RoutingCostAdvisory,
+    AnnotationNotDrawn, LegendRoleUnkeyed,
 )
+from chrona.presentation.model.legend_role_coverage import unkeyed_band_and_fill_roles
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
@@ -75,8 +77,11 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.style_rules import StyleEvaluationError
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
-from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
-from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
+from chrona.presentation.review.figure_facts import (deferred_layout_figures, filtered_figure_counts, projected_counts,
+                                                     projected_last_planned_finish)
+from chrona.presentation.review.annotation_expansion import (
+    AnnotationExpansionError, undrawn_project_annotations,
+)
 from chrona.presentation.model.wording_tables import wording_resolver
 from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
@@ -295,6 +300,30 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path or "/") from error
 
 
+def _layout_has_source(node: object, source: str) -> bool:
+    if not isinstance(node, Mapping):
+        return False
+    if node.get("kind") == "slot" and node.get("source") == source:
+        return True
+    children = node.get("children")
+    return isinstance(children, list) and any(_layout_has_source(child, source) for child in children)
+
+
+def _undrawn_annotation_warnings(view: Any, project: Mapping[str, Any], projection: Any,
+                                 plan: Any) -> tuple[AnnotationNotDrawn, ...]:
+    """Name each Project annotation on a drawn target that no binding or notes slot draws (#1870)."""
+    visible = view.visibility.annotations
+    mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
+    notes = project.get("annotations", {})
+    if mode == "none" or not isinstance(notes, Mapping) or not notes:
+        return ()
+    if _layout_has_source(plan.profile.profile.get("root"), "notes"):
+        return ()  # the notes slot draws every note a binding left over
+    unplaced = (key for key, _ in plan.content.notes)
+    return tuple(AnnotationNotDrawn(*item)
+                 for item in undrawn_project_annotations(notes, projection, unplaced))
+
+
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
@@ -311,6 +340,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
+    authored_view = view
     try:
         view, field_role_info = resolve_field_role_view(view, project)
     except ContractError as error:
@@ -364,7 +394,6 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     legend_colors = _legend_colors(theme, profile_connections.detail)
     color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                       theme["body"].get("categorySlots"),
-                                      color_vision=tuple(theme["body"].get("colorVision", ())),
                                       observed=_observed_scale_values(view.color_encoding, projection),
                                       reserved=tuple(c for c in legend_colors if chroma(c) >= MINIMUM_RESERVED_CHROMA),
                                       other_color=_other_color(theme, legend_colors))
@@ -449,12 +478,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         axis_band_scale = resolve_axis_band_scales(
             selected_content.axis_tiers, window=projection.window,
             fiscal_start_month=selected_content.axis_fiscal_start_month,
-            scales=theme["body"].get("colorScales", {}), categories=theme["body"].get("categorySlots", {}),
-            color_vision=tuple(theme["body"].get("colorVision", ())))
+            scales=theme["body"].get("colorScales", {}), categories=theme["body"].get("categorySlots", {}))
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
-    selected_content = _complete_annotation_headers(selected_content, theme, projection, view)
+    selected_content = _complete_annotation_headers(selected_content, theme, projection, view, wording_resolver(environment.locale, view.wording))
     routing_advisory: RoutingCostAdvisory | None = None
 
     def observe_layout_work(event: RenderEvent) -> None:
@@ -472,7 +500,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     # Both native surfaces use the same composed View heading. A network's
     # whole-title slot is the heading host; profiles without that slot admit
     # the same named heading parts as before.
-    heading_content = compose_heading(view, project, actual_observations, environment.locale)
+    snapshot_present = render_closure.snapshot is not None or render_closure.snapshot_project is not None
+    heading_content = compose_heading(view, project, actual_observations, environment.locale,
+                                      snapshot_present=snapshot_present)
     try:
         count_input = inspect_count_reads(SurfaceRenderPlanInput(
             previous_route_hints=previous_scene.route_hints if previous_scene is not None else None,
@@ -482,7 +512,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
-            scene_precision=environment.scene_precision,
+            scene_precision=environment.scene_precision, snapshot_present=snapshot_present,
             paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=layout_progress))
@@ -521,7 +551,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
         if (view.surface == "table-timeline" or view.surface == "dependency-network"):
-            profile_info += missing_heading_fact_warnings(view, project, actual_observations)
+            profile_info += missing_heading_fact_warnings(view, project, actual_observations,
+                                                          snapshot_present=snapshot_present)
+        if view.surface == "table-timeline":
+            profile_info += _undrawn_annotation_warnings(view, project, projection, plan)
+        profile_info += tuple(LegendRoleUnkeyed(role, purpose)
+                              for purpose, role in unkeyed_band_and_fill_roles(surface.primitives))
         if routing_advisory is not None:
             profile_info += (routing_advisory,)
         if profile_info:
@@ -543,7 +578,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path) from error
     # A Theme role or binding no document of this closure reads is reported, not silently accepted (#1117).
     unread_roles = unread_theme_diagnostics(
-        theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
+        theme["body"], (view, *((authored_view,) if view is not authored_view else ()),  # omitted unbound-role columns still read their roles (#1616)
                         layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
                         render_closure.summary_profile.summary if render_closure.summary_profile else None,
                         render_closure.style.rules if render_closure.style is not None else (),
@@ -571,6 +606,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     perceptibility_warnings = (_scene_perceptibility_warnings(scene, surface.primitive_provenance)
                                if render_closure.context.identity.revision == "draft" else ())
     contrast_warnings = _scene_contrast_warnings(scene, theme, surface.primitive_provenance)
+    _enforce_color_vision_claims(theme, collisions, surface.diagnostic_provenance)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -669,6 +705,44 @@ def _scene_perceptibility_warnings(
 ) -> tuple[ScenePerceptibilityWarning, ...]:
     """Project only evaluator errors into ordered draft feedback facts."""
     return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)), provenance)
+
+
+def _enforce_color_vision_claims(
+    theme: Mapping[str, Any], collisions: tuple[ScaleCollision, ...],
+    provenance: tuple[DiagnosticProvenance, ...],
+) -> None:
+    """Enforce only Scheme claims; measurement and default warnings stay independent."""
+    claims = frozenset(ThemeTokenView(theme).color_vision) & frozenset(SIMULATED_VISIONS)
+    if not claims:
+        return
+    failures = []
+    for item in collisions:
+        if item.vision in claims:
+            failures.append(("E_PRESENTATION_SCALE_NOT_SEPARABLE", {
+                "vision": item.vision, "deltaE": item.delta_e,
+                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": item.vision,
+                "scaleId": item.scale_id, "first": item.first, "second": item.second,
+            }))
+    for item in provenance:
+        finding = item.color_pair
+        if finding is not None and finding.vision in claims:
+            failures.append(("E_LEGEND_COLOR_NOT_SEPARABLE", {
+                "vision": finding.vision, "deltaE": finding.delta_e,
+                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": finding.vision,
+                "sourceSubjects": [{"sourceRef": subject.source_ref,
+                    **({"title": subject.title} if subject.title is not None else {})}
+                    for subject in item.subjects],
+            }))
+    if failures:
+        code, details = failures[0]
+        pair = (f"scale {details['scaleId']}: {details['first']} / {details['second']}"
+                if "scaleId" in details else " / ".join(
+                    subject.get("title", subject["sourceRef"]) for subject in details["sourceSubjects"]))
+        more = f" and {len(failures) - 1} more" if len(failures) > 1 else ""
+        raise RenderFailed(code,
+            f"{pair}: colour difference {details['deltaE']!r} below {MINIMUM_CATEGORY_DELTA_E:g} "
+            f"under {details['vision']}{more}; the Scheme claims suitability.colorVision includes {details['claim']}",
+            "presentation", "/body/suitability/colorVision", details=details)
 
 
 def _scene_contrast_warnings(
@@ -840,7 +914,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
          "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
         source_ref="/body/grouping/tint",
-        color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups,
+        observed=groups,
         other_color=_tint_other_color(theme, scale_id=tint.scale))
     if scale is None:
         return (), (), None
@@ -968,7 +1042,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
                                        and item.figure_id not in late_ids)), actual,
             project_last_finish=projected_last_planned_finish(projection.items),
             counts=projected_counts(projection.items, as_of_available=
-                                   ((actual or {}).get("body") or {}).get("asOf") is not None))
+                                   ((actual or {}).get("body") or {}).get("asOf") is not None),
+            filtered_counts=filtered_figure_counts(view.figures, projection.items, grouping=view.grouping,
+                                                   as_of_available=((actual or {}).get("body") or {}).get("asOf") is not None))
         global_figures = tuple(resolution.values.items())
         binding_ids = {item.figure.figure_id for item in view.profile_bindings if item.figure is not None}
         unavailable_figures = tuple(item for item in resolution.diagnostics
@@ -1048,7 +1124,7 @@ def _require_forecast_occurrence_coverage(view: ViewInput, projection: Any) -> N
 
 
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],
-                                 projection: Any, view: ViewInput) -> SurfaceContentInput:
+                                 projection: Any, view: ViewInput, resolver: Any = None) -> SurfaceContentInput:
     """Compose kind text with explicit View facts before source measurement or Layout."""
     tokens = ThemeTokenView(theme)
     figures = dict(projection.figures)
@@ -1056,7 +1132,7 @@ def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[st
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     annotations = []
     for annotation in content.annotations:
-        token = tokens.annotation_kind(annotation.kind)
+        token = tokens.annotation_kind(annotation.kind, resolver)
         if token is None:
             annotations.append(annotation)
             continue
@@ -1124,9 +1200,11 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
                       actual: Mapping[str, Any] | None, *,
                       group_first_start: date | None = None,
                       project_last_finish: date | None = None,
-                      counts: FigureCounts | None = None) -> tuple[tuple[str, int], ...]:
+                      counts: FigureCounts | None = None,
+                      filtered_counts: Mapping[str, FigureCounts] | None = None) -> tuple[tuple[str, int], ...]:
     resolution = _figure_resolution(project, placements, view, actual,
-                                   group_first_start=group_first_start, project_last_finish=project_last_finish, counts=counts)
+                                   group_first_start=group_first_start, project_last_finish=project_last_finish,
+                                   counts=counts, filtered_counts=filtered_counts)
     if resolution.diagnostics:
         raise RenderRejected(list(resolution.diagnostics))
     return tuple(resolution.values.items())
@@ -1135,7 +1213,8 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
 def _figure_resolution(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
                        actual: Mapping[str, Any] | None, *, group_first_start: date | None = None,
                        project_last_finish: date | None = None,
-                       counts: FigureCounts | None = None) -> FigureResolution:
+                       counts: FigureCounts | None = None,
+                       filtered_counts: Mapping[str, FigureCounts] | None = None) -> FigureResolution:
     """Every figure the View declares, computed by the Core from the facts gathered here (#586).
 
     This is the one place the as-of, the placements, the resolved periods and the Project calendars are
@@ -1150,7 +1229,7 @@ def _figure_resolution(project: dict[str, Any], placements: dict[str, dict[str, 
         periods=resolve_periods(project, placements),
         calendars={key: Calendar.from_mapping(value) for key, value in (project.get("calendars") or {}).items()},
         default_calendar=(project.get("project") or {}).get("calendar"), group_first_start=group_first_start,
-        counts=counts, project_last_finish=project_last_finish)
+        counts=counts, project_last_finish=project_last_finish, filtered_counts=filtered_counts)
 
 
 def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
@@ -1180,6 +1259,9 @@ def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[
                                          group_first_start=min(dates) if dates else None,
                                          project_last_finish=projected_last_planned_finish(projection.items),
                                          counts=projected_counts(members, as_of_available=
+                                             ((actual or {}).get("body") or {}).get("asOf") is not None),
+                                         filtered_counts=filtered_figure_counts(
+                                             specs, members, grouping=view.grouping, as_of_available=
                                              ((actual or {}).get("body") or {}).get("asOf") is not None))
             values.append((group_id, resolved))
         except RenderRejected as error:

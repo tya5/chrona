@@ -1,0 +1,38 @@
+$ python tools/theme_role_reference.py --check
+Theme role reference: PASS
+rc=0
+
+$ grep -n theme-role-reference skills/chrona/SKILL.md; wc -l skills/chrona/SKILL.md
+154:[Theme role reference](references/theme-role-reference.md) explains what roles paint and which
+     200 skills/chrona/SKILL.md
+
+$ python -c "regenerate in memory and compare with the committed page"
+regenerated == committed: True | bytes 67759
+
+$ grep -c "^| " skills/chrona/references/theme-role-reference.md   # table rows
+234
+
+$ sed -n 262,270p skills/chrona/references/theme-role-reference.md   # paint keys: as-of.stroke, planned.fill / gate.fill, actual
+
+A Theme role can be shared by several meanings: `forecast` is distinct but reuses `planned`.
+`milestoneSymbol` is point-glyph geometry and has no fill paint key. Planned point milestones
+and the Detail `milestone` key resolve to `planned` paint by default; when `gate` is declared,
+they resolve to `gate`. Actual marks use `actual` paint. The `asOf` Theme role provides
+as-of relation geometry/width; the Scene Path's paint role is `as-of`, for example
+`as-of.stroke`. Do not infer the milestone key's paint binding from its Detail role name:
+its selected targets are `planned.fill` / `gate.fill`, as the shared point resolver specifies.
+These distinctions keep paint bindings separate from geometry roles.
+
+$ sed -n 273,284p ...   # authoring notes: progressFill, small-caps + smallCapsScale, shape: circle, legend role names
+
+- A Layout Profile's top-level `viewDefaults.progressFill.source` supplies the default for a
+  View's `body.progressFill.source`; an explicit View value replaces that default. It selects
+  `planned` or `actual` as the source for a display-only submark on completed marks; the Theme
+  `progress-fill` role supplies its ink (including progress on completed Actual marks).
+- A Theme text role using `textTransform: small-caps` must also declare `smallCapsScale` (a named
+  number token greater than 0.5 and less than 1).
+- A point-symbol token may use a built-in shape such as `shape: circle`; legend entries may also
+  request the closed `swatchShape: circle` geometry. Neither syntax assigns a color token ID.
+- Common built-in Detail legend roles include `planned`, `actual`, `milestone`, `dependency`,
+  `asOf`, `calendar-closed`, `forecast`, `progressFill`, `actual-ahead`, `actual-on-track`,
+  `actual-behind`, `snapshot`, `deadlineMark` and `critical-edge`. These are role names, distinct

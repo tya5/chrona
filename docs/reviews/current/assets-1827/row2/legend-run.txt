@@ -1,0 +1,16 @@
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual.yaml --detail detail-listed.yaml --preset target-b --output legend-listed.svg
+  detail legend:  - {role: planned, label: Planned} 
+  status ok
+  legend keys drawn: planned, progress, baseline
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual.yaml --detail detail-unkeyed.yaml --preset target-b --output legend-unkeyed.svg
+  detail legend:  - {role: planned, label: Planned}  unkeyedLegendRoles: [snapshot] 
+  status ok
+  legend keys drawn: planned, progress
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual.yaml --detail detail-unkeyed-bad.yaml --preset target-b --output legend-unkeyed-bad.svg
+  detail legend:  - {role: planned, label: Planned}  unkeyedLegendRoles: [snapshot, progressFill] 
+  status rejected
+   E_REVIEW_DETAIL_PROFILE_SCHEMA /body/unkeyedLegendRoles/1 expected one of 'snapshot', 'deadlineMark'
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual.yaml --detail detail-both.yaml --preset target-b --output legend-both.svg
+  detail legend:  - {role: planned, label: Planned}  - {role: snapshot, label: Plan before}  unkeyedLegendRoles: [snapshot] 
+  status rejected
+   E_DETAIL_LEGEND_POLICY /body/unkeyedLegendRoles/0 legend role 'snapshot' cannot be both explicitly keyed and opted out

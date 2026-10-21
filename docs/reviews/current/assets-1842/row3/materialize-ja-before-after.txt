@@ -1,0 +1,7 @@
+# before (source tree of 0f1dbe938, parent of PR #1843 merge 4b0a03ea9), inputs: trial-12/deckja @ 81d11c3cb
+$ chrona materialize manifest.yaml --slide exec --output out --write
+{"status": "rejected", "diagnostics": [{"code": "E_FONT_GLYPH_UNAVAILABLE", "severity": "error", "component": "presentation", "sourceRef": "/body/environment/fontMetrics", "revisionRefs": [], "message": "family='Noto Sans' weight=400 codepoint=U+57FA ('基') has no advance in the face stack [Noto Sans]; text_length=4"}]}
+
+# after (this worktree, origin/main 2350a3c4d)
+$ chrona materialize manifest.yaml --slide exec --output out --write
+{"status": "ok", "diagnostics": [], "warningCodes": ["I_BASELINE_OBJECT_REMOVED", "I_FONT_GLYPH_SUBSTITUTED", "I_LAYOUT_RELATION_POLICY_SUPERSEDED", "W_DEADLINE", "W_LEGEND_COLOR_NOT_SEPARABLE", "W_LEGEND_SWATCH_COLLISION", "W_SCENE_MARK_CONTRAST", "W_SCENE_STATE_TEXT_CONTRAST"]}

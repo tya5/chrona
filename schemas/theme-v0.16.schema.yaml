@@ -31,3 +31,5 @@ properties:
       colorScales: {description: "Color scales to replace as a whole or to add, by scale id.", type: object}
       annotationKinds: {description: "Annotation kind headers to replace as a whole or to add, by kind.", type: object}
       metrics: {description: "Source-measurement metric bindings to replace or add, by metric name.", type: object}
+      markStack: {description: "Optional ordered mark-band stack; it replaces the base's markStack as a whole, or is added when the base declares none (the Theme v0.15 member).", $ref: "urn:chrona:theme-v0.15#/properties/body/properties/markStack"}
+      contrastPolicy: {description: "Contrast constraints to replace or add, class by class (mark, stateText, groundText, decoration, unsupportedGround, asOfConeGround, exceptions); a class the derived Theme omits keeps the base's value (the Theme v0.15 member).", $ref: "urn:chrona:theme-v0.15#/properties/body/properties/contrastPolicy"}

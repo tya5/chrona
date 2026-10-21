@@ -129,19 +129,26 @@ def test_is_error_is_set_only_for_failed(workspace):
     assert (ok.structured_content["status"], ok.is_error) == ("ok", False)
 
 
-@pytest.mark.parametrize(("name", "arguments"), [
-    ("no_such_tool", {}), ("validate_project", {}), ("validate_project", {"project": 3}),
-    ("validate_project", {"project": "launch.yaml", "extra": True}),
-    ("render_draft", {"project": "launch.yaml", "format": "pdf"}),
-])
-def test_unknown_tools_and_malformed_arguments_are_protocol_errors_not_envelopes(workspace, name, arguments):
+def test_an_unknown_tool_is_a_protocol_error(workspace):
     async def scenario(client):
         with pytest.raises(MCPError) as raised:
-            await client.call_tool(name, arguments)
+            await client.call_tool("no_such_tool", {})
         return raised.value
 
     error = run(workspace, scenario)
     assert error.code == types.INVALID_PARAMS and error.message
+
+
+@pytest.mark.parametrize(("name", "arguments", "pointer"), [
+    ("validate_project", {}, "/"), ("validate_project", {"project": 3}, "/project"),
+    ("validate_project", {"project": "launch.yaml", "extra": True}, "/extra"),
+    ("render_draft", {"project": "launch.yaml", "format": "pdf"}, "/format"),
+])
+def test_malformed_arguments_are_a_rejected_result_with_a_pointer_not_a_protocol_error(workspace, name, arguments, pointer):
+    result = run(workspace, lambda client: client.call_tool(name, arguments))
+    assert (result.structured_content["status"], result.is_error) == ("rejected", False)
+    row = result.structured_content["diagnostics"][0]
+    assert (row["code"], row["sourceRef"]) == ("E_MCP_INPUT_INVALID", pointer)
 
 
 def test_the_guides_are_the_packaged_skill_text(workspace):

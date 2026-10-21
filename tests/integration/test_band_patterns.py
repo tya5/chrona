@@ -86,3 +86,22 @@ def test_a_pattern_on_a_role_outside_the_list_is_still_refused(tmp_path):
         _render(tmp_path, parts)
 
     assert "E_THEME_ROLE_PROPERTY_UNSUPPORTED" in str(caught.value) + repr(getattr(caught.value, "diagnostic_id", ""))
+
+
+def test_the_refusal_lists_the_properties_the_role_accepts(tmp_path):
+    from chrona.presentation.scene.capabilities import theme_role_contract
+    from chrona.usecases.failure_report import report_failure
+
+    parts = _parts()
+    parts["theme"]["body"]["values"]["band.pattern"] = {"type": "pattern", "value": {"kind": "catalog", "ref": DOTS}}
+    parts["theme"]["body"]["roles"]["calendar-closed"] = {"backgroundTreatment": "fill", "backgroundPaintOrder": 11,
+                                                          "pattern": "band.pattern"}
+
+    with pytest.raises(Exception) as caught:
+        _render(tmp_path, parts)
+
+    row = report_failure(caught.value).diagnostics[0]
+    assert row["sourceRef"] == "/body/roles/calendar-closed/pattern"
+    supported = sorted(theme_role_contract("calendar-closed").properties)
+    assert "'pattern'" in row["message"] and "supported properties: " + ", ".join(supported) in row["message"]
+    assert "stroke" in supported and "pattern" not in supported

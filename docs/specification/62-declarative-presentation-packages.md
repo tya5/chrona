@@ -93,6 +93,9 @@ font-set ids (`chrona.noto-sans`, `chrona.noto-sans+jp`; the names of a Render
 Context's `fontMetrics.fontSet`). `preset copy` writes it to `preset.yaml` as
 `resources.fontSets` and copies no font bytes. A draft render of that preset
 measures with the union of the named sets unless `--font-metrics` is given.
+A guided workspace render (`render-workspace`, MCP `render_workspace`) reads the
+workspace preset's `resources.fontSets` the same way, so the same Project and
+preset resolve the same faces and emit the same font warnings on every route (#1891).
 A declared set adds candidates; it is not a requirement. The `+jp` set is served
 by the separately installed `chrona-fonts-noto-cjk` package; when that provider
 is not installed the set's assets are skipped with `W_FONT_FAMILY_SKIPPED`

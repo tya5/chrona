@@ -71,7 +71,7 @@ def validate_axis_band_fill_targets(tiers: Sequence[AxisTier], tokens: ThemeToke
 
 def resolve_axis_band_scales(
     tiers: Sequence[AxisTier], *, window: tuple[date, date], fiscal_start_month: int,
-    scales: Mapping[str, object], categories: Mapping[str, object], color_vision: tuple[str, ...] = (),
+    scales: Mapping[str, object], categories: Mapping[str, object],
 ) -> AxisBandScaleResolution:
     """Resolve every opted-in band interval from exact Scheme-slot mappings.
 
@@ -136,7 +136,7 @@ def resolve_axis_band_scales(
             if not isinstance(color, str) or _HEX.fullmatch(color) is None:
                 raise AxisBandScaleError("E_PRESENTATION_SCALE_MAPPING", f"{spec.scale_id}:{value}: unknown Scheme category", pointer)
             resolved.append((value, color))
-        collisions.extend(scale_collisions(spec.scale_id, tuple(resolved), color_vision))
+        collisions.extend(scale_collisions(spec.scale_id, tuple(resolved)))
         color_by_value = dict(resolved)
 
         for interval in interval_sets[tier_index]:

@@ -22,6 +22,8 @@ Rules the matrix keeps:
 * the CLI is deterministic: `test_hash_seed_determinism.py` runs it under eight hash seeds, so the
   key order of ``analysis.totalFloat`` (Project object order, Spec 57) is recorded as printed;
 * nothing here reads the clock or the host environment.
+* comparison of warning `deltaE` fields ignores libm noise beyond twelve
+  significant digits; capture and public output retain the full raw numbers.
 
 Re-record the golden file only for an intended CLI change:
 ``python -m tests.cli.test_cli_characterization --record``.
@@ -387,9 +389,8 @@ _OS_ERROR = re.compile(r"\[(?:Errno|WinError) \d+\] [^:]*?: ")
 
 def _normalise(text: str, root: pathlib.Path) -> str:
     spellings = {str(root), root.as_posix(), str(root.resolve()), root.resolve().as_posix()}
-    # Resolve the longest alias first: replacing /tmp/... inside /private/tmp/...
-    # would otherwise leave /private<tmp>, depending on set/hash iteration order.
-    for spelling in sorted(spellings, key=len, reverse=True):
+    # Resolve the longest alias first; lexical tie-breaking keeps replacement stable.
+    for spelling in sorted(spellings, key=lambda value: (-len(value), value)):
         text = text.replace(spelling, "<tmp>")
         text = text.replace(spelling.replace("\\", "\\\\"), "<tmp>")
     text = _OS_ERROR.sub("<os error>: ", text)
@@ -537,7 +538,34 @@ def test_cli_output_is_unchanged(case: Case):
     if case.id == "unknown-command":
         assert _portable_unknown_command(golden) == _portable_unknown_command(expected)
     else:
-        assert golden == expected
+        assert _portable_color_measurements(golden) == _portable_color_measurements(expected)
+
+
+def _portable_color_measurements(record):
+    """Keep the envelope exact, apart from platform libm's final deltaE digits.
+
+    The Linux/macOS CIEDE2000 witnesses differ by about1e-14. This affects only
+    the characterization comparison, never capture, metric policy or output.
+    """
+    stdout = record.get("stdout")
+    if not isinstance(stdout, str):
+        return record
+    portable = re.sub(r'("deltaE": )(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)',
+                      lambda match: match[1] + format(float(match[2]), ".12g"), stdout)
+    return {**record, "stdout": portable}
+
+
+def test_color_measurement_comparison_preserves_pairs_and_raw_capture():
+    def record(value):
+        return {"stdout": json.dumps({"warnings": [{"code": "W_PRESENTATION_SCALE_NOT_SEPARABLE",
+                "values": ["bus", "payload"], "vision": "tritanopia", "deltaE": value}]}) + "\n"}
+
+    mac, linux = record(3.1270079319954034), record(3.1270079319954585)
+    assert _portable_color_measurements(mac) == _portable_color_measurements(linux)
+    assert mac["stdout"] == record(3.1270079319954034)["stdout"]
+    assert _portable_color_measurements(mac) != _portable_color_measurements(record(3.1271))
+    assert _portable_color_measurements(mac) != _portable_color_measurements({
+        "stdout": linux["stdout"].replace('"payload"', '"launch"')})
 
 
 def test_golden_holds_no_host_path():
@@ -641,3 +669,12 @@ def test_normalise_handles_overlapping_posix_scratch_aliases(monkeypatch):
         for spelling in (root, root.resolve()):
             message = json.dumps({"message": f"[Errno 2] No such file: '{spelling}/nested/missing.yaml'"})
             assert _normalise(message, root) == expected
+
+def test_normalise_replaces_resolved_scratch_alias_before_shorter_spelling():
+    class ScratchPath(pathlib.PurePosixPath):
+        def resolve(self):
+            return pathlib.PurePosixPath("/private/tmp/chrona-scratch")
+
+    root = ScratchPath("/tmp/chrona-scratch")
+    text = "<os error>: '/private/tmp/chrona-scratch/missing.yaml'"
+    assert _normalise(text, root) == "<os error>: 'missing.yaml'"

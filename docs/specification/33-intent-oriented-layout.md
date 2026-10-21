@@ -190,6 +190,9 @@ children; Scene never fits the run or changes content allocation.
 **Heading counts (#1346).** A slot heading uses
 exactly one of literal `text` or figure `template`; alignment, presence,
 reservation and overflow rules stay unchanged. Literal View overrides win.
+A `template` may also show `{wording:<key>}` (#1880, Spec 63): the Render Context locale's wording entry, with the View
+`wording.keys` override, replaces the placeholder before the template is compiled, so `{figure:<id>}` reads are unchanged; an unknown
+key is `E_WORDING_KEY_UNKNOWN` at the slot's `heading/template`.
 Presentation supplies closed programs; Layout binds before natural measurement.
 Layout records one typed receipt per completed annotation body, full narrative
 rail summary, or unconsumed note occurrence. Marker/index/status/kind fragments
@@ -577,6 +580,21 @@ successful opposite-side placement emits
 `W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:<annotation-id>:<candidate-id>:` with
 reason `other-side-of-as-of`, including when the first candidate fits. If the
 pass fails, retain the existing fallback and diagnostics.
+
+When every declared `nearest-free` candidate has failed, the terminal visible
+placement of an annotation box (#1869) MUST NOT cover a mark of an object other
+than the annotation's anchor while any lattice position within the first
+declared candidate's `maxPositions` budget (fine, then coarse) avoids one. Positions are
+ranked by whether they cover another object's mark at all (one that does not
+always wins), then the text and label visuals met (a note box never hides a
+name), the number of other objects' marks covered, the other declared obstacles
+met, the area of those marks covered, then nearest first. When every position covers another object's mark, the least-covering
+one is used and Layout emits `W_LAYOUT_ANNOTATION_COVERS_MARK:<annotation-id>:<object-id>`
+once per covered object, naming that object. The `W_LAYOUT_LABEL_OVERFLOW` of
+such a box reports the box size as the size required and, as the size
+available, the largest free rectangle of the candidate's region (on the
+anchor's side of an in-window as-of rule, and connected to the anchor when the
+candidate has a connector), not the region itself.
 
 ### 8.2 Annotation connector topology after the shared inventory
 

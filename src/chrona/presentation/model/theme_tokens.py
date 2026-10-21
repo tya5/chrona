@@ -8,6 +8,7 @@ from typing import Any, Literal, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, KindHeader, kind_header
 from chrona.presentation.model.semantic_registry import is_annotation_artwork_role, is_label_chip_role
+from chrona.presentation.model.wording_tables import WordingResolver
 
 
 class ThemeTokenError(ValueError):
@@ -15,6 +16,9 @@ class ThemeTokenError(ValueError):
 
     def __init__(self, diagnostic_id: str, path: str, detail: str | None = None):
         super().__init__(diagnostic_id)
+        if detail is None and diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED":
+            from chrona.presentation.scene.capabilities import unsupported_role_property_detail
+            detail = unsupported_role_property_detail(path)
         self.diagnostic_id = diagnostic_id
         self.path = path
         self.detail = detail
@@ -1039,18 +1043,19 @@ class ThemeTokenView:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/sliceInsets")
         return glyph, insets, unit_em
 
-    def annotation_kind(self, kind: str | None) -> "AnnotationKindToken | None":
+    def annotation_kind(self, kind: str | None, resolver: WordingResolver | None = None) -> "AnnotationKindToken | None":
         """Return the Theme's declaration for one Project annotation kind (#584).
 
         A kind the Theme does not declare, and an annotation with no kind, get no kind
-        treatment: absence is today's plain annotation, not a fallback.
+        treatment: absence is today's plain annotation, not a fallback. A `{wording: key}` label is read for
+        the `resolver`'s locale (#1865).
         """
         declared = self._body.get("annotationKinds")
         entry = declared.get(kind) if isinstance(declared, Mapping) and kind is not None else None
         if not isinstance(entry, Mapping):
             return None
         try:
-            header = kind_header(str(kind), entry)
+            header = kind_header(str(kind), entry, resolver)
         except AnnotationKindTextError as error:
             raise ThemeTokenError(error.code, f"/body/annotationKinds/{kind}") from error
         color, stamp = entry.get("color"), entry.get("stamp")

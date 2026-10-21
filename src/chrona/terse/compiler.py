@@ -26,6 +26,7 @@ class CompileResult:
     diagnostics: tuple[TerseDiagnostic, ...]
     source_map: SourceMap = field(default_factory=dict)
     profile_bindings: tuple[str, ...] = ()
+    entity_profile_bindings: tuple[str, ...] = ()  # entity ids (every entity states a profile), Spec 65 section 12.4
 
     @property
     def ok(self) -> bool:
@@ -50,7 +51,8 @@ def compile_terse(text: str, source: str | None = None) -> CompileResult:
     if problems:
         return CompileResult(None, _finish(problems, source))
     project, source_map = _build(parsed)
-    return CompileResult(project, (), source_map, tuple(item.name.value for item in parsed.objects if item.profile is not None))
+    return CompileResult(project, (), source_map, tuple(item.name.value for item in parsed.objects if item.profile is not None),
+                         tuple(item.name.value for item in parsed.entities))
 
 
 def _finish(problems: list[TerseDiagnostic], source: str | None) -> tuple[TerseDiagnostic, ...]:
@@ -84,9 +86,11 @@ def _resolve_names(parsed: ParseResult) -> list[TerseDiagnostic]:
             calendar(dep.lag_calendar)
             if dep.name.value not in parsed.known_objects:
                 close = nearest(dep.name.value, object_names)
+                hint = f"did you mean `{close}`?" if close else "`after` names an object defined in this plan (forward references are fine)"
+                if any(entity.name.value == dep.name.value for entity in parsed.entities):
+                    hint = "that name is an entity; `after` names an object, and a field such as `deliverable=ID` names an entity"
                 problems.append(TerseDiagnostic(
-                    "E_TERSE_REFERENCE_UNKNOWN", f"no object named '{dep.name.value}'", "/", dep.name.range,
-                    f"did you mean `{close}`?" if close else "`after` names an object defined in this plan (forward references are fine)"))
+                    "E_TERSE_REFERENCE_UNKNOWN", f"no object named '{dep.name.value}'", "/", dep.name.range, hint))
     return problems
 
 
@@ -130,6 +134,16 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
                     smap[f"{base}/exceptions/{index}"] = when.range
             calendars[item.name.value] = entry
         result["calendars"] = calendars
+
+    if parsed.entities:  # after the calendars, before the objects (Spec 65 section 4)
+        entities: dict[str, Any] = {}
+        for item in parsed.entities:
+            base = f"/entities/{item.name.value}"
+            entities[item.name.value] = {"type": item.profile.value, "title": item.title.value}
+            smap[base] = item.range
+            smap[base + "/type"] = item.profile.range
+            smap[base + "/title"] = item.title.range
+        result["entities"] = entities
 
     forms = {s.name.value: ("point" if s.schedule.form in ("point", "derived") else "span") for s in parsed.objects}
     objects: dict[str, Any] = {}

@@ -1,0 +1,10 @@
+$ chrona materialize examples/halcyon-1/manifest.yaml --slide target-b --output <empty dir>   # compares with the committed generated/*.svg
+  status ok | diagnostics 0
+$ chrona materialize examples/halcyon-1/manifest.yaml --slide yuya --output <empty dir>   # compares with the committed generated/*.svg
+  status ok | diagnostics 0
+  examples/halcyon-1/generated/21-target-b.svg slot heading text: ['NOTES']
+  examples/halcyon-1/generated/22-yuya.svg slot heading text: ['注記']
+
+layouts (source):
+src/chrona/resources/designs/yuya/layout.yaml:215:          text: {wording: slot.notes}
+src/chrona/resources/designs/target-b/layout.yaml:127:          heading: {text: {wording: slot.notes}, align: start, block: header-row}

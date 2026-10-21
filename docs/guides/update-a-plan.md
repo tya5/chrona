@@ -94,7 +94,18 @@ objects:
 relations:
   - {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
   - {id: launch-to-support, type: dependency, from: {object: launch, endpoint: at}, to: {object: support, endpoint: start}, lag: 0d}
+annotations:
+  design-late: {kind: note, text: Copy arrived two days late, anchor: {object: design}}
+  vendor-risk: {kind: risk, text: Vendor review may move the launch gate, anchor: {object: build}}
 ```
+
+**Notes and risks** are the top-level `annotations` map of the plan, as in the block above: a `kind` (`note` or `risk`),
+one short `text` and an `anchor: {object: ID}` naming the task or gate. You never place them on the picture; the
+design draws each one, in the plot or its notes rail as the design lays it out. A note or risk that the design's View
+has no binding for is not dropped silently: `render` names it in a
+`W_PRESENTATION_ANNOTATION_NOT_DRAWN` warning (status stays `ok`) with its id, kind and target. The longer
+reference, with rows grouped by a field role, is
+[Notes, risks and lanes](../../skills/chrona/references/notes-risks-and-lanes.md).
 
 If your tasks are `scheduled` (an `amount` such as `15wd`, placed by its relations), change
 the amount or the relation instead and read the new dates from `chrona schedule`; do not
@@ -128,6 +139,9 @@ Reading `update-after.svg`:
   that group, the group follows the others. With a hierarchy or no grouping it is the last row.
 - **Solid bar:** the current plan. **Dark line:** the actual. A striped bar is a task open
   at `asOf`.
+- **A task that started on `asOf` has no actual bar yet.** An open task is drawn from its `start` up to
+  `asOf`, so one that started today has no extent: nothing is drawn for it, its Δ cell stays blank and `render`
+  warns `W_LAYOUT_OPEN_ACTUAL_INVALID`. It is not lost; the bar appears at the next update, when `asOf` is later.
 - **`Δ vs plan`:** the Actual finish minus the **current** plan's finish, in **working days** of
   the object's calendar (the task's own `calendar`, else the project's `calendar`): the days
   from the planned finish up to, not including, the actual finish that the calendar marks
@@ -136,14 +150,18 @@ Reading `update-after.svg`:
   (it finished 2026-11-12 against a planned 2026-11-09). With a Monday to Friday calendar, a
   task planned to finish on Friday 2026-11-06 and finished on Tuesday 2026-11-10 reads `+2d`
   (Friday and Monday), not `+4d`. This is the `target-b` preset's `deltaUnit: working-days`;
-  a preset that sets `calendar-days` counts every day. Build reads a dash
-  because it has no finish yet. Moving the plan to match an actual makes its delta `+0d`, so
+  a preset that sets `calendar-days` counts every day. Build's cell is **blank**
+  because it has no finish yet: `target-b`, `yuya`, `titlecard`, `marquee` and `sunday` declare
+  `missingBy: {inProgress: blank}` for this column. For a column you write, `missing` (or `missingBy`)
+  sets what an open task shows, as in the column below. Moving the plan to match an actual makes its delta `+0d`, so
   the ghost, not the delta, shows how far the plan moved. This ordinary Actual comparison is
   against the current plan; it does not use the Snapshot as its delta baseline.
 
 **A `Δ` column of your own.** The `Δ vs plan` column above is the design's: it declares its cell format. A column
-you write in a View with `source: {facet: finishDelta}` and no `format` draws the bare number (`5*` for an
-estimated forecast), without sign or unit. Add `format: signedDays` to the column to read `+5d*`; the unit text
+you write in a View with `source: {facet: finishDelta}` and no `format` takes the design's `facet` column
+style: the bundled presets except `editorial` (whose Layout mirrors the HALCYON-1 corpus) declare `format: signedDays`, so it reads `+5d*` for an estimated forecast. A design
+of your own without that style draws the bare number (`5*`), without sign or unit; add `format: signedDays` to the
+column or a `facet` style to its Layout Profile's `viewDefaults.columnStyles`. The unit text
 follows `comparison.deltaUnit` and the locale (`d`, or `日` and `営業日` in `ja-JP`; see
 [Locale and wording](locale-and-wording.md)):
 

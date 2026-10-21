@@ -40,6 +40,9 @@ class LayoutError(ValueError):
     """Stable M24 layout diagnostic."""
 
     def __init__(self, diagnostic_id: str, path: str = "", node_id: str | None = None, detail: str = ""):
+        if not detail and diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED":
+            from chrona.presentation.scene.capabilities import unsupported_role_property_detail
+            detail = unsupported_role_property_detail(path) or ""
         super().__init__(diagnostic_id + (f": {detail}" if detail else ""))
         self.diagnostic_id = diagnostic_id
         self.path = path

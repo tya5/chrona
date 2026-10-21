@@ -104,10 +104,10 @@ def test_hierarchy_fallback_with_no_group_ancestor_keeps_a_single_ungrouped_list
     assert {item.object_id for item in projection.items} == {"one", "two"}
 
 
-def test_other_unbound_role_references_still_report_independently():
+def test_an_unbound_role_column_is_omitted_without_a_diagnostic_beside_the_handled_grouping():
     project = _project()
     view = _view(role_column=True)
     resolved, info = resolve_field_role_view(view, project)
     assert resolved.grouping is not None and resolved.grouping.by is _PrivateGroupingMode.PROJECT_ROOT_GROUP
-    assert len(info) == 1 and info[0].role == "responsible"
-    assert info[0].source_refs == ("/body/tableColumns/1/source/fieldRole",)
+    assert info == ()  # an omitted column is not reported (#1870)
+    assert len(resolved.table_columns) == len(view.table_columns) - 1

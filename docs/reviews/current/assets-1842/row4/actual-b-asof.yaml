@@ -1,0 +1,8 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: ghost-actual
+body:
+  asOf: '2026-11-12'
+  observations:
+  - {id: a-1, sequence: 1, projectObjectId: a, actual: {start: '2026-11-02', openUntil: asOf, progress: 0.5}}
+  - {id: b-1, sequence: 1, projectObjectId: b, actual: {start: '2026-11-12', openUntil: asOf, progress: 0.0}}

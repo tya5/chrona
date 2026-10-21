@@ -414,9 +414,11 @@ def test_ordinary_key_still_requires_its_declared_stroke_width():
 def test_completed_encoded_pair_warning_uses_typed_scale_and_final_visible_figures():
     blue = _paint(fill="#0000FF")
     near_blue = _paint(fill="#0000FE")
+    duplicate_facts = tuple(ScaleCollision("risk", "high", "medium", vision, 0.0)
+                            for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
     encoded = SurfaceLegendEntry("scale:risk:high", "High", view_scale_id="risk",
         view_scale_domain_value="high",
-        scale_collisions=(ScaleCollision("risk", "high", "medium", "normal", 0.0),))
+        scale_collisions=duplicate_facts)
     semantic = SurfaceLegendEntry("semantic:milestone", "Milestone")
     request = _theme_request()
 
@@ -465,34 +467,44 @@ def _theme_request_with_claimed_visions():
     return request
 
 
-def test_completed_ordinary_keys_warn_for_low_separation_under_normal_and_claimed_visions():
-    planned = _entry("planned", _paint(fill="#DDD9CF"), "Planned finish")
-    nonworking = _entry("nonworking", _paint(fill="#E9E5DB"), "Non-working day")
-    request = _theme_request_with_claimed_visions()
+def test_completed_ordinary_keys_warn_for_low_separation_under_cvd_without_a_claim():
+    planned = _entry("planned", _paint(fill="#8957E5"), "Planned finish")
+    nonworking = _entry("nonworking", _paint(fill="#2F81F7"), "Non-working day")
+    request = _theme_request()
 
     diagnostics, provenance = _batch((planned, nonworking), (
         ("shape", _box(0, 0, 10, 10), "Rect", planned.realized_key.paint, None),
         ("shape", _box(20, 30, 20, 20), "Rect", nonworking.realized_key.paint, None),
     ), request=request)
 
-    assert diagnostics == (
-        "W_LEGEND_COLOR_NOT_SEPARABLE:normal:2.688",
-        "W_LEGEND_COLOR_NOT_SEPARABLE:protanopia:2.696",
-        "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:2.683",
-        "W_LEGEND_COLOR_NOT_SEPARABLE:tritanopia:2.69",
-    )
-    assert len(provenance) == 4
-    assert all(item.subjects == (
+    assert diagnostics == ("W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:3.699",)
+    assert provenance[0].subjects == (
         DiagnosticSubject(f"legend-key:{planned.realized_key.key_id}", "Planned finish (planned)"),
         DiagnosticSubject(f"legend-key:{nonworking.realized_key.key_id}", "Non-working day (nonworking)"),
-    ) for item in provenance)
+    )
+    assert provenance[0].color_pair.vision == "deuteranopia"
+    assert provenance[0].color_pair.delta_e == pytest.approx(3.6987178254387363)
+
+    hidden_text = (
+        SimpleNamespace(placement_id=planned.text_placement_id, content="Planned finish", overflow="fit"),
+        SimpleNamespace(placement_id=nonworking.text_placement_id, content="Non-working day", overflow="suppressed"),
+    )
+    hidden = completed_legend_diagnostics(request, (planned, nonworking), (), (
+        SimpleNamespace(source_ref=planned.source_identity, bounds=_box(0, 0, 10, 10),
+            kind="Rect", legend_paint=planned.realized_key.paint, legend_swatch_shape=None,
+            visual_role=planned.role, path_commands=(), points=(), corner_radius=0, paint_channels=None),
+        SimpleNamespace(source_ref=nonworking.source_identity, bounds=_box(20, 30, 20, 20),
+            kind="Rect", legend_paint=nonworking.realized_key.paint, legend_swatch_shape=None,
+            visual_role=nonworking.role, path_commands=(), points=(), corner_radius=0, paint_channels=None),
+    ), (), hidden_text)
+    assert hidden == ((), ())
 
 
-def test_completed_identical_ordinary_keys_with_distinct_meanings_warn_and_keep_final_filter():
+def test_completed_identical_ordinary_keys_with_distinct_meanings_warn_in_all_modes_and_keep_final_filter():
     paint = _paint(fill="#DDD9CF")
     planned = _entry("planned", paint, "Planned finish")
     today = _entry("today", paint, "Today")
-    request = _theme_request_with_claimed_visions()
+    request = _theme_request()
     result = _batch((planned, today), (
         ("shape", _box(0, 0, 10, 10), "Rect", paint, None),
         ("shape", _box(20, 30, 20, 20), "Rect", paint, None),

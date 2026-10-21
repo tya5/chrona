@@ -1,0 +1,6 @@
+version: chrona/theme/v0.16
+kind: theme
+id: derived-target-b
+body:
+  extends: {id: target-b, path: theme.yaml}
+  contrastPolicy: {mark: warning}

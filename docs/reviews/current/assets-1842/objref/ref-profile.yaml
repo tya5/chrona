@@ -1,0 +1,20 @@
+version: chrona/profile/v0.3
+packageId: atlas-delivery
+contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000
+requires:
+  projectFormat: timeline/v0.7
+profiles:
+  atlas.work:
+    extends: task
+    fields:
+      deliverable:
+        type: objectReference
+        targetProfiles: [atlas.deliverable]
+      reviewers:
+        type: objectReference
+        cardinality: many
+        targetProfiles: [atlas.person]
+  atlas.deliverable:
+    extends: entity
+  atlas.person:
+    extends: entity

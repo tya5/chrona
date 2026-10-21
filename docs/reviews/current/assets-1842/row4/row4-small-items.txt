@@ -1,0 +1,33 @@
+## (b) Delta column
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --output delta-default-no-format.svg   # bundled default preset
+  Delta cells: 6* 2*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-signed-days.yaml --output delta-default-signed-days.svg   # bundled default preset
+  Delta cells: +6d* +2d*
+$ [proposed reviewer edit, not applied] chrona render ... --view view-no-format.yaml --layout <default layout + viewDefaults line>
+  Delta cells: +6d* +2d*
+
+## (c) as-of heading per preset, en-US and ja-JP
+en-US view-heading default -> as of Nov 12, 2026
+en-US view-heading target-b -> as of 12 Nov
+en-US view-heading mission-light -> as of Nov 12, 2026
+en-US view-heading yuya -> as of 12 Nov
+en-US view-marker-day-month default -> as of 12 Nov
+en-US view-marker-day-month target-b -> as of 12 Nov
+en-US view-marker-day-month mission-light -> as of 12 Nov
+en-US view-marker-day-month yuya -> as of 12 Nov
+ja-JP view-heading default -> as of 2026/11/12
+ja-JP view-heading target-b -> as of 11月12日
+ja-JP view-heading mission-light -> as of 2026/11/12
+ja-JP view-heading yuya -> as of 11月12日
+ja-JP view-marker-day-month default -> as of 11月12日
+ja-JP view-marker-day-month target-b -> as of 11月12日
+ja-JP view-marker-day-month mission-light -> as of 11月12日
+ja-JP view-marker-day-month yuya -> as of 11月12日
+
+## (d) open actual that starts on the as-of date
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-asof.yaml --view view-no-format.yaml --output open-actual-b-asof.svg
+  status ok warnings ['W_LAYOUT_OPEN_ACTUAL_INVALID']
+  actual bars drawn: 1
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --view view-no-format.yaml --output open-actual-b-day-before.svg
+  status ok warnings []
+  actual bars drawn: 2

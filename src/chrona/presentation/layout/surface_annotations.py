@@ -19,11 +19,11 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.layout.text import measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     AnnotationBox, annotation_rail_candidates, nearest_box_port, project_annotation_box,
-    visible_overflow_tail_box,
     resolve_annotation_anchor,
 )
 from chrona.presentation.layout.annotation_search import (
-    nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
+    largest_free_extent, least_covering_box, nearest_free_box, nearest_free_tail_box,
+    nearest_free_routed_tail_box,
 )
 from chrona.presentation.layout.annotation_artwork import place_artwork
 from chrona.presentation.layout.annotation_border import NO_BORDER, place_border, resolve_border
@@ -377,13 +377,15 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     # of the numbered list's ordering and its body-only text records.
     rail_boxes: list[LabelRect] = []
 
-    def add_diagnostic(value: str, annotation: Any) -> None:
+    def add_diagnostic(value: str, annotation: Any,
+                       extra_subjects: tuple[DiagnosticSubject, ...] = ()) -> None:
         diagnostics.append(value)
         # `subject_id` is set only when normalized View annotation ingress
         # resolved its explicit Project-object anchor.
         if annotation.subject_id:
             diagnostic_provenance.append(DiagnosticProvenance(value, (
-                DiagnosticSubject.project_object(annotation.subject_id, annotation.subject or None),)))
+                DiagnosticSubject.project_object(annotation.subject_id, annotation.subject or None),
+                *extra_subjects)))
 
     def ordered_rail_candidates(annotation: Any, resolved: Any, *, anchor_y: float,
                                 text_size: tuple[float, float], rail: LabelRect,
@@ -540,6 +542,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             tail_route_state_limit = tail_route_states_examined = 0
             tail_route_search_exhausted = False
             other_side_of_as_of = False
+            forced_overflow: tuple[LabelRect, tuple[float, float]] | None = None
             tail_topology: str | None = None
             kind_measure = EMPTY_FRAME
             tilt_angle = 0.0  # the Theme's deterministic tilt for this annotation's position (#584)
@@ -1111,26 +1114,61 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                              anchor_bounds.y + anchor_bounds.height / 2)
                             width, height = annotation_size
+                            forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
+                                                   region_bounds.right - width),
+                                               min(max(anchor_center[1] - height / 2, region_bounds.y),
+                                                   region_bounds.bottom - height), width, height)
+                            forced_host_id = anchor_host.placement_id if anchor_host is not None else None
+                            # The box never covers a mark of another object while a position
+                            # without one exists (#1869); otherwise it covers the fewest and
+                            # a warning names them.
+                            least = least_covering_box(
+                                region=region_bounds, anchor_center=anchor_center, box_size=annotation_size,
+                                max_positions=first_candidate.search.max_positions,
+                                obstacles=surface_obstacles,
+                                obstacle_classes=first_candidate.obstacles.classes,
+                                mark_owner=lambda placement_id: (
+                                    mark_by_id[placement_id].source_ref
+                                    if placement_id in mark_by_id else placement_id),
+                                own_owner=(anchor_host.source_ref if anchor_host is not None else resolved.object_id), host_id=forced_host_id)
+                            if least is not None:
+                                forced = least.box
+                                for owner in least.covered_owners:
+                                    covered_subjects = next(
+                                        (mark.subjects for mark in completed_marks
+                                         if mark.source_ref == owner and mark.subjects), ())
+                                    add_diagnostic(
+                                        f"W_LAYOUT_ANNOTATION_COVERS_MARK:{annotation_id}:{owner}",
+                                        annotation, extra_subjects=covered_subjects)
                             if first_candidate.connector.kind == "tail":
-                                container = request.theme_tokens.annotation_container(
-                                    semantic_binding(presentation.box_semantic_id).theme_role)
-                                corner_radius = (_container_radius(
-                                    role_corner_radius, container, size, width, height)
-                                    if role_corner_radius is not None else float(container.corner_radius) * size)
-                                forced, tail_tip = visible_overflow_tail_box(
-                                    region=region_bounds, anchor=anchor_bounds,
-                                    box_size=(width, height), obstacles=surface_obstacles,
-                                    obstacle_classes=first_candidate.obstacles.classes,
-                                    corner_radius=corner_radius, tail_base=float(container.tail_base) * size,
-                                    host_id=anchor_host.placement_id if anchor_host is not None else None)
+                                # Preserve the declared integrated tail topology while
+                                # honoring the completed least-covering box decision.
+                                tail_tip = nearest_box_port(
+                                    anchor_bounds,
+                                    (forced.x + forced.width / 2, forced.y + forced.height / 2))
                                 tail_topology = "direct-tail"
-                                box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
-                            else:
-                                forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
-                                                       region_bounds.right - width),
-                                                   min(max(anchor_center[1] - height / 2, region_bounds.y),
-                                                       region_bounds.bottom - height), width, height)
-                                box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
+                            # The space the declared candidate had: its own region on the
+                            # anchor's side of the as-of rule, minus its declared obstacles.
+                            side_region = region_bounds
+                            if as_of_side_constraint is not None:
+                                as_of_x, side_of_rule = as_of_side_constraint
+                                side_region = (
+                                    LabelRect(region_bounds.x, region_bounds.y,
+                                              max(0.0, min(as_of_x, region_bounds.right) - region_bounds.x),
+                                              region_bounds.height) if side_of_rule == "start" else
+                                    LabelRect(max(as_of_x, region_bounds.x), region_bounds.y,
+                                              max(0.0, region_bounds.right - max(as_of_x, region_bounds.x)),
+                                              region_bounds.height))
+                            forced_overflow = (
+                                LabelRect(region_bounds.x, region_bounds.y,
+                                          *largest_free_extent(
+                                              region=side_region, box_size=annotation_size,
+                                              obstacles=surface_obstacles,
+                                              obstacle_classes=first_candidate.obstacles.classes,
+                                              host_id=forced_host_id,
+                                              reach_from=(anchor_bounds if first_candidate.connector.kind in ("tail", "leader") else None))),
+                                annotation_size)
+                            box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
                         else:
                             box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
@@ -1191,6 +1229,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             box_overflow = box.placement.visible_overflow
             overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
                                  else LabelRect(*_bounds(timeline.bounds)))
+            overflow_required = forced_overflow[1] if forced_overflow is not None else None
+            if forced_overflow is not None:
+                overflow_viewport = forced_overflow[0]
             annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
                                      Decimal(str(bounds.width)), Decimal(str(bounds.height)))
             if tilt_angle:
@@ -1294,7 +1335,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     text.append(kind_line)
                     register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
                     if box_overflow:
-                        visible_label_overflows.append((kind_line, overflow_viewport))
+                        visible_label_overflows.append((kind_line, overflow_viewport, overflow_required))
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=frame_x + annotation_leading + content_left + kind_measure.body_inset_left,
                                            baseline_block=(frame_y + content_top
@@ -1318,7 +1359,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if annotation_slot is not None and annotation.number is not None and status_in_list:
                 rail_records.append(placed_annotation)
             if box_overflow:
-                visible_label_overflows.append((placed_annotation, overflow_viewport))
+                visible_label_overflows.append((placed_annotation, overflow_viewport, overflow_required))
             if annotation_visuals:
                 if not hasattr(annotation_metrics, "cap_height_at"):
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in annotation_visuals))

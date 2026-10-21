@@ -1,0 +1,43 @@
+version: chrona/example-materializer/v0.1
+id: deck-demo
+role: regression-corpus
+contextDefaults:
+  project:
+    id: plan
+    kind: project
+    store: {provider: local, identity: deck-demo}
+    address: deck-project.yaml
+    revision: {token: current}
+  view: {id: chrona-preset-mission-light, kind: view, store: {provider: local, identity: deck-demo}, address: deck-look/view.yaml, revision: {token: v1}}
+  theme: {id: chrona-builtin-mission-light, kind: theme, store: {provider: local, identity: deck-demo}, address: deck-look/theme.yaml, revision: {token: v1}}
+  colorScheme: {id: mission-light, kind: color-scheme, store: {provider: local, identity: deck-demo}, address: deck-look/scheme.yaml, revision: {token: v1}}
+  layout: {id: chrona-builtin-mission-light, kind: layout-profile, store: {provider: local, identity: deck-demo}, address: deck-look/layout.yaml, revision: {token: v1}}
+  inputs:
+    snapshot:
+      id: plan-baseline
+      kind: snapshot-ref
+      store: {provider: local, identity: deck-demo}
+      address: deck-broken-ref.yaml
+      revision: {token: baseline}
+  environment:
+    viewport: {inlineSize: 1600, blockSize: 900}
+    locale: en-US
+    fontMetrics: {algorithm: declared-metrics-v3, missingFont: diagnose, fontSet: chrona.noto-sans}
+    scenePrecision: 3
+  target:
+    kind: svg
+    visualProfile: chrona-output/visual/v0.6-svg
+    capabilities: [accessibleText, hierarchicalAxis, marker, semanticRoles, sourceMetadata, tableSemantics]
+slides:
+- id: overview
+  expectedSvg: deck-generated/overview.svg
+  evidence: the plan as it stands
+  contextOverrides:
+    id: deck-overview
+- id: compare
+  expectedSvg: deck-generated/compare.svg
+  evidence: the plan against its baseline
+  contextOverrides:
+    id: deck-compare
+    body:
+      view: {id: plan-compare, kind: view, store: {provider: local, identity: deck-demo}, address: deck-view-compare.yaml, revision: {token: v1}}

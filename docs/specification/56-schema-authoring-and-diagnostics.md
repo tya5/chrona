@@ -295,6 +295,15 @@ An unknown id in a relation or a `parent` names the nearest known id by the rule
 an unexpected or misplaced member, else the deepest node of the pointer that exists. Scheduler findings and the agent
 tool rows keep their shape.
 
+`chrona validate` checks a resource file against its own schema and contract when the document is not a Project:
+the `kind` member decides (`theme`, `color-scheme`, `layout-profile`, `view`, `style`, `actual-set`,
+`summary-profile`, `review-detail-profile`), and a document without `kind` is told by its `chrona/<kind>/vN`
+version. It reports every schema error as `E_SCHEMA` with its pointer, then the contract checks of that kind, and
+prints `"resource": "<kind>"` on success. A `kind` outside that list is `E_CLOSURE_KIND` at `/kind` and names the
+accepted kinds. A View that relies on its design's defaults is incomplete alone; `--layout <layout.yaml>` lays that
+Layout profile's `viewDefaults` under it, as a render does. This adds no schema member and changes no Project
+check (Spec 56 section 3.2).
+
 ## 4. Union policy and Project v0.6
 
 Use a discriminator only where a stable author-owned tag already expresses a

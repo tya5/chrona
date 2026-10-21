@@ -261,7 +261,9 @@ For an explicitly selected path name, omit only ancestor segments represented
 by an enclosing, actually displayed header/row/lane for that same source
 object. Project-root hierarchy fallback can cover its ancestor; field/entity
 groups, object-type groups and ungrouped rows do not cover ancestors by text
-or coincident identifier. Omitted/hidden headers cover nothing. A vertical group tag that gave
+or coincident identifier, with one exception: a role-bound field grouping drops the
+leading ancestor segments whose title equals its displayed header text (section 6.2,
+"Role-bound grouping with parent groups", #1870). Omitted/hidden headers cover nothing. A vertical group tag that gave
 way for want of room (Specification 07, #1726) is not displayed: Layout then sets the path column
 cells of that group's rows with the full path, covered ancestor included; groups whose tags are
 drawn keep the covered path. Keep the leaf.
@@ -311,7 +313,13 @@ role selects grouping's explicit fallback, omits its columns/optional color or
 icon encoding, removes the role lane-key component (retaining `byObject`), or
 uses the Project title for a network node label.
 Evaluation emits one `I_VIEW_FIELD_ROLE_UNBOUND` per role, with `count` and
-`sourceRefs` counting affected declarations, not rows. Ordinary tables with no
+`sourceRefs` counting affected declarations, not rows. A table or lane-table
+*column* whose role is unbound is omitted without that diagnostic (#1870): it is
+how a role the Project does not use disappears from a shared design, so a default
+render of a built-in design on a Project without the optional `phase` role reports
+nothing about it. Grouping, colour, icon, lane-key and node-label references
+change how the picture reads and stay reported. Theme roles an omitted column
+would have read still count as read (#1616). Ordinary tables with no
 remaining column reject with `E_VIEW_TABLE_COLUMNS_EMPTY`; an omitted
 `hierarchyColumn` is `E_VIEW_HIERARCHY_COLUMN_UNKNOWN`. No column is invented or
 silently substituted. Other target-reference validation remains unchanged.
@@ -348,9 +356,54 @@ IDs and Project fields are not rewritten, and no renderer resolves a reference.
 When a bound field-role grouping is resolved to its Project field, selected
 `type: group` summary objects are omitted from those field-grouped rows rather
 than receiving the missing-value group as ordinary bars. The projection reports
-their omitted count as `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED`; member objects
-retain their field groups. This omission is specific to role-bound grouping:
-direct-field grouping and `grouping.by: none` keep their declared behavior.
+their omitted count as `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED` under rule R4 below;
+member objects retain their field groups. This omission is specific to role-bound
+grouping: direct-field grouping and `grouping.by: none` keep their declared behavior.
+
+**Role-bound grouping with parent groups (#1870).** When `by: {fieldRole: R}` resolves
+to a Project field (a bound role), four rules fix what the reader sees on a Project that
+also declares parent `type: group` objects. They apply to a bound role only: a direct
+`by: field` key, an unbound role (`fallback`) and `grouping.by: none` keep their own
+rules. No View member is added.
+
+- **R1, header order.** Headers appear in this precedence, first match wins: (1) the
+  View's explicit `grouping.order`; (2) `grouping.order.by: earliestPlannedStart`;
+  (3) the first appearance of the header among the selected rows in the Project's
+  declared object order, so a Project that lists `plat`, `mob`, `data` shows them in
+  that order whatever the field values spell; the same declared position is the
+  `source` ordering key. The `missing` group (items with no value of the role's
+  field and nothing to inherit one from, R3) is last under rules 2 and 3 wherever its
+  name would sort; an explicit `order` that lists it places it as listed, and one that
+  omits it places it after the listed headers. Rows within a header keep the View's
+  `ordering`.
+- **R2, row names.** A name that shows the `path` (a `source: path` column, or the
+  `path` label content) drops the leading ancestor segments whose title equals, as an
+  exact string, the text of the header displayed for that row: the group entity's title,
+  else the field value, as the header names it. The member's own segment is never
+  dropped, so a path with nothing left shows the object's title. A row under the
+  `missing` group keeps its full path. The rule holds for `presentation: header` and
+  `band` alike, for plot labels and for table cells. It covers a segment only while the
+  header is displayed: where Layout withdraws a vertical group tag (Specification 07,
+  #1726) the cells show the full path, and an omitted header (a grouping that
+  distinguishes nothing) covers nothing. A header spelled differently from the
+  ancestor's title (`Go to market` against `Go-to-market`) is not matched and the
+  segment stays.
+- **R3, points without the role's value.** A point (gate, milestone) with no value of
+  the role's field does not go to the `missing` group when `rows.points` places it
+  elsewhere. With `key-row` it leaves the headers for the key row. With `attached`,
+  `predecessor` or `group-header` it joins the group of the object it is attached to:
+  its `attachesTo` host, else its nearest Project ancestor, that carries the field.
+  (`attached` is the default `rows.points`.) With `own-row`, or when nothing supplies
+  a value, it is in the `missing` group as before. A View that places its points
+  therefore leaves `missing` holding only non-point objects.
+- **R4, parent summaries.** A parent group's summary is not a row; its information is
+  that of its members. A header shows the union of its members' spans where it shows
+  a range at all (the v0.1 header template has no range placeholder, so a header draws
+  none). `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED` is reported only when information is
+  lost: its `count` is the number of omitted parent groups whose selected descendants
+  fall under more than one header (a point the `key-row` takes out of the headers
+  belongs to none). A parent whose descendants share one header, or that has none
+  selected, adds nothing and emits no diagnostic.
 
 The private root-group context used by the `hierarchy` fallback orders groups
 by Project object declaration order when the View declares neither `order` nor
@@ -600,6 +653,16 @@ member contributes no text. String shorthand retains its existing behavior.
 The shared heading schema admits this optional form in place for both Views and
 Layout `viewDefaults` (Spec 56 §3.2); Scene and adapters receive only completed text.
 
+**Presence conditions on heading parts (#1880).** A heading part may also declare
+`presentWhen: actualSet | snapshot`. The part is kept only when the render supplies an
+Actual Set (`actualSet`) or a Snapshot (`snapshot`, a baseline Project or package); otherwise
+it is omitted silently when the heading is composed, before figure binding and text
+measurement, as an `omitWhenZero` part is at zero. A part may declare both, and both must
+hold. A part that is omitted for lack of data reports no missing-fact warning for the
+`{asOf}` it would have read (`W_PRESENTATION_HEADING_FACT_MISSING`). Any other value is a View/Layout schema
+error. A heading whose parts are all omitted contributes no text. String shorthand and
+parts without `presentWhen` are unchanged.
+
 ### 7.5 Slot caption copy (#1100)
 
 A View MAY declare `slotHeadingText: {<Layout slot node id>: <literal copy>}`. Each target must be a slot
@@ -614,6 +677,20 @@ or with an empty map, the profile's copy and output remain unchanged.
 
 ### 7.2 Derived figures (#586)
 
+**Restricted counts (#1880).** A `count` figure may declare `objectTypes` (non-empty list of
+domain object types), `temporalKind` (`point` or `span`, the planned shape) and, with the
+`groups` source only, `excludeUnassigned: true`. The restrictions narrow the distinct
+selected Primary/combined identities before any source is counted, so `selected`,
+`recorded`, `behind` and the other sources count only the matching objects; `groups`
+counts the distinct nonempty group identities of the matching objects, and
+`excludeUnassigned` also leaves out the group that collects objects with no grouping value
+(the grouping `missing` fallback, whether a plain field grouping or a role-bound one).
+Omission keeps today's count of every selected object and group. A group-scoped figure
+applies the restriction to the members of the current group. `placedNotes` cannot be
+restricted, and `excludeUnassigned` with another source is `E_VIEW_FIGURE_INVALID` at the
+property (`/source` for `placedNotes`). Slot-binding figures (`bindings`) do not take the
+restrictions.
+
 **Reusable heading counts (#1346).** Heading
 parts additionally admit existing `{figure:<id>}` markers. Slot headings may
 declare `template` instead of literal `text` (Spec33); `slotHeadingText` stays
@@ -625,6 +702,16 @@ selected memberships. Placed notes are Spec33 completed narrative occurrences,
 not selected Project notes. This late source is table-timeline-only and read
 only by heading parts/slot captions; other consumers refuse it with
 `E_FIGURE_LAYOUT_SCOPE` at their reference. Unused late figures still resolve.
+
+**Wording placeholders in heading text (#1880).** Heading text (a string, or the `text` of a
+part) admits `{wording:<key>}` beside `{project}`, `{asOf}`, `{calendar}` and `{figure:<id>}`: the
+built-in wording-table entry of the Render Context locale, with the View `wording.keys`
+override applied (Spec 63). It is closed to literal text when the heading is composed, so
+Layout measures the resolved text. An unknown key is `E_WORDING_KEY_UNKNOWN` at the part's
+`text` pointer. A Summary panel `title` admits the same placeholder (Spec 25): a title with a
+`{wording:` marker is read as a template (`{{`/`}}` are literal braces; `{figure:..}` is not
+admitted), any other title is plain text as before; an unknown key is
+`E_WORDING_KEY_UNKNOWN` at `/body/panels/<i>/title`.
 
 Optional `figureFormats` maps declared count-figure IDs to closed text formats.
 Layout `viewDefaults.figureFormats` offers whole-member replacement; a View
@@ -647,7 +734,7 @@ and their own format. Validate every format declaration's shape and target
 eagerly, but require number names only when a template reads it; an unused
 count remains a raw integer. Theme's existing text treatment applies afterwards.
 
-A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
+A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?, objectTypes?, temporalKind?, excludeUnassigned?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
 Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); an undeclared Summary figure is omitted with `I_SUMMARY_FIGURE_UNBOUND` under #1344, while other template consumers retain `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before except that explicitly approved Summary omission.
 
@@ -885,7 +972,7 @@ geometry-based recovery is allowed.
 
 View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. An annotation has one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. The anchor endpoint is `start`, `end`, `finish`, `at` or `body`; `end` is the canonical spelling of a span's end and `finish` its alias, and the two produce the same Scene. A referenced Project note is not duplicated in the notes slot. Each candidate declares a region, search, obstacle classes and connector; Layout evaluates the list against one completed surface obstacle set, records the selected candidate and bounded search count, and owns box and connector geometry. The rail, adjacent sides and plot search are configurations of this one model; legacy named rungs normalize to candidates without changing their output. No View field contains concrete coordinates. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
-The **kind** of a presentation annotation is the `kind` of the Project annotation its `projectAnnotation` reference selects (an open string such as `risk` or `note`); it is distinct from `purpose`, the closed placement intent. An annotation that carries its own `text` has no kind. Theme kind decoration does not select placement, purpose or text. The explicit View `annotationBindings` contract in Specification44 may bind a Project kind/temporal shape to an ordinary purpose and facet/endpoint; its purpose policy may come from Layout `viewDefaults.annotationPlacement`. No implicit Theme-driven placement or second source of Project narrative is introduced.
+The **kind** of a presentation annotation is the `kind` of the Project annotation its `projectAnnotation` reference selects (an open string such as `risk` or `note`); it is distinct from `purpose`, the closed placement intent. An annotation that carries its own `text` has no kind. Theme kind decoration does not select placement, purpose or text. The explicit View `annotationBindings` contract in Specification44 may bind a Project kind/temporal shape to an ordinary purpose and facet/endpoint; its purpose policy may come from Layout `viewDefaults.annotationPlacement`. No implicit Theme-driven placement or second source of Project narrative is introduced. A Project annotation whose target the View draws is drawn through a binding or a Layout notes slot, or named in `W_PRESENTATION_ANNOTATION_NOT_DRAWN` (annotation id, kind, target and target shape) when neither draws it (#1870). A View with `visibility.annotations` `none` omits annotations by choice and emits no such warning.
 
 For a plot `tail` candidate, the same View intent may complete as a direct
 integrated balloon tail or a strict routed connection to a short balloon tip.
@@ -1061,7 +1148,8 @@ looked up by a closed key in the bundled wording table of
 [Axis Name Tables](63-axis-name-tables.md#built-in-wording-tables), one complete
 table per supported locale (`en-US`, `ja-JP`), selected by the Render Context locale
 only. A preset, View or Detail Profile references an entry as `{wording: <key>}` in
-`tableColumns[].header`, `markers[].label` and a Detail legend `label`; each also
+`tableColumns[].header`, `markers[].label`, a Detail legend `label` and the
+field-grouping `grouping.missing` label (#1865: `grouping.unassigned`, `grouping.other`); each also
 accepts a literal. The text of one built-in label resolves, lowest to highest:
 (1) the table entry for the locale; (2) a literal authored in the preset (never
 translated); (3) the View `wording.keys: {<key>: <text>}` override of that key;

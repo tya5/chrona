@@ -33,8 +33,6 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
-from jsonschema.exceptions import best_match
-
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.operational.authoring_commands import read_authoring_workspace, transact_authoring_command
 from chrona.operational.workspace_initialization import publish_workspace_directory
@@ -52,6 +50,8 @@ from chrona.usecases.failure_report import (
     FailureReport, StableFailure, collapse_records, diagnostic_record, rejection_report, report_failure,
 )
 from chrona.usecases.preset_library import DEFAULT_PRESET_ID, list_builtin_presets
+from chrona.usecases.input_violations import explain_input_errors
+from chrona.usecases.resource_checks import document_kind, read_document, unknown_kind, validate_resource_mapping
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
 TOOL_SET_VERSION = "chrona/agent-tools/v0.8"
@@ -73,10 +73,6 @@ _PRESET_PATH_SUFFIXES = (".yaml", ".yml")
 
 class UnknownToolError(LookupError):
     """The tool name is not in the registry (a protocol error, never an envelope)."""
-
-
-class InvalidArgumentsError(ValueError):
-    """The arguments do not satisfy the tool's input schema (a protocol error, never an envelope)."""
 
 
 @dataclass(frozen=True)
@@ -374,9 +370,24 @@ def _identity(content: bytes) -> str:
 
 # --- handlers ------------------------------------------------------------------------------------------------
 
+_KIND_TOOLS = {
+    "authoring-workspace": "; use validate_workspace for a guided workspace",
+    "command-request": "; use check_command for a Command Request",
+    "authoring-command": "; use apply_authoring_command for an Authoring Command",
+}
+
+
 def _validate_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     path = call.scope.resolve_path(arguments["project"], "/project")
     call.carried["projectIdentity"] = _identity(path.read_bytes())
+    document = read_document(path)
+    kind = document_kind(document)
+    if kind is not None:  # the kinds `chrona validate` checks by their own schema (#1854); the rest name the right tool
+        refused = unknown_kind(kind, use=_KIND_TOOLS.get(kind, ""))
+        found = (refused,) if refused is not None else validate_resource_mapping(kind, document)
+        if found:
+            return call.rejected(rejection_report(found))
+        return ToolResult(call.ok(projectIdentity=call.carried["projectIdentity"], resource=kind))
     outcome = validate_project_file(path)
     if not outcome.ok:
         return call.rejected(rejection_report(outcome.diagnostics))
@@ -437,7 +448,8 @@ def _rasterizer_importable() -> bool:
 def _tool_viewport(arguments: dict[str, Any]) -> str:
     viewport = arguments.get("viewport", DEFAULT_VIEWPORT)
     if not _VIEWPORT.fullmatch(viewport):
-        raise InvalidArgumentsError("viewport must match WIDTHxHEIGHT or WIDTHxauto (3 to 5 digits, no leading zero)")
+        raise StableFailure(INPUT_INVALID, "viewport must match WIDTHxHEIGHT or WIDTHxauto (3 to 5 digits, no leading zero)",
+                            "mcp", "/viewport", 1)
     return viewport
 
 
@@ -639,6 +651,19 @@ def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResul
 
 # --- registry ------------------------------------------------------------------------------------------------
 
+_DETAIL_POINTER = re.compile(r"^(/[^\s:]*): ")
+
+
+def _detail_pointer(detail: object) -> str | None:
+    """The command pointer an authoring rejection's detail leads with (``/payload/overrides/theme: ...``), if any."""
+    match = _DETAIL_POINTER.match(detail) if isinstance(detail, str) else None
+    return match.group(1) if match else None
+
+
+def _without_pointer(detail: object) -> str | None:
+    return _DETAIL_POINTER.sub("", detail, count=1) if isinstance(detail, str) else None
+
+
 def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     workspace = call.scope.resolve_path(arguments["workspace"], "/workspace")
     supplied = arguments["command"]
@@ -664,8 +689,8 @@ def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
         "E_AUTHORING_TARGET_MISMATCH": "/target/path",
     }
     rows = [diagnostic_record(
-        item["code"], item.get("detail") or item.get("message") or item["code"], "authoring",
-        pointers.get(item["code"], "/"),
+        item["code"], _without_pointer(item.get("detail")) or item.get("message") or item["code"], "authoring",
+        _detail_pointer(item.get("detail")) or pointers.get(item["code"], "/"),
     ) for item in result["diagnostics"]]
     return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
 
@@ -696,9 +721,11 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "status 'ok' with no diagnostics, or status 'rejected' with typed diagnostics (code, sourceRef, message). "
         "A rejected plan is a normal result, not a tool error. A dependency cycle is rejected here, naming the "
         "objects on it. This tool computes no dates, so a fixed date that contradicts its dependencies is found "
-        "only by schedule_project: run it to read dates.",
+        "only by schedule_project: run it to read dates. Like chrona validate, it checks a Theme, Color Scheme, Layout "
+        "Profile, View, Style, Actual Set, Summary Profile or Review Detail Profile file by its kind (status ok then "
+        "carries 'resource'); another kind is rejected naming the kind and the tool to use.",
         _input_schema({"project": _WORKSPACE_PATH_PROPERTY}, ["project"]),
-        _output_schema({"projectIdentity": {"$ref": "#/$defs/sha256"}}),
+        _output_schema({"projectIdentity": {"$ref": "#/$defs/sha256"}, "resource": {"type": "string"}}),
         _validate_project,
     ),
     ToolSpec(
@@ -916,19 +943,29 @@ def _input_validator(name: str):
     return validator_for_schema(_BY_NAME[name].input_schema)
 
 
-def _check_arguments(spec: ToolSpec, arguments: object) -> dict[str, Any]:
+INPUT_INVALID = "E_MCP_INPUT_INVALID"
+_MAX_INPUT_DIAGNOSTICS = 8
+
+
+def _input_rejection(call: _Call, spec: ToolSpec, arguments: object) -> ToolResult | None:
+    """A rejected result naming each violating node and the expected shape, or None when the arguments satisfy the schema.
+
+    An unknown tool is the only protocol error left: the arguments are the caller's input, so a mistake in them is
+    a result the agent can read and fix (#1892 row 5). No message echoes the supplied value.
+    """
     if not isinstance(arguments, dict):
-        raise InvalidArgumentsError(f"{spec.name}: arguments must be an object")
-    error = best_match(_input_validator(spec.name).iter_errors(arguments))
-    if error is not None:
-        where = "/".join(str(part) for part in error.absolute_path)
-        message = error.message if len(error.message) <= 200 else error.message[:200] + "..."
-        raise InvalidArgumentsError(f"{spec.name}: {where + ': ' if where else ''}{message}")
-    return arguments
+        found = [("/", "arguments must be an object with the properties of the tool input schema")]
+    else:
+        found = explain_input_errors(_input_validator(spec.name).iter_errors(arguments), spec.input_schema)
+        if not found:
+            return None
+    rows = [diagnostic_record(INPUT_INVALID, f"{spec.name}: {message}", "mcp", pointer)
+            for pointer, message in found[:_MAX_INPUT_DIAGNOSTICS]]
+    return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
 
 
 def call_tool(scope: WorkspaceScope, name: str, arguments: object = None, *, allow_write: bool = False) -> ToolResult:
-    """Run one tool. Unknown names and malformed arguments raise (protocol errors); everything else is a result.
+    """Run one tool. An unknown name raises (a protocol error); everything else, malformed arguments included, is a result.
 
     A mutating tool runs only when ``allow_write`` is true (a server start option, never an argument); otherwise the
     result is ``failed`` with ``E_MCP_WRITE_DISABLED`` before any file is opened.
@@ -936,8 +973,12 @@ def call_tool(scope: WorkspaceScope, name: str, arguments: object = None, *, all
     spec = _BY_NAME.get(name)
     if spec is None:
         raise UnknownToolError(name)
-    checked = _check_arguments(spec, {} if arguments is None else arguments)
     call = _Call(scope)
+    supplied = {} if arguments is None else arguments
+    rejection = _input_rejection(call, spec, supplied)
+    if rejection is not None:
+        return rejection
+    checked: dict[str, Any] = supplied  # type: ignore[assignment]
     if spec.mutating and not allow_write:
         return call.failure(StableFailure(
             WRITE_DISABLED,
@@ -947,7 +988,5 @@ def call_tool(scope: WorkspaceScope, name: str, arguments: object = None, *, all
         ))
     try:
         return spec.handler(call, checked)
-    except InvalidArgumentsError:
-        raise
     except Exception as error:  # every other failure is typed by the shared failure report
         return call.failure(error)
