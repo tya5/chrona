@@ -24,8 +24,8 @@ def _witness(*sources: EncodingSource) -> EncodingWitness:
     return EncodingWitness("fill", "owner", "responsible", "Ada", tuple(sources))
 
 
-def _coverage(*witnesses: EncodingWitness, kind="encoding") -> LegendEncodingCoverage:
-    return LegendEncodingCoverage(kind, tuple(witnesses))
+def _coverage(*witnesses: EncodingWitness, kind="encoding", paint_channel="fill") -> LegendEncodingCoverage:
+    return LegendEncodingCoverage(kind, tuple(witnesses), paint_channel)
 
 
 def _primitive(**changes):
@@ -206,6 +206,32 @@ def test_legend_encoding_coverage_requires_nonempty_unique_witnesses():
         _coverage(witness, witness)
 
 
+def test_encoding_legend_coverage_can_name_stroke_while_state_coverage_cannot():
+    witness = _witness(EncodingSource("view", "mission-light", "/encodings/owner"))
+    coverage = _coverage(witness, paint_channel="stroke")
+    primitive = _primitive(source_kind="legend", purpose="legend-swatch",
+                           paint=ScenePaint(None, "#224466", 1.25, (), 1.0),
+                           legend_encoding_coverage=coverage)
+    document = json.loads(serialize_scene(_scene(primitive)))
+    encoded = document["surfaces"][0]["primitives"][0]["legendEncodingCoverage"]
+    assert encoded == {"kind": "encoding", "paintChannel": "stroke",
+                       "witnesses": [witness.as_mapping()]}
+    validate_scene_document(document)
+
+    with pytest.raises(ValueError, match="state legend encoding coverage cannot declare"):
+        _coverage(witness, kind="state", paint_channel="stroke")
+    with pytest.raises(ValueError, match="paint channel must be 'fill' or 'stroke'"):
+        _coverage(witness, paint_channel="outline")
+    with pytest.raises(ValueError, match="cannot declare a paint channel"):
+        LegendEncodingCoverage.from_mapping({
+            "kind": "state", "paintChannel": "fill", "witnesses": [witness.as_mapping()],
+        })
+    with pytest.raises(ValueError, match="when present, must be 'stroke'"):
+        LegendEncodingCoverage.from_mapping({
+            "kind": "encoding", "paintChannel": "fill", "witnesses": [witness.as_mapping()],
+        })
+
+
 def test_legend_encoding_coverage_sources_require_exact_pinned_resource_join():
     witness = _witness(EncodingSource("view", "missing-view", "/encodings/owner"))
     primitive = _primitive(source_kind="legend", purpose="legend-swatch",
@@ -271,9 +297,29 @@ def test_replayed_legend_encoding_coverage_is_closed_and_requires_filled_swatch_
         validate_scene_document(hollow_state)
 
     encoding_stroke = json.loads(json.dumps(state_stroke))
-    encoding_stroke["surfaces"][0]["primitives"][0]["legendEncodingCoverage"]["kind"] = "encoding"
+    encoding_stroke["surfaces"][0]["primitives"][0]["legendEncodingCoverage"].update(
+        {"kind": "encoding", "paintChannel": "stroke"})
+    validate_scene_document(encoding_stroke)
+
+    encoding_fill = json.loads(json.dumps(document))
+    encoding_fill["surfaces"][0]["primitives"][0]["legendEncodingCoverage"]["paintChannel"] = "fill"
     with pytest.raises(SceneSerializationError, match="scene-v0.7.schema.yaml rejected"):
-        validate_scene_document(encoding_stroke)
+        validate_scene_document(encoding_fill)
+
+    missing_stroke_coverage = json.loads(json.dumps(encoding_stroke))
+    missing_stroke_coverage["surfaces"][0]["primitives"][0]["legendEncodingCoverage"].pop("paintChannel")
+    with pytest.raises(SceneSerializationError, match="scene-v0.7.schema.yaml rejected"):
+        validate_scene_document(missing_stroke_coverage)
+
+    state_channel = json.loads(json.dumps(state_stroke))
+    state_channel["surfaces"][0]["primitives"][0]["legendEncodingCoverage"]["paintChannel"] = "stroke"
+    with pytest.raises(SceneSerializationError, match="scene-v0.7.schema.yaml rejected"):
+        validate_scene_document(state_channel)
+
+    zero_width_stroke = json.loads(json.dumps(encoding_stroke))
+    zero_width_stroke["surfaces"][0]["primitives"][0]["paint"]["strokeWidth"] = 0
+    with pytest.raises(SceneSerializationError, match="scene-v0.7.schema.yaml rejected"):
+        validate_scene_document(zero_width_stroke)
 
     duplicate = json.loads(json.dumps(document))
     duplicate["surfaces"][0]["primitives"][0]["legendEncodingCoverage"]["witnesses"].append(

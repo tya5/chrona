@@ -190,7 +190,7 @@ def test_separately_keyed_encoding_uses_one_neutral_state_key_and_retains_actual
     assert {witness.value for witness in key.legend_encoding_coverage.witnesses} == {"a", "b"}
 
 
-@pytest.mark.parametrize("case", ("absent", "hidden", "wrong-scale", "wrong-occurrence", "unfilled"))
+@pytest.mark.parametrize("case", ("absent", "hidden", "wrong-scale", "wrong-occurrence"))
 def test_unexplained_encoded_paint_still_splits_state_keys(case):
     from chrona.presentation.layout.legend_candidates import coalesce_point_keys
     content = _encoded_content(covered=case != "absent", visible=case != "hidden")
@@ -199,9 +199,6 @@ def test_unexplained_encoded_paint_still_splits_state_keys(case):
             if entry.view_scale_id is not None else entry for entry in content.legend_entries))
     elif case == "wrong-occurrence":
         content = replace(content, legend_entries=tuple(replace(entry, style_occurrences=())
-            for entry in content.legend_entries))
-    elif case == "unfilled":
-        content = replace(content, legend_entries=tuple(replace(entry, swatch_shape="rule-pair")
             for entry in content.legend_entries))
     keys = coalesce_point_keys(source_point_keys(content, _tokens(), mark_block_size=20,
                               paint_capabilities=PaintWitnessCapabilities()))
@@ -273,3 +270,14 @@ def test_same_scale_and_occurrence_do_not_waive_mismatched_encoding_origin():
                               paint_capabilities=PaintWitnessCapabilities()))
     assert len(keys) == 2
     assert all(key.legend_encoding_coverage is None for key in keys)
+
+
+def test_explicit_rule_pair_encoding_key_still_explains_its_source_colour():
+    from chrona.presentation.layout.legend_candidates import coalesce_point_keys
+    content = _encoded_content()
+    content = replace(content, legend_entries=tuple(replace(entry, swatch_shape="rule-pair")
+        if entry.encoding_scale_id is not None else entry for entry in content.legend_entries))
+    key, = coalesce_point_keys(source_point_keys(content, _tokens(), mark_block_size=20,
+                             paint_capabilities=PaintWitnessCapabilities()))
+    assert key.glyph.paints[0].effective_channels.fill == "#345678"
+    assert {witness.value for witness in key.legend_encoding_coverage.witnesses} == {"a", "b"}

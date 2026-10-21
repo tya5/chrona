@@ -126,7 +126,7 @@ def _point_witness_parts(content, tokens, key, point_state, mark_block_size):
 
 def encoding_legend_coverage(content, entry, *, painted=None):
     """Exact raw witnesses explained by this typed encoding key, including Other."""
-    if entry.encoding_scale_id is None or not entry.swatch_visible or entry.swatch_shape == "rule-pair":
+    if entry.encoding_scale_id is None or not entry.swatch_visible:
         return ()
     def owns_origin(witness):
         if entry.style_scope is not None:

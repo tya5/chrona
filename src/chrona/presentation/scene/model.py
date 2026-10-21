@@ -199,13 +199,13 @@ def _validate_legend_encoding_coverage(scene_id: object, value: LegendEncodingCo
     visible_stroke = (paint is not None and paint.stroke is not None
                       and _finite_number(paint.stroke_width) and paint.stroke_width > 0)
     visible_ink = (paint is not None and
-                   (paint.fill is not None if value.kind == "encoding"
-                    else paint.fill is not None or visible_stroke))
+                   ((paint.fill is not None if value.paint_channel == "fill" else visible_stroke)
+                    if value.kind == "encoding" else paint.fill is not None or visible_stroke))
     if (kind not in {"Rect", "Symbol", "Path"} or source_kind != "legend"
             or purpose != "legend-swatch"
             or (paint is not None and not visible_ink)
             or (completed and not visible_ink)):
-        ink = "fill" if value.kind == "encoding" else "visible fill or stroke"
+        ink = (f"{value.paint_channel}" if value.kind == "encoding" else "visible fill or stroke")
         raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(scene_id)} {value.kind} legend encoding coverage requires {ink} on a legend-swatch Rect, Symbol, or Path")
 
 

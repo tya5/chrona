@@ -39,7 +39,7 @@ $defs:
   legendScope: {description: "Passive scope provenance for one completed Style legend swatch.", type: object, required: [styleId, ruleId, scaleId, selector, showScope], additionalProperties: false, properties: {styleId: {$ref: "#/$defs/string"}, ruleId: {$ref: "#/$defs/string"}, scaleId: {$ref: "#/$defs/string"}, selector: {description: "Canonical normalized selector JSON retained as inert provenance text.", type: string, minLength: 2}, title: {$ref: "#/$defs/string"}, showScope: {$ref: "#/$defs/boolean"}}}
   encodingSource: {description: "Passive identity of one View or Style resource that supplied an encoding.", examples: [{kind: view, id: example-view, sourceRef: "views/example.yaml"}, {kind: style, id: example-style, sourceRef: "styles/example.yaml", ruleId: fill-by-status}], type: object, additionalProperties: false, required: [kind, id, sourceRef], properties: {kind: {description: "Whether a View or Style supplied this encoding.", enum: [view, style]}, id: {$ref: "#/$defs/string"}, sourceRef: {$ref: "#/$defs/string"}, ruleId: {$ref: "#/$defs/string"}}, oneOf: [{description: "A View source identifies the resource and excludes Style rule identity.", examples: [{kind: view, id: example-view, sourceRef: "views/example.yaml"}], required: [kind, id, sourceRef], properties: {kind: {description: "View resource identity has no Style rule.", const: view}}, not: {required: [ruleId]}}, {description: "A Style source identifies the resource and its matched rule.", examples: [{kind: style, id: example-style, sourceRef: "styles/example.yaml", ruleId: fill-by-status}], required: [kind, id, sourceRef, ruleId], properties: {kind: {description: "Style resource identity includes its matched rule.", const: style}}}]}
   encodingWitness: {description: "Passive completed fill-encoding witness; Scene does not evaluate its source.", examples: [{channel: fill, scaleId: status-scale, field: status, value: active, sources: [{kind: view, id: example-view, sourceRef: "views/example.yaml"}]}], type: object, required: [channel, scaleId, field, value, sources], additionalProperties: false, properties: {channel: {description: "The completed visual encoding channel.", const: fill}, scaleId: {$ref: "#/$defs/string"}, field: {$ref: "#/$defs/string"}, value: {$ref: "#/$defs/text"}, sources: {description: "Resource identities that supplied the completed encoding.", type: array, minItems: 1, uniqueItems: true, items: {$ref: "#/$defs/encodingSource"}}}}
-  legendEncodingCoverage: {description: "Passive state-neutralization or encoding-key coverage for a completed legend swatch; Scene never evaluates it. State keys may retain visible fill or stroke; encoding keys require fill.", type: object, required: [kind, witnesses], additionalProperties: false, properties: {kind: {description: "Whether the key explains encoded values or neutralizes that channel for a state key.", enum: [state, encoding]}, witnesses: {description: "Exact unique encoded occurrence witnesses covered by this key.", type: array, minItems: 1, uniqueItems: true, items: {$ref: "#/$defs/encodingWitness"}}}}
+  legendEncodingCoverage: {description: "Passive state-neutralization or encoding-key coverage for a completed legend swatch; Scene never evaluates it. State keys may retain visible fill or stroke; encoding keys name their visible paint channel.", type: object, required: [kind, witnesses], additionalProperties: false, properties: {kind: {description: "Whether the key explains encoded values or neutralizes that channel for a state key.", enum: [state, encoding]}, paintChannel: {description: "The visible channel used by an encoding key; omission means fill; when present the only permitted value is stroke.", const: stroke}, witnesses: {description: "Exact unique encoded occurrence witnesses covered by this key.", type: array, minItems: 1, uniqueItems: true, items: {$ref: "#/$defs/encodingWitness"}}}}
   capabilities: {description: "Sorted completed feature capabilities required by a consumer.", type: array, uniqueItems: true, items: {$ref: "#/$defs/capability"}}
   capability: {description: "One closed completed-Scene feature capability.", enum: [mark.marker-geometry, paint.pattern-geometry, mark.symbol-outline, icon.vector, icon.raster]}
   surfaces: {description: "Completed renderer-neutral surfaces.", type: array, minItems: 1, items: {$ref: "#/$defs/surface"}}
@@ -142,11 +142,13 @@ $defs:
           - description: "Encoding-key legend swatches preserve their visible fill."
             examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
             if:
-              description: "Select encoding-key coverage for the filled-swatch rule."
+              description: "Select encoding-key coverage using the default fill channel."
               examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
               properties:
                 legendEncodingCoverage:
-                  properties: {kind: {description: "The coverage category tested by this condition.", const: encoding}}
+                  properties:
+                    kind: {description: "The coverage category tested by this condition.", const: encoding}
+                    paintChannel: {description: "When omitted, encoding coverage uses the default fill channel.", not: {const: stroke}}
                   required: [kind]
               required: [legendEncodingCoverage]
             then:
@@ -154,6 +156,23 @@ $defs:
               examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: encoding, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
               properties:
                 paint: {description: "The completed paint carrying encoding-key ink.", required: [fill]}
+          - description: "An explicitly stroke-encoded legend swatch preserves a visible positive-width stroke."
+            examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: encoding, paintChannel: stroke, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+            if:
+              description: "Select encoding-key coverage that names its stroke channel."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: encoding, paintChannel: stroke, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+              properties:
+                legendEncodingCoverage:
+                  properties:
+                    kind: {description: "The coverage category tested by this condition.", const: encoding}
+                    paintChannel: {description: "The selected completed channel for this encoding key.", const: stroke}
+                  required: [kind, paintChannel]
+              required: [legendEncodingCoverage]
+            then:
+              description: "A stroke-encoded key requires a visible positive-width completed stroke."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: encoding, paintChannel: stroke, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+              properties:
+                paint: {description: "The completed paint carrying the selected stroke channel.", required: [stroke, strokeWidth]}
           - description: "State-key legend swatches preserve a visible fill or stroke."
             examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
             if:
@@ -161,7 +180,8 @@ $defs:
               examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {stroke: '#336699', strokeWidth: 1}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
               properties:
                 legendEncodingCoverage:
-                  properties: {kind: {description: "The coverage category tested by this condition.", const: state}}
+                  properties:
+                    kind: {description: "The coverage category tested by this condition.", const: state}
                   required: [kind]
               required: [legendEncodingCoverage]
             then:
@@ -177,6 +197,22 @@ $defs:
                     - description: "A visible stroke with width is sufficient state-key ink."
                       examples: [{stroke: '#336699', strokeWidth: 1}]
                       required: [stroke, strokeWidth]
+          - description: "State-key legend swatches cannot declare an encoding paint channel."
+            examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+            if:
+              description: "Select state-key coverage for the no-channel-member rule."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+              properties:
+                legendEncodingCoverage:
+                  properties: {kind: {description: "The coverage category tested by this condition.", const: state}}
+                  required: [kind]
+              required: [legendEncodingCoverage]
+            then:
+              description: "State-key coverage excludes the optional paintChannel member."
+              examples: [{kind: Rect, sourceKind: legend, purpose: legend-swatch, paint: {fill: '#336699'}, legendEncodingCoverage: {kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}]}}]
+              properties:
+                legendEncodingCoverage:
+                  not: {description: "A state key must not contain paintChannel.", examples: [{kind: state, witnesses: [{channel: fill, scaleId: status, field: state, value: active, sources: [{kind: view, id: example, sourceRef: views/example.yaml}]}], paintChannel: stroke}], required: [paintChannel]}
     if: {required: [strokeClip]}
     then:
       required: [paint]

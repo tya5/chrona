@@ -251,13 +251,16 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
                 stroke_width = paint.get("strokeWidth") if isinstance(paint, Mapping) else None
                 visible_stroke = (isinstance(paint, Mapping) and paint.get("stroke") is not None
                                   and _finite(stroke_width) and stroke_width > 0)
+                visible_encoding_channel = (isinstance(paint, Mapping) and
+                                            (paint.get("fill") is not None if coverage.paint_channel == "fill"
+                                             else visible_stroke))
                 if (primitive.get("kind") not in {"Rect", "Symbol", "Path"}
                         or primitive.get("sourceKind") != "legend"
                         or primitive.get("purpose") != "legend-swatch"
                         or not isinstance(paint, Mapping)
-                        or (paint.get("fill") is None and
-                            (coverage.kind == "encoding" or not visible_stroke))):
-                    ink = "fill" if coverage.kind == "encoding" else "visible fill or stroke"
+                        or (not visible_encoding_channel if coverage.kind == "encoding"
+                            else paint.get("fill") is None and not visible_stroke)):
+                    ink = coverage.paint_channel if coverage.kind == "encoding" else "visible fill or stroke"
                     raise _scene_error(f"E_PRESENTATION_PRIMITIVE_INVALID: {coverage.kind} legend encoding coverage requires {ink} on a legend-swatch Rect, Symbol, or Path")
                 for witness in coverage.witnesses:
                     for source in witness.sources:

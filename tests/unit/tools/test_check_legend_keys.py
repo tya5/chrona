@@ -343,6 +343,37 @@ def test_encoding_coverage_does_not_assign_another_part_fill_to_a_witness():
     assert any("separate encoding key" in finding for finding in legend_key_findings(scene))
 
 
+def test_encoding_stroke_projection_uses_its_typed_stroke_colour():
+    scene = _neutral_encoded_point_scene()
+    key = scene["surfaces"][0]["primitives"][-1]
+    key["paint"].update(fill="#00AA00", stroke="#AA0000", strokeWidth=1)
+    key["legendEncodingCoverage"]["paintChannel"] = "stroke"
+    assert legend_key_findings(scene) == []
+
+
+@pytest.mark.parametrize("mutation", ["wrong-stroke", "missing-width", "zero-width", "wrong-channel"])
+def test_encoding_stroke_projection_rejects_wrong_or_invisible_channel(mutation):
+    scene = _neutral_encoded_point_scene()
+    key = scene["surfaces"][0]["primitives"][-1]
+    key["paint"].update(fill="#AA0000", stroke="#AA0000", strokeWidth=1)
+    key["legendEncodingCoverage"]["paintChannel"] = "stroke"
+    if mutation == "wrong-stroke":
+        key["paint"]["stroke"] = "#00AA00"
+    elif mutation == "missing-width":
+        key["paint"].pop("strokeWidth")
+    elif mutation == "zero-width":
+        key["paint"]["strokeWidth"] = 0
+    else:
+        key["legendEncodingCoverage"]["paintChannel"] = "fill"
+    assert any("separate encoding key" in finding for finding in legend_key_findings(scene))
+
+
+def test_state_coverage_forbids_encoding_paint_channel():
+    scene = _neutral_encoded_point_scene()
+    scene["surfaces"][0]["primitives"][1]["legendEncodingCoverage"]["paintChannel"] = "stroke"
+    assert any("typed state coverage" in finding for finding in legend_key_findings(scene))
+
+
 def test_encoded_neutralization_does_not_ignore_explicit_multipart_paint():
     witness = _fill_witness()
     bounds = {"inline": 10, "block": 20, "inlineSize": 10, "blockSize": 10}

@@ -19,6 +19,7 @@ deltas:
       additionalProperties: false
       properties:
         kind: {enum: [state, encoding]}
+        paintChannel: {const: stroke}
         witnesses:
           type: array
           minItems: 1
@@ -66,10 +67,21 @@ deltas:
           - if:
               properties:
                 legendEncodingCoverage:
-                  properties: {kind: {const: encoding}}
+                  properties:
+                    kind: {const: encoding}
+                    paintChannel: {not: {const: stroke}}
                   required: [kind]
               required: [legendEncodingCoverage]
             then: {properties: {paint: {required: [fill]}}}
+          - if:
+              properties:
+                legendEncodingCoverage:
+                  properties:
+                    kind: {const: encoding}
+                    paintChannel: {const: stroke}
+                  required: [kind, paintChannel]
+              required: [legendEncodingCoverage]
+            then: {properties: {paint: {required: [stroke, strokeWidth]}}}
           - if:
               properties:
                 legendEncodingCoverage:
@@ -82,7 +94,17 @@ deltas:
                   anyOf:
                     - required: [fill]
                     - required: [stroke, strokeWidth]
-    reason: "#1847 admits hollow stroke-painted neutral state keys while encoded-value keys continue to require fill."
+          - if:
+              properties:
+                legendEncodingCoverage:
+                  properties: {kind: {const: state}}
+                  required: [kind]
+              required: [legendEncodingCoverage]
+            then:
+              properties:
+                legendEncodingCoverage:
+                  not: {required: [paintChannel]}
+    reason: "#1847 admits hollow stroke-painted neutral state keys and makes the encoding key's selected visible channel explicit."
     test: tests/unit/chrona/presentation/scene/test_encoding_metadata.py::test_state_legend_coverage_allows_stroke_only_completed_ink
   - {"schema":"scene-v0.7.schema.yaml","pointer":"/properties/surfaces/items/properties/laneMembers/items/allOf","before":[{"if":{"not":{"required":["windowAbsences"]}},"then":{"properties":{"emittedPrimitiveIds":{"minItems":1},"primaryMarkIds":{"minItems":1}}}}],"after":[{"if":{"not":{"anyOf":[{"required":["windowAbsences"]},{"required":["rowAbsence"]}]}},"then":{"properties":{"emittedPrimitiveIds":{"minItems":1},"primaryMarkIds":{"minItems":1}}}},{"if":{"required":["rowAbsence"]},"then":{"properties":{"emittedPrimitiveIds":{"maxItems":0},"primaryMarkIds":{"maxItems":0}}}},{"if":{"properties":{"rowAbsence":{"properties":{"reason":{"const":"no-selected-temporal-facet"}},"required":["reason"]}},"required":["rowAbsence"]},"then":{"not":{"required":["windowAbsences"]}}},{"if":{"properties":{"rowAbsence":{"properties":{"reason":{"const":"outside-window"}},"required":["reason"]},"windowAbsences":{"contains":{"properties":{"sourceKind":{"not":{"const":"actual"}}},"required":["sourceKind"]}}},"required":["rowAbsence","windowAbsences"]},"then":{"properties":{"windowAbsences":{"contains":{"properties":{"facet":{"enum":["planned","forecast"]}},"required":["facet"]}}}}}],"reason":"#1812 admits only Layout-completed row-absent source members with empty geometry inventories; ordinary members stay strict.","test":"tests/integration/test_window_row_admission_render.py::test_all_outside_rows_are_omitted_but_original_sources_are_accounted"}
   - {"schema":"scene-v0.7.schema.yaml","pointer":"/properties/surfaces/items/properties/laneMembers/items/properties/rowAbsence","after":{"type":"object","required":["reason"],"additionalProperties":false,"properties":{"reason":{"enum":["outside-window","no-selected-temporal-facet"]}}},"reason":"#1812 carries typed row-omission facts without deleting source lane membership or inventing rendered rows.","test":"tests/integration/test_window_row_admission_render.py::test_all_outside_rows_are_omitted_but_original_sources_are_accounted"}

@@ -110,8 +110,14 @@ def _legend_coverage(items: list[dict[str, Any]]) -> tuple[str | None, dict[tupl
         coverage = item.get("legendEncodingCoverage")
         if coverage is None:
             continue
-        if (not isinstance(coverage, dict) or set(coverage) != {"kind", "witnesses"}
+        if (not isinstance(coverage, dict)
                 or coverage.get("kind") not in {"state", "encoding"}):
+            malformed = True
+            continue
+        base_keys = {"kind", "witnesses"}
+        allowed_keys = (base_keys if coverage["kind"] == "state" else
+                        base_keys | ({"paintChannel"} if coverage.get("paintChannel") == "stroke" else set()))
+        if set(coverage) != allowed_keys:
             malformed = True
             continue
         kinds.add(coverage["kind"])
@@ -186,14 +192,21 @@ def _admitted_coverage_primitive(item: dict[str, Any], coverage_kind: str | None
         and item.get("kind") in {"Rect", "Symbol", "Path"}
     )
     if coverage_kind == "encoding":
-        return common and paint.get("fill") is not None
+        coverage = item.get("legendEncodingCoverage")
+        channel = coverage.get("paintChannel", "fill") if isinstance(coverage, dict) else None
+        if channel == "stroke":
+            width = paint.get("strokeWidth")
+            return (common and paint.get("stroke") is not None
+                    and isinstance(width, (int, float)) and not isinstance(width, bool)
+                    and math.isfinite(width) and width > 0)
+        return common and channel == "fill" and paint.get("fill") is not None
     if coverage_kind == "state":
         return common and (paint.get("fill") is not None or paint.get("stroke") is not None)
     return False
 
 
-def _encoding_key_fill_inventory(primitives: list[dict[str, Any]]) -> dict[tuple[Any, ...], set[Any]]:
-    """Collect fill paints from separately typed, admitted encoding legend keys."""
+def _encoding_key_paint_inventory(primitives: list[dict[str, Any]]) -> dict[tuple[Any, ...], set[Any]]:
+    """Collect each witness's explicitly selected paint from encoding legend keys."""
     candidates = [item for item in primitives
                   if _admitted_coverage_primitive(item, "encoding")]
     fills: dict[tuple[Any, ...], set[Any]] = defaultdict(set)
@@ -201,9 +214,11 @@ def _encoding_key_fill_inventory(primitives: list[dict[str, Any]]) -> dict[tuple
         kind, witnesses, malformed = _legend_coverage([item])
         if kind != "encoding" or malformed:
             continue
-        key_fill = (item.get("paint") or {}).get("fill")
+        coverage = item.get("legendEncodingCoverage")
+        channel = coverage.get("paintChannel", "fill")
+        key_paint = (item.get("paint") or {}).get(channel)
         for witness in witnesses:
-            fills[witness].add(key_fill)
+            fills[witness].add(key_paint)
     return fills
 
 
@@ -248,7 +263,7 @@ def _point_key_findings(visual_role: str, label: str, key_figures: list[list[dic
         return [f"{label}: point key has no source Symbol mark figure"]
     source_figures = _figure_groups(source_points)
     source_paints = {_figure_paint_identity(figure) for figure in source_figures}
-    encoding_key_fills = _encoding_key_fill_inventory(surface_primitives)
+    encoding_key_paints = _encoding_key_paint_inventory(surface_primitives)
     findings: list[str] = []
     for key_figure in key_figures:
         if any(item.get("kind") != "Symbol" for item in key_figure):
@@ -289,7 +304,7 @@ def _point_key_findings(visual_role: str, label: str, key_figures: list[list[dic
         for witness in sorted(declared, key=repr):
             fills = source_fills.get(witness, set())
             if (not fills or not any(
-                    fill in encoding_key_fills.get(witness, set()) for fill in fills)):
+                    fill in encoding_key_paints.get(witness, set()) for fill in fills)):
                 decoded = dict((key, value) for key, value in witness)
                 findings.append(
                     f"{label}: state coverage witness scale={decoded.get('scaleId')!r}, "
