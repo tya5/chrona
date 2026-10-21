@@ -203,6 +203,7 @@ class TableColumn:
     suffix: str | None = None  # a literal appended to a `rowIndex` cell (#1545)
     header: str | FrozenDict | None = None  # a literal or `{wording: key}`; absent, the header is the id (#1724)
     header_wording_key: str | None = None  # original `{wording: key}` identity, retained after locale resolution
+    priority: str = "optional"  # `preferred`/`required` keep an unbound comparison column; `optional` drops it (#1869)
 
 
 @dataclass(frozen=True)
@@ -1146,7 +1147,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                       header_wording_key=(str(column["header"]["wording"])
                                                           if isinstance(column.get("header"), Mapping)
                                                           and isinstance(column["header"].get("wording"), str)
-                                                          else None))
+                                                          else None),
+                                      priority=str(column.get("priority", "optional")))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
