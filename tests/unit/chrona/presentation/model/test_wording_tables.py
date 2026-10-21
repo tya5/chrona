@@ -314,3 +314,20 @@ def test_the_legend_entries_are_sentence_case_and_a_design_lowers_them_with_a_te
     en = wording_catalog()["en-US"]
     lower_case = [key for key, text in en.items() if key.startswith("legend.") and text[:1].isalpha() and text[:1].islower()]
     assert lower_case == []
+
+
+# #1856: the closed list of lower-case en-US values. Wording keys drawn inside another text read as a fragment of it, and
+# unit symbols are not words. Guide "Case belongs to the design" and Spec 63 name the same keys.
+LOWER_CASE_FRAGMENT_KEYS = frozenset({
+    "marker.baselineNew", "marker.baselineRemoved", "missing.unknown", "missing.inProgress",
+})
+UNIT_SYMBOL_KEYS = frozenset({"delta.unit.calendarDay", "delta.unit.workingDay"})
+
+
+def test_a_lower_case_en_us_value_is_only_a_named_fragment_or_unit_symbol():
+    table = wording_catalog()["en-US"]
+    lower = {key for key, text in table.items() if text[:1].islower()}
+    assert lower == LOWER_CASE_FRAGMENT_KEYS | UNIT_SYMBOL_KEYS, (
+        "a new lower-case en-US value must be sentence case, or be added to the fragment exception in "
+        "docs/guides/locale-and-wording.md and Spec 63 (#1856)")
+    assert all(table[key] == "d" for key in UNIT_SYMBOL_KEYS)

@@ -74,6 +74,14 @@ for the as-of marker) and references the same key; it does not need a key of its
 `TASK DURATION` this way. A transform belongs to a role, so it applies to every entry of that legend and, for the as-of marker, to the
 date after the label too (`as of 20 feb`). Japanese has no case and is unchanged by a transform.
 
+**The fragment exception.** Exactly six `en-US` values are not sentence case, and they are named, not open-ended.
+Four are wording keys that are drawn inside another text and read as a fragment of it: `marker.baselineNew` (`new`, the
+empty Δ cell of a new object), `marker.baselineRemoved` (`removed`, the `(removed)` suffix of a removed baseline row),
+`missing.unknown` (`unknown`) and `missing.inProgress` (`in progress`) (cell fillers). Two are unit symbols, not words:
+`delta.unit.calendarDay` and `delta.unit.workingDay` (both `d`). A fragment in sentence case would read `Gone (Removed)`.
+A design that wants one of the four fragments capitalised sets `textTransform` on the role that draws it, as for any other
+case variant. A new lower-case `en-US` value is a bug unless it is added to this list; a unit test pins the list.
+
 **A slot heading.** A Layout Profile slot `heading.text` is a literal or `{wording: <key>}`, for example
 `heading: {text: {wording: slot.notes}}` (`Notes` / `注記`). A literal stays as written under every locale, so a copied
 layout that keeps `text: Notes` still draws English under `--locale ja-JP`; reference `slot.notes` to follow the locale.
