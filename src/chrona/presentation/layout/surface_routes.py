@@ -1200,8 +1200,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 stub_choice = None
                 for pair in first_fit_port_pairs(port_pairs):
                     geometry = paired_stub_geometry(pair,
-                        source_run=terminal_length(marker_start) + 2 * max(1., dependency_stroke),
-                        target_run=terminal_length(marker_end) + 2 * max(1., dependency_stroke))
+                        source_run=endpoint_lead_run(pair[0], dependency_stroke, marker_start),
+                        target_run=endpoint_lead_run(pair[1], dependency_stroke, marker_end))
                     outgoing, start, _ = complete_centred_terminals(
                         geometry.source, marker_start, None, dependency_stroke)
                     incoming, _, end = complete_centred_terminals(

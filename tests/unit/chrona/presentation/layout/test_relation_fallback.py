@@ -77,6 +77,25 @@ def test_fixed_recovery_uses_shared_residual_leads_not_a_second_full_terminal_re
     assert completed.points[-2] == (96.5, 20.)
 
 
+def test_paired_stub_runs_use_shared_asymmetric_endpoint_leads_and_host_residual():
+    from chrona.presentation.layout.relation_endpoint_geometry import endpoint_lead_run
+    from chrona.presentation.layout.relation_terminals import marker_geometry
+
+    source_marker = marker_geometry({"shape": "circle", "headLength": 5, "headWidth": 5})
+    target_marker = marker_geometry({"shape": "open-triangle", "headLength": 3, "headWidth": 2},
+                                    stroke_width=2)
+    pair = (replace(PAIR[0], exposed_port=(4., 0.)),
+            replace(PAIR[1], exposed_port=(95., 20.)))
+    source_run = endpoint_lead_run(pair[0].exposed_port, pair[0].semantic_port, 1., source_marker)
+    target_run = endpoint_lead_run(pair[1].exposed_port, pair[1].semantic_port, 2., target_marker)
+
+    assert source_run == 0.  # the host corridor already exceeds the centered half-head + stroke lead
+    assert target_run > source_run  # an asymmetric non-centered painted terminal has its own lead
+    paired = paired_stub_geometry(pair, source_run=source_run, target_run=target_run)
+    assert paired.source == ((0., 0.), (4., 0.))
+    assert paired.target == ((95. - target_run, 20.), (100., 20.))
+
+
 @pytest.mark.parametrize("run", (-1., float("nan"), float("inf"), True, "1"))
 def test_invalid_corridor_metrics_are_not_painted(run):
     with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
