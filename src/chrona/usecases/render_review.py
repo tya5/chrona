@@ -454,8 +454,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
-    selected_content = _complete_annotation_headers(selected_content, theme, projection, view,
-                                                       wording_resolver(environment.locale, view.wording))
+    selected_content = _complete_annotation_headers(selected_content, theme, projection, view, wording_resolver(environment.locale, view.wording))
     routing_advisory: RoutingCostAdvisory | None = None
 
     def observe_layout_work(event: RenderEvent) -> None:
