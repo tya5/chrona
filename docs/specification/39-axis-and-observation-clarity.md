@@ -52,7 +52,9 @@ selected label suppresses that label without changing the selected unit or
 cadence; painted-host fit does not introduce a second selection loop. A cadence
 never merges painted cells or transfers text to a neighbouring host. Record
 every omitted candidate with `W_LAYOUT_AXIS_LABEL_THINNED`, its source outcome
-and suppression decision, and each affected tier with `W_LAYOUT_AXIS_DENSITY`.
+and suppression decision, and each affected tier with `W_LAYOUT_AXIS_DENSITY`. The warning's message names the
+omitted label's text (record fields `sourceTitle`, with the tier pointer in `sourceRef`) and the reason in words; the
+Scene diagnostic identity `axis-label:<tier>:<interval>:<reason>` is unchanged (#1854).
 An omitted label has no visible target or visible-overflow record.
 
 An outcome retains its measured fit even when it is omitted: use reason
