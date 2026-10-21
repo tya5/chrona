@@ -61,6 +61,9 @@ The keys, with their `en-US` and `ja-JP` text:
 | `slot.notes` | Notes | 注記 |
 | `grouping.unassigned`, `grouping.other` | Unassigned, Other | 未割り当て, その他 |
 | `annotation.note`, `annotation.risk` | Note, Risk | 注記, リスク |
+| `heading.kicker`, `heading.schedule` | The plan, Schedule | 計画, 計画表 |
+| `count.workPackages`, `count.sections` | Work packages, Sections | 作業パッケージ, セクション |
+| `caption.statusReports`, `caption.untilFinish` | Status reports, Until finish | 状況報告, 完了まで |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
