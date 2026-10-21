@@ -692,7 +692,8 @@ relation selection/admission; its `visibility.relations.overflow` continues to
 govern non-spatial admission and the dependency-network surface. The field
 continues to validate. When Layout changes its effective spatial meaning, one
 info diagnostic identifies the old View value and superseding Layout member;
-an agreeing suppress declaration has no migration notice or byte change.
+an agreeing suppress declaration has no migration notice or byte change. A View that draws no relation
+(`visibility.relations.mode: none`, or `--relations none`) has nothing to supersede and emits no notice (#1854).
 
 `suppress` retains ordinary selection and its suppression outcome without
 recovery, halo or stage diagnostics. A legacy View visible-overflow value does
@@ -1623,7 +1624,7 @@ The existing direct visible-overflow fallback remains permitted, but records
 the actual failure class (search/bounds, quality limit or obstacle crossing)
 and affected node subjects in `W_LAYOUT_ROUTE_FALLBACK`. A direct path that
 crosses an unrelated node must explicitly say so; it is not a normal clear
-route. Neither criticality nor failure is inferred from the line's paint.
+route. A note's leader that falls back is named "leader of note <id>" (#1854), not as a relation route. Neither criticality nor failure is inferred from the line's paint.
 
 When a selected network edge actually draws the existing `critical-edge` role, normalized
 content includes one key for that role unless an authored key already exists.

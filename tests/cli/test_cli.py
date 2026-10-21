@@ -504,12 +504,7 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
         "message": "0 relations on table-timeline settled without search; 0 used fallback search",
         "relationInstances": 0, "severity": "info", "shapeSettled": 0,
         "surfaceId": "table-timeline",
-    }, {
-        "code": "I_LAYOUT_RELATION_POLICY_SUPERSEDED", "severity": "info",
-        "surfaceId": "table-timeline", "layoutMember": "relationRouting.unroutable",
-        "layoutValue": "relax", "viewMember": "visibility.relations.overflow", "viewValue": "suppress",
-        "message": "Layout relationRouting.unroutable=relax supersedes declared View visibility.relations.overflow=suppress for spatial routing",
-    }]
+    }]  # no relation is drawn, so no relation policy was superseded (#1854)
 
     svg_bytes = output.read_bytes()
     assert svg_bytes.startswith(b"<svg")
