@@ -501,7 +501,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     # Both native surfaces use the same composed View heading. A network's
     # whole-title slot is the heading host; profiles without that slot admit
     # the same named heading parts as before.
-    heading_content = compose_heading(view, project, actual_observations, environment.locale)
+    snapshot_present = render_closure.snapshot is not None or render_closure.snapshot_project is not None
+    heading_content = compose_heading(view, project, actual_observations, environment.locale,
+                                      snapshot_present=snapshot_present)
     try:
         count_input = inspect_count_reads(SurfaceRenderPlanInput(
             previous_route_hints=previous_scene.route_hints if previous_scene is not None else None,
@@ -511,7 +513,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=profile_connections.detail,
             viewport_inline=environment.viewport_inline, viewport_block=environment.viewport_block,
             content_sized=request.draft_auto_block, locale=environment.locale,
-            scene_precision=environment.scene_precision,
+            scene_precision=environment.scene_precision, snapshot_present=snapshot_present,
             paint_capabilities=paint_witness_capabilities(visual_profile),
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests, progress=layout_progress))
@@ -550,7 +552,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                                    initial=plan, admitted=scene_input)
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
         if (view.surface == "table-timeline" or view.surface == "dependency-network"):
-            profile_info += missing_heading_fact_warnings(view, project, actual_observations)
+            profile_info += missing_heading_fact_warnings(view, project, actual_observations,
+                                                          snapshot_present=snapshot_present)
         if view.surface == "table-timeline":
             profile_info += _undrawn_annotation_warnings(view, project, projection, plan)
         profile_info += tuple(LegendRoleUnkeyed(role, purpose)

@@ -212,7 +212,7 @@ $defs:
       dateForm: {$ref: "#/$defs/viewHeading/properties/dateForm"}
       text: {$ref: "#/$defs/viewHeading/properties/text"}
   headingText:
-    description: "A template string or ordered template parts, concatenated verbatim. A guarded part is omitted silently when its declared global count figure is zero."
+    description: "A template string or ordered template parts, concatenated verbatim. A guarded part is omitted silently when its declared global count figure is zero or when the data it requires is not supplied."
     examples: ["{project}", [{text: "in {figure:group-count} panels", omitWhenZero: group-count}]]
     oneOf:
       - {$ref: "#/$defs/viewHeading/properties/title"}
@@ -227,6 +227,7 @@ $defs:
           properties:
             text: {description: "Heading template with the existing semantic and figure placeholders; separators and spaces are literal.", type: string, minLength: 1}
             omitWhenZero: {description: "Declared global count figure whose raw zero value omits this part before text measurement.", $ref: "#/$defs/profileFigureIdentity"}
+            presentWhen: {description: "Data this part requires: actualSet keeps it only when the render supplies an Actual Set, snapshot only when it supplies a Snapshot. Otherwise the part is omitted silently, before text measurement; it combines with omitWhenZero (both must hold).", enum: [actualSet, snapshot]}
   groupHeaderPresentation:
     description: "Group-header text template; usable only with presentation header and grouping by field or object type."
     type: object
