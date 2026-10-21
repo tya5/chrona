@@ -848,7 +848,12 @@ delta) nor changes variance roles or temporal geometry. This explicit fact can
 coexist with the ordinary delta in the same table.
 
 Expose the fact in the shared comparison/table-source vocabulary and View's
-comparison facet vocabulary, without a View version bump. It belongs to primary
+comparison facet vocabulary, without a View version bump. The frozen
+`common-v0.1.tableColumnSource` has both View and Style consumers and remains
+unchanged: a registered `common-v0.2.tableColumnSource` extends it with the
+Snapshot source, using the shared `vocabulary-v0.2.snapshotComparisonFacet`.
+Live View and Style adopt that new source grammar together; historical schemas
+retain their prior references. It belongs to primary
 items only; a missing counterpart or finish has no numeric value and follows
 the column's declared missing-value treatment. Do not fabricate zero, an
 estimated asterisk or the forecast `new` marker. Without a supplied Snapshot,
