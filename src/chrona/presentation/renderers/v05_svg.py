@@ -375,9 +375,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         fit = layout.fit if viewer_fit else None
         lines = layout.lines
         # `textLength` lives in the text's own, pre-transform frame; the measured size already contains the compression.
+        # A line of several measured runs (small caps, #1285) carries `textLength` per run, never once on the whole
+        # `<text>`: resvg places mixed-size `<tspan>`s of one fitted `<text>` far from where they were measured (#1869),
+        # and the line's own fit size is the full-size line, not the runs Layout measured and bounded.
+        fitted_runs = fit is not None and fit.mode == TEXT_FOLLOWS_BOX and bool(layout.runs)
         fitted = ([f' textLength="{number(size / layout.horizontal_scale)}" lengthAdjust="{fit.adjust}"'
                    for size in fit.line_inline_sizes]
-                  if fit is not None and fit.mode == TEXT_FOLLOWS_BOX else [""] * len(lines))
+                  if fit is not None and fit.mode == TEXT_FOLLOWS_BOX and not fitted_runs else [""] * len(lines))
         pad = " " * fit.end_pad_spaces if fit is not None and fit.mode == BOX_FOLLOWS_TEXT else ""
         def line_text(index: int) -> str:
             # A small-caps line is its measured runs, each at its own size (#1285); anything else is the line itself.
@@ -396,6 +400,9 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     attrs.append(f'font-weight="{weight}"')
                 if identity is not None:
                     attrs.append(f'data-asset-identity="{escape(identity, quote=True)}"')
+                if fitted_runs:
+                    attrs.append(f'textLength="{number(run.inline_size / layout.horizontal_scale)}" '
+                                 f'lengthAdjust="{fit.adjust}"')
                 return escape(run.text) if not attrs else f'<tspan {" ".join(attrs)}>{escape(run.text)}</tspan>'
             return "".join(run_markup(run) for run in layout.runs[index])
 
