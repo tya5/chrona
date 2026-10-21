@@ -15,6 +15,9 @@ class ThemeTokenError(ValueError):
 
     def __init__(self, diagnostic_id: str, path: str, detail: str | None = None):
         super().__init__(diagnostic_id)
+        if detail is None and diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED":
+            from chrona.presentation.scene.capabilities import unsupported_role_property_detail
+            detail = unsupported_role_property_detail(path)
         self.diagnostic_id = diagnostic_id
         self.path = path
         self.detail = detail

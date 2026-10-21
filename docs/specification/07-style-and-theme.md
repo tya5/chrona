@@ -749,7 +749,8 @@ before Layout or Scene construction, every declared `roles` property and every
 The registry distinguishes Layout typography/geometry, Scene paint, and
 marker/symbol/contrast policy from the Scene visual-role spelling. A property
 with no capable consumer is rejected as `E_THEME_ROLE_PROPERTY_UNSUPPORTED`
-with its exact declaration pointer; an unknown role is not accepted merely
+with its exact declaration pointer, and the message lists the properties that role accepts (read from the same role
+contract table the validator uses; a role with no registered contract keeps the general sentence); an unknown role is not accepted merely
 because its syntax matches the Theme schema. A role's property may be valid
 yet unused by a particular View. A valid decorative treatment unsupported by
 the *selected profile* is governed by Specification 63's omission/fidelity
