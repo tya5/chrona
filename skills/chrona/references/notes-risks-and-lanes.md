@@ -15,6 +15,12 @@ commands from the skill directory.
   which says that the object field `team` holds the owner (the closed roles are `responsible` and `phase`).
   Each object then carries the field under `fields`. A preset that groups (`target-b`, `executive-light`)
   draws one lane per owner; an object with no `team` goes to the preset's unassigned group.
+  Lanes follow the order the plan lists their first object, and the unassigned group comes last. A task
+  under a parent group does not repeat the lane's name: with a parent titled `Platform` in the `Platform`
+  lane the row reads `Build`, not `Platform / Build`. A gate with no `team` stays in the unassigned group
+  unless the View places points elsewhere (`rows.points`, for example `key-row`). The parent group's own
+  summary row is not drawn; the render reports `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED` only when one
+  parent's tasks fall in more than one lane.
 
 ```yaml examples/notes-and-lanes/plan.yaml
 version: timeline/v0.7

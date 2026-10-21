@@ -261,7 +261,9 @@ For an explicitly selected path name, omit only ancestor segments represented
 by an enclosing, actually displayed header/row/lane for that same source
 object. Project-root hierarchy fallback can cover its ancestor; field/entity
 groups, object-type groups and ungrouped rows do not cover ancestors by text
-or coincident identifier. Omitted/hidden headers cover nothing. A vertical group tag that gave
+or coincident identifier, with one exception: a role-bound field grouping drops the
+leading ancestor segments whose title equals its displayed header text (section 6.2,
+"Role-bound grouping with parent groups", #1870). Omitted/hidden headers cover nothing. A vertical group tag that gave
 way for want of room (Specification 07, #1726) is not displayed: Layout then sets the path column
 cells of that group's rows with the full path, covered ancestor included; groups whose tags are
 drawn keep the covered path. Keep the leaf.
@@ -354,9 +356,54 @@ IDs and Project fields are not rewritten, and no renderer resolves a reference.
 When a bound field-role grouping is resolved to its Project field, selected
 `type: group` summary objects are omitted from those field-grouped rows rather
 than receiving the missing-value group as ordinary bars. The projection reports
-their omitted count as `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED`; member objects
-retain their field groups. This omission is specific to role-bound grouping:
-direct-field grouping and `grouping.by: none` keep their declared behavior.
+their omitted count as `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED` under rule R4 below;
+member objects retain their field groups. This omission is specific to role-bound
+grouping: direct-field grouping and `grouping.by: none` keep their declared behavior.
+
+**Role-bound grouping with parent groups (#1870).** When `by: {fieldRole: R}` resolves
+to a Project field (a bound role), four rules fix what the reader sees on a Project that
+also declares parent `type: group` objects. They apply to a bound role only: a direct
+`by: field` key, an unbound role (`fallback`) and `grouping.by: none` keep their own
+rules. No View member is added.
+
+- **R1, header order.** Headers appear in this precedence, first match wins: (1) the
+  View's explicit `grouping.order`; (2) `grouping.order.by: earliestPlannedStart`;
+  (3) the first appearance of the header among the selected rows in the Project's
+  declared object order, so a Project that lists `plat`, `mob`, `data` shows them in
+  that order whatever the field values spell; the same declared position is the
+  `source` ordering key. The `missing` group (items with no value of the role's
+  field and nothing to inherit one from, R3) is last under rules 2 and 3 wherever its
+  name would sort; an explicit `order` that lists it places it as listed, and one that
+  omits it places it after the listed headers. Rows within a header keep the View's
+  `ordering`.
+- **R2, row names.** A name that shows the `path` (a `source: path` column, or the
+  `path` label content) drops the leading ancestor segments whose title equals, as an
+  exact string, the text of the header displayed for that row: the group entity's title,
+  else the field value, as the header names it. The member's own segment is never
+  dropped, so a path with nothing left shows the object's title. A row under the
+  `missing` group keeps its full path. The rule holds for `presentation: header` and
+  `band` alike, for plot labels and for table cells. It covers a segment only while the
+  header is displayed: where Layout withdraws a vertical group tag (Specification 07,
+  #1726) the cells show the full path, and an omitted header (a grouping that
+  distinguishes nothing) covers nothing. A header spelled differently from the
+  ancestor's title (`Go to market` against `Go-to-market`) is not matched and the
+  segment stays.
+- **R3, points without the role's value.** A point (gate, milestone) with no value of
+  the role's field does not go to the `missing` group when `rows.points` places it
+  elsewhere. With `key-row` it leaves the headers for the key row. With `attached`,
+  `predecessor` or `group-header` it joins the group of the object it is attached to:
+  its `attachesTo` host, else its nearest Project ancestor, that carries the field.
+  (`attached` is the default `rows.points`.) With `own-row`, or when nothing supplies
+  a value, it is in the `missing` group as before. A View that places its points
+  therefore leaves `missing` holding only non-point objects.
+- **R4, parent summaries.** A parent group's summary is not a row; its information is
+  that of its members. A header shows the union of its members' spans where it shows
+  a range at all (the v0.1 header template has no range placeholder, so a header draws
+  none). `I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED` is reported only when information is
+  lost: its `count` is the number of omitted parent groups whose selected descendants
+  fall under more than one header (a point the `key-row` takes out of the headers
+  belongs to none). A parent whose descendants share one header, or that has none
+  selected, adds nothing and emits no diagnostic.
 
 The private root-group context used by the `hierarchy` fallback orders groups
 by Project object declaration order when the View declares neither `order` nor
