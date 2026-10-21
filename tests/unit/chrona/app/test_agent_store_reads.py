@@ -17,7 +17,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from chrona.app import agent_tools
-from chrona.app.agent_tools import InvalidArgumentsError, call_tool, registry_document, tool_specs
+from chrona.app.agent_tools import call_tool, registry_document, tool_specs
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.usecases.local_authoring import initialize_project
 from tests.support.store_workspace import PROJECT, StoreWorkspace, run_cli
@@ -178,8 +178,8 @@ def test_no_argument_lowers_integrity_names_a_root_or_an_output(corpus, override
     reference = corpus.reference()
     for tool, arguments in (("render_review", {"contextReference": reference}),
                             ("compare_baseline", {"baselineReference": reference, "candidateReference": reference})):
-        with pytest.raises(InvalidArgumentsError):
-            call_tool(WorkspaceScope(corpus.root), tool, {**arguments, override: False})
+        result = call_tool(WorkspaceScope(corpus.root), tool, {**arguments, override: False})
+        assert result.structured["status"] == "rejected" and result.structured["diagnostics"][0]["sourceRef"] == f"/{override}"
 
 
 def test_a_reference_naming_an_undeclared_store_is_refused(corpus):

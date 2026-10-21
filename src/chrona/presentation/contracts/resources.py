@@ -918,25 +918,30 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     return version
 
 
-def explain_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[SchemaViolation, ...]:
+def explain_schema_errors(
+    identity: ClosureIdentity, value: Mapping[str, Any], *, select_branches: bool = False,
+) -> tuple[SchemaViolation, ...]:
     """Explain every resource-schema error without constructing a contract.
 
     The single-error ``_validate`` path remains the compatibility boundary for
     existing callers.  Presentation ingress collection uses this separate
     function before it decides whether a resource is safe to parse.
     """
-    report = explain_resource_schema_errors(identity, value)
+    report = explain_resource_schema_errors(identity, value, select_branches=select_branches)
     return report.aggregate if report is not None else ()
 
 
-def explain_resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> SchemaErrorExplanations | None:
+def explain_resource_schema_errors(
+    identity: ClosureIdentity, value: Mapping[str, Any], *, select_branches: bool = False,
+) -> SchemaErrorExplanations | None:
     """Return aggregate and legacy explanations for one resource, if invalid."""
     errors = _resource_schema_errors(identity, value)
     if not errors:
         return None
     return SchemaErrorExplanations(
         tuple(_in_authors_words(item, value) for item in
-              explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id)),
+              explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id,
+                                 select_branches=select_branches)),
         _in_authors_words(explain_errors(errors, resource_kind=identity.kind, resource_identity=identity.id), value),
         len(errors),
     )

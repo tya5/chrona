@@ -8,7 +8,9 @@ from typing import Any
 import yaml
 
 from chrona.core.identity import content_identity
-from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
+from chrona.presentation.contracts import (
+    ClosureIdentity, ContractError, SchemaContractError, explain_schema_errors, parse_contract,
+)
 from chrona.storage.file_transaction import PreparedFileMutation
 
 
@@ -72,7 +74,15 @@ def prepare_authoring_command(
         _apply(candidate, command)
         if command["type"] == "selectPresentationPreset":
             _check_preset_identity(canonical_path.parent, command["payload"]["preset"])
-        parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate)), candidate)
+        identity = ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate))
+        try:
+            parse_contract(identity, candidate)
+        except SchemaContractError as error:
+            details = _override_violations(command, identity, candidate)
+            if not details:
+                raise
+            return PreparedFileMutation(files={}, result_revision=None,
+                                        result=_rejected(command, error.diagnostic_id, base, details=details))
         payload = yaml.safe_dump(candidate, allow_unicode=True, sort_keys=False).encode("utf-8")
         next_revision = content_identity(candidate)
         result = _accepted(command, base, next_revision)
@@ -168,7 +178,31 @@ def _prepared_rejection(command: dict[str, Any], code: str, base: str, *, detail
     return PreparedFileMutation(files={}, result_revision=None, result=result)
 
 
-def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "") -> dict[str, Any]:
+_OVERRIDES_IN_WORKSPACE = "/body/presentation/binding/overrides"
+_MAX_VIOLATIONS = 8
+
+
+def _override_violations(command: dict[str, Any], identity: ClosureIdentity, candidate: dict[str, Any]) -> list[str]:
+    """Each schema violation of a ``setPresentationOverride`` payload as ``<command pointer>: <message>`` (#1892 row 5).
+
+    The workspace schema reports a bad override as one union failure at ``/body/presentation``; the discriminator
+    selects the guided branch, so the violation names the node inside ``payload.overrides`` and what it may hold.
+    A violation outside the overrides is not this command's input, so it is not translated.
+    """
+    from chrona.schema_diagnostics import violation_node, violation_sentence
+    if command["type"] != "setPresentationOverride":
+        return []
+    details: list[str] = []
+    for violation in explain_schema_errors(identity, candidate, select_branches=True):
+        node = violation_node(violation)
+        if node != _OVERRIDES_IN_WORKSPACE and not node.startswith(_OVERRIDES_IN_WORKSPACE + "/"):
+            return []
+        details.append(f"/payload/overrides{node[len(_OVERRIDES_IN_WORKSPACE):]}: {violation_sentence(violation)}")
+    return details[:_MAX_VIOLATIONS]
+
+
+def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "",
+              details: list[str] | None = None) -> dict[str, Any]:
     code, _, inline_detail = code.partition(":")
     detail = detail or inline_detail.strip()
     diagnostic: dict[str, Any] = {"code": code}
@@ -181,8 +215,9 @@ def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "") -
                        f"{command.get('baseRevision')}; query workspace_revision for "
                        f"{command['target']['path']!r} and retry"),
         }
+    rows = [{"code": code, "detail": item} for item in details] if details else [diagnostic]
     return {
         "version": "chrona/authoring-command-result/v0.1", "status": "rejected",
         "commandId": command.get("commandId"), "commandBaseRevision": command.get("baseRevision"),
-        "workspaceRevision": base, "resultRevision": None, "diagnostics": [diagnostic],
+        "workspaceRevision": base, "resultRevision": None, "diagnostics": rows,
     }

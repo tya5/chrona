@@ -22,7 +22,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from chrona.app import agent_tools
 from chrona.app.agent_tools import (
-    InvalidArgumentsError, UnknownToolError, call_tool, registry_document, tool_specs,
+    UnknownToolError, call_tool, registry_document, tool_specs,
 )
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.app.cli import main
@@ -171,7 +171,7 @@ def test_the_registry_document_is_a_copy_not_the_live_schemas():
     assert SPECS["validate_project"].input_schema["properties"]["project"]["maxLength"] == 512
 
 
-# --- protocol errors: unknown names and malformed arguments are not envelopes ---------------------------------
+# --- an unknown name is a protocol error; malformed arguments are a rejected result (#1892 row 5) --------------
 
 def test_an_unknown_tool_is_a_protocol_error(scope):
     with pytest.raises(UnknownToolError):
@@ -194,15 +194,41 @@ def test_an_unknown_tool_is_a_protocol_error(scope):
     ("render_draft", {"project": "small.yaml", "font_metrics": "m.json"}),
     ("render_draft", {"project": "small.yaml", "forecast": "yes"}),
 ])
-def test_malformed_arguments_are_a_protocol_error(scope, name, arguments):
-    with pytest.raises(InvalidArgumentsError):
-        call_tool(scope, name, arguments)
+def test_malformed_arguments_are_a_rejected_result_with_a_pointer(scope, name, arguments):
+    result = call_tool(scope, name, arguments)
+    assert result.structured["status"] == "rejected" and not result.is_error
+    assert codes(result) == ["E_MCP_INPUT_INVALID"]
+    row = result.structured["diagnostics"][0]
+    assert row["sourceRef"].startswith("/") and row["component"] == "mcp" and row["message"]
+    VALIDATORS[name].validate(result.structured)
+
+
+def test_a_rejected_input_names_the_node_the_expected_shape_and_where_a_member_is_permitted(scope):
+    wrong_type = call_tool(scope, "validate_project", {"project": 3}).structured["diagnostics"][0]
+    assert wrong_type["sourceRef"] == "/project" and "expected type string" in wrong_type["message"]
+    missing = call_tool(scope, "validate_project", {}).structured["diagnostics"][0]
+    assert missing["sourceRef"] == "/" and "missing required property 'project'" in missing["message"]
+    extra = call_tool(scope, "render_draft", {"project": "small.yaml", "constraints": {}}).structured["diagnostics"][0]
+    assert extra["sourceRef"] == "/constraints" and "unexpected property 'constraints'" in extra["message"]
+    assert "permitted properties:" in extra["message"] and "project" in extra["message"]
+    not_object = call_tool(scope, "validate_project", [1]).structured["diagnostics"][0]
+    assert not_object["sourceRef"] == "/" and "arguments must be an object" in not_object["message"]
+
+
+def test_a_long_input_is_never_echoed_in_a_rejection(scope):
+    result = call_tool(scope, "validate_project", {"project": "z" * 600})
+    assert "z" * 50 not in json.dumps(result.structured) and result.structured["diagnostics"][0]["sourceRef"] == "/project"
+
+
+def test_the_viewport_rejection_points_at_the_viewport(scope):
+    result = call_tool(scope, "render_draft", {"project": "small.yaml", "viewport": "1600x0"})
+    assert result.structured["status"] == "rejected"
+    assert result.structured["diagnostics"][0]["sourceRef"] == "/viewport"
 
 
 def test_missing_arguments_mean_an_empty_object(scope):
     assert run(scope, "list_presets").structured["status"] == "ok"
-    with pytest.raises(InvalidArgumentsError):
-        call_tool(scope, "validate_project", None)
+    assert call_tool(scope, "validate_project", None).structured["status"] == "rejected"
 
 
 # --- validate_project ----------------------------------------------------------------------------------------
@@ -884,3 +910,55 @@ def test_the_tool_core_imports_without_the_sdk():
         [sys.executable, "-c", "import sys; import chrona.app.agent_tools; assert 'mcp' not in sys.modules, 'SDK imported'"],
         capture_output=True, text=True, check=False)
     assert done.returncode == 0, done.stderr
+
+
+# --- validate_project by kind, like chrona validate (#1892 row 6) ---------------------------------------------
+
+ACTUAL_SET = """\
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: actuals
+body: {observations: []}
+"""
+
+
+def test_validate_project_checks_a_resource_by_its_kind(tmp_path):
+    root = tmp_path / "ws"
+    root.mkdir()
+    (root / "actual.yaml").write_text(ACTUAL_SET, encoding="utf-8")
+    (root / "scheme.yaml").write_text("version: chrona/color-scheme/v0.1\nkind: color-scheme\nid: s\nbody: {nonsense: 1}\n",
+                                      encoding="utf-8")
+    scope = WorkspaceScope(root)
+    ok = run(scope, "validate_project", project="actual.yaml")
+    assert ok.structured["status"] == "ok" and ok.structured["resource"] == "actual-set"
+    bad = run(scope, "validate_project", project="scheme.yaml")
+    assert bad.structured["status"] == "rejected" and "resource" not in bad.structured
+    assert not any("'project'" in item["message"] for item in bad.structured["diagnostics"])
+
+
+def test_validate_project_matches_the_command_line_for_every_kind_it_accepts(tmp_path, monkeypatch, capsys):
+    root = tmp_path / "ws"
+    root.mkdir()
+    (root / "actual.yaml").write_text(ACTUAL_SET, encoding="utf-8")
+    (root / "bad-theme.yaml").write_text("version: chrona/theme/v0.16\nkind: theme\nid: t\nbody: {nonsense: 1}\n",
+                                         encoding="utf-8")
+    for name in ("actual.yaml", "bad-theme.yaml"):
+        tool = call_tool(WorkspaceScope(root), "validate_project", {"project": name}).structured
+        code, out, _ = cli(monkeypatch, capsys, root, "validate", name)
+        printed = json.loads(out)
+        assert tool["status"] == printed["status"] and (code == 0) == (tool["status"] == "ok")
+        assert [(d["code"], d["sourceRef"]) for d in tool["diagnostics"]] == [(d["code"], d["sourceRef"]) for d in printed["diagnostics"]]
+
+
+@pytest.mark.parametrize(("kind", "tool"), [
+    ("authoring-workspace", "validate_workspace"), ("command-request", "check_command"), ("render-context", None),
+])
+def test_validate_project_names_the_kind_and_the_right_tool_for_a_kind_it_does_not_check(tmp_path, kind, tool):
+    root = tmp_path / "ws"
+    root.mkdir()
+    (root / "other.yaml").write_text(f"version: chrona/{kind}/v0.1\nkind: {kind}\nid: x\n", encoding="utf-8")
+    result = run(WorkspaceScope(root), "validate_project", project="other.yaml")
+    row, = result.structured["diagnostics"]
+    assert result.structured["status"] == "rejected" and row["code"] == "E_CLOSURE_KIND" and row["sourceRef"] == "/kind"
+    assert repr(kind) in row["message"] and "the accepted kinds are project, theme" in row["message"]
+    assert (f"use {tool}" in row["message"]) == (tool is not None)
