@@ -12,6 +12,7 @@ from chrona.presentation.layout.window_row_admission import geometry_folded_poin
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
                                              metric_for_role, place_text)
 from chrona.presentation.layout.vertical_text import place_vertical_label_fit
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 
 
@@ -186,7 +187,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                         "W_LAYOUT_TEXT_ELLIPSIZED", fitted.placements[0].placement_id, group.group_id,
                         "group-tag-text", "ellipsize-with-source" if ellipsized else "suppress-with-source",
                         float(cell.inline_size), fitted.required_block, float(cell.inline_size),
-                        fitted.available_block))
+                        fitted.available_block, (DiagnosticSubject(group.group_id, labels[group.group_id]),)))
         return SurfaceGroupPresentation(tuple(text), tuple(tag_warnings))
     if request.theme_tokens.optional_choice("groupHeader", "align", ("start", "center", "end")) is not None:
         # `align` places a vertical tag in its rows; on a horizontal header it would be silently ignored (#981).
