@@ -36,7 +36,7 @@ member in place to Layout Profile v0.10 under Spec 56 section 3.2.
 
 ## 2. Resource and reuse model
 
-### Named page defaults (#1855; implementation pending)
+### Named page defaults (#1855)
 
 An optional top-level `pageSize` on Layout Profile v0.10 selects a named Draft
 viewport default, not pagination or an automatic fit policy. The shared

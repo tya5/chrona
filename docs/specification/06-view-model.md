@@ -423,8 +423,7 @@ A View selects a temporal window independently from scheduling semantics. v0.1 a
 `{mode: explicit, start: Date, end: Date}`, `{mode: selected-planned, marginDays: N}`,
 or `{mode: selected-comparison, marginDays: N}`. Explicit windows are `[start, end)`
 with both bounds and `start < end`; derived windows use selected minimum start and
-maximum exclusive end. Under the #1855 replacement (implementation pending),
-derive that half-open envelope from span exclusive ends and each point's Date
+maximum exclusive end. Derive that half-open envelope (#1855) from span exclusive ends and each point's Date
 plus one Date day, so a zero-padding point window remains positive and contains
 the point. An authored `marginDays: N` is exactly N Date days on each side,
 including zero; it is not a lower bound beneath a hidden percentage margin.
@@ -927,7 +926,7 @@ wording-key identity until that reference is known. Literal headers, other
 wording references and explicit wording overrides retain their authorship.
 The comparison calculation and working/calendar-day units are unchanged.
 
-### Snapshot finish-delta table fact (#1855; implementation pending)
+### Snapshot finish-delta table fact (#1855)
 
 A table source `{comparisonFacet: snapshotFinishDelta}` exposes the selected
 primary plan's finish minus the supplied Snapshot counterpart's planned finish,

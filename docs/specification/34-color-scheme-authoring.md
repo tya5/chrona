@@ -62,7 +62,7 @@ For each pair `(text, surface)` and `(text, surfaceRaised)`, the resolver comput
 
 Required stable diagnostics are `E_SCHEME_SCHEMA`, `E_SCHEME_PROVENANCE`, `E_SCHEME_INTENT_UNKNOWN`, `E_SCHEME_THEME_BINDING`, `E_SCHEME_CONTRAST`, and `E_CONTEXT_COLOR_SCHEME`. Diagnostics name the resource ID and path and never recover with a default.
 
-### Print-claim separability (#1855; implementation pending)
+### Print-claim separability (#1855)
 
 Each render evaluates completed visible legend inks under a grayscale
 simulation in addition to the colour-vision checks of Specs28/60. Project an
