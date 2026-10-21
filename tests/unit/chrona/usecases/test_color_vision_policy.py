@@ -214,7 +214,8 @@ def test_real_planned_actual_legend_warning_becomes_claim_error_before_svg(monke
     warning_render = _render(tmp_path / "unclaimed", _source(), actual=ACTUAL,
                              parts=parts, detail=detail)
     warnings = [item.payload for item in warning_render.warning_records
-                if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
+                if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
+                and item.payload["vision"] != "grayscale"]
     assert len(warnings) == 2
     assert {item["vision"] for item in warnings} == {"deuteranopia"}
     assert {item["diagnostic"] for item in warnings} == {

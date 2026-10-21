@@ -45,7 +45,7 @@ from chrona.presentation.model.info_diagnostics import (
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
-from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
+from chrona.presentation.contracts.resources import ColorSchemeContract, ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderEvent, RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
@@ -570,6 +570,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                if render_closure.context.identity.revision == "draft" else ())
     contrast_warnings = _scene_contrast_warnings(scene, theme, surface.primitive_provenance)
     _enforce_color_vision_claims(theme, collisions, surface.diagnostic_provenance)
+    scheme = render_closure.resource("color-scheme")
+    if scheme is None:
+        raise ClosureError("E_CLOSURE_REQUIRED", detail="the closure has no color-scheme resource")
+    if not isinstance(scheme.contract, ColorSchemeContract):
+        raise render_closure._kind_error(scheme, ColorSchemeContract)
+    _enforce_print_claim(scheme.contract.scheme_input, surface.diagnostic_provenance)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -676,6 +682,25 @@ def _enforce_color_vision_claims(
 ) -> None:
     """Enforce only Scheme claims; measurement and default warnings stay independent."""
     claims = frozenset(ThemeTokenView(theme).color_vision) & frozenset(SIMULATED_VISIONS)
+    _enforce_separability_claims({vision: vision for vision in claims}, collisions, provenance,
+                               "/body/suitability/colorVision", "suitability.colorVision includes")
+
+
+def _enforce_print_claim(
+    scheme: Mapping[str, Any], provenance: tuple[DiagnosticProvenance, ...],
+) -> None:
+    """Print claims govern completed legend ink, never categorical scale domains."""
+    claim = scheme["body"]["suitability"]["print"]
+    claims = {"grayscale": claim} if claim in {"print-friendly", "photocopy-friendly"} else {}
+    _enforce_separability_claims(claims, (), provenance,
+                               "/body/suitability/print", "suitability.print is")
+
+
+def _enforce_separability_claims(
+    claims: Mapping[str, str], collisions: tuple[ScaleCollision, ...],
+    provenance: tuple[DiagnosticProvenance, ...], source_ref: str, claim_description: str,
+) -> None:
+    """Apply declared severities to measured facts without reinterpreting geometry."""
     if not claims:
         return
     failures = []
@@ -683,7 +708,7 @@ def _enforce_color_vision_claims(
         if item.vision in claims:
             failures.append(("E_PRESENTATION_SCALE_NOT_SEPARABLE", {
                 "vision": item.vision, "deltaE": item.delta_e,
-                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": item.vision,
+                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": claims[item.vision],
                 "scaleId": item.scale_id, "first": item.first, "second": item.second,
             }))
     for item in provenance:
@@ -691,7 +716,7 @@ def _enforce_color_vision_claims(
         if finding is not None and finding.vision in claims:
             failures.append(("E_LEGEND_COLOR_NOT_SEPARABLE", {
                 "vision": finding.vision, "deltaE": finding.delta_e,
-                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": finding.vision,
+                "minimumDeltaE": MINIMUM_CATEGORY_DELTA_E, "claim": claims[finding.vision],
                 "sourceSubjects": [{"sourceRef": subject.source_ref,
                     **({"title": subject.title} if subject.title is not None else {})}
                     for subject in item.subjects],
@@ -704,8 +729,8 @@ def _enforce_color_vision_claims(
         more = f" and {len(failures) - 1} more" if len(failures) > 1 else ""
         raise RenderFailed(code,
             f"{pair}: colour difference {details['deltaE']!r} below {MINIMUM_CATEGORY_DELTA_E:g} "
-            f"under {details['vision']}{more}; the Scheme claims suitability.colorVision includes {details['claim']}",
-            "presentation", "/body/suitability/colorVision", details=details)
+            f"under {details['vision']}{more}; the Scheme claims {claim_description} {details['claim']}",
+            "presentation", source_ref, details=details)
 
 
 def _scene_contrast_warnings(
