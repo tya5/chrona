@@ -662,5 +662,10 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             float(legend.bounds.inline_size), float(legend.bounds.block_size)))
     replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                legend.bounds.inline_size, final_size))
+    coverage = {entry.source_identity: (entry.realized_key.legend_encoding_coverage
+                if entry.realized_key is not None else entry.legend_encoding_coverage)
+                for entry in entries}
+    marks = [replace(mark, legend_encoding_coverage=coverage.get(mark.source_ref)) for mark in marks]
+    shapes = [replace(shape, legend_encoding_coverage=coverage.get(shape.source_ref)) for shape in shapes]
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
                               tuple(side_content_warnings), legend, tuple(label_targets))

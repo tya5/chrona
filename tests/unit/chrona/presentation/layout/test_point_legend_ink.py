@@ -149,3 +149,127 @@ def test_gate_canonical_source_occurrence_is_reserved_as_planned_state():
     assert keys[0].point_state == "planned"
     assert keys[0].occurrences == (occurrence.key,)
     assert keys[0].paint_role == "gate"
+
+
+def _encoded_content(*, scope="view", covered=True, visible=True):
+    from chrona.presentation.model.style_fills import CompletedStyleFill, StyleFillIndex
+    from chrona.presentation.style import EncodingSource, EncodingWitness
+
+    occurrences = tuple(_occurrence("planned", subject=subject) for subject in ("a", "b"))
+    source = EncodingSource("view", "view", "/body/colorEncoding") if scope == "view" else (
+        EncodingSource("style", "style", "/body/rules/0", "paint"))
+    fills = tuple((occurrence.key, CompletedStyleFill(color, EncodingWitness(
+        "fill", "owners", "owner", subject, (source,))))
+        for occurrence, color, subject in zip(occurrences, ("#112233", "#998877"), ("a", "b")))
+    entries = [SurfaceLegendEntry("milestone", "Gate")]
+    if covered:
+        for occurrence, _ in fills:
+            values = dict(style_occurrences=(occurrence,), swatch_visible=visible)
+            if scope == "view":
+                values.update(view_scale_id="owners", view_scale_domain_value=occurrence.subject_id)
+            else:
+                # Folded Other deliberately differs from the raw encoded value.
+                values.update(style_scope=StyleLegendScope("style", "paint", "owners", "field", None, True),
+                              style_value="Other")
+            entries.append(SurfaceLegendEntry(f"scale:{occurrence.subject_id}", "Owner", **values))
+    return replace(_content(entries, occurrences), style_fills=StyleFillIndex(fills))
+
+
+@pytest.mark.parametrize("scope", ("view", "style"))
+def test_separately_keyed_encoding_uses_one_neutral_state_key_and_retains_actual_ink(scope):
+    from chrona.presentation.layout.legend_candidates import coalesce_point_keys
+    content = _encoded_content(scope=scope)
+    keys = source_point_keys(content, _tokens(), mark_block_size=20,
+                             paint_capabilities=PaintWitnessCapabilities())
+    key, = coalesce_point_keys(keys)
+    assert key.glyph.paints[0].effective_channels.fill == "#345678"
+    assert key.occurrences == tuple(item.key for item in content.legend_mark_occurrences)
+    assert {witness.paints[0].effective_channels.fill for witness in key.encoding_witnesses} == {
+        "#112233", "#998877"}
+    assert key.legend_encoding_coverage.kind == "state"
+    assert {witness.value for witness in key.legend_encoding_coverage.witnesses} == {"a", "b"}
+
+
+@pytest.mark.parametrize("case", ("absent", "hidden", "wrong-scale", "wrong-occurrence", "unfilled"))
+def test_unexplained_encoded_paint_still_splits_state_keys(case):
+    from chrona.presentation.layout.legend_candidates import coalesce_point_keys
+    content = _encoded_content(covered=case != "absent", visible=case != "hidden")
+    if case == "wrong-scale":
+        content = replace(content, legend_entries=tuple(replace(entry, view_scale_id="other")
+            if entry.view_scale_id is not None else entry for entry in content.legend_entries))
+    elif case == "wrong-occurrence":
+        content = replace(content, legend_entries=tuple(replace(entry, style_occurrences=())
+            for entry in content.legend_entries))
+    elif case == "unfilled":
+        content = replace(content, legend_entries=tuple(replace(entry, swatch_shape="rule-pair")
+            for entry in content.legend_entries))
+    keys = coalesce_point_keys(source_point_keys(content, _tokens(), mark_block_size=20,
+                              paint_capabilities=PaintWitnessCapabilities()))
+    assert len(keys) == 2
+    assert {key.glyph.paints[0].effective_channels.fill for key in keys} == {"#112233", "#998877"}
+    assert all(key.legend_encoding_coverage is None for key in keys)
+
+
+def test_neutralization_preserves_explicit_multipart_ink_and_replaces_only_encoded_parts():
+    from chrona.presentation.layout.legend_ink import _keys
+    from chrona.presentation.layout.mark_geometry import SymbolPartPlacement
+    content = _encoded_content()
+    parts = (SymbolPartPlacement((), paint_mode="fill"),
+             SymbolPartPlacement((), paint_mode="fill", paint_color="#FF0000"))
+    key, = _keys(content, _tokens(), PaintWitnessCapabilities(),
+        key=content.legend_mark_occurrences[0].key, selected_role=None, parts=parts,
+        default_role="planned", family_id="milestone", glyph_footprint=(10, 10),
+        point_state="planned", point_geometry=("two-parts",))
+    assert tuple(paint.effective_channels.fill for paint in key.glyph.paints) == ("#345678", "#FF0000")
+    assert tuple(paint.effective_channels.fill for paint in key.encoding_witnesses[0].paints) == ("#112233", "#FF0000")
+
+    explicit, = _keys(content, _tokens(), PaintWitnessCapabilities(),
+        key=content.legend_mark_occurrences[0].key, selected_role=None, parts=parts[1:],
+        default_role="planned", family_id="milestone", glyph_footprint=(10, 10), point_state="planned")
+    assert explicit.glyph.paints[0].effective_channels.fill == "#FF0000"
+    assert explicit.legend_encoding_coverage is None
+
+
+def test_neutral_state_representative_restores_the_declared_role_gradient():
+    tokens = _tokens()
+    body = dict(tokens._body)
+    body["values"] = {**body["values"],
+        "end": {"type": "color", "value": "#ABCDEF"},
+        "angle": {"type": "number", "value": 45}}
+    body["roles"] = {**body["roles"], "planned": {**body["roles"]["planned"],
+        "gradientStart": "ink", "gradientEnd": "end", "gradientAngle": "angle"}}
+    tokens = ThemeTokenView({"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": body})
+    keys = source_point_keys(_encoded_content(), tokens, mark_block_size=20,
+                             paint_capabilities=PaintWitnessCapabilities())
+    assert all(key.glyph.paints[0].gradient.admitted for key in keys)
+    assert all(key.encoding_witnesses[0].paints[0].gradient is None for key in keys)
+    assert len({key.grouping_identity for key in keys}) == 1
+
+
+def test_neutral_state_keeps_a_hollow_theme_role_without_inventing_fill():
+    tokens = _tokens()
+    body = dict(tokens._body)
+    body["values"] = {**body["values"],
+        "outline": {"type": "pattern", "value": {"kind": "outline"}},
+        "width": {"type": "number", "value": 1}}
+    body["roles"] = {**body["roles"], "planned": {**body["roles"]["planned"],
+        "pattern": "outline", "stroke": "ink", "strokeWidth": "width"}}
+    body["roles"]["planned"].pop("fill")
+    tokens = ThemeTokenView({"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": body})
+    keys = source_point_keys(_encoded_content(), tokens, mark_block_size=20,
+                             paint_capabilities=PaintWitnessCapabilities())
+    assert all(key.glyph.paints[0].effective_channels.fill is None for key in keys)
+    assert all(key.glyph.paints[0].effective_channels.stroke == "#345678" for key in keys)
+    assert all(key.legend_encoding_coverage.kind == "state" for key in keys)
+
+
+def test_same_scale_and_occurrence_do_not_waive_mismatched_encoding_origin():
+    from chrona.presentation.layout.legend_candidates import coalesce_point_keys
+    content = _encoded_content(scope="style")
+    content = replace(content, legend_entries=tuple(replace(entry,
+        style_scope=replace(entry.style_scope, rule_id="unrelated"))
+        if entry.style_scope is not None else entry for entry in content.legend_entries))
+    keys = coalesce_point_keys(source_point_keys(content, _tokens(), mark_block_size=20,
+                              paint_capabilities=PaintWitnessCapabilities()))
+    assert len(keys) == 2
+    assert all(key.legend_encoding_coverage is None for key in keys)

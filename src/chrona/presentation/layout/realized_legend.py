@@ -5,12 +5,13 @@ from chrona.presentation.layout.legend_candidates import (
     actual_key_label, coalesce_actual_keys, coalesce_point_keys, point_key_label,
 )
 from chrona.presentation.layout.legend_diagnostics import completed_legend_diagnostics
-from chrona.presentation.layout.legend_ink import actual_mark_keys, mark_ink_keys, point_mark_keys
+from chrona.presentation.layout.legend_ink import actual_mark_keys, encoding_legend_coverage, mark_ink_keys, point_mark_keys
 from chrona.presentation.layout.style_legend import painted_style_occurrences
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
 from chrona.presentation.layout.slot_heading import content_slot, full_slot, inline_content_slot, inline_full_slot
 from chrona.presentation.model.legend_paint import effective_ink_identity
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
+from chrona.presentation.style import LegendEncodingCoverage
 
 
 def completed_legend_slots(slots, allocated_slots, legend, headings):
@@ -104,17 +105,24 @@ def _final_representative(candidate, realized):
                     variance_classes=realized.variance_classes,
                     paint_role=(realized.paint_role if candidate.point_state is not None else candidate.paint_role),
                     point_state=realized.point_state,
-                    covered_point_states=realized.covered_point_states)
+                    covered_point_states=realized.covered_point_states,
+                    encoding_witnesses=realized.encoding_witnesses)
 
 
 def filtered_realized_entries(request, marks, shapes, relations, text):
     content, tokens, capabilities = request.surface_content, request.theme_tokens, request.paint_capabilities
     drawn_marks = tuple(mark for mark in marks if visible_placement(mark))
+    painted = painted_style_occurrences(drawn_marks, text, fills=content.style_fills, tokens=tokens)
+    # Source reservation and final state completion use the same exact coverage
+    # predicate, but a filtered encoding entry cannot justify neutralization.
+    point_content = replace(content, legend_entries=tuple(
+        entry for entry in content.legend_entries if entry.encoding_scale_id is None
+        or encoding_legend_coverage(content, entry, painted=painted)))
     actual = coalesce_actual_keys(tuple(key for mark in drawn_marks
         for key in actual_mark_keys(mark, content, tokens, capabilities)))
     by_ink = {key.grouping_identity: key for key in actual}
     points = coalesce_point_keys(tuple(key for mark in drawn_marks
-        for key in point_mark_keys(mark, content, tokens, capabilities)))
+        for key in point_mark_keys(mark, point_content, tokens, capabilities)))
     point_by_ink = {key.grouping_identity: key for key in points}
     point_reserved = {entry.realized_key.grouping_identity for entry in content.legend_entries
                       if entry.realized_key is not None and entry.realized_key.point_state is not None}
@@ -126,7 +134,6 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
         assert by_ink.keys() <= reserved, "final Actual ink must have a premeasured candidate"
     progress_shapes = tuple(shape for shape in shapes
                             if shape.semantic_id == "progressFill" and visible_placement(shape))
-    painted = painted_style_occurrences(drawn_marks, text, fills=content.style_fills, tokens=tokens)
     roles = {_scene_role(mark.semantic_id) for mark in drawn_marks}
     roles.update(_scene_role(shape.semantic_id) for shape in shapes
                  if shape.semantic_id and (visible_placement(shape) or shape.points))
@@ -170,6 +177,11 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
                 # The estimate marker remains meaningful when an encoding replaces
                 # forecast ink; retain its explanation without claiming a forecast swatch.
                 result.append(replace(entry, swatch_visible=False))
+            continue
+        if entry.encoding_scale_id is not None:
+            coverage = encoding_legend_coverage(content, entry, painted=painted)
+            if coverage:
+                result.append(replace(entry, legend_encoding_coverage=LegendEncodingCoverage("encoding", coverage)))
             continue
         if entry.style_scope is not None or entry.role.startswith("scale:"):
             if any(occurrence in painted for occurrence in entry.style_occurrences):

@@ -190,3 +190,51 @@ def test_identical_planned_and_actual_figures_share_one_faithful_svg_key(tmp_pat
                for item in (*points, *swatches))
     assert all(svg[item.scene_id].attrib.get("fill") == item.paint.fill
                for item in (*points, *swatches))
+
+
+def test_separately_keyed_owner_colours_do_not_duplicate_state_meaning_in_svg(tmp_path):
+    request = _request(tmp_path, actual=True, forecast=False)
+    project = yaml.safe_load(request.project.read_text())
+    for object_id, item in project["objects"].items():
+        item.setdefault("fields", {})["owner"] = "b" if object_id == "observed" else "a"
+    sr._write(request.project, project)
+    view = yaml.safe_load(request.view.read_text())
+    view["body"]["colorEncoding"] = {
+        "scale": "owners", "target": "planned", "source": {"field": "owner"}, "domain": ["a", "b"]}
+    sr._write(request.view, view)
+    theme = yaml.safe_load(request.theme.read_text())
+    theme["body"]["colorScales"] = {"owners": {"slots": {"a": "owner-a", "b": "owner-b"}}}
+    sr._write(request.theme, theme)
+    scheme = yaml.safe_load(request.scheme.read_text())
+    scheme["body"]["categories"].update({"owner-a": "#3456A0", "owner-b": "#0A8060"})
+    sr._write(request.scheme, scheme)
+
+    rendered = render_draft(request).rendered
+    swatches, labels = _legend(rendered)
+    state_keys = tuple(item for item in swatches if item.source_ref.startswith("milestone:"))
+    state_labels = tuple(item for item in labels if item.source_ref.startswith("milestone:"))
+    assert {item.text for item in state_labels} == {"Gate · Planned", "Gate · Actual"}
+    # Each glyph can have a separate completed outline part, but just two state figures.
+    assert len({item.source_ref for item in state_keys}) == 2
+    assert not any(item.payload.get("code") == "W_LEGEND_LABEL_DUPLICATE" for item in rendered.warning_records)
+    point_marks = tuple(item for item in rendered.surface.primitives
+                        if item.kind == "Symbol" and item.source_kind == "object"
+                        and item.purpose == "planned" and item.paint.fill is not None)
+    assert {item.paint.fill for item in point_marks} == {"#3456A0", "#0A8060"}
+    neutral = tuple(item for item in state_keys if item.visual_role == "planned" and item.paint.fill is not None)
+    assert len(neutral) == 1
+    assert neutral[0].paint.fill not in {item.paint.fill for item in point_marks}
+    coverage = neutral[0].legend_encoding_coverage
+    assert coverage.kind == "state" and {item.value for item in coverage.witnesses} == {"a", "b"}
+    separately_keyed = {witness for item in swatches if item.legend_encoding_coverage is not None
+                       and item.legend_encoding_coverage.kind == "encoding"
+                       for witness in item.legend_encoding_coverage.witnesses}
+    assert set(coverage.witnesses) <= separately_keyed
+    from chrona.presentation.scene.serialization import scene_document, validate_scene_document
+    from tools.check_legend_keys import legend_key_findings
+    document = scene_document(rendered.scene)
+    validate_scene_document(document)
+    assert legend_key_findings(document) == []
+    svg = _svg_elements(rendered)
+    assert all(svg[item.scene_id].attrib.get("fill") == item.paint.fill
+               for item in (*point_marks, *neutral))

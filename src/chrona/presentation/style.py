@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 import json
 import math
-from typing import Any
+from typing import Any, Literal
 
 
 Scalar = str | bool | int | float
@@ -134,6 +134,35 @@ class EncodingWitness:
             raise ValueError("encoding witness sources must be an array")
         return cls(raw["channel"], raw["scaleId"], raw["field"], raw["value"],
                    tuple(EncodingSource.from_mapping(source) for source in sources))
+
+
+@dataclass(frozen=True)
+class LegendEncodingCoverage:
+    """Passive coverage claim for one completed legend-swatch figure."""
+
+    kind: Literal["state", "encoding"]
+    witnesses: tuple[EncodingWitness, ...]
+
+    def __post_init__(self) -> None:
+        if self.kind not in {"state", "encoding"}:
+            raise ValueError("legend encoding coverage kind must be 'state' or 'encoding'")
+        if (not isinstance(self.witnesses, tuple) or not self.witnesses
+                or any(not isinstance(item, EncodingWitness) for item in self.witnesses)
+                or len(set(self.witnesses)) != len(self.witnesses)):
+            raise ValueError("legend encoding coverage needs a non-empty unique witness tuple")
+
+    def as_mapping(self) -> dict[str, Any]:
+        return {"kind": self.kind,
+                "witnesses": [witness.as_mapping() for witness in self.witnesses]}
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "LegendEncodingCoverage":
+        if not isinstance(raw, Mapping) or set(raw) != {"kind", "witnesses"}:
+            raise ValueError("legend encoding coverage has missing or unsupported members")
+        witnesses = raw["witnesses"]
+        if not isinstance(witnesses, (tuple, list)):
+            raise ValueError("legend encoding coverage witnesses must be an array")
+        return cls(raw["kind"], tuple(EncodingWitness.from_mapping(item) for item in witnesses))
 
 
 @dataclass(frozen=True)

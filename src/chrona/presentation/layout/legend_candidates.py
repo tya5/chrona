@@ -44,7 +44,8 @@ def _coalesce_keys(keys: tuple[RealizedLegendKey, ...]) -> tuple[RealizedLegendK
         covered = {state for key in group for state in key.point_states}
         states = tuple(state for state in ("planned", "actual", "forecast") if state in covered)
         result.append(replace(first, occurrences=occurrences, variance_classes=classes, glyph=glyph,
-                              covered_point_states=states))
+                              covered_point_states=states, encoding_witnesses=tuple(dict.fromkeys(
+                                  witness for key in group for witness in key.encoding_witnesses))))
     return tuple(result)
 
 

@@ -16,7 +16,7 @@ from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.path_geometry import rounded_diamond_path
 from chrona.presentation.layout.pattern_placement import complete_pattern_placement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
-from chrona.presentation.model.legend_paint import RealizedGlyphInk, RealizedLegendKey
+from chrona.presentation.model.legend_paint import PointStateEncodingWitness, RealizedGlyphInk, RealizedLegendKey
 from chrona.presentation.model.semantic_registry import mark_style_role
 from chrona.presentation.model.mark_semantics import canonical_mark_semantic
 from chrona.presentation.model.point_paint import resolve_point_paint_role
@@ -124,12 +124,43 @@ def _point_witness_parts(content, tokens, key, point_state, mark_block_size):
             radius / size if size else 0.0)
 
 
+def encoding_legend_coverage(content, entry, *, painted=None):
+    """Exact raw witnesses explained by this typed encoding key, including Other."""
+    if entry.encoding_scale_id is None or not entry.swatch_visible or entry.swatch_shape == "rule-pair":
+        return ()
+    def owns_origin(witness):
+        if entry.style_scope is not None:
+            scope = entry.style_scope
+            return any(source.kind == "style" and source.resource_id == scope.style_id
+                       and source.rule_id == scope.rule_id for source in witness.sources)
+        return any(source.kind == "view" for source in witness.sources)
+
+    return tuple(dict.fromkeys(
+        fill.encoding for occurrence in entry.style_occurrences
+        if (painted is None or occurrence in painted)
+        and (fill := content.style_fills.completed(occurrence)) is not None
+        and fill.encoding.scale_id == entry.encoding_scale_id
+        and owns_origin(fill.encoding)))
+
+
+def _covered_point_encoding(content, key):
+    fill = content.style_fills.completed(key)
+    if fill is None:
+        return None
+    return next((fill.encoding for entry in content.legend_entries
+                 if key in entry.style_occurrences
+                 and fill.encoding in encoding_legend_coverage(content, entry)), None)
+
+
 def _keys(content, tokens, capabilities, *, key, selected_role, parts,
           variance_classes=(), catalog=False, default_role="actual", family_id="actual", subject_id=None,
           glyph_footprint=None, point_state=None, point_geometry=None):
     role = selected_role or default_role
     result = []
     paints = []
+    representative_paints = []
+    covered_encoding = _covered_point_encoding(content, key) if point_state is not None else None
+    neutralized = False
     for part in parts or (None,):
         mode = part.paint_mode if part is not None else None
         family = mark_paint_family(tokens, role, glyph_paint_mode=mode,
@@ -148,17 +179,31 @@ def _keys(content, tokens, capabilities, *, key, selected_role, parts,
             catalog_pattern=catalog,
             catalog_glyph_stroke_width=part.stroke_width if part is not None and mode == "stroke" else None)
         paints.append(paint)
+        if covered_encoding is not None and paint.channels.solid_override:
+            representative_paints.append(resolve_theme_paint_witness(
+                tokens, role, family,
+                gradient_supported=capabilities.gradient_supported,
+                optional_gradient_omission=capabilities.optional_gradient_omission,
+                part_mode=mode, part_color=part.paint_color if part is not None else None,
+                catalog_pattern=catalog,
+                catalog_glyph_stroke_width=part.stroke_width if part is not None and mode == "stroke" else None))
+            neutralized = True
+        else:
+            representative_paints.append(paint)
         channels = paint.effective_channels
         if channels.opacity == 0 or (channels.fill is None and channels.stroke is None):
             continue
-        result.append(RealizedLegendKey(family_id, role, paint, (key,) if key else (), variance_classes,
+        result.append(RealizedLegendKey(family_id, role, representative_paints[-1], (key,) if key else (), variance_classes,
                                        pattern_ink_identity(tokens, role, completed_catalog=catalog),
                                        point_state=point_state))
     if glyph_footprint is not None and result:
         # Keep the canonical normalized shape/outline and ordered paint, not
         # translated placement coordinates, resource IDs, or host bounds.
-        glyph = RealizedGlyphInk(selected_role, point_geometry or (), tuple(paints), glyph_footprint)
-        return (replace(result[0], glyph=glyph, point_state=point_state),)
+        glyph = RealizedGlyphInk(selected_role, point_geometry or (), tuple(representative_paints), glyph_footprint)
+        witnesses = ((PointStateEncodingWitness(key, covered_encoding, tuple(paints)),)
+                     if neutralized else ())
+        return (replace(result[0], glyph=glyph,
+                        point_state=point_state, encoding_witnesses=witnesses),)
     return tuple(result)
 
 

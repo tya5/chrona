@@ -16,7 +16,7 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding_for_primitive, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
-from chrona.presentation.style import EncodingWitness, StyleLegendScope, StyleMatch
+from chrona.presentation.style import EncodingWitness, LegendEncodingCoverage, StyleLegendScope, StyleMatch
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
@@ -173,15 +173,40 @@ def _validate_encoding_mark(scene_id: object, value: EncodingWitness | None, *, 
 
 def _validate_encoding_provenance_metadata(primitives: tuple[ScenePrimitive, ...],
                                            resources: tuple[tuple[str, str, str, str], ...]) -> None:
-    encoded = tuple(item for item in primitives if item.encoding is not None)
+    encoded = tuple((item, witness) for item in primitives
+                    for witness in ((item.encoding,) if item.encoding is not None else ())
+                    + (item.legend_encoding_coverage.witnesses
+                       if item.legend_encoding_coverage is not None else ()))
     if not encoded:
         return
-    for primitive in encoded:
-        for source in primitive.encoding.sources:
+    for primitive, witness in encoded:
+        for source in witness.sources:
             matches = tuple(resource for resource in resources
                             if resource[0] == source.kind and resource[1] == source.resource_id)
             if len(matches) != 1:
-                raise ValueError("E_RESOURCE_IDENTITY_MISMATCH: Scene encoding source must join exactly one pinned provenance resource")
+                label = ("legend encoding coverage source" if primitive.legend_encoding_coverage is not None
+                         and witness in primitive.legend_encoding_coverage.witnesses else "encoding source")
+                raise ValueError(f"E_RESOURCE_IDENTITY_MISMATCH: Scene {label} must join exactly one pinned provenance resource")
+
+
+def _validate_legend_encoding_coverage(scene_id: object, value: LegendEncodingCoverage | None, *,
+                                       kind: object, source_kind: object, purpose: object,
+                                       paint: ScenePaint | None, completed: bool = False) -> None:
+    if value is None:
+        return
+    if not isinstance(value, LegendEncodingCoverage):
+        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(scene_id)} legend encoding coverage must be a typed record")
+    visible_stroke = (paint is not None and paint.stroke is not None
+                      and _finite_number(paint.stroke_width) and paint.stroke_width > 0)
+    visible_ink = (paint is not None and
+                   (paint.fill is not None if value.kind == "encoding"
+                    else paint.fill is not None or visible_stroke))
+    if (kind not in {"Rect", "Symbol", "Path"} or source_kind != "legend"
+            or purpose != "legend-swatch"
+            or (paint is not None and not visible_ink)
+            or (completed and not visible_ink)):
+        ink = "fill" if value.kind == "encoding" else "visible fill or stroke"
+        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(scene_id)} {value.kind} legend encoding coverage requires {ink} on a legend-swatch Rect, Symbol, or Path")
 
 
 def _paint_clip_contains(clip: PaintClip, bounds: object, points: object) -> bool:
@@ -575,6 +600,7 @@ class ScenePrimitive:
     style_match: StyleMatch | None = None
     legend_scope: StyleLegendScope | None = None
     encoding: EncodingWitness | None = None
+    legend_encoding_coverage: LegendEncodingCoverage | None = None
     mark_ground: bool | None = None
 
     def __post_init__(self) -> None:
@@ -591,6 +617,9 @@ class ScenePrimitive:
                                purpose=self.purpose)
         _validate_encoding_mark(self.scene_id, self.encoding, kind=self.kind, purpose=self.purpose,
                                 visual_role=self.visual_role, paint=self.paint)
+        _validate_legend_encoding_coverage(self.scene_id, self.legend_encoding_coverage,
+                                           kind=self.kind, source_kind=self.source_kind,
+                                           purpose=self.purpose, paint=self.paint)
         if (self.legend_swatch_shape not in (None, "circle", "rule-pair")
                 or (self.legend_swatch_shape is not None and self.source_kind != "legend")):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} legend_swatch_shape")
@@ -1178,11 +1207,18 @@ class InspectionScene:
     font_warnings: tuple[FontTabularWarning, ...] = ()
 
     def __post_init__(self) -> None:
+        primitives = tuple(primitive for surface in self.surfaces for primitive in surface.primitives)
+        for primitive in primitives:
+            _validate_legend_encoding_coverage(
+                primitive.scene_id, primitive.legend_encoding_coverage,
+                kind=primitive.kind, source_kind=primitive.source_kind,
+                purpose=primitive.purpose, paint=primitive.paint, completed=True,
+            )
         _validate_style_provenance_metadata(
-            tuple(primitive for surface in self.surfaces for primitive in surface.primitives),
+            primitives,
             self.provenance.resources,
         )
         _validate_encoding_provenance_metadata(
-            tuple(primitive for surface in self.surfaces for primitive in surface.primitives),
+            primitives,
             self.provenance.resources,
         )

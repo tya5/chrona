@@ -73,6 +73,140 @@ def _figure_paint_identity(items: list[dict[str, Any]]) -> tuple[Any, ...]:
     return tuple(result)
 
 
+def _encoding_witness(item: dict[str, Any]) -> tuple[Any, ...] | None:
+    """Return only a complete fill witness; IDs and labels never establish encoding."""
+    witness = item.get("encoding")
+    if (not isinstance(witness, dict)
+            or set(witness) != {"channel", "scaleId", "field", "value", "sources"}
+            or witness.get("channel") != "fill"
+            or not all(isinstance(witness.get(field), str) and witness[field]
+                       for field in ("scaleId", "field", "value"))
+            or not isinstance(witness.get("sources"), list) or not witness["sources"]):
+        return None
+    source_keys: set[tuple[Any, ...]] = set()
+    for source in witness["sources"]:
+        if not isinstance(source, dict) or source.get("kind") not in {"view", "style"}:
+            return None
+        required = {"kind", "id", "sourceRef"} | ({"ruleId"} if source["kind"] == "style" else set())
+        allowed = required | ({"ruleId"} if source["kind"] == "view" else set())
+        if (not required.issubset(source) or not set(source).issubset(allowed)
+                or not all(isinstance(source.get(field), str) and source[field]
+                           for field in required)):
+            return None
+        if source["kind"] == "view" and "ruleId" in source:
+            return None
+        source_keys.add(_freeze(source))
+    if len(source_keys) != len(witness["sources"]):
+        return None
+    return _freeze(witness)
+
+
+def _legend_coverage(items: list[dict[str, Any]]) -> tuple[str | None, dict[tuple[Any, ...], dict[str, Any]], bool]:
+    """Union typed figure coverage, rejecting mixed kinds or malformed witnesses."""
+    kinds: set[str] = set()
+    witnesses: dict[tuple[Any, ...], dict[str, Any]] = {}
+    malformed = False
+    for item in items:
+        coverage = item.get("legendEncodingCoverage")
+        if coverage is None:
+            continue
+        if (not isinstance(coverage, dict) or set(coverage) != {"kind", "witnesses"}
+                or coverage.get("kind") not in {"state", "encoding"}):
+            malformed = True
+            continue
+        kinds.add(coverage["kind"])
+        values = coverage.get("witnesses")
+        if not isinstance(values, list) or not values:
+            malformed = True
+            continue
+        item_witnesses: set[tuple[Any, ...]] = set()
+        for witness in values:
+            if _encoding_witness({"encoding": witness}) is None:
+                malformed = True
+                continue
+            frozen = _freeze(witness)
+            item_witnesses.add(frozen)
+            witnesses[frozen] = witness
+        if len(item_witnesses) != len(values):
+            malformed = True
+    if len(kinds) > 1:
+        malformed = True
+    return (next(iter(kinds)) if len(kinds) == 1 else None, witnesses, malformed)
+
+
+def _without_encoded_fill(item: dict[str, Any]) -> tuple[Any, Any]:
+    """Normalize only completed fill and its gradient, not other paint/effects."""
+    paint = dict(item.get("paint") or {})
+    paint.pop("fill", None)
+    paint.pop("gradient", None)
+    glow, bounds = paint.get("glow"), item.get("bounds")
+    if isinstance(glow, dict) and isinstance(bounds, dict) and isinstance(glow.get("region"), dict):
+        glow = dict(glow)
+        region = glow["region"]
+        glow["region"] = tuple(round(value, 9) for value in (
+            bounds["inline"] - region["inline"], bounds["block"] - region["block"],
+            region["inline"] + region["inlineSize"] - bounds["inline"] - bounds["inlineSize"],
+            region["block"] + region["blockSize"] - bounds["block"] - bounds["blockSize"]))
+        paint["glow"] = glow
+    return _freeze(paint), _freeze(item.get("pattern"))
+
+
+def _neutral_encoded_figure_matches(
+    source: list[dict[str, Any]], key: list[dict[str, Any]],
+    declared_witnesses: set[tuple[Any, ...]],
+) -> tuple[bool, set[tuple[Any, ...]], dict[tuple[Any, ...], set[Any]]]:
+    """Compare ordered parts, relaxing only fill+gradient where source proves fill encoding."""
+    if len(source) != len(key):
+        return False, set(), {}
+    used: set[tuple[Any, ...]] = set()
+    fills: dict[tuple[Any, ...], set[Any]] = defaultdict(set)
+    for source_part, key_part in zip(source, key):
+        witness = _encoding_witness(source_part)
+        if witness is not None and witness in declared_witnesses:
+            source_fill = (source_part.get("paint") or {}).get("fill")
+            if source_fill is None:
+                return False, set(), {}
+            used.add(witness)
+            fills[witness].add(source_fill)
+            if (_without_encoded_fill(source_part) != _without_encoded_fill(key_part)
+                    or source_part.get("kind") != key_part.get("kind")):
+                return False, set(), {}
+        elif (_figure_paint_identity([source_part]) != _figure_paint_identity([key_part])
+              or source_part.get("kind") != key_part.get("kind")):
+            return False, set(), {}
+    return bool(used), used, fills
+
+
+def _admitted_coverage_primitive(item: dict[str, Any], coverage_kind: str | None) -> bool:
+    """Match Scene admission for encoding fills and filled-or-stroke state keys."""
+    paint = item.get("paint") or {}
+    common = (
+        item.get("sourceKind") == "legend"
+        and item.get("purpose") == "legend-swatch"
+        and item.get("kind") in {"Rect", "Symbol", "Path"}
+    )
+    if coverage_kind == "encoding":
+        return common and paint.get("fill") is not None
+    if coverage_kind == "state":
+        return common and (paint.get("fill") is not None or paint.get("stroke") is not None)
+    return False
+
+
+def _encoding_key_fill_inventory(primitives: list[dict[str, Any]]) -> dict[tuple[Any, ...], set[Any]]:
+    """Collect fill paints from separately typed, admitted encoding legend keys."""
+    candidates = [item for item in primitives
+                  if _admitted_coverage_primitive(item, "encoding")]
+    fills: dict[tuple[Any, ...], set[Any]] = defaultdict(set)
+    for item in candidates:
+        kind, witnesses, malformed = _legend_coverage([item])
+        if kind != "encoding" or malformed:
+            continue
+        key_fill = (item.get("paint") or {}).get("fill")
+        for witness in witnesses:
+            fills[witness].add(key_fill)
+    return fills
+
+
 def _figure_groups(items: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
     """Join only parts with explicit common source and completed bounds."""
     grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
@@ -99,24 +233,72 @@ def _point_figure_role(item: dict[str, Any], owner_role: str) -> str | None:
 
 
 def _point_key_findings(visual_role: str, label: str, key_figures: list[list[dict[str, Any]]],
-                        marks: dict[str, list[dict[str, Any]]]) -> list[str]:
+                        surface_primitives: list[dict[str, Any]]) -> list[str]:
     """Match each state key to one complete source mark figure, never a palette union."""
-    source_points = [item for role, items in marks.items() for item in items
+    source_points = [item for item in surface_primitives
                      if item.get("kind") == "Symbol"
+                     and item.get("sourceKind") != "legend"
                      and item.get("sourceKind") in {None, "object"}
+                     and not item.get("id", "").startswith("legend-swatch:")
                      and (item.get("visualRole") == visual_role
-                          or (visual_role == "planned" and role == "planned"
-                              and item.get("visualRole") is None))
-                     and ":snapshot:" not in item.get("id", "")]
+                          or (visual_role == "planned" and item.get("visualRole") is None
+                              and item.get("purpose") in {None, "planned"}))
+                     and item.get("purpose") != "snapshot"]
     if not source_points:
         return [f"{label}: point key has no source Symbol mark figure"]
     source_figures = _figure_groups(source_points)
     source_paints = {_figure_paint_identity(figure) for figure in source_figures}
+    encoding_key_fills = _encoding_key_fill_inventory(surface_primitives)
     findings: list[str] = []
     for key_figure in key_figures:
         if any(item.get("kind") != "Symbol" for item in key_figure):
             findings.append(f"{label}: point key shape is not Symbol")
-        elif _figure_paint_identity(key_figure) not in source_paints:
+            continue
+        coverage_kind, declared_witnesses, malformed = _legend_coverage(key_figure)
+        has_coverage = any("legendEncodingCoverage" in item for item in key_figure)
+        if _figure_paint_identity(key_figure) in source_paints and not has_coverage:
+            continue
+
+        coverage_parts = [item for item in key_figure if "legendEncodingCoverage" in item]
+        malformed = malformed or not coverage_parts or any(
+            not _admitted_coverage_primitive(item, coverage_kind) for item in coverage_parts)
+        if coverage_kind != "state" or malformed or not declared_witnesses:
+            findings.append(
+                f"{label}: key paints fill/stroke complete figure {[_paint(item) for item in key_figure]}, "
+                "no source point figure has that ordered paint stack"
+            )
+            findings.append(f"{label}: nonmatching encoded point key lacks valid typed state coverage")
+            continue
+        declared = set(declared_witnesses)
+        matched_witnesses: set[tuple[Any, ...]] = set()
+        source_fills: dict[tuple[Any, ...], set[Any]] = defaultdict(set)
+        for source_figure in source_figures:
+            matched, witnesses, fills = _neutral_encoded_figure_matches(
+                source_figure, key_figure, declared)
+            if matched:
+                matched_witnesses.update(witnesses)
+                for witness, values in fills.items():
+                    source_fills[witness].update(values)
+        if declared != matched_witnesses:
+            findings.append(
+                f"{label}: key paints fill/stroke complete figure {[_paint(item) for item in key_figure]}, "
+                "no source point figure has that ordered paint stack"
+            )
+            findings.append(f"{label}: state coverage has no matching complete source figure for every witness")
+            continue
+        for witness in sorted(declared, key=repr):
+            fills = source_fills.get(witness, set())
+            if (not fills or not any(
+                    fill in encoding_key_fills.get(witness, set()) for fill in fills)):
+                decoded = dict((key, value) for key, value in witness)
+                findings.append(
+                    f"{label}: state coverage witness scale={decoded.get('scaleId')!r}, "
+                    f"field={decoded.get('field')!r}, value={decoded.get('value')!r} "
+                    "has no separate encoding key with the source fill"
+                )
+        if any(label in finding and ("has no separate encoding key" in finding
+                                     or "state coverage" in finding)
+               for finding in findings):
             findings.append(
                 f"{label}: key paints fill/stroke complete figure {[_paint(item) for item in key_figure]}, "
                 "no source point figure has that ordered paint stack"
@@ -176,7 +358,7 @@ def _surface_findings(primitives: list[dict[str, Any]], *, legend_declared: bool
                 [item for figure in state_key_figures[state] for item in figure])]
             findings.extend(_point_key_findings(
                 state, "milestone" if role == "milestone" else state,
-                state_key_figures[state], marks))
+                state_key_figures[state], primitives))
         role_keys = ordinary_role_keys
         if not role_keys:
             continue
@@ -184,7 +366,7 @@ def _surface_findings(primitives: list[dict[str, Any]], *, legend_declared: bool
             expected_kind = "Symbol" if role == "milestone" else None
             candidates = [item for item in marks.get("planned" if role == "milestone" else role, ())
                           if (role != "milestone" or item["kind"] == expected_kind)
-                          and ":snapshot:" not in item["id"]]
+                          and item.get("purpose") != "snapshot"]
             if not candidates:
                 continue
             mark_figures = _figure_groups(candidates)
@@ -220,7 +402,7 @@ def _surface_findings(primitives: list[dict[str, Any]], *, legend_declared: bool
             candidates = [item for item in marks.get("planned" if role == "milestone" else role, ())
                           if (role == "actual" or item["kind"] == expected_kind)
                           # Baseline ghosts are stroke-only echoes, not the mark the key shows.
-                          and ":snapshot:" not in item["id"]]
+                          and item.get("purpose") != "snapshot"]
             if not candidates:
                 continue
             if role != "actual" and key["kind"] != expected_kind:

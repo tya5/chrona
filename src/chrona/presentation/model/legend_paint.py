@@ -9,6 +9,7 @@ from typing import Literal
 
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
 from chrona.presentation.model.theme_paint import ThemePaintWitness
+from chrona.presentation.style import EncodingWitness, LegendEncodingCoverage
 
 
 _HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -67,6 +68,15 @@ class RealizedGlyphInk:
 
 
 @dataclass(frozen=True)
+class PointStateEncodingWitness:
+    """Actual occurrence ink retained behind a neutral state representative."""
+
+    occurrence: StyleOccurrenceKey
+    encoding: EncodingWitness
+    paints: tuple[ThemePaintWitness, ...]
+
+
+@dataclass(frozen=True)
 class RealizedLegendKey:
     """A measured candidate and its exact completed paint/source witnesses."""
 
@@ -80,6 +90,12 @@ class RealizedLegendKey:
     glyph: RealizedGlyphInk | None = None
     point_state: Literal["planned", "actual", "forecast"] | None = None
     covered_point_states: tuple[Literal["planned", "actual", "forecast"], ...] = ()
+    encoding_witnesses: tuple[PointStateEncodingWitness, ...] = ()
+
+    @property
+    def legend_encoding_coverage(self) -> LegendEncodingCoverage | None:
+        witnesses = tuple(dict.fromkeys(item.encoding for item in self.encoding_witnesses))
+        return LegendEncodingCoverage("state", witnesses) if witnesses else None
 
     @property
     def point_states(self) -> tuple[str, ...]:

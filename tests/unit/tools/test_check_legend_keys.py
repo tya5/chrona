@@ -195,6 +195,182 @@ def test_milestone_point_key_matches_its_completed_visual_role(visual_role):
     assert any("complete figure" in finding for finding in legend_key_findings(broken))
 
 
+def _fill_witness(value="open", *, scale_id="status-scale", field="status", source_id="view-a"):
+    return {"channel": "fill", "scaleId": scale_id, "field": field, "value": value,
+            "sources": [{"kind": "view", "id": source_id, "sourceRef": "/body/colorEncoding"}]}
+
+
+def _neutral_encoded_point_scene(witnesses=None, *, scale_fill="#AA0000", key_fill="#333333",
+                                 key_gradient=None, key_stroke="#111111"):
+    witnesses = witnesses or [_fill_witness()]
+    bounds = {"inline": 10, "block": 20, "inlineSize": 10, "blockSize": 10}
+    primitives = []
+    for index, witness in enumerate(witnesses):
+        fill = scale_fill
+        mark = _rect(f"planned:opaque-object-{index}", kind="Symbol", fill=fill,
+                     bounds=bounds, source_ref=f"object-{index}", stroke="#111111")
+        mark.update(sourceKind="object", purpose="planned", visualRole="planned", encoding=witness)
+        primitives.append(mark)
+
+    state_paint = {"fill": key_fill, "stroke": key_stroke}
+    if key_gradient is not None:
+        state_paint["gradient"] = key_gradient
+    state = _rect("legend-swatch:planned:opaque-state-key", kind="Symbol", fill=key_fill,
+                  bounds={"inline": 100, "block": 20, "inlineSize": 10, "blockSize": 10},
+                  source_ref="opaque-state-key", stroke=key_stroke)
+    state.update(sourceKind="legend", purpose="legend-swatch", visualRole="planned",
+                 paint=state_paint,
+                 legendEncodingCoverage={"kind": "state", "witnesses": deepcopy(witnesses)})
+    primitives.append(state)
+
+    scale = _rect("legend-swatch:encoding:opaque-scale-key", kind="Rect", fill=scale_fill,
+                  source_ref="opaque-scale-key")
+    scale.update(sourceKind="legend", purpose="legend-swatch", visualRole="planned",
+                 legendEncodingCoverage={"kind": "encoding", "witnesses": deepcopy(witnesses)})
+    primitives.append(scale)
+    return _scene(primitives)
+
+
+def test_encoded_point_key_accepts_only_typed_reciprocal_coverage_and_fill_neutralization():
+    scene = _neutral_encoded_point_scene()
+    assert legend_key_findings(scene) == []
+
+
+def test_exact_paint_match_remains_good_but_declared_coverage_still_needs_its_scale_key():
+    exact = _neutral_encoded_point_scene(key_fill="#AA0000")
+    assert legend_key_findings(exact) == []
+
+    exact["surfaces"][0]["primitives"].pop()
+    assert any("separate encoding key" in finding for finding in legend_key_findings(exact))
+
+
+def test_neutral_point_key_can_restore_theme_gradient_only_with_exact_coverage():
+    gradient = {"start": {"x": 0, "y": 0}, "end": {"x": 0, "y": 1},
+                "stops": [{"offset": 0, "color": "#FFFFFF"},
+                          {"offset": 1, "color": "#333333"}], "fidelity": "required"}
+    scene = _neutral_encoded_point_scene(key_gradient=gradient)
+    assert legend_key_findings(scene) == []
+
+    without_coverage = deepcopy(scene)
+    without_coverage["surfaces"][0]["primitives"][1].pop("legendEncodingCoverage")
+    assert any("typed state coverage" in finding for finding in legend_key_findings(without_coverage))
+
+
+def test_hollow_theme_state_key_keeps_stroke_and_uses_filled_encoding_key():
+    scene = _neutral_encoded_point_scene()
+    state = scene["surfaces"][0]["primitives"][1]
+    state["paint"]["fill"] = None
+    assert legend_key_findings(scene) == []
+
+
+def test_encoded_fill_neutralization_keeps_pattern_ink_unchanged():
+    scene = _neutral_encoded_point_scene()
+    source, state = scene["surfaces"][0]["primitives"][:2]
+    pattern = {"kind": "hatch", "spacing": 4, "angle": 45,
+               "stroke": "#101010", "strokeWidth": 1}
+    source["pattern"] = deepcopy(pattern)
+    state["pattern"] = deepcopy(pattern)
+    assert legend_key_findings(scene) == []
+
+    state["pattern"]["spacing"] = 5
+    assert any("complete source figure" in finding for finding in legend_key_findings(scene))
+
+
+@pytest.mark.parametrize("mutation,expected", [
+    ("missing-state", "typed state coverage"),
+    ("forged-value", "source figure"),
+    ("wrong-scale", "source figure"),
+    ("wrong-field", "source figure"),
+    ("wrong-origin", "source figure"),
+    ("same-key-only", "separate encoding key"),
+    ("cross-surface", "separate encoding key"),
+    ("wrong-scale-fill", "separate encoding key"),
+    ("nonfill-stroke", "complete source figure"),
+])
+def test_encoded_point_key_rejects_incomplete_or_forged_coverage(mutation, expected):
+    scene = _neutral_encoded_point_scene()
+    surfaces = scene["surfaces"]
+    primitives = surfaces[0]["primitives"]
+    if mutation == "missing-state":
+        primitives[1].pop("legendEncodingCoverage")
+    elif mutation in {"forged-value", "wrong-scale", "wrong-field", "wrong-origin"}:
+        witness = primitives[1]["legendEncodingCoverage"]["witnesses"][0]
+        if mutation == "forged-value":
+            witness["value"] = "closed"
+        elif mutation == "wrong-scale":
+            witness["scaleId"] = "other-scale"
+        elif mutation == "wrong-field":
+            witness["field"] = "other-field"
+        else:
+            witness["sources"][0]["id"] = "other-view"
+    elif mutation == "same-key-only":
+        primitives.pop()
+    elif mutation == "cross-surface":
+        encoding = primitives.pop()
+        surfaces.append({"primitives": [encoding]})
+    elif mutation == "wrong-scale-fill":
+        primitives[-1]["paint"]["fill"] = "#00AA00"
+    else:
+        primitives[1]["paint"]["stroke"] = "#FFFFFF"
+    assert any(expected in finding for finding in legend_key_findings(scene)), legend_key_findings(scene)
+
+
+def test_encoding_other_coverage_can_represent_many_raw_values_with_one_fill():
+    witnesses = [_fill_witness("rare-a"), _fill_witness("rare-b")]
+    scene = _neutral_encoded_point_scene(witnesses)
+    assert legend_key_findings(scene) == []
+
+    broken = deepcopy(scene)
+    broken["surfaces"][0]["primitives"][-1]["legendEncodingCoverage"]["witnesses"].pop()
+    assert any("separate encoding key" in finding
+               for finding in legend_key_findings(broken))
+
+
+def test_encoding_coverage_does_not_assign_another_part_fill_to_a_witness():
+    witness_a, witness_b = _fill_witness("a"), _fill_witness("b")
+    scene = _neutral_encoded_point_scene([witness_a])
+    encoding = scene["surfaces"][0]["primitives"][-1]
+    encoding["visualRole"] = "unclassified-custom-role"
+    assert legend_key_findings(scene) == []
+    encoding["legendEncodingCoverage"]["witnesses"] = [witness_a]
+    extra = _rect("legend-swatch:encoding:other-part", kind="Rect", fill="#AA0000")
+    extra.update(sourceKind="legend", purpose="legend-swatch",
+                 visualRole="unclassified-custom-role",
+                 legendEncodingCoverage={"kind": "encoding", "witnesses": [witness_b]})
+    # The correct source fill belongs only to witness b's part; it cannot prove a.
+    encoding["paint"]["fill"] = "#00AA00"
+    scene["surfaces"][0]["primitives"].append(extra)
+    assert any("separate encoding key" in finding for finding in legend_key_findings(scene))
+
+
+def test_encoded_neutralization_does_not_ignore_explicit_multipart_paint():
+    witness = _fill_witness()
+    bounds = {"inline": 10, "block": 20, "inlineSize": 10, "blockSize": 10}
+    source = _rect("planned:opaque-object:part0", kind="Symbol", fill="#AA0000",
+                   bounds=bounds, source_ref="object", stroke="#111111")
+    source.update(sourceKind="object", purpose="planned", visualRole="planned", encoding=witness)
+    explicit = _rect("planned:opaque-object:part1", kind="Symbol", fill="#00AA00",
+                     bounds=bounds, source_ref="object", stroke="#222222")
+    explicit.update(sourceKind="object", purpose="planned", visualRole="planned")
+    state0 = _rect("legend-swatch:planned:key:part0", kind="Symbol", fill="#333333",
+                   bounds=bounds, source_ref="key", stroke="#111111")
+    state0.update(sourceKind="legend", purpose="legend-swatch", visualRole="planned",
+                  legendEncodingCoverage={"kind": "state", "witnesses": [witness]})
+    state1 = _rect("legend-swatch:planned:key:part1", kind="Symbol", fill="#00AA00",
+                   bounds=bounds, source_ref="key", stroke="#222222")
+    state1.update(sourceKind="legend", purpose="legend-swatch", visualRole="planned")
+    scale = _rect("legend-swatch:encoding:key", kind="Rect", fill="#AA0000")
+    scale.update(sourceKind="legend", purpose="legend-swatch", visualRole="planned",
+                 legendEncodingCoverage={"kind": "encoding", "witnesses": [witness]})
+    scene = _scene([source, explicit, state0, state1, scale])
+    assert legend_key_findings(scene) == []
+
+    broken = deepcopy(scene)
+    broken["surfaces"][0]["primitives"][3]["paint"]["fill"] = "#FFFFFF"
+    assert any("complete source figure" in finding
+               for finding in legend_key_findings(broken))
+
+
 def test_coincident_planned_and_actual_multipart_figures_do_not_form_a_hybrid():
     bounds = {"inline": 12, "block": 20, "inlineSize": 10, "blockSize": 10}
 
