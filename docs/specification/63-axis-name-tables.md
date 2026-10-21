@@ -77,3 +77,12 @@ unchanged and does not select wording. A View, Layout or Detail Profile referenc
 [View Model §9.3](06-view-model.md). Adding a locale is a table entry in the resource and schema; a test lists the
 keys and fails when a locale lacks one. Case is never part of the table: every `en-US` value is sentence case (`Today`, `Non-working day`, `As of`), and a design that wants `as of`, `actual` or `non-working day` in lower case, or `TODAY` in capitals, sets the existing Theme typography `textTransform` (`lowercase`, `uppercase`) on the role that draws the text (`as-of-label`, the legend role). Japanese text has no case and is unchanged by a transform. A design therefore needs no key of its own for a case variant. The one exception is explicit and closed: the wording keys drawn inside another text, which read as a fragment of it (`marker.baselineNew`, `marker.baselineRemoved`, `missing.unknown`, `missing.inProgress`), and the unit symbols (`delta.unit.calendarDay`, `delta.unit.workingDay`). A test fails when any other `en-US` value starts in lower case. The `en-US` entries equal the English literals the built-in presets carried before the
 table, so a preset that keeps its literals renders byte-identically.
+
+(#1880) A wording entry can also be shown inside a longer text with the placeholder `{wording:<key>}`, in three places only: a
+heading part or heading template of a View or Layout `viewDefaults` (kicker, title, subtitle; Spec 06 §7.2), a Layout slot
+caption `heading.template` (Spec 33) and a Summary panel `title` (Spec 25). The placeholder is the same entry a `{wording: <key>}`
+reference would read: the Render Context locale's table text, with the View `wording.keys` override on top. Heading parts and caption
+templates already treat braces as grammar (`{{` and `}}` are literal braces); a Summary `title` is read as a template only when it contains a
+`{wording:` marker, so an existing title with braces is unchanged. An unknown key is `E_WORDING_KEY_UNKNOWN` at the heading part, the
+Summary `title` (View/Summary contract time) or the slot (Layout, at the caption `template`); a malformed marker keeps the surface's template
+code. No schema changes: the surfaces stay strings, and the key set stays the closed `wordingKey` enum.

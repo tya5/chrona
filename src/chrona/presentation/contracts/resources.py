@@ -19,7 +19,8 @@ from chrona.resources.semantic_vocabulary import SemanticVocabularyBinding
 from chrona.presentation.style import StyleRule, StyleRuleError, parse_style_rules
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
-from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, validate_heading_template
+from chrona.presentation.wording_markers import WordingMarkerError, wording_marker_keys
+from chrona.presentation.heading_text import HeadingPart, heading_figure_ids, heading_wording_keys, validate_heading_template
 from chrona.presentation.table_presentation import (
     AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
 )
@@ -1381,6 +1382,25 @@ def _view_profile_bindings(raw: Mapping[str, Any], explicit_figures: tuple[Figur
     return tuple(bindings)
 
 
+def _known_wording_keys() -> tuple[str, ...]:
+    # Imported late: the wording tables live in `presentation.model`, which imports these contracts.
+    from chrona.presentation.model.wording_tables import wording_keys
+    return wording_keys()
+
+
+def _check_title_wording(title: str, path: str) -> None:
+    """A Summary panel title may show `{wording:<key>}`; a malformed marker or unknown key is refused (#1880)."""
+    try:
+        keys = wording_marker_keys(title, code="E_SUMMARY_TITLE_TEMPLATE")
+    except WordingMarkerError as error:
+        raise ContractError(error.code, error.detail, path) from error
+    known = _known_wording_keys()
+    for key in sorted(keys):
+        if key not in known:
+            raise ContractError("E_WORDING_KEY_UNKNOWN",
+                                f"title names unknown wording key {key!r}; expected one of {known!r}", path)
+
+
 def _pointer_token(value: str) -> str:
     return value.replace("~", "~0").replace("/", "~1")
 
@@ -1472,8 +1492,15 @@ def _view_heading(raw: Any, figures: tuple[FigureSpec, ...] = ()) -> ViewHeading
             try:
                 validate_heading_template(part.text)
                 references = heading_figure_ids(part.text)
+                wording_keys_used = heading_wording_keys(part.text)
             except GroupHeaderTextError as error:
                 raise ContractError(error.code, error.detail, template_path) from error
+            known_keys = _known_wording_keys()
+            for key in sorted(wording_keys_used):
+                if key not in known_keys:
+                    raise ContractError("E_WORDING_KEY_UNKNOWN",
+                                        f"heading names unknown wording key {key!r}; expected one of {known_keys!r}",
+                                        template_path)
             for identifier in sorted(references):
                 if identifier not in declared:
                     raise ContractError("E_VIEW_FIGURE_UNKNOWN", f"heading names undeclared figure {identifier!r}",
@@ -1708,6 +1735,8 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
                                              declaration_path=path))
             else:
                 metrics.append((str(metric_id), str(definition)))
+        if "title" in panel:
+            _check_title_wording(str(panel["title"]), f"/body/panels/{panel_index}/title")
         panels.append(SummaryPanelInput(str(panel["id"]), str(panel["title"]) if "title" in panel else None,
                                         str(panel.get("presentation", "lines")), tuple(metrics),
                                         str(panel.get("arrangement", "stack"))))
