@@ -23,6 +23,16 @@ the actual mark, while `planned` uses the planned mark.  An absent source,
 absent host, or zero fraction produces no submark.  A fraction of one is a
 full-host submark; no alternative fill, estimate, or interpolation is inferred.
 
+**What the fill measures (#1869).** The `planned` source measures the fraction
+of its host, the planned mark.  The `actual` source measures progress as a
+fraction of the planned span, drawn from the observed start and clipped to the
+Actual mark: its extent is `progress` times the planned mark's extent, never more
+than the Actual mark's.  An Actual with a `finish` is complete by observation
+and draws no submark whatever its `progress` says, so the Actual mark keeps its
+Actual paint and the Actual legend key.  A point Actual, an Actual with no
+planned mark, and a planned mark with no extent have no span to compare and keep
+the fraction of the Actual host itself.
+
 The legend uses a separate `Progress` key when a positive completed progress
 submark is painted with ink different from its completed host. Its swatch uses
 the realized `progressFill` paint; absent, zero-width, or same-ink submarks
@@ -36,8 +46,9 @@ key from the declaration or source fraction.
 
 Layout receives the selected fraction and completed host mark bounds. It creates
 one renderer-neutral `progress-fill:<host-id>` submark whose inline extent is the
-original host extent multiplied by the fraction and whose block bounds equal the
-host's. For a native Rect host this remains a Rect; for a host whose Scene identity
+original host extent multiplied by the fraction (for an `actual` source, the
+fraction of the host that §1 derives from the planned span) and whose block bounds
+equal the host's. For a native Rect host this remains a Rect; for a host whose Scene identity
 is split across painted glyph parts, Layout completes a Symbol contour by
 intersecting the fraction region with the nonzero-winding union of the host's
 filled parts. A stroke-only point glyph has no fillable interior and produces no

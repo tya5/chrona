@@ -426,7 +426,7 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
                       ) -> dict[str, tuple[Any, ...]]:
     if source is None:
         return {}
-    from chrona.presentation.layout.surface_marks import complete_progress_shape
+    from chrona.presentation.layout.surface_marks import actual_progress_fraction, complete_progress_shape
 
     try:
         inset, radius = theme.progress_track("progress-fill")
@@ -453,6 +453,13 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
             raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/body/progressFill",
                               detail="stage=progress; reason=missing-original-host")
         original_host = original_marks.get(host.placement_id, host) if original_marks is not None else host
+        if source == "actual":
+            planned = next((mark for mark in marks[instance] if mark.placement_id.startswith("planned:")), None)
+            if planned is not None and original_marks is not None:
+                planned = original_marks.get(planned.placement_id, planned)
+            fraction = actual_progress_fraction(float(fraction), item.actual, original_host, planned)
+            if not fraction:
+                continue
         shape = complete_progress_shape(host, original_host=original_host,
             fraction=float(fraction), inset_ratio=inset, radius_ratio=radius)
         if shape is None:
