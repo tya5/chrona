@@ -41,7 +41,9 @@ from chrona.presentation.model.color_separability import SIMULATED_VISIONS, Scal
 from chrona.presentation.model.info_diagnostics import (
     PresentationInfo, UnboundSummarySource, FontGlyphFallback, ScaleValuesFolded,
     ForecastInfo, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, RoutingCostAdvisory,
+    AnnotationNotDrawn, LegendRoleUnkeyed,
 )
+from chrona.presentation.model.legend_role_coverage import unkeyed_band_and_fill_roles
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
@@ -76,7 +78,9 @@ from chrona.presentation.model.style_rules import StyleEvaluationError
 from chrona.presentation.contracts.resources import ViewInput
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import deferred_layout_figures, projected_counts, projected_last_planned_finish
-from chrona.presentation.review.annotation_expansion import AnnotationExpansionError
+from chrona.presentation.review.annotation_expansion import (
+    AnnotationExpansionError, undrawn_project_annotations,
+)
 from chrona.presentation.model.wording_tables import wording_resolver
 from chrona.presentation.review.profile_connections import ProfileConnectionError, resolve_profile_connections
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
@@ -295,6 +299,30 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path or "/") from error
 
 
+def _layout_has_source(node: object, source: str) -> bool:
+    if not isinstance(node, Mapping):
+        return False
+    if node.get("kind") == "slot" and node.get("source") == source:
+        return True
+    children = node.get("children")
+    return isinstance(children, list) and any(_layout_has_source(child, source) for child in children)
+
+
+def _undrawn_annotation_warnings(view: Any, project: Mapping[str, Any], projection: Any,
+                                 plan: Any) -> tuple[AnnotationNotDrawn, ...]:
+    """Name each Project annotation on a drawn target that no binding or notes slot draws (#1870)."""
+    visible = view.visibility.annotations
+    mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
+    notes = project.get("annotations", {})
+    if mode == "none" or not isinstance(notes, Mapping) or not notes:
+        return ()
+    if _layout_has_source(plan.profile.profile.get("root"), "notes"):
+        return ()  # the notes slot draws every note a binding left over
+    unplaced = (key for key, _ in plan.content.notes)
+    return tuple(AnnotationNotDrawn(*item)
+                 for item in undrawn_project_annotations(notes, projection, unplaced))
+
+
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
@@ -311,6 +339,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
+    authored_view = view
     try:
         view, field_role_info = resolve_field_role_view(view, project)
     except ContractError as error:
@@ -452,7 +481,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
-    selected_content = _complete_annotation_headers(selected_content, theme, projection, view)
+    selected_content = _complete_annotation_headers(selected_content, theme, projection, view, wording_resolver(environment.locale, view.wording))
     routing_advisory: RoutingCostAdvisory | None = None
 
     def observe_layout_work(event: RenderEvent) -> None:
@@ -520,6 +549,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         surface, projection, plan = rendered.surface, rendered.projection, rendered.plan
         if (view.surface == "table-timeline" or view.surface == "dependency-network"):
             profile_info += missing_heading_fact_warnings(view, project, actual_observations)
+        if view.surface == "table-timeline":
+            profile_info += _undrawn_annotation_warnings(view, project, projection, plan)
+        profile_info += tuple(LegendRoleUnkeyed(role, purpose)
+                              for purpose, role in unkeyed_band_and_fill_roles(surface.primitives))
         if routing_advisory is not None:
             profile_info += (routing_advisory,)
         if profile_info:
@@ -541,7 +574,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path) from error
     # A Theme role or binding no document of this closure reads is reported, not silently accepted (#1117).
     unread_roles = unread_theme_diagnostics(
-        theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
+        theme["body"], (view, *((authored_view,) if view is not authored_view else ()),  # omitted unbound-role columns still read their roles (#1616)
                         layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
                         render_closure.summary_profile.summary if render_closure.summary_profile else None,
                         render_closure.style.rules if render_closure.style is not None else (),
@@ -1085,7 +1118,7 @@ def _require_forecast_occurrence_coverage(view: ViewInput, projection: Any) -> N
 
 
 def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],
-                                 projection: Any, view: ViewInput) -> SurfaceContentInput:
+                                 projection: Any, view: ViewInput, resolver: Any = None) -> SurfaceContentInput:
     """Compose kind text with explicit View facts before source measurement or Layout."""
     tokens = ThemeTokenView(theme)
     figures = dict(projection.figures)
@@ -1093,7 +1126,7 @@ def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[st
     late_ids = {item.figure_id for item in deferred_layout_figures(view.figures)}
     annotations = []
     for annotation in content.annotations:
-        token = tokens.annotation_kind(annotation.kind)
+        token = tokens.annotation_kind(annotation.kind, resolver)
         if token is None:
             annotations.append(annotation)
             continue

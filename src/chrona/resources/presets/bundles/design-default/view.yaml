@@ -9,6 +9,7 @@ body:
   annotationBindings:
   - {kind: note, temporalKind: point, purpose: note, facet: planned, endpoint: at}
   - {kind: risk, temporalKind: span, purpose: note, facet: planned, endpoint: end}
+  - {kind: risk, temporalKind: point, purpose: note, facet: planned, endpoint: at}
   - {kind: note, temporalKind: span, purpose: note, facet: planned, endpoint: end}
   surface: table-timeline
   bindings:
@@ -29,7 +30,7 @@ body:
   grouping:
     by: {fieldRole: responsible}
     fallback: hierarchy
-    missing: Unassigned
+    missing: {wording: grouping.unassigned}
   ordering:
     by: plannedStart
     direction: ascending

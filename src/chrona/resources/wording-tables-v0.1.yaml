@@ -49,6 +49,10 @@ tables:
     delta.unit.calendarDay: d
     delta.unit.workingDay: d
     slot.notes: Notes
+    grouping.unassigned: Unassigned
+    grouping.other: Other
+    annotation.note: Note
+    annotation.risk: Risk
   ja-JP:
     column.task: タスク
     column.plan: 計画
@@ -98,3 +102,7 @@ tables:
     delta.unit.calendarDay: 日
     delta.unit.workingDay: 営業日
     slot.notes: 注記
+    grouping.unassigned: 未割り当て
+    grouping.other: その他
+    annotation.note: 注記
+    annotation.risk: リスク

@@ -50,6 +50,7 @@ def close_member_names(projection: Any, view: Any) -> Mapping[NameKey, str]:
     root_headers = (grouping is not None
                     and grouping.by is _PrivateGroupingMode.PROJECT_ROOT_GROUP
                     and grouping.presentation == "header")
+    role_headers = (grouping is not None and grouping.by == "field" and grouping.field_role is not None)
     group_ids = projection.group_ids or tuple(dict.fromkeys(
         row.group_id for row in projection.lane_rows if row.group_id))
 
@@ -72,8 +73,10 @@ def close_member_names(projection: Any, view: Any) -> Mapping[NameKey, str]:
         segments = source_path(item)
         full = " / ".join(title for _, title in segments)
         names.setdefault(member_name_key(item), full)
+        shown = _shown_prefix(segments, item) if role_headers else 0
         names[member_name_key(item, container)] = " / ".join(
-            title for object_id, title in segments if object_id == item.object_id or object_id not in covered)
+            title for index, (object_id, title) in enumerate(segments)
+            if object_id == item.object_id or (object_id not in covered and index >= shown))
 
     rows = {row.row_id: row for row in projection.rows}
     for row in projection.rows:
@@ -102,6 +105,23 @@ def close_member_names(projection: Any, view: Any) -> Mapping[NameKey, str]:
         for item in projection.items:
             remember(item, item.object_id, item.group_id)
     return MappingProxyType(names)
+
+
+def _shown_prefix(segments: tuple[tuple[str, str], ...], item: Any) -> int:
+    """Leading ancestor segments a role-bound field header already displays (#1870 row 4, R2).
+
+    The test is exact text: a segment whose title equals the header's text. The member itself is never dropped, and
+    an item the grouping sent to the `missing` group sits under a header that names nothing of its path.
+    """
+    label = getattr(item, "group_label", "")
+    if not label or not item.group_id or getattr(item, "group_unassigned", False):
+        return 0
+    count = 0
+    for object_id, title in segments[:-1]:
+        if object_id == item.object_id or title != label:
+            break
+        count += 1
+    return count
 
 
 def _project_source(item: Any) -> str:

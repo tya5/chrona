@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -39,7 +40,8 @@ def _cli(example: Path, output: Path) -> subprocess.CompletedProcess:
     program = "from chrona.app import cli; cli.main()"
     return subprocess.run([sys.executable, "-c", program, "materialize", str(example / "manifest.yaml"),
                            "--slide", "executive", "--output", str(output), "--write"],
-                          capture_output=True, text=True, check=False)
+                          capture_output=True, text=True, encoding="utf-8", check=False,
+                          env={**os.environ, "PYTHONIOENCODING": "utf-8"})
 
 
 @pytest.mark.parametrize("declare_cjk", [True, False], ids=["cjk-declared", "latin-declared-only"])

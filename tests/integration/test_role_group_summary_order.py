@@ -12,7 +12,7 @@ from chrona.usecases.draft_render import warning_payloads
 from tests.support import synthetic_review as sr
 
 
-def _source(*, responsible_role: bool = False, ungrouped: bool = False):
+def _source(*, responsible_role: bool = False, ungrouped: bool = False, split: bool = False):
     # Declaration, alphabetic ID and earliest-start orders intentionally differ.
     objects = {
         "z-design": {"type": "group", "title": "Design", "schedule": {"mode": "rollup"}},
@@ -22,6 +22,9 @@ def _source(*, responsible_role: bool = False, ungrouped: bool = False):
         "m-release": {"type": "group", "title": "Release", "schedule": {"mode": "rollup"}},
         "release-task": {**sr.span("release-task", date(2026, 2, 2), 5, owner="gold"), "parent": "m-release"},
     }
+    if split:  # the Design parent's children now fall under two headers
+        objects["design-review"] = {**sr.span("design-review", date(2026, 2, 16), 3, owner="gold"),
+                                    "parent": "z-design"}
     if ungrouped:
         objects["ungrouped-task"] = sr.span("ungrouped-task", date(2026, 1, 1), 2,
                                               owner="blue", title="Ungrouped work")
@@ -83,7 +86,7 @@ def test_root_group_context_order_preserves_explicit_order_and_earliest_start(tm
     assert _group_header_order(earliest) == ["Build", "Release", "Design"]
 
 
-def test_bound_role_grouping_omits_selected_group_summaries_and_transports_count(tmp_path):
+def test_bound_role_grouping_omits_group_summaries_and_reports_none_when_each_parent_has_one_header(tmp_path):
     rendered = _render(tmp_path, _source(responsible_role=True), {
         "by": {"fieldRole": "responsible"}, "fallback": "hierarchy",
         "missing": "Unassigned", "presentation": "header",
@@ -91,13 +94,25 @@ def test_bound_role_grouping_omits_selected_group_summaries_and_transports_count
 
     assert {item.source_ref for item in rendered.surface.primitives
             if item.purpose == "planned"} == {"design-task", "build-task", "release-task"}
-    assert _group_header_order(rendered) == ["Team blue", "Team gold", "Team green"]
+    # Headers follow the Project's declared order (#1870 R1), not the field value's spelling.
+    assert _group_header_order(rendered) == ["Team blue", "Team green", "Team gold"]
+    assert not any(isinstance(item, FieldGroupingSummariesOmitted) for item in rendered.info_diagnostics)
+    assert not [item for item in warning_payloads(rendered)
+                if item["code"] == "I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED"]
+
+
+def test_bound_role_grouping_transports_the_count_of_parents_spanning_two_headers(tmp_path):
+    rendered = _render(tmp_path, _source(responsible_role=True, split=True), {
+        "by": {"fieldRole": "responsible"}, "fallback": "hierarchy",
+        "missing": "Unassigned", "presentation": "header",
+    })
+
     (info,) = [item for item in rendered.info_diagnostics
                if isinstance(item, FieldGroupingSummariesOmitted)]
-    assert info.count == 3
+    assert info.count == 1
     payload, = [item for item in warning_payloads(rendered)
                 if item["code"] == "I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED"]
-    assert payload["severity"] == "info" and payload["count"] == 3
+    assert payload["severity"] == "info" and payload["count"] == 1
     assert info.scene_diagnostic() in rendered.scene.diagnostics
 
 

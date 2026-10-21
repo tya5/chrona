@@ -40,10 +40,11 @@ def resolve_field_role_view(view: ViewInput, project: Mapping[str, Any]
     bindings = FieldRoleBindings.from_project(project)
     missing: dict[str, list[str]] = defaultdict(list)
 
-    def unavailable(role: str | None, path: str) -> bool:
+    def unavailable(role: str | None, path: str, *, report: bool = True) -> bool:
         if role is None or bindings.field_for(role) is not None:
             return False
-        missing[role].append(path)
+        if report:
+            missing[role].append(path)
         return True
 
     grouping = view.grouping
@@ -55,9 +56,12 @@ def resolve_field_role_view(view: ViewInput, project: Mapping[str, Any]
 
     def columns(values: tuple[_Column, ...], prefix: str) -> tuple[_Column, ...]:
         return tuple(column for index, column in enumerate(values)
+                     # An omitted column is how a role the Project does not use disappears from a
+                     # shared design; it is not reported (#1870). Grouping, colour, icon, lane-key
+                     # and node-label references change how the picture reads and stay reported.
                      if not (isinstance(column.source, Mapping)
                              and unavailable(column.source.get("fieldRole"),
-                                             f"{prefix}/{index}/source/fieldRole")))
+                                             f"{prefix}/{index}/source/fieldRole", report=False)))
 
     table_columns = columns(view.table_columns, "/body/tableColumns")
     if view.rows.mode != "lanes" and view.table_columns and not table_columns:

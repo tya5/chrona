@@ -79,7 +79,7 @@ def test_shared_design_default_view_uses_the_same_fallback_on_a_synthetic_projec
     assert any("root team" in item.casefold() for item in labels)
     unbound_roles = {item.role for item in rendered.info_diagnostics if isinstance(item, UnboundFieldRole)}
     assert "responsible" not in unbound_roles
-    assert "phase" in unbound_roles
+    assert unbound_roles == set()  # the optional Phase column disappears quietly (#1870)
 
 
 def test_executive_light_bound_responsible_matches_its_former_direct_owner_grouping(tmp_path):

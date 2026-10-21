@@ -107,7 +107,12 @@ allOf:
                     required: [by]
                     additionalProperties: false
                     properties: {by: {description: "Order groups by the earliest planned start among their selected items, then by group value.", const: earliestPlannedStart}}
-              missing: {description: "Label for missing field values.", type: string, minLength: 1}
+              missing:
+                description: "Label for missing field values: a literal shown exactly, or a `{wording: <key>}` reference resolved per Render Context locale from the built-in wording table (#1865)."
+                examples: [Unset, {wording: grouping.unassigned}]
+                oneOf:
+                  - {type: string, minLength: 1}
+                  - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
               presentation: {$ref: "urn:chrona:common-v0.1#/$defs/groupPresentation"}
               depth:
                 description: "Maximum relative hierarchy depth, or all selected descendants."

@@ -84,7 +84,7 @@ schemas:
       profileBinding: "sha256:04325918c7ff85b736bedfbaab5288f3992cda0c138b50e7da40c43cfc4a8789"
       profileBindings: "sha256:4452c5489b8d4c993c417aa2e0c89cebfc0cb56e18fb6da60debbc4a8c5d43ce"
       viewWording: "sha256:8621134f7cff3eb87910859ea16ad2db2272a75d56be1c5b767c0ff8850e5651"
-      wordingKey: "sha256:910bfe64fd4aa042a15433fb7e0b7b96f9f0212b7d598eb8f594a28fd87bf4ad"
+      wordingKey: "sha256:74573ec6042f9652874f08c238ee6c260840310812efc0ba48c96ed003bf9148"
       wordingRef: "sha256:aa52583b3f55a590ad8c90d8e17eecc7c51e7edec997e6f5b34d0d03b058559a"
       profileLegendLabel: "sha256:f7be3125a2038a14d7cd75b5ae3a7eeefaaf39698437bbbabfa6eb0163390469"
       profileSummaryLabel: "sha256:00404e686415370f1711c4d7acfa2905444d3cf23cef2e10c47d445ebe690f96"

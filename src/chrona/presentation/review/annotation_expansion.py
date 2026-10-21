@@ -1,7 +1,7 @@
 """Project-neutral semantic annotation expansion; no measurement or geometry."""
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -23,6 +23,32 @@ class AnnotationExpansionError(ContractError):
 
 def _pointer(key: str) -> str:
     return key.replace("~", "~0").replace("/", "~1")
+
+
+def drawn_targets(projection: ReviewProjection) -> dict[str, str]:
+    """Object id to temporal shape for every object the projection draws as a primary mark."""
+    current_items = (*projection.items,
+                     *(item for folded in projection.folded_points for item in folded.all_items))
+    return {item.object_id: item.source_type for item in current_items
+            if item.source_kind in {"primary", "combined"}}
+
+
+def undrawn_project_annotations(project_notes: Mapping[str, Any], projection: ReviewProjection,
+                                unplaced_keys: Iterable[str]) -> tuple[tuple[str, str, str, str], ...]:
+    """(id, kind, target, shape) of each unplaced Project note whose target is drawn (#1870).
+
+    `unplaced_keys` are the notes no View annotation consumed. The caller removes them
+    from the result when a notes slot draws them, so only silently dropped notes remain.
+    """
+    selected = drawn_targets(projection)
+    found = []
+    for key in sorted(set(unplaced_keys)):
+        note = project_notes.get(key)
+        anchor = note.get("anchor") if isinstance(note, Mapping) else None
+        target = anchor.get("object") if isinstance(anchor, Mapping) else None
+        if isinstance(target, str) and target in selected:
+            found.append((str(key), str(note.get("kind", "")), target, selected[target]))
+    return tuple(found)
 
 
 def expand_annotations(view: ViewInput, project_notes: Mapping[str, Any],
@@ -49,10 +75,7 @@ def expand_annotations(view: ViewInput, project_notes: Mapping[str, Any],
         add_identity(annotation)
     consumed = {str(item.value["projectAnnotation"]) for item in explicit
                 if "projectAnnotation" in item.value}
-    current_items = (*projection.items,
-                     *(item for folded in projection.folded_points for item in folded.all_items))
-    selected = {item.object_id: item.source_type for item in current_items
-                if item.source_kind in {"primary", "combined"}}
+    selected = drawn_targets(projection)
     keys = tuple(sorted(project_notes))
     for binding in view.annotation_bindings:
         for key in keys:

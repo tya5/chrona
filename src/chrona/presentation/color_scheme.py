@@ -10,7 +10,7 @@ from typing import Any, Mapping
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, kind_header
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings, period_variant_role_base
 from chrona.presentation.model.theme_tokens import ThemeTokenError, checked_horizontal_scale
-from chrona.presentation.scene.capabilities import theme_role_property_consumer
+from chrona.presentation.scene.capabilities import theme_role_property_consumer, unsupported_role_property_detail
 from chrona.presentation.scene.contrast_policy import POLICY_MEMBERS, POLICY_SEVERITIES
 from chrona.presentation.scene.paint_analysis import composited_contrast
 
@@ -20,6 +20,8 @@ class ColorSchemeError(ValueError):
 
     def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None):
         super().__init__(diagnostic_id)
+        if detail is None and diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED":
+            detail = unsupported_role_property_detail(source_ref)
         self.diagnostic_id = diagnostic_id
         self.source_ref = source_ref
         self.detail = detail
@@ -161,14 +163,14 @@ def _role_color(roles: Mapping[str, Any], values: Mapping[str, Any], role: str, 
     return None
 
 
-def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, dict[str, str]]:
+def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, dict[str, Any]]:
     """Validate the Theme's `annotationKinds` and resolve each kind colour (#584)."""
     if declared is None:
         return {}
     if not isinstance(declared, Mapping):
         raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", "/body/annotationKinds",
                                f"valueType={type(declared).__name__}; expected mapping of kind identifiers to declarations")
-    resolved: dict[str, dict[str, str]] = {}
+    resolved: dict[str, dict[str, Any]] = {}
     for kind, declaration in declared.items():
         pointer = f"/body/annotationKinds/{kind}"
         if not isinstance(kind, str) or not kind or not isinstance(declaration, Mapping):
@@ -178,7 +180,8 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
             kind_header(kind, declaration)
         except AnnotationKindTextError as error:
             raise ColorSchemeError(error.code, pointer, error.detail) from error
-        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title", "heading", "stamp") if name in declaration}
+        entry = {name: (dict(declaration[name]) if isinstance(declaration[name], Mapping) else str(declaration[name]))
+                 for name in ("label", "secondary", "title", "heading", "stamp") if name in declaration}
         intent = declaration.get("color")
         if intent is not None:
             if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):

@@ -87,7 +87,8 @@ def test_preset_ids_named_by_the_skill_are_builtin_ids():
 def test_the_doc_check_tool_discovers_and_will_run_every_skill_command():
     commands = [command for command in discover(ROOT) if command.path.parts[0] == "skills"]
 
-    assert {command.path.name for command in commands} == {"SKILL.md", "typed-fields.md"}  # the page runs its own (#1683)
+    assert {command.path.name for command in commands} == {  # a page that shows a file runs its own (#1683, #1854)
+        "SKILL.md", "typed-fields.md", "notes-risks-and-lanes.md"}
     assert any(command.tokens[:2] == ("chrona", "init") for command in commands)
     assert any("launch.yaml" in token for command in commands for token in command.tokens)
     assert all(command.skip_reason is None for command in commands), "a skill command must be run, not skipped"
@@ -176,6 +177,35 @@ def test_typed_fields_fences_equal_their_example_files_and_the_example_runs(tmp_
                                 str(examples / "style.yaml"), "--output", str(styled))
     assert status == 0 and json.loads(out)["status"] == "ok"
     assert "Platform risk: low" in styled.read_text(encoding="utf-8")
+
+
+def test_the_skill_links_notes_risks_and_lanes_and_the_page_snippet_renders(tmp_path, monkeypatch, capsys):
+    """#1854 row 5: the skill reaches notes, risks and grouping by a field role; the page's plan is a real, rendered file."""
+    assert "(references/notes-risks-and-lanes.md)" in SKILL.read_text(encoding="utf-8")
+    page = SKILL_DIR / "references" / "notes-risks-and-lanes.md"
+    shown = dict(re.findall(r"^```yaml (examples/notes-and-lanes/\S+)\n(.*?)^```", page.read_text(encoding="utf-8"),
+                            flags=re.DOTALL | re.MULTILINE))
+    assert set(shown) == {"examples/notes-and-lanes/plan.yaml"}
+    for path, body in shown.items():
+        assert body == (SKILL_DIR / path).read_text(encoding="utf-8"), path
+    plan = SKILL_DIR / "examples" / "notes-and-lanes" / "plan.yaml"
+    document = yaml.safe_load(plan.read_text(encoding="utf-8"))
+    assert document["fieldRoles"] == {"responsible": "team"}
+    assert {item["kind"] for item in document["annotations"].values()} == {"note", "risk"}
+
+    status, out, _err = run_cli(monkeypatch, capsys, "validate", str(plan))
+    assert (status, json.loads(out)) == (0, {"status": "ok", "diagnostics": []})
+    output = tmp_path / "notes.svg"
+    status, out, _err = run_cli(monkeypatch, capsys, "render", str(plan), "--preset", "target-b", "--output", str(output))
+    rendered = json.loads(out)
+    assert status == 0 and rendered["status"] == "ok"
+    codes = {item["code"] for item in rendered["warnings"]}
+    assert not {code for code in codes if code.startswith("W_")}, codes
+    painted = output.read_text(encoding="utf-8")
+    for lane in ("Platform", "Product", "Unassigned"):  # one lane per owner, and the gates without one
+        assert f">{lane}<" in painted
+    for text in ("NOTE \u00b7 build", "RISK \u00b7 test", "Slot confirmed for 9 Nov.", "Keys not yet issued."):
+        assert text in painted, text
 
 
 def test_typed_fields_colour_recipe_works_on_executive_light_and_target_b(tmp_path, monkeypatch, capsys):

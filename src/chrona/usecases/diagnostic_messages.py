@@ -12,6 +12,7 @@ it reads strings.
 """
 from __future__ import annotations
 
+import json
 import re
 from typing import Iterable, Mapping
 
@@ -81,6 +82,15 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_LEGEND_ROLE_UNKEYED": (
+        "the picture draws a band or fill that the drawn legend has no key for; add a legend entry for its role "
+        "to the Detail Profile so a reader can tell what it means"
+    ),
+    "W_PRESENTATION_ANNOTATION_NOT_DRAWN": (
+        "a Project annotation on a drawn object is not drawn: no View annotation binding matches its kind and "
+        "the shape of its target, and the layout has no notes slot; add an annotationBindings entry for that "
+        "kind and temporalKind to the View"
+    ),
     "W_PRESENTATION_HEADING_FACT_MISSING": (
         "a heading placeholder has no source fact and renders empty; supply the named fact or remove the placeholder"
     ),
@@ -219,6 +229,23 @@ def encoding_contrast_detail(payload: Mapping[str, object]) -> str:
     return f"{source_text}; {field}={value} (scale {scale}), {measured} over {ground}{occurrences}"
 
 
+_AXIS_THINNED_REASONS: Mapping[str, str] = {
+    "label-does-not-fit": "the label does not fit its interval",
+    "regular-cadence": "dropped to keep every label of the tier evenly spaced",
+    "phase-unavailable": "dropped because no even spacing of the tier's labels fits",
+}
+
+
+def _axis_thinned_subject(tail: str, *, named: bool) -> str:
+    """``axis-label:<tier>:<interval>:<reason>`` in words; the ledger names the label text beside it (#1854)."""
+    candidate, _, reason = tail.rpartition(":")
+    said = _AXIS_THINNED_REASONS.get(reason, reason)
+    parts = candidate.split(":")
+    if named or len(parts) != 3 or parts[0] != "axis-label":
+        return said
+    return f"axis tier {parts[1]}, interval {parts[2]}: {said}"
+
+
 def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
     code = str(payload.get("code", ""))
@@ -232,8 +259,33 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
                            f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
                            f"{payload.get('rowCount')} rows, block size {_number(payload.get('actualBlockSize'))}, "
                            f"limit {_number(payload.get('maxBlockSize'))}")
+    if code == "W_LAYOUT_AXIS_LABEL_THINNED":
+        return WarningText(_SURFACE_CAUSES[code], _axis_thinned_subject(identity.removeprefix(code).removeprefix(":"),
+                                                                       named="sourceTitle" in payload
+                                                                       or "sourceSubjects" in payload))
+    if code == "W_LEGEND_ROLE_UNKEYED":
+        try:
+            fields = json.loads(identity.removeprefix(code).removeprefix(":"))
+        except ValueError:
+            fields = {}
+        return WarningText(_SURFACE_CAUSES[code],
+                           f"{fields.get('drawnAs', '?')} (legend role {fields.get('role', '?')})")
+    if code == "W_PRESENTATION_ANNOTATION_NOT_DRAWN":
+        try:
+            fields = json.loads(identity.removeprefix(code).removeprefix(":"))
+        except ValueError:
+            fields = {}
+        return WarningText(
+            _SURFACE_CAUSES[code],
+            f"{fields.get('kind', '?')} {fields.get('annotation', '?')} on {fields.get('target', '?')} "
+            f"({fields.get('targetShape', '?')} target)")
     if code in _SURFACE_CAUSES:
         return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
+    if code == "W_LAYOUT_ROUTE_FALLBACK" and str(payload.get("placementId", "")).startswith("annotation-leader:"):
+        # A note's leader is not a relation: name it as the author's note (#1854).
+        note = str(payload["placementId"]).removeprefix("annotation-leader:")
+        return WarningText("a note's leader could not be routed around the marks and was drawn as a direct path",
+                           f"leader of note {note}")
     if code in _FIT_CAUSES:
         if code == "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT":
             declared = payload.get("declared")

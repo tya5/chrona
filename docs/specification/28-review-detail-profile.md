@@ -242,6 +242,14 @@ findings; neither substitutes for the other. Colour separability applies when
 the completed keys do not already differ in glyph shape or line pattern
 (Spec60); every failing pair remains individually identifiable in CLI output.
 
+A completed Scene that draws a legend and also draws a closed-day band
+(`calendar-closed`), a calendar-exception band (`calendar-exception`) or a
+progress fill (`progress-fill`) whose legend role (`calendar-closed`,
+`calendar-exception`, `progressFill`) has no key in that legend emits
+`W_LEGEND_ROLE_UNKEYED` naming the drawn purpose and the role (#1870). A Scene
+with no legend has nothing to key against and stays silent. The warning checks
+that a key exists; it does not compare a key's label with what its swatch shows.
+
 Swatch comparison uses completed glyph/path geometry relative to its key box
 and the effective emitted paint, not semantic IDs, placement translation,
 resource names or a fill-only palette. Retain ordered multipart glyph parts,

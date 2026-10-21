@@ -354,15 +354,16 @@ copy the agent skill into an empty directory
 
 ## chrona validate
 
-check a Project (a YAML file or a saved snapshot) or an Actual Set file and list its mistakes
+check a Project, or a Theme, Layout Profile, View or other resource file by its kind, and list its mistakes
 
-`chrona validate --allow-missing-content-identity --snapshot-reference --snapshot-root --store-identity`
+`chrona validate --allow-missing-content-identity --layout --snapshot-reference --snapshot-root --store-identity`
 
 - `project`: raw Draft Project path (YAML, or a terse .chrona plan)
 - `--snapshot-reference`: immutable Project resource-reference YAML
 - `--snapshot-root`: local snapshot adapter root
 - `--store-identity`: expected local snapshot store identity
 - `--allow-missing-content-identity`: accept references without an exact content identity (explicit opt-out)
+- `--layout`: Layout Profile YAML path whose viewDefaults complete a View being validated (a View that relies on its design's defaults is incomplete without it)
 
 ## chrona workspace
 
