@@ -338,6 +338,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.read.add("previous-scene")
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
+    authored_view = view
     try:
         view, field_role_info = resolve_field_role_view(view, project)
     except ContractError as error:
@@ -572,7 +573,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path) from error
     # A Theme role or binding no document of this closure reads is reported, not silently accepted (#1117).
     unread_roles = unread_theme_diagnostics(
-        theme["body"], (view, *((render_closure.view.view,) if field_role_info else ()),  # omitted unbound-role columns still read their roles (#1616)
+        theme["body"], (view, *((authored_view,) if view is not authored_view else ()),  # omitted unbound-role columns still read their roles (#1616)
                         layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
                         render_closure.summary_profile.summary if render_closure.summary_profile else None,
                         render_closure.style.rules if render_closure.style is not None else (),
