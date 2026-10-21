@@ -1,0 +1,3 @@
+$ python docs/reviews/current/assets-1891/check_line_start.py
+prohibited characters: 77; wraps checked: 1232; lines starting with a prohibited character: 0
+the reported note: ('設計レ', 'ビュー')

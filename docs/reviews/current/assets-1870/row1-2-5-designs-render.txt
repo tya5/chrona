@@ -1,0 +1,37 @@
+$ chrona render plan-gate-risk.yaml --preset target-b --output target-b.svg
+  status ok
+   I_LAYOUT_RELATION_POLICY_SUPERSEDED 1
+   W_LAYOUT_LABEL_OVERFLOW 1
+   W_LAYOUT_ROUTE_FALLBACK 1
+  risk text drawn: 1
+$ chrona render plan-gate-risk.yaml --preset yuya --output yuya.svg
+  status ok
+   I_LAYOUT_RELATION_POLICY_SUPERSEDED 1
+   W_LAYOUT_LABEL_OVERFLOW 1
+   W_LAYOUT_ROUTE_FALLBACK 1
+   W_LAYOUT_TEXT_ELLIPSIZED 2
+  risk text drawn: 1
+$ chrona render plan-gate-risk.yaml --preset titlecard --output titlecard.svg
+  status ok
+   I_LAYOUT_RELATION_POLICY_SUPERSEDED 1
+   W_LAYOUT_LABEL_OVERFLOW 1
+   W_LAYOUT_ROUTE_FALLBACK 1
+   W_LEGEND_COLOR_NOT_SEPARABLE 1
+   W_SUMMARY_SLOT_UNAVAILABLE 1
+  risk text drawn: 1
+$ chrona render plan-gate-risk.yaml --preset marquee --output marquee.svg
+  status ok
+   I_LAYOUT_RELATION_POLICY_SUPERSEDED 1
+   W_LAYOUT_LABEL_OVERFLOW 1
+   W_LAYOUT_ROUTE_FALLBACK 1
+   W_LEGEND_ROLE_UNKEYED 1
+     the picture draws a band or fill that the drawn legend has no key for; add a legend entry for its role to the Detail Profile so a reader can tell what it means:
+  risk text drawn: 1
+$ chrona render plan-gate-risk.yaml --preset sunday --output sunday.svg
+  status ok
+   I_LAYOUT_RELATION_POLICY_SUPERSEDED 1
+   W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED 1
+   W_LAYOUT_LABEL_OVERFLOW 1
+   W_LEGEND_ROLE_UNKEYED 1
+     the picture draws a band or fill that the drawn legend has no key for; add a legend entry for its role to the Detail Profile so a reader can tell what it means:
+  risk text drawn: 1

@@ -1,0 +1,12 @@
+$ chrona render plan-gate-risk.yaml --preset titlecard --locale en-US
+  status ok
+  first texts: 2026 Q4 | 10月 | OCT | 11月 | NOV | 12月 | DEC | 第弐面 | 計画表、Notes, risks and lanes | SCHEDULE · 3 WORK PACKAGES · 2 SECTIONS · PLAN | TASK | Design | Build | Test
+$ chrona render plan-gate-risk.yaml --preset titlecard --locale ja-JP
+  status ok
+  first texts: 2026 Q4 | 10月 | OCT | 11月 | NOV | 12月 | DEC | 第弐面 | 計画表、Notes, risks and lanes | SCHEDULE · 3 WORK PACKAGES · 2 SECTIONS · PLAN | タスク | Design | Build | Test
+$ chrona render plan-gate-risk.yaml --preset marquee --locale en-US
+  status ok
+  first texts: Q4 2026 | OCT | NOV | DEC | THE PLAN | Notes, risks and lanes | Three work packages in two acts · plan | TASK | Design | Build | Test | Kickoff | Launch | ACT
+$ chrona render plan-gate-risk.yaml --preset marquee --locale ja-JP
+  status ok
+  first texts: 2026年Q4 | 10月 | 11月 | 12月 | THE PLAN | Notes, risks and lanes | Three work packages in two acts · plan | タスク | Design | Build | Test | Kickoff | Launch | ACT
