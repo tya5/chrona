@@ -42,8 +42,8 @@ def test_literal_text_is_not_interpreted_as_a_template(tmp_path):
 def test_literal_view_copy_wins_without_reading_or_reparsing_the_template(tmp_path, monkeypatch):
     from chrona.presentation.layout import slot_heading
     compile_text = slot_heading.compile_figure_text
-    def closed_without_read(source):
-        program = compile_text(source)
+    def closed_without_read(source, **options):
+        program = compile_text(source, **options)
         class Closed:
             figure_ids = program.figure_ids
             def bind(self, *args):
