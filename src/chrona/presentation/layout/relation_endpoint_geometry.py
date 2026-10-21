@@ -28,8 +28,7 @@ def endpoint_lead_run(exposed_port: tuple[float, float], semantic_port: tuple[fl
 def temporal_route_inline_hull(pair: tuple[ConnectorEgress, ConnectorEgress], width: float,
                                source_marker: MarkerGeometry | None,
                                target_marker: MarkerGeometry | None,
-                               temporal_anchors: tuple[tuple[float, float] | None,
-                                                       tuple[float, float] | None]
+                               temporal_anchors: tuple[tuple[float, float], tuple[float, float]]
                                ) -> tuple[float, float]:
     """Smallest inline interval containing temporal anchors, corridors and mandatory outward leads."""
     if (len(pair) != 2 or isinstance(width, bool) or not isinstance(width, (int, float))
@@ -39,14 +38,15 @@ def temporal_route_inline_hull(pair: tuple[ConnectorEgress, ConnectorEgress], wi
     source_run = endpoint_lead_run(source.exposed_port, source.semantic_port, width, source_marker)
     target_run = endpoint_lead_run(target.exposed_port, target.semantic_port, width, target_marker)
     source_out, target_out = outward_corridor_ends(pair, source_run=source_run, target_run=target_run)
-    if len(temporal_anchors) != 2 or any(anchor is not None and (
-            len(anchor) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
-                                    or not isfinite(value) for value in anchor))
+    if not isinstance(temporal_anchors, tuple) or len(temporal_anchors) != 2 or any(
+            not isinstance(anchor, tuple) or len(anchor) != 2
+            or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                   or not isfinite(value) for value in anchor)
             for anchor in temporal_anchors):
         raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: temporal endpoint anchors")
     xs = [source.semantic_port[0], source.exposed_port[0], source_out[0],
           target.semantic_port[0], target.exposed_port[0], target_out[0]]
-    xs.extend(anchor[0] for anchor in temporal_anchors if anchor is not None)
+    xs.extend(anchor[0] for anchor in temporal_anchors)
     return min(xs), max(xs)
 
 

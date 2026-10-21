@@ -68,6 +68,25 @@ def test_protected_temporal_excursion_is_typed_scene_cli_and_mcp_info():
     assert "leaves its temporal inline hull" in payload["message"]
 
 
+def test_temporal_excursion_survives_cli_emission_and_mcp_diagnostic_projection(tmp_path, capsys):
+    from chrona.app.agent_tools import _warning
+    from chrona.app.agent_workspace import WorkspaceScope
+    from chrona.app.cli import _emit_render_result
+
+    fact = CriticalRelationTemporalExcursion("table-timeline", "relation:edge-1",
+                                             (10., 40.), (8., 40.))
+    rendered = SimpleNamespace(warning_records=(), info_diagnostics=(fact,))
+    _emit_render_result(rendered)
+    emitted, = json.loads(capsys.readouterr().out)["warnings"]
+    assert emitted["code"] == fact.code and emitted["severity"] == "info"
+    assert emitted["allowedInline"] == [10., 40.] and emitted["actualInline"] == [8., 40.]
+    projected = _warning(WorkspaceScope(tmp_path), emitted)
+    assert projected["code"] == fact.code and projected["severity"] == "info"
+    assert projected["detail"]["allowedInline"] == emitted["allowedInline"]
+    assert projected["detail"]["actualInline"] == emitted["actualInline"]
+    assert projected["detail"]["relationId"] == fact.relation_id
+
+
 @pytest.mark.parametrize("args", (
     ("s", "r", (0., 1.), (0., 1.)),
     ("s", "r", (1., 0.), (2., 3.)),

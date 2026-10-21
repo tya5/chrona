@@ -118,3 +118,14 @@ def test_temporal_hull_includes_point_nominal_anchor_when_selected_port_is_offse
     target = ConnectorEgress("end", (40., 20.), (40., 20.), ("span",))
     assert temporal_route_inline_hull((source, target), 1., None, None,
                                       ((10., 20.), (40., 20.))) == (10., 41.)
+
+
+@pytest.mark.parametrize("anchors", (
+    (None, (40., 20.)), ((10., 20.), None), (None, None),
+    ((10., 20.), (float("inf"), 20.)), ((True, 20.), (40., 20.)),
+))
+def test_temporal_hull_requires_both_finite_temporal_anchors(anchors):
+    source = ConnectorEgress("start", (14., 20.), (14., 20.), ("point",))
+    target = ConnectorEgress("end", (40., 20.), (40., 20.), ("span",))
+    with pytest.raises(ValueError, match="temporal endpoint anchors"):
+        temporal_route_inline_hull((source, target), 1., None, None, anchors)
