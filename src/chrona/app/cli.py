@@ -5,6 +5,7 @@ import copy
 from hashlib import sha256
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 from datetime import date
@@ -311,12 +312,15 @@ def _parser() -> JsonArgumentParser:
     parser.add_argument("--version", action="version", version=_version_text())
     sub = parser.add_subparsers(dest="command", required=True, parser_class=JsonArgumentParser, metavar="COMMAND")
     commands = {
-        "validate": "check a Project (a YAML file or a saved snapshot) or an Actual Set file and list its mistakes",
+        "validate": "check a Project, or a Theme, Layout Profile, View or other resource file by its kind, and list its mistakes",
         "schedule": "compute the dates of a Project from its dependencies and working calendars",
     }
     for name, help_text in commands.items():
         command = sub.add_parser(name, help=help_text, description=help_text)
         _add_snapshot_arguments(command)
+    sub.choices["validate"].add_argument(
+        "--layout", help="Layout Profile YAML path whose viewDefaults complete a View being validated "
+                         "(a View that relies on its design's defaults is incomplete without it)")
     command = sub.add_parser("render", help="draw a slide from a Project file, with its optional Actual and look files",
                               description="draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass")
     command.add_argument("project", help="Draft Project YAML path, or a terse .chrona plan")
@@ -1040,8 +1044,8 @@ def _run(args: argparse.Namespace) -> None:
         print(json.dumps(output, indent=2, default=_json_default))
         return
     project = _load_primary_project(args)
-    if args.command == "validate" and _is_actual_set(project):
-        _validate_actual_set(project)
+    if args.command == "validate" and (kind := _resource_kind(project)) is not None:
+        _validate_resource(kind, project, getattr(args, "layout", None))
         return
     if args.command == "validate":
         validation = validate_project_mapping(project, base_dir=_project_directory(args))
@@ -1055,24 +1059,54 @@ def _run(args: argparse.Namespace) -> None:
     print(json.dumps(_with_warning_positions(args, outcome), indent=2, default=_json_default))
 
 
-def _is_actual_set(value: Any) -> bool:
-    """An Actual Set is told from a Project by its kind or version, not by trial validation (#1630)."""
-    return isinstance(value, dict) and (value.get("kind") == "actual-set"
-                                        or str(value.get("version", "")).startswith("chrona/actual-set/"))
+# The resource kinds `chrona validate` checks against their own schema (#1630, #1854). A Project is the default.
+VALIDATE_RESOURCE_KINDS = ("theme", "color-scheme", "layout-profile", "view", "style", "actual-set",
+                           "summary-profile", "review-detail-profile")
 
 
-def _validate_actual_set(value: dict[str, Any]) -> None:
-    """`chrona validate actual.yaml`: the Actual Set schema and intervals, not its ids (a render checks those against a Project)."""
-    from chrona.presentation.contracts.resources import ClosureIdentity, ContractError, parse_contract
-    identity = ClosureIdentity("actual-set", str(value.get("id", "actual-set")), "", "")
+def _resource_kind(value: Any) -> str | None:
+    """The kind of a resource document, or None for a Project; an unknown kind names the accepted ones (#1854).
+
+    The `kind` member decides; a document without one (a Layout profile, an Actual Set or Detail profile
+    written without it) is told by its `version` (`chrona/<kind>/vN`). A Project has neither.
+    """
+    if not isinstance(value, dict):
+        return None
+    kind = value.get("kind")
+    if kind is None:
+        match = re.fullmatch(r"chrona/([a-z][a-z-]*)/v[0-9.]+", str(value.get("version", "")))
+        kind = match.group(1) if match else None
+    if kind is None or kind == "project":
+        return None
+    if kind not in VALIDATE_RESOURCE_KINDS:
+        accepted = ", ".join(("project",) + VALIDATE_RESOURCE_KINDS)
+        _reject([Diagnostic("E_CLOSURE_KIND", f"validate does not check a document of kind {str(kind)!r}; "
+                            f"the accepted kinds are {accepted}", "/kind")])
+    return str(kind)
+
+
+def _validate_resource(kind: str, value: dict[str, Any], layout_path: str | None = None) -> None:
+    """`chrona validate <resource>.yaml`: that kind's schema and contract checks, not a Project's (a render checks ids)."""
+    from chrona.presentation.contracts.resources import (
+        ClosureIdentity, ContractError, explain_schema_errors, parse_contract,
+    )
+    identity = ClosureIdentity(kind, str(value.get("id", kind)), "", "")
+    if kind == "view" and layout_path:
+        from chrona.presentation.contracts.view_defaults import merge_view_defaults
+        defaults = load_yaml(layout_path).get("viewDefaults")
+        if isinstance(defaults, dict):
+            value = merge_view_defaults(value, defaults)
     try:
+        violations = explain_schema_errors(identity, value)
+        if violations:
+            _reject([Diagnostic("E_SCHEMA", item.message, item.pointer) for item in violations])
         parse_contract(identity, value)
     except ContractError as error:
         violation = getattr(error, "violation", None)
         code = "E_SCHEMA" if violation is not None else str(error.diagnostic_id).split(":")[0]
         message = violation.message if violation is not None else (error.detail or str(error.diagnostic_id))
         _reject([Diagnostic(code, message, error.source_ref)])
-    print(json.dumps({"status": "ok", "diagnostics": [], "resource": "actual-set"}))
+    print(json.dumps({"status": "ok", "diagnostics": [], "resource": kind}))
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:

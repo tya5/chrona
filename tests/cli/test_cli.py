@@ -1585,7 +1585,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("a Project (a YAML file or a saved snapshot)", "from a Project file", "a saved render context in a Store"):
+    for phrase in ("check a Project, or a Theme, Layout Profile, View", "from a Project file", "a saved render context in a Store"):
         assert phrase in help_text
 
 
