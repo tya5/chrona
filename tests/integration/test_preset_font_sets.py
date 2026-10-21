@@ -179,3 +179,32 @@ def test_yuya_renders_the_halcyon_slip_suffix_without_an_installed_cjk_face():
             rendered = render_draft(DraftRenderRequest(project=project_path, actual=root / "actual.yaml",
                                                        target_kind="svg", preset="yuya", package_reader=reader))
     assert rendered.artifact.content
+
+
+def _workspace_for(tmp_path: Path, preset: str) -> Path:
+    from chrona.usecases.authoring_workspace import create_workspace
+
+    def publish(directory: Path, files) -> None:
+        directory.mkdir()
+        for name, payload in files.items():
+            (directory / name).parent.mkdir(parents=True, exist_ok=True)
+            (directory / name).write_bytes(payload)
+
+    return create_workspace(tmp_path / preset, {"id": "guided-fonts", "title": "Guided fonts", "tasks": [
+        {"id": "task", "title": "Task", "planned": {"start": "2027-01-04", "finish": "2027-01-09"}}]},
+        preset, publish=publish).workspace
+
+
+@needs_cjk
+@pytest.mark.parametrize("identifier", DECLARING)
+def test_render_workspace_resolves_the_preset_font_sets_like_render_draft(starter, tmp_path, no_provider, hiragino, identifier):
+    """Both routes read the preset's fontSets, so the same Project and preset give the same font warnings (#1891)."""
+    from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
+
+    workspace = _workspace_for(tmp_path, identifier)
+    with use_installed_fonts(hiragino):
+        guided = render_workspace(WorkspaceRenderRequest(workspace, "svg"))
+        draft = render_draft(DraftRenderRequest(project=starter / "project.yaml", actual=starter / "actual.yaml",
+                                                target_kind="svg", preset=str(workspace.parent / "preset" / "preset.yaml")))
+    set_notes = [item for item in _skipped(guided) if "role=font-set" in item]
+    assert set_notes and set_notes == [item for item in _skipped(draft) if "role=font-set" in item]
