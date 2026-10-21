@@ -8,7 +8,10 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # The design half of the View (#1341, Spec 06 §9.2). Project-independent: a View connects a project by
 # declaring its selection, window, grouping key/order, column captions/sources, period and marker
 # sources, figures and annotation bindings; any member the View declares replaces the one below.
-# The heading reads the count figures `selected-count` and `group-count`, which the View declares.
+# The heading reads the count figures `selected-count` and `group-count`, which the View declares
+# (the packaged design-default View counts span objects and groups other than the unassigned
+# fallback). "baseline" and "what actually happened" are printed only when the render supplies a
+# Snapshot or an Actual Set.
 viewDefaults:
   heading:
     kicker: The plan
@@ -16,7 +19,10 @@ viewDefaults:
     subtitle:
       - {text: "{figure:selected-count} work packages"}
       - {text: " in {figure:group-count} acts", omitWhenZero: group-count}
-      - {text: " · baseline, plan and what actually happened"}
+      - {text: " · "}
+      - {text: "baseline, ", presentWhen: snapshot}
+      - {text: "plan"}
+      - {text: " and what actually happened", presentWhen: actualSet}
     dateForm: day-month-year
   figureFormats:
     selected-count: {form: english-words, capitalize: true}
