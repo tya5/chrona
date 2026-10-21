@@ -761,8 +761,11 @@ A completed legend swatch may carry optional
 a closed tagged record with a non-empty unique list of the exact encoded
 occurrence values it explains (`encoding`) or deliberately neutralizes
 (`state`) under Spec28. The existing witness shape and pinned-resource joins apply.
-Only filled legend Rect/Symbol/Path primitives with purpose
+Only legend Rect/Symbol/Path primitives with purpose
 `legend-swatch` admit it; text, chart marks and unrelated decorations do not.
+An `encoding` swatch must have a completed fill; a `state` representative
+may instead retain the Theme's stroke-only default. At least one completed
+paint channel is required. Coverage never invents a fill for a hollow role.
 Layout supplies this passive evidence after final visibility and coverage
 selection. Scene copies it, never evaluates fields or selects coverage.
 An encoded scale key retains all represented raw witnesses, including values
