@@ -19,7 +19,7 @@ $defs:
       - chrona-output/visual/v0.7-png
       - chrona-output/visual/v0.7-pdf
   pageSize:
-    description: "Named Draft viewport default: ISO 216 paper or US Letter/Legal, with orientation. Dimensions are converted from the physical format to fractional CSS pixels."
+    description: "Named Draft viewport default: ISO 216 paper or US Letter/Legal, with orientation. Physical dimensions close to nearest integer CSS pixels at Draft ingress."
     enum:
       - a3-portrait
       - a3-landscape

@@ -2,11 +2,13 @@
 
 This module is deliberately a small pure model: it maps the closed page-size
 vocabulary to CSS-pixel dimensions, without choosing when a caller applies the
-default or rounding dimensions for an output adapter.
+default. It closes named dimensions at the existing integer Context boundary,
+without rounding any completed Layout geometry.
 """
 from __future__ import annotations
 
 from fractions import Fraction
+from math import floor
 from types import MappingProxyType
 from typing import Mapping
 
@@ -30,12 +32,13 @@ _PAGE_SIZE_IN_PHYSICAL_UNITS: Mapping[str, tuple[int, int, str]] = MappingProxyT
 PAGE_SIZE_NAMES = tuple(_PAGE_SIZE_IN_PHYSICAL_UNITS)
 
 
-def viewport_for_page_size(page_size: str) -> tuple[float, float]:
-    """Return named paper width and height in fractional CSS pixels.
+def viewport_for_page_size(page_size: str) -> tuple[int, int]:
+    """Return the named Draft viewport in nearest whole CSS pixels.
 
     CSS defines 96 px/in and 25.4 mm/in. US page dimensions are stored as
-    integer half-inches to preserve their exact 8.5-inch width. No integer
-    pixel rounding is performed here; adapters own any output discretization.
+    integer half-inches to preserve their exact 8.5-inch width. Physical
+    conversion remains rational until this boundary; positive half pixels round
+    up once, consistently with the integer Render Context viewport contract.
     """
     try:
         width, height, unit = _PAGE_SIZE_IN_PHYSICAL_UNITS[page_size]
@@ -47,4 +50,4 @@ def viewport_for_page_size(page_size: str) -> tuple[float, float]:
         scale = css_px_per_unit
     else:
         scale = Fraction(96, 2)  # dimensions are in half-inches
-    return float(width * scale), float(height * scale)
+    return floor(width * scale + Fraction(1, 2)), floor(height * scale + Fraction(1, 2))
