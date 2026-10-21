@@ -757,9 +757,10 @@ independent data-channel contrast obligation.
 #### Separately keyed encoding coverage (#1847)
 
 A completed legend swatch may carry optional
-`legendEncodingCoverage: [<encodingWitness>, ...]`: a non-empty unique list of
-the exact encoded occurrence values it explains or deliberately neutralizes
-under Spec28. The existing witness shape and pinned-resource joins apply.
+`legendEncodingCoverage: {kind: state | encoding, witnesses: [<encodingWitness>, ...]}`:
+a closed tagged record with a non-empty unique list of the exact encoded
+occurrence values it explains (`encoding`) or deliberately neutralizes
+(`state`) under Spec28. The existing witness shape and pinned-resource joins apply.
 Only filled MARK-classified legend Rect/Symbol/Path primitives with purpose
 `legend-swatch` admit it; text, chart marks and unrelated decorations do not.
 Layout supplies this passive evidence after final visibility and coverage
@@ -767,7 +768,7 @@ selection. Scene copies it, never evaluates fields or selects coverage.
 An encoded scale key retains all represented raw witnesses, including values
 folded into Other. A neutral state key retains only the witnesses whose encoded
 channel was replaced by its selected Theme role's default. Each such witness
-must also occur on a separately admitted encoding key on the same surface.
+must also occur on a separately admitted `kind: encoding` key on the same surface.
 The state key's geometry and all nonencoded paint channels still match a
 corresponding completed source figure; chart paint is not changed.
 This optional addition is in live v0.7 in place; omission preserves existing
