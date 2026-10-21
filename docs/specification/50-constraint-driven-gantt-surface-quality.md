@@ -527,8 +527,16 @@ reservation. This introduces no extra label pass or routing rehearsal.
 Fixed-connector recovery uses the same mandatory lead per admitted endpoint,
 subtracting its completed semantic-to-exposed corridor; a centred terminal's
 full diameter is not its required outward lead. Preserve the fixed proposal
-grammar/order and all completed-route validators. Paired stubs retain their
-separate visible-fragment and required-title contract.
+grammar/order and all completed-route validators. Diagnosed paired stubs use
+that same per-endpoint minimum-lead kernel, rather than a full terminal length
+plus an independent two-stroke reserve. Subtract the completed host corridor
+once; a centred head needs its outward half-length plus a painted stroke run,
+not its full diameter. Each independent fragment still passes completed
+head/stroke, primary-mark, physical-host and hard-name clearance checks; exact
+name tangency follows the canonical intersection rule. This does not authorize
+shorter invalid ink, a connected-route claim, suppressed required titles or
+new budgets/quality limits. Paired stubs retain their separate visible-fragment
+and required-title contract.
 
 Completed name text and label-visual footprints are hard content in every
 normal and recovery domain. Carry their explicit obstacle identities through
