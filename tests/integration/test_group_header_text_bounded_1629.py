@@ -22,8 +22,10 @@ SHORT_CJK = "佐藤"
 
 
 def _scene(tmp_path, monkeypatch, capsys, owners):
+    # A role-bound grouping lists headers in the Project's declared order (#1870); sorting keeps each owner's band
+    # in the position this test was written for (the first band takes the first-group template).
     objects = {f"t{index}": sr.span(f"t{index}", date(2026, 11, 2 + 7 * index), 5, owner=owner, title=f"Task {index}")
-               for index, owner in enumerate(owners)}
+               for index, owner in enumerate(sorted(owners))}
     project = sr.project(objects)
     project["entities"] = {owner: {"type": "team", "title": owner} for owner in owners}
     path = tmp_path / "project.yaml"
