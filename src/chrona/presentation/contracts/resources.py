@@ -1428,8 +1428,17 @@ def _view_figure(item: Mapping[str, Any], path: str, *, figure_id: str | None = 
         if item["source"] in ("groups", "placedNotes") and item.get("scope", "global") != "global":
             raise ContractError("E_VIEW_FIGURE_INVALID", "groups and placedNotes counts require global scope",
                                 f"{path}/scope")
+        object_types = tuple(str(value) for value in item.get("objectTypes", ()))
+        temporal_kind = str(item["temporalKind"]) if "temporalKind" in item else None
+        exclude_unassigned = bool(item.get("excludeUnassigned", False))
+        if item["source"] == "placedNotes" and (object_types or temporal_kind or exclude_unassigned):
+            raise ContractError("E_VIEW_FIGURE_INVALID", "a placedNotes count cannot be restricted", f"{path}/source")
+        if exclude_unassigned and item["source"] != "groups":
+            raise ContractError("E_VIEW_FIGURE_INVALID", "excludeUnassigned applies only to the groups count",
+                                f"{path}/excludeUnassigned")
         return FigureSpec(figure_id, "count", source=str(item["source"]),
-                          scope=str(item.get("scope", "global")), path=path)
+                          scope=str(item.get("scope", "global")), path=path, object_types=object_types,
+                          temporal_kind=temporal_kind, exclude_unassigned=exclude_unassigned)
     return FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days,
                       calendar_id=calendar, path=path)
 

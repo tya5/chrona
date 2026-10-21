@@ -86,6 +86,15 @@ class FigureSpec:
     path: str = ""
     scope: str = "global"
     source: str | None = None
+    # A count restriction (#1880): domain object types, a planned temporal kind (point/span), and, for the
+    # `groups` source, leaving out the group that collects objects with no grouping value.
+    object_types: tuple[str, ...] = ()
+    temporal_kind: str | None = None
+    exclude_unassigned: bool = False
+
+    @property
+    def filtered(self) -> bool:
+        return bool(self.object_types) or self.temporal_kind is not None or self.exclude_unassigned
 
 
 @dataclass(frozen=True)
@@ -146,11 +155,13 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
                     calendars: Mapping[str, Calendar], default_calendar: str | None,
                     group_first_start: date | None = None,
                     project_last_finish: date | None = None,
-                    counts: FigureCounts | None = None) -> FigureResolution:
+                    counts: FigureCounts | None = None,
+                    filtered_counts: Mapping[str, FigureCounts] | None = None) -> FigureResolution:
     """Resolve every declared figure; report every finding, not only the first.
 
     A figure with a finding yields no value, so a consumer can never read a made-up number for it; the
-    caller refuses the render on any diagnostic.
+    caller refuses the render on any diagnostic. ``filtered_counts`` carries, by figure id, the bundle a
+    restricted count figure reads instead of ``counts`` (#1880).
     """
     declared = {item.period_id: item for item in periods}
     values: dict[str, int] = {}
@@ -160,7 +171,8 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
         if spec.kind == "count":
             if spec.source not in COUNT_SOURCES:
                 raise TypeError(f"figure {spec.figure_id}: unknown count source {spec.source!r}")
-            value = counts.value(spec.source) if counts is not None else None
+            bundle = (filtered_counts or {}).get(spec.figure_id) if spec.filtered else counts
+            value = bundle.value(spec.source) if bundle is not None else None
             if value is None:
                 diagnostics.append(Diagnostic(
                     "E_FIGURE_COUNT_UNAVAILABLE",
