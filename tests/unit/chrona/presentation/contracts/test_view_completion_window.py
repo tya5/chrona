@@ -3,6 +3,7 @@ from copy import deepcopy
 import pytest
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
+from chrona.presentation.contracts.view_defaults import merge_view_defaults
 from tests.support import synthetic_review as sr
 
 
@@ -60,3 +61,16 @@ def test_finished_completion_state_is_closed_and_relative_window_is_timeline_onl
     value["body"]["window"] = {"mode": "relative", "before": "1w"}
     with pytest.raises(ContractError, match="E_RESOURCE_SCHEMA"):
         _parse(value)
+
+
+def test_selected_window_keeps_omission_distinct_from_authored_zero_and_profile_default():
+    value = _view()
+    value["body"]["window"] = {"mode": "selected-planned"}
+    assert _parse(value).view.window.margin_days is None
+
+    inherited = merge_view_defaults(value, {"window": {"marginDays": 5}})
+    assert _parse(inherited).view.window.margin_days == 5
+
+    value["body"]["window"]["marginDays"] = 0
+    authored = merge_view_defaults(value, {"window": {"marginDays": 5}})
+    assert _parse(authored).view.window.margin_days == 0

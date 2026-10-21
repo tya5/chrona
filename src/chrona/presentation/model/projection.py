@@ -685,22 +685,52 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if start >= end:
             raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
     else:
-        dates = [v for row in rows for item in row.items for v in active_placement(item).values()]
-        dates += [v for point in folded_points for v in active_placement(point.item).values()]
+        envelopes: list[tuple[date, date]] = []
+        selected_dates = [item for row in rows for item in row.items]
+        selected_dates.extend(point.item for point in folded_points)
+        for item in selected_dates:
+            placement = active_placement(item)
+            if item.source_type == "point":
+                point_date = placement["at"]
+                try:
+                    envelopes.append((point_date, point_date + timedelta(days=1)))
+                except OverflowError as error:
+                    raise ViewWindowError(
+                        "E_REVIEW_WINDOW",
+                        f"Point date {point_date} for selected object {item.object_id!r} has no following Date day in the Date domain",
+                    ) from error
+            else:
+                envelopes.append((placement["start"], placement["end"]))
         if view.window.mode == "selected-comparison":
-            dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
-        start, end = min(dates), max(dates)
+            for item in selected_dates:
+                actual = item.actual or {}
+                if "at" in actual and isinstance(actual["at"], date):
+                    point_date = actual["at"]
+                    try:
+                        envelopes.append((point_date, point_date + timedelta(days=1)))
+                    except OverflowError as error:
+                        raise ViewWindowError(
+                            "E_REVIEW_WINDOW",
+                            f"Actual point date {point_date} for selected object {item.object_id!r} has no following Date day in the Date domain",
+                        ) from error
+                else:
+                    actual_dates = [value for value in actual.values() if isinstance(value, date)]
+                    if actual_dates:
+                        envelopes.append((min(actual_dates), max(actual_dates)))
+        start = min(bounds[0] for bounds in envelopes)
+        end = max(bounds[1] for bounds in envelopes)
         margin = view.window.margin_days
-        if view.window.mode == "selected-planned":
-            # View owns temporal breathing room; schedules remain half-open facts.
-            margin = max(margin, ((end - start).days + 9) // 10, 1)
+        if margin is None:
+            # Omitted policy: planned content receives proportional breathing room;
+            # comparison content remains exactly at its completed envelope.
+            margin = max(((end - start).days + 9) // 10, 1) if view.window.mode == "selected-planned" else 0
     try:
         window = (date.fromordinal(start.toordinal() - margin),
                   date.fromordinal(end.toordinal() + margin))
     except ValueError as error:
         ids = tuple(item.object_id for item in selected)
-        raise ValueError(f"E_REVIEW_WINDOW: cannot pad selected dates {start}..{end} "
-                         f"by {margin} days within the Date domain; selected objects={ids!r}") from error
+        raise ViewWindowError("E_REVIEW_WINDOW", f"cannot pad selected dates {start}..{end} "
+                              f"by {margin} days within the Date domain; selected objects={ids!r}") from error
     return ReviewProjection(tuple(selected),
         window,
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,

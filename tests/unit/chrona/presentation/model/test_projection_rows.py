@@ -152,7 +152,7 @@ def typed_view(value):
                       excluded_states=tuple(exclusion.get("state", ()))) if selection or exclusion else None,
         ViewGrouping(grouping["by"], grouping.get("field"), tuple(grouping.get("order", ())), grouping.get("missing"), grouping.get("presentation"), grouping.get("depth"), grouping.get("rollup")) if grouping else None,
         ViewOrdering(ordering["by"], ordering["direction"], ordering["tieBreak"]) if ordering else None,
-        ViewWindow(body["window"]["mode"], body["window"].get("start"), body["window"].get("end"), body["window"].get("marginDays", 0),
+        ViewWindow(body["window"]["mode"], body["window"].get("start"), body["window"].get("end"), body["window"].get("marginDays"),
                    body["window"].get("before"), body["window"].get("after"), body["window"].get("outside", "keep")),
         ViewComparison(None, body["comparison"]["actual"], None, None, tuple(body["comparison"].get("facets", ()))),
         ViewVisibility(False, visibility.get("relations", "none"), "none"), (), (),

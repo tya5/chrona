@@ -380,7 +380,7 @@ class ViewWindow:
     mode: str
     start: str | None
     end: str | None
-    margin_days: int
+    margin_days: int | None
     before: str | None = None
     after: str | None = None
     outside: str = "keep"
@@ -1101,7 +1101,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                 if raw_ordering else None)
     raw_window = body["window"]
     window = ViewWindow(str(raw_window["mode"]), str(raw_window["start"]) if "start" in raw_window else None,
-                        str(raw_window["end"]) if "end" in raw_window else None, int(raw_window.get("marginDays", 0)),
+                        str(raw_window["end"]) if "end" in raw_window else None,
+                        int(raw_window["marginDays"]) if "marginDays" in raw_window else None,
                         str(raw_window["before"]) if "before" in raw_window else None,
                         str(raw_window["after"]) if "after" in raw_window else None,
                         str(raw_window.get("outside", "keep")))
