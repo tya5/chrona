@@ -763,7 +763,13 @@ occurrence values it explains (`encoding`) or deliberately neutralizes
 (`state`) under Spec28. The existing witness shape and pinned-resource joins apply.
 Only legend Rect/Symbol/Path primitives with purpose
 `legend-swatch` admit it; text, chart marks and unrelated decorations do not.
-An `encoding` swatch must have a completed fill; a `state` representative
+An `encoding` swatch explains the source's encoded fill using its completed
+key paint: fill by default, or stroke for the existing `rule-pair` projection.
+Optional `paintChannel: stroke` on an `encoding` record names that projection;
+omission means fill. Layout supplies the selected channel with the completed
+key geometry. It is not inferred from labels, IDs or a matching colour.
+The selected channel must have visible paint (a stroke also needs positive
+width). A `state` record has no `paintChannel`; its representative
 may instead retain the Theme's stroke-only default. At least one completed
 paint channel is required. Coverage never invents a fill for a hollow role.
 Layout supplies this passive evidence after final visibility and coverage
