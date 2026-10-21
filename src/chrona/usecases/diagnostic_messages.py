@@ -82,6 +82,10 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_LEGEND_ROLE_UNKEYED": (
+        "the picture draws a band or fill that the drawn legend has no key for; add a legend entry for its role "
+        "to the Detail Profile so a reader can tell what it means"
+    ),
     "W_PRESENTATION_ANNOTATION_NOT_DRAWN": (
         "a Project annotation on a drawn object is not drawn: no View annotation binding matches its kind and "
         "the shape of its target, and the layout has no notes slot; add an annotationBindings entry for that "
@@ -259,6 +263,13 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
         return WarningText(_SURFACE_CAUSES[code], _axis_thinned_subject(identity.removeprefix(code).removeprefix(":"),
                                                                        named="sourceTitle" in payload
                                                                        or "sourceSubjects" in payload))
+    if code == "W_LEGEND_ROLE_UNKEYED":
+        try:
+            fields = json.loads(identity.removeprefix(code).removeprefix(":"))
+        except ValueError:
+            fields = {}
+        return WarningText(_SURFACE_CAUSES[code],
+                           f"{fields.get('drawnAs', '?')} (legend role {fields.get('role', '?')})")
     if code == "W_PRESENTATION_ANNOTATION_NOT_DRAWN":
         try:
             fields = json.loads(identity.removeprefix(code).removeprefix(":"))
