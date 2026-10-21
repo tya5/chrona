@@ -441,6 +441,11 @@ If padded bounds cannot be represented in the Date domain, diagnose
 wrapping or silently clamping. An empty eligible set is a diagnostic,
 never a current-date default.
 
+Derived-window projection also retains its unpadded selected temporal envelope
+as a typed fact, using the same spans, point-day coverage and comparison dates
+that determined the window. Layout consumes this fact for padding-only axis
+bucket eligibility (Spec39); it does not reselect Project facts or alter padding.
+
 Before timeline geometry or visibility-index preparation, Layout validates the
 completed projection's positive Date window. A still-degenerate or invalid
 window reports `E_PRESENTATION_PROJECTION_REQUIRED` at `/projection/window`,
