@@ -311,7 +311,13 @@ role selects grouping's explicit fallback, omits its columns/optional color or
 icon encoding, removes the role lane-key component (retaining `byObject`), or
 uses the Project title for a network node label.
 Evaluation emits one `I_VIEW_FIELD_ROLE_UNBOUND` per role, with `count` and
-`sourceRefs` counting affected declarations, not rows. Ordinary tables with no
+`sourceRefs` counting affected declarations, not rows. A table or lane-table
+*column* whose role is unbound is omitted without that diagnostic (#1870): it is
+how a role the Project does not use disappears from a shared design, so a default
+render of a built-in design on a Project without the optional `phase` role reports
+nothing about it. Grouping, colour, icon, lane-key and node-label references
+change how the picture reads and stay reported. Theme roles an omitted column
+would have read still count as read (#1616). Ordinary tables with no
 remaining column reject with `E_VIEW_TABLE_COLUMNS_EMPTY`; an omitted
 `hierarchyColumn` is `E_VIEW_HIERARCHY_COLUMN_UNKNOWN`. No column is invented or
 silently substituted. Other target-reference validation remains unchanged.
