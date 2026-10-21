@@ -350,7 +350,7 @@ class ViewGrouping:
     by: str | _PrivateGroupingMode
     field: str | None
     order: tuple[str, ...]
-    missing: str | None
+    missing: str | FrozenDict | None  # a literal, or `{wording: key}` until the render resolves it (#1865)
     presentation: str | None
     depth: int | Literal["all"] | None
     rollup: str | None
@@ -1087,7 +1087,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              str(raw_grouping["field"]) if "field" in raw_grouping else None,
                              tuple(str(item) for item in raw_grouping.get("order", ()))
                              if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
-                             str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
+                             (freeze(raw_grouping["missing"]) if isinstance(raw_grouping["missing"], Mapping)
+                              else str(raw_grouping["missing"])) if "missing" in raw_grouping else None,
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
                              raw_grouping.get("depth"),
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
