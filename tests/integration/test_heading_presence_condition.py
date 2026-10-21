@@ -54,3 +54,16 @@ def test_an_unknown_condition_is_refused(tmp_path):
     with pytest.raises(ClosureError) as caught:
         sr.render(tmp_path, _source(), presentation=parts)
     assert str(caught.value) == "E_VIEW_SCHEMA"
+
+
+def test_a_conditional_part_can_show_a_wording_placeholder(tmp_path):
+    parts = _parts()
+    _subtitle_role(parts)
+    parts["view"]["body"]["heading"] = {"title": "Plan", "subtitle": [
+        {"text": "{wording:column.plan}"}, {"text": " / {wording:legend.baseline}", "presentWhen": "snapshot"}]}
+    (tmp_path / "plain").mkdir()
+    plain = sr.render(tmp_path / "plain", _source(), presentation=parts)
+    assert [p.text for p in plain.surface.primitives if p.scene_id == "subtitle"] == ["Plan"]
+    (tmp_path / "base").mkdir()
+    with_snapshot = sr.render(tmp_path / "base", _source(), presentation=parts, snapshot_project=_source())
+    assert [p.text for p in with_snapshot.surface.primitives if p.scene_id == "subtitle"] == ["Plan / Baseline"]
