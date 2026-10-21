@@ -31,6 +31,7 @@ BUILT_IN_WORDING_KEYS = (
     "legend.plan", "legend.missing-actual", "legend.missing-actual-in-progress", "legend.in-the-wings",
     "legend.calendar-exception", "legend.period", "legend.depends-on", "legend.other", "column.no",
     "delta.unit.calendarDay", "delta.unit.workingDay", "slot.notes",
+    "grouping.unassigned", "grouping.other",
 )
 LOCALES = ("en-US", "ja-JP")
 

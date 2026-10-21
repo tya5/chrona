@@ -59,6 +59,7 @@ The keys, with their `en-US` and `ja-JP` text:
 | `column.no` | No | 番号 |
 | `delta.unit.calendarDay`, `delta.unit.workingDay` | d, d | 日, 営業日 |
 | `slot.notes` | Notes | 注記 |
+| `grouping.unassigned`, `grouping.other` | Unassigned, Other | 未割り当て, その他 |
 
 `legend.calendar-closed` reads `Non-working day`, not `Weekend`, because the role also draws public holidays.
 `column.no` is `No` without a full stop and `column.number` is `No.`: a `wording.keys` override is not locale-scoped
@@ -89,6 +90,11 @@ heading's role `textTransform` styles the resolved text as before.
 
 **A Summary metric label.** A Summary Profile metric `label` is a string or `{wording: <key>}`, for example
 `label: {wording: summary.days}` (`DAYS` / `日`); the View `wording.summary` entry still wins over it.
+
+**The group for a missing field value.** A View `grouping.missing` is a literal or `{wording: <key>}`, for example
+`missing: {wording: grouping.unassigned}` (`Unassigned` / `未割り当て`); `grouping.other` reads `Other` / `その他`. It names the group
+of items whose grouping field is absent, for a field grouping and for a role grouping (`by: {fieldRole: responsible}`). A literal
+stays as written under every locale, and the `wording.keys` override reaches the reference like any key.
 
 **The day unit of a delta.** A signed finish delta reads `+3d` in English and `+3日` in Japanese. The View's
 `comparison.deltaUnit` picks the key: `calendar-days` reads `delta.unit.calendarDay`, `working-days` reads

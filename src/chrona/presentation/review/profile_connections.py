@@ -104,7 +104,7 @@ def _legend_label(entry: Any, resolver: WordingResolver, known_keys: frozenset[s
 
 
 def _resolve_view_references(view: ViewInput, resolver: WordingResolver) -> ViewInput:
-    """Replace `{wording: key}` column headers and marker labels by their locale text (#1724)."""
+    """Replace `{wording: key}` column headers, marker labels and the grouping missing label by their locale text (#1724)."""
     columns = tuple(replace(column, header=resolver.resolve(column.header),
                             header_wording_key=column.header["wording"])
                     if is_wording_ref(column.header) else column
@@ -112,9 +112,12 @@ def _resolve_view_references(view: ViewInput, resolver: WordingResolver) -> View
     markers = tuple(freeze({**marker, "label": resolver.resolve(marker["label"])})
                     if is_wording_ref(marker.get("label")) else marker
                     for marker in view.markers)
-    if columns == view.table_columns and markers == view.markers:
+    grouping = view.grouping
+    if grouping is not None and is_wording_ref(grouping.missing):  # the unassigned-group label (#1865)
+        grouping = replace(grouping, missing=resolver.resolve(grouping.missing))
+    if columns == view.table_columns and markers == view.markers and grouping is view.grouping:
         return view
-    return replace(view, table_columns=columns, markers=markers)
+    return replace(view, table_columns=columns, markers=markers, grouping=grouping)
 
 
 def resolve_profile_connections(view: ViewInput, summary: SummaryProfileInput | None,
