@@ -387,6 +387,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     )
     canvas_warning = canvas_viewport_warning(
         surface_id="table-timeline", declared=request.declared_viewport, actual=canvas,
+        page_size=request.page_size,
         contributors=chain(canvas_rectangles,
                            ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
                             for relation in relations for inline, block in relation.points)))

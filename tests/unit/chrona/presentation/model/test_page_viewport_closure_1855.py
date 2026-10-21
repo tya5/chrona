@@ -1,5 +1,6 @@
 """Draft viewport closure follows effective Layout page defaults (#1855)."""
 from copy import deepcopy
+from collections.abc import Mapping
 from datetime import date
 from hashlib import sha256
 from pathlib import Path
@@ -7,7 +8,7 @@ from pathlib import Path
 import yaml
 import pytest
 
-from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.model.closure import resolve_draft_render, resolve_render_context
 from chrona.resources import builtin_preset_source_root, safe_load
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -116,3 +117,89 @@ def test_omitted_viewport_uses_inherited_page_size_from_pinned_layout_base(tmp_p
     assert draft.auto_block is False
     assert "extends" not in draft.closure.layout_profile.layout_input
     assert draft.closure.layout_profile.layout_input["pageSize"] == "a4-landscape"
+
+
+def test_derived_top_level_page_size_replaces_inherited_default(tmp_path):
+    base = _bundle()["layout"]
+    base["pageSize"] = "a4-landscape"
+    token, address = "base-r2", "layouts/base.yaml"
+    payload = yaml.safe_dump(base, sort_keys=False).encode("utf-8")
+    base_path = snapshot_directory(tmp_path / "store", token) / address
+    base_path.parent.mkdir(parents=True)
+    base_path.write_bytes(payload)
+    reference = {
+        "id": base["id"], "kind": "layout-profile",
+        "store": {"provider": "local", "identity": "print-design"},
+        "address": address, "revision": {"token": token},
+        "contentIdentity": "sha256:" + sha256(payload).hexdigest(),
+    }
+    derived = {key: deepcopy(base[key]) for key in (
+        "version", "id", "flowDirection", "dependencyNetworkFlowDirection",
+        "requiredThemeTokens", "reviewSurface",
+    )}
+    derived.update(
+        extends=reference,
+        pageSize="letter-portrait",
+        overrides={"page": {"padding": deepcopy(base["root"]["padding"])}},
+    )
+
+    draft = _resolve(
+        tmp_path / "draft", layout=derived,
+        package_reader=LocalSnapshotReader(tmp_path / "store", "print-design"),
+    )
+
+    assert _viewport(draft) == (816, 1056)
+    assert draft.auto_block is False
+    assert draft.closure.layout_profile.layout_input["pageSize"] == "letter-portrait"
+
+
+def _plain(value):
+    if isinstance(value, Mapping):
+        return {key: _plain(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_plain(item) for item in value]
+    return value
+
+
+def test_immutable_context_viewport_is_not_replaced_by_layout_page_default(tmp_path):
+    parts = _bundle()
+    parts["layout"]["pageSize"] = "a4-landscape"
+    values = {"project": project({"task": span("task", date(2026, 1, 1), 10)}), **parts}
+    draft = _resolve(tmp_path / "draft", layout=parts["layout"], viewport=(701, 503))
+    snapshot, token = tmp_path / "store", "context-page-r1"
+    directory = snapshot_directory(snapshot, token)
+    directory.mkdir(parents=True)
+
+    def store(kind, identifier, address, value):
+        payload = yaml.safe_dump(value, sort_keys=False).encode("utf-8")
+        path = directory / address
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+        return {"id": identifier, "kind": kind, "address": address,
+                "store": {"provider": "local", "identity": "page-context"},
+                "revision": {"token": token},
+                "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
+
+    references = {}
+    for name, value in values.items():
+        kind = {"scheme": "color-scheme"}.get(name, "layout-profile" if name == "layout" else name)
+        identifier = value["project"]["id"] if name == "project" else value["id"]
+        references[name] = store(kind, identifier, f"{name}.yaml", value)
+    environment = draft.closure.context.environment
+    context = {"version": "chrona/render-context/v0.17", "kind": "render-context", "id": "saved-page-context",
+               "body": {"project": references["project"], "view": references["view"],
+                        "theme": references["theme"], "colorScheme": references["scheme"],
+                        "layout": references["layout"], "inputs": {},
+                        "environment": {"viewport": {"inlineSize": 701, "blockSize": 503},
+                                        "locale": environment.locale,
+                                        "scenePrecision": environment.scene_precision,
+                                        "fontMetrics": _plain(environment.font_metrics)},
+                        "target": {"kind": "svg", "capabilities": [],
+                                   "visualProfile": draft.closure.context.target.visual_profile}}}
+    reference = store("render-context", context["id"], "context.yaml", context)
+
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "page-context"))
+
+    assert (closure.context.environment.viewport_inline,
+            closure.context.environment.viewport_block) == (701, 503)
+    assert closure.layout_profile.layout_input["pageSize"] == "a4-landscape"

@@ -47,7 +47,7 @@ from chrona.presentation.model.legend_role_coverage import unkeyed_band_and_fill
 from chrona.usecases.forecast_schedule import forecast_schedule
 from chrona.usecases.profile_field_bindings import resolve_source_field_bindings
 from chrona.presentation.model.field_role_view import resolve_field_role_view
-from chrona.presentation.contracts.resources import ColorSchemeContract, ContractError, ViewAllPeriods, ViewPeriod
+from chrona.presentation.contracts.resources import ContractError, ViewAllPeriods, ViewPeriod
 from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderEvent, RenderProgress
 from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
@@ -603,12 +603,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                if render_closure.context.identity.revision == "draft" else ())
     contrast_warnings = _scene_contrast_warnings(scene, theme, surface.primitive_provenance)
     _enforce_color_vision_claims(theme, collisions, surface.diagnostic_provenance)
-    scheme = render_closure.resource("color-scheme")
-    if scheme is None:
-        raise ClosureError("E_CLOSURE_REQUIRED", detail="the closure has no color-scheme resource")
-    if not isinstance(scheme.contract, ColorSchemeContract):
-        raise render_closure._kind_error(scheme, ColorSchemeContract)
-    _enforce_print_claim(scheme.contract.scheme_input, surface.diagnostic_provenance)
+    _enforce_print_claim(render_closure.color_scheme.scheme_input, surface.diagnostic_provenance)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),

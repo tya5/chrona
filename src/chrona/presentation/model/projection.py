@@ -365,6 +365,9 @@ class ReviewProjection:
     # Comparison sources resolved by Render Context closure, independent of selected table rows.
     bound_comparison_sources: frozenset[str] = frozenset()
     window_outside: str = "keep"
+    # Optional selected half-open temporal envelope before derived-window padding.
+    # Explicit/relative windows and projections without this proof leave it unknown.
+    unpadded_window: tuple[date, date] | None = None
 
     @property
     def has_rows(self) -> bool:
@@ -687,6 +690,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         lanes_by_id = {lane.lane_id: lane for lane in lane_membership.lanes}
         lane_membership = replace(lane_membership,
                                   lanes=tuple(lanes_by_id[row.lane_id] for row in lane_rows))
+    unpadded_window = None
     if view.window.mode == "relative":
         if view.window.before is None and view.window.after is None:
             raise ValueError("E_REVIEW_WINDOW: relative window requires before or after at /body/window")
@@ -741,6 +745,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                         envelopes.append((min(actual_dates), max(actual_dates)))
         start = min(bounds[0] for bounds in envelopes)
         end = max(bounds[1] for bounds in envelopes)
+        unpadded_window = (start, end)
         margin = view.window.margin_days
         if margin is None:
             # Omitted policy: planned content receives proportional breathing room;
@@ -770,7 +775,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         rows_resolved=True, group_order=group_order,
         bound_comparison_sources=frozenset(
             ("snapshot",) if snapshot_project is not None else ()
-        ) | (frozenset({"scenario"}) if scenarios else frozenset()))
+        ) | (frozenset({"scenario"}) if scenarios else frozenset()),
+        unpadded_window=unpadded_window)
 
 
 def _group_order(selected: list[ReviewItem], rows: tuple[ReviewRowProjection, ...]) -> tuple[str, ...]:
