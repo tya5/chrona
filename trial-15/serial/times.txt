@@ -1,0 +1,5 @@
+target-b real 7.24
+yuya real 7.65
+titlecard real 12.48
+marquee real 8.34
+sunday real 11.36

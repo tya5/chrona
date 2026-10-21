@@ -1,0 +1,1 @@
+{"status": "rejected", "diagnostics": [{"code": "E_PROJECT_SCHEMA", "severity": "error", "component": "closure", "sourceRef": "/annotations/r2/anchor", "revisionRefs": [], "message": "unexpected property 'endpoint'"}]}

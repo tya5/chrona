@@ -1,0 +1,302 @@
+{
+  "status": "ok",
+  "placements": {
+    "plat": {
+      "start": "2026-10-05",
+      "end": "2027-03-15"
+    },
+    "arch": {
+      "start": "2026-10-05",
+      "end": "2026-10-19"
+    },
+    "gw": {
+      "start": "2026-10-19",
+      "end": "2026-12-07"
+    },
+    "auth": {
+      "start": "2026-12-07",
+      "end": "2026-12-28"
+    },
+    "bill": {
+      "start": "2026-12-28",
+      "end": "2027-01-25"
+    },
+    "load": {
+      "start": "2027-01-25",
+      "end": "2027-02-08"
+    },
+    "hard": {
+      "start": "2027-02-08",
+      "end": "2027-03-01"
+    },
+    "relops": {
+      "start": "2027-03-01",
+      "end": "2027-03-15"
+    },
+    "mob": {
+      "start": "2026-10-05",
+      "end": "2027-03-01"
+    },
+    "ux": {
+      "start": "2026-10-05",
+      "end": "2026-10-26"
+    },
+    "ds": {
+      "start": "2026-10-26",
+      "end": "2026-11-16"
+    },
+    "ios": {
+      "start": "2026-11-16",
+      "end": "2026-12-21"
+    },
+    "and": {
+      "start": "2026-12-21",
+      "end": "2027-01-25"
+    },
+    "sync": {
+      "start": "2027-01-25",
+      "end": "2027-02-15"
+    },
+    "store": {
+      "start": "2027-02-15",
+      "end": "2027-03-01"
+    },
+    "data": {
+      "start": "2026-10-05",
+      "end": "2027-02-10"
+    },
+    "evt": {
+      "start": "2026-10-05",
+      "end": "2026-10-21"
+    },
+    "pipe": {
+      "start": "2026-10-21",
+      "end": "2026-11-18"
+    },
+    "wh": {
+      "start": "2026-11-18",
+      "end": "2026-12-09"
+    },
+    "dash": {
+      "start": "2026-12-09",
+      "end": "2026-12-30"
+    },
+    "ml": {
+      "start": "2026-12-30",
+      "end": "2027-01-27"
+    },
+    "dqa": {
+      "start": "2027-01-27",
+      "end": "2027-02-10"
+    },
+    "gtm": {
+      "start": "2026-10-26",
+      "end": "2027-03-01"
+    },
+    "mkt": {
+      "start": "2026-10-26",
+      "end": "2026-11-09"
+    },
+    "price": {
+      "start": "2026-11-09",
+      "end": "2026-11-30"
+    },
+    "beta": {
+      "start": "2026-11-30",
+      "end": "2026-12-28"
+    },
+    "web": {
+      "start": "2026-12-28",
+      "end": "2027-01-11"
+    },
+    "camp": {
+      "start": "2027-01-11",
+      "end": "2027-02-08"
+    },
+    "enab": {
+      "start": "2027-02-08",
+      "end": "2027-03-01"
+    },
+    "pen": {
+      "start": "2026-11-16",
+      "end": "2026-12-07"
+    },
+    "g1": {
+      "at": "2026-11-06"
+    },
+    "g2": {
+      "at": "2026-12-11"
+    },
+    "g3": {
+      "at": "2027-01-29"
+    },
+    "g4": {
+      "at": "2027-03-05"
+    },
+    "g5": {
+      "at": "2027-03-31"
+    }
+  },
+  "diagnostics": [],
+  "warnings": [],
+  "analysis": {
+    "criticalObjectIds": [],
+    "totalFloat": {
+      "arch": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "gw": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "auth": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "bill": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "load": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "hard": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "relops": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ux": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ds": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ios": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "and": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "sync": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "store": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "evt": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "pipe": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "wh": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "dash": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "ml": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "dqa": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "mkt": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "price": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "beta": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "web": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "camp": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "enab": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "pen": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g1": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g2": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g3": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g4": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      },
+      "g5": {
+        "value": 0,
+        "unit": "working-days",
+        "calendar": "office"
+      }
+    }
+  }
+}

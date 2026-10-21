@@ -1,0 +1,519 @@
+version: timeline/v0.7
+project:
+  id: nova
+  title: Nova app launch plan
+  calendar: office
+fieldRoles:
+  responsible: stream
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    exceptions:
+    - date: '2026-11-26'
+      working: false
+    - date: '2026-12-25'
+      working: false
+    - date: '2027-01-01'
+      working: false
+objects:
+  plat:
+    type: group
+    title: Platform
+    schedule:
+      mode: rollup
+  arch:
+    type: task
+    title: Architecture spike
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2026-10-05'
+      end: '2026-10-19'
+  gw:
+    type: task
+    title: API gateway
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2026-10-19'
+      end: '2026-11-16'
+  auth:
+    type: task
+    title: Auth service
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2026-11-16'
+      end: '2026-12-07'
+  bill:
+    type: task
+    title: Billing service
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2026-12-07'
+      end: '2027-01-04'
+  load:
+    type: task
+    title: Load testing
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2027-01-04'
+      end: '2027-01-18'
+  hard:
+    type: task
+    title: Hardening
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2027-01-18'
+      end: '2027-02-08'
+  relops:
+    type: task
+    title: Release ops
+    parent: plat
+    fields:
+      stream: Platform
+    schedule:
+      mode: fixed-span
+      start: '2027-02-08'
+      end: '2027-02-22'
+  mob:
+    type: group
+    title: Mobile app
+    schedule:
+      mode: rollup
+  ux:
+    type: task
+    title: UX research
+    parent: mob
+    fields:
+      stream: Mobile app
+    schedule:
+      mode: fixed-span
+      start: '2026-10-05'
+      end: '2026-10-26'
+  ds:
+    type: task
+    title: Design system
+    parent: mob
+    fields:
+      stream: Mobile app
+    schedule:
+      mode: fixed-span
+      start: '2026-10-26'
+      end: '2026-11-16'
+  ios:
+    type: task
+    title: iOS app shell
+    parent: mob
+    fields:
+      stream: Mobile app
+    schedule:
+      mode: fixed-span
+      start: '2026-11-16'
+      end: '2026-12-21'
+  and:
+    type: task
+    title: Android app shell
+    parent: mob
+    fields:
+      stream: Mobile app
+    schedule:
+      mode: fixed-span
+      start: '2026-12-21'
+      end: '2027-01-25'
+  sync:
+    type: task
+    title: Offline sync
+    parent: mob
+    fields:
+      stream: Mobile app
+    schedule:
+      mode: fixed-span
+      start: '2027-01-25'
+      end: '2027-02-15'
+  store:
+    type: task
+    title: Store submission
+    parent: mob
+    fields:
+      stream: Mobile app
+    schedule:
+      mode: fixed-span
+      start: '2027-02-15'
+      end: '2027-03-01'
+  data:
+    type: group
+    title: Data
+    schedule:
+      mode: rollup
+  evt:
+    type: task
+    title: Event schema
+    parent: data
+    fields:
+      stream: Data
+    schedule:
+      mode: fixed-span
+      start: '2026-10-05'
+      end: '2026-10-21'
+  pipe:
+    type: task
+    title: Pipeline MVP
+    parent: data
+    fields:
+      stream: Data
+    schedule:
+      mode: fixed-span
+      start: '2026-10-21'
+      end: '2026-11-18'
+  wh:
+    type: task
+    title: Warehouse model
+    parent: data
+    fields:
+      stream: Data
+    schedule:
+      mode: fixed-span
+      start: '2026-11-18'
+      end: '2026-12-09'
+  dash:
+    type: task
+    title: Dashboards
+    parent: data
+    fields:
+      stream: Data
+    schedule:
+      mode: fixed-span
+      start: '2026-12-09'
+      end: '2026-12-30'
+  ml:
+    type: task
+    title: ML scoring pilot
+    parent: data
+    fields:
+      stream: Data
+    schedule:
+      mode: fixed-span
+      start: '2026-12-30'
+      end: '2027-01-27'
+  dqa:
+    type: task
+    title: Data QA
+    parent: data
+    fields:
+      stream: Data
+    schedule:
+      mode: fixed-span
+      start: '2027-01-27'
+      end: '2027-02-10'
+  gtm:
+    type: group
+    title: Go-to-market
+    schedule:
+      mode: rollup
+  mkt:
+    type: task
+    title: Market sizing
+    parent: gtm
+    fields:
+      stream: Go-to-market
+    schedule:
+      mode: fixed-span
+      start: '2026-10-26'
+      end: '2026-11-09'
+  price:
+    type: task
+    title: Pricing study
+    parent: gtm
+    fields:
+      stream: Go-to-market
+    schedule:
+      mode: fixed-span
+      start: '2026-11-09'
+      end: '2026-11-30'
+  beta:
+    type: task
+    title: Beta recruitment
+    parent: gtm
+    fields:
+      stream: Go-to-market
+    schedule:
+      mode: fixed-span
+      start: '2026-11-30'
+      end: '2026-12-28'
+  web:
+    type: task
+    title: Partner webinar
+    parent: gtm
+    fields:
+      stream: Go-to-market
+    schedule:
+      mode: fixed-span
+      start: '2026-12-28'
+      end: '2027-01-11'
+  camp:
+    type: task
+    title: Launch campaign
+    parent: gtm
+    fields:
+      stream: Go-to-market
+    schedule:
+      mode: fixed-span
+      start: '2027-01-11'
+      end: '2027-02-08'
+  enab:
+    type: task
+    title: Sales enablement
+    parent: gtm
+    fields:
+      stream: Go-to-market
+    schedule:
+      mode: fixed-span
+      start: '2027-02-08'
+      end: '2027-03-01'
+  g1:
+    type: gate
+    title: Design review
+    schedule:
+      mode: fixed-point
+      at: '2026-11-06'
+  g2:
+    type: gate
+    title: Alpha
+    schedule:
+      mode: fixed-point
+      at: '2026-12-11'
+  g3:
+    type: gate
+    title: Beta start
+    schedule:
+      mode: fixed-point
+      at: '2027-01-29'
+  g4:
+    type: gate
+    title: Launch readiness
+    schedule:
+      mode: fixed-point
+      at: '2027-03-05'
+  g5:
+    type: gate
+    title: GA
+    schedule:
+      mode: fixed-point
+      at: '2027-03-31'
+relations:
+- id: arch-gw
+  type: dependency
+  from:
+    object: arch
+    endpoint: end
+  to:
+    object: gw
+    endpoint: start
+  lag: 0d
+- id: gw-auth
+  type: dependency
+  from:
+    object: gw
+    endpoint: end
+  to:
+    object: auth
+    endpoint: start
+  lag: 0d
+- id: auth-bill
+  type: dependency
+  from:
+    object: auth
+    endpoint: end
+  to:
+    object: bill
+    endpoint: start
+  lag: 0d
+- id: bill-load
+  type: dependency
+  from:
+    object: bill
+    endpoint: end
+  to:
+    object: load
+    endpoint: start
+  lag: 0d
+- id: load-hard
+  type: dependency
+  from:
+    object: load
+    endpoint: end
+  to:
+    object: hard
+    endpoint: start
+  lag: 0d
+- id: hard-relops
+  type: dependency
+  from:
+    object: hard
+    endpoint: end
+  to:
+    object: relops
+    endpoint: start
+  lag: 0d
+- id: ux-ds
+  type: dependency
+  from:
+    object: ux
+    endpoint: end
+  to:
+    object: ds
+    endpoint: start
+  lag: 0d
+- id: ds-ios
+  type: dependency
+  from:
+    object: ds
+    endpoint: end
+  to:
+    object: ios
+    endpoint: start
+  lag: 0d
+- id: ios-and
+  type: dependency
+  from:
+    object: ios
+    endpoint: end
+  to:
+    object: and
+    endpoint: start
+  lag: 0d
+- id: and-sync
+  type: dependency
+  from:
+    object: and
+    endpoint: end
+  to:
+    object: sync
+    endpoint: start
+  lag: 0d
+- id: sync-store
+  type: dependency
+  from:
+    object: sync
+    endpoint: end
+  to:
+    object: store
+    endpoint: start
+  lag: 0d
+- id: evt-pipe
+  type: dependency
+  from:
+    object: evt
+    endpoint: end
+  to:
+    object: pipe
+    endpoint: start
+  lag: 0d
+- id: pipe-wh
+  type: dependency
+  from:
+    object: pipe
+    endpoint: end
+  to:
+    object: wh
+    endpoint: start
+  lag: 0d
+- id: wh-dash
+  type: dependency
+  from:
+    object: wh
+    endpoint: end
+  to:
+    object: dash
+    endpoint: start
+  lag: 0d
+- id: dash-ml
+  type: dependency
+  from:
+    object: dash
+    endpoint: end
+  to:
+    object: ml
+    endpoint: start
+  lag: 0d
+- id: ml-dqa
+  type: dependency
+  from:
+    object: ml
+    endpoint: end
+  to:
+    object: dqa
+    endpoint: start
+  lag: 0d
+- id: mkt-price
+  type: dependency
+  from:
+    object: mkt
+    endpoint: end
+  to:
+    object: price
+    endpoint: start
+  lag: 0d
+- id: price-beta
+  type: dependency
+  from:
+    object: price
+    endpoint: end
+  to:
+    object: beta
+    endpoint: start
+  lag: 0d
+- id: beta-web
+  type: dependency
+  from:
+    object: beta
+    endpoint: end
+  to:
+    object: web
+    endpoint: start
+  lag: 0d
+- id: web-camp
+  type: dependency
+  from:
+    object: web
+    endpoint: end
+  to:
+    object: camp
+    endpoint: start
+  lag: 0d
+- id: camp-enab
+  type: dependency
+  from:
+    object: camp
+    endpoint: end
+  to:
+    object: enab
+    endpoint: start
+  lag: 0d
+annotations:
+  n1:
+    kind: note
+    text: Schema review took 2 extra days
+    anchor:
+      object: evt

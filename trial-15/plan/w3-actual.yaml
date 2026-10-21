@@ -1,0 +1,125 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: nova-observed
+body:
+  asOf: '2026-11-09'
+  observations:
+  - id: arch-1
+    sequence: 1
+    projectObjectId: arch
+    actual:
+      start: '2026-10-05'
+      finish: '2026-10-16'
+      progress: 1
+  - id: gw-1
+    sequence: 1
+    projectObjectId: gw
+    actual:
+      start: '2026-10-16'
+      openUntil: asOf
+      progress: 0.15
+  - id: ux-1
+    sequence: 1
+    projectObjectId: ux
+    actual:
+      start: '2026-10-05'
+      openUntil: asOf
+      progress: 0.9
+  - id: evt-1
+    sequence: 1
+    projectObjectId: evt
+    actual:
+      start: '2026-10-05'
+      finish: '2026-10-21'
+      progress: 1
+  - id: pipe-1
+    sequence: 1
+    projectObjectId: pipe
+    actual:
+      start: '2026-10-21'
+      openUntil: asOf
+      progress: 0.1
+  - id: mkt-1
+    sequence: 1
+    projectObjectId: mkt
+    actual:
+      start: '2026-10-26'
+      openUntil: asOf
+      progress: 0.0
+  - id: gw-2
+    sequence: 2
+    projectObjectId: gw
+    actual:
+      start: '2026-10-16'
+      openUntil: asOf
+      progress: 0.25
+  - id: ux-2
+    sequence: 2
+    projectObjectId: ux
+    actual:
+      start: '2026-10-05'
+      finish: '2026-10-28'
+      progress: 1
+  - id: ds-1
+    sequence: 1
+    projectObjectId: ds
+    actual:
+      start: '2026-10-28'
+      openUntil: asOf
+      progress: 0.2
+  - id: pipe-2
+    sequence: 2
+    projectObjectId: pipe
+    actual:
+      start: '2026-10-21'
+      openUntil: asOf
+      progress: 0.4
+  - id: mkt-2
+    sequence: 2
+    projectObjectId: mkt
+    actual:
+      start: '2026-10-26'
+      openUntil: asOf
+      progress: 0.5
+  - id: gw-3
+    sequence: 3
+    projectObjectId: gw
+    actual:
+      start: '2026-10-16'
+      openUntil: asOf
+      progress: 0.35
+  - id: ds-2
+    sequence: 2
+    projectObjectId: ds
+    actual:
+      start: '2026-10-28'
+      openUntil: asOf
+      progress: 0.5
+  - id: pipe-3
+    sequence: 3
+    projectObjectId: pipe
+    actual:
+      start: '2026-10-21'
+      finish: '2026-11-06'
+      progress: 1
+  - id: wh-1
+    sequence: 1
+    projectObjectId: wh
+    actual:
+      start: '2026-11-06'
+      openUntil: asOf
+      progress: 0.1
+  - id: mkt-3
+    sequence: 3
+    projectObjectId: mkt
+    actual:
+      start: '2026-10-26'
+      finish: '2026-11-06'
+      progress: 1
+  - id: price-1
+    sequence: 1
+    projectObjectId: price
+    actual:
+      start: '2026-11-06'
+      openUntil: asOf
+      progress: 0.1
