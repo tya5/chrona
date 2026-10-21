@@ -213,7 +213,8 @@ def test_the_skill_links_notes_risks_and_lanes_and_the_page_snippet_renders(tmp_
     painted = output.read_text(encoding="utf-8")
     for lane in ("Platform", "Product", "Unassigned"):  # one lane per owner, and the gates without one
         assert f">{lane}<" in painted
-    for text in ("NOTE \u00b7 build", "RISK \u00b7 test", "Slot confirmed for 9 Nov.", "Keys not yet issued."):
+    for text in ("NOTE \u00b7 Build", "RISK \u00b7 Test",  # target-b headers name the subject by title (#1870 row 3)
+                  "Slot confirmed for 9 Nov.", "Keys not yet issued."):
         assert text in painted, text
 
 
