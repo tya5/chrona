@@ -7,13 +7,14 @@ Candidate: [820688585](https://github.com/tya5/chrona/commit/820688585bb58031369
 [architecture / implementation plan](https://github.com/tya5/chrona/issues/1841#issuecomment-6331843745).
 Pre-code normative authority: deferred repair [f7a2e64e5](https://github.com/tya5/chrona/commit/f7a2e64e5eec4bca26b97b85582db1aac631fa78)
 and required-endpoint exception [1d991babe](https://github.com/tya5/chrona/commit/1d991babe1303751d34ebeae09ba531cf8fe1a3e).
-**Release pending:** [CI39721069352](https://github.com/tya5/chrona/actions/runs/39721069352)
-is running on this exact candidate, including ready main f613e6165.
+**PR checks passed; release pending:** [CI39721069352](https://github.com/tya5/chrona/actions/runs/39721069352)
+succeeded on this exact candidate, including ready main f613e6165: all three pytest
+shards, conformance, MCP floor, newest-Python reproduction and derived-ready passed.
 Previous CI39718841904 passed conformance/MCP/reproduction but found eight stale
 preparation/session/fragment assertions. Those tests are migrated (10 focused cases pass);
 all geometry/resource source files remain identical to71413b1aa. Main's independent
 fixed-page diagnostic-guide update passes nine focused transport/artifact checks.
-Do not close until final checks and the three-OS release on the exact main containing this review succeed.
+Do not close until the three-OS release on the exact main containing this review succeeds.
 
 ## Architecture and verification
 
@@ -32,13 +33,14 @@ Additional focused sets overlap these counts; they are not added together.
 
 ## Official rendered evidence
 
-Geometry-identical candidate71413b1aa artifact12399723719 from CI39718841904, official SHA-256
-`21cdc08e6cebd9bc4a559ce73857c15b5e9c85114d5b4a7ce6a0f82f779a684c`;
-snapshot TAR SHA-256 `4af07a6d843ac29f9330e817d5db9aa0d0f1b343c58a0847998a6ffc6d4ab622`.
-All **50 SVGs and primitive maps exactly equal previously inspected941**.
-39 Scenes are byte-identical; the other11 differ only in diagnostic order or additional
-shared-approach info. The [complete per-slide / recovery / text ledger](https://github.com/tya5/chrona/pull/1849#issuecomment-6331591571)
-is updated to this artifact. Exact-current-head evidence is still required. Baseline solver stages were not recorded: absence
+Exact820 artifact12400987197 from CI39721069352, official SHA-256
+`ba343ff398a95ddff0eea0da610dc92a6c001b9189ef9060f95084e97d635a98`;
+snapshot TAR SHA-256 `594f8a86dff6e45a1624d6dff3e56ac7ffb98410d73a08270258e00deee60c8d`.
+All **50 Scenes and50 SVGs exactly equal71413b1aa**; all SVGs and primitive maps
+also exactly equal previously inspected941. Against941,39 Scenes are byte-identical;
+the other11 differ only in diagnostic order or additional shared-approach info.
+The [complete per-slide / recovery / text ledger](https://github.com/tya5/chrona/pull/1849#issuecomment-6331591571)
+covers the same bytes. Baseline solver stages were not recorded: absence
 of an old receipt is not evidence of NORMAL.
 
 Against published main:48/50 SVGs change; primitives +419/−83/~837.
@@ -111,9 +113,9 @@ E `2c2736bc12e4cc49460549cd19e9e1d0be97ec209e8039f6c1e6302640fd44d1`.
 |1|hints validate against the completed host geometry whatever the primitive kind. On the trial input, hinted renders accept the unchanged routes and the time drops (before/after recorded).|met|[Host controls](../../../tests/unit/chrona/usecases/test_previous_scene.py), [original timing audit](https://github.com/tya5/chrona/issues/1841#issuecomment-6296684466), fresh trial12 above; released review-containing main4e779217 / [CI39553831077](https://github.com/tya5/chrona/actions/runs/39553831077).| — |
 |2|one shared measure/place rounding for every content-width text; a synthetic case for cells and headers.|met|[Fractional cell/header tests](../../../tests/unit/chrona/presentation/layout/test_table_forward_fit.py); released main4e779217 / CI39553831077.| — |
 |3|the title is honoured; the guide example runs on the default preset in the docs tests.|met|[SVG heading tests](../../../tests/integration/test_network_heading_parts.py), [executable guide](../../../tests/integration/test_network_view_guide.py); released main4e779217 / CI39553831077.| — |
-|4|a route segment may not run along a mark's edge (treat edge contact as an obstacle); a synthetic case.|not met|[Closed-contact controls](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_primary_mark_closed_contact.py), [endpoint controls](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), final official50-context rendered review above. Final CI/release gate remains pending.| — |
+|4|a route segment may not run along a mark's edge (treat edge contact as an obstacle); a synthetic case.|met|[Closed-contact controls](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_primary_mark_closed_contact.py), [endpoint controls](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), final official50-context rendered review above and CI39721069352. Separate main release gate remains pending.| — |
 |5|network rank placement keeps unchanged nodes (hint or stable ordering), and row pitch is quantised so rows above an insertion stay byte-identical.|met|[Approved contract6297232443](https://github.com/tya5/chrona/issues/1841#issuecomment-6297232443): authored fractional pitch/fill redistribution and rank-demand movement remain intentional; [Spec33](../../specification/33-intent-oriented-layout.md), [Spec50](../../specification/50-constraint-driven-gantt-surface-quality.md).| — |
-|6|a route's horizontal extent stays within its endpoints' times plus the port leads, unless it is diagnosed as recovery.|not met|[Temporal-hull / endpoint tests](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), [protected-domain tests](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_protected_finite_route_domain.py), fresh trials16/17 and explicit final-corpus receipts above. Final CI/release gate remains pending.| — |
+|6|a route's horizontal extent stays within its endpoints' times plus the port leads, unless it is diagnosed as recovery.|met|[Temporal-hull / endpoint tests](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), [protected-domain tests](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_protected_finite_route_domain.py), fresh trials16/17, explicit final-corpus receipts above and CI39721069352. Separate main release gate remains pending.| — |
 
 ## Programme-level criteria (optional)
 
