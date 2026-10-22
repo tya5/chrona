@@ -1,0 +1,57 @@
+"""Leader start versus painted glyph edge in a Scene JSON (read-only probe for the #1924 review).
+
+usage: python -I probe-1924.py SCENE.json LEADER_ID
+For the leader, take its first point and every Symbol part of the glyph whose viewport
+(bounds) lies within 3 units of that point; the painted edge toward the leader is the
+largest x of the fill outlines, and of the stroke outlines plus half the stroke width.
+"""
+import json
+import sys
+
+
+def walk(node, out):
+    if isinstance(node, dict):
+        if node.get("kind") == "Symbol" and "symbol" in node:
+            out.append(node)
+        for value in node.values():
+            walk(value, out)
+    elif isinstance(node, list):
+        for value in node:
+            walk(value, out)
+
+
+def leader(node, leader_id):
+    if isinstance(node, dict):
+        if node.get("id") == leader_id:
+            return node
+        for value in node.values():
+            found = leader(value, leader_id)
+            if found:
+                return found
+    elif isinstance(node, list):
+        for value in node:
+            found = leader(value, leader_id)
+            if found:
+                return found
+    return None
+
+
+scene = json.load(open(sys.argv[1], encoding="utf-8"))
+path = leader(scene, sys.argv[2])
+sx, sy = path["points"][0]
+parts = []
+walk(scene, parts)
+near = [p for p in parts if p["bounds"]["inline"] - 3 <= sx <= p["bounds"]["inline"] + p["bounds"]["inlineSize"] + 3
+        and p["bounds"]["block"] - 3 <= sy <= p["bounds"]["block"] + p["bounds"]["blockSize"] + 3
+        and p["purpose"] != "annotation-leader"]
+hosts = sorted({p["id"].rsplit(":part", 1)[0] for p in near})
+edge = None
+for p in near:
+    half = p["paint"].get("strokeWidth", 0) / 2 if "stroke" in p["paint"] else 0
+    xs = [pt[0] for seg in p["symbol"]["outline"] for pt in seg["points"]]
+    if xs:
+        edge = max(edge or -1e9, max(xs) + half)
+print(f"leader {sys.argv[2]} start x={sx:.3f} y={sy:.3f}")
+print(f"host glyph(s) {hosts}; parts considered {len(near)}")
+print(f"painted edge toward the leader x={edge:.3f} (fill outline, or stroke outline + half stroke)")
+print(f"gap leader start to painted edge = {abs(sx - edge):.3f}")

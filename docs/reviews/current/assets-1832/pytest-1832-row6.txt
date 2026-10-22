@@ -1,0 +1,56 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.7, pytest-9.1.1, pluggy-1.6.0 -- /private/tmp/claude-501/venv1682/bin/python
+rootdir: /private/tmp/claude-501/rv1928
+configfile: pyproject.toml
+plugins: cov-7.1.0, xdist-3.8.0, split-0.11.0, timeout-2.4.0, asyncio-1.4.0, httpx-0.36.2, anyio-4.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 46 items
+
+tests/unit/tools/test_derived_gate_await.py::test_completed_success_exits_on_first_poll PASSED [  2%]
+tests/unit/tools/test_derived_gate_await.py::test_in_progress_then_success_logs_each_poll_and_stops_within_one_interval PASSED [  4%]
+tests/unit/tools/test_derived_gate_await.py::test_never_completing_gate_times_out_after_bounded_polls PASSED [  6%]
+tests/unit/tools/test_derived_gate_await.py::test_failed_gate_raises_immediately[failure-failure-failure] PASSED [  8%]
+tests/unit/tools/test_derived_gate_await.py::test_failed_gate_raises_immediately[failure-success-failure] PASSED [ 10%]
+tests/unit/tools/test_derived_gate_await.py::test_failed_gate_raises_immediately[success-success-skipped] PASSED [ 13%]
+tests/unit/tools/test_derived_gate_await.py::test_transient_api_error_is_retried_and_logged PASSED [ 15%]
+tests/unit/tools/test_derived_gate_await.py::test_persistent_api_errors_are_bounded PASSED [ 17%]
+tests/unit/tools/test_derived_gate_await.py::test_success_resets_the_error_count PASSED [ 19%]
+tests/unit/tools/test_derived_gate_await.py::test_dispatch_uses_the_returned_run_id_not_a_listing PASSED [ 21%]
+tests/unit/tools/test_derived_gate_await.py::test_dispatch_without_run_id_fails_loudly[payload0] PASSED [ 23%]
+tests/unit/tools/test_derived_gate_await.py::test_dispatch_without_run_id_fails_loudly[payload1] PASSED [ 26%]
+tests/unit/tools/test_derived_gate_await.py::test_dispatch_without_run_id_fails_loudly[payload2] PASSED [ 28%]
+tests/unit/tools/test_derived_gate_await.py::test_dispatch_without_run_id_fails_loudly[payload3] PASSED [ 30%]
+tests/unit/tools/test_derived_gate_await.py::test_main_end_to_end_with_fake_gh PASSED [ 32%]
+tests/unit/tools/test_derived_gate_await.py::test_success_conclusion_with_unfinished_jobs_keeps_polling_then_succeeds PASSED [ 34%]
+tests/unit/tools/test_derived_gate_await.py::test_success_conclusion_with_jobs_never_finishing_times_out_naming_job_states PASSED [ 36%]
+tests/unit/tools/test_derived_gate_await.py::test_completed_required_job_failure_still_raises_without_polling_on PASSED [ 39%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_derived_main_gate_is_dispatch_only_and_read_only PASSED [ 41%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_derived_main_gate_checks_the_exact_temp_ref_commit PASSED [ 43%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_derived_ready_fails_closed_when_derived_main_fails PASSED [ 45%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_derived_ready_marks_only_the_verified_sha_with_a_commit_status PASSED [ 47%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_derived_ready_status_publish_is_retried_once PASSED [ 50%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_status_publish_succeeds_after_one_transient_failure PASSED [ 52%]
+tests/unit/tools/test_derived_main_gate_workflow.py::test_status_publish_fails_after_second_failure PASSED [ 54%]
+tests/unit/tools/test_derived_workflow.py::test_retired_outputs_are_prior_tracked_generated_files_only PASSED [ 56%]
+tests/unit/tools/test_derived_workflow.py::test_retirement_finds_unchanged_declared_output_after_deletion_and_docs_commit PASSED [ 58%]
+tests/unit/tools/test_derived_workflow.py::test_retirement_resolves_multiple_paths_from_distinct_manifest_ancestors PASSED [ 60%]
+tests/unit/tools/test_derived_workflow.py::test_retirement_follows_first_parent_through_non_fast_forward_manifest_merge PASSED [ 63%]
+tests/unit/tools/test_derived_workflow.py::test_unproven_generated_orphans_remain_rejected[never-declared] PASSED [ 65%]
+tests/unit/tools/test_derived_workflow.py::test_unproven_generated_orphans_remain_rejected[modified] PASSED [ 67%]
+tests/unit/tools/test_derived_workflow.py::test_unproven_generated_orphans_remain_rejected[modified-restored] PASSED [ 69%]
+tests/unit/tools/test_derived_workflow.py::test_unproven_generated_orphans_remain_rejected[deleted-recreated] PASSED [ 71%]
+tests/unit/tools/test_derived_workflow.py::test_unproven_generated_orphans_remain_rejected[untracked] PASSED [ 73%]
+tests/unit/tools/test_derived_workflow.py::test_snapshot_records_historically_declared_retirement_and_source_bytes PASSED [ 76%]
+tests/unit/tools/test_derived_workflow.py::test_prepare_candidate_preserves_noop_sha_and_stages_only_derived_paths PASSED [ 78%]
+tests/unit/tools/test_derived_workflow.py::test_retirement_rejects_authored_or_unbounded_paths[examples/deck/manifest.yaml] PASSED [ 80%]
+tests/unit/tools/test_derived_workflow.py::test_retirement_rejects_authored_or_unbounded_paths[examples/deck/generated/input.yaml] PASSED [ 82%]
+tests/unit/tools/test_derived_workflow.py::test_retirement_rejects_authored_or_unbounded_paths[../outside.svg] PASSED [ 84%]
+tests/unit/tools/test_derived_workflow.py::test_snapshot_apply_requires_exact_manifest_inventory PASSED [ 86%]
+tests/unit/tools/test_derived_workflow.py::test_sync_target_gate_validation_runs_before_checkout PASSED [ 89%]
+tests/unit/tools/test_derived_workflow.py::test_pr_readiness_accepts_only_a_main_base PASSED [ 91%]
+tests/unit/tools/test_derived_workflow.py::test_pr_classifier_receives_unquoted_commit_ids PASSED [ 93%]
+tests/unit/tools/test_derived_workflow.py::test_pr_snapshot_consumers_fetch_baseline_history PASSED [ 95%]
+tests/unit/tools/test_derived_workflow.py::test_dispatched_full_matrix_sha_guard_uses_cross_platform_bash PASSED [ 97%]
+tests/unit/tools/test_derived_workflow.py::test_source_only_builds_inventory_once_with_unchanged_per_path_results PASSED [100%]
+
+============================= 46 passed in 22.36s ==============================
