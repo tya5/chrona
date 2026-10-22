@@ -99,3 +99,16 @@ def test_no_canvas_warning_keeps_existing_warning_collection_unchanged():
         surface_diagnostics=(), tabular_warnings=(), glyph_warnings=(), fit_warnings=(),
         perceptibility_warnings=(), scale_collisions=(), attachment_warnings=(),
     ) == ()
+
+
+def test_canvas_warning_points_to_the_fixed_size_guide_and_the_guide_exists():
+    import re
+    from pathlib import Path
+
+    record, = _collect(_warning())
+    message = warning_message(describe_warning(record.payload))
+
+    assert "only a minimum" in message and "show fewer rows" in message
+    guide = re.search(r"\((docs/guides/fixed-size-output\.md)\)", message)[1]
+    root = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
+    assert (root / guide).is_file(), guide

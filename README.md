@@ -137,6 +137,7 @@ skill (`chrona skill copy`).
 | learn Project features one small step at a time | [Progressive project tutorial](docs/guides/progressive-project-tutorial.md) |
 | write a plan quickly, one line per task | [Terse plan card](docs/guides/terse-plan.md), and [what it compiles to](docs/guides/terse-plan-mapping.md) |
 | start from a spreadsheet, or colour bars by an owner column | [Import a CSV](docs/guides/csv-import.md) |
+| fit a fixed slide (1280x720) or page (A4), or fix `W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT` | [Fit a fixed slide or page](docs/guides/fixed-size-output.md) |
 | show a dependency graph instead of a timeline | [Network view](docs/guides/network-view.md) |
 | make a one-page summary for a steering committee | [Executive summary](docs/guides/executive-summary.md) |
 | colour by my own typed field (risk, team) | [Typed fields](docs/guides/typed-fields.md) |
@@ -156,7 +157,8 @@ skill (`chrona skill copy`).
 To work on chrona itself, see [Develop chrona](CONTRIBUTING.md#development-setup).
 
 Draft rendering defaults to a content-sized `1600xauto` viewport. Use an
-explicit `--viewport WIDTHxHEIGHT` when you need a finite minimum allocation.
+explicit `--viewport WIDTHxHEIGHT` when you need a finite minimum allocation
+(it does not shrink content; see [Fit a fixed slide or page](docs/guides/fixed-size-output.md)).
 The `auto` request is Draft-only; immutable Render Contexts keep a finite
 `environment.viewport.blockSize`.
 
