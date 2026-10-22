@@ -277,6 +277,15 @@ For a composite Symbol, the existing `<placement>:partN` sibling identities may
 recover their exact endpoint placement only when every sibling has the same
 source, purpose and completed bounds. Reject conflicting siblings or a colliding
 unsuffixed primitive; never merge by source alone or infer a union of bounds.
+Native, folded and lane glyph emission and completed-endpoint observation share
+one neutral component-identity utility. Explicitly painted components use the
+canonical `:partN` grammar; an unsplit implicit-paint primitive retains its base
+identity. Resolution requires unique, contiguous indices starting at zero and
+the same strict sibling evidence as previous-Scene host decoding. The former
+lane-only `:part:N` spelling is replaced, including dependent host-placement
+references; no compatibility identity is retained. This changes component IDs,
+not geometry, paint, temporal endpoints or routing policy. Old alternate IDs
+cannot authorize a recovered-crossing observation.
 For a schema-validated fan-in non-owner, decode the shared end-terminal evidence
 from its exact `terminalOwnerId` relation on the same surface/target port. The
 absent local paint is not evidence of an unconfigured terminal. Preserve the
