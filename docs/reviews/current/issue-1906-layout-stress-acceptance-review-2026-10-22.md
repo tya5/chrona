@@ -2,14 +2,16 @@
 
 # Issue 1906 — layout stress acceptance review
 
-**Not release-accepted; keep issue1906 open.** Functional evidence below does not
-replace final-head CI and the three-OS run on the exact review-containing main.
-PR [1914](https://github.com/tya5/chrona/pull/1914), head1275ccda3, is in
-[CI39865857613](https://github.com/tya5/chrona/actions/runs/39865857613).
+**Functional acceptance evidence is complete; release acceptance is a separate gate.**
+Keep issue1906 open until successful final-head CI and the three-OS run on the
+exact review-containing main are recorded in its closing comment.
+PR [1914](https://github.com/tya5/chrona/pull/1914), head1275ccda3, passed
+[CI39865857613](https://github.com/tya5/chrona/actions/runs/39865857613) and merged
+at2d10bb5da6bab2cf7b58aa3d45c67d371a04f5e5.
 The live-progress residual is published at
 [e075a1e5a](https://github.com/tya5/chrona/commit/e075a1e5a), after its
 pre-code specification [d28b3ba37](https://github.com/tya5/chrona/commit/d28b3ba37);
-its PR/release gate remains pending.
+its current publication/release receipt is maintained in the issue work record.
 
 Authority: [current work record](https://github.com/tya5/chrona/issues/1906#issuecomment-6332734477),
 [progress correction](https://github.com/tya5/chrona/issues/1906#issuecomment-6352889826),
@@ -81,6 +83,7 @@ No rollback, golden edit or clearance waiver was used.
 Separate highlight/leader contract issue [1935](https://github.com/tya5/chrona/issues/1935)
 is explicitly reviewer-parked after RC, outside this issue.
 
-Before closure: green final implementation CI, progress-follow-up publication/CI,
-successful exact review-containing-main three-OS pytest/conformance/wheel-smoke
-and newest-Python materializer evidence. Snapshot identity is not a release gate.
+Release rule: the issue closing comment must cite successful final implementation
+and progress-follow-up CI, plus the exact review-containing-main three-OS
+pytest/conformance/wheel-smoke and newest-Python materializer evidence.
+Snapshot identity is not a release gate.
