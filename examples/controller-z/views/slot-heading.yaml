@@ -130,6 +130,42 @@ body:
         - rule
       connector:
         kind: leader
+    - id: rail-card
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes:
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: none
+    - id: terminal-list
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes:
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: none
   - id: pvt-note
     purpose: callout
     projectAnnotation: pvt-exit
@@ -157,3 +193,39 @@ body:
         - rule
       connector:
         kind: leader
+    - id: rail-card
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes:
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: none
+    - id: terminal-list
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes:
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: none
