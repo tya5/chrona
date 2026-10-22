@@ -109,7 +109,7 @@ root:
       children:
         - id: title-panel
           kind: row
-          inlineSize: {fixed: {token: title-panel-width}}
+          inlineSize: {minmax: {min: {fixed: 0}, max: {fixed: {token: title-panel-width}}}}
           blockSize: fill
           gap: {token: spacing.l}
           padding: {token: spacing.m}

@@ -196,9 +196,23 @@ def _retain_required_row_blocks(measurements: list[Measurement | None],
 def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None,
                profile: ResolvedLayoutProfile, path: str,
                sizing: LayoutSizingContext | None = None) -> tuple[Decimal, Decimal | None, Decimal]:
-    base = _unbounded_spec_base(spec, axis=axis, measurement=measurement, profile=profile, path=path)
     budget = sizing.by_path.get(path.removesuffix("/inlineSize")) if sizing and axis == "inline" else None
+    base = _unbounded_spec_base(spec, axis=axis, measurement=measurement, profile=profile, path=path,
+                                preserve_intrinsic_minimum=budget is not None)
     dependencies = _intrinsic_floor_dependencies(spec, measurement)
+    if budget is not None:
+        # A source ceiling may be wider than a finite author cap. The source's
+        # mandatory minimum must fit both constraints; checking only its probe
+        # budget could otherwise admit a floor above the authored track max.
+        track_cap = base[1] if isinstance(spec, dict) and "minmax" in spec else None
+        effective_ceiling = min(budget.ceiling, track_cap) if track_cap is not None else budget.ceiling
+        if base[0] > effective_ceiling:
+            if budget.source_kind == "heading" and dependencies:
+                raise CountDependentHeadingFitError(
+                    budget.path, budget.slot_id,
+                    "intrinsic text minimum exceeds the effective declared ceiling", dependencies)
+            raise LayoutError(budget.failure_code, budget.path, budget.slot_id,
+                              "mandatory inline minimum exceeds the effective declared ceiling")
     return _limit_inline_base(base, budget, dependencies) if budget is not None else base
 
 
@@ -216,7 +230,28 @@ def _intrinsic_floor_dependencies(spec: Any, measurement: Measurement | None) ->
     return frozenset()
 
 
-def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile: ResolvedLayoutProfile, path: str) -> tuple[Decimal, Decimal | None, Decimal]:
+def _minimum_contains_authored_fixed_size(spec: Any) -> bool:
+    """Whether a minmax minimum contains a fixed author floor, not a measured floor."""
+    if isinstance(spec, dict) and "fixed" in spec:
+        return True
+    if isinstance(spec, dict) and "minmax" in spec:
+        return _minimum_contains_authored_fixed_size(spec["minmax"]["min"])
+    return False
+
+
+def _minimum_is_intrinsic(spec: Any) -> bool:
+    if isinstance(spec, str):
+        return spec in {"content", "min-content", "max-content"}
+    if isinstance(spec, dict) and "fitContent" in spec:
+        return True
+    if isinstance(spec, dict) and "minmax" in spec:
+        return _minimum_is_intrinsic(spec["minmax"]["min"])
+    return False
+
+
+def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | None,
+                         profile: ResolvedLayoutProfile, path: str,
+                         preserve_intrinsic_minimum: bool = False) -> tuple[Decimal, Decimal | None, Decimal]:
     """Return minimum, preferred/fixed target, and flex weight."""
     if spec == "fill":
         return ZERO, None, Decimal(1)
@@ -237,8 +272,26 @@ def _unbounded_spec_base(spec: Any, *, axis: str, measurement: Measurement | Non
         # an empty table slot collapses to zero width (#1683).
         return ZERO, ZERO, ZERO
     if isinstance(spec, dict) and "minmax" in spec:
-        low, _, _ = _spec_base(spec["minmax"]["min"], axis=axis, measurement=measurement, profile=profile, path=path + "/minmax/min")
+        minimum_spec = spec["minmax"]["min"]
+        low, _, _ = _unbounded_spec_base(minimum_spec, axis=axis, measurement=measurement,
+                                         profile=profile, path=path + "/minmax/min",
+                                         preserve_intrinsic_minimum=preserve_intrinsic_minimum)
         _, high, weight = _spec_base(spec["minmax"]["max"], axis=axis, measurement=measurement, profile=profile, path=path + "/minmax/max")
+        if high is not None and low > high:
+            if _minimum_contains_authored_fixed_size(minimum_spec):
+                raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", path + "/minmax",
+                                  detail="authored minmax minimum exceeds its finite maximum")
+            if _minimum_is_intrinsic(minimum_spec) and not preserve_intrinsic_minimum:
+                # Intrinsic minima are measured demands, not authored floors.
+                # When they exceed a finite maximum, retain the maximum and
+                # let the child owner report its visible content overflow.
+                low = high
+        # A finite maximum without an explicit fractional weight is a bounded
+        # flexible track. It shares available space, but the allocator still
+        # freezes it at its declared minimum/maximum. Equal bounds naturally
+        # remain a point; an explicit fr maximum keeps its authored weight.
+        if high is not None and weight == ZERO:
+            weight = Decimal(1)
         return low, high, weight
     if measurement is None:
         raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", path)
@@ -372,9 +425,12 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
             "fixed" in inline_spec or ("minmax" in inline_spec
                 and isinstance(inline_spec["minmax"]["max"], dict)
                 and "fixed" in inline_spec["minmax"]["max"])))
-        if fixed_ceiling and base[1] is not None and width > base[1]:
+        if (fixed_ceiling and base[1] is not None and minimum > base[1]):
             raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", child_path + "/inlineSize",
                               str(child["id"]), "Flow item minimum exceeds its authored inline ceiling")
+        if (isinstance(inline_spec, dict) and "minmax" in inline_spec
+                and base[1] is not None):
+            width = min(width, base[1])
         if budget is not None:
             width = (base[1] if base[2] == ZERO and base[1] is not None
                      else min(width, budget.ceiling))
@@ -389,8 +445,11 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
         if not (isinstance(block_spec, dict) and "aspectRatio" in block_spec):
             block_minimum, block_target, block_weight = _spec_base(
                 block_spec, axis="block", measurement=measured, profile=profile, path=child_path + "/blockSize")
-            height = (block_target if block_spec != "content" and block_weight == ZERO and block_target is not None
-                      else max(block_minimum, height))
+            if block_weight > ZERO and block_target is not None:
+                height = min(block_target, max(block_minimum, height))
+            else:
+                height = (block_target if block_spec != "content" and block_weight == ZERO and block_target is not None
+                          else max(block_minimum, height))
         if isinstance(child.get("inlineSize"), dict) and "aspectRatio" in child["inlineSize"]:
             width = max(minimum, height * _d(child["inlineSize"]["aspectRatio"]))
         if isinstance(child.get("blockSize"), dict) and "aspectRatio" in child["blockSize"]:
@@ -503,8 +562,10 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
         required = block(node, path, available_inline)
         if node["kind"] != "slot":
             measured = _block_measurement(measured, required)
-        minimum, target, _ = _spec_base(node["blockSize"], axis="block", measurement=measured,
-                                        profile=profile, path=path + "/blockSize")
+        minimum, target, weight = _spec_base(node["blockSize"], axis="block", measurement=measured,
+                                             profile=profile, path=path + "/blockSize")
+        if weight > ZERO and target is not None:
+            return min(target, max(minimum, required))
         if node["blockSize"] != "content" and target is not None:
             return target
         return max(minimum, required)
@@ -514,8 +575,10 @@ def measure_natural_normal_flow_block(profile: ResolvedLayoutProfile, *, viewpor
     measure = _measure_for_sizing(root, node_path, measurements, profile, sizing)
     if root["kind"] != "slot":
         measure = _block_measurement(measure, natural)
-    minimum, target, _ = _spec_base(root["blockSize"], axis="block", measurement=measure,
-                                    profile=profile, path=node_path + "/blockSize")
+    minimum, target, weight = _spec_base(root["blockSize"], axis="block", measurement=measure,
+                                         profile=profile, path=node_path + "/blockSize")
+    if weight > ZERO and target is not None:
+        return min(target, max(minimum, natural))
     if root["blockSize"] != "content" and target is not None:
         return target
     return max(minimum, natural)
@@ -548,7 +611,12 @@ def _cross_size(base: tuple[Decimal, Decimal | None, Decimal], available: Decima
                 *, stretch: bool) -> Decimal:
     _, target, weight = base
     if weight > ZERO:
-        return _resolve_flexible_tracks([base], available)[0] if stretch else available
+        # A finite flexible ceiling is active even for start-aligned cross
+        # placement. Unbounded fr/fill tracks keep their established alignment
+        # behavior.
+        if target is not None or stretch:
+            return _resolve_flexible_tracks([base], available)[0]
+        return available
     return target if target is not None else available
 
 

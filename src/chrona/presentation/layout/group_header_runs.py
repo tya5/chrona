@@ -111,7 +111,9 @@ def wrap_group_header_runs(*, runs: tuple[tuple[str, str | None], ...], availabl
 def place_wrapped_group_header_runs(*, group_id: str,
                                     lines: tuple[tuple[GroupHeaderRunSegment, ...], ...],
                                     start: Decimal, size: Decimal, top_block: float,
-                                    line_blocks: tuple[float, ...], theme_tokens: Any, font_metrics: Any
+                                    line_blocks: tuple[float, ...],
+                                    line_baseline_offsets: tuple[float, ...],
+                                    theme_tokens: Any, font_metrics: Any
                                     ) -> tuple[TextPlacement, ...]:
     """Place premeasured wrapped segments on shared per-line baselines in source order."""
     placements: list[TextPlacement] = []
@@ -120,11 +122,11 @@ def place_wrapped_group_header_runs(*, group_id: str,
     for line_index, line in enumerate(lines):
         cursor = float(start)
         line_block = line_blocks[line_index] if line_index < len(line_blocks) else 0.0
-        top_inset = min(((segment.block_size - segment.font_size) / 2 for segment in line), default=0.0)
+        baseline_offset = (line_baseline_offsets[line_index]
+                           if line_index < len(line_baseline_offsets) else 0.0)
         for segment in line:
             cursor += segment.gap
-            baseline = (top_block + line_offset + (segment.block_size - segment.font_size) / 2
-                        - top_inset + segment.font_size)
+            baseline = top_block + line_offset + baseline_offset
             placement_id = f"{prefix}{len(placements)}"
             placements.append(place_text(
                 placement_id=placement_id, source_ref=group_id, content=segment.text,

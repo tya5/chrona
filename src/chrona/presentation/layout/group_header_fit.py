@@ -98,6 +98,7 @@ class GroupHeaderFit:
     horizontal_fits: bool = True
     uses_vertical_tag: bool = True
     horizontal_run_lines: tuple[tuple[GroupHeaderRunSegment, ...], ...] | None = None
+    horizontal_line_baseline_offsets: tuple[float, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -177,17 +178,23 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
     groups: list[GroupHeaderFit] = []
     for group_id, label in labels:
         run_lines = None
+        line_baseline_offsets: tuple[float, ...] = ()
         if marked_runs is not None and group_id in marked_runs:
             run_lines = wrap_group_header_runs(runs=marked_runs[group_id], available_inline=header_inline_size,
                                                theme_tokens=theme_tokens, font_metrics=font_metrics)
             lines = tuple("".join(segment.text for segment in line) for line in run_lines)
             widest = max((sum(segment.gap + segment.width for segment in line) for line in run_lines), default=0.0)
             minimum_unit = max((segment.width for line in run_lines for segment in line), default=0.0)
-            line_blocks = tuple(
-                max(((segment.block_size - segment.font_size) / 2 + segment.block_size
-                     for segment in line), default=line_block)
-                - min(((segment.block_size - segment.font_size) / 2 for segment in line), default=0.0)
+            # Text ink bounds begin at baseline - font_size and extend by
+            # block_size. Close each mixed-role line around those actual
+            # extents once, before placement, and retain the shared baseline
+            # offsets as measured plan facts.
+            line_baseline_offsets = tuple(
+                max((segment.font_size for segment in line), default=0.0)
                 for line in run_lines)
+            line_blocks = tuple(
+                baseline + max((segment.block_size - segment.font_size for segment in line), default=0.0)
+                for baseline, line in zip(line_baseline_offsets, run_lines, strict=True))
             horizontal_block_size = (minimum_header_block_size if len(run_lines) <= 1 else
                                      max(minimum_header_block_size, sum(line_blocks)))
             horizontal_fits = header_inline_size > 0 and all(
@@ -217,7 +224,8 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
                 vertical_label_required_block(label=label, typography_role="groupHeader",
                                           theme_tokens=theme_tokens, font_metrics=font_metrics),
             lines, horizontal_block_size,
-            Decimal(str(minimum_unit)), line_blocks, horizontal_fits, vertical_tag_plan, run_lines))
+            Decimal(str(minimum_unit)), line_blocks, horizontal_fits, vertical_tag_plan, run_lines,
+            line_baseline_offsets))
     return GroupHeaderFitPlan(tuple(groups), header_inline_start, header_inline_size,
                               minimum_header_block_size, source_inline_prefix,
                               vertical_tag_plan, source_inline_demand)

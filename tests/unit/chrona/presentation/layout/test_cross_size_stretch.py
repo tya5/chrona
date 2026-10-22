@@ -148,7 +148,7 @@ def test_minmax_fixed_target_is_not_replaced_by_cross_stretch():
 
     small_manifest = solve_layout(too_small, viewport_inline=20, viewport_block=100,
                                   measurements={"child": measurement()})
-    assert decisions(small_manifest)["child"].inline_size == Decimal(50)
+    assert decisions(small_manifest)["child"].inline_size == Decimal(30)
     assert any(warning.placement_id == "child" for warning in small_manifest.fit_warnings)
     assert decisions(solve_layout(too_large, viewport_inline=80, viewport_block=100,
                                   measurements={"child": measurement()}))["child"].inline_size == Decimal(50)

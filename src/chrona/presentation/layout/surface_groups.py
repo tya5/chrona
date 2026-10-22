@@ -280,6 +280,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                     placed = place_wrapped_group_header_runs(
                         group_id=group.group_id, lines=fit.horizontal_run_lines, start=start, size=size,
                         top_block=top_block, line_blocks=line_blocks,
+                        line_baseline_offsets=fit.horizontal_line_baseline_offsets,
                         theme_tokens=request.theme_tokens, font_metrics=request.font_metrics)
                     text.extend(placed)
                     retain_header_band_geometry(group, start, placed)

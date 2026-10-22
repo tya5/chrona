@@ -468,9 +468,9 @@ def complete_legend_layout(entries: tuple[SurfaceLegendEntry, ...], *, available
         reservation = reservations[index]
         minimum_label = minimum_labels[index]
         minimum_entry = minimum_widths[index]
-        if direction == "inline" and used > 0:
+        if direction == "inline" and item_min_inline is not None and used > 0:
             remaining = available_inline - used
-            if remaining < max(item_min_inline or Decimal(0), minimum_entry):
+            if remaining < max(item_min_inline, minimum_entry):
                 top += current_row_block + gap
                 used = current_row_block = Decimal(0)
         cell_width = max(Decimal(0), available_inline - used)

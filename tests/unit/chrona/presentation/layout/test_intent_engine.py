@@ -611,11 +611,11 @@ def test_candidate_demand_keeps_shortage_evidence_from_returned_capped_manifest(
         required_blocks=demand)
     constant_map = resolve_content_block_extent(
         resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
-        required_blocks={"timeline": Decimal(600)})
+        required_blocks={"timeline": Decimal(550)})
     assert result.extent == 900
     assert result == constant_map
     assert [(item.required_block, item.allocated_block) for item in result.short_sources] == [
-        (Decimal(600), Decimal(500))]
+        (Decimal(550), Decimal(450))]
 
 
 def test_static_and_candidate_demand_shortfalls_describe_returned_manifest():
