@@ -14,7 +14,7 @@ from chrona.presentation.scene.model import (
     _validate_style_semantic_metadata,
 )
 from chrona.presentation.model.semantic_registry import contrast_binding_for_primitive, semantic_binding
-from chrona.presentation.style import EncodingWitness
+from chrona.presentation.style import EncodingWitness, LegendEncodingCoverage
 from chrona.resources import schema_validator
 from chrona.resources.semantic_vocabulary import KIND as VOCABULARY_KIND, builtin_semantic_vocabulary
 from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
@@ -85,6 +85,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
         for surface in scene.surfaces for primitive in surface.primitives)
     has_encoding_metadata = any(primitive.encoding is not None
                                 for surface in scene.surfaces for primitive in surface.primitives)
+    has_legend_encoding_coverage = any(primitive.legend_encoding_coverage is not None
+                                       for surface in scene.surfaces for primitive in surface.primitives)
     has_mark_ground_metadata = any(primitive.mark_ground is not None
                                    for surface in scene.surfaces for primitive in surface.primitives)
     return {
@@ -92,7 +94,8 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                     or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
                     or has_relation_endpoint_identity or has_window_absences or has_row_absences
                     or has_style_semantic_metadata
-                    or has_style_provenance_metadata or has_encoding_metadata or has_mark_ground_metadata
+                    or has_style_provenance_metadata or has_encoding_metadata or has_legend_encoding_coverage
+                    or has_mark_ground_metadata
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -231,6 +234,40 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
                                if item["kind"] == source.kind and item["id"] == source.resource_id]
                     if len(matches) != 1:
                         raise _scene_error("E_RESOURCE_IDENTITY_MISMATCH: Scene encoding source must join exactly one pinned provenance resource")
+    if any("legendEncodingCoverage" in primitive
+           for surface in document.get("surfaces", ())
+           for primitive in surface.get("primitives", ())):
+        resources = document["provenance"]["resources"]
+        for surface in document.get("surfaces", ()):
+            for primitive in surface.get("primitives", ()):
+                raw = primitive.get("legendEncodingCoverage")
+                if raw is None:
+                    continue
+                try:
+                    coverage = LegendEncodingCoverage.from_mapping(raw)
+                except (TypeError, ValueError, KeyError) as error:
+                    raise _scene_error(f"E_PRESENTATION_PRIMITIVE_INVALID: legend encoding coverage is malformed ({type(error).__name__})") from error
+                paint = primitive.get("paint")
+                stroke_width = paint.get("strokeWidth") if isinstance(paint, Mapping) else None
+                visible_stroke = (isinstance(paint, Mapping) and paint.get("stroke") is not None
+                                  and _finite(stroke_width) and stroke_width > 0)
+                visible_encoding_channel = (isinstance(paint, Mapping) and
+                                            (paint.get("fill") is not None if coverage.paint_channel == "fill"
+                                             else visible_stroke))
+                if (primitive.get("kind") not in {"Rect", "Symbol", "Path"}
+                        or primitive.get("sourceKind") != "legend"
+                        or primitive.get("purpose") != "legend-swatch"
+                        or not isinstance(paint, Mapping)
+                        or (not visible_encoding_channel if coverage.kind == "encoding"
+                            else paint.get("fill") is None and not visible_stroke)):
+                    ink = coverage.paint_channel if coverage.kind == "encoding" else "visible fill or stroke"
+                    raise _scene_error(f"E_PRESENTATION_PRIMITIVE_INVALID: {coverage.kind} legend encoding coverage requires {ink} on a legend-swatch Rect, Symbol, or Path")
+                for witness in coverage.witnesses:
+                    for source in witness.sources:
+                        matches = [item for item in resources
+                                   if item["kind"] == source.kind and item["id"] == source.resource_id]
+                        if len(matches) != 1:
+                            raise _scene_error("E_RESOURCE_IDENTITY_MISMATCH: Scene legend encoding coverage source must join exactly one pinned provenance resource")
     try:
         for surface in document.get("surfaces", ()):
             for primitive in surface.get("primitives", ()):
@@ -747,6 +784,8 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
                          "showScope": item.legend_scope.show_scope}
                         if item.legend_scope is not None else None),
         "encoding": item.encoding.as_mapping() if item.encoding is not None else None,
+        "legendEncodingCoverage": (item.legend_encoding_coverage.as_mapping()
+                                   if item.legend_encoding_coverage is not None else None),
         "markGround": item.mark_ground,
         "text": item.text, "baseline": _point(item.baseline) if item.baseline is not None else None,
         "textLayout": _text_layout(item.text_layout) if item.text_layout is not None else None,

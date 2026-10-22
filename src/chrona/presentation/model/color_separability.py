@@ -1,8 +1,8 @@
 """Perceptual separability of categorical colours (Specification 60).
 
-Pure colour arithmetic: CIEDE2000 on sRGB and colour-vision-deficiency
-simulation with the Machado, Oliveira and Fernandes (2009) matrices at
-severity 1.0.  No Theme, Layout or renderer knowledge lives here.
+Pure colour arithmetic: CIEDE2000 on sRGB, grayscale projection, and
+colour-vision-deficiency simulation with the Machado, Oliveira and Fernandes
+(2009) matrices at severity 1.0. No Theme, Layout or renderer knowledge lives here.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ MINIMUM_CATEGORY_DELTA_E = 5.0
 # CIELAB chroma below which a colour is a grey and carries no hue to reserve (#1628).
 MINIMUM_RESERVED_CHROMA = 12.0
 SIMULATED_VISIONS = ("protanopia", "deuteranopia", "tritanopia")
+CHECKED_VISIONS = ("normal", *SIMULATED_VISIONS)
 
 _MACHADO = {
     "protanopia": ((0.152286, 1.052583, -0.204868), (0.114503, 0.786281, 0.099216), (-0.003882, -0.048116, 1.051998)),
@@ -65,6 +66,12 @@ def _lab(linear: tuple[float, float, float]) -> tuple[float, float, float]:
 def _simulate(linear: tuple[float, float, float], vision: str) -> tuple[float, float, float]:
     if vision == "normal":
         return linear
+    if vision == "grayscale":
+        # A full-precision linear-sRGB grey has the same value in every
+        # channel; this is equivalent to sRGB-encoding and decoding Y without
+        # quantizing the intermediate colour to an 8-bit palette.
+        luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+        return luminance, luminance, luminance
     matrix = _MACHADO[vision]
     red, green, blue = (sum(row[index] * linear[index] for index in range(3)) for row in matrix)
     return red, green, blue
@@ -115,19 +122,17 @@ def chroma(hex_colour: str) -> float:
 
 def delta_e_2000(first: str, second: str, *, vision: str = "normal") -> float:
     """Return the CIEDE2000 difference of two sRGB colours as seen under ``vision``."""
-    if vision != "normal" and vision not in _MACHADO:
+    if vision not in ("normal", "grayscale", *_MACHADO):
         raise ValueError(f"E_COLOR_VISION_UNKNOWN:{vision}")
     return _ciede2000(_lab(_simulate(_linear(first), vision)), _lab(_simulate(_linear(second), vision)))
 
 
-def scale_collisions(scale_id: str, colours: tuple[tuple[str, str], ...],
-                     color_vision: tuple[str, ...] = ()) -> tuple[ScaleCollision, ...]:
-    """Return every domain pair below the minimum, in domain order, then vision order."""
-    visions = ("normal", *(vision for vision in SIMULATED_VISIONS if vision in color_vision))
+def scale_collisions(scale_id: str, colours: tuple[tuple[str, str], ...]) -> tuple[ScaleCollision, ...]:
+    """Return every pair below the minimum under normal and all CVD simulations."""
     collisions = []
     for (first, first_colour), (second, second_colour) in combinations(colours, 2):
-        for vision in visions:
+        for vision in CHECKED_VISIONS:
             distance = delta_e_2000(first_colour, second_colour, vision=vision)
             if distance < MINIMUM_CATEGORY_DELTA_E:
-                collisions.append(ScaleCollision(scale_id, first, second, vision, round(distance, 3)))
+                collisions.append(ScaleCollision(scale_id, first, second, vision, distance))
     return tuple(collisions)

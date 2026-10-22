@@ -40,7 +40,7 @@ allOf:
                     semantic: {description: "Original semantic identity of the projected mark.", type: string, minLength: 1}
                     purpose: {description: "Original declared purpose of the projected mark.", type: string, minLength: 1}
                     comparisonCategory: {description: "Projected comparison classification.", $ref: "#/$defs/comparisonCategory"}
-                    columnSource: {description: "Exact source declaration of a View table column.", $ref: "urn:chrona:common-v0.1#/$defs/tableColumnSource"}
+                    columnSource: {description: "Exact source declaration of a View table column.", $ref: "urn:chrona:common-v0.2#/$defs/tableColumnSource"}
                     roles:
                       description: "One or more original projection roles, before any Style role selection."
                       type: array

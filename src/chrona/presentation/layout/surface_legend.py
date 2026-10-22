@@ -12,8 +12,10 @@ from chrona.presentation.layout.text import (TextSegment, ellipsize_text, measur
                                              metric_for_role, place_text)
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_periods import compose_period_decoration
-from chrona.presentation.layout.mark_geometry import SymbolPartPlacement, complete_point_outline, symbol_parts
-from chrona.presentation.layout.legend_ink import actual_symbol_token
+from chrona.presentation.layout.mark_geometry import (
+    SymbolPartPlacement, complete_point_outline, symbol_parts, place_canonical_point_geometry,
+)
+from chrona.presentation.layout.legend_ink import point_symbol_token
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.semantic_registry import semantic_binding, mark_style_role
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
@@ -214,6 +216,10 @@ def _segment_width(segments: tuple[TextSegment, ...], *, font_size: float, font_
 
 def _entry_label_width(entry: SurfaceLegendEntry, *, font_size: float, font_metrics: Any,
                        treatment: Any) -> float:
+    if entry.label_variants:
+        return max(_entry_label_width(replace(entry, label=label, label_variants=()),
+                                     font_size=font_size, font_metrics=font_metrics, treatment=treatment)
+                   for label in (entry.label, *entry.label_variants))
     segments = _legend_text_segments(entry, treatment.transform)
     if segments is not None:
         return _segment_width(segments, font_size=font_size, font_metrics=font_metrics, treatment=treatment)
@@ -290,10 +296,16 @@ def legend_source_input(entries: tuple[SurfaceLegendEntry, ...], *, tokens: Any,
     """
     treatment = tokens.text_treatment("legend")
     legend_size = float(treatment.font_size)
-    gap = _legend_item_gap_decimal(arrangement.gap, legend_size)
-    label_gaps = tuple(entry_label_gap(entry, arrangement.gap, tokens, legend_size) for entry in entries)
     if not entries:
         return SourceInput(("legend",), typography_role="legend")
+    # Size each potential key once using its widest possible final coverage label.
+    metrics = metric_for_role(tokens, "legend", font_metrics)
+    entries = tuple(replace(entry, label=max((entry.label, *entry.label_variants),
+        key=lambda label: _entry_label_width(replace(entry, label=label, label_variants=()),
+            font_size=legend_size, font_metrics=metrics, treatment=treatment)), label_variants=())
+        if entry.label_variants else entry for entry in entries)
+    gap = _legend_item_gap_decimal(arrangement.gap, legend_size)
+    label_gaps = tuple(entry_label_gap(entry, arrangement.gap, tokens, legend_size) for entry in entries)
     entry_extents = tuple(entry_swatch_extent(entry, tokens, mark_block_size, legend_size)
                           for entry in entries)
     extents = tuple(width for width, _height, _bucket in entry_extents)
@@ -427,13 +439,17 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             key = entry.realized_key
             if key.glyph is not None:
                 bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-                parts, geometry_identity = _completed_point_key_parts(
-                    actual_symbol_token(request.theme_tokens, key.glyph.selected_role),
-                    (x, y, width, height), key.paint_role, request.theme_tokens)
+                if key.point_state is not None:
+                    geometry_identity = key.glyph.geometry_identity
+                    parts = place_canonical_point_geometry(geometry_identity, (x, y, width, height))
+                else:
+                    parts, geometry_identity = _completed_point_key_parts(
+                        point_symbol_token(request.theme_tokens, key.glyph.selected_role, "actual"),
+                        (x, y, width, height), key.paint_role, request.theme_tokens)
                 assert len(parts) == len(key.glyph.paints), "composite key geometry and ink must stay aligned"
                 center = (x + width / 2, y + height / 2)
                 marks.append(MarkPlacement(swatch_id, entry.source_identity, bounds, center, center,
-                    mark_shape="point", slot_id=legend.slot_id, semantic_id="actual",
+                    mark_shape="point", slot_id=legend.slot_id, semantic_id=key.point_state or "actual",
                     theme_role=key.paint_role, symbol_parts=parts, legend_paints=key.glyph.paints,
                     legend_geometry_identity=geometry_identity))
                 return
@@ -646,5 +662,14 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
             float(legend.bounds.inline_size), float(legend.bounds.block_size)))
     replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                legend.bounds.inline_size, final_size))
+    coverage = {}
+    for entry, (_, _, bucket) in zip(entries, geometries, strict=True):
+        witness = (entry.realized_key.legend_encoding_coverage
+                   if entry.realized_key is not None else entry.legend_encoding_coverage)
+        if witness is not None and witness.kind == "encoding":
+            witness = replace(witness, paint_channel="stroke" if bucket == "rule-pair" else "fill")
+        coverage[entry.source_identity] = witness
+    marks = [replace(mark, legend_encoding_coverage=coverage.get(mark.source_ref)) for mark in marks]
+    shapes = [replace(shape, legend_encoding_coverage=coverage.get(shape.source_ref)) for shape in shapes]
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
                               tuple(side_content_warnings), legend, tuple(label_targets))

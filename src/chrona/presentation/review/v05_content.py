@@ -218,7 +218,9 @@ def _table_column_header(column: Any, projection: ReviewProjection, view: ViewIn
                          resolver: WordingResolver) -> str:
     """Resolve the built-in finish-delta header against the comparison actually shown (#1810)."""
     key = getattr(column, "header_wording_key", None)
-    if key != "column.finishDelta" or not _is_finish_delta_source(column.source):
+    if (key != "column.finishDelta"
+            or not (_is_finish_delta_source(column.source)
+                    or _is_snapshot_finish_delta_source(column.source))):
         return resolver.resolve(column.header) if column.header is not None else column.id
 
     wording = view.wording or {}
@@ -227,6 +229,8 @@ def _table_column_header(column: Any, projection: ReviewProjection, view: ViewIn
     # select a wording key from the bound comparison source, not from the rendered text or View baseline.
     if isinstance(overrides, Mapping) and "column.finishDelta" in overrides:
         return resolver.resolve(column.header)
+    if _is_snapshot_finish_delta_source(column.source):
+        return resolver.text("column.finishDeltaBaseline")
     has_forecast = any(item.forecast is not None for item in _table_subjects(projection))
     reference = ("Baseline" if has_forecast and "snapshot" in projection.bound_comparison_sources
                  else "Plan")
@@ -279,6 +283,8 @@ def _table_column_source_available(source: Any, projection: ReviewProjection,
     if facet == "finishDelta":
         return (actual_set is not None
                 or any(item.forecast is not None for item in subjects))
+    if facet == "snapshotFinishDelta":
+        return "snapshot" in projection.bound_comparison_sources
     if facet in {"startDelta", "atDelta", "progress", "missingActual"}:
         return actual_set is not None
     return True
@@ -416,6 +422,10 @@ CALENDAR_CLOSED_LEGEND_ROLE = "calendar-closed"
 def _is_finish_delta_source(source: Any) -> bool:
     return (isinstance(source, Mapping)
             and (source.get("facet") == "finishDelta" or source.get("comparisonFacet") == "finishDelta"))
+
+
+def _is_snapshot_finish_delta_source(source: Any) -> bool:
+    return isinstance(source, Mapping) and source.get("comparisonFacet") == "snapshotFinishDelta"
 
 
 def _is_forecast_delta(item: Any, source: Any) -> bool:
@@ -834,9 +844,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))),
                                actual_variance_paints=select_actual_variance_paints(
                                    projection, actual_variance_colors or {}))
-    needs_actual_candidates = any(entry.role == "actual" for entry in content.legend_entries)
+    point_state_owners = {"planned", "actual", "forecast", "milestone"}
+    needs_point_state_candidates = any(entry.role in point_state_owners for entry in content.legend_entries)
     facts = (collect_surface_style_facts(projection, content, gate_declared=gate_declared)
-             if style_rules or encoding_rules or needs_actual_candidates else None)
+             if style_rules or encoding_rules or needs_point_state_candidates else None)
     potential_roles = (frozenset(item.key.semantic_id for item in facts.occurrences
                                 if item.primitive_family == "mark") if facts is not None
                        else surface_comparison_mark_semantics(projection, content, gate_declared=gate_declared))

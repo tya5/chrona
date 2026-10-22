@@ -26,7 +26,7 @@ def _render(tmp_path, source, parts, *, actual=None):
                      visual_profile="chrona-output/visual/v0.7-svg")
 
 
-@pytest.mark.parametrize("groups", (1, 3))
+@pytest.mark.parametrize("groups", (1, 4))
 def test_role_visual_fans_out_to_each_realized_hashed_label(tmp_path, groups):
     actual = deepcopy(ACTUAL)
     if groups == 1:

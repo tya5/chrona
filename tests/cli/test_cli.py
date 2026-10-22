@@ -322,10 +322,11 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
     render = parser.parse_args(["render", "project.yaml", "--output", "timeline.svg"])
     assert render.preset is None
     assert render.format is None
-    assert render.viewport == "1600xauto"
+    # Omission stays distinct until ingress resolves the effective Layout.
+    assert render.viewport is None
     assert render.snapshot is None
     workspace = parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"])
-    assert workspace.viewport == "1600xauto" and workspace.format is None
+    assert workspace.viewport is None and workspace.format is None
     assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
 
 
@@ -484,22 +485,11 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
     envelope = json.loads(capsys.readouterr().out)
     assert envelope["status"] == "ok"
     warnings = envelope["warnings"]
-    legend_warning, = [item for item in warnings if item["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
-    assert legend_warning["diagnostic"] == "W_LEGEND_COLOR_NOT_SEPARABLE:normal:0.0"
-    assert legend_warning["severity"] == "warning"
-    assert legend_warning["sourceRef"] == "legend-key:planned"
-    assert legend_warning["sourceTitle"] == "Task duration (planned)"
-    assert legend_warning["sourceSubjects"] == [
-        {"sourceRef": "legend-key:planned", "title": "Task duration (planned)"},
-        {"sourceRef": "legend-key:actual:976a22327959f6fd" if with_actual else "legend-key:milestone",
-         "title": "Actual (actual)" if with_actual else "Milestone (milestone)"},
-    ]
-    if with_actual:
-        assert legend_warning["count"] == 4
-    else:
-        assert "count" not in legend_warning
-
-    assert [item for item in warnings if item["code"] != "W_LEGEND_COLOR_NOT_SEPARABLE"] == [{
+    # Equal-ink point and span keys have distinct completed glyphs, so they
+    # remain independently labelled without an ink-only collision warning.
+    assert not [item for item in warnings if item["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
+    assert [item for item in warnings if item["code"] in {
+        "I_LAYOUT_RELATION_ROUTING", "I_LAYOUT_RELATION_POLICY_SUPERSEDED"}] == [{
         "code": "I_LAYOUT_RELATION_ROUTING", "fallbackSearch": 0,
         "message": "0 relations on table-timeline settled without search; 0 used fallback search",
         "relationInstances": 0, "severity": "info", "shapeSettled": 0,

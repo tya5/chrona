@@ -28,8 +28,10 @@ def test_the_folded_other_legend_entry_is_a_table_key(tmp_path, monkeypatch, cap
     owners = ["Ada", "Benoit", "Chika", "Diego", "Eleni", "Farah", "Gabe", "Hana"]
     project = folded._plan(tmp_path, monkeypatch, capsys, owners)
     scene = tmp_path / "scene.json"
+    scheme = folded._mission_light_scheme_without_print_claim(tmp_path)
     result = folded._run(monkeypatch, capsys, "render", "--preset", "mission-light", str(project),
-                         "--layout", str(folded._mission_light_layout_with_legend(tmp_path)), "--locale", locale,
+                         "--layout", str(folded._mission_light_layout_with_legend(tmp_path)),
+                         "--scheme", str(scheme), "--locale", locale,
                          "-o", str(tmp_path / "out.svg"), "--emit-scene", str(scene))
     assert result["status"] == "ok"
     texts = _scene_texts(scene)
@@ -81,8 +83,11 @@ def _render_legend(tmp_path, locale, *, lowercase=False):
 def test_every_new_legend_key_is_japanese_under_ja_jp_and_the_scan_knows_the_english(tmp_path):
     texts, parts = _render_legend(tmp_path, "ja-JP")
     table = wording_catalog()["ja-JP"]
-    for key in ("legend.depends-on", "legend.in-the-wings"):  # the roles this Project draws; an unused role draws no key
-        assert table[key] in texts, (key, texts)
+    assert table["legend.depends-on"] in texts
+    # The realized point figures differ, so the translated owner label has
+    # translated state qualifiers rather than an unqualified duplicate key.
+    assert {table["legend.in-the-wings"] + " · " + table[key]
+            for key in ("legend.planned-plain", "legend.actual")} <= set(texts)
     resolver = wording_resolver("ja-JP", None)
     assert all(resolver.text(key) == table[key] and not re.search("[A-Za-z]", table[key])
                for key in (*NEW_LEGEND_KEYS, "column.no"))

@@ -17,7 +17,7 @@ from chrona.presentation.model.style_fills import StyleFillIndex
 from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.hierarchy_names import NameKey, member_name_key, source_path
-from chrona.presentation.style import StyleLegendScope
+from chrona.presentation.style import LegendEncodingCoverage, StyleLegendScope
 
 
 def _diagnostic_error(code: str, detail: str) -> ValueError:
@@ -245,6 +245,9 @@ class SurfaceLegendEntry:
     style_display_value: str | None = None
     # Text-only explanatory entries keep their identity/label but emit no ink.
     swatch_visible: bool = True
+    # Potential localized state-coverage labels, consumed only by conservative sizing.
+    label_variants: tuple[str, ...] = ()
+    legend_encoding_coverage: LegendEncodingCoverage | None = None
 
     def __post_init__(self) -> None:
         if self.view_scale_id is not None:
@@ -431,6 +434,9 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
         declared = project.get("scenarios", {}).get(item.scenario_id, {})
         return declared.get("title") if isinstance(declared, dict) else None
     facet = source["comparisonFacet"]
+    if facet == "snapshotFinishDelta":
+        return (getattr(item, "snapshot_finish_delta", None)
+                if item.source_kind in {"primary", "combined"} else None)
     missing_actual = (True if item.observation_state == ObservationState.DUE_UNOBSERVED else
                       False if item.observation_state == ObservationState.RECORDED else None)
     return {"finishDelta": display_finish_delta(item), "missingActual": missing_actual,

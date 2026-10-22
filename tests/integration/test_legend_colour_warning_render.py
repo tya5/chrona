@@ -6,11 +6,15 @@ from tests.integration.test_realized_legends import (
     ACTUAL, _detail, _parts, _render, _render_with_style, _source, _svg_fills,
 )
 from tests.support import synthetic_review as sr
+from chrona.presentation.model.color_separability import delta_e_2000
 
 
 def _encoded_parts(slots=None):
     slots = slots or {"a": "#269D78"}
     parts = _parts()
+    # Compare the candidate slot to an equivalent-shaped Actual witness.
+    parts["theme"]["body"]["roles"]["planned"]["markCornerRadius"] = "mark-radius-square"
+    parts["theme"]["body"]["roles"]["actual"]["markCornerRadius"] = "mark-radius-square"
     parts["view"]["body"]["colorEncoding"] = {
         "scale": "risk", "target": "planned", "source": {"field": "owner"}, "domain": list(slots)}
     parts["theme"]["body"]["colorScales"] = {"risk": {"slots": {key: f"risk-{key}" for key in slots}}}
@@ -20,15 +24,21 @@ def _encoded_parts(slots=None):
 
 def test_realized_explicit_slot_warns_against_semantic_key_with_both_names_and_svg_ink(tmp_path):
     parts = _encoded_parts()
+    # Use one intentional projection so both keys complete to the same glyph.
+    parts["theme"]["body"]["roles"].setdefault("legend-swatch", {})["swatchShape"] = "circle"
     rendered = _render(tmp_path, _source(), actual=ACTUAL, parts=parts,
                        detail=_detail(("actual", "Observed")))
     records = [item for item in rendered.warning_records
                if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
                and any("Team a" in subject["title"]
                        for subject in item.payload.get("sourceSubjects", ()))
-               and any(subject["sourceRef"].startswith("legend-key:actual:")
+               and any(subject["title"].startswith("On track")
                        for subject in item.payload.get("sourceSubjects", ()))]
-    assert records, "a real View slot must be compared with the realized Actual key"
+    assert {record.payload["vision"] for record in records} == {
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale",
+    }, [record.payload for record in records]
+    grayscale = next(record.payload for record in records if record.payload["vision"] == "grayscale")
+    assert grayscale["deltaE"] == delta_e_2000("#269D78", "#269D79", vision="grayscale")
     root = ElementTree.fromstring(rendered.artifact.content)
     svg = {node.attrib["data-scene-id"]: node for node in root.iter()
            if "data-scene-id" in node.attrib}
@@ -37,17 +47,34 @@ def test_realized_explicit_slot_warns_against_semantic_key_with_both_names_and_s
         payload = record.payload
         assert record.identity in rendered.surface.diagnostics
         assert len(payload["sourceSubjects"]) == 2
-        assert "normal vision" in payload["message"] and "ΔE=" in payload["message"]
+        assert "ΔE=" in payload["message"]
         assert "Team a" in payload["message"] and "On track" in payload["message"]
+        assert {subject["title"].split(" (", 1)[0] for subject in payload["sourceSubjects"]} == {
+            "Team a", "On track",
+        }
         fills = set()
         for subject in payload["sourceSubjects"]:
             assert subject["title"] in payload["message"]
             key = subject["sourceRef"].removeprefix("legend-key:")
             primitive = primitives[f"legend-swatch:{key}"]
             assert primitive.purpose == "legend-swatch"
+            assert primitive.kind == "Symbol"
             assert svg[primitive.scene_id].attrib["fill"] == primitive.paint.fill
             fills.add(primitive.paint.fill.upper())
         assert fills == {"#269D78", "#269D79"}
+
+
+def test_explicit_slot_and_actual_bar_with_different_default_geometry_do_not_warn(tmp_path):
+    parts = _encoded_parts()
+    rendered = _render(tmp_path, _source(), actual=ACTUAL, parts=parts,
+                       detail=_detail(("actual", "Observed")))
+    assert not any(
+        item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
+        and any("Team a" in subject["title"] for subject in item.payload.get("sourceSubjects", ()))
+        and any(subject["sourceRef"].startswith("legend-key:actual:")
+                for subject in item.payload.get("sourceSubjects", ()))
+        for item in rendered.warning_records
+    )
 
 
 def test_unrealized_semantic_candidate_does_not_generate_a_colour_warning(tmp_path):
@@ -66,12 +93,16 @@ def test_same_scale_explicit_slots_keep_the_domain_warning_without_a_duplicate_l
     rendered = _render(tmp_path, source, parts=_encoded_parts({"a": "#0000FF", "b": "#0000FE"}))
     records = [item.payload for item in rendered.warning_records
                if item.payload["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
-    assert len(records) == 1
-    assert records[0]["scaleId"] == "risk" and records[0]["values"] == ["a", "b"]
-    assert records[0]["vision"] == "normal" and records[0]["deltaE"] < 5
-    assert "a and b" in records[0]["message"]
-    assert not any(item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
-                   for item in rendered.warning_records)
+    assert {item["vision"] for item in records} == {
+        "normal", "protanopia", "deuteranopia", "tritanopia",
+    }
+    assert all(item["scaleId"] == "risk" and item["values"] == ["a", "b"]
+               and item["deltaE"] < 5 and "a and b" in item["message"] for item in records)
+    legend_records = [item.payload for item in rendered.warning_records
+                      if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
+    assert {item["vision"] for item in legend_records} == {"grayscale"}
+    assert all(item["deltaE"] == delta_e_2000("#0000FF", "#0000FE", vision="grayscale")
+               for item in legend_records)
 
 
 def test_same_scale_same_value_distinct_style_scopes_warn_with_both_completed_keys(tmp_path):
@@ -114,17 +145,22 @@ def test_same_scale_same_value_distinct_style_scopes_warn_with_both_completed_ke
                 and any(title.startswith("Actual phase: a (") for title in titles))
 
     matching = [item for item in records if has_two_scopes(item)]
-    assert len(matching) == 1, [
+    assert {item.payload["vision"] for item in matching} == {
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale",
+    }, [
         [subject["title"] for subject in item.payload["sourceSubjects"]] for item in records
     ]
-    payload = matching[0].payload
-    subjects = payload["sourceSubjects"]
-    assert len(subjects) == 2
-    assert {subject["title"].split(" (", 1)[0] for subject in subjects} == {
-        "Planned owner: a", "Actual phase: a",
-    }
-    assert len({subject["sourceRef"] for subject in subjects}) == 2
-    assert all("legend-key:scale:style:" in subject["sourceRef"] for subject in subjects)
+    for record in matching:
+        payload = record.payload
+        subjects = payload["sourceSubjects"]
+        assert len(subjects) == 2
+        assert {subject["title"].split(" (", 1)[0] for subject in subjects} == {
+            "Planned owner: a", "Actual phase: a",
+        }
+        assert len({subject["sourceRef"] for subject in subjects}) == 2
+        assert all("legend-key:scale:style:" in subject["sourceRef"] for subject in subjects)
+    grayscale = next(item.payload for item in matching if item.payload["vision"] == "grayscale")
+    assert grayscale["deltaE"] == delta_e_2000("#269D78", "#269D78", vision="grayscale")
     assert not any(item.payload["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"
                    for item in rendered.warning_records)
 

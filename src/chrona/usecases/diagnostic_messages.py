@@ -315,8 +315,11 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
             contributor_text = ", ".join(subjects) if subjects else "no slot detail"
             if isinstance(contributor_count, int) and contributor_count > len(subjects):
                 contributor_text += f", and {contributor_count - len(subjects)} more"
+            page_size = payload.get("pageSize")
+            configured = (f" (configured page default {page_size})"
+                          if isinstance(page_size, str) and page_size else "")
             subject = (f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
-                       f"declared {declared_size}, actual {actual_extent}; contributors: {contributor_text}")
+                       f"declared {declared_size}{configured}, actual {actual_extent}; contributors: {contributor_text}")
             return WarningText(_FIT_CAUSES[code], subject)
         cause = f"{_FIT_CAUSES[code]} ({payload.get('failureKind')}, {payload.get('behaviour')})"
         needs = f"needs {_number(payload.get('requiredInline'))}x{_number(payload.get('requiredBlock'))}"
@@ -350,6 +353,13 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
         return WarningText(f"two colors of scale {payload.get('scaleId')} are not separable under "
                            f"{payload.get('vision')} vision", f"{first} and {second}")
     if code == "W_LEGEND_COLOR_NOT_SEPARABLE":
+        vision_fact = payload.get("vision")
+        delta_fact = payload.get("deltaE")
+        if isinstance(vision_fact, str) and isinstance(delta_fact, (int, float)) and not isinstance(delta_fact, bool):
+            return WarningText(
+                f"two completed legend meanings are not separable under {_bounded_text(vision_fact, 32)} vision",
+                f"minimum colour difference ΔE={delta_fact}",
+            )
         details = identity.removeprefix(code).removeprefix(":").split(":")
         if len(details) == 2 and all(details):
             vision, min_delta = details
@@ -399,11 +409,23 @@ def collapse_warnings(payloads: Iterable[Mapping[str, object]]) -> list[dict[str
     gains ``count`` (2 or more) and ``occurrences`` (the distinct identities in order, at most 20), and its
     message names the first subject and how many more there were.
     """
-    groups: dict[tuple[str, str, str, str], list[Mapping[str, object]]] = {}
+    groups: dict[tuple[str, str, str, object], list[Mapping[str, object]]] = {}
     for payload in payloads:
-        # Encoded-fill warnings already represent complete realised pairs at the
-        # render boundary. Do not co-collapse distinct pairs or truncate their IDs.
-        pair = str(payload.get("diagnostic", "")) if payload.get("encodingPair") else ""
+        # Pair findings already carry completed pair identities at the render
+        # boundary. Their display diagnostic may round distinct measurements to
+        # the same text, so group only repeated copies of the same typed finding.
+        pair: object = ""
+        if payload.get("encodingPair"):
+            pair = ("encoding", str(payload.get("diagnostic", "")))
+        elif payload.get("code") == "W_PRESENTATION_SCALE_NOT_SEPARABLE":
+            pair = ("scale", payload.get("scaleId"), tuple(payload.get("values", ())),
+                    payload.get("vision"), payload.get("deltaE"))
+        elif payload.get("code") == "W_LEGEND_COLOR_NOT_SEPARABLE":
+            subjects = payload.get("sourceSubjects", ())
+            refs = tuple(item.get("sourceRef") for item in subjects if isinstance(item, Mapping)) \
+                if isinstance(subjects, (list, tuple)) else ()
+            pair = ("legend", refs, payload.get("vision"), payload.get("deltaE"),
+                    str(payload.get("diagnostic", "")))
         key = (str(payload.get("code")), str(payload.get("severity")), describe_warning(payload).cause, pair)
         groups.setdefault(key, []).append(payload)
     rows: list[dict[str, object]] = []

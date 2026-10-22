@@ -20,6 +20,7 @@ SCHEMAS = (
     "axis-name-tables-v0.1.schema.yaml",
     "wording-tables-v0.1.schema.yaml",
     "common-v0.1.schema.yaml",
+    "common-v0.2.schema.yaml",
     "graphics-v0.1.schema.yaml",
     "project-v0.7.schema.yaml",
     "profile-v0.3.schema.yaml",

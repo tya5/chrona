@@ -271,6 +271,14 @@ These distinctions keep paint bindings separate from geometry roles.
 
 ## Authoring notes
 
+- `timeline.row.minBlockSize` is a minimum, not a fixed row pitch (a preset may map it to
+  a token named `timeline-row-height`). The completed row must also fit measured table text:
+  `fontSize × lineHeight × wrapped line count`, plus `timeline.row.paddingBlock`.
+  Mark tracks contribute `timeline.mark.blockSize` and the selected role/occurrence geometry
+  (including stacked comparison tracks and point key lanes), plus the same total block padding.
+  The row uses the largest requirement; paddingBlock is total block padding, not per-edge.
+  A Layout Profile's fill distribution can enlarge it further. For compact rows, adjust these
+  contributors together rather than reducing the minimum alone.
 - A Layout Profile's top-level `viewDefaults.progressFill.source` supplies the default for a
   View's `body.progressFill.source`; an explicit View value replaces that default. It selects
   `planned` or `actual` as the source for a display-only submark on completed marks; the Theme

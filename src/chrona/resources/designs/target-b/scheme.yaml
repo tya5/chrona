@@ -21,7 +21,7 @@ body:
     background: light
     colorVision:
     - none-claimed
-    print: print-friendly
+    print: not-claimed
   provenance:
     kind: chrona-authored
     source: Chrona HALCYON-1 example, mission-light

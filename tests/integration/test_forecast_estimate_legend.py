@@ -99,14 +99,20 @@ def test_mixed_encoded_span_and_unencoded_folded_point_keep_real_swatch(tmp_path
     assert any(item.scene_id == "variance:group-header:team:gate" and item.text.endswith("*")
                for item in rendered.surface.primitives)
     # The folded point is still drawn with the ordinary forecast stroke while the
-    # span fill is encoded; the semantic forecast key therefore remains truthful.
+    # span fill is encoded; its separate point-state key remains truthful.
     assert any(item.scene_id == "planned:a:a" and item.paint.fill == "#3456A0"
                for item in rendered.surface.primitives)
     assert any(item.scene_id == "planned:group-header:team:gate:part0"
                and item.paint.fill is None and item.paint.stroke is not None
                for item in rendered.surface.primitives)
-    assert any(item.scene_id == "legend-swatch:forecast" for item in rendered.surface.primitives)
+    assert not any(item.scene_id == "legend-swatch:forecast" for item in rendered.surface.primitives)
+    assert any(item.purpose == "legend-swatch" and item.visual_role == "planned"
+               and item.paint.stroke is not None and item.paint.fill is None
+               and item.scene_id.startswith("legend-swatch:forecast:")
+               for item in rendered.surface.primitives)
     assert any(item.purpose == "legend-label" and item.text == "Forecast (* estimated)"
+               for item in rendered.surface.primitives)
+    assert any(item.purpose == "legend-label" and item.text == "Forecast (* estimated) · Milestone"
                for item in rendered.surface.primitives)
 
 

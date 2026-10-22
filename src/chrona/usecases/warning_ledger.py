@@ -9,6 +9,7 @@ from typing import Any, Iterable, Mapping
 from chrona.usecases.diagnostic_messages import describe_warning, warning_message
 from chrona.core.diagnostics import Diagnostic
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning
 
 
 @dataclass(frozen=True)
@@ -61,21 +62,25 @@ def collect_render_warnings(
     forecast_warnings: Iterable[Diagnostic] = (),
     contrast_warnings: Iterable[Any] = (),
     surface_provenance: Iterable[DiagnosticProvenance] = (),
-    canvas_warning: Any | None = None,
+    canvas_warning: CanvasViewportWarning | None = None,
     auto_block_warning: Any | None = None,
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
     records = []
-    subjects_by_diagnostic: dict[str, list[tuple[DiagnosticSubject, ...]]] = {}
+    subjects_by_diagnostic: dict[str, list[DiagnosticProvenance]] = {}
     for item in surface_provenance:
-        subjects_by_diagnostic.setdefault(item.diagnostic, []).append(item.subjects)
+        subjects_by_diagnostic.setdefault(item.diagnostic, []).append(item)
     for diagnostic in surface_diagnostics:
         if diagnostic.startswith("W_"):
             provenance = subjects_by_diagnostic.get(diagnostic, [])
-            subjects = provenance.pop(0) if provenance else ()
-            records.append(_with_subjects(RenderWarning(diagnostic, {
+            item = provenance.pop(0) if provenance else None
+            subjects = item.subjects if item is not None else ()
+            payload = {
                 "code": diagnostic.split(":", 1)[0], "severity": "warning", "diagnostic": diagnostic,
-            }), subjects))
+            }
+            if item is not None and item.color_pair is not None:
+                payload.update(vision=item.color_pair.vision, deltaE=item.color_pair.delta_e)
+            records.append(_with_subjects(RenderWarning(diagnostic, payload), subjects))
     for item in tabular_warnings:
         records.append(_record("W_FONT_TABULAR_UNAVAILABLE",
                                {"role": item.role, "family": item.family, "weight": item.weight},
@@ -135,6 +140,8 @@ def collect_render_warnings(
             declared={"inlineSize": _json_number(declared.inline_size),
                       "blockSize": _json_number(declared.block_size)
                       if declared.block_size is not None else None},
+            **({"pageSize": canvas_warning.page_size}
+               if canvas_warning.page_size is not None else {}),
             actual={"inlineStart": _json_number(actual.inline),
                     "blockStart": _json_number(actual.block),
                     "inlineSize": _json_number(actual.inline_size),

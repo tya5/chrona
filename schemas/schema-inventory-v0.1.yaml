@@ -28,6 +28,12 @@ schemas:
       sceneProfileRef: "sha256:e011a7e4334b71e684d4296cc5adb50e88d281035fa735d4fa140350a8a36609"
       snapshotRef: "sha256:bfaba880acfd952f7506c248c78e7341daf4b4163a603fb76c9eed7b879886a5"
       actualSetRef: "sha256:b51a9c956dc161b32639563fc403a8009ee8fa9d6e36d338e451b85285e6513a"
+  - file: common-v0.2.schema.yaml
+    kind: schema-part-common
+    state: live
+    consumers: [src/chrona/resources/__init__.py]
+    frozenDefs:
+      tableColumnSource: "sha256:b20139ddf425e9f960345d42a1144faa5238edc6e40a06417f1ef7edd4bd871f"
   - file: common-v0.1.schema.yaml
     kind: schema-part-common
     state: live
@@ -190,3 +196,5 @@ schemas:
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
       visualProfile: "sha256:3b45edfe10cbaed5d3c483496052a4e641e1dd87c4c01d3a340738c31e0c692c"
+      pageSize: "sha256:f3de3415b4a1a18af5b0476ab6b8eff38c59b360a566cf4b0d773ff20074e931"
+      snapshotComparisonFacet: "sha256:8307a32f6e032f0e532584ad4bde3756925d0a03a652b03641fd3d46ec60b179"

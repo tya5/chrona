@@ -13,6 +13,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.core.relation_identity import relation_identities
+from chrona.presentation.model.color_separability import MINIMUM_CATEGORY_DELTA_E
 from tests.support.deck_contexts import context_document
 from tests.support.draft_packages import stage_project_package_store
 from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
@@ -124,10 +125,11 @@ def test_public_relations_do_not_start_with_their_target_arrowhead() -> None:
 
 
 def test_no_committed_scene_ships_an_inseparable_colour_scale() -> None:
-    """#421: every committed colour scale separates its domain."""
+    """#421 normal-vision palette gate; default CVD findings belong to #1848."""
     for scene_path in PUBLIC_SCENES:
         diagnostics = json.loads(scene_path.read_text(encoding="utf-8")).get("diagnostics", [])
-        assert not [item for item in diagnostics if item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE")], scene_path
+        assert not [item for item in diagnostics
+                    if item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE") and item.endswith(":normal")], scene_path
 
 
 def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None:
@@ -145,7 +147,12 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert envelope["status"] == "ok" and envelope["diagnostics"] == []
     warnings = envelope["warnings"]
     collisions = [item for item in warnings if item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
-    assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
+    assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions
+            if item["vision"] == "normal"] == [(["bus", "launch"], "normal", 0.0)]
+    identical = [item for item in collisions if item["values"] == ["bus", "launch"]]
+    assert {(item["vision"], item["deltaE"]) for item in identical} == {
+        (vision, 0.0) for vision in ("normal", "protanopia", "deuteranopia", "tritanopia")}
+    assert all(item["deltaE"] < MINIMUM_CATEGORY_DELTA_E and item["severity"] == "warning" for item in collisions)
 
 
 def _assert_automatic_default_keeps_plot_names_and_row_guides(
@@ -196,9 +203,9 @@ def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatc
     )
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
-    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg, expected_axis_warnings=(
-        "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:10:label-does-not-fit",
-        "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1"))
+    # The former endpoint thinning diagnostics belonged to padding-only
+    # buckets, which are now ineligible rather than failed label candidates.
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     columns = {item["text"] for item in primitives.values()
@@ -523,8 +530,8 @@ def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_i
 def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(tmp_path, monkeypatch) -> None:
     """#1724: the week owning 2026-12-28 straddles the 2026/2027 year-band cells and keeps its label.
 
-    Window-edge cells that cannot fit their own logical interval stay omitted; only
-    host overhang onto the abutting cell of the same band tier is admitted.
+    Padding-only endpoint buckets are filtered, while the retained week that
+    straddles both year cells remains visible with its bridge.
     """
     project = tmp_path / "two-year.yaml"
     project.write_text(yaml.safe_dump({
@@ -547,8 +554,9 @@ def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(t
     first, second = primitives["axis-band-rect:0:0"]["bounds"], primitives["axis-band-rect:0:1"]["bounds"]
     assert label["inline"] < first["inline"] + first["inlineSize"] < label["inline"] + label["inlineSize"]
     assert label["inline"] + label["inlineSize"] <= second["inline"] + second["inlineSize"]
-    # No blank column between retained labels; only the clipped window-edge cells are omitted.
-    assert labels == list(range(1, 15))
+    # No blank column between eligible labels. The first bucket is padding-only;
+    # the last overlaps the selected envelope and remains an axis candidate.
+    assert labels == list(range(2, 15))
     # The cell gap between the two year cells must not strike through the label: a bridge in the
     # band's colour covers the gap over the label's block extent, painted above the cells and below the text.
     gap = (first["inline"] + first["inlineSize"], second["inline"])

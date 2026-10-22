@@ -36,6 +36,38 @@ member in place to Layout Profile v0.10 under Spec 56 section 3.2.
 
 ## 2. Resource and reuse model
 
+### Named page defaults (#1855)
+
+An optional top-level `pageSize` on Layout Profile v0.10 selects a named Draft
+viewport default, not pagination or an automatic fit policy. The shared
+`schemas/vocabulary` enum contains `a3-portrait`, `a3-landscape`,
+`a4-portrait`, `a4-landscape`, `a5-portrait`, `a5-landscape`,
+`letter-portrait`, `letter-landscape`, `legal-portrait`, `legal-landscape`.
+Portrait physical dimensions are A3 297×420mm, A4 210×297mm, A5 148×210mm,
+Letter 8.5×11in and Legal 8.5×14in; landscape exchanges the axes.
+Use the [CSS named media sizes](https://www.w3.org/TR/css-page-3/#page-size-prop)
+and [absolute-unit relation](https://www.w3.org/TR/css-values-4/#absolute-lengths)
+of 96 CSS px per inch and 25.4mm per inch. At Draft ingress, convert each
+physical axis once to the nearest positive integer CSS pixel (half pixels round
+up) to close the existing integer Render Context viewport. For example, A4
+landscape is 1123×794. This is named-default conversion, not a fractional
+Render Context schema change or content-driven fit. Layout geometry and Scene
+precision remain unchanged; neither layer rounds or replaces a closed viewport.
+
+Draft ingress resolves the effective profile, including its normal top-level
+inheritance/replacement, before closing an omitted viewport from `pageSize`.
+An explicit Draft viewport wins as a whole, including an explicit auto-height;
+an immutable Render Context's viewport always wins. Without either an authored
+viewport or a page default, retain Draft's 1600×auto behavior. Layout never
+rewrites a closed Context or chooses a viewport from content.
+
+When content exceeds the effective viewport, retain the existing overflow
+policy and diagnostic, carrying both the configured `pageSize` (when present)
+and effective viewport dimensions. A differently sized explicit viewport is
+reported as such, not called the configured paper size. These facts depend on
+the closed Context/profile, not on hidden caller provenance. No font shrink,
+row compaction, page splitting or project-specific tuning is implied.
+
 For explicitly absent Summary content (#1535), zero resolved View annotations,
 or zero resolved legend entries (#1597), Layout removes the corresponding source slots
 and ancestor containers whose content children are all removed, including their

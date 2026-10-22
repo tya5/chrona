@@ -20,6 +20,7 @@ from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, 
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.theme_paint import ThemePaintWitness
+from chrona.presentation.style import LegendEncodingCoverage
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -382,6 +383,7 @@ class MarkPlacement:
     legend_paints: tuple[ThemePaintWitness, ...] = ()
     # Canonical local completed point geometry for legend comparison; Scene keeps symbol_parts.
     legend_geometry_identity: tuple[object, ...] | None = None
+    legend_encoding_coverage: LegendEncodingCoverage | None = None
 
 @dataclass(frozen=True)
 class LayoutImageFill:
@@ -441,6 +443,7 @@ class ShapePlacement:
     host_placement_id: str | None = None
     # Completed semantic-key ink; Scene projects it without selecting another paint.
     legend_paint: ThemePaintWitness | None = None
+    legend_encoding_coverage: LegendEncodingCoverage | None = None
 
     def __post_init__(self) -> None:
         if self.legend_swatch_shape not in (None, "circle", "rule-pair"):
@@ -734,6 +737,7 @@ class SurfaceLayoutRequest:
     # Optional source-bound mask for geometry rows under View outside: omit.
     row_admission: Any | None = None
     scene_precision: int = 3
+    page_size: str | None = None
 
 
 @dataclass(frozen=True)

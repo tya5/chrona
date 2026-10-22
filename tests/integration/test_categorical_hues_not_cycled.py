@@ -52,6 +52,15 @@ def _mission_light_layout_with_legend(tmp_path):
     return path
 
 
+def _mission_light_scheme_without_print_claim(tmp_path):
+    source = ROOT / "src/chrona/resources/presets/bundles/mission-light/scheme.yaml"
+    scheme = yaml.safe_load(source.read_bytes())
+    scheme["body"]["suitability"]["print"] = "not-claimed"
+    path = tmp_path / "mission-light-unclaimed-print.yaml"
+    path.write_text(yaml.safe_dump(scheme, sort_keys=False), encoding="utf-8")
+    return path
+
+
 def test_wallboard_dark_legend_has_no_two_entries_with_one_colour(tmp_path, monkeypatch, capsys):
     project = _plan(tmp_path, monkeypatch, capsys)
     scene_path = tmp_path / "scene.json"
@@ -73,7 +82,8 @@ def test_wallboard_dark_legend_has_no_two_entries_with_one_colour(tmp_path, monk
     folded = [item for item in result["warnings"] if item["code"] == "I_PRESENTATION_SCALE_FOLDED"]
     assert len(folded) == 1 and folded[0]["severity"] == "info"
     assert folded[0]["foldedCount"] == len(OWNERS) - folded[0]["distinctColors"]
-    assert not any(item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE" for item in result["warnings"])
+    assert not any(item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE" and item["vision"] == "normal"
+                   for item in result["warnings"])
 
 
 def test_mission_light_eight_owners_get_a_keyed_folded_other_with_distinct_screened_inks(
@@ -82,8 +92,9 @@ def test_mission_light_eight_owners_get_a_keyed_folded_other_with_distinct_scree
     project = _plan(tmp_path, monkeypatch, capsys, owners)
     scene_path = tmp_path / "mission-light.json"
     layout = _mission_light_layout_with_legend(tmp_path)
+    scheme = _mission_light_scheme_without_print_claim(tmp_path)
     result = _run(monkeypatch, capsys, "render", "--preset", "mission-light", str(project),
-                  "--layout", str(layout),
+                  "--layout", str(layout), "--scheme", str(scheme),
                   "-o", str(tmp_path / "mission-light.svg"), "--emit-scene", str(scene_path))
     assert result["status"] == "ok"
 
@@ -100,7 +111,8 @@ def test_mission_light_eight_owners_get_a_keyed_folded_other_with_distinct_scree
     assert len(folded) == 1 and folded[0]["severity"] == "info"
     assert folded[0]["distinctColors"] <= 6
     assert folded[0]["foldedCount"] == 8 - folded[0]["distinctColors"]
-    assert not any(item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE" for item in result["warnings"])
+    assert not any(item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE" and item["vision"] == "normal"
+                   for item in result["warnings"])
     # The project-local Layout adds a legend slot without changing the
     # packaged mission-light resources. Folded source values share Other ink.
     encoded_marks = {item["encoding"]["value"]: item["paint"]["fill"] for item in primitives

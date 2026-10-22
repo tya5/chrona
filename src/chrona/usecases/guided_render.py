@@ -7,15 +7,12 @@ from pathlib import Path
 from chrona.core.ports import RenderArtifact, SnapshotReader
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.presentation.model.closure import (
-    DEFAULT_DRAFT_VIEWPORT, ClosureError, GuidedAuthoringProvenance, resolve_guided_draft_render,
+    ClosureError, GuidedAuthoringProvenance, resolve_guided_draft_render,
 )
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.draft_render import parse_viewport
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
-
-
-DEFAULT_VIEWPORT = f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto"
 
 
 @dataclass(frozen=True)
@@ -24,7 +21,7 @@ class WorkspaceRenderRequest:
 
     workspace: Path
     target_kind: str
-    viewport: str = DEFAULT_VIEWPORT
+    viewport: str | None = None
     locale: str = "en-US"
     visual_profile: str | None = None
     typesetter: TypesetterIdentity | None = None

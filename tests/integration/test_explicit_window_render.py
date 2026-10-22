@@ -32,6 +32,12 @@ def _parts(lanes):
     return parts
 
 
+def _svg_elements_by_scene_id(rendered):
+    root = ET.fromstring(rendered.artifact.content)
+    return {item.get("data-scene-id"): ET.tostring(item)
+            for item in root.iter() if item.get("data-scene-id")}
+
+
 @pytest.mark.parametrize("lanes", [False, True], ids=["rows", "lanes"])
 def test_before_across_after_close_every_production_plot_primitive_and_warn_exact_sources(tmp_path, lanes):
     parts = _parts(lanes)
@@ -71,10 +77,27 @@ def test_containing_window_preserves_complete_scene_surface_and_svg(tmp_path, la
     parts["view"]["body"]["window"] = {
         "mode": "explicit", "start": scale.domain_start.isoformat(), "end": scale.domain_end.isoformat()}
     explicit = sr.render(tmp_path / "explicit", source, presentation=parts)
-    # Only the authored View provenance differs; compare the whole completed
-    # Scene surface, not selected marks, and actual adapter bytes.
-    assert explicit.surface == derived.surface
-    assert explicit.artifact.content == derived.artifact.content
+    # An explicit window does not carry the derived window's selected envelope,
+    # so its endpoint padding buckets remain eligible. The declared padded
+    # scale and all non-padding completed geometry stay identical.
+    added_padding_buckets = {
+        "axis-band-rect:0:0", "axis-grid:1:0", "axis-grid:3:0", "axis-label:2:0",
+    }
+    derived_primitives = {p.scene_id: p for p in derived.surface.primitives}
+    explicit_primitives = {p.scene_id: p for p in explicit.surface.primitives}
+    assert explicit.surface.scale_manifest == derived.surface.scale_manifest
+    assert explicit.surface.canvas_bounds == derived.surface.canvas_bounds
+    assert explicit.surface.slots == derived.surface.slots
+    assert explicit.surface.rows == derived.surface.rows
+    assert explicit.surface.groups == derived.surface.groups
+    assert set(explicit_primitives) - set(derived_primitives) == added_padding_buckets
+    assert {key: value for key, value in explicit_primitives.items()
+            if key not in added_padding_buckets} == derived_primitives
+    derived_svg = _svg_elements_by_scene_id(derived)
+    explicit_svg = _svg_elements_by_scene_id(explicit)
+    assert set(explicit_svg) - set(derived_svg) == added_padding_buckets
+    assert all(explicit_svg[key] == value for key, value in derived_svg.items())
+    assert explicit.artifact.content != derived.artifact.content
     assert not any(r.payload["code"] == "W_LAYOUT_OUTSIDE_WINDOW" for r in explicit.warning_records)
 
 

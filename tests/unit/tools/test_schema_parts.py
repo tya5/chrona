@@ -491,6 +491,7 @@ ADOPTERS = frozenset({
 # dereferenced diagnostics retain the same named union branch as other registered-part references.
 PARTS_REFERENCING_COMMON: dict[str, set[str]] = {
     "common-v0.1.schema.yaml": {"fractionalTrack", "projectFieldReference"},
+    "common-v0.2.schema.yaml": {"tableColumnSource"},
     "revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"},
 }
 

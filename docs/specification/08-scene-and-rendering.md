@@ -754,6 +754,37 @@ Inspection Scenes intentionally include the encoded field value; author-facing
 diagnostic messages use the existing bounded-value formatting. Spec46 owns the
 independent data-channel contrast obligation.
 
+#### Separately keyed encoding coverage (#1847)
+
+A completed legend swatch may carry optional
+`legendEncodingCoverage: {kind: state | encoding, witnesses: [<encodingWitness>, ...]}`:
+a closed tagged record with a non-empty unique list of the exact encoded
+occurrence values it explains (`encoding`) or deliberately neutralizes
+(`state`) under Spec28. The existing witness shape and pinned-resource joins apply.
+Only legend Rect/Symbol/Path primitives with purpose
+`legend-swatch` admit it; text, chart marks and unrelated decorations do not.
+An `encoding` swatch explains the source's encoded fill using its completed
+key paint: fill by default, or stroke for the existing `rule-pair` projection.
+Optional `paintChannel: stroke` on an `encoding` record names that projection;
+omission means fill. Layout supplies the selected channel with the completed
+key geometry. It is not inferred from labels, IDs or a matching colour.
+The selected channel must have visible paint (a stroke also needs positive
+width). A `state` record has no `paintChannel`; its representative
+may instead retain the Theme's stroke-only default. At least one completed
+paint channel is required. Coverage never invents a fill for a hollow role.
+Layout supplies this passive evidence after final visibility and coverage
+selection. Scene copies it, never evaluates fields or selects coverage.
+An encoded scale key retains all represented raw witnesses, including values
+folded into Other. A neutral state key retains only the witnesses whose encoded
+channel was replaced by its selected Theme role's default. Each such witness
+must also occur on a separately admitted `kind: encoding` key on the same surface.
+The state key's geometry and all nonencoded paint channels still match a
+corresponding completed source figure; chart paint is not changed.
+This optional addition is in live v0.7 in place; omission preserves existing
+Scene replay but does not prove neutral-state coverage. Adapters ignore the
+evidence for painting, and the independent observer checks the exact reciprocal
+coverage instead of inferring encoding meaning from IDs, labels or colours.
+
 The initial renderer-neutral vocabulary is intentionally small:
 
 | Primitive | Purpose |

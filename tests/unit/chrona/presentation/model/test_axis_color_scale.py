@@ -166,8 +166,10 @@ def test_separability_checks_domain_values_not_repeated_interval_cells():
     result = _run((_tier("month", fill=AxisBandFillSpec("s", "interval")),),
                   scales={"s": {"slots": slots}}, categories={"same": "#112233"})
     assert len(result.paints) == 5
-    assert tuple((item.first, item.second) for item in result.collisions) == tuple(
-        (str(i), str(j)) for i in range(5) for j in range(i + 1, 5)
+    pairs = tuple((str(i), str(j)) for i in range(5) for j in range(i + 1, 5))
+    assert tuple((item.first, item.second, item.vision) for item in result.collisions) == tuple(
+        (first, second, vision) for first, second in pairs
+        for vision in ("normal", "protanopia", "deuteranopia", "tritanopia")
     )
 
 
@@ -175,5 +177,16 @@ def test_alternating_separability_is_checked_on_two_domain_classes_once():
     slots = {"0": "same", "1": "same"}
     result = _run((_tier("month", fill=AxisBandFillSpec("s", "alternating")),),
                   scales={"s": {"slots": slots}}, categories={"same": "#112233"})
-    assert len(result.collisions) == 1
-    assert (result.collisions[0].first, result.collisions[0].second) == ("0", "1")
+    assert [(item.first, item.second, item.vision) for item in result.collisions] == [
+        ("0", "1", vision)
+        for vision in ("normal", "protanopia", "deuteranopia", "tritanopia")]
+
+
+def test_axis_scale_checks_cvd_without_a_scheme_claim():
+    result = _run(
+        (_tier("month", fill=AxisBandFillSpec("s", "alternating")),),
+        scales={"s": {"slots": {"0": "violet", "1": "blue"}}},
+        categories={"violet": "#8957E5", "blue": "#2F81F7"},
+    )
+    assert [(item.first, item.second, item.vision) for item in result.collisions] == [
+        ("0", "1", "deuteranopia")]

@@ -422,6 +422,32 @@ def _axis_primary_outcomes(*, intervals: tuple[AxisInterval, ...], form: str,
     return tuple(outcomes)
 
 
+def _padding_eligible_intervals(request: SurfaceLayoutRequest,
+                                intervals: tuple[AxisInterval, ...]) -> tuple[AxisInterval, ...]:
+    """Remove only calendar buckets proven wholly outside a derived envelope."""
+    envelope = getattr(request.projection, "unpadded_window", None)
+    if envelope is None:
+        return intervals
+    try:
+        start, end = envelope
+        window_start, window_end = request.projection.window
+        mode = getattr(getattr(request.projection, "window_mode", None), "value",
+                       getattr(request.projection, "window_mode", None))
+        valid = (mode in {"selected-planned", "selected-comparison"}
+                 and type(start) is date and type(end) is date and start < end
+                 and isinstance(window_start, date) and isinstance(window_end, date)
+                 and window_start <= start < end <= window_end)
+    except (TypeError, ValueError):
+        valid = False
+    if not valid:
+        raise LayoutError(
+            "E_PRESENTATION_PROJECTION_REQUIRED", "/projection/unpaddedWindow",
+            detail=f"expected a positive Date interval enclosed by projection.window; "
+                   f"unpadded_window={envelope!r}, window={request.projection.window!r}")
+    return tuple(item for item in intervals
+                 if item.natural_start < end and start < item.natural_end)
+
+
 def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier_index: int,
                       tier: AxisTier) -> AxisTierMeasurement:
     """Measure native tier choices and labels without admitting them to an axis host."""
@@ -445,8 +471,9 @@ def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier
             for candidate in ("day", "week", "month", "quarter", "half", "year"):
                 if candidate not in forms:
                     continue
-                trial = axis_intervals(start, end, candidate, tick_step=tier.every,
-                                       fiscal_start_month=request.surface_content.axis_fiscal_start_month)
+                trial = _padding_eligible_intervals(request, axis_intervals(
+                    start, end, candidate, tick_step=tier.every,
+                    fiscal_start_month=request.surface_content.axis_fiscal_start_month))
                 trial_outcomes = _axis_primary_outcomes(
                     intervals=trial, form=forms[candidate], name_table=name_table,
                     tier_index=tier_index, tier=tier, scale=scale, tokens=tokens,
@@ -461,8 +488,11 @@ def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier
                     break
             intervals = selected
         else:
-            intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
-                                       fiscal_start_month=request.surface_content.axis_fiscal_start_month)
+            intervals = _padding_eligible_intervals(request, axis_intervals(
+                start, end, tier.unit, tick_step=tier.every,
+                fiscal_start_month=request.surface_content.axis_fiscal_start_month))
+    except LayoutError:
+        raise
     except ValueError as error:
         raise LayoutError(str(error), "/view/body/axis/tiers") from error
     if tier.role == "labels" and form is not None:
