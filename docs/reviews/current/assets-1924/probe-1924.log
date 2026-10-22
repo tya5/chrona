@@ -1,0 +1,17 @@
+== before (4faae80ca^ = 734483472), trial-17 B-en, preset yuya, locale en-US
+leader annotation-leader:a1-note start x=843.685 y=515.183
+host glyph(s) ['planned:g1:g1']; parts considered 7
+painted edge toward the leader x=841.840 (fill outline, or stroke outline + half stroke)
+gap leader start to painted edge = 1.845
+
+== after (main e3ec09e9f, includes PR #1927)
+leader annotation-leader:a1-note start x=841.840 y=515.183
+host glyph(s) ['planned:g1:g1']; parts considered 7
+painted edge toward the leader x=841.840 (fill outline, or stroke outline + half stroke)
+gap leader start to painted edge = 0.000
+
+== public slide examples/halcyon-1/generated/22-yuya.scene.json (published by the bot after PR #1927), leader window-note
+leader annotation-leader:window-note start x=1168.715 y=722.630
+host glyph(s) ['planned:launch:launch']; parts considered 7
+painted edge toward the leader x=1168.715 (fill outline, or stroke outline + half stroke)
+gap leader start to painted edge = 0.000
