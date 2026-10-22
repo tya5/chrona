@@ -694,7 +694,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 source_candidates = connector_egress_candidates(
                     anchor_host, resolved.endpoint, target,
                     comparison_clusters.get((anchor_host.source_ref, anchor_row), (anchor_host,)),
-                    explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint))
+                    explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint), painted=True)
                 viewport = request.layout_manifest.viewport
                 content_extent = (float(viewport.inline), float(viewport.block),
                                   max(float(viewport.inline + viewport.inline_size), candidate_bounds.right),
@@ -1514,7 +1514,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     selected_source = connector_egress_candidates(
                         anchor_host, resolved.endpoint, target,
                         comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)),
-                        explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint))[0]
+                        explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint), painted=True)[0]
                     points = (selected_source.semantic_port, target)
                     path_commands = ()
                     visible_route_segments = tuple(zip(points, points[1:]))

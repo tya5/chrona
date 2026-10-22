@@ -504,7 +504,7 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                                        ObstacleRect(box.x, box.y, box.right, box.bottom)))
         target = (box.x + box.width / 2, box.y + box.height / 2)
         box_best = None
-        for egress in connector_egress_candidates(anchor, endpoint, target, siblings):
+        for egress in connector_egress_candidates(anchor, endpoint, target, siblings, painted=True):
             if route_states >= route_state_limit:
                 return RoutedTailSearchResult(None, None, None, None, (), box_trials,
                                               route_states, True)
@@ -643,7 +643,7 @@ def _nearest_free_routed_tail_box_across_rule(
                                        ObstacleRect(box.x, box.y, box.right, box.bottom)))
         target = (box.x + box.width / 2, box.y + box.height / 2)
         streams = []
-        for egress in connector_egress_candidates(anchor, endpoint, target, siblings):
+        for egress in connector_egress_candidates(anchor, endpoint, target, siblings, painted=True):
             source_points = egress.corridor or (egress.exposed_port,)
             source_x = tuple(point[0] for point in source_points)
             if ((anchor_side == "start" and max(source_x) >= as_of_x)
