@@ -44,7 +44,7 @@ def test_a_slot_caption_and_a_summary_label_reference_the_new_keys(tmp_path):
         sr.find_node(parts["layout"], "annotations")["heading"] = {
             "text": {"wording": "caption.statusReports"}, "block": "header-row"}
         source = sr.chain_project()
-        sr.add_notes(source, parts["view"], base.TARGETS, [base._rail_candidate()], words=3)
+        sr.add_notes(source, parts["view"], base.TARGETS, base._rail_candidates(), words=3)
         rendered = sr.render(directory, source, presentation=parts, locale=locale,
                              font_metrics_path=ja._font_descriptor(directory))
         expected = DESIGN_TEXT_KEYS["caption.statusReports"][index]

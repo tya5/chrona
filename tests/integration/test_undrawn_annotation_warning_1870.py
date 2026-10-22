@@ -23,6 +23,7 @@ def _render(tmp_path, *, bindings, notes_slot, mode="presentation"):
     body["annotationBindings"] = bindings
     body["annotationPlacement"] = POLICY
     body["visibility"]["annotations"] = {"mode": mode, "marker": "numbered"} if mode != "none" else "none"
+    body["visibility"].setdefault("fallback", {})["annotations"] = ["rail", "suppress"]
     if not notes_slot:
         _drop_notes_slot(parts["layout"]["root"])
     project = sr.project({"task": sr.span("task", date(2026, 1, 5), 12), "gate": sr.point("gate", date(2026, 1, 9))})

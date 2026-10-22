@@ -37,7 +37,8 @@ from chrona.presentation.layout.surface_annotations import (
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_groups import (
-    compose_group_presentation, resolve_group_tab, translate_group_header_text,
+    compose_group_presentation, groups_after_group_header_fold, resolve_group_tab,
+    translate_group_header_text,
 )
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_header_strips, compose_group_tabs,
@@ -191,20 +192,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         shapes = list(replace_group_header_band(
             tuple(shapes), update, extent=base.layout_manifest.background_extents.get("groupHeaderBand", "")))
     shapes.extend(compose_group_header_strips(base=base, groups=tuple(groups), theme_tokens=request.theme_tokens))
-    tab_groups = tuple(groups)
     tab = resolve_group_tab(request.theme_tokens)
-    if tab is not None and tab.target == "tag" and base.group_header_fit_plan is not None:
-        # A demoted name owns a separate horizontal header; the declared tag plate remains on the row-only tag cell.
-        tab_groups = tuple(
-            replace(group, content_bounds=Rect(
-                group.content_bounds.inline,
-                group.header_bounds.block + group.header_bounds.block_size,
-                group.content_bounds.inline_size,
-                max(Decimal(0), group.content_bounds.block_size - group.header_bounds.block_size)))
-            if (group.header_bounds is not None
-                and (fit := base.group_header_fit_plan.group(group.group_id)) is not None
-                and not fit.uses_vertical_tag) else group
-            for group in groups)
+    tab_groups = groups_after_group_header_fold(
+        groups=tuple(groups), tab=tab, fit_plan=base.group_header_fit_plan)
     shapes.extend(compose_group_tabs(
         groups=tab_groups, theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))

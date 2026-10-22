@@ -9,13 +9,13 @@ in the slot keeps its content size and warns.
 from __future__ import annotations
 
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
+from tests.support import annotation_border as ab
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
-
-from pathlib import Path
 
 MATERIAL = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file()
                 ) / "src/chrona/resources/icons/material-symbols-outline-rounded-v2026-09-22.yaml"
@@ -37,7 +37,7 @@ def _render(tmp_path, *, container=None, texts=None, words=3, candidates=None, r
         parts["theme"]["body"]["values"]["note-container"] = {"type": "annotationContainer", "value": dict(container)}
         parts["theme"]["body"]["roles"]["annotation-note-box"]["annotationContainer"] = "note-container"
     source = sr.chain_project()
-    ids = sr.add_notes(source, parts["view"], TARGETS, candidates or [_rail_candidate()], words=words)
+    ids = sr.add_notes(source, parts["view"], TARGETS, candidates or ab.border_candidates(), words=words)
     for note_id, text in zip(ids, texts or (), strict=False):
         source["annotations"][note_id]["text"] = text
     return sr.render(directory, source, presentation=parts)
@@ -115,7 +115,7 @@ def test_the_kind_border_is_part_of_the_chrome_the_body_wraps_inside(tmp_path):
     sr.with_note_rail(parts, RAIL)
     ak.with_kind_theme(parts, border_side="start", border_width=20, bar=False, label_fill="text")
     for annotation in parts["view"]["body"]["annotations"]:
-        annotation["candidates"] = [_rail_candidate()]
+        annotation["candidates"] = ab.border_candidates()
     parts["theme"]["body"]["values"]["note-container"] = {
         "type": "annotationContainer", "value": dict(FILL, border={"start": {"width": 20, "paint": "kind"}})}
     parts["theme"]["body"]["roles"]["annotation-note-box"]["annotationContainer"] = "note-container"
@@ -213,7 +213,7 @@ def test_a_label_visual_is_part_of_the_chrome_the_body_wraps_inside(tmp_path, si
     parts["view"]["body"]["visuals"] = [{"target": {"kind": "annotation", "id": "view-n0"},
                                          "ref": "material:10k-outline-rounded", "decorative": True, "side": side}]
     for annotation in parts["view"]["body"]["annotations"]:
-        annotation["candidates"] = [_rail_candidate()]
+        annotation["candidates"] = ab.border_candidates()
     parts["theme"]["body"]["values"]["note-container"] = {"type": "annotationContainer", "value": dict(FILL)}
     parts["theme"]["body"]["roles"]["annotation-note-box"]["annotationContainer"] = "note-container"
     directory = tmp_path / side

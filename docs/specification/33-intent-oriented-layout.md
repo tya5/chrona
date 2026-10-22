@@ -723,7 +723,11 @@ declared connector touching the resolved anchor, and its body, tail and any
 routed connector MUST clear other objects' marks. Exhaustion does not permit
 a detached balloon, a least-covering box over another object's mark, or an
 unvalidated direct leader. Evaluate the existing ordered candidates without
-changing their individual search budgets. A final declared candidate with
+changing their individual search budgets.
+An annotations slot's declared `visible-overflow` may admit a natural frame's
+inline overhang under Specification07/44; it does not waive full-frame obstacle
+clearance or connector validation and must name the note in its diagnostic.
+A final declared candidate with
 `region: {kind: slot, source: annotations}`, `search: {kind: row-aligned}`
 and `connector: {kind: none}` is an explicit terminal list destination.
 Try its normal fit first; when its allocated slot is insufficient, complete

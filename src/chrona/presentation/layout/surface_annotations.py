@@ -973,6 +973,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 annotation, resolved, anchor_y=prepared.anchor_y,
                                 text_size=fill_size or annotation_size,
                                 rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                allow_inline_overflow=(annotation_slot is not None
+                                                       and annotation_slot.overflow == "visible-overflow"),
                                 connector_kind=candidate.connector.kind)
                             for candidate_box in candidate_boxes:
                                 annotation_search_count += 1
@@ -1272,6 +1274,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             box_overflow = box.placement.visible_overflow
             overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
                                  else LabelRect(*_bounds(timeline.bounds)))
+            overflow_required = ((bounds.width, bounds.height) if box_overflow else None)
             annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
                                      Decimal(str(bounds.width)), Decimal(str(bounds.height)))
             if tilt_angle:

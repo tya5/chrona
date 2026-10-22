@@ -51,7 +51,7 @@ def _request(entries, *, edge=True, manifest_ids=()):
         projection=SimpleNamespace(network=network),
         surface_content=_Content(tuple(entries)),
         layout_manifest=SimpleNamespace(decisions=tuple(SimpleNamespace(node_id=item) for item in manifest_ids)),
-        measured_sources=SimpleNamespace(metric_values=resolve_theme_metrics(theme)),
+        measured_sources=SimpleNamespace(metric_values=resolve_theme_metrics(theme), legend_layout=None),
         theme_tokens=ThemeTokenView(theme), font_metrics=metrics,
     )
 
@@ -129,7 +129,11 @@ def test_authored_legend_keeps_all_keys_and_layout_settings_when_moved():
     assert moved.slot.gap == Decimal(4) and moved.slot.columns == 2
     assert moved.slot.bounds.block == Decimal(50) + plan.block_gap
     assert moved.slot.bounds.inline == authored_slot.bounds.inline
-    assert moved.slot.bounds.inline_size == authored_slot.bounds.inline_size
+    # Completion grows the authored minimum to the measured full-key extent;
+    # relocation must preserve that same completed width, not the pre-closure slot width.
+    assert moved.slot.bounds.inline_size == unchanged.slot.bounds.inline_size
+    assert moved.slot.bounds.inline_size >= authored_slot.bounds.inline_size
+    assert {item.content for item in moved.text} == {"Critical dependency", "Other dependencies"}
     assert len(moved.relations) == 2
 
 

@@ -9,7 +9,7 @@ from chrona.presentation.layout.group_header_runs import (
     place_group_header_runs, place_wrapped_group_header_runs,
 )
 from chrona.presentation.layout.group_header_fit import (
-    GroupHeaderFitPlan, header_text_room, resolve_group_labels,
+    GroupHeaderFitPlan, header_text_room, resolve_group_labels, validate_group_header_room,
 )
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
@@ -105,8 +105,8 @@ def resolve_group_tab(theme_tokens: Any) -> GroupTabSpec | None:
 
 def check_group_tab_inline(tab: GroupTabSpec, header: Rect) -> None:
     """Reject a tab plus gap that leaves the header text no inline room."""
-    if tab.reserved >= header.inline_size:
-        raise _tab_error("tabInlineSize", tab.reserved, header.inline_size)
+    validate_group_header_room(header_inline_size=header.inline_size,
+                               tab_reserved=tab.reserved, tab_position=tab.position)
 
 
 def group_tab_bounds(tab: GroupTabSpec, header: Rect) -> Rect:
@@ -126,6 +126,26 @@ def group_tag_bounds(tab: GroupTabSpec, column: tuple[float, float], rows: Rect)
     if inline <= 0 or block <= 0:
         raise _tab_error("tabGap", tab.gap, min(size, rows.block_size))
     return Rect(start + tab.gap, rows.block + tab.gap, inline, block)
+
+
+def groups_after_group_header_fold(*, groups: tuple[GroupPlacement, ...],
+                                   tab: GroupTabSpec | None,
+                                   fit_plan: GroupHeaderFitPlan | None) -> tuple[GroupPlacement, ...]:
+    """Keep a demoted horizontal header outside the row-only cell painted by a tag-target tab."""
+    if tab is None or tab.target != "tag" or fit_plan is None:
+        return groups
+    adjusted: list[GroupPlacement] = []
+    for group in groups:
+        fit = fit_plan.group(group.group_id) if group.group_id else None
+        if group.header_bounds is None or fit is None or fit.uses_vertical_tag:
+            adjusted.append(group)
+            continue
+        adjusted.append(replace(group, content_bounds=Rect(
+            group.content_bounds.inline,
+            group.header_bounds.block + group.header_bounds.block_size,
+            group.content_bounds.inline_size,
+            max(Decimal(0), group.content_bounds.block_size - group.header_bounds.block_size))))
+    return tuple(adjusted)
 
 
 def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
@@ -242,18 +262,11 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
             start, size = group.header_bounds.inline, group.header_bounds.inline_size
             if tab is not None:
                 # The text never lies on the tab (#882): it starts after a start tab and gives an end tab its room.
-                check_group_tab_inline(tab, group.header_bounds)
-                if label_inset_ratio is not None and tab.position == "start":
-                    if label_inset < tab.reserved:
-                        raise LayoutError(
-                            "E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
-                            detail=f"actual offset={label_inset}; required reservation={tab.reserved}")
-                elif label_inset_ratio is not None:
-                    if label_inset + tab.reserved > group.header_bounds.inline_size:
-                        raise LayoutError(
-                            "E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
-                            detail=(f"actual offset={label_inset}; required reservation={tab.reserved}; "
-                                    f"available={group.header_bounds.inline_size}"))
+                validate_group_header_room(
+                    header_inline_size=group.header_bounds.inline_size,
+                    label_inset=label_inset,
+                    label_inset_declared=label_inset_ratio is not None,
+                    tab_reserved=tab.reserved, tab_position=tab.position)
             bounded = tab is not None or text_end_limit is not None
             if bounded:
                 room = header_text_room(

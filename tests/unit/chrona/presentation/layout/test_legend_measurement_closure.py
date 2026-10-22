@@ -46,6 +46,16 @@ def test_natural_content_width_never_ellipsizes_an_exact_fit(direction, columns,
     assert not batch.warnings
 
 
+@pytest.mark.parametrize("label", ["出番待ち · 予定", "出番待ち · 実績", "東京  Release · 予定"])
+def test_fitting_cjk_legend_preserves_authored_internal_spaces(label):
+    entries = (SurfaceLegendEntry("unknown", label),)
+    layout = complete_legend_layout(
+        entries, available_inline=Decimal(500), item_min_inline=None, gap=Decimal(4),
+        tokens=ThemeTokenView(theme()), mark_block_size=8, font_metrics=_Metrics())
+    assert layout.entries[0].lines == (label,)
+    assert layout.entries[0].source_text == label
+
+
 @pytest.mark.parametrize("direction,columns", [("block", None), ("inline", None), ("block", 1)])
 def test_real_shortage_still_ellipsizes_and_reports_source(direction, columns):
     entry = SurfaceLegendEntry("unknown", "Plan")

@@ -1,6 +1,7 @@
 """Transformed group headers keep their completed width equal to the painted run (#1336)."""
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from importlib.resources import files
 
 import pytest
@@ -63,25 +64,36 @@ def test_uppercase_compressed_header_width_matches_the_same_painted_text(tmp_pat
     _assert_svg_bounds(transformed, band_id)
 
 
-def test_role_marked_ellipsis_uses_transformed_width_and_band_end(tmp_path):
-    source = _source_with_title("i" * 200)
-    transformed = _render(tmp_path, _transformed_parts(marked=True, transform="uppercase", tab=150),
-                          source=source, name="transformed-ellipsis")
-    scene_id = "group-header:team-0#run0"
-    header = _by_id(transformed)[scene_id]
-    assert header.text.endswith("…")
-    assert header.text == header.text.upper()
+def test_role_marked_wrapped_full_name_uses_transformed_width_and_band_end(tmp_path):
+    source_title = " ".join(["i" * 4] * 100)
+    painted_title = " ".join(["I" * 4] * 100)
+    source = _source_with_title(source_title)
+    transformed = _render(tmp_path, _transformed_parts(marked=True, transform="uppercase", tab=100),
+                          source=source, name="transformed-wrap")
+    prefix = "group-header:team-0#run"
+    headers = [item for key, item in sorted(_by_id(transformed).items()) if key.startswith(prefix)]
+    assert headers and all(item.text == "IIII" for item in headers)
 
-    # Re-render the exact visible source without a transform: its measured width must be identical to the transformed
-    # run, even after the bounded ellipsis decision.
-    reference_source = _source_with_title(header.text)
-    reference = _render(tmp_path, _transformed_parts(marked=True, transform="none", tab=150),
-                        source=reference_source, name="plain-ellipsis-reference")
-    assert _by_id(reference)[scene_id].bounds[2] == pytest.approx(header.bounds[2], abs=1e-6)
+    # The same complete words painted as uppercase source text must measure identically, including wrapped lines.
+    reference_source = _source_with_title(painted_title)
+    reference = _render(tmp_path, _transformed_parts(marked=True, transform="none", tab=100),
+                        source=reference_source, name="plain-wrap-reference")
+    reference_headers = [item for key, item in sorted(_by_id(reference).items()) if key.startswith(prefix)]
+    assert len(reference_headers) == len(headers)
+    assert [item.text for item in reference_headers] == [item.text for item in headers]
+    assert [item.bounds[2] for item in reference_headers] == pytest.approx(
+        [item.bounds[2] for item in headers], abs=1e-6)
+    assert not any(item.text.endswith("…") for item in headers)
+    svg = ET.fromstring(transformed.artifact.content)
+    svg_runs = [node for node in svg.iter()
+                if node.tag.rsplit("}", 1)[-1] == "text"
+                and node.attrib.get("data-scene-id", "").startswith(prefix)]
+    assert ["".join(node.itertext()) for node in svg_runs] == [item.text for item in headers]
+
     band_id = "group-header-band:team-0"
     band = _by_id(transformed)[band_id]
     table = next(slot.bounds for slot in transformed.surface.slots if slot.slot_id == "table")
-    expected_right = min(table[0] + table[2], header.bounds[0] + header.bounds[2])
+    expected_right = min(table[0] + table[2], max(item.bounds[0] + item.bounds[2] for item in headers))
     assert band.bounds[0] + band.bounds[2] == pytest.approx(expected_right, abs=1e-6)
     _assert_svg_bounds(transformed, band_id)
 

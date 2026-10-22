@@ -176,11 +176,13 @@ def test_content_sized_short_and_wide_headings_do_not_overlap_when_rail_is_narro
     _, rendered = _render(tmp_path, rail=180, heading_size=22, fill=False, wide_heading=wide_heading)
     _assert_boxes_do_not_overlap(rendered)
     if wide_heading:
-        # An indivisible oversized header cannot be placed as a box wider than
-        # its declared rail; the explicit safe destination retains the body.
-        # The list record intentionally carries no kind heading; the filled
-        # card controls above separately assert heading rendering.
-        assert len(_prims(rendered, "annotation-list")) == 3
+        # The rail explicitly allows visible overflow. A clear full-width
+        # natural card retains its heading instead of silently becoming a list.
+        boxes = _prims(rendered, "annotation-box")
+        assert boxes and any(box.bounds[2] > 180 for box in boxes.values())
+        assert any(warning.code == "W_LAYOUT_LABEL_OVERFLOW"
+                   and warning.source_ref in boxes
+                   for warning in rendered.surface.fit_warnings)
     _assert_svg_contains_notes(rendered)
 
 
@@ -191,6 +193,16 @@ def test_marker_none_exhausted_rail_stacks_full_records_and_reports_overflow(tmp
     _assert_svg_contains_notes(rendered)
     assert any(warning.code == "W_LAYOUT_LABEL_OVERFLOW" and warning.source_ref == "view-n2"
                for warning in rendered.surface.fit_warnings)
+
+
+def test_a_rail_without_visible_overflow_uses_its_declared_list_for_wide_cards(tmp_path):
+    source, parts = _parts(rail=180, heading_size=22, fill=False, wide_heading=True)
+    sr.find_node(parts["layout"], "annotations")["overflow"] = "clip-optional"
+    rendered = ak.render(tmp_path, source, parts)
+    assert not _prims(rendered, "annotation-box")
+    assert len(_prims(rendered, "annotation-list")) == 3
+    _assert_boxes_do_not_overlap(rendered)
+    _assert_svg_contains_notes(rendered)
 
 
 def test_exhausted_rail_without_declared_terminal_destination_is_rejected(tmp_path):

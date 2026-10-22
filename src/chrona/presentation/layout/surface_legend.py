@@ -11,7 +11,7 @@ from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES
 from chrona.presentation.layout.sources import (MeasuredLegend, MeasuredLegendEntry, SourceInput,
                                                 SourceTextRun)
 from chrona.presentation.layout.text import (TextSegment, ellipsize_text, measure_text_segments, measure_text_width,
-                                             metric_for_role, place_text, wrap_text, _wrap_units)
+                                             metric_for_role, place_text, _wrap_units)
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_periods import compose_period_decoration
 from chrona.presentation.layout.mark_geometry import (
@@ -346,9 +346,11 @@ def _fit_legend_label(entry: SurfaceLegendEntry, *, available: Decimal, font_siz
             if Decimal(str(qualified_width)) <= available:
                 source_text, segments = qualified, qualified_segments
     if segments is None:
-        lines = wrap_text(source_text, available_inline=float(available), font_size=font_size,
-                          font_metrics=metrics, letter_spacing=float(treatment.letter_spacing),
-                          text_transform=treatment.transform, numeric_spacing=treatment.numeric_spacing)
+        # Preserve authored spaces inside a completed line, including CJK
+        # qualifiers. The same source-span breaker measures styled fragments.
+        lines = _wrap_segmented_text(
+            source_text, (TextSegment(source_text, treatment.transform),),
+            available=available, font_size=font_size, metrics=metrics, treatment=treatment)
         width = max(Decimal(str(measure_text_width(
             line, font_size=font_size, font_metrics=metrics,
             letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,

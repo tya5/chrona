@@ -326,9 +326,13 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     parts["view"]["body"]["window"] = {
         "mode": "explicit", "start": "2026-01-05", "end": "2026-03-01"}
     source = sr.bunched_project()
-    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"],
-        [sr.candidate("plot-near", connector="leader"),
-         sr.candidate("plot-no-tail", connector="none")])
+    annotation_slot = {"kind": "slot", "source": "annotations"}
+    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"], [
+        sr.candidate("plot-near", connector="leader"),
+        sr.candidate("plot-no-tail", connector="none"),
+        sr.candidate("rail-card", region=annotation_slot, search_kind="row-aligned", connector="none"),
+        sr.candidate("terminal-list", region=annotation_slot, search_kind="row-aligned", connector="none"),
+    ])
     rendered = sr.render(tmp_path, source, presentation=parts)
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics

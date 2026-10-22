@@ -23,6 +23,7 @@ from chrona.presentation.scene.serialization import scene_document, serialize_sc
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 from tests.support import annotation_artwork as aw
+from tests.support import annotation_border as ab
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
@@ -60,7 +61,7 @@ def _parts(*, container=None, fit=None, adjust=None, texts=None, words=3, unstro
 
 def _source(parts, *, texts=None, words=3, candidates=None):
     source = sr.chain_project()
-    ids = sr.add_notes(source, parts["view"], TARGETS, candidates or [_rail_candidate()], words=words)
+    ids = sr.add_notes(source, parts["view"], TARGETS, candidates or ab.border_candidates(), words=words)
     for note_id, text in zip(ids, texts or (), strict=False):
         source["annotations"][note_id]["text"] = text
     return source
@@ -71,13 +72,14 @@ def _with_start_ink(parts):
     parts["theme"]["body"]["colorBindings"]["annotation-border-start.fill"] = "accent"
 
 
-def _render(tmp_path, name="r", *, parts=None, texts=None, words=3, configure=None, **parts_args):
+def _render(tmp_path, name="r", *, parts=None, texts=None, words=3, candidates=None, configure=None,
+            **parts_args):
     directory = tmp_path / name
     directory.mkdir()
     parts = parts or _parts(**parts_args)
     if configure is not None:
         configure(parts)
-    return sr.render(directory, _source(parts, texts=texts, words=words), presentation=parts)
+    return sr.render(directory, _source(parts, texts=texts, words=words, candidates=candidates), presentation=parts)
 
 
 def _by_prefix(rendered, prefix):
@@ -318,6 +320,11 @@ def _failure(call):
 
 
 def _refused(tmp_path, **kwargs):
+    # Keep these Theme refusals on a box-producing candidate family: a safe
+    # terminal list is a valid visual fallback, but would bypass box-only
+    # validation that these tests intentionally exercise.
+    kwargs.setdefault("candidates", [
+        ab.rail_candidate(), ab.rail_card_candidate(), sr.candidate("plot-guard", connector="none")])
     return _failure(lambda: _render(tmp_path, **kwargs))
 
 

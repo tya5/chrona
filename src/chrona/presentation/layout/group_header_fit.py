@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Any, Mapping
 
 from chrona.presentation.layout.group_header_runs import GroupHeaderRunSegment, wrap_group_header_runs
-from chrona.presentation.layout.model import geometry_sum
+from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import _wrap_units, measure_text_width, metric_for_role, wrap_text
 from chrona.presentation.layout.vertical_text import vertical_label_required_block
 from chrona.presentation.layout.window_row_admission import geometry_folded_points
@@ -50,12 +50,34 @@ class HeaderTextRoom:
     bounded: bool
 
 
+def validate_group_header_room(*, header_inline_size: Decimal, label_inset: Decimal = Decimal(0),
+                               label_inset_declared: bool = False, tab_reserved: Decimal = Decimal(0),
+                               tab_position: str | None = None) -> None:
+    """Reject an impossible authored tab/inset against the candidate header extent."""
+    if tab_position is not None and tab_reserved >= header_inline_size:
+        raise LayoutError("E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/group-tab/tabInlineSize",
+                          detail=f"group-tab:tabInlineSize:{tab_reserved}:{header_inline_size}")
+    if not label_inset_declared or tab_position is None:
+        return
+    if tab_position == "start" and label_inset < tab_reserved:
+        raise LayoutError("E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
+                          detail=f"actual offset={label_inset}; required reservation={tab_reserved}")
+    if tab_position == "end" and label_inset + tab_reserved > header_inline_size:
+        raise LayoutError("E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
+                          detail=(f"actual offset={label_inset}; required reservation={tab_reserved}; "
+                                  f"available={header_inline_size}"))
+
+
 def header_text_room(*, header_start: Decimal, header_end: Decimal,
                      label_inset: Decimal = Decimal(0), label_inset_end: Decimal = Decimal(0),
                      label_inset_declared: bool = False, tab_reserved: Decimal = Decimal(0),
                      tab_position: str | None = None, text_end_limit: Decimal | None = None
                      ) -> HeaderTextRoom:
     """Return the shared text span used by header preflight and final group composition."""
+    validate_group_header_room(
+        header_inline_size=header_end - header_start, label_inset=label_inset,
+        label_inset_declared=label_inset_declared, tab_reserved=tab_reserved,
+        tab_position=tab_position)
     start = header_start + label_inset
     end = header_end - label_inset_end
     if tab_position == "start" and not label_inset_declared:

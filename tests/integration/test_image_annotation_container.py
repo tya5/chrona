@@ -179,7 +179,10 @@ def test_the_image_notes_slide_rasterizes_reproducibly_with_its_image_tiles(tmp_
             "--theme", str(example / "themes/wallboard-image-notes.yaml"),
             "--scheme", str(example / "schemes/control-room-dark.yaml"),
             "--layout", str(example / "layouts/wallboard.yaml"),
-            "--icon-catalog", str(example / "icons.yaml"), "--output", str(output),
+            "--icon-catalog", str(example / "icons.yaml"),
+            # Match the committed slide's contextOverrides viewport; the CLI
+            # otherwise uses its narrower default and exhausts the note slot.
+            "--viewport", "1920x1080", "--output", str(output),
         ])
         main()
         outputs.append(output.read_bytes())

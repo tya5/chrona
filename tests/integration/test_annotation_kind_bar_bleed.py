@@ -1,23 +1,23 @@
 """Border-flush annotation-kind bars and bar-end stamps (#1242)."""
 from __future__ import annotations
 
-from copy import deepcopy
 import io
+import xml.etree.ElementTree as ET
+from copy import deepcopy
 from math import atan2, degrees, sqrt
 from pathlib import Path
-import xml.etree.ElementTree as ET
 
-from PIL import Image
 import pytest
+from PIL import Image
 
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.serialization import scene_document
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
+from tests.support import annotation_border as ab
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
-
 
 SVG = "chrona-output/visual/v0.6-svg"
 PNG = "chrona-output/visual/v0.6-png"
@@ -117,9 +117,7 @@ def _filled_bleed_parts(*, label: str, secondary: str = "WARNING", secondary_siz
     theme["values"][container_id]["value"]["inlineSize"] = "fill"
     theme["annotationKinds"]["risk"].update(title="{label}", label=label, secondary=secondary)
     theme["values"]["kind-secondary-size"]["value"] = secondary_size
-    parts["view"]["body"]["annotations"][0]["candidates"] = [sr.candidate(
-        "rail", region={"kind": "slot", "source": "annotations"},
-        connector="none", search_kind="row-aligned")]
+    parts["view"]["body"]["annotations"][0]["candidates"] = ab.border_candidates()
     parts["view"]["body"]["visibility"]["annotations"]["marker"] = "none"
     return source, parts
 

@@ -86,7 +86,7 @@ def render_notes(tmp_path: Any, border: Mapping[str, Any] | None, *, name: str =
         configure(parts)
     source = sr.chain_project() if source is None else source
     ids = sr.add_notes(source, parts["view"], targets,
-                       candidates if candidates is not None else [rail_candidate()], words=words)
+                       candidates if candidates is not None else border_candidates(), words=words)
     for note_id, text in zip(ids, texts, strict=False):
         source["annotations"][note_id]["text"] = text
     return sr.render(directory, source, presentation=parts)

@@ -1,6 +1,7 @@
 """Count completed producer occurrences, not indexes, kind bars or Scene ID patterns (#1346)."""
 from copy import deepcopy
 from datetime import date
+from xml.etree import ElementTree
 
 import pytest
 
@@ -77,14 +78,24 @@ def test_completed_rail_summary_counts_once_while_suppressed_body_does_not(tmp_p
     def suppress(annotation, *args, **kwargs):
         return None if annotation.annotation_id == "note-2" else original(annotation, *args, **kwargs)
     monkeypatch.setattr(surface_annotations, "project_annotation_box", suppress)
+    original_rail = surface_annotations.annotation_rail_candidates
+    def suppress_rail(annotation, *args, **kwargs):
+        return () if annotation.annotation_id == "note-2" else original_rail(annotation, *args, **kwargs)
+    monkeypatch.setattr(surface_annotations, "annotation_rail_candidates", suppress_rail)
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
     receipts = captured[0].narrative_receipts
-    expected = {("note-0", "body"), ("note-1", "body"), ("note-3", "body")}
-    if numbered:
-        expected.add(("note-2", "summary"))
+    expected = {("note-0", "body"), ("note-1", "body"), ("note-2", "summary"), ("note-3", "body")}
     assert len(receipts) == len(expected)
     assert {(r.source_id, r.form) for r in receipts} == expected
     assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:note-2" in rendered.surface.diagnostics
+    ids = {item.scene_id: item for item in rendered.surface.primitives}
+    assert "annotation-text:note-2" not in ids
+    summary = ids["annotation-summary:note-2"]
+    prefix = "3. " if numbered else ""
+    expected_body = f"{prefix}Synthetic note 2 on gate-2. (callout not shown on plot)"
+    assert summary.text == expected_body
+    svg_text = " ".join(" ".join(ElementTree.fromstring(rendered.artifact.content).itertext()).split())
+    assert svg_text.count(expected_body) == 1
 
 
 def test_no_narrative_has_no_receipts_even_though_titles_and_labels_are_drawn(tmp_path, monkeypatch):
