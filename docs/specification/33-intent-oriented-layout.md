@@ -764,8 +764,10 @@ pass fails, retain the existing fallback and diagnostics.
 declared connector touching the resolved anchor, and its body, tail and any
 routed connector MUST clear other objects' marks. Exhaustion does not permit
 a detached balloon, a least-covering box over another object's mark, or an
-unvalidated direct leader. Evaluate the existing ordered candidates without
-changing their individual search budgets.
+unvalidated direct plot leader. Evaluate the existing ordered candidates without
+changing their individual search budgets. The diagnosed rail-leader completion
+below is a deliberate exception for the connector only, not plot callouts,
+tails or card-body clearance.
 An annotations slot's declared `visible-overflow` may admit a natural frame's
 inline overhang under Specification07/44; it does not waive full-frame obstacle
 clearance or connector validation and must name the note in its diagnostic.
@@ -802,6 +804,36 @@ it cannot authorize unsafe ink or claim global feasibility. If the measured
 stack does not fit, retain the declared exhaustion behavior. Plot-first
 callouts do not acquire an unconditional footer reservation through this rule.
 
+**Mandatory rail leaders (owner decision, #1906).** A candidate declaring
+`region: {kind: slot, source: annotations}`, `search: {kind: row-aligned}`
+and `connector: {kind: leader}` keeps its declared connection whenever its
+full card body fits. Try the existing clear/bridged routes for the finite
+ordered body candidates first, under the existing budgets and quality limits.
+If no such pair is admitted, complete the first otherwise-valid body candidate
+with a direct hairline from its resolved mark endpoint to its card boundary.
+Retain its declared Theme leader paint; do not invent a stroke, shrink text,
+drop the leader, or silently choose a connector-free card because routing failed.
+This fallback is diagnosed, not a claim that its path is clear. It may cross
+completed obstacles, including work-item marks, an as-of rule, text or other
+strokes; name every actual crossing rather than hiding one class of collision.
+
+Layout measures the final painted connector, including its actual stroke width
+and any tilted-card boundary extension, against the same completed obstacle
+index. Retain typed crossing identities/classes/regions and report them in
+`W_LAYOUT_ANNOTATION_LEADER_FALLBACK` with the annotation and candidate IDs.
+Only the declared source/target contact and initial host-egress corridor are
+expected attachment, not obstacle waivers for later re-entry. The diagnostic
+still names route exhaustion when the crossing set is empty. A bounded search
+miss is not global infeasibility. Scene/adapters project the completed path
+and existing Theme paint; they never choose the fallback or detect crossings.
+
+This explicitly supersedes the absolute no-crossing condition for rail
+leaders in the original #1906 row 4, following owner decision
+[6351461724](https://github.com/tya5/chrona/pull/1914#issuecomment-6351461724).
+Anchor/View-tie stacking, full-card containment/obstacle checks, explicit list
+exhaustion when no body fits, and plot/tail safety remain unchanged. An authored
+`connector: none` remains intentional; only a declared rail leader is mandatory.
+
 ### 8.2 Annotation connector topology after the shared inventory
 
 The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)
@@ -814,7 +846,10 @@ Strict connectors avoid all declared obstacles. A rail leader MAY use an
 explicit, bounded bridged-orthogonal topology after strict search. A bridge
 MAY cross only a semantic dependency stroke, transversely and
 away from junctions/endpoints. It MUST NOT cross a mark, text, annotation box,
-another annotation leader, port other than a named endpoint, or rule barrier. Layout completes a visible
+another annotation leader, port other than a named endpoint, or rule barrier.
+After these clear-route attempts exhaust, the separately diagnosed mandatory
+rail hairline above is permitted; it is not a strict or bridged-clear route.
+Layout completes a visible
 gap in the later annotation connector at each crossing; the crossed stroke
 remains continuous. The connector remains a single source-linked placement,
 and Scene/adapters MUST NOT decide the crossing or gap. A tail connector MUST
