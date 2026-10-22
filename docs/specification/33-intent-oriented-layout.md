@@ -730,8 +730,12 @@ clearance or connector validation and must name the note in its diagnostic.
 A final declared candidate with
 `region: {kind: slot, source: annotations}`, `search: {kind: row-aligned}`
 and `connector: {kind: none}` is an explicit terminal list destination.
-Try its normal fit first; when its allocated slot is insufficient, complete
-the whole note as a naturally stacked list record and report the existing
+This candidate declares list text, not a card whose connector happens to be
+absent. A nonterminal slot/row-aligned candidate with `connector: none`
+retains the Theme's card frame, kind header and title without a leader;
+declare it before the terminal list when card presentation must be preserved.
+Try the terminal list's normal text fit first; when its allocated slot is
+insufficient, complete the whole note as a naturally stacked list record and report the existing
 source-linked visible-overflow diagnostic naming that note. Preserve the
 body of unnumbered notes too, without inventing an ordinal. This list entry
 is not a detached plot callout and has no fabricated connector. Its slot

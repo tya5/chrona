@@ -32,8 +32,16 @@ def test_design_declares_terminal_list_and_corresponding_slot(design):
     candidates = profile["viewDefaults"]["annotationPlacement"]["note"]["candidates"]
     _assert_list_candidate(candidates[-1])
     assert any(slot["source"] == "annotations" for slot in _slots(profile["root"]))
-    # Adding a safe list does not discard a design's preferred connector.
-    assert all(candidate["connector"]["kind"] != "none" for candidate in candidates[:-1])
+    if design == "sunday":
+        # Sunday deliberately tries plot/tail placements before its explicit list.
+        assert all(candidate["connector"]["kind"] == "tail" for candidate in candidates[:-1])
+    else:
+        # Rail-first designs retain a full card attempt before the explicit list rung.
+        assert candidates[0]["connector"] == {"kind": "leader"}
+        card = candidates[-2]
+        assert card["region"] == {"kind": "slot", "source": "annotations"}
+        assert card["search"] == {"kind": "row-aligned"}
+        assert card["connector"] == {"kind": "none"}
 
 
 def test_authored_roadmap_view_explicitly_migrates_its_placement_policies():
