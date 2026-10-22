@@ -522,8 +522,9 @@ identity for the growth or incompatible-cap diagnostic. Apply that minimum
 both to the source measurement and to bounded remeasurement; text fitting
 cannot erase required group content. Re-close normal-flow and native row
 geometry before routing. This demand is raised only for a group whose
-preferred vertical name does not fit and whose horizontal indivisible unit
-exceeds its allocation, not for every potentially long group label. Every
+preferred vertical name does not fit, or whose required bounded horizontal
+header does not fit, and whose horizontal indivisible unit exceeds its
+allocation; not for every potentially long group label. Every
 reclosure must add a previously unsatisfied measured group minimum; unchanged
 demand is an incompatibility, not permission to retry indefinitely. The finite
 admitted group inventory bounds this closure without a new search quota.

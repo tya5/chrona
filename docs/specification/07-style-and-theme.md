@@ -922,6 +922,15 @@ lines and sufficient block demand. A partial tag, a diagnostic or a path
 that does not contain a field/entity value is not the full-name alternative.
 Fit groups retain their preferred tags; hidden headers remain hidden.
 
+The same full-name requirement applies to ordinary horizontal headers bounded
+by a header tab or a `text`/`table` band extent. Measure their actual text room,
+including declared tab and label insets, and reserve wrapped-line block demand
+before rows close. The earlier tab-bound shortening behavior does not justify
+losing the only visible full name. Keep declared tab paint, header-band extent,
+and marked-run typography; fitting headers retain their existing placement.
+Role-marked templates must retain their roles and order when wrapping, not be
+collapsed into unmarked text. Unbounded headers retain their existing extent.
+
 Carry this choice as a typed Layout fit plan through source measurement,
 natural demand, row allocation and group composition, not as extra text
 added after rows close. Reallocate header demand before routing; if reduced
