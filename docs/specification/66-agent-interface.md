@@ -297,8 +297,24 @@ message says so and names the revision. Additive; no result version change.
 - Both tools are mutating (`readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`) and fail
   `E_MCP_WRITE_DISABLED` before opening any file without `--allow-write`. Command and result versions are new
   documents (`schemas/project-command-v0.1.schema.yaml`, `schemas/project-command-result-v0.1.schema.yaml`); no
-  existing schema changes (items 2 and 3 widen the `type` enum and `payload` conditions of the new command document in place). Reverting an edit is a later item (an `inverse` command in the result); until then it is
-  the opposite command at the new revision.
+  existing schema changes (items 2 and 3 widen the `type` enum and `payload` conditions of the new command document in place).
+- Revert (#1892 row 2, item 4; owner default 3, no second undo engine). An accepted `projectResult` carries `inverse`:
+  a complete `chrona/project-command/v0.1` request (`commandId` = the original id plus `-inverse`, `target` as given,
+  `baseRevision` = `resultRevision`, the type and payload that restore exactly what the command changed). An upsert that
+  replaced a value is undone by an upsert of the old value, one that added a key by the matching `remove*` (an id-less
+  relation by `removeRelation {relation}`, which removes the first identical relation), a removal by an upsert of the
+  removed value at its former place, `setProjectMeta` by the previous values (`null` for a member that was absent). The
+  place is carried by optional payload members of the set types: `before` (a new key goes before that existing key of
+  the member instead of at the end), `index` (`setRelation`: the 0-based position of a new relation), `memberBefore` (the
+  member is created before that top-level key) and, for `setProjectMeta`, `order` (header key order). A name that does
+  not exist is `E_PROJECT_COMMAND` at `/payload/<member>`. To revert, send `inverse` as the `command` of
+  `apply_project_command`; the file is byte-identical to the one before the edit when that file was in canonical form
+  (as written by `create_project` or an earlier command; the first command on a hand-written file already rewrites
+  comments, flow style and quoting, which no inverse restores) and `resultRevision` equals the revision before the edit.
+  The inverse of an inverse is the original edit again. After any other edit the revision check refuses a stale inverse
+  (`E_AUTHORING_BASE_REVISION`): read `validate_project`, then build the opposite edit. A replay returns the same
+  `inverse`; a rejected result has none. `removeCalendar` now also drops an emptied `calendars` member, like the other
+  removals. The file route has no baseline command yet (items 5 and 6).
 
 Only initialization accepts a nonexistent destination directory. Its explicit
 destination guard retains the syntax/containment/device rules of section4;

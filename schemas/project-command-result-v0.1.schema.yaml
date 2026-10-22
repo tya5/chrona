@@ -14,6 +14,17 @@ properties:
   resultRevision: {description: "The revision after an accepted write (equal to projectRevision for an edit that changes nothing), or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], $ref: "urn:chrona:common-v0.1#/$defs/sha256IdentityOrNull"}
   replayed: {description: "True only when this accepted result is the retained first result of an earlier application of the same commandId and request; nothing was written by this call. Absent for a fresh application.", const: true}
   revisionIsCurrent: {description: "Present on a replay: whether resultRevision is still the Project's current revision (false when later commands changed it).", type: boolean}
+  inverse:
+    description: "On an accepted result: the project-command/v0.1 request (version, commandId, type, target, baseRevision = resultRevision, payload) that restores exactly what this command changed. Apply it with apply_project_command to revert the edit; it is refused with E_AUTHORING_BASE_REVISION once the Project has moved on."
+    type: object
+    required: [version, commandId, type, target, baseRevision, payload]
+    properties:
+      version: {description: "The project-command contract version.", const: chrona/project-command/v0.1}
+      commandId: {description: "The command identity of the inverse: the original commandId with -inverse appended (use your own to retry after a different edit).", type: string, minLength: 1}
+      type: {description: "The inverse operation: a set or remove command type of project-command/v0.1.", type: string, minLength: 1}
+      target: {description: "The Project file the inverse applies to (the original target).", type: object}
+      baseRevision: {description: "The revision the inverse requires: this result's resultRevision.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+      payload: {description: "Operation-specific inverse content; it may carry the placement members before, index, memberBefore or order.", type: object}
   diagnostics:
     description: "Diagnostics emitted by the Project command boundary."
     type: array

@@ -17,7 +17,7 @@ from typing import Any, Mapping
 import yaml
 
 from chrona.core.diagnostics import Diagnostic
-from chrona.core.identity import content_identity
+from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import validate_project
 from chrona.extensions.profiles import check_project_extensions
 from chrona.storage.file_transaction import PreparedFileMutation
@@ -86,6 +86,7 @@ def prepare_project_command(
         "version": RESULT_VERSION, "status": "accepted", "commandId": command["commandId"],
         "commandBaseRevision": command["baseRevision"], "projectRevision": base,
         "resultRevision": next_revision, "diagnostics": [],
+        "inverse": inverse_command(current, candidate, command, next_revision),
     }
     return PreparedFileMutation(files={canonical_path.name: payload}, result_revision=next_revision, result=result)
 
@@ -100,6 +101,12 @@ def verify_project_receipt(
     result_errors = tuple(schema_validator("project-command-result-v0.1.schema.yaml").iter_errors(result))
     if request_errors or result_errors:
         raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained request or result violates its schema")
+    inverse = result.get("inverse")
+    if inverse is not None and (
+        tuple(schema_validator("project-command-v0.1.schema.yaml").iter_errors(inverse))
+        or inverse["baseRevision"] != after_identity or inverse["target"] != request["target"]
+    ):
+        raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained inverse is not a command on the result revision")
     if (
         result["status"] != "accepted"
         or result["commandId"] != request["commandId"]
@@ -141,32 +148,57 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
         if not isinstance(meta, dict):
             return "E_PROJECT_COMMAND", ["/payload: the Project's project member is not a mapping; fix the file first"]
         for name, value in payload.items():
+            if name == "order":
+                continue
             if value is None:
                 meta.pop(name, None)
             else:
                 meta[name] = value
+        order = payload.get("order")
+        if order is not None:
+            unknown = [name for name in order if name not in meta]
+            if unknown:
+                return "E_PROJECT_COMMAND", [
+                    f"/payload/order: the project header has no member {unknown[0]!r} after this edit; it has {', '.join(map(str, meta))}"]
+            _reorder(meta, order)
         return None
     if command_type in _MAPPING_MEMBERS:
         member, value_key = _MAPPING_MEMBERS[command_type]
         table = candidate.get(member)
-        if table is None:
-            table = candidate[member] = {}
-        if not isinstance(table, dict):
+        if table is not None and not isinstance(table, dict):
             return "E_PROJECT_COMMAND", [f"/payload: the Project's {member} member is not a mapping; fix the file first"]
-        table[_key(command)] = deepcopy(payload[value_key])
+        if table is None:
+            table = {}
+            if (refusal := _place(candidate, member, table, payload.get("memberBefore"), "/payload/memberBefore", "Project member")):
+                return refusal
+        if (refusal := _place(table, _key(command), deepcopy(payload[value_key]), payload.get("before"), "/payload/before", member)):
+            return refusal
         return None
     if command_type == "setRelation":
         relations = candidate.get("relations")
-        if relations is None:
-            relations = candidate["relations"] = []
-        if not isinstance(relations, list):
+        if relations is not None and not isinstance(relations, list):
             return "E_PROJECT_COMMAND", ["/payload: the Project's relations member is not a list; fix the file first"]
         relation = deepcopy(payload["relation"])
-        index = _relation_index(relations, relation)
-        if index is None:
-            relations.append(relation)
-        else:
+        index = _relation_index(relations or [], relation)
+        if relations is None:
+            relations = []
+            if (refusal := _place(candidate, "relations", relations, payload.get("memberBefore"), "/payload/memberBefore", "Project member")):
+                return refusal
+        if index is not None:
             relations[index] = relation
+        elif payload.get("index", len(relations)) > len(relations):
+            return "E_PROJECT_COMMAND", [f"/payload/index: the Project has {len(relations)} relations, so a new one cannot be inserted at {payload['index']}"]
+        else:
+            relations.insert(payload.get("index", len(relations)), relation)
+        return None
+    if command_type == "removeRelation" and "relation" in payload:
+        relations, wanted = candidate.get("relations"), json_value(payload["relation"])
+        index = next((i for i, item in enumerate(relations if isinstance(relations, list) else ()) if json_value(item) == wanted), None)
+        if index is None:
+            return "E_PROJECT_RELATION_MISSING", ["/payload/relation: the Project has no identical relation"]
+        del relations[index]
+        if not relations:
+            del candidate["relations"]
         return None
     if command_type == "removeRelation":
         relations, relation_id = candidate.get("relations"), payload["id"]
@@ -207,6 +239,8 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
                 f"/payload/id: calendar {calendar_id!r} is still used by {'; '.join(users[:MAX_ROWS])}; "
                 "point those at another calendar first"]
         del calendars[calendar_id]
+        if not calendars:
+            del candidate["calendars"]
         return None
     objects = candidate.get("objects")
     if command_type == "removeObject":
@@ -223,6 +257,32 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
         del objects[object_id]
         return None
     return "E_PROJECT_COMMAND", [f"/type: unsupported command type {command_type!r}"]
+
+
+def _place(table: dict[str, Any], key: str, value: Any, before: str | None, pointer: str, label: str) -> tuple[str, list[str]] | None:
+    """Write ``table[key] = value``: an existing key keeps its position, a new one goes before ``before`` or at the end."""
+    if key in table or before is None:
+        table[key] = value
+        return None
+    if before not in table:
+        return "E_PROJECT_COMMAND", [f"{pointer}: the {label} has no key {before!r}" + _known(table, "it has")]
+    items = list(table.items())
+    table.clear()
+    for name, item in items:
+        if name == before:
+            table[key] = value
+        table[name] = item
+    return None
+
+
+def _reorder(table: dict[str, Any], order: list[str]) -> None:
+    """Move the keys named in ``order`` to the front in that order; the others keep their relative order after them."""
+    items = dict(table)
+    table.clear()
+    for name in order:
+        if name in items:
+            table[name] = items.pop(name)
+    table.update(items)
 
 
 def _known(table: Any, lead: str) -> str:
@@ -319,6 +379,85 @@ def _referrers(project: Mapping[str, Any], object_id: str) -> list[str]:
         if isinstance(anchor, dict) and anchor.get("object") == object_id:
             found.append(f"annotation {name!r} (anchor)")
     return found
+
+
+# --- the inverse -----------------------------------------------------------------------------------------------
+
+_REMOVE_OF = {"setObject": "removeObject", "setCalendar": "removeCalendar", "setEntity": "removeEntity",
+              "setFieldRole": "removeFieldRole", "setAnnotation": "removeAnnotation"}
+_SET_OF = {removal: setter for setter, removal in _REMOVE_OF.items()}
+
+
+def inverse_command(current: Mapping[str, Any], candidate: Mapping[str, Any], command: dict[str, Any], result_revision: str) -> dict[str, Any]:
+    """The command that restores what ``command`` changed, bound to ``result_revision`` (the revision it produced).
+
+    It is an ordinary ``project-command/v0.1`` request built from the Project before (``current``) and after
+    (``candidate``): an upsert that replaced a value is undone by an upsert of the old value; one that added a key
+    by the matching removal; a removal by an upsert of the removed value carrying the position it had (``before``,
+    ``index``, ``memberBefore``, ``order``), so the file returns to the same bytes. Resending the same inverse after
+    the file has moved on is refused by the revision check like any stale command.
+    """
+    command_type, payload = command["type"], command["payload"]
+    inverse_type, inverse_payload = _inverse_edit(current, candidate, command_type, payload)
+    return {
+        "version": COMMAND_VERSION, "commandId": f"{command['commandId']}-inverse", "type": inverse_type,
+        "target": deepcopy(command["target"]), "baseRevision": result_revision, "payload": inverse_payload,
+    }
+
+
+def _following(keys: list[Any], key: Any) -> Any:
+    """The key that comes right after ``key`` in ``keys``, or ``None`` when ``key`` is last."""
+    position = keys.index(key)
+    return keys[position + 1] if position + 1 < len(keys) else None
+
+
+def _member_before(current: Mapping[str, Any], candidate: Mapping[str, Any], member: str) -> str | None:
+    """The top-level key a deleted ``member`` stood before, or ``None`` when it was last or still exists."""
+    return None if member in candidate or member not in current else _following(list(current), member)
+
+
+def _inverse_edit(current: Mapping[str, Any], candidate: Mapping[str, Any], command_type: str,
+                  payload: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    if command_type == "setProjectMeta":
+        before, after = current["project"], candidate["project"]
+        restored: dict[str, Any] = {name: json_value(before[name]) if name in before else None
+                                    for name in payload if name != "order"}
+        if any(name not in after and name in before for name in restored):
+            restored["order"] = [str(name) for name in before]
+        return "setProjectMeta", restored
+    if command_type in _MAPPING_MEMBERS or command_type in _REMOVALS or command_type in ("removeObject", "removeCalendar"):
+        setter = command_type if command_type in _MAPPING_MEMBERS else _SET_OF[command_type]
+        member, value_key = _MAPPING_MEMBERS[setter]
+        key_name = "role" if setter == "setFieldRole" else "id"
+        key = payload[key_name]
+        table = current.get(member) if isinstance(current.get(member), dict) else {}
+        if command_type == setter:
+            if key in table:
+                return setter, {key_name: key, value_key: json_value(table[key])}
+            return _REMOVE_OF[setter], {key_name: key}
+        restored = {key_name: key, value_key: json_value(table[key])}
+        following = _following(list(table), key)
+        if following is not None:
+            restored["before"] = str(following)
+        if (placed := _member_before(current, candidate, member)) is not None:
+            restored["memberBefore"] = placed
+        return setter, restored
+    relations = current.get("relations") if isinstance(current.get("relations"), list) else []
+    if command_type == "setRelation":
+        relation = payload["relation"]
+        index = _relation_index(relations, relation)
+        if index is not None:
+            return "setRelation", {"relation": json_value(relations[index])}
+        declared = relation.get("id")
+        return "removeRelation", {"id": declared} if isinstance(declared, str) and declared else {"relation": json_value(relation)}
+    if "relation" in payload:
+        index = next(i for i, item in enumerate(relations) if json_value(item) == json_value(payload["relation"]))
+    else:
+        index = _relation_index(relations, {"id": payload["id"]})
+    restored = {"relation": json_value(relations[index]), "index": index}
+    if (placed := _member_before(current, candidate, "relations")) is not None:
+        restored["memberBefore"] = placed
+    return "setRelation", restored
 
 
 # --- validation of the candidate -----------------------------------------------------------------------------
