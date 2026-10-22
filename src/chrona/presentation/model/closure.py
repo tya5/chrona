@@ -378,25 +378,7 @@ def resolve_draft_render(
                 _collect_presentation_resources([*sources, *package_sources]))
         _project_profile_packages(primary_project, resources, tuple(package_edges))
     if snapshot_project_path is not None:
-        snapshot_project = _load_draft_resource("project", snapshot_project_path)
-        if snapshot_project.id != resources[0].id:
-            raise ClosureError(
-                "E_CLOSURE_ID",
-                detail=(f"the snapshot project id {snapshot_project.id!r} is not the context project id "
-                        f"{resources[0].id!r}"),
-            )
-        if not isinstance(snapshot_project.contract, ProjectContract):
-            raise _closure_kind_error("snapshot project", "ProjectContract", snapshot_project.contract)
-        package_sources, edges = _project_package_sources(snapshot_project.contract, package_reader)
-        package_edges.extend(edges)
-        if package_sources:
-            for package in _deduplicate_exact_profile_packages(_collect_presentation_resources(package_sources)):
-                if not any(_same_resource_identity(package, item) for item in resources):
-                    resources.append(package)
-        _project_profile_packages(snapshot_project.contract, resources, tuple(package_edges))
-        resources.append(ClosureResource(
-            "snapshot-project", snapshot_project.id, snapshot_project.revision,
-            snapshot_project.content_identity, snapshot_project.contract))
+        _add_snapshot_project(resources, snapshot_project_path, package_reader, package_edges)
     preset_metrics, preset_notes = _preset_font_metrics(preset)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
@@ -414,6 +396,30 @@ def resolve_draft_render(
                                         forecast=forecast,
                                         profile_package_edges=tuple(package_edges))
     return replace(draft, preset_visual_profile_fallback=profile_fallback)
+
+
+def _add_snapshot_project(resources: list[ClosureResource], snapshot_project_path: Path,
+                          package_reader: SnapshotReader | None, package_edges: list[ProfilePackageSourceEdge]) -> None:
+    """Append the baseline Project at ``snapshot_project_path`` to the draft closure, which must name the same Project."""
+    snapshot_project = _load_draft_resource("project", snapshot_project_path)
+    if snapshot_project.id != resources[0].id:
+        raise ClosureError(
+            "E_CLOSURE_ID",
+            detail=(f"the snapshot project id {snapshot_project.id!r} is not the context project id "
+                    f"{resources[0].id!r}"),
+        )
+    if not isinstance(snapshot_project.contract, ProjectContract):
+        raise _closure_kind_error("snapshot project", "ProjectContract", snapshot_project.contract)
+    package_sources, edges = _project_package_sources(snapshot_project.contract, package_reader)
+    package_edges.extend(edges)
+    if package_sources:
+        for package in _deduplicate_exact_profile_packages(_collect_presentation_resources(package_sources)):
+            if not any(_same_resource_identity(package, item) for item in resources):
+                resources.append(package)
+    _project_profile_packages(snapshot_project.contract, resources, tuple(package_edges))
+    resources.append(ClosureResource(
+        "snapshot-project", snapshot_project.id, snapshot_project.revision,
+        snapshot_project.content_identity, snapshot_project.contract))
 
 
 def _preset_font_metrics(preset: Any) -> tuple[dict[str, Any] | None, tuple[str, ...]]:
@@ -530,6 +536,7 @@ def resolve_guided_draft_render(
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
     forecast: bool = False,
     package_reader: SnapshotReader | None = None,
+    snapshot_project_path: Path | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -567,6 +574,10 @@ def resolve_guided_draft_render(
             resources = _deduplicate_exact_profile_packages(
                 _collect_presentation_resources([*sources, *package_sources]))
         _project_profile_packages(primary_project, resources, package_edges)
+    if snapshot_project_path is not None:
+        edges = list(package_edges)
+        _add_snapshot_project(resources, snapshot_project_path, package_reader, edges)
+        package_edges = tuple(edges)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     if any(resource.id != declaration["id"] for resource, declaration in zip(
             catalog_resources, preset_resource.contract.resources.get("iconCatalogs", ()))):
