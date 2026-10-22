@@ -25,6 +25,9 @@ Scene is a derived artifact. It is not the source of truth for dates, dependenci
 Unroutable dependency recovery (#1427) is completed in Layout, not Scene.
 Scene projects staged relation facts, paired connector/text
 placements and halo paths without measuring, routing or counting fragments.
+The existing resolution diagnostic carries Layout's explicit ordered fragment
+IDs for a paired STUB. Observers join those completed IDs to primitives; they
+do not infer fragment identity from names or fabricate graph endpoints.
 Recovered lines and their Theme-ground halos paint below text; the halo is a
 decoration under the completed contrast policy. Spec50 §3.3 owns resolution.
 

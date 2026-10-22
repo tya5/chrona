@@ -765,6 +765,17 @@ claiming a shared connected arrival. Layout retains each actual endpoint in its 
 placement. Shared relation provenance and terminal text retain the linkage
 without falsely declaring a connected source-to-target route. These are ordinary
 completed path/text primitives, not a new Scene schema or scheduling edge.
+The typed STUB resolution receipt MUST carry `fragmentIds`: exactly two
+distinct, non-empty completed primitive IDs, ordered source then target.
+Other stages MUST omit this field. `relationId` identifies the resolved
+occurrence, not the fragments' logical relation `sourceRef`. Scene and tools
+consume the explicit pair rather than deriving it from ID suffixes. A duplicate
+path observer recognizes one paired representation only when exactly two
+same-source paths match one unambiguous, valid same-surface STUB receipt and
+both omit graph-instance references. Missing, malformed, duplicated or mismatched
+evidence, a graph-linked path, or a third path retains the duplicate finding;
+absence of graph references alone is never an exemption. Older receipts without
+the pair remain inspectable but cannot authorize this recognition.
 Finite fallback is not evidence of safety, completeness or a clean route.
 
 All three non-suppress modes retain the relation's visible representation.
