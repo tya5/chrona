@@ -372,7 +372,10 @@ class MemberNameSearchCursor:
 
     @property
     def neighborhood_evaluated_count(self) -> int:
-        return sum(self._ledger.neighborhood_spend.values())
+        count = 0
+        for spent in self._ledger.neighborhood_spend.values():
+            count += spent
+        return count
 
     @property
     def neighborhood_domain_spend(self) -> Mapping[tuple[str, str], int]:
