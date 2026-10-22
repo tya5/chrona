@@ -368,9 +368,13 @@ and the registry is unchanged. The binding is the one module that imports the SD
 - Calls are handled one at a time (a render cannot be cancelled) in a worker thread; the server holds no state between
   calls and writes nothing to standard output but protocol frames. Logging goes to standard error.
 - `initialize` carries `instructions` (under 1 KB: the model in three sentences, that a rejection is a result, whether writes are on, and that
-  `schedule_project` is the tool that computes dates). Two read-only resources serve the packaged skill, `chrona://guide/authoring`
-  (the body of `SKILL.md`) and `chrona://guide/diagnostics` (`references/diagnostics.md`); without a packaged skill they
-  are omitted. No prompts, subscriptions, sampling or other capability is offered.
+  `schedule_project` is the tool that computes dates). Read-only resources serve the packaged skill, `chrona://guide/authoring`
+  (the body of `SKILL.md`), `chrona://guide/diagnostics` and one `chrona://guide/references/<page>` per other
+  `references/<page>.md`; relative links between these pages are rewritten to the resource URIs so none is dead
+  (#1892 row 4). The diagnostics resource is `references/diagnostics.md` followed by a table generated from
+  `app/agent_diagnostics.py` with the meaning and remedy of every code the MCP layer, guided authoring and Store commands
+  emit; `tests/unit/chrona/app/test_agent_diagnostics.py` fails when an emitting module names a code that neither table
+  explains. Without a packaged skill they are omitted. No prompts, subscriptions, sampling or other capability is offered.
 - There is no HTTP transport, listener, authentication or background task.
 
 ## 8. Command-line surface (#1304)

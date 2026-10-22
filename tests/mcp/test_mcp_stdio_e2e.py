@@ -238,7 +238,7 @@ def test_protocol_errors_and_resources_over_stdio(workspace):
 
     errors, authoring, diagnostics, listed = session(workspace, scenario)
     assert errors == ["/", "/", "/format", types.INVALID_PARAMS]
-    assert [resource.uri for resource in listed.resources] == ["chrona://guide/authoring", "chrona://guide/diagnostics"]
+    assert [resource.uri for resource in listed.resources][:2] == ["chrona://guide/authoring", "chrona://guide/diagnostics"]
     assert "chrona schedule" in authoring.contents[0].text and "E_UNSUPPORTED_CYCLE" in diagnostics.contents[0].text
 
 
