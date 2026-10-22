@@ -139,3 +139,46 @@ def test_main_end_to_end_with_fake_gh(capsys) -> None:
     assert gate.main(["--repo", "owner/repo", "--sha", SHA], runner) == 0
     assert f"poll 1/120 run={RUN} status=completed" in capsys.readouterr().out
     assert gate.main(["--repo", "owner/repo", "--sha", "nope"], runner) == 1
+
+
+def _pending_jobs(main="in_progress", ready="queued"):
+    return [{"name": "derived-main", "status": main, "conclusion": None},
+            {"name": "derived-ready", "status": ready, "conclusion": None}]
+
+
+class SequencedJobsApi(FakeApi):
+    """Run is already completed/success; the jobs listing catches up later (run 39792897388)."""
+
+    def __init__(self, job_lists):
+        super().__init__([{"status": "completed", "conclusion": "success"}])
+        self.job_lists = list(job_lists)
+
+    def request(self, method, endpoint, **kwargs):
+        if endpoint.endswith("/jobs"):
+            self.calls.append(endpoint)
+            jobs = self.job_lists.pop(0) if len(self.job_lists) > 1 else self.job_lists[0]
+            return {"jobs": jobs}
+        return super().request(method, endpoint, **kwargs)
+
+
+def test_success_conclusion_with_unfinished_jobs_keeps_polling_then_succeeds() -> None:
+    api = SequencedJobsApi([_pending_jobs(), _pending_jobs("completed", "in_progress"), _jobs()])
+    api.jobs = None
+    state, lines, sleeps = _run(api)
+    assert state == "derived-main:completed:success,derived-ready:completed:success"
+    assert sleeps == [15, 15]
+    assert any("not yet completed: derived-main:in_progress:,derived-ready:queued:" in line for line in lines)
+
+
+def test_success_conclusion_with_jobs_never_finishing_times_out_naming_job_states() -> None:
+    api = SequencedJobsApi([_pending_jobs()])
+    with pytest.raises(gate.GateError, match=r"E_GATE_TIMEOUT.*derived-main:in_progress:,derived-ready:queued:"):
+        _run(api, max_polls=3)
+
+
+def test_completed_required_job_failure_still_raises_without_polling_on() -> None:
+    api = SequencedJobsApi([_pending_jobs("in_progress", "completed")[:1]
+                            + [{"name": "derived-ready", "status": "completed", "conclusion": "failure"}]])
+    with pytest.raises(gate.GateError, match="Trusted gate failed"):
+        _run(api)
+    assert len(api.calls) == 2
