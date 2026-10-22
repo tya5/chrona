@@ -394,7 +394,7 @@ def test_public_halcyon_03_lane_table_uses_member_titles_without_item_count() ->
                    for item in primitives)
 
 
-@pytest.mark.parametrize("slide", ("02-programme-board", "12-glyph-gates"))
+@pytest.mark.parametrize("slide", ("11-overlay-briefing", "12-glyph-gates"))
 def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
     primitives = _primitives(scene)
@@ -449,14 +449,14 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
 
 
 def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
-    scene = json.loads((ROOT / "examples/halcyon-1/generated/02-programme-board.scene.json").read_text(encoding="utf-8"))
+    scene = json.loads((ROOT / "examples/halcyon-1/generated/11-overlay-briefing.scene.json").read_text(encoding="utf-8"))
     primitives = _primitives(scene)
     assert any(item.get("id") == "annotation-text:station-note" for item in primitives)
     assert any(item.get("id") == "annotation-box:station-note" for item in primitives)
     assert "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:station-note:plot-no-tail" in scene["diagnostics"]
 
 
-@pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))
+@pytest.mark.parametrize("slide", ("11-overlay-briefing", "12-glyph-gates"))
 def test_wallboard_fill_counts_names_that_cannot_stay_near_their_marks(slide: str) -> None:
     scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
@@ -502,15 +502,29 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
     assert shared_copy == shared
 
     halcyon = ROOT / "examples/halcyon-1"
-    for slide_id in ("programme-board", "glyph-gates"):
-        context = context_document(halcyon, slide_id)
-        assert context["body"]["layout"] == {
-            "id": "wallboard-programme-board",
-            "kind": "layout-profile",
-            "store": {"provider": "local", "identity": "halcyon-1-example"},
-            "address": "layouts/wallboard-programme-board.yaml",
-            "revision": {"token": "example-v1"},
-        }
+    glyph_gates = context_document(halcyon, "glyph-gates")
+    assert glyph_gates["body"]["layout"] == {
+        "id": "wallboard-programme-board",
+        "kind": "layout-profile",
+        "store": {"provider": "local", "identity": "halcyon-1-example"},
+        "address": "layouts/wallboard-programme-board.yaml",
+        "revision": {"token": "example-v1"},
+    }
+    programme_context = context_document(halcyon, "programme-board")
+    assert programme_context["body"]["layout"] == {
+        "id": "programme-board-sidebar",
+        "kind": "layout-profile",
+        "store": {"provider": "local", "identity": "halcyon-1-example"},
+        "address": "layouts/programme-board-sidebar.yaml",
+        "revision": {"token": "example-v1"},
+    }
+    sidebar_layout = yaml.safe_load((layouts / "programme-board-sidebar.yaml").read_text(encoding="utf-8"))
+    sidebar, board = sidebar_layout["root"]["children"]
+    assert [child.get("source") for child in sidebar["children"]] == ["title", "summary", "notes"]
+    assert [child["id"] for child in board["children"]] == ["review", "legend"]
+    review = board["children"][0]
+    assert [child["id"] for child in review["children"]] == ["table", "timeline-stack"]
+    assert sidebar["frame"] == {"paint": "sidebar"}
     for slide_id in ("tvac-slip", "replan-baseline", "gallery-image-notes"):
         context = context_document(halcyon, slide_id)
         assert context["body"]["layout"] == {
