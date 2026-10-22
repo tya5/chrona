@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 import sys
 import threading
 from importlib.metadata import PackageNotFoundError, version
@@ -35,11 +36,13 @@ from mcp.shared.exceptions import MCPError
 
 from chrona.app.agent_tools import ToolResult, UnknownToolError, call_tool, tool_specs
 from chrona.app.agent_workspace import WorkspaceScope
+from chrona.app.agent_diagnostics import catalog_markdown
 from chrona.resources import skill_resource
 
 SERVER_NAME = "chrona"
 AUTHORING_URI = "chrona://guide/authoring"
 DIAGNOSTICS_URI = "chrona://guide/diagnostics"
+REFERENCE_URI_PREFIX = "chrona://guide/references/"
 _BASE_INSTRUCTIONS = (
     "Chrona computes dates and pictures from YAML; edit the plan, never the picture. Tools: "
     "validate_project (structure and dependency cycles, no dates), schedule_project (computed dates), "
@@ -55,6 +58,15 @@ INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are off: mutating tools require --a
 WRITE_INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are on (--allow-write): write tools execute directly, with no approval step."
 _LOG = logging.getLogger("chrona.mcp")
 _FRONT_MATTER = "---"
+_PAGE_LINK = re.compile(r"\]\((?:references/)?([a-z][a-z-]*)\.md(#[^)]*)?\)")
+
+
+def _served_links(text: str) -> str:
+    """Point a skill page's relative links at the resources that serve those pages, so no link is dead over MCP."""
+    def target(match: re.Match[str]) -> str:
+        uri = DIAGNOSTICS_URI if match.group(1) == "diagnostics" else f"{REFERENCE_URI_PREFIX}{match.group(1)}"
+        return f"]({uri}{match.group(2) or ''})"
+    return _PAGE_LINK.sub(target, text)
 
 
 def _server_version() -> str:
@@ -104,10 +116,22 @@ def _guides() -> dict[str, tuple[str, str, str]]:
         return {}
     if skill.startswith(_FRONT_MATTER):
         skill = skill.split(_FRONT_MATTER, 2)[2].lstrip("\n")
-    return {
-        AUTHORING_URI: ("authoring", "The chrona authoring model, the loop and the rules that cost the most when broken.", skill),
-        DIAGNOSTICS_URI: ("diagnostics", "Every diagnostic code an agent meets and what to change for each.", diagnostics),
+    guides = {
+        AUTHORING_URI: ("authoring", "The chrona authoring model, the loop and the rules that cost the most when broken.",
+                        _served_links(skill)),
+        DIAGNOSTICS_URI: ("diagnostics", "Every diagnostic code an MCP tool emits, what it means and what to change.",
+                          _served_links(diagnostics.rstrip("\n") + "\n\n" + catalog_markdown())),
     }
+    # The skill's other reference pages are linked from the guides by relative path; serve them so no link is dead.
+    try:
+        for page in sorted(root.joinpath("references").iterdir(), key=lambda item: item.name):
+            if page.name.endswith(".md") and page.name != "diagnostics.md":
+                name = page.name.removesuffix(".md")
+                guides[f"{REFERENCE_URI_PREFIX}{name}"] = (
+                    f"reference-{name}", f"The skill reference page references/{page.name}.", _served_links(page.read_text(encoding="utf-8")))
+    except (OSError, ValueError) as error:
+        _LOG.warning("the skill reference pages are unavailable: %s", type(error).__name__)
+    return guides
 
 
 def build_server(workspace: str | Path, *, allow_write: bool = False) -> Server:
