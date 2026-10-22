@@ -71,6 +71,29 @@ geometry, and Scene/adapters only project/serialize it. Packaged defaults and
 builtin presets use automatic label units with `thin-with-record`; their band
 hosts and paint must be explicitly compatible with their selected labels.
 
+### Padding-only calendar buckets (#1855)
+
+For a derived `selected-planned` or `selected-comparison` window, the projection
+may carry its unpadded selected temporal envelope (Spec06). Calendar buckets
+wholly outside that half-open envelope are padding, not axis candidates: remove
+them from every tier's labels, band cells and grid/tick geometry before
+measurement and automatic fit/cadence. Keep the declared padded scale and canvas
+unchanged. Preserve each retained bucket's dates, natural index and authored
+`every` selection; regular thinning starts at the first eligible candidate.
+Interior calendar gaps remain present; a span covers its whole interval, not
+only its start date. Point-day and selected comparison coverage follow Spec06.
+
+This does not drop a failed label: an ineligible bucket has no label outcome or
+`W_LAYOUT_AXIS_LABEL_THINNED`. Eligible clipped-edge labels retain the ordinary
+containment/thinning contract above. Explicit and relative windows are unchanged.
+Without the typed envelope, Layout cannot infer padding from dates, coordinates
+or IDs and retains the declared window's buckets. A supplied envelope must be a
+positive Date interval enclosed by the window; inconsistent facts fail with
+`E_PRESENTATION_PROJECTION_REQUIRED`, not silent omission. View projection owns
+the temporal fact, Layout alone owns candidate eligibility and completed
+geometry, and Scene/adapters stay passive. No schema, font, padding or
+project/preset-specific policy is introduced.
+
 ## 1.2 Axis tier appearance (#426)
 
 An axis tier's `role` decides what it draws; a new optional `typographyRole`

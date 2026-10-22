@@ -20,7 +20,7 @@ from chrona.core.ports import RenderArtifact, SnapshotReader
 from chrona.core.validation import load_yaml
 from chrona.extensions.profiles import resolve_local_extension_manifests
 from chrona.presentation.contracts import TypesetterIdentity
-from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, resolve_draft_render
+from chrona.presentation.model.closure import ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
     RelationHintReceipt, RelationHintSummary,
     PaintOmission, ScaleValuesFolded, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
@@ -35,8 +35,6 @@ from chrona.usecases.diagnostic_messages import collapse_warnings
 from chrona.usecases.failure_report import StableFailure
 from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
-
-DEFAULT_VIEWPORT = f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto"
 
 
 @dataclass(frozen=True)
@@ -57,7 +55,7 @@ class DraftRenderRequest:
     icon_catalogs: tuple[str | Path, ...] = ()
     font_metrics: str | Path | None = None
     system_fonts: bool = False
-    viewport: str = DEFAULT_VIEWPORT
+    viewport: str | None = None
     locale: str = "en-US"
     visual_profile: str | None = None
     typesetter_engine: str | None = None
@@ -82,7 +80,9 @@ class DraftRenderResult:
         return self.rendered.artifact
 
 
-def parse_viewport(value: str) -> tuple[int, int | None]:
+def parse_viewport(value: str | None) -> tuple[int, int | None] | None:
+    if value is None:
+        return None
     parts = value.lower().split("x")
     if len(parts) != 2:
         raise StableFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2)

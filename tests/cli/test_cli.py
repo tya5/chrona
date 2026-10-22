@@ -322,10 +322,11 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
     render = parser.parse_args(["render", "project.yaml", "--output", "timeline.svg"])
     assert render.preset is None
     assert render.format is None
-    assert render.viewport == "1600xauto"
+    # Omission stays distinct until ingress resolves the effective Layout.
+    assert render.viewport is None
     assert render.snapshot is None
     workspace = parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"])
-    assert workspace.viewport == "1600xauto" and workspace.format is None
+    assert workspace.viewport is None and workspace.format is None
     assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
 
 

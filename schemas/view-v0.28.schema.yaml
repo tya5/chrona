@@ -197,7 +197,16 @@ allOf:
               actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
               observationSelection: {description: "Only the latest observation is selected.", const: latest}
               deltaUnit: {description: "Comparison delta unit.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/comparisonDeltaUnit"}
-              facets: {description: "Comparison facets exposed to the surface.", type: array, uniqueItems: true, items: {description: "One comparison facet.", enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}}
+              facets:
+                description: "Comparison facets exposed to the surface."
+                type: array
+                uniqueItems: true
+                items:
+                  description: "One comparison facet."
+                  examples: [planned, snapshotFinishDelta]
+                  oneOf:
+                    - {description: "An existing primary/Actual comparison facet.", enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}
+                    - {$ref: "urn:chrona:vocabulary-v0.2#/$defs/snapshotComparisonFacet"}
           visibility:
             description: "Visibility and fallback policy for surface content."
             type: object
@@ -494,7 +503,7 @@ allOf:
                     - {description: "An authored literal header, shown exactly.", type: string, minLength: 1}
                     - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
                 source:
-                  $ref: "urn:chrona:common-v0.1#/$defs/tableColumnSource"
+                  $ref: "urn:chrona:common-v0.2#/$defs/tableColumnSource"
                 format: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"}
                 missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
                 missingBy: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missingBy"}

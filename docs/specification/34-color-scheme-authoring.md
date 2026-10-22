@@ -62,11 +62,38 @@ For each pair `(text, surface)` and `(text, surfaceRaised)`, the resolver comput
 
 Required stable diagnostics are `E_SCHEME_SCHEMA`, `E_SCHEME_PROVENANCE`, `E_SCHEME_INTENT_UNKNOWN`, `E_SCHEME_THEME_BINDING`, `E_SCHEME_CONTRAST`, and `E_CONTEXT_COLOR_SCHEME`. Diagnostics name the resource ID and path and never recover with a default.
 
+### Print-claim separability (#1855)
+
+Each render evaluates completed visible legend inks under a grayscale
+simulation in addition to the colour-vision checks of Specs28/60. Project an
+ink to linear-sRGB relative luminance Y and represent that luminance as an
+sRGB grey; compare the greys with the same CIEDE2000 metric and existing
+separability floor used by those checks. Preserve full precision, rather than
+quantizing the intermediate grey to an 8-bit palette. This is no new threshold:
+Spec60 currently declares `MINIMUM_CATEGORY_DELTA_E = 5.0`; there is no separate
+Theme-authored numeric deltaE floor or new print-only knob.
+
+Reuse the completed full-glyph/line-pattern distinction rule of #1847: a
+structurally distinct pair is exempt, but unknown geometry is not evidence of
+distinction. Every failing legend pair retains both identities, `grayscale`
+simulation and measured difference on the existing typed diagnostic path.
+Default findings are warnings. Either `suitability.print: print-friendly` or
+`photocopy-friendly` enforces that same comparison as an error before invoking
+an adapter, naming `/body/suitability/print`; neither claim has a stricter floor.
+`not-claimed` leaves warning severity. Do not add `achromatopsia` to the
+`colorVision` vocabulary, change scale-domain checks, mutate palettes, or
+infer a claim from a preset/target name.
+
+Pure arithmetic belongs to the presentation model; Layout compares completed
+figures, ingress carries the Scheme claim into the resolved policy, and the
+usecase enforces it. Scene transports completed facts and adapters serialize
+them. A print claim is not a request to recolour the rendered document.
+
 ## 7. Acceptance invariants
 
 1. The same closed Context produces identical concrete colours and named-slot resolution.
 2. Reordering groups does not change an explicit category slot mapping.
-3. Switching Scheme does not change facts, selected roles, geometry, metrics, Scene structure, or target capability requirements.
+3. Switching Scheme does not change source facts, selected roles, authored geometry/metrics or target capability requirements. Completed legend grouping, its allocated extent and diagnostics may vary with its realized paint witnesses under Specs28/60; adapters do not invent that variation.
 4. Missing provenance, unknown intent, missing binding, and insufficient contrast fail before Scene emission.
 5. Markers, patterns, and text alternatives remain available after every scheme change.
 

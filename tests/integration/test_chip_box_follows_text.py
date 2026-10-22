@@ -108,14 +108,14 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     raw = _render(tmp_path, "raw")
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
-    assert sha256(raw.artifact.content).hexdigest() == "83b5b75f6f548316bc3f3f3f66daf512c007d16adfcb293ed2c31667d59074ec"
-    # The Scene digest includes the builtin View provenance change from #1701;
-    # this case still characterizes geometry, paint, and SVG bytes.
+    # The approved axis-window rule excludes padding-only endpoint buckets;
+    # this pins the resulting axis-only Scene/SVG difference.
+    assert sha256(raw.artifact.content).hexdigest() == "9a2b162e29e15e808b10c9bb7b98c83ff576d1064e1189c802aa5cdb35cc141c"
     vocabulary = builtin_semantic_vocabulary()
     assert [resource for resource in raw.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "c7c2bc5e0f7bce0a0460fa00d96c58edf7a52417d30dbfc70f75b00296de577c"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "b1bddd4c27476c5580fd15510b8f6af30c7e74f7f5c0e3b5cfa8cfd894d6172c"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

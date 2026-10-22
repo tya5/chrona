@@ -32,6 +32,9 @@ ACTUAL = {
 
 def test_technical_print_variance_legend_rects_use_bound_inks_under_strict_contrast(tmp_path):
     parts = sr.bundle("technical-print")
+    # This test checks bound swatch inks and strict mark contrast, not the
+    # separate suitability claim for the palette's grayscale separability.
+    parts["scheme"]["body"]["suitability"]["print"] = "not-claimed"
     parts["theme"]["body"]["contrastPolicy"] = {member: "error" for member in POLICY_MEMBERS}
     parts["view"]["body"]["rows"] = {"mode": "automatic"}
     parts["view"]["body"]["comparison"]["facets"] = ["planned", "actual", "finishDelta"]
