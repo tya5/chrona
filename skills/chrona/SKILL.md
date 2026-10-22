@@ -82,8 +82,7 @@ Plain files, no Store. Run from the skill directory; the worked files are `examp
 chrona render examples/launch.yaml --actual examples/actual.yaml --snapshot examples/launch.yaml --preset target-b --output update.svg
 ```
 
-Here plan and baseline are one file; in an update, your edited plan and the step 1 copy. Use a new
-output name each time. A dashed outline is where the baseline had an item that moved.
+Here plan and baseline are one file; in an update, your edited plan and the step 1 copy. Use a new output name each time. A dashed outline is where the baseline had an item that moved.
 For a forecast instead of editing dates, use `chrona render project.yaml --actual actual.yaml --snapshot baseline.yaml --forecast --preset target-b --output forecast.svg`. It uses `body.asOf` without changing Project, Actual or baseline files or saving a Snapshot. Unfinished Δ carries `*` against the baseline (the original plan when omitted); progress is not remaining effort. `technical-print` and MCP `render_draft` support forecast too. Omit the flag for the unchanged ordinary plan/actual render.
 
 ## If the chrona MCP server is connected
@@ -109,7 +108,8 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
 | `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; writes no output file. |
 | `create_project` | Library entry (no CLI equivalent) | Creates a new `project.yaml` from a complete Project; requires `--allow-write`. |
-| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` with `setObject`/`removeObject` at a `baseRevision`; requires `--allow-write`. |
+| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` (objects, relations, calendars, entities, field roles, annotations, project meta) at a `baseRevision`; the accepted result's `inverse` reverts it; requires `--allow-write`. |
+| `save_baseline` | Library entry (no CLI equivalent) | Copies `project.yaml` to `baselines/<name>.yaml` (step 1); pass it as `render_draft` `snapshot`; requires `--allow-write`. |
 
 Edit standalone `project.yaml` directly, or over MCP with `apply_project_command` (`validate_project` returns its `projectRevision`); use `apply_command` for Stores. For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
 

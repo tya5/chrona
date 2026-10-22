@@ -22,7 +22,7 @@ the two. The tool core imports use cases, the shared Store address guard and the
 (`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too),
 the shared authoring transaction, and the opaque exclusive workspace initializer only.
 It imports no transport SDK and prints nothing. `apply_command`,
-`apply_authoring_command`, `create_workspace`, `create_project` and `apply_project_command` write only behind the write gate (sections2.1/2.3/2.5).
+`apply_authoring_command`, `create_workspace`, `create_project`, `apply_project_command` and `save_baseline` write only behind the write gate (sections2.1/2.3/2.5).
 
 ## 2. Tool set `chrona/agent-tools/v0.9`
 
@@ -37,7 +37,7 @@ authoring-command object through the same validated mutation use case.
 `v0.8` (#902 item4) also permits inline Store command objects. Existing paths,
 command/resource versions, result envelopes and transaction guards are unchanged.
 `v0.9` (#1892 row 1) adds `create_project` and `apply_project_command` for a raw `project.yaml` (section 2.5) and the
-optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged.
+optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged. #1892 row 2 adds `save_baseline` under `v0.9` (section 2.5).
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -56,6 +56,7 @@ optional `projectRevision` of a validated Project; existing inputs and outputs a
 | `render_workspace` | `chrona render-workspace` | shared guided-render use case |
 | `create_project` | library entry | `usecases.project_commands.prepare_new_project` and `operational.workspace_initialization.publish_new_file` |
 | `apply_project_command` | library entry | `usecases.project_commands` over the authoring transaction of Spec51 §4.2 |
+| `save_baseline` | library entry | `usecases.project_baselines` and `operational.workspace_initialization.publish_new_file` |
 
 The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
 (section 2.2); the two command tools are section 2.1.
@@ -260,8 +261,28 @@ message says so and names the revision. Additive; no result version change.
   appended; every schedule mode, `Nwd` amounts, `constraints`, `deadline`, `parent`, `attachesTo` and `fields` are
   the Project schema's); `removeObject {id}` deletes an object and is refused with `E_PROJECT_OBJECT_MISSING` for
   an unknown id and `E_PROJECT_OBJECT_REFERENCED` while a relation endpoint, a `parent` or an `attachesTo` names it.
-  Further member commands (relations, calendars, entities, field roles, annotations, project meta) extend the `type`
-  enum without a version change.
+  #1892 row 1 item 2 adds the other structural members, each upserting by its key:
+  `setRelation {relation}` appends a complete dependency relation, or replaces the relation that declares the same
+  `id` (a relation without an `id` is appended unless an identical one exists); both endpoints must name existing
+  objects whose schedule has that endpoint, otherwise the Core `E_REFERENCE`/`E_ENDPOINT_MODE_MISMATCH` row is
+  reported at `/payload/relation/from/object` (or `to`). `removeRelation {id}` deletes the relation(s) declaring that
+  `id` (`E_PROJECT_RELATION_MISSING` otherwise, also for a relation that declares none).
+  `setCalendar {id, calendar}` upserts `calendars.<id>`; `removeCalendar {id}` is refused with
+  `E_PROJECT_CALENDAR_MISSING` for an unknown id and `E_PROJECT_CALENDAR_REFERENCED` while `project.calendar`, an
+  object's `calendar` or a relation's `lag.calendar` names it. `setEntity {id, entity}` upserts `entities.<id>`;
+  `setFieldRole {role, binding}` sets `fieldRoles.<role>` (`role` is a `projectFieldRole`, `binding` an object field
+  name). #1892 row 1 item 3 completes the members the skill teaches: `setAnnotation {id, annotation}` upserts
+  `annotations.<id>` and refuses an `anchor.object` that names no object (`E_PROJECT_OBJECT_MISSING` at
+  `/payload/annotation/anchor/object`); `removeAnnotation {id}` (`E_PROJECT_ANNOTATION_MISSING`); `removeEntity {id}`
+  (`E_PROJECT_ENTITY_MISSING`, and `E_PROJECT_ENTITY_REFERENCED` while an object's or another entity's `fields` value
+  is, or lists, that id); `removeFieldRole {role}` (`E_PROJECT_FIELD_ROLE_MISSING`; roles are bound by Views and
+  profiles outside the Project file, so nothing inside it can still name a role and an unbound role reads as absent,
+  Spec 06 §6.2); `setProjectMeta {title?, calendar?}` replaces the given `project` header members, `null` removes
+  one, the Project `id` cannot change and a `calendar` must exist (Core reference rule). `removeObject` now also
+  refuses an object that an annotation anchors on. Members deliberately without a command (`version`, `periods`,
+  `scenarios`, `extensions`) are listed with the reason in `tests/unit/chrona/app/test_project_command_coverage.py`,
+  which fails when a Project schema member is neither covered nor listed. The `type` enum grows without a version
+  change.
 - The transaction is the one of Spec51 §4.2 (`transact_authoring_command`): the lock, the compare-and-set on
   `baseRevision` (`E_AUTHORING_BASE_REVISION` with `expectedRevision`), the replay ledger (same `commandId` and request
   returns the first result with `replayed: true` and `revisionIsCurrent`; the same id for another request is
@@ -271,14 +292,38 @@ message says so and names the revision. Additive; no result version change.
 - Validation before write is the Project schema plus the Core rules, i.e. what `validate_project` reports except the
   dependency-cycle check; a cycle and a date that contradicts a dependency are `schedule_project` results, not write
   errors (owner default 6). A finding inside the command's own object is reported at its command pointer
-  (`/payload/object/schedule/amount`); any other finding keeps its Project pointer in the message under `/payload`.
+  (`/payload/object/schedule/amount`, `/payload/relation/...`, `/payload/calendar/...`, `/payload/entity/...`, `/payload/binding`); any other finding keeps its Project pointer in the message under `/payload`.
   Nothing is written for a rejection. The file is rewritten as canonical YAML: comments, flow style and key
   quoting of the original are not kept.
 - Both tools are mutating (`readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`) and fail
   `E_MCP_WRITE_DISABLED` before opening any file without `--allow-write`. Command and result versions are new
   documents (`schemas/project-command-v0.1.schema.yaml`, `schemas/project-command-result-v0.1.schema.yaml`); no
-  existing schema changes. Reverting an edit is a later item (an `inverse` command in the result); until then it is
-  the opposite command at the new revision.
+  existing schema changes (items 2 and 3 widen the `type` enum and `payload` conditions of the new command document in place).
+- Revert (#1892 row 2, item 4; owner default 3, no second undo engine). An accepted `projectResult` carries `inverse`:
+  a complete `chrona/project-command/v0.1` request (`commandId` = the original id plus `-inverse`, `target` as given,
+  `baseRevision` = `resultRevision`, the type and payload that restore exactly what the command changed). An upsert that
+  replaced a value is undone by an upsert of the old value, one that added a key by the matching `remove*` (an id-less
+  relation by `removeRelation {relation}`, which removes the first identical relation), a removal by an upsert of the
+  removed value at its former place, `setProjectMeta` by the previous values (`null` for a member that was absent). The
+  place is carried by optional payload members of the set types: `before` (a new key goes before that existing key of
+  the member instead of at the end), `index` (`setRelation`: the 0-based position of a new relation), `memberBefore` (the
+  member is created before that top-level key) and, for `setProjectMeta`, `order` (header key order). A name that does
+  not exist is `E_PROJECT_COMMAND` at `/payload/<member>`. To revert, send `inverse` as the `command` of
+  `apply_project_command`; the file is byte-identical to the one before the edit when that file was in canonical form
+  (as written by `create_project` or an earlier command; the first command on a hand-written file already rewrites
+  comments, flow style and quoting, which no inverse restores) and `resultRevision` equals the revision before the edit.
+  The inverse of an inverse is the original edit again. After any other edit the revision check refuses a stale inverse
+  (`E_AUTHORING_BASE_REVISION`): read `validate_project`, then build the opposite edit. A replay returns the same
+  `inverse`; a rejected result has none. `removeCalendar` now also drops an emptied `calendars` member, like the other
+  removals.
+- `save_baseline {project, name}` is the file-route baseline (`update-a-plan.md` step 1, `cp project.yaml baseline.yaml`). It
+  validates the Project, then copies its bytes unchanged to `baselines/<name>.yaml` in the Project's own directory
+  (`name` matches `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`; a violation is `E_MCP_INPUT_INVALID` at `/name`) with the exclusive
+  no-overwrite publication of `create_project`. It returns `baseline` (the workspace path) and `contentIdentity` (the byte
+  hash). The path is the `snapshot` argument of `render_draft`, which then draws the baseline ghosts and deltas against the
+  edited plan. A name that holds other content is `E_BASELINE_FILE_EXISTS`; the same bytes again return the same result with
+  `replayed: true`; `baselines` being a symlink or not a directory is `E_BASELINE_DIRECTORY`. A copy is never edited or
+  removed by any tool. The Store route (`captureSnapshot`) is a separate mechanism whose bootstrap is item 6.
 
 Only initialization accepts a nonexistent destination directory. Its explicit
 destination guard retains the syntax/containment/device rules of section4;

@@ -8,7 +8,7 @@ additionalProperties: false
 properties:
   version: {description: "This project-command contract version.", const: chrona/project-command/v0.1}
   commandId: {description: "Stable identifier for this command; resending the same id with the same request replays the first result.", type: string, minLength: 1}
-  type: {description: "Operation to apply to the Project: setObject upserts one object by id, removeObject deletes one.", enum: [setObject, removeObject]}
+  type: {description: "Operation to apply to the Project: setObject, setRelation, setCalendar, setEntity, setFieldRole and setAnnotation upsert one member, setProjectMeta edits the project header; removeObject, removeRelation, removeCalendar, removeEntity, removeFieldRole and removeAnnotation delete one.", enum: [setObject, removeObject, setRelation, removeRelation, setCalendar, removeCalendar, setEntity, setFieldRole, setAnnotation, removeAnnotation, setProjectMeta, removeEntity, removeFieldRole]}
   target:
     type: object
     description: "Project file selected by the command."
@@ -32,6 +32,8 @@ allOf:
           properties:
             id: {description: "Object identifier: the key under objects. An existing id is replaced, a new id is appended.", type: string, minLength: 1}
             object: {description: "The complete Project object that replaces or adds objects.<id> (see the Project schema: type, title?, schedule, calendar?, parent?, attachesTo?, deadline?, fields?).", type: object}
+            before: {description: "When the key is new, insert it immediately before this existing key of objects instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the objects member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
   - description: "removeObject carries only the object id; an object that a relation, a parent or attachesTo still names is refused."
     examples: [{}]
     if: {properties: {type: {const: removeObject}}}
@@ -43,3 +45,141 @@ allOf:
           additionalProperties: false
           properties:
             id: {description: "Identifier of the object to remove.", type: string, minLength: 1}
+  - description: "setRelation carries one complete dependency relation; a relation that declares an id replaces the relation with that id, any other is appended (an identical one is not duplicated). Both endpoints must name existing objects."
+    examples: [{}]
+    if: {properties: {type: {const: setRelation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [relation]
+          additionalProperties: false
+          properties:
+            relation: {description: "The complete Project relation: {type: dependency, from:{object,endpoint}, to:{object,endpoint}, id?, lag?}.", type: object}
+            index: {description: "When the relation is new, insert it at this 0-based position of relations instead of appending (at most the current length); ignored when it replaces an existing relation.", type: integer, minimum: 0}
+            memberBefore: {description: "When the command creates the relations member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "removeRelation carries the id of a relation that declares one, or, for a relation without an id, the complete relation to remove."
+    examples: [{}]
+    if: {properties: {type: {const: removeRelation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          oneOf: [{required: [id]}, {required: [relation]}]
+          additionalProperties: false
+          properties:
+            id: {description: "Declared id of the relation to remove.", type: string, minLength: 1}
+            relation: {description: "The complete relation to remove (the first identical one); use it for a relation that declares no id.", type: object}
+  - description: "setCalendar carries the calendar id and one complete Project calendar (working_days, exceptions?, title?, fiscalStartMonth?)."
+    examples: [{}]
+    if: {properties: {type: {const: setCalendar}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, calendar]
+          additionalProperties: false
+          properties:
+            id: {description: "Calendar identifier: the key under calendars. An existing id is replaced.", type: string, minLength: 1}
+            calendar: {description: "The complete Project calendar that replaces or adds calendars.<id>.", type: object}
+            before: {description: "When the key is new, insert it immediately before this existing key of calendars instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the calendars member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "removeCalendar carries only the calendar id; a calendar that project.calendar, an object or a relation lag still names is refused."
+    examples: [{}]
+    if: {properties: {type: {const: removeCalendar}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the calendar to remove.", type: string, minLength: 1}
+  - description: "setEntity carries the entity id and one complete Project entity (type, title?, fields?)."
+    examples: [{}]
+    if: {properties: {type: {const: setEntity}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, entity]
+          additionalProperties: false
+          properties:
+            id: {description: "Entity identifier: the key under entities. An existing id is replaced.", type: string, minLength: 1}
+            entity: {description: "The complete Project entity that replaces or adds entities.<id>.", type: object}
+            before: {description: "When the key is new, insert it immediately before this existing key of entities instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the entities member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "setFieldRole binds a closed semantic role to an object field name in fieldRoles; an existing binding is replaced."
+    examples: [{}]
+    if: {properties: {type: {const: setFieldRole}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [role, binding]
+          additionalProperties: false
+          properties:
+            role: {description: "The semantic role: responsible or phase.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
+            binding: {description: "Object field name bound to the role.", type: string, minLength: 1, pattern: '\S'}
+            before: {description: "When the key is new, insert it immediately before this existing key of fieldRoles instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the fieldRoles member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "setAnnotation carries the annotation id and one complete Project annotation (kind, text, anchor.object); the anchor must name an existing object."
+    examples: [{}]
+    if: {properties: {type: {const: setAnnotation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, annotation]
+          additionalProperties: false
+          properties:
+            id: {description: "Annotation identifier: the key under annotations. An existing id is replaced.", type: string, minLength: 1}
+            annotation: {description: "The complete Project annotation that replaces or adds annotations.<id>: {kind, text, anchor:{object}}.", type: object}
+            before: {description: "When the key is new, insert it immediately before this existing key of annotations instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the annotations member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "removeAnnotation carries only the annotation id."
+    examples: [{}]
+    if: {properties: {type: {const: removeAnnotation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the annotation to remove.", type: string, minLength: 1}
+  - description: "setProjectMeta edits the project header: a given title or calendar replaces the current one, null removes it; the Project id cannot change."
+    examples: [{}]
+    if: {properties: {type: {const: setProjectMeta}}}
+    then:
+      properties:
+        payload:
+          type: object
+          minProperties: 1
+          additionalProperties: false
+          properties:
+            title: {description: "New Project title; null removes the title.", type: [string, "null"]}
+            calendar: {description: "New default calendar identifier (it must exist under calendars); null removes the default.", type: [string, "null"]}
+            order: {description: "The project header keys in the order they should have after the edit (named keys first, the others after them); the inverse of a removal uses it to put the key back where it was.", type: array, items: {type: string, minLength: 1}}
+  - description: "removeEntity carries only the entity id; an entity that an object or another entity still names in a field is refused."
+    examples: [{}]
+    if: {properties: {type: {const: removeEntity}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the entity to remove.", type: string, minLength: 1}
+  - description: "removeFieldRole carries only the role; the field it was bound to is left on the objects."
+    examples: [{}]
+    if: {properties: {type: {const: removeFieldRole}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [role]
+          additionalProperties: false
+          properties:
+            role: {description: "The semantic role to unbind: responsible or phase.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}

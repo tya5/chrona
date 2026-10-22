@@ -278,6 +278,12 @@ new one). There is no draft command that records an observation for you. `chrona
 that for a Store, from an intake batch command document (schema `actual-intake-batch`) and a
 Store config; there is no step-by-step guide for it yet, so it is a known gap.
 
+Reverting an edit of the plan file over MCP needs no Store: `apply_project_command` returns, with each accepted edit, an
+`inverse` command (bound to the new revision) that puts the file back to the bytes it had before the edit; send it as the
+next `command`. Step 1 over MCP is `save_baseline {project, name}`: it copies the file to `baselines/<name>.yaml` next to it and
+returns that path, which `render_draft` takes as `snapshot` to draw the baseline against the edited plan. The Store route
+over MCP is still a gap (#1892 item 6).
+
 An AI coding agent finds the same loop in the [chrona agent skill](../../skills/chrona/SKILL.md#update-the-plan-after-a-week-of-work).
 Reading a plan from a Store or a saved Render Context is a different path; see the
 [progressive Project tutorial](progressive-project-tutorial.md).
