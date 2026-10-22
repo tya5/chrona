@@ -194,6 +194,17 @@ grid declarations, paint, entry order and semantic ambiguity checks remain
 independent of this closure. Declared ellipsis may shorten a label only when
 it retains readable source text; otherwise wrapping/growth applies.
 
+The same no-empty-label closure applies to a declared legend grid. Preserve
+its column count and reading order. Below natural column demand, allocate
+the available width between each column's measured entry minima and natural
+preference using the shared deterministic track allocation, then close label
+lines and each row's maximum block demand at those widths. If the sum of
+column minima and gaps cannot fit, that indivisible minimum is the named
+growth/constraint-shortage cause. Do not replace a declared grid with an
+inline flow, drop columns, or leave swatches at natural-width positions while
+fitting their labels against a different allocation. A block legend closes
+its label lines at its one-column width by the same rule.
+
 Heading wrapping remains the explicit View intent in Specification 24:
 omitted `heading.text.wrap` still means `forbid`. First-party designs that
 intend bounded title/subtitle wrapping declare `allow` in their existing
