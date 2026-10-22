@@ -51,11 +51,6 @@ viewDefaults:
           search: {kind: row-aligned}
           obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
           connector: {kind: leader}
-        - id: safe-card
-          region: {kind: slot, source: annotations}
-          search: {kind: row-aligned}
-          obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
-          connector: {kind: none}
         - id: list
           region: {kind: slot, source: annotations}
           search: {kind: row-aligned}

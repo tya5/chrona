@@ -1,12 +1,16 @@
-"""A connector-free card rung preserves Theme presentation before an explicit list fallback."""
+"""Rail cards keep their declared leaders; true box exhaustion uses an explicit list."""
 from __future__ import annotations
 
+import json
 from xml.etree import ElementTree
 from pathlib import Path
 
 import pytest
 
 from chrona.presentation.layout import surface_annotations, surface_composer
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
+)
 from chrona.presentation.layout.annotation_card_measurement import suffix_block_capacity
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.usecases.render_review import RenderFailed
@@ -58,8 +62,6 @@ def _fixture():
     theme["colorBindings"]["annotation-heading.fill"] = "text"
     parts["view"]["body"]["annotations"][0]["candidates"] = [
         _candidate("preferred", "leader"),
-        # IDs are opaque; this nonterminal connector-free rung is still a card.
-        _candidate("unconnected-card", "none"),
         _candidate("declared-list", "none"),
     ]
     return source, parts
@@ -105,9 +107,23 @@ def _card_extent(svg_item):
     return float(svg_item.get("y")), float(svg_item.get("height"))
 
 
-def test_failed_leader_uses_full_card_rung_in_scene_and_svg(tmp_path, monkeypatch):
+def test_failed_leader_keeps_full_card_and_emits_diagnosed_hairline(tmp_path, monkeypatch):
     source, parts = _fixture()
-    monkeypatch.setattr(surface_annotations, "route_annotation_candidate", lambda *args, **kwargs: None)
+
+    def fail_route_with_named_crossing(start, end, obstacles, **kwargs):
+        # The provisional card overlay delegates to the shared accepted index.
+        # Add a synthetic mark centered on the eventual direct hairline after
+        # card placement, so only the fallback crossing query sees it.
+        base = obstacles._base
+        midpoint_x = (start[0] + end[0]) / 2
+        midpoint_y = (start[1] + end[1]) / 2
+        if not base.has("mark:synthetic-crossing"):
+            base.add(SurfaceObstacle(
+                "mark:synthetic-crossing", "mark", "timeline",
+                ObstacleRect(midpoint_x - 2, midpoint_y - 2, midpoint_x + 2, midpoint_y + 2)))
+        return None
+
+    monkeypatch.setattr(surface_annotations, "route_annotation_candidate", fail_route_with_named_crossing)
 
     rendered = ak.render(tmp_path, source, parts)
 
@@ -121,7 +137,7 @@ def test_failed_leader_uses_full_card_rung_in_scene_and_svg(tmp_path, monkeypatc
     assert BODY in ids["annotation-text:view-n0"].text
     assert ids["annotation-text:view-n0"].text_layout is not None
     assert "annotation-list:view-n0" not in ids
-    assert "annotation-leader:view-n0" not in ids
+    assert "annotation-leader:view-n0" in ids and "annotation-leader:view-n0" in svg
     assert "annotation-kind-text:view-n0:0" in svg
     assert "annotation-kind-text:view-n0:1" in svg
     assert "annotation-heading:view-n0" in svg
@@ -131,8 +147,74 @@ def test_failed_leader_uses_full_card_rung_in_scene_and_svg(tmp_path, monkeypatc
     body_text = " ".join(" ".join(svg["annotation-text:view-n0"].itertext()).split())
     assert heading_text == "Launch window opens"
     assert BODY in body_text
-    assert any("W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:view-n0:unconnected-card" in item
-               for item in rendered.scene.diagnostics)
+    diagnostics = [item for item in rendered.scene.diagnostics
+                   if item.startswith("W_LAYOUT_ANNOTATION_LEADER_FALLBACK:")]
+    assert len(diagnostics) == 1
+    detail = json.loads(diagnostics[0].split(":", 1)[1])
+    assert detail["annotationId"] == "view-n0"
+    assert detail["candidateId"] == "preferred"
+    assert detail["crossings"] == [{
+        "placementId": "mark:synthetic-crossing",
+        "obstacleClass": "mark",
+        "regionId": "timeline",
+    }]
+
+
+def test_tilted_rail_hairline_reaches_paper_and_indexes_its_extension(tmp_path, monkeypatch):
+    source, parts = _fixture()
+    ak.with_tilt(parts, [12])
+    registered = []
+    original_add = SurfaceObstacleIndex.add
+
+    def capture_leader_segments(index, obstacle):
+        original_add(index, obstacle)
+        if obstacle.placement_id.startswith("annotation-leader:view-n0:segment:"):
+            registered.append(obstacle)
+
+    monkeypatch.setattr(SurfaceObstacleIndex, "add", capture_leader_segments)
+
+    def fail_route_with_named_crossing(start, end, obstacles, **kwargs):
+        base = obstacles._base
+        midpoint_x = (start[0] + end[0]) / 2
+        midpoint_y = (start[1] + end[1]) / 2
+        if not base.has("mark:synthetic-crossing"):
+            base.add(SurfaceObstacle(
+                "mark:synthetic-crossing", "mark", "timeline",
+                ObstacleRect(midpoint_x - 2, midpoint_y - 2, midpoint_x + 2, midpoint_y + 2)))
+        return None
+
+    monkeypatch.setattr(surface_annotations, "route_annotation_candidate", fail_route_with_named_crossing)
+    rendered = ak.render(tmp_path, source, parts)
+
+    primitives = {item.scene_id: item for item in rendered.surface.primitives}
+    leader = primitives["annotation-leader:view-n0"]
+    frame = primitives["annotation-box:view-n0"]
+    assert frame.symbol is not None
+    assert len(leader.points) >= 3
+    extension = (leader.points[-2], leader.points[-1])
+    assert extension[0] != extension[1]
+
+    outline_points = tuple(point for command in frame.symbol.outline for point in command.points)
+    outline_edges = tuple(zip(outline_points, (*outline_points[1:], outline_points[0])))
+
+    def lies_on_segment(point, start, end):
+        dx, dy = end[0] - start[0], end[1] - start[1]
+        cross = (point[0] - start[0]) * dy - (point[1] - start[1]) * dx
+        dot = (point[0] - start[0]) * dx + (point[1] - start[1]) * dy
+        return abs(cross) <= 1e-6 and -1e-6 <= dot <= dx * dx + dy * dy + 1e-6
+
+    assert any(lies_on_segment(leader.points[-1], start, end)
+               for start, end in outline_edges)
+    assert any(isinstance(item.geometry, ObstacleSegment)
+               and (item.geometry.start, item.geometry.end) == extension
+               for item in registered)
+
+    diagnostic = next(item for item in rendered.scene.diagnostics
+                      if item.startswith("W_LAYOUT_ANNOTATION_LEADER_FALLBACK:"))
+    detail = json.loads(diagnostic.split(":", 1)[1])
+    crossings = {item["placementId"] for item in detail["crossings"]}
+    assert "mark:synthetic-crossing" in crossings
+    assert "annotation-box:view-n0" not in crossings
 
 
 def test_blocked_card_reaches_explicit_list_with_complete_body_once(tmp_path, monkeypatch):
@@ -156,6 +238,7 @@ def test_blocked_card_reaches_explicit_list_with_complete_body_once(tmp_path, mo
 def test_no_terminal_list_keeps_required_fallback_error(tmp_path, monkeypatch):
     source, parts = _fixture()
     parts["view"]["body"]["annotations"][0]["candidates"] = [_candidate("preferred", "leader")]
+    monkeypatch.setattr(surface_annotations, "annotation_rail_candidates", lambda *args, **kwargs: ())
     monkeypatch.setattr(surface_annotations, "route_annotation_candidate", lambda *args, **kwargs: None)
 
     with pytest.raises(RenderFailed) as failure:

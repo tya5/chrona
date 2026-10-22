@@ -7,8 +7,11 @@ from itertools import product
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import (
-    ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope,
+    BOUNDARY_CONTACT_TOLERANCE, ObstacleRect, ObstacleSegment,
+    SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
+    segment_length_inside_rect, segment_overlap_length,
 )
+from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.routing import relation_route_quality, route_orthogonal
 from chrona.presentation.layout.surface_quality import PathCommand
 
@@ -45,6 +48,105 @@ class AnnotationRouteTrial:
     commands: tuple[PathCommand, ...]
     topology: str
     crossing_ids: tuple[str, ...] = ()
+
+
+def rail_leader_crossings(points: tuple[tuple[float, float], ...],
+                          index: SurfaceObstacleIndex, *, stroke_width: float,
+                          source: ConnectorEgress, target_id: str,
+                          port_ids: tuple[str, ...] = (),
+                          target_extension: tuple[tuple[float, float],
+                                                  tuple[float, float]] | None = None
+                          ) -> tuple[SurfaceObstacle, ...]:
+    """Report every completed obstacle touched by a rail leader's painted path.
+
+    This is evidence collection, not a route validator: callers may preserve a
+    required leader even when the returned inventory is nonempty. Endpoint
+    exemptions are deliberately local to their expected terminal legs.
+    """
+    if len(points) < 2:
+        raise _topology_search_error(points=points, expected="at least two points")
+    outward = {"end": (1.0, 0.0), "start": (-1.0, 0.0),
+               "above": (0.0, -1.0), "below": (0.0, 1.0)}.get(source.side)
+    if outward is None:
+        raise _topology_search_error(source_side=source.side)
+
+    crossed: dict[str, SurfaceObstacle] = {}
+    source_hosts = frozenset(source.host_ids)
+    corridor_hosts = source_hosts | frozenset(source.corridor_host_ids)
+    exact_corridor = (len(source.corridor) == 2 and len(points) >= 2
+                      and points[0] == source.corridor[0]
+                      and points[1] == source.corridor[1])
+    outward_start = (points[0] == source.semantic_port
+                     and (points[1][0] - points[0][0]) * outward[0]
+                     + (points[1][1] - points[0][1]) * outward[1] > 0)
+    named_ports = frozenset(port_ids)
+    target_box_id = f"annotation-box:{target_id}"
+
+    for leg_index, (start, end) in enumerate(zip(points, points[1:])):
+        if start == end:
+            continue
+        segment = ObstacleSegment(start, end, stroke_width)
+        for obstacle in index.collisions(segment):
+            if obstacle.placement_id in named_ports:
+                continue
+            if leg_index == 0:
+                if (exact_corridor and obstacle.placement_id in corridor_hosts):
+                    continue
+                if (outward_start and obstacle.placement_id in source_hosts
+                        and _source_boundary_contact_only(obstacle, start, end)):
+                    continue
+            is_target_extension = (target_extension is not None
+                                   and leg_index == len(points) - 2
+                                   and (start, end) == target_extension
+                                   and isinstance(obstacle.geometry, ObstacleRect)
+                                   and _point_on_rect_boundary(target_extension[0],
+                                                               obstacle.geometry))
+            is_rect_port_leg = (isinstance(obstacle.geometry, ObstacleRect)
+                                and ((target_extension is None
+                                      and leg_index == len(points) - 2
+                                      and end == points[-1])
+                                     or (target_extension is not None
+                                         and leg_index == len(points) - 3
+                                         and end == target_extension[0])))
+            if (obstacle.placement_id == target_box_id
+                    and (is_target_extension
+                         or (is_rect_port_leg
+                             and _ends_at_rect_boundary(start, end, obstacle.geometry)))):
+                continue
+            crossed[obstacle.placement_id] = obstacle
+    return tuple(crossed[key] for key in sorted(crossed))
+
+
+def _source_boundary_contact_only(obstacle: SurfaceObstacle,
+                                  start: tuple[float, float],
+                                  end: tuple[float, float]) -> bool:
+    geometry = obstacle.geometry
+    if isinstance(geometry, ObstacleRect):
+        at_boundary = ((start[0] in (geometry.left, geometry.right)
+                        and geometry.top <= start[1] <= geometry.bottom)
+                       or (start[1] in (geometry.top, geometry.bottom)
+                           and geometry.left <= start[0] <= geometry.right))
+        return (at_boundary
+                and segment_length_inside_rect(ObstacleSegment(start, end), geometry)
+                <= BOUNDARY_CONTACT_TOLERANCE)
+    return (start in (geometry.start, geometry.end)
+            and segment_overlap_length((start, end),
+                                       (geometry.start, geometry.end))
+            <= BOUNDARY_CONTACT_TOLERANCE)
+
+
+def _ends_at_rect_boundary(start: tuple[float, float], end: tuple[float, float],
+                           rect: ObstacleRect) -> bool:
+    return (_point_on_rect_boundary(end, rect)
+            and segment_length_inside_rect(ObstacleSegment(start, end), rect)
+            <= BOUNDARY_CONTACT_TOLERANCE)
+
+
+def _point_on_rect_boundary(point: tuple[float, float], rect: ObstacleRect) -> bool:
+    return ((point[0] in (rect.left, rect.right)
+             and rect.top <= point[1] <= rect.bottom)
+            or (point[1] in (rect.top, rect.bottom)
+                and rect.left <= point[0] <= rect.right))
 
 
 def local_route_bounds(mark: tuple[float, float, float, float],

@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
+import json
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
@@ -34,6 +35,7 @@ from chrona.presentation.layout.annotation_tilt import (
 from chrona.presentation.layout.annotation_topology import (
     AnnotationRouteTrial,
     local_route_bounds,
+    rail_leader_crossings,
     route_annotation_candidate,
     visible_segments,
 )
@@ -54,6 +56,7 @@ from chrona.presentation.layout.labels import (
 )
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.model.theme_tokens import ThemeTokenError
+from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleSegment,
@@ -736,6 +739,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
                                    tuple[tuple[float, float], ...],
                                    tuple[tuple[float, float], ...]] | None = None
+            diagnosed_rail_candidate: PlacementCandidate | None = None
             completed_as_list = False
 
             def complete_terminal_list_record(candidate: Any) -> None:
@@ -958,6 +962,16 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                                 used_fill = filled is not None
                                 break
+                            if (box is None and candidate_boxes
+                                    and candidate.region.kind == "slot"
+                                    and candidate.region.source == "annotations"
+                                    and candidate.connector.kind == "leader"):
+                                # All existing clear-route trials failed. The
+                                # declared rail connection is mandatory, but
+                                # its body still has to be an ordinary fit.
+                                box, selected_rung = candidate_boxes[0], rung
+                                diagnosed_rail_candidate = candidate
+                                used_fill = filled is not None
                         elif candidate.search.kind == "nearest-free":
                             region_bounds = LabelRect(*_bounds(timeline.bounds))
                             host_id = anchor_host.placement_id if anchor_host is not None else None
@@ -1513,6 +1527,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)),
                         explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint), painted=True)[0]
                     points = (selected_source.semantic_port, target)
+                    if diagnosed_rail_candidate is not None and selected_source.corridor:
+                        points = (*selected_source.corridor, target)
                     path_commands = ()
                     visible_route_segments = tuple(zip(points, points[1:]))
                 else:
@@ -1527,6 +1543,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     tip = nearest_boundary_point(tilt_polygon, target)
                     if tip != target:
                         points = (*points, tip)
+                        visible_route_segments = (*visible_route_segments, (target, tip))
                         if path_commands:
                             path_commands = (*path_commands, PathCommand("line", (tip,)))
                 source_side = selected_source.side
@@ -1538,6 +1555,23 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 leader_semantic_id = presentation.leader_semantic_id
                 leader_stroke_width = float(request.theme_tokens.number(
                     semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
+                if diagnosed_rail_candidate is not None:
+                    crossings = rail_leader_crossings(
+                        tuple(points), surface_obstacles, stroke_width=leader_stroke_width,
+                        source=selected_source, target_id=annotation_id,
+                        port_ids=(source_port_obstacle_id, target_port_obstacle_id),
+                        target_extension=((target, points[-1])
+                                          if tilt_angle and points[-1] != target else None))
+                    detail = {
+                        "annotationId": annotation_id,
+                        "candidateId": diagnosed_rail_candidate.candidate_id,
+                        "reason": "diagnosed-hairline",
+                        "crossings": [{"placementId": item.placement_id,
+                                       "obstacleClass": item.obstacle_class,
+                                       "regionId": item.region_id} for item in crossings],
+                    }
+                    add_diagnostic("W_LAYOUT_ANNOTATION_LEADER_FALLBACK:" +
+                                   json.dumps(detail, sort_keys=True, separators=(",", ":")), annotation)
                 marker_end = (marker_geometry(
                     request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role),
                     stroke_width=leader_stroke_width)

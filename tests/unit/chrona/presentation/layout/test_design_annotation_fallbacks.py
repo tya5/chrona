@@ -36,12 +36,11 @@ def test_design_declares_terminal_list_and_corresponding_slot(design):
         # Sunday deliberately tries plot/tail placements before its explicit list.
         assert all(candidate["connector"]["kind"] == "tail" for candidate in candidates[:-1])
     else:
-        # Rail-first designs retain a full card attempt before the explicit list rung.
+        # Rail-first designs have a mandatory leader card, then an explicit
+        # terminal list only for genuine box-placement exhaustion.
         assert candidates[0]["connector"] == {"kind": "leader"}
-        card = candidates[-2]
-        assert card["region"] == {"kind": "slot", "source": "annotations"}
-        assert card["search"] == {"kind": "row-aligned"}
-        assert card["connector"] == {"kind": "none"}
+        assert len(candidates) == 2
+        assert candidates[-1]["connector"] == {"kind": "none"}
 
 
 def test_authored_roadmap_view_explicitly_migrates_its_placement_policies():
