@@ -59,8 +59,8 @@ ALLOWED_SHAPES: dict[str, str] = {
 ID_SITES: dict[tuple[str, str], int] = {
     ("actual-intake-batch-v0.2.schema.yaml", "non-empty-string"): 2,
     ("actual-set-v0.3.schema.yaml", "non-empty-string"): 3,
-    ("authoring-command-result-v0.1.schema.yaml", "non-empty-string"): 1,
-    ("authoring-command-v0.1.schema.yaml", "non-empty-string"): 4,
+    ("authoring-command-result-v0.1.schema.yaml", "non-empty-string"): 2,
+    ("authoring-command-v0.1.schema.yaml", "non-empty-string"): 6,
     ("authoring-workspace-v0.1.schema.yaml", "non-empty-string"): 8,
     ("color-scheme-v0.2.schema.yaml", "non-empty-string"): 1,
     ("command-request-v0.4.schema.yaml", "non-empty-string"): 8,
