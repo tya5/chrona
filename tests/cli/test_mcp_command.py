@@ -40,12 +40,12 @@ def test_list_tools_prints_the_registry_and_needs_no_sdk(monkeypatch, capsys):
     assert [tool["name"] for tool in json.loads(out)["tools"]] == [
         "validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline",
         "check_command", "apply_command", "apply_authoring_command", "create_workspace",
-        "validate_workspace", "workspace_revision", "render_workspace"]
+        "validate_workspace", "workspace_revision", "render_workspace", "create_project", "apply_project_command"]
 
 
 def test_list_tools_validates_an_explicit_workspace(monkeypatch, capsys, tmp_path):
     code, out, _ = run_main(monkeypatch, capsys, "--list-tools", "--workspace", str(tmp_path))
-    assert code == 0 and json.loads(out)["toolSet"] == "chrona/agent-tools/v0.8"
+    assert code == 0 and json.loads(out)["toolSet"] == "chrona/agent-tools/v0.9"
     code, out, _ = run_main(monkeypatch, capsys, "--list-tools", "--workspace", str(tmp_path / "absent"))
     assert code == 2 and json.loads(out)["diagnostics"][0]["code"] == "E_INPUT_IO"
     code, out, _ = run_main(monkeypatch, capsys, "--list-tools", "--workspace", str(Path(tmp_path.anchor)))

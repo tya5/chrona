@@ -17,6 +17,7 @@ _EMITTERS = (
     "operational/store_commands.py", "operational/baselines.py", "operational/workspace_initialization.py",
     "usecases/authoring_commands.py", "usecases/authoring_materialization.py", "usecases/authoring_workspace.py",
     "usecases/input_violations.py", "usecases/resource_checks.py", "usecases/failure_report.py",
+    "usecases/project_commands.py",
 )
 
 

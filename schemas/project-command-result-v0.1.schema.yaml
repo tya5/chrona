@@ -1,0 +1,41 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/project-command-result-v0.1"
+title: "Chrona Project command result v0.1"
+description: "Outcome of one revision-bound Project command."
+type: object
+required: [version, status, commandId, commandBaseRevision, projectRevision, resultRevision, diagnostics]
+additionalProperties: false
+properties:
+  version: {description: "This project result format version.", const: chrona/project-command-result/v0.1}
+  status: {description: "Whether the command was accepted or rejected.", enum: [accepted, rejected]}
+  commandId: {description: "The command identity supplied by the caller.", type: string, minLength: 1}
+  commandBaseRevision: {description: "The Project revision declared by the command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+  projectRevision: {description: "The Project revision observed before writing.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+  resultRevision: {description: "The revision after an accepted write (equal to projectRevision for an edit that changes nothing), or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], $ref: "urn:chrona:common-v0.1#/$defs/sha256IdentityOrNull"}
+  replayed: {description: "True only when this accepted result is the retained first result of an earlier application of the same commandId and request; nothing was written by this call. Absent for a fresh application.", const: true}
+  revisionIsCurrent: {description: "Present on a replay: whether resultRevision is still the Project's current revision (false when later commands changed it).", type: boolean}
+  diagnostics:
+    description: "Diagnostics emitted by the Project command boundary."
+    type: array
+    items:
+      description: "One Project-command diagnostic."
+      type: object
+      required: [code]
+      additionalProperties: false
+      properties:
+        code: {description: "Stable diagnostic identifier.", type: string, minLength: 1}
+        detail: {description: "Actionable diagnostic explanation; it may lead with the JSON pointer of the violating command node and a colon.", type: string, minLength: 1}
+        expectedRevision: {description: "Project revision required by the command writer.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+        firstApplied: {description: "On E_AUTHORING_COMMAND_ID_REUSE: true, the earlier command with this commandId was applied.", const: true}
+        appliedRevision: {description: "On E_AUTHORING_COMMAND_ID_REUSE: the result revision of the earlier command that used this commandId.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+        revisionIsCurrent: {description: "On E_AUTHORING_COMMAND_ID_REUSE: whether appliedRevision is still the Project's current revision.", type: boolean}
+        receivedRevision: {description: "Revision supplied by the rejected command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+allOf:
+  - description: "Accepted results carry a result revision and no diagnostics."
+    examples: [{}]
+    if: {properties: {status: {const: accepted}}, required: [status]}
+    then: {properties: {resultRevision: {type: string}}, allOf: [{properties: {diagnostics: {maxItems: 0}}}]}
+  - description: "Rejected results have no result revision and at least one diagnostic."
+    examples: [{}]
+    if: {properties: {status: {const: rejected}}, required: [status]}
+    then: {properties: {resultRevision: {type: 'null'}}, allOf: [{properties: {diagnostics: {minItems: 1}}}]}

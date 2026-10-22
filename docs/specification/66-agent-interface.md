@@ -2,7 +2,7 @@
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
 tools, #813; the Store read tools, #812) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the agent tool set `chrona/agent-tools/v0.8`, the shape of a tool result, the workspace path rules, the
+**Owns:** the agent tool set `chrona/agent-tools/v0.9`, the shape of a tool result, the workspace path rules, the
 write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -22,9 +22,9 @@ the two. The tool core imports use cases, the shared Store address guard and the
 (`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too),
 the shared authoring transaction, and the opaque exclusive workspace initializer only.
 It imports no transport SDK and prints nothing. `apply_command`,
-`apply_authoring_command` and `create_workspace` write only behind the write gate (sections2.1/2.3).
+`apply_authoring_command`, `create_workspace`, `create_project` and `apply_project_command` write only behind the write gate (sections2.1/2.3/2.5).
 
-## 2. Tool set `chrona/agent-tools/v0.8`
+## 2. Tool set `chrona/agent-tools/v0.9`
 
 Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
 set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
@@ -36,6 +36,8 @@ Store tools; their path arguments, result envelope and write gate are unchanged.
 authoring-command object through the same validated mutation use case.
 `v0.8` (#902 item4) also permits inline Store command objects. Existing paths,
 command/resource versions, result envelopes and transaction guards are unchanged.
+`v0.9` (#1892 row 1) adds `create_project` and `apply_project_command` for a raw `project.yaml` (section 2.5) and the
+optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -52,6 +54,8 @@ command/resource versions, result envelopes and transaction guards are unchanged
 | `validate_workspace` | workspace validation library entry | complete guided source/resource closure validation |
 | `workspace_revision` | `chrona workspace revision` | existing validated workspace revision query |
 | `render_workspace` | `chrona render-workspace` | shared guided-render use case |
+| `create_project` | library entry | `usecases.project_commands.prepare_new_project` and `operational.workspace_initialization.publish_new_file` |
+| `apply_project_command` | library entry | `usecases.project_commands` over the authoring transaction of Spec51 §4.2 |
 
 The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
 (section 2.2); the two command tools are section 2.1.
@@ -63,7 +67,9 @@ JSON Schema 2020-12 input and output schema of each tool, and its annotations: f
 true`, `destructiveHint: false`; for mutating tools `readOnlyHint: false`, `destructiveHint: true` (the metadata does
 not understate a write, whatever it overwrites); `idempotentHint: true` and `openWorldHint: false` for every tool.
 
-- `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
+- `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read, and for
+  a valid Project `projectRevision` (the content identity of the parsed Project: the `baseRevision` of
+  `apply_project_command`; a different value from the byte hash, equal for files that differ only in formatting).
   Like `chrona validate` it dispatches on the document's `kind` (or its `chrona/<kind>/vN` version): a Theme, Color
   Scheme, Layout Profile, View, Style, Actual Set, Summary Profile or Review Detail Profile is checked against its own
   schema and contract and an `ok` result adds `resource` (the kind). Any other kind is `E_CLOSURE_KIND` (`sourceRef`
@@ -233,6 +239,46 @@ message says so and names the revision. Additive; no result version change.
   never has to read files or provoke a stale-base error to discover a revision.
   Reverting a source edit is its inverse command at the new revision, not a
   second undo engine. MCP recovery guidance names tools, not shell commands.
+
+### 2.5 The raw Project write tools (#1892 row 1)
+
+`apply_authoring_command` edits the compact guided workspace, which can express fixed-date tasks only. A full Project
+(`timeline/v0.7`: gates, `Nwd` amounts, constraints, deadlines, relations, calendars) is the file `validate_project`,
+`schedule_project` and `render_draft` read, so a second command family edits that file.
+
+- `create_project {file, project}` writes a new Project file. `file` is a workspace path ending `.yaml` or `.yml` whose
+  parent exists and which does not exist (`E_PROJECT_EXISTS`; never an overwrite, exclusive link publication); `project`
+  is the complete Project mapping. The Project is validated as in `apply_project_command` before any byte is
+  written; findings are a `rejected` result with the Core pointers. Result: `project` (the path) and `projectRevision`.
+- `apply_project_command {project, command}` takes the path of an existing Project and an inline closed
+  `chrona/project-command/v0.1` object or a contained command-file path (`E_PROJECT_COMMAND_SCHEMA` for a file that
+  breaks the schema; an inline object that does is `E_MCP_INPUT_INVALID` with the pointer). A request has `version`,
+  `commandId`, `type`, `target {kind: project, path: <file name>}`, `baseRevision` and `payload`. The result is
+  `projectResult` (`chrona/project-command-result/v0.1`: `status`, `commandId`, `commandBaseRevision`,
+  `projectRevision` before, `resultRevision` after or null, `diagnostics`).
+- Types in this release: `setObject {id, object}` upserts `objects.<id>` with a complete Project object (new ids are
+  appended; every schedule mode, `Nwd` amounts, `constraints`, `deadline`, `parent`, `attachesTo` and `fields` are
+  the Project schema's); `removeObject {id}` deletes an object and is refused with `E_PROJECT_OBJECT_MISSING` for
+  an unknown id and `E_PROJECT_OBJECT_REFERENCED` while a relation endpoint, a `parent` or an `attachesTo` names it.
+  Further member commands (relations, calendars, entities, field roles, annotations, project meta) extend the `type`
+  enum without a version change.
+- The transaction is the one of Spec51 §4.2 (`transact_authoring_command`): the lock, the compare-and-set on
+  `baseRevision` (`E_AUTHORING_BASE_REVISION` with `expectedRevision`), the replay ledger (same `commandId` and request
+  returns the first result with `replayed: true` and `revisionIsCurrent`; the same id for another request is
+  `E_AUTHORING_COMMAND_ID_REUSE`, which says the first command applied), crash recovery and atomic replacement.
+  Receipts, the lock and a transaction marker are hidden files beside the Project file. The revision is the content
+  identity of the parsed Project, so reformatting alone does not change it.
+- Validation before write is the Project schema plus the Core rules, i.e. what `validate_project` reports except the
+  dependency-cycle check; a cycle and a date that contradicts a dependency are `schedule_project` results, not write
+  errors (owner default 6). A finding inside the command's own object is reported at its command pointer
+  (`/payload/object/schedule/amount`); any other finding keeps its Project pointer in the message under `/payload`.
+  Nothing is written for a rejection. The file is rewritten as canonical YAML: comments, flow style and key
+  quoting of the original are not kept.
+- Both tools are mutating (`readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`) and fail
+  `E_MCP_WRITE_DISABLED` before opening any file without `--allow-write`. Command and result versions are new
+  documents (`schemas/project-command-v0.1.schema.yaml`, `schemas/project-command-result-v0.1.schema.yaml`); no
+  existing schema changes. Reverting an edit is a later item (an `inverse` command in the result); until then it is
+  the opposite command at the new revision.
 
 Only initialization accepts a nonexistent destination directory. Its explicit
 destination guard retains the syntax/containment/device rules of section4;
