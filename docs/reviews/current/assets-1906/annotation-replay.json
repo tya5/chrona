@@ -1,0 +1,79 @@
+{
+  "source_commit": "f4a51c6ca07f9f1d149366d1cad1420db72e1430",
+  "source_changed_during_batch": false,
+  "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "input_revision": "cbc183f6b9243181eaef102afa4f9377c9b899ca",
+  "results": [
+    {
+      "design": "marquee",
+      "case": "B",
+      "locale": "en-US",
+      "returncode": 0,
+      "resource_variant": "frozen-trial",
+      "seconds": 7.968,
+      "svg_sha256": "dda458b00a71811626bb4920a7136a4709eeeb68cda659028209322713939864",
+      "scene.json_sha256": "951c865d17fc527e559d2a1213966793a40ef2c1fca72f670bfac945a8646667"
+    },
+    {
+      "design": "target-b",
+      "case": "A",
+      "locale": "en-US",
+      "returncode": 0,
+      "resource_variant": "frozen-trial",
+      "seconds": 147.448,
+      "svg_sha256": "e81358d49eed75a480c8b3aaab87c8cc3b9b7d648e987da9d09b1a21669df7b0",
+      "scene.json_sha256": "7ebf77557d13d275f084fa627de21f04f6a646c48450d650329789998a692e5a"
+    },
+    {
+      "design": "titlecard",
+      "case": "B",
+      "locale": "en-US",
+      "returncode": 0,
+      "resource_variant": "frozen-trial",
+      "seconds": 5.176,
+      "svg_sha256": "63b1d73fce35780eaebbd639a2b2b93210dda36b9af529ee2579e0b356c7c27b",
+      "scene.json_sha256": "7c6bc748a5d3620d73b7ae23e073e5261098bbc4f57676fc0c5e7d6d4eccff04"
+    },
+    {
+      "design": "yuya",
+      "case": "A",
+      "locale": "en-US",
+      "returncode": 0,
+      "resource_variant": "frozen-trial",
+      "seconds": 81.235,
+      "svg_sha256": "c35e68e9262af6bb96ab6a201b35af1e98fbc9fd9a18f3c9aed63a9899aa78d9",
+      "scene.json_sha256": "55af1914587c622e51f1072769f6941c93de849cd8da5214443753326f2fe651"
+    },
+    {
+      "design": "yuya",
+      "case": "B",
+      "locale": "en-US",
+      "returncode": 0,
+      "resource_variant": "frozen-trial",
+      "seconds": 4.917,
+      "svg_sha256": "fb6867f6289da11644d0a659d0166aa770a1816402f63572ac14805de28a8ff0",
+      "scene.json_sha256": "874aa90517f31c240686ae02649c46ae1b928e105310ea1a572b861a7e62db94"
+    },
+    {
+      "design": "yuya",
+      "case": "C4",
+      "locale": "en-US",
+      "returncode": 0,
+      "resource_variant": "frozen-trial",
+      "seconds": 6.599,
+      "svg_sha256": "32e7452095e537042da35710a41f15c3e92c1a86ade09024c139c0cdc6cdb9db",
+      "scene.json_sha256": "1ef632e6629e2058fa4c2dae7cc38a50a1789ec84466b66d16ff54d4eb1a4a98"
+    }
+  ],
+  "plan_input_sha256": {
+    "B-en-project.yaml": "0e62dbfd9679740d205f96f52b129c1a16c20f49e5ef9df1f297c86bf32ab954",
+    "B-en-actual.yaml": "9ad98b221261a3d6013f40deeeee2b13f9790b4c29ee4f7b65eaa5f5fbcfca6e",
+    "B-en-baseline.yaml": "8b9df203869122a2149bfef6ba9bc7e88a445716df908741b14e5b2aa5c545f7",
+    "A-en-project.yaml": "b0dda7a753338082538e5ca6dd0e03c75e93369845f9f4f46746ac646f25eb90",
+    "A-en-actual.yaml": "124bd341e5bc43ec6218fd109ce51d9af594500a202336e0f1d0c803b5b1f78d",
+    "A-en-baseline.yaml": "b835198327ca1b022850719bd5b3eaaf9b1e8b7f593789a57eab7cb826944101",
+    "C-en-project.yaml": "92f93d0d5b5f54e082adc5304aa208e40ba81c9c3e557967bad6045d43c077a8",
+    "C-en-actual.yaml": "2bc2a0249da83ef422a73d4411f4db5c47f0fd96aff27de55e85e023460717ae",
+    "C-en-baseline.yaml": "d839a84cde4277139b196f11be11c138f06b966d15458a3082d4820443dcfde9"
+  }
+}
