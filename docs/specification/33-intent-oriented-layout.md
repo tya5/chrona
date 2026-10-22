@@ -204,6 +204,10 @@ growth/constraint-shortage cause. Do not replace a declared grid with an
 inline flow, drop columns, or leave swatches at natural-width positions while
 fitting their labels against a different allocation. A block legend closes
 its label lines at its one-column width by the same rule.
+For constrained grids this replaces the natural-width packed-overflow
+fallback above: `spread` uses equal shares when every measured minimum fits
+its share, otherwise the same minimum-constrained track allocation applies.
+At natural-fit widths the existing `start`/`spread` arrangement is unchanged.
 
 Heading wrapping remains the explicit View intent in Specification 24:
 omitted `heading.text.wrap` still means `forbid`. First-party designs that
