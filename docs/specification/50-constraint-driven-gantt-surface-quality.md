@@ -518,9 +518,11 @@ not a speculative reservation or rehearsal. The former `best` lane-corridor
 planner rehearsed name placement and routed first to make names yield; retire
 that planner as well, rather than retain another route-priority path.
 
-If an ordinary member name exhausts its normal ladder, Layout may complete one
-local name/name exchange before its declared terminal outcome. Reuse its
-already-generated candidate evidence in the existing order. An exchange candidate
+Complete normal name allocation in its unchanged admission order before any
+exchange. Then visit failed ordinary names in reverse admission order, before
+their declared terminal outcome. Each may complete one local name/name exchange.
+Reuse its already-generated candidate evidence in the existing candidate order,
+revalidating it against the current completed name inventory. An exchange candidate
 must satisfy bounds and own-mark association and be blocked solely by the complete
 group of exactly one earlier ordinary member name. Group ownership is explicit
 Layout evidence for its text and all visual/footprint obstacles, not an ID-prefix
@@ -531,12 +533,15 @@ Hold that candidate and continue the earlier name's remaining declared candidate
 on its own host and row, with all other names fixed. Commit both normally clear
 groups atomically, or preserve the prior choice and the later name's existing
 suppression/fallback. Ordinary excludes attached/key-row and other required names.
-There is no recursive exchange, global reorder, new candidate side or joint
+There is no recursive exchange, global normal-admission reorder, new candidate side or joint
 route/name search. Keep geometry prepared once per existing role/side; side changes
 carry the complete measured text, chip, icon, style and host result. Emit each
 accepted final group once, with no abandoned obstacles or duplicate primitives.
-Charge all candidate evaluations to the existing per-request accounting; never
-restart a capped search or mint an extra quota. A remaining bounded/greedy miss is
+Charge all candidate evaluations, including revalidation, to the same request
+ledger using explicit candidate and domain provenance. An exhausted 512-candidate
+neighborhood cannot revalidate or restart; resumption uses only its remaining
+allowance. Finite uncapped full-band contact evidence records every recheck but
+generates no new poses. Never mint an extra quota. A remaining bounded/greedy miss is
 diagnosed, not claimed as global infeasibility. Routes see only the closed result.
 
 Before this actual placement, Layout completes the intrinsic mandatory

@@ -166,8 +166,11 @@ version candidate generation, limits, and tie breaks.
 
 One final member-name placement/emission permits the bounded, atomic two-name
 candidate exchange specified in Spec 50 before routing. This is internal Layout
-allocation, not a second surface pass or joint route/name allocator. Reuse measured
-candidate geometry and existing search accounting; publish each final text/visual
+allocation, not a second surface pass or joint route/name allocator. Complete
+unchanged normal allocation first, then repair failed names in reverse admission
+order; normal admission is never reordered. Reuse measured candidate geometry
+and existing search accounting, charging revalidation to its original domain;
+publish each final text/visual
 group once. A failed exchange preserves prior choices and the declared failure
 policy, without implying global geometric infeasibility.
 

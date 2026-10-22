@@ -389,7 +389,9 @@ and non-lane labels retain their established bounded side-neighborhood search.
 
 Before routing, Spec 50's one-earlier-name exchange may replace two ordinary
 member-name candidate choices atomically within their existing host/row and
-candidate domains. It cannot cascade, reorder membership/subtracks, relocate a
+candidate domains. Finish normal allocation unchanged before trying failed names
+in reverse admission order, revalidating against all completed name groups. It
+cannot cascade, reorder membership/subtracks, relocate a
 required label, or weaken intrinsic endpoint ink, association or collision rules.
 Scene and lane handoff receive only the final complete text/visual groups.
 
