@@ -53,8 +53,8 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | group-header-strip | `group-header-strip` | enabled | 1.100 | 2 | 36 | 1.000 | 1.350 | 0 | 12 |
 | group-tab | `group-tab` | enabled | 1.100 | 6 | 60 | 1.119 | 6.982 | 0 | 0 |
 | kicker-text | `kicker` | required | 4.500 | 6 | 6 | 9.106 | 15.260 | 0 | 0 |
-| legend-label | `legend` | required | 4.500 | 11 | 82 | 5.448 | 13.415 | 0 | 0 |
-| legend-label | `text` | required | 4.500 | 33 | 188 | 10.019 | 16.268 | 0 | 0 |
+| legend-label | `legend` | required | 4.500 | 11 | 79 | 5.448 | 13.415 | 0 | 0 |
+| legend-label | `text` | required | 4.500 | 33 | 185 | 10.019 | 16.268 | 0 | 0 |
 | legend-swatch | `actual` | required | 3.000 | 42 | 80 | 4.747 | 16.268 | 0 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 9 | 9 | 1.050 | 1.134 | 0 | 4 |
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 4 | 4 | 1.216 | 1.255 | 0 | 0 |
@@ -62,7 +62,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | legend-swatch | `missing-actual` | required | 3.000 | 1 | 1 | 17.667 | 17.667 | 0 | 0 |
 | legend-swatch | `period-band` | enabled | 1.100 | 2 | 6 | 1.163 | 2.217 | 0 | 0 |
 | legend-swatch | `planned` | required | 3.000 | 43 | 98 | 4.637 | 16.268 | 0 | 0 |
-| legend-swatch | `progress-fill` | required | 3.000 | 36 | 36 | 1.782 | 16.268 | 0 | 2 |
+| legend-swatch | `progress-fill` | required | 3.000 | 30 | 30 | 1.782 | 16.268 | 0 | 1 |
 | legend-swatch | `snapshot` | required | 3.000 | 13 | 13 | 2.594 | 5.817 | 0 | 2 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 19 | 19 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 35 | 317 | 10.019 | 14.573 | 0 | 0 |
@@ -78,7 +78,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | period-label | `period-label` | required | 4.500 | 13 | 13 | 1.692 | 6.629 | 0 | 5 |
 | planned | `gate` | required | 3.000 | 10 | 70 | 1.000 | 9.106 | 0 | 4 |
 | planned | `planned` | required | 3.000 | 49 | 781 | 1.000 | 10.019 | 0 | 47 |
-| progress-fill | `progress-fill` | required | 3.000 | 39 | 239 | 3.216 | 5.022 | 0 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 32 | 32 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 28 | 64 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 17 | 113 | 11.934 | 14.573 | 0 | 0 |
 | row-decoration | `row-band` | absent | 1.100 | 16 | 0 | — | — | 0 | 0 |
@@ -336,17 +336,15 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `group-tab:rc` | `group-tab` | 39.500, 769.600 | `group-header-band:rc` | flat | `#3A1115` | fill | — | 7.627 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `kicker` | `kicker` | 389.457, 48.785 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:actual:6f8e0dfcd79118bf` | `legend` | 285.072, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:dependency` | `legend` | 794.091, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:milestone:8eade5a1cbf17965` | `legend` | 656.587, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:milestone:a86f55376e512867` | `legend` | 516.575, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:dependency` | `legend` | 680.477, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:milestone:8eade5a1cbf17965` | `legend` | 542.973, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:milestone:a86f55376e512867` | `legend` | 402.961, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:planned` | `legend` | 194.091, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:progressFill:54edda289964d274` | `legend` | 391.210, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend:snapshot` | `legend` | 97.220, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:actual:6f8e0dfcd79118bf` | `actual` | 242.742, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:milestone:8eade5a1cbf17965:part0` | `actual` | 596.133, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:milestone:a86f55376e512867:part0` | `gate` | 451.018, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:milestone:8eade5a1cbf17965:part0` | `actual` | 482.518, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:milestone:a86f55376e512867:part0` | `gate` | 337.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:planned` | `planned` | 148.440, 862.337 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:progressFill:54edda289964d274` | `progress-fill` | 341.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 7.109 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:snapshot` | `snapshot` | 38.000, 862.338 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `period-band:rc-window` | `period-band` | 735.125, 508.073 | `calendar-closed:2026-10-25` | flat | `#16120F` | fill | — | 1.222 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `period-label:rc-window` | `period-label` | 735.125, 207.746 | `period-band:rc-window` | translucent-over-flat | `#4D231A` | fill | — | 10.661 | 4.500 | info |
@@ -376,24 +374,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:target-b:target-b` | `planned` | 490.880, 227.514 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:titlecard:titlecard` | `planned` | 532.454, 265.064 | `planned:titlecard:snapshot:titlecard` | flat | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:yuya:yuya` | `planned` | 501.273, 246.289 | `calendar-closed:2026-10-03` | flat | `#16120F` | stroke | — | 8.597 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:canvas-fit:canvas-fit` | `progress-fill` | 563.634, 367.935 | `actual:canvas-fit:canvas-fit` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:defaults:defaults` | `progress-fill` | 563.634, 618.461 | `actual:defaults:defaults` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:docs-ci:docs-ci` | `progress-fill` | 563.634, 599.686 | `actual:docs-ci:docs-ci` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:errors:errors` | `progress-fill` | 563.634, 637.236 | `actual:errors:errors` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:flow-bugs:flow-bugs` | `progress-fill` | 542.847, 386.710 | `actual:flow-bugs:flow-bugs` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:io:io` | `progress-fill` | 563.634, 734.337 | `actual:io:io` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:japanese:japanese` | `progress-fill` | 563.634, 540.136 | `actual:japanese:japanese` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:legend-warning:legend-warning` | `progress-fill` | 563.634, 405.485 | `actual:legend-warning:legend-warning` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:marquee:marquee` | `progress-fill` | 553.240, 289.609 | `actual:marquee:marquee` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:presets:presets` | `progress-fill` | 615.601, 696.787 | `actual:presets:presets` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:route-bound:route-bound` | `progress-fill` | 563.634, 502.585 | `actual:route-bound:route-bound` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:rows-headers:rows-headers` | `progress-fill` | 563.634, 424.260 | `actual:rows-headers:rows-headers` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:scene-checks:scene-checks` | `progress-fill` | 574.027, 443.035 | `actual:scene-checks:scene-checks` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:sunday:sunday` | `progress-fill` | 563.634, 308.384 | `actual:sunday:sunday` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:tall-canvas:tall-canvas` | `progress-fill` | 563.634, 521.361 | `actual:tall-canvas:tall-canvas` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:target-b:target-b` | `progress-fill` | 490.880, 233.284 | `actual:target-b:target-b` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:titlecard:titlecard` | `progress-fill` | 532.454, 270.834 | `actual:titlecard:titlecard` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `progress-fill:actual:yuya:yuya` | `progress-fill` | 501.273, 252.059 | `actual:yuya:yuya` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `row-rule:ai-design` | `row-rule` | 662.000, 721.049 | `calendar-closed:2026-10-18` | flat | `#16120F` | stroke | — | 1.222 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `row-rule:canvas-fit` | `row-rule` | 662.000, 373.422 | `calendar-closed:2026-10-18` | flat | `#16120F` | stroke | — | 1.222 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `row-rule:defaults` | `row-rule` | 662.000, 623.949 | `calendar-closed:2026-10-18` | flat | `#16120F` | stroke | — | 1.222 | 1.100 | info |
@@ -662,24 +642,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:target-b:target-b` | `planned` | 487.877, 237.538 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:titlecard:titlecard` | `planned` | 543.920, 274.730 | `planned:titlecard:snapshot:titlecard` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:yuya:yuya` | `planned` | 501.888, 256.134 | `calendar-closed:2026-10-03` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:canvas-fit:canvas-fit` | `progress-fill` | 585.952, 377.275 | `actual:canvas-fit:canvas-fit` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:defaults:defaults` | `progress-fill` | 585.952, 625.833 | `actual:defaults:defaults` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:docs-ci:docs-ci` | `progress-fill` | 585.952, 607.237 | `actual:docs-ci:docs-ci` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:errors:errors` | `progress-fill` | 585.952, 644.429 | `actual:errors:errors` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:flow-bugs:flow-bugs` | `progress-fill` | 557.931, 395.871 | `actual:flow-bugs:flow-bugs` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:io:io` | `progress-fill` | 585.952, 740.814 | `actual:io:io` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:japanese:japanese` | `progress-fill` | 585.952, 548.045 | `actual:japanese:japanese` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:legend-warning:legend-warning` | `progress-fill` | 585.952, 414.468 | `actual:legend-warning:legend-warning` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:marquee:marquee` | `progress-fill` | 571.941, 299.487 | `actual:marquee:marquee` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:presets:presets` | `progress-fill` | 656.005, 703.622 | `actual:presets:presets` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:route-bound:route-bound` | `progress-fill` | 585.952, 510.852 | `actual:route-bound:route-bound` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:rows-headers:rows-headers` | `progress-fill` | 585.952, 433.064 | `actual:rows-headers:rows-headers` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:scene-checks:scene-checks` | `progress-fill` | 599.963, 451.660 | `actual:scene-checks:scene-checks` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:sunday:sunday` | `progress-fill` | 585.952, 318.083 | `actual:sunday:sunday` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:tall-canvas:tall-canvas` | `progress-fill` | 585.952, 529.448 | `actual:tall-canvas:tall-canvas` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:target-b:target-b` | `progress-fill` | 487.877, 243.698 | `actual:target-b:target-b` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:titlecard:titlecard` | `progress-fill` | 543.920, 280.890 | `actual:titlecard:titlecard` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `progress-fill:actual:yuya:yuya` | `progress-fill` | 501.888, 262.294 | `actual:yuya:yuya` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `slot-heading:legend` | `slot-heading` | 784.799, 47.050 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:ai-design:snapshot:ai-design` | `snapshot` | 1132.368, 717.818 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:canvas-fit:snapshot:canvas-fit` | `snapshot` | 585.952, 372.875 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
@@ -915,19 +877,17 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `group-tab:rc` | `group-tab` | 35.000, 770.696 | `group-header-band:rc` | flat | `#171513` | stroke | — | 1.119 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `kicker` | `kicker` | 93.280, 47.440 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:actual:c6c8bd9b98d4ba13` | `legend` | 229.248, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:calendar-closed` | `legend` | 585.235, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:dependency` | `legend` | 666.723, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:milestone:350960b6b740b414` | `legend` | 491.238, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:milestone:fec615ee58d683ee` | `legend` | 383.789, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:calendar-closed` | `legend` | 514.691, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:dependency` | `legend` | 596.179, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:milestone:350960b6b740b414` | `legend` | 420.694, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:milestone:fec615ee58d683ee` | `legend` | 313.245, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:planned` | `legend` | 158.704, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:progressFill:fe8291d10269acd7` | `legend` | 299.792, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend:snapshot` | `legend` | 77.216, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:actual:c6c8bd9b98d4ba13` | `actual` | 201.976, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 10.142 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:milestone:350960b6b740b414:part0` | `actual` | 445.514, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 10.142 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 557.963, 858.700 | `canvas-texture` | flat | `#050505` | fill | — | 1.134 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:milestone:fec615ee58d683ee:part0` | `gate` | 338.064, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:milestone:350960b6b740b414:part0` | `actual` | 374.970, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 10.142 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 487.419, 858.700 | `canvas-texture` | flat | `#050505` | fill | — | 1.134 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:milestone:fec615ee58d683ee:part0` | `gate` | 267.520, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:planned` | `planned` | 131.432, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:progressFill:fe8291d10269acd7` | `progress-fill` | 272.520, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 5.216 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:snapshot` | `snapshot` | 28.000, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 730.946, 517.587 | `period-band:rc-window` | pattern-substrate | `#1B1917` | stroke | — | 6.720 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 730.946, 517.587 | `calendar-closed:2026-10-25` | flat | `#16132F` | stroke | — | 6.891 | 1.100 | info |
@@ -959,24 +919,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:target-b:target-b` | `planned` | 505.243, 245.182 | `calendar-closed:2026-10-04` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:titlecard:titlecard` | `planned` | 547.235, 282.111 | `planned:titlecard:snapshot:titlecard` | flat | `#050505` | fill | — | 7.814 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:yuya:yuya` | `planned` | 515.741, 263.647 | `planned:yuya:snapshot:yuya` | flat | `#050505` | fill | — | 7.814 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:canvas-fit:canvas-fit` | `progress-fill` | 557.732, 382.449 | `actual:canvas-fit:canvas-fit` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:defaults:defaults` | `progress-fill` | 557.732, 625.557 | `actual:defaults:defaults` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:docs-ci:docs-ci` | `progress-fill` | 557.732, 607.093 | `actual:docs-ci:docs-ci` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:errors:errors` | `progress-fill` | 557.732, 644.022 | `actual:errors:errors` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:flow-bugs:flow-bugs` | `progress-fill` | 536.737, 400.913 | `actual:flow-bugs:flow-bugs` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:io:io` | `progress-fill` | 557.732, 737.880 | `actual:io:io` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:japanese:japanese` | `progress-fill` | 557.732, 550.164 | `actual:japanese:japanese` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:legend-warning:legend-warning` | `progress-fill` | 557.732, 419.378 | `actual:legend-warning:legend-warning` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:marquee:marquee` | `progress-fill` | 547.235, 307.055 | `actual:marquee:marquee` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:presets:presets` | `progress-fill` | 610.222, 700.951 | `actual:presets:presets` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:route-bound:route-bound` | `progress-fill` | 557.732, 513.235 | `actual:route-bound:route-bound` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:rows-headers:rows-headers` | `progress-fill` | 557.732, 437.842 | `actual:rows-headers:rows-headers` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:scene-checks:scene-checks` | `progress-fill` | 568.230, 456.306 | `actual:scene-checks:scene-checks` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:sunday:sunday` | `progress-fill` | 557.732, 325.520 | `actual:sunday:sunday` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:tall-canvas:tall-canvas` | `progress-fill` | 557.732, 531.700 | `actual:tall-canvas:tall-canvas` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:target-b:target-b` | `progress-fill` | 484.248, 251.662 | `actual:target-b:target-b` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:titlecard:titlecard` | `progress-fill` | 526.239, 288.591 | `actual:titlecard:titlecard` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `progress-fill:actual:yuya:yuya` | `progress-fill` | 494.746, 270.127 | `actual:yuya:yuya` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `row-rule:ai-design` | `row-rule` | 658.000, 723.767 | `calendar-closed:2026-10-18` | flat | `#16132F` | stroke | — | 1.214 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `row-rule:canvas-fit` | `row-rule` | 658.000, 386.801 | `calendar-closed:2026-10-18` | flat | `#16132F` | stroke | — | 1.214 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `row-rule:defaults` | `row-rule` | 658.000, 629.910 | `calendar-closed:2026-10-18` | flat | `#16132F` | stroke | — | 1.214 | 1.100 | info |
@@ -1225,19 +1167,17 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tab:m4` | `group-tab` | 52.612, 711.060 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 2.001 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `group-tab:rc` | `group-tab` | 52.612, 780.484 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 2.001 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:actual:84510d640ea7a7d0` | `legend` | 262.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:calendar-closed` | `legend` | 608.216, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:dependency` | `legend` | 692.216, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:milestone:1deb7ddd926c80b8` | `legend` | 512.162, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:milestone:62d9a9a23bc592c0` | `legend` | 408.054, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:calendar-closed` | `legend` | 542.216, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:dependency` | `legend` | 626.216, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:milestone:1deb7ddd926c80b8` | `legend` | 446.162, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:milestone:62d9a9a23bc592c0` | `legend` | 342.054, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:planned` | `legend` | 184.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:progressFill:6194e25e14c9aeb0` | `legend` | 328.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend:snapshot` | `legend` | 94.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:actual:84510d640ea7a7d0` | `actual` | 233.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:milestone:1deb7ddd926c80b8:part0` | `actual` | 464.108, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 573.216, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:milestone:62d9a9a23bc592c0:part6` | `gate` | 354.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 6.836 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:milestone:1deb7ddd926c80b8:part0` | `actual` | 398.108, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 507.216, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:milestone:62d9a9a23bc592c0:part6` | `gate` | 288.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 6.836 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:planned` | `planned` | 143.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:progressFill:6194e25e14c9aeb0` | `progress-fill` | 299.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.782 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:snapshot` | `snapshot` | 42.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 739.934, 502.787 | `period-band:rc-window` | pattern-substrate | `#EFE3C8` | stroke | — | 3.597 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 739.934, 502.787 | `calendar-closed:2026-10-25` | flat | `#E9DEC3` | stroke | — | 3.425 | 1.100 | info |
@@ -1269,24 +1209,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:target-b:target-b` | `planned` | 493.796, 211.921 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:titlecard:titlecard` | `planned` | 556.640, 258.203 | `planned:titlecard:snapshot:titlecard` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:yuya:yuya` | `planned` | 525.218, 235.062 | `calendar-closed:2026-10-04` | flat | `#E9DEC3` | fill | — | 4.415 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:canvas-fit:canvas-fit` | `progress-fill` | 567.114, 357.249 | `actual:canvas-fit:canvas-fit` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:defaults:defaults` | `progress-fill` | 567.114, 611.804 | `actual:defaults:defaults` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:docs-ci:docs-ci` | `progress-fill` | 567.114, 588.662 | `actual:docs-ci:docs-ci` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:errors:errors` | `progress-fill` | 567.114, 634.945 | `actual:errors:errors` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:flow-bugs:flow-bugs` | `progress-fill` | 546.166, 380.390 | `actual:flow-bugs:flow-bugs` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:io:io` | `progress-fill` | 567.114, 727.510 | `actual:io:io` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:japanese:japanese` | `progress-fill` | 567.114, 542.380 | `actual:japanese:japanese` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:legend-warning:legend-warning` | `progress-fill` | 567.114, 403.531 | `actual:legend-warning:legend-warning` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:marquee:marquee` | `progress-fill` | 556.640, 287.825 | `actual:marquee:marquee` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:presets:presets` | `progress-fill` | 619.484, 681.228 | `actual:presets:presets` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:route-bound:route-bound` | `progress-fill` | 567.114, 496.097 | `actual:route-bound:route-bound` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:rows-headers:rows-headers` | `progress-fill` | 567.114, 426.673 | `actual:rows-headers:rows-headers` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:scene-checks:scene-checks` | `progress-fill` | 577.588, 449.814 | `actual:scene-checks:scene-checks` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:sunday:sunday` | `progress-fill` | 567.114, 310.966 | `actual:sunday:sunday` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:tall-canvas:tall-canvas` | `progress-fill` | 567.114, 519.238 | `actual:tall-canvas:tall-canvas` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:target-b:target-b` | `progress-fill` | 493.796, 218.401 | `actual:target-b:target-b` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:titlecard:titlecard` | `progress-fill` | 535.692, 264.683 | `actual:titlecard:titlecard` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `progress-fill:actual:yuya:yuya` | `progress-fill` | 504.270, 241.542 | `actual:yuya:yuya` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `row-rule:ai-design` | `row-rule` | 668.000, 711.060 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `row-rule:canvas-fit` | `row-rule` | 668.000, 363.939 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `row-rule:defaults` | `row-rule` | 668.000, 618.494 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
@@ -1790,9 +1712,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1126.242, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 552.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 408.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
@@ -1947,9 +1867,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `planned:performance:performance` | `planned` | 856.309, 480.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `planned:pvt:pvt` | `planned` | 1061.077, 644.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 874.924, 316.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
-| `examples/controller-z/generated/annotation-rounded.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 635.584, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/annotation-rounded.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 888.753, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/annotation-rounded.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 888.221, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/annotation-rounded.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 875.988, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 552.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 408.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
@@ -2082,9 +2000,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/annotations.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
@@ -2211,9 +2127,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/as-of-foot.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 500.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 664.400 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 336.400 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/as-of-foot.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 264.400 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 500.400 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/as-of-foot.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 336.400 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `note:evb-risk` | `text` | 142.727, 939.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `note:pvt-exit` | `text` | 192.441, 959.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/as-of-foot.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 210.400 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -2354,9 +2268,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/axis-alternating.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/axis-alternating.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/axis-alternating.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-alternating.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -2499,9 +2411,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/axis-cell-corners.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/axis-cell-corners.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -2641,9 +2551,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/axis-interval-scales.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/axis-interval-scales.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/axis-interval-scales.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -2789,9 +2697,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `planned:performance:snapshot:performance` | flat | `#C9CED8` | stroke | — | 10.306 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `planned:pvt:snapshot:pvt` | flat | `#C9CED8` | stroke | — | 10.306 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `planned:silicon-bringup:snapshot:silicon-bringup` | flat | `#C9CED8` | stroke | — | 10.306 | 3.000 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `note:evb-risk` | `text` | 142.727, 948.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `note:pvt-exit` | `text` | 192.441, 968.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 586.086, 202.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -2934,9 +2840,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/capabilities.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 440.912 | `row-band:performance` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 584.962 | `row-band:pvt` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 296.863 | `row-band:silicon-bringup` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/capabilities.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 224.837 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 440.912 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/capabilities.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 296.863 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `note:evb-risk` | `text` | 142.727, 859.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `note:pvt-exit` | `text` | 192.441, 879.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 170.819 | `row-band:architecture` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -3092,9 +2996,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/elevated.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | gradient-sample | `#F5F8FC` | stroke | — | 15.273 | 3.000 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | gradient-sample | `#F9FBFD` | stroke | — | 15.684 | 3.000 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | gradient-sample | `#F6F8FC` | stroke | — | 15.301 | 3.000 | info |
-| `examples/controller-z/generated/elevated.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/elevated.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | gradient-sample | `#EEF3F9` | fill | — | 14.582 | 4.500 | info |
@@ -3232,9 +3134,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/executive.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/executive.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/executive.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/executive.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/executive.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/executive.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/executive.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -3372,9 +3272,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/group-child-indent.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/group-child-indent.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/group-child-indent.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -3467,9 +3365,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/group-header-runs.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 7.583 | 3.000 | info |
-| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1126.242, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#0A0A0C` | fill | — | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#0A0A0C` | fill | — | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 17.128 | 4.500 | info |
@@ -3726,9 +3622,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/in-progress.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/in-progress.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/in-progress.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/in-progress.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -4039,9 +3933,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/progress-track.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/progress-track.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 604.928, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1113.787, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/progress-track.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1071.963, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/progress-track.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -4165,9 +4057,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/region-frames.scene.json` | `planned:performance:performance` | `planned` | 1056.864, 574.750 | `row-band:performance` | flat | `#F1E6CC` | stroke | — | 14.612 | 3.000 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `planned:pvt:pvt` | `planned` | 1302.432, 737.750 | `row-band:pvt` | flat | `#F1E6CC` | stroke | — | 14.612 | 3.000 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1056.864, 411.750 | `row-band:silicon-bringup` | flat | `#F1E6CC` | stroke | — | 14.612 | 3.000 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 606.656, 330.250 | `actual:firmware:firmware` | flat | `#1F7A52` | stroke | — | 3.421 | 3.000 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1104.613, 574.750 | `actual:performance:performance` | flat | `#1F7A52` | stroke | — | 3.421 | 3.000 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1063.685, 411.750 | `actual:silicon-bringup:silicon-bringup` | flat | `#1F7A52` | stroke | — | 3.421 | 3.000 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 569.094, 291.500 | `group:fw-team` | flat | `#E6DBBE` | fill | — | 13.154 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:relation:id:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1263.504, 386.450 | `row-band:silicon-bringup` | flat | `#F1E6CC` | fill | — | 14.612 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `relation-label:relation:id:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1020.156, 588.050 | `row-band:performance` | flat | `#F1E6CC` | fill | — | 14.612 | 4.500 | info |
@@ -4350,9 +4240,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/slot-heading.scene.json` | `planned:performance:performance` | `planned` | 856.309, 480.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `planned:pvt:pvt` | `planned` | 1061.077, 644.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 874.924, 316.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
-| `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 635.584, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 888.753, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 888.221, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 875.988, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `slot-heading:annotations` | `slot-heading` | 1266.306, 92.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 6.552 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 552.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
@@ -4475,9 +4363,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/surface-glow.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 7.583 | 3.000 | info |
-| `examples/controller-z/generated/surface-glow.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/surface-glow.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/surface-glow.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/surface-glow.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1126.242, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `note:evb-risk` | `text` | 142.727, 919.600 | `canvas` | canvas | `#0A0A0C` | fill | — | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `note:pvt-exit` | `text` | 192.441, 939.200 | `canvas` | canvas | `#0A0A0C` | fill | — | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/surface-glow.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 190.800 | `canvas` | canvas | `#0A0A0C` | fill | — | 17.128 | 4.500 | info |
@@ -4608,9 +4494,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/text-roles.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 440.912 | `row-band:performance` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/text-roles.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 584.962 | `row-band:pvt` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/text-roles.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 296.863 | `row-band:silicon-bringup` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z/generated/text-roles.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 224.837 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/text-roles.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 440.912 | `actual:performance:performance` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z/generated/text-roles.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 296.863 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/text-roles.scene.json` | `note:evb-risk` | `text` | 142.727, 859.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/text-roles.scene.json` | `note:pvt-exit` | `text` | 192.441, 879.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/text-roles.scene.json` | `relation-label:relation:id:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 662.210, 170.819 | `row-band:architecture` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -4786,9 +4670,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z/generated/viewer-fit.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 5.284 | 3.000 | info |
-| `examples/controller-z/generated/viewer-fit.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/viewer-fit.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/viewer-fit.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/viewer-fit.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1126.242, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | — | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 552.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 408.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | — | 11.935 | 4.500 | info |
@@ -4879,12 +4761,10 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend:actual:238c36979795b0de` | `text` | 1484.854, 872.920 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend:planned` | `text` | 1460.800, 793.720 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend:planned:aeb4c6d20263059b` | `text` | 1484.854, 822.520 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend:progressFill:ff20d4fbbb7c74d9` | `text` | 1422.400, 898.120 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend-swatch:actual:1f3fcaa4cc2095e6` | `actual` | 1396.000, 847.720 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend-swatch:actual:238c36979795b0de` | `actual` | 1396.000, 872.920 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend-swatch:planned` | `planned` | 1396.000, 793.720 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend-swatch:planned:aeb4c6d20263059b` | `planned` | 1396.000, 822.520 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `legend-swatch:progressFill:ff20d4fbbb7c74d9` | `progress-fill` | 1396.000, 898.120 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `member-label:architecture:architecture` | `text` | 590.400, 157.500 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `member-label:dvt:dvt` | `text` | 1299.001, 537.500 | `group:validation-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 970.788, 393.500 | `group:validation-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -4913,8 +4793,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 490.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 654.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 326.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 254.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 326.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `note:evb-risk` | `text` | 192.000, 929.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `note:pvt-exit` | `text` | 136.000, 949.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `cell:architecture:作業ストリーム` | `text` | 108.000, 182.800 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
@@ -5002,12 +4880,10 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend:actual:238c36979795b0de` | `text` | 1484.854, 862.920 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend:planned` | `text` | 1460.800, 783.720 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend:planned:aeb4c6d20263059b` | `text` | 1484.854, 812.520 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/controller-z-ja/generated/executive.scene.json` | `legend:progressFill:ff20d4fbbb7c74d9` | `text` | 1422.400, 888.120 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend-swatch:actual:1f3fcaa4cc2095e6` | `actual` | 1396.000, 837.720 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend-swatch:actual:238c36979795b0de` | `actual` | 1396.000, 862.920 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend-swatch:planned` | `planned` | 1396.000, 783.720 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `legend-swatch:planned:aeb4c6d20263059b` | `planned` | 1396.000, 812.520 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/controller-z-ja/generated/executive.scene.json` | `legend-swatch:progressFill:ff20d4fbbb7c74d9` | `progress-fill` | 1396.000, 888.120 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `member-label:architecture:architecture` | `text` | 590.400, 147.500 | `group:fw-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `member-label:dvt:dvt` | `text` | 1299.001, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 970.788, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | — | 14.573 | 4.500 | info |
@@ -5036,8 +4912,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/controller-z-ja/generated/executive.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | — | 14.573 | 3.000 | info |
-| `examples/controller-z-ja/generated/executive.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/controller-z-ja/generated/executive.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `note:evb-risk` | `text` | 192.000, 919.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `note:pvt-exit` | `text` | 136.000, 939.200 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/controller-z-ja/generated/executive.scene.json` | `cell:architecture:作業ストリーム` | `text` | 108.000, 172.800 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
@@ -6244,19 +6118,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `planned:structure:structure` | `planned` | 662.600, 398.300 | `canvas` | canvas | `#F5F5F1` | stroke | — | 10.019 | 3.000 | info |
 | `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `planned:tvac:tvac` | `planned` | 1143.026, 1282.300 | `canvas` | canvas | `#F5F5F1` | stroke | — | 10.019 | 3.000 | info |
 | `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `planned:vibration:vibration` | `planned` | 1114.391, 1214.300 | `canvas` | canvas | `#F5F5F1` | stroke | — | 10.019 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 794.638, 602.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 902.813, 874.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 913.949, 1010.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 788.275, 534.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 729.415, 466.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 1077.802, 1146.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 769.185, 262.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 702.371, 330.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 829.636, 738.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 847.135, 806.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 708.734, 398.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 1163.360, 1282.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 1125.527, 1214.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
+| `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 1165.190, 1282.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
 | `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `note:station` | `text` | 181.707, 2051.600 | `canvas` | canvas | `#F5F5F1` | fill | — | 10.019 | 4.500 | info |
 | `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `note:tvac` | `text` | 182.596, 2032.000 | `canvas` | canvas | `#F5F5F1` | fill | — | 10.019 | 4.500 | info |
 | `examples/halcyon-1/generated/13-gallery-editorial.scene.json` | `note:window` | `text` | 186.894, 2012.400 | `canvas` | canvas | `#F5F5F1` | fill | — | 10.019 | 4.500 | info |
@@ -6640,19 +6502,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `planned:review-lane:["generated","","structure"]:structure` | `planned` | 978.840, 398.300 | `canvas` | canvas | `#F5F5F1` | stroke | — | 10.019 | 3.000 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `planned:review-lane:["generated","","tvac"]:tvac` | `planned` | 1717.385, 1282.300 | `canvas` | canvas | `#F5F5F1` | stroke | — | 10.019 | 3.000 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `planned:review-lane:["generated","","vibration"]:vibration` | `planned` | 1673.365, 1214.300 | `canvas` | canvas | `#F5F5F1` | stroke | — | 10.019 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","avionics"]:avionics` | `progress-fill` | 1181.817, 602.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","bus-test"]:bus-test` | `progress-fill` | 1348.112, 874.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","comms-test"]:comms-test` | `progress-fill` | 1365.231, 1010.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","detector"]:detector` | `progress-fill` | 1172.035, 534.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","eps"]:eps` | `progress-fill` | 1081.551, 466.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","integration"]:integration` | `progress-fill` | 1617.119, 1146.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","mcs"]:mcs` | `progress-fill` | 1142.689, 262.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","optics"]:optics` | `progress-fill` | 1039.978, 330.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","payload-tvac"]:payload-tvac` | `progress-fill` | 1235.619, 738.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","station"]:station` | `progress-fill` | 1262.519, 806.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","structure"]:structure` | `progress-fill` | 1049.760, 398.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","tvac"]:tvac` | `progress-fill` | 1747.548, 1282.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
-| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","vibration"]:vibration` | `progress-fill` | 1690.484, 1214.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
+| `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `progress-fill:actual:review-lane:["generated","","tvac"]:tvac` | `progress-fill` | 1750.660, 1282.300 | `canvas` | canvas | `#F5F5F1` | fill | — | 3.216 | 3.000 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `note:station` | `text` | 181.707, 2051.600 | `canvas` | canvas | `#F5F5F1` | fill | — | 10.019 | 4.500 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `note:tvac` | `text` | 182.596, 2032.000 | `canvas` | canvas | `#F5F5F1` | fill | — | 10.019 | 4.500 | info |
 | `examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json` | `note:window` | `text` | 186.894, 2012.400 | `canvas` | canvas | `#F5F5F1` | fill | — | 10.019 | 4.500 | info |
@@ -7052,19 +6902,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:structure:structure` | `planned` | 501.618, 180.126 | `canvas` | canvas | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:tvac` | `planned` | 946.382, 460.518 | `planned:tvac:snapshot:tvac` | flat | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:vibration` | `planned` | 919.873, 438.664 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 589.982, 208.460 | `actual:avionics:avionics` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 707.800, 252.167 | `actual:bus-test:bus-test` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 728.418, 596.267 | `actual:comms-test:comms-test` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 604.709, 337.729 | `actual:detector:detector` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 542.855, 230.313 | `actual:eps:eps` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 855.073, 423.290 | `actual:integration:integration` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 501.618, 552.560 | `actual:mcs:mcs` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 501.618, 315.875 | `actual:optics:optics` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 634.164, 359.583 | `actual:payload-tvac:payload-tvac` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 625.327, 574.413 | `actual:station:station` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 501.618, 186.606 | `actual:structure:structure` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 955.218, 466.998 | `actual:tvac:tvac` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 919.873, 445.144 | `actual:vibration:vibration` | flat | `#101828` | stroke | — | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `row-rule:avionics` | `row-rule` | 668.000, 214.987 | `canvas` | canvas | `#FFFFFF` | stroke | — | 1.248 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `row-rule:bus-test` | `row-rule` | 668.000, 258.694 | `canvas` | canvas | `#FFFFFF` | stroke | — | 1.248 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `row-rule:campaign` | `row-rule` | 668.000, 688.356 | `canvas` | canvas | `#FFFFFF` | stroke | — | 1.248 | 1.100 | info |
@@ -7430,19 +7268,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:structure:structure` | `planned` | 545.556, 235.062 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:tvac:tvac` | `planned` | 960.936, 489.617 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:vibration:vibration` | `planned` | 914.622, 466.475 | `planned:vibration:snapshot:vibration` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 590.423, 264.683 | `actual:avionics:avionics` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 706.208, 310.966 | `actual:bus-test:bus-test` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 726.471, 611.804 | `actual:comms-test:comms-test` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 604.896, 380.390 | `actual:detector:detector` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 544.109, 287.825 | `actual:eps:eps` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 850.940, 449.814 | `actual:integration:integration` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 503.584, 565.521 | `actual:mcs:mcs` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 503.584, 357.249 | `actual:optics:optics` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 633.842, 403.531 | `actual:payload-tvac:payload-tvac` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 625.159, 588.662 | `actual:station:station` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 503.584, 241.542 | `actual:structure:structure` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 949.357, 496.097 | `actual:tvac:tvac` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 914.622, 472.955 | `actual:vibration:vibration` | flat | `#B22D1B` | stroke | — | 5.022 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `row-rule:avionics` | `row-rule` | 668.000, 271.374 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `row-rule:bus-test` | `row-rule` | 668.000, 317.657 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `row-rule:campaign` | `row-rule` | 668.000, 687.918 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
@@ -7816,19 +7642,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:structure:structure` | `planned` | 536.126, 263.647 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:tvac:tvac` | `planned` | 952.450, 506.755 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:vibration:vibration` | `planned` | 916.185, 488.291 | `calendar-closed:2027-07-31` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 581.095, 288.591 | `actual:avionics:avionics` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 697.143, 325.520 | `actual:bus-test:bus-test` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 717.452, 625.557 | `actual:comms-test:comms-test` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 595.601, 400.913 | `actual:detector:detector` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 534.676, 307.055 | `actual:eps:eps` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 842.204, 476.306 | `actual:integration:integration` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 494.059, 588.629 | `actual:mcs:mcs` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 494.059, 382.449 | `actual:optics:optics` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 624.613, 419.378 | `actual:payload-tvac:payload-tvac` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 615.909, 607.093 | `actual:station:station` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 494.059, 270.127 | `actual:structure:structure` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 940.845, 513.235 | `actual:tvac:tvac` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 906.031, 494.771 | `actual:vibration:vibration` | flat | `#54E06A` | stroke | — | 11.887 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `row-rule:avionics` | `row-rule` | 658.000, 292.943 | `canvas-texture` | flat | `#050505` | stroke | — | 1.146 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `row-rule:bus-test` | `row-rule` | 658.000, 329.872 | `canvas-texture` | flat | `#050505` | stroke | — | 1.146 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `row-rule:campaign` | `row-rule` | 658.000, 705.303 | `canvas-texture` | flat | `#050505` | stroke | — | 1.146 | 1.100 | info |
@@ -8155,19 +7969,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `planned:structure:structure` | `planned` | 499.094, 246.289 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `planned:tvac:tvac` | `planned` | 933.665, 496.815 | `planned:tvac:snapshot:tvac` | flat | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `planned:vibration:vibration` | `planned` | 907.763, 478.040 | `planned:vibration:snapshot:vibration` | flat | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 585.432, 270.834 | `actual:avionics:avionics` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 700.550, 308.384 | `actual:bus-test:bus-test` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 720.696, 618.461 | `actual:comms-test:comms-test` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 599.822, 386.710 | `actual:detector:detector` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 539.385, 289.609 | `actual:eps:eps` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 844.448, 465.035 | `actual:integration:integration` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 499.094, 580.911 | `actual:mcs:mcs` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 499.094, 367.935 | `actual:optics:optics` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 628.602, 405.485 | `actual:payload-tvac:payload-tvac` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 619.968, 599.686 | `actual:station:station` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 499.094, 252.059 | `actual:structure:structure` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 942.299, 502.585 | `actual:tvac:tvac` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 907.763, 483.810 | `actual:vibration:vibration` | flat | `#EADCC0` | stroke | — | 14.558 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `row-rule:avionics` | `row-rule` | 662.000, 276.321 | `canvas` | canvas | `#0D0A09` | stroke | — | 1.187 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `row-rule:bus-test` | `row-rule` | 662.000, 313.872 | `canvas` | canvas | `#0D0A09` | stroke | — | 1.187 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `row-rule:campaign` | `row-rule` | 662.000, 702.274 | `canvas` | canvas | `#0D0A09` | stroke | — | 1.187 | 1.100 | info |
@@ -8489,19 +8291,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:structure:structure` | `planned` | 478.027, 256.134 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:tvac:tvac` | `planned` | 1075.632, 504.692 | `planned:tvac:snapshot:tvac` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:vibration:vibration` | `planned` | 1040.013, 486.096 | `planned:vibration:snapshot:vibration` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 596.756, 280.890 | `actual:avionics:avionics` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 755.062, 318.083 | `actual:bus-test:bus-test` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:comms-test:comms-test` | `progress-fill` | 782.766, 625.833 | `actual:comms-test:comms-test` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 616.545, 395.871 | `actual:detector:detector` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 533.434, 299.487 | `actual:eps:eps` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:integration:integration` | `progress-fill` | 952.945, 473.660 | `actual:integration:integration` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:mcs:mcs` | `progress-fill` | 478.027, 588.641 | `actual:mcs:mcs` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 478.027, 377.275 | `actual:optics:optics` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 656.121, 414.468 | `actual:payload-tvac:payload-tvac` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:station:station` | `progress-fill` | 644.248, 607.237 | `actual:station:station` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 478.027, 262.294 | `actual:structure:structure` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:tvac:tvac` | `progress-fill` | 1087.505, 510.852 | `actual:tvac:tvac` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `progress-fill:actual:vibration:vibration` | `progress-fill` | 1040.013, 492.256 | `actual:vibration:vibration` | flat | `#D13A26` | stroke | — | 4.212 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `slot-heading:legend` | `slot-heading` | 784.799, 47.050 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:campaign:snapshot:campaign` | `snapshot` | 1245.811, 699.222 | `calendar-closed:2027-09-18` | translucent-over-flat | `#F4F2EA` | stroke | — | 3.138 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:emc:snapshot:emc` | `snapshot` | 1115.208, 525.048 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
@@ -8640,19 +8430,17 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/26-gates.scene.json` | `legend:actual:1f3fcaa4cc2095e6` | `text` | 70.302, 1047.338 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `legend:actual:238c36979795b0de` | `text` | 98.714, 1071.138 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `legend:planned:aeb4c6d20263059b` | `text` | 104.246, 1023.538 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:progressFill:ff20d4fbbb7c74d9` | `text` | 63.438, 1094.938 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:EM` | `text` | 47.178, 1142.538 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:FM` | `text` | 46.956, 1188.138 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:QM` | `text` | 48.528, 1165.338 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:snapshot` | `text` | 92.512, 1118.738 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:EM` | `text` | 47.178, 1119.738 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:FM` | `text` | 46.956, 1165.338 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:scale:model:QM` | `text` | 48.528, 1142.538 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend:snapshot` | `text` | 92.512, 1095.938 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:actual:1f3fcaa4cc2095e6` | `actual` | 24.000, 1047.338 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:actual:238c36979795b0de` | `actual` | 24.000, 1071.138 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:planned:aeb4c6d20263059b` | `planned` | 24.000, 1023.538 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:EM` | `planned` | 24.000, 1142.538 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:FM` | `planned` | 24.000, 1188.138 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:QM` | `planned` | 24.000, 1165.338 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:progressFill:ff20d4fbbb7c74d9` | `progress-fill` | 24.000, 1094.938 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:snapshot` | `snapshot` | 24.000, 1118.738 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:EM` | `planned` | 24.000, 1119.738 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:FM` | `planned` | 24.000, 1165.338 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:scale:model:QM` | `planned` | 24.000, 1142.538 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
+| `examples/halcyon-1/generated/26-gates.scene.json` | `legend-swatch:snapshot` | `snapshot` | 24.000, 1095.938 | `canvas` | canvas | `#FFFFFF` | stroke | — | 16.268 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:cdr` | `text` | 833.652, 907.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `milestone:psr` | `text` | 813.870, 927.000 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `missing-actual:pdr:pdr` | `missing-actual` | 598.187, 168.800 | `planned:pdr:pdr` | flat | `#8DB6E8` | stroke | — | 7.738 | 3.000 | info |
@@ -8682,13 +8470,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/halcyon-1/generated/26-gates.scene.json` | `planned:pdr:pdr` | `planned` | 588.187, 168.800 | `planned:pdr:scenario:payload-fast-track:pdr` | flat | `#C9CED8` | stroke | — | 10.306 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `planned:psr:psr` | `planned` | 1446.951, 848.800 | `planned:psr:scenario:payload-fast-track:psr` | flat | `#C9CED8` | stroke | — | 10.306 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `planned:structure:structure` | `planned` | 611.818, 232.800 | `planned:structure:scenario:payload-fast-track:structure` | flat | `#C9CED8` | stroke | — | 10.306 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:avionics:avionics` | `progress-fill` | 748.130, 360.800 | `actual:avionics:avionics` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:bus-test:bus-test` | `progress-fill` | 929.879, 424.800 | `actual:bus-test:bus-test` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:detector:detector` | `progress-fill` | 770.848, 636.800 | `actual:detector:detector` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:eps:eps` | `progress-fill` | 675.430, 296.800 | `actual:eps:eps` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:optics:optics` | `progress-fill` | 611.818, 572.800 | `actual:optics:optics` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:payload-tvac:payload-tvac` | `progress-fill` | 816.286, 700.800 | `actual:payload-tvac:payload-tvac` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
-| `examples/halcyon-1/generated/26-gates.scene.json` | `progress-fill:actual:structure:structure` | `progress-fill` | 611.818, 232.800 | `actual:structure:structure` | flat | `#269D79` | stroke | — | 4.789 | 3.000 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `note:station` | `text` | 1403.919, 1060.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `note:tvac` | `text` | 1404.808, 1041.000 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/halcyon-1/generated/26-gates.scene.json` | `note:window` | `text` | 1409.106, 1021.400 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
@@ -8770,7 +8551,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | `sunday` | 2 | 17 | 0 |
 | `target-b` | 1 | 83 | 0 |
 | `titlecard` | 2 | 20 | 0 |
-| `yuya` | 2 | 148 | 0 |
+| `yuya` | 2 | 147 | 0 |
 
 ## Decoration corpus witness
 
@@ -8778,4 +8559,4 @@ Every independently required decoration role has committed Scene or explicit syn
 
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8696; observations: 8799; errors: 0; warnings: 460.
+Findings: 8477; observations: 8580; errors: 0; warnings: 459.

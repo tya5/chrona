@@ -129,7 +129,8 @@ def test_actual_and_progress_project_completed_cut_contours(tmp_path, lanes, ope
     rendered = sr.render(tmp_path, _source(), presentation=parts, actual=actual)
     marks = [p for p in rendered.surface.primitives if p.source_ref == "across"
              and p.purpose in {"actual", "progress-fill"}]
-    assert {p.purpose for p in marks} == {"actual", "progress-fill"}
+    # A finished Actual draws no progress fill (#1869); an open one does, cut by the same window.
+    assert {p.purpose for p in marks} == ({"actual", "progress-fill"} if open_actual else {"actual"})
     assert all(p.kind == "Symbol" and p.paint_clip is not None for p in marks)
     x, y, w, h = next(slot.bounds for slot in rendered.surface.slots if slot.source == "timeline")
     assert all(x <= a <= x + w and y <= b <= y + h
