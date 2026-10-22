@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:common-v0.2"
+title: "Chrona Common Definitions v0.2"
+description: "Shared source additions; predecessor definitions remain frozen and registered."
+$defs:
+  tableColumnSource:
+    description: "A projected table source, including an explicit current-plan versus Snapshot finish delta."
+    examples: [title, {comparisonFacet: snapshotFinishDelta}]
+    oneOf:
+      - {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnSource"}
+      - description: "Current planned finish minus its supplied Snapshot counterpart's planned finish."
+        examples: [{comparisonFacet: snapshotFinishDelta}]
+        type: object
+        required: [comparisonFacet]
+        additionalProperties: false
+        properties:
+          comparisonFacet: {$ref: "urn:chrona:vocabulary-v0.2#/$defs/snapshotComparisonFacet"}

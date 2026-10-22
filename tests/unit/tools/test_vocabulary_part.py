@@ -162,7 +162,7 @@ def test_visual_profile_vocabulary_v02_is_registered_and_v01_remains_frozen():
     assert VISUAL_VOCABULARY in SCHEMA_PARTS
     entry = next(item for item in ENTRIES if item["file"] == VISUAL_VOCABULARY)
     assert entry["state"] == "live" and entry["kind"] == "schema-part-vocabulary"
-    assert set(_visual_defs()) == {"visualProfile"}
+    assert set(_visual_defs()) == {"pageSize", "snapshotComparisonFacet", "visualProfile"}
     assert schema_document(VISUAL_VOCABULARY)["$id"] == VISUAL_VOCABULARY_ID
     assert _defs()["visualProfile"]["enum"] == VISUAL_PROFILES[:-1]
     assert _visual_defs()["visualProfile"]["enum"] == VISUAL_PROFILES

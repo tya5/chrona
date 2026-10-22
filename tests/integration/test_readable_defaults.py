@@ -203,9 +203,9 @@ def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatc
     )
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
-    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg, expected_axis_warnings=(
-        "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:10:label-does-not-fit",
-        "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1"))
+    # The former endpoint thinning diagnostics belonged to padding-only
+    # buckets, which are now ineligible rather than failed label candidates.
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     columns = {item["text"] for item in primitives.values()
@@ -530,8 +530,8 @@ def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_i
 def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(tmp_path, monkeypatch) -> None:
     """#1724: the week owning 2026-12-28 straddles the 2026/2027 year-band cells and keeps its label.
 
-    Window-edge cells that cannot fit their own logical interval stay omitted; only
-    host overhang onto the abutting cell of the same band tier is admitted.
+    Padding-only endpoint buckets are filtered, while the retained week that
+    straddles both year cells remains visible with its bridge.
     """
     project = tmp_path / "two-year.yaml"
     project.write_text(yaml.safe_dump({
@@ -554,8 +554,9 @@ def test_default_axis_keeps_the_week_label_that_crosses_the_year_band_boundary(t
     first, second = primitives["axis-band-rect:0:0"]["bounds"], primitives["axis-band-rect:0:1"]["bounds"]
     assert label["inline"] < first["inline"] + first["inlineSize"] < label["inline"] + label["inlineSize"]
     assert label["inline"] + label["inlineSize"] <= second["inline"] + second["inlineSize"]
-    # No blank column between retained labels; only the clipped window-edge cells are omitted.
-    assert labels == list(range(1, 15))
+    # No blank column between eligible labels. The first bucket is padding-only;
+    # the last overlaps the selected envelope and remains an axis candidate.
+    assert labels == list(range(2, 15))
     # The cell gap between the two year cells must not strike through the label: a bridge in the
     # band's colour covers the gap over the label's block extent, painted above the cells and below the text.
     gap = (first["inline"] + first["inlineSize"], second["inline"])

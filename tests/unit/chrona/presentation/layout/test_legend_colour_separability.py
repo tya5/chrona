@@ -40,10 +40,10 @@ def test_solid_near_and_identical_completed_palettes_use_existing_delta_floor():
 
     failures = _palette_separation_failures(blue, almost_blue)
     assert tuple(vision for vision, _ in failures) == (
-        "normal", "protanopia", "deuteranopia", "tritanopia")
-    assert tuple(round(distance, 3) for _, distance in failures) == (0.127, 0.117, 0.15, 0.163)
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale")
+    assert tuple(round(distance, 3) for _, distance in failures) == (0.127, 0.117, 0.15, 0.163, 0.114)
     assert _palette_separation_failures(blue, blue) == tuple(
-        (vision, 0.0) for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
+        (vision, 0.0) for vision in ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"))
     assert _palette_separation_failures(blue, red) == ()
 
 
@@ -67,6 +67,15 @@ def test_stroke_is_used_only_when_figure_has_no_visible_fill():
     assert _figure_ink_colours(filled) == ("#AA3300",)
 
 
+def test_completed_stroke_only_figure_gets_grayscale_comparison():
+    black = _figure(_paint(None, "#000000", 1), modes=("stroke",))
+    near_black = _figure(_paint(None, "#080808", 1), modes=("stroke",))
+    failures = _palette_separation_failures(black, near_black)
+    assert "grayscale" in tuple(vision for vision, _ in failures)
+    expected = legend_diagnostics.delta_e_2000("#000000", "#080808", vision="grayscale")
+    assert dict(failures)["grayscale"] == expected
+
+
 def test_transparent_paint_does_not_contribute_ink():
     transparent = _figure(_paint(("solid", "#AA3300"), "#222222", 1, opacity=0))
     assert _figure_ink_colours(transparent) == ()
@@ -86,7 +95,26 @@ def test_below_floor_is_reported_once_per_vision_in_canonical_order():
     same = _figure(_paint(("solid", "#778899")))
     assert _palette_separation_failures(same, same) == (
         ("normal", 0.0), ("protanopia", 0.0),
-        ("deuteranopia", 0.0), ("tritanopia", 0.0))
+        ("deuteranopia", 0.0), ("tritanopia", 0.0), ("grayscale", 0.0))
+
+
+def test_equal_lightness_hues_warn_only_for_grayscale_with_raw_pair_provenance():
+    red, green = _entry("semantic:red", "RED"), _entry("semantic:green", "GREEN")
+    figures = {
+        red.source_identity: _figure(_paint(("solid", "#FF0000"))),
+        green.source_identity: _figure(_paint(("solid", "#008600"))),
+    }
+    failures = _palette_separation_failures(
+        figures[red.source_identity], figures[green.source_identity])
+    assert tuple(vision for vision, _ in failures) == ("grayscale",)
+    expected = legend_diagnostics.delta_e_2000("#FF0000", "#008600", vision="grayscale")
+    diagnostics, provenance = _colour_pair_diagnostics(((red, None), (green, None)), figures)
+    assert diagnostics == (f"W_LEGEND_COLOR_NOT_SEPARABLE:grayscale:{round(expected, 3)}",)
+    assert provenance == (DiagnosticProvenance(
+        diagnostics[0],
+        (DiagnosticSubject("legend-key:semantic:red", "RED (risk)"),
+         DiagnosticSubject("legend-key:semantic:green", "GREEN (risk)")),
+        ColorPairFinding("grayscale", expected)),)
 
 
 def _glyph_figure(shape, *, canonical=False, dash=(), width=1):
@@ -107,21 +135,21 @@ def test_canonical_wrapper_is_not_a_visual_difference_from_its_raw_parts():
     raw = _glyph_figure("diamond")
     canonical = _glyph_figure("diamond", canonical=True)
     assert legend_diagnostics._non_colour_figure(raw) == legend_diagnostics._non_colour_figure(canonical)
-    assert len(_palette_separation_failures(raw, canonical)) == 4
+    assert len(_palette_separation_failures(raw, canonical)) == 5
 
 
 def test_dash_pattern_is_a_distinction_but_equal_patterns_still_check_colour():
     solid = _glyph_figure("diamond")
     dashed = _glyph_figure("diamond", dash=(5, 3))
     assert _palette_separation_failures(solid, dashed) == ()
-    assert len(_palette_separation_failures(dashed, dashed)) == 4
+    assert len(_palette_separation_failures(dashed, dashed)) == 5
 
 
 def test_completed_stroke_width_is_a_distinction_but_equal_width_still_checks_colour():
     thin = _glyph_figure("diamond", width=1)
     thick = _glyph_figure("diamond", width=2)
     assert _palette_separation_failures(thin, thick) == ()
-    assert len(_palette_separation_failures(thick, thick)) == 4
+    assert len(_palette_separation_failures(thick, thick)) == 5
 
 
 def test_completed_catalogue_pattern_structure_is_a_distinction():
@@ -129,12 +157,12 @@ def test_completed_catalogue_pattern_structure_is_a_distinction():
     geometry, paints, _patterns = solid[0]
     patterned = ((geometry, paints, (("catalog", 8, 8, 45, 5000, ("tile-path",)),)),)
     assert _palette_separation_failures(solid, patterned) == ()
-    assert len(_palette_separation_failures(patterned, patterned)) == 4
+    assert len(_palette_separation_failures(patterned, patterned)) == 5
 
 
 def test_missing_geometry_cannot_exempt_an_identical_colour_pair():
     unknown = _figure(_paint(None, "#000000", 1))
-    assert len(_palette_separation_failures(unknown, _glyph_figure("diamond"))) == 4
+    assert len(_palette_separation_failures(unknown, _glyph_figure("diamond"))) == 5
 
 
 def _entry(source, label):
@@ -154,10 +182,10 @@ def test_encoded_key_is_compared_with_a_distinct_semantic_legend_meaning():
     assert diagnostics == tuple(
         f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:{distance}"
         for vision, distance in (("normal", 0.127), ("protanopia", 0.117),
-                                 ("deuteranopia", 0.15), ("tritanopia", 0.163)))
+                                 ("deuteranopia", 0.15), ("tritanopia", 0.163), ("grayscale", 0.114)))
     assert tuple(item.color_pair.vision for item in provenance) == (
-        "normal", "protanopia", "deuteranopia", "tritanopia")
-    assert tuple(round(item.color_pair.delta_e, 3) for item in provenance) == (0.127, 0.117, 0.15, 0.163)
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale")
+    assert tuple(round(item.color_pair.delta_e, 3) for item in provenance) == (0.127, 0.117, 0.15, 0.163, 0.114)
     assert all(item.subjects == (
         DiagnosticSubject("legend-key:scale:risk:high", "HIGH (risk)"),
         DiagnosticSubject("legend-key:semantic:progress", "PROGRESS (risk)"),
@@ -169,7 +197,7 @@ def test_distinct_encoded_scales_are_compared_but_one_scale_domain_pair_is_skipp
     gate = _entry("gate:gate", "GATE")
     figures = {entry.source_identity: _figure(_paint(("solid", "#0000FF"))) for entry in (high, gate)}
 
-    all_modes = ("normal", "protanopia", "deuteranopia", "tritanopia")
+    all_modes = ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale")
     assert _colour_pair_diagnostics(((high, "risk"), (gate, "gate")), figures)[0] == tuple(
         f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:0.0" for vision in all_modes)
     covered_findings = tuple(ScaleCollision("risk", "high", "gate", vision, 0.0)
@@ -190,14 +218,14 @@ def test_sharing_scale_does_not_suppress_same_value_or_uncovered_delta():
     same_value = SurfaceLegendEntry("risk:high-alt", "HIGH (alternate)", view_scale_id="risk",
                                     view_scale_domain_value="high")
     facts = tuple(ScaleCollision("risk", "high", "gate", vision, 0.0)
-                  for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
+                  for vision in ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"))
     gate = SurfaceLegendEntry("gate:gate", "GATE", view_scale_id="risk",
                               view_scale_domain_value="gate", scale_collisions=facts)
     figures = {entry.source_identity: blue for entry in (high, same_value, gate)}
 
     assert _colour_pair_diagnostics(((high, "risk"), (same_value, "risk")), figures)[0] == tuple(
         f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:0.0"
-        for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
+        for vision in ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"))
     assert _colour_pair_diagnostics(((high, "risk"), (gate, "risk")), figures) == ((), ())
 
     wrong_delta = (ScaleCollision("risk", "high", "gate", "normal", 0.001),)
@@ -206,7 +234,7 @@ def test_sharing_scale_does_not_suppress_same_value_or_uncovered_delta():
     assert _colour_pair_diagnostics(((high, "risk"), (uncovered, "risk")),
                                     {high.source_identity: blue, uncovered.source_identity: blue})[0] == tuple(
         f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:0.0"
-        for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
+        for vision in ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"))
 
 
 def test_unencoded_pairs_are_checked_but_missing_or_empty_figures_are_not():
@@ -216,8 +244,8 @@ def test_unencoded_pairs_are_checked_but_missing_or_empty_figures_are_not():
     diagnostics, provenance = _colour_pair_diagnostics(((first, None), (second, None)),
                                                        {"first": blue, "second": blue})
     assert diagnostics == tuple(f"W_LEGEND_COLOR_NOT_SEPARABLE:{vision}:0.0"
-                                for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
-    assert len(provenance) == 4
+                                for vision in ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"))
+    assert len(provenance) == 5
     assert _colour_pair_diagnostics(((first, "scale"), (second, None)), {}) == ((), ())
     assert _colour_pair_diagnostics((), {"first": blue}) == ((), ())
 

@@ -6,6 +6,7 @@ from tests.integration.test_realized_legends import (
     ACTUAL, _detail, _parts, _render, _render_with_style, _source, _svg_fills,
 )
 from tests.support import synthetic_review as sr
+from chrona.presentation.model.color_separability import delta_e_2000
 
 
 def _encoded_parts(slots=None):
@@ -34,8 +35,10 @@ def test_realized_explicit_slot_warns_against_semantic_key_with_both_names_and_s
                and any(subject["title"].startswith("On track")
                        for subject in item.payload.get("sourceSubjects", ()))]
     assert {record.payload["vision"] for record in records} == {
-        "normal", "protanopia", "deuteranopia", "tritanopia",
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale",
     }, [record.payload for record in records]
+    grayscale = next(record.payload for record in records if record.payload["vision"] == "grayscale")
+    assert grayscale["deltaE"] == delta_e_2000("#269D78", "#269D79", vision="grayscale")
     root = ElementTree.fromstring(rendered.artifact.content)
     svg = {node.attrib["data-scene-id"]: node for node in root.iter()
            if "data-scene-id" in node.attrib}
@@ -95,8 +98,11 @@ def test_same_scale_explicit_slots_keep_the_domain_warning_without_a_duplicate_l
     }
     assert all(item["scaleId"] == "risk" and item["values"] == ["a", "b"]
                and item["deltaE"] < 5 and "a and b" in item["message"] for item in records)
-    assert not any(item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"
-                   for item in rendered.warning_records)
+    legend_records = [item.payload for item in rendered.warning_records
+                      if item.payload["code"] == "W_LEGEND_COLOR_NOT_SEPARABLE"]
+    assert {item["vision"] for item in legend_records} == {"grayscale"}
+    assert all(item["deltaE"] == delta_e_2000("#0000FF", "#0000FE", vision="grayscale")
+               for item in legend_records)
 
 
 def test_same_scale_same_value_distinct_style_scopes_warn_with_both_completed_keys(tmp_path):
@@ -140,7 +146,7 @@ def test_same_scale_same_value_distinct_style_scopes_warn_with_both_completed_ke
 
     matching = [item for item in records if has_two_scopes(item)]
     assert {item.payload["vision"] for item in matching} == {
-        "normal", "protanopia", "deuteranopia", "tritanopia",
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale",
     }, [
         [subject["title"] for subject in item.payload["sourceSubjects"]] for item in records
     ]
@@ -153,6 +159,8 @@ def test_same_scale_same_value_distinct_style_scopes_warn_with_both_completed_ke
         }
         assert len({subject["sourceRef"] for subject in subjects}) == 2
         assert all("legend-key:scale:style:" in subject["sourceRef"] for subject in subjects)
+    grayscale = next(item.payload for item in matching if item.payload["vision"] == "grayscale")
+    assert grayscale["deltaE"] == delta_e_2000("#269D78", "#269D78", vision="grayscale")
     assert not any(item.payload["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"
                    for item in rendered.warning_records)
 

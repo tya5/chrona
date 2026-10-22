@@ -198,6 +198,8 @@ class ReviewItem:
     new_vs_baseline: bool = False
     # The localized ``marker.baselineNew`` text a new object shows in its empty Δ (#1781).
     new_marker: str = NEW_MARKER
+    # Snapshot/current planned finish comparison, independent of Actual and forecast delta.
+    snapshot_finish_delta: int | None = None
     # True when a role-bound field grouping sent this item to the `missing` group because it carries no value of the
     # role's field and nothing it is attached to supplies one (#1870 row 4). The group is then ordered last.
     group_unassigned: bool = False
@@ -365,6 +367,9 @@ class ReviewProjection:
     # Comparison sources resolved by Render Context closure, independent of selected table rows.
     bound_comparison_sources: frozenset[str] = frozenset()
     window_outside: str = "keep"
+    # Optional selected half-open temporal envelope before derived-window padding.
+    # Explicit/relative windows and projections without this proof leave it unknown.
+    unpadded_window: tuple[date, date] | None = None
 
     @property
     def has_rows(self) -> bool:
@@ -569,6 +574,12 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         date_basis = ItemDateBasis.from_project(project, object_id)
         finish_delta = _finish_delta(planned, actual, as_of, basis=date_basis,
                                      delta_unit=view.comparison.delta_unit or "calendar-days")
+        snapshot_placement = (snapshot_placements.get(object_id)
+                              if snapshot_project is not None and snapshot_placements is not None
+                              and object_id in snapshot_project.get("objects", {}) else None)
+        snapshot_finish_delta = _snapshot_finish_delta(
+            planned, snapshot_placement, basis=date_basis,
+            delta_unit=view.comparison.delta_unit or "calendar-days")
         float_value = active_analysis.total_float.get(object_id) if active_analysis is not None else None
         total_float = float_value.value if float_value is not None else None
         critical = object_id in active_analysis.critical if active_analysis is not None else False
@@ -606,7 +617,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             new_vs_baseline=(snapshot_project is not None and snapshot_placements is not None
                              and object_id not in snapshot_placements),
             new_marker=resolver.text("marker.baselineNew"), group_unassigned=unassigned,
-            object_type=project_type))
+            snapshot_finish_delta=snapshot_finish_delta, object_type=project_type))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if forecast is not None:
@@ -681,6 +692,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         lanes_by_id = {lane.lane_id: lane for lane in lane_membership.lanes}
         lane_membership = replace(lane_membership,
                                   lanes=tuple(lanes_by_id[row.lane_id] for row in lane_rows))
+    unpadded_window = None
     if view.window.mode == "relative":
         if view.window.before is None and view.window.after is None:
             raise ValueError("E_REVIEW_WINDOW: relative window requires before or after at /body/window")
@@ -701,22 +713,53 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if start >= end:
             raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
     else:
-        dates = [v for row in rows for item in row.items for v in active_placement(item).values()]
-        dates += [v for point in folded_points for v in active_placement(point.item).values()]
+        envelopes: list[tuple[date, date]] = []
+        selected_dates = [item for row in rows for item in row.items]
+        selected_dates.extend(point.item for point in folded_points)
+        for item in selected_dates:
+            placement = active_placement(item)
+            if item.source_type == "point":
+                point_date = placement["at"]
+                try:
+                    envelopes.append((point_date, point_date + timedelta(days=1)))
+                except OverflowError as error:
+                    raise ViewWindowError(
+                        "E_REVIEW_WINDOW",
+                        f"Point date {point_date} for selected object {item.object_id!r} has no following Date day in the Date domain",
+                    ) from error
+            else:
+                envelopes.append((placement["start"], placement["end"]))
         if view.window.mode == "selected-comparison":
-            dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
-        start, end = min(dates), max(dates)
+            for item in selected_dates:
+                actual = item.actual or {}
+                if "at" in actual and isinstance(actual["at"], date):
+                    point_date = actual["at"]
+                    try:
+                        envelopes.append((point_date, point_date + timedelta(days=1)))
+                    except OverflowError as error:
+                        raise ViewWindowError(
+                            "E_REVIEW_WINDOW",
+                            f"Actual point date {point_date} for selected object {item.object_id!r} has no following Date day in the Date domain",
+                        ) from error
+                else:
+                    actual_dates = [value for value in actual.values() if isinstance(value, date)]
+                    if actual_dates:
+                        envelopes.append((min(actual_dates), max(actual_dates)))
+        start = min(bounds[0] for bounds in envelopes)
+        end = max(bounds[1] for bounds in envelopes)
+        unpadded_window = (start, end)
         margin = view.window.margin_days
-        if view.window.mode == "selected-planned":
-            # View owns temporal breathing room; schedules remain half-open facts.
-            margin = max(margin, ((end - start).days + 9) // 10, 1)
+        if margin is None:
+            # Omitted policy: planned content receives proportional breathing room;
+            # comparison content remains exactly at its completed envelope.
+            margin = max(((end - start).days + 9) // 10, 1) if view.window.mode == "selected-planned" else 0
     try:
         window = (date.fromordinal(start.toordinal() - margin),
                   date.fromordinal(end.toordinal() + margin))
     except ValueError as error:
         ids = tuple(item.object_id for item in selected)
-        raise ValueError(f"E_REVIEW_WINDOW: cannot pad selected dates {start}..{end} "
-                         f"by {margin} days within the Date domain; selected objects={ids!r}") from error
+        raise ViewWindowError("E_REVIEW_WINDOW", f"cannot pad selected dates {start}..{end} "
+                              f"by {margin} days within the Date domain; selected objects={ids!r}") from error
     return ReviewProjection(tuple(selected),
         window,
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
@@ -734,7 +777,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         rows_resolved=True, group_order=group_order,
         bound_comparison_sources=frozenset(
             ("snapshot",) if snapshot_project is not None else ()
-        ) | (frozenset({"scenario"}) if scenarios else frozenset()))
+        ) | (frozenset({"scenario"}) if scenarios else frozenset()),
+        unpadded_window=unpadded_window)
 
 
 def _group_order(selected: list[ReviewItem], rows: tuple[ReviewRowProjection, ...]) -> tuple[str, ...]:
@@ -1003,6 +1047,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             intent = spec.presentation if spec.presentation is not None else row.presentation
             members.append(replace(base, item_id=item_id, source_kind=kind, track=track, scenario_id=spec.scenario_id,
                                    forecast=base.forecast if kind == "primary" else None,
+                                   snapshot_finish_delta=(base.snapshot_finish_delta if kind == "primary" else None),
                                    presentation=dict(intent) if intent is not None else None))
         subject = row.table_subject or (members[0].item_id if members else "")
         if subject not in member_ids:
@@ -1274,6 +1319,18 @@ def _finish_delta(planned: dict[str, date], actual: dict[str, date | float] | No
                   delta_unit: str = "calendar-days") -> int | None:
     """The canonical known finish variance, including a started open Actual at as-of."""
     return finish_variance(planned, actual, as_of, basis=basis, delta_unit=delta_unit)
+
+
+def _snapshot_finish_delta(planned: Mapping[str, Any], snapshot: Mapping[str, Any] | None, *,
+                           basis: ItemDateBasis, delta_unit: str) -> int | None:
+    """Current planned finish minus a matching Snapshot finish, with no Actual/forecast policy."""
+    if snapshot is None:
+        return None
+    endpoint = "at" if "at" in planned else "end"
+    current_finish, snapshot_finish = planned.get(endpoint), snapshot.get(endpoint)
+    if not isinstance(current_finish, date) or not isinstance(snapshot_finish, date):
+        return None
+    return endpoint_distance(snapshot_finish, current_finish, basis, delta_unit)
 
 
 def _order(rows: list[ReviewItem], view: ViewInput, project: Mapping[str, Any]) -> None:

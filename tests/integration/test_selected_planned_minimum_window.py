@@ -1,7 +1,7 @@
 """Selected-planned windows keep sparse schedules and their labels inside the plot."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from dataclasses import replace
 from importlib import import_module
 from pathlib import Path
@@ -106,3 +106,28 @@ def test_degenerate_completed_projection_keeps_owner_detail_in_public_diagnostic
     assert "gate" in diagnostic["message"]
     assert "positive Date window" in diagnostic["message"]
     assert "no further detail" not in diagnostic["message"]
+
+
+@pytest.mark.parametrize("profile_margin,view_margin,expected", [(0, None, 0), (2, None, 2), (7, 0, 0)])
+def test_quarter_boundary_uses_declared_profile_padding_without_hidden_floor(tmp_path, profile_margin, view_margin, expected):
+    parts = sr.bundle("executive-light")
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["view"]["body"]["window"] = {"mode": "selected-planned"}
+    if view_margin is not None:
+        parts["view"]["body"]["window"]["marginDays"] = view_margin
+    parts["layout"].setdefault("viewDefaults", {})["window"] = {"marginDays": profile_margin}
+    parts["view"]["body"]["axis"] = {"tiers": [
+        {"unit": "quarter", "every": 1, "role": "labels",
+         "label": {"form": "year-quarter", "align": "center", "overflow": "visible-overflow", "orientation": "horizontal"}}]}
+    start, end = date(2026, 10, 1), date(2026, 11, 12)
+    rendered = sr.render(tmp_path, sr.project({"work": sr.span("work", start, (end-start).days)}), presentation=parts)
+    scale = rendered.surface.scale_manifest
+    assert scale.domain_start == start - timedelta(days=expected)
+    assert scale.domain_end == end + timedelta(days=expected)
+    marks = tuple(item for item in rendered.surface.primitives if item.source_ref == "work" and item.purpose == "planned")
+    assert marks
+    svg = rendered.artifact.content.decode()
+    assert all(f'data-scene-id="{item.scene_id}"' in svg for item in marks)
+    if expected == 0:
+        assert not any("Q3" in item.text for item in rendered.surface.primitives
+                       if item.scene_id.startswith("axis-label:"))

@@ -737,6 +737,7 @@ class SurfaceLayoutRequest:
     # Optional source-bound mask for geometry rows under View outside: omit.
     row_admission: Any | None = None
     scene_precision: int = 3
+    page_size: str | None = None
 
 
 @dataclass(frozen=True)

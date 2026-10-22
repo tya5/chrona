@@ -298,7 +298,9 @@ def _palette_separation_failures(first_figure, second_figure):
     if not first or not second:
         return ()
     failures = []
-    for vision in CHECKED_VISIONS:
+    # Grayscale belongs to completed-figure comparisons, not to the
+    # scale-domain policy represented by CHECKED_VISIONS.
+    for vision in (*CHECKED_VISIONS, "grayscale"):
         distance = min(delta_e_2000(left, right, vision=vision)
                        for left in first for right in second)
         if distance < MINIMUM_CATEGORY_DELTA_E:

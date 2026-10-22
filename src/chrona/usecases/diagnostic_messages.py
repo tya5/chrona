@@ -315,8 +315,11 @@ def _describe_warning(payload: Mapping[str, object]) -> WarningText:
             contributor_text = ", ".join(subjects) if subjects else "no slot detail"
             if isinstance(contributor_count, int) and contributor_count > len(subjects):
                 contributor_text += f", and {contributor_count - len(subjects)} more"
+            page_size = payload.get("pageSize")
+            configured = (f" (configured page default {page_size})"
+                          if isinstance(page_size, str) and page_size else "")
             subject = (f"surface {payload.get('surfaceId')} at {payload.get('sourceRef')}: "
-                       f"declared {declared_size}, actual {actual_extent}; contributors: {contributor_text}")
+                       f"declared {declared_size}{configured}, actual {actual_extent}; contributors: {contributor_text}")
             return WarningText(_FIT_CAUSES[code], subject)
         cause = f"{_FIT_CAUSES[code]} ({payload.get('failureKind')}, {payload.get('behaviour')})"
         needs = f"needs {_number(payload.get('requiredInline'))}x{_number(payload.get('requiredBlock'))}"
