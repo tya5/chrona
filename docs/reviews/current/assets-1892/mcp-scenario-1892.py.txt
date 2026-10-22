@@ -1,0 +1,108 @@
+"""MCP-only transcript for #1892: every step is a call_tool call (row 4 reads the served resource)."""
+import copy, json, sys, tempfile, re
+from pathlib import Path
+from chrona.app.agent_tools import call_tool
+from chrona.app.agent_workspace import WorkspaceScope
+from chrona.app import mcp_server
+
+root = Path(tempfile.mkdtemp(prefix="mcp1892-"))
+n = 0
+def call(name, args, write=True):
+    global n; n += 1
+    r = call_tool(WorkspaceScope(root), name, copy.deepcopy(args), allow_write=write)
+    s = json.loads(json.dumps(r.structured))
+    print(f"\n[{n}] call_tool {name} {json.dumps(args)[:600]}")
+    print("    ->", json.dumps(s, ensure_ascii=False)[:1400])
+    return s, r
+def check(label, cond):
+    print(f"    CHECK {label}: {'PASS' if cond else 'FAIL'}")
+    if not cond: sys.exit(1)
+
+def cmd(cid, typ, rev, payload):
+    return {"version": "chrona/project-command/v0.1", "commandId": cid, "type": typ,
+            "target": {"kind": "project", "path": "project.yaml"}, "baseRevision": rev, "payload": payload}
+
+print("=== A. File route: create_project -> apply_project_command -> save_baseline -> inverse revert ===")
+project = {"version": "timeline/v0.7", "project": {"id": "launch", "title": "Launch"},
+  "calendars": {"mon-fri": {"id": "mon-fri", "weekdays": ["mon","tue","wed","thu","fri"]}} if False else {},
+  "objects": {"design": {"type": "task", "title": "Design", "schedule": {"mode": "fixed-span", "start": "2026-11-02", "end": "2026-11-06"}},
+              "build": {"type": "task", "title": "Build", "schedule": {"mode": "scheduled", "amount": "5d"}}},
+  "relations": [{"type": "dependency", "from": {"object": "design", "endpoint": "end"}, "to": {"object": "build", "endpoint": "start"}}]}
+project.pop("calendars")
+s, _ = call("create_project", {"file": "project.yaml", "project": project})
+check("created", s["status"] == "ok"); rev0 = s["projectRevision"]
+before = (root / "project.yaml").read_bytes()
+s, _ = call("save_baseline", {"project": "project.yaml", "name": "week-1"})
+check("baseline saved, bytes copied", s["status"] == "ok" and (root / "baselines/week-1.yaml").read_bytes() == before)
+s, _ = call("apply_project_command", {"project": "project.yaml", "command": cmd("slip-design", "setObject", rev0,
+    {"id": "design", "object": {"type": "task", "title": "Design", "schedule": {"mode": "fixed-span", "start": "2026-11-09", "end": "2026-11-20"}}})})
+res = s["projectResult"]; check("edit accepted with inverse", res["status"] == "accepted" and "inverse" in res)
+check("file changed", (root / "project.yaml").read_bytes() != before)
+s, r = call("render_draft", {"project": "project.yaml", "preset": "target-b", "inline": "svg", "snapshot": "baselines/week-1.yaml"})
+svg = next(a.data for a in r.attachments if a.kind == "svg").decode()
+check("render_draft with the saved baseline status ok", s["status"] == "ok")
+s, _ = call("apply_project_command", {"project": "project.yaml", "command": res["inverse"]})
+check("inverse accepted", s["projectResult"]["status"] == "accepted")
+check("file byte-identical after revert", (root / "project.yaml").read_bytes() == before)
+s2, _ = call("apply_project_command", {"project": "project.yaml", "command": cmd("slip-design", "setObject", rev0,
+    {"id": "design", "object": {"type": "task", "title": "Design", "schedule": {"mode": "fixed-span", "start": "2026-11-09", "end": "2026-11-20"}}})})
+print("    (row 3, same commandId resent after the revert)")
+
+print("\n=== B. Store route: create_store -> publish_resource -> captureSnapshot -> intake -> revertActualCommand ===")
+s, _ = call("create_store", {}); check("store created", s["status"] == "ok")
+s, _ = call("publish_resource", {"kind": "project", "path": "project.yaml"}); pref = s["reference"]; check("project published", s["status"] == "ok")
+ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "actuals", "body": {"observations": []}}
+BATCH = {"version": "chrona/actual-intake-batch/v0.2", "kind": "actual-intake-batch", "id": "week-1",
+         "body": {"source": {"system": "tracker", "contentIdentity": "sha256:" + "a" * 64},
+                  "records": [{"externalKey": "42", "projectObjectId": "design", "actual": {"finish": "2026-11-07"}}]}}
+s, _ = call("publish_resource", {"kind": "actual-set", "document": ACTUAL}); aref = s["reference"]
+s, _ = call("publish_resource", {"kind": "actual-intake-batch", "document": BATCH}); bref = s["reference"]
+def scmd(cid, typ, tgt, payload):
+    return {"version": "chrona/command/v0.4", "commandId": cid, "type": typ, "target": tgt, "baseRevision": tgt["revision"]["token"],
+            "expectedContentIdentity": tgt["contentIdentity"], "payload": payload}
+cap = scmd("snap-1", "captureSnapshot", pref, {"snapshotId": "baseline-1", "registry": {"provider": "local", "identity": "workspace"}})
+s, _ = call("check_command", {"command": cap}); check("captureSnapshot checks ok", s["status"] == "ok")
+s, _ = call("apply_command", {"command": cap}); check("captureSnapshot applied", s["status"] == "ok")
+s, _ = call("apply_command", {"command": scmd("intake-1", "applyActualIntakeBatch", aref, {"batch": bref, "project": pref})})
+check("intake applied", s["status"] == "ok"); after = s["automationResult"]["resultTarget"]
+s, _ = call("apply_command", {"command": scmd("undo-1", "revertActualCommand", after, {"commandId": "intake-1"})})
+check("revertActualCommand applied", s["status"] == "ok")
+
+print("\n=== C. Row 6: validate_project by kind ===")
+(root / "x").mkdir(exist_ok=True)
+import yaml
+(root / "actual.yaml").write_text(yaml.safe_dump(ACTUAL, sort_keys=False)); (root / "batch.yaml").write_text(yaml.safe_dump(BATCH, sort_keys=False))
+s, _ = call("validate_project", {"project": "actual.yaml"}); check("actual-set validated by kind", s["status"] == "ok")
+s, _ = call("validate_project", {"project": "batch.yaml"}); print("    (intake batch over validate_project)")
+(root / "unknown.yaml").write_text("version: chrona/nothing/v0.1\nkind: nothing\n")
+s, _ = call("validate_project", {"project": "unknown.yaml"})
+
+print("\n=== D. Row 5: rejection pointers ===")
+s, _ = call("apply_project_command", {"project": "project.yaml", "command": {"version": "chrona/project-command/v0.1", "commandId": "bad", "type": "setObject",
+    "target": {"kind": "project", "path": "project.yaml"}, "baseRevision": "x", "payload": {"id": "a", "object": {"type": "task", "constraints": {}}}}})
+check("rejected status result, no protocol error", s["status"] in ("rejected", "failed") or "diagnostics" in s)
+
+s, _ = call("check_command", {"command": {"version": "chrona/command/v0.4", "commandId": "x", "type": "captureSnapshot", "payload": {}}})
+check("check_command invalid input is a status result", s["status"] in ("rejected", "failed") and s["diagnostics"][0]["sourceRef"] not in ("", None))
+print("\n=== E. Row 4: served diagnostics guide ===")
+guides = mcp_server._guides()
+text = guides["chrona://guide/diagnostics"][2]
+for code in ("E_AUTHORING_COMMAND_ID_REUSE", "E_BASELINE_FILE_EXISTS", "E_STORE_RESOURCE_EXISTS", "E_MCP_INPUT_INVALID"):
+    print(f"    {code} in chrona://guide/diagnostics: {code in text}")
+print("    resources:", sorted(guides))
+
+print("\n=== F. Guided workspace route ===")
+s, _ = call("create_workspace", {"directory": "ws", "preset": "target-b", "project": {"id": "p", "tasks": [{"id": "one", "title": "One", "planned": {"start": "2026-11-02", "finish": "2026-11-06"}}]}})
+print("    files:", sorted(p.relative_to(root).as_posix() for p in (root / "ws").rglob("*") if p.is_file())[:12])
+s, _ = call("save_baseline", {"project": "ws/workspace.yaml", "name": "w1"})
+rev = json.loads(json.dumps(call_tool(WorkspaceScope(root), "workspace_revision", {"workspace": "ws/workspace.yaml"}).structured))
+print("    workspace_revision ->", rev)
+base = rev.get("workspaceRevision")
+def wcmd(cid, typ, payload, b):
+    return {"version": "chrona/authoring-command/v0.1", "commandId": cid, "type": typ, "target": {"kind": "authoring-workspace", "path": "workspace.yaml"}, "baseRevision": b, "payload": payload}
+s, _ = call("apply_authoring_command", {"workspace": "ws/workspace.yaml", "command": wcmd("w-edit", "setWorkspaceTask", {"task": {"id": "one", "title": "One", "planned": {"start": "2026-11-09", "finish": "2026-11-13"}}}, base)})
+print("    (workspace route: the accepted result carries no inverse member:", "inverse" not in json.dumps(s), ")")
+cur = s["authoringResult"]["resultRevision"]
+s, _ = call("apply_authoring_command", {"workspace": "ws/workspace.yaml", "command": wcmd("w-open", "setWorkspaceActual", {"actual": {"taskId": "one", "actual": {"start": "2026-11-02"}}}, cur)})
+s, _ = call("apply_authoring_command", {"workspace": "ws/workspace.yaml", "command": wcmd("w-ovr", "setPresentationOverride", {"overrides": {"bogus": 1}}, cur)})
+s, _ = call("render_workspace", {"workspace": "ws/workspace.yaml", "inline": "none"}) if False else (None, None)
