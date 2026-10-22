@@ -731,6 +731,8 @@ def _member_neighborhood(cursor: MemberNameSearchCursor, side: str,
             initial_count=initial_count, limit=512):
         cursor._neighborhood_counts[budget_key] = count
         yield candidate_side, rect, count, final_rung, False
+
+
 @dataclass(frozen=True)
 class LabelRequest:
     """One semantic plot-text request awaiting deterministic Layout placement."""

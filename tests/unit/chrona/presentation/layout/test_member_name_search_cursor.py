@@ -97,4 +97,3 @@ def test_start_neighborhood_does_not_inherit_end_reach_limit():
     assert candidate.placement.side == "start"
     assert candidate.placement.bounds.x == 10
     assert candidate.placement.search_count == 11
-
