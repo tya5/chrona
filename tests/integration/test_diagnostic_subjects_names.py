@@ -166,19 +166,22 @@ def test_a_real_render_names_the_note_whose_declared_leader_candidate_fell_back(
     }]
     view_path = tmp_path / "notes-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
-    # Force only the leader connector search to fail; the following declared
-    # card candidate still goes through the real Layout placement and safety.
+    # A failed clear-route search keeps the declared full card and leader,
+    # rather than advancing to the following connector-free card candidate.
     monkeypatch.setattr(surface_annotations, "route_annotation_candidate", lambda *args, **kwargs: None)
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(plan), "--preset", "target-b",
                                       "--view", str(view_path), "--output", str(tmp_path / "out.svg")])
     main()
     warnings = json.loads(capsys.readouterr().out)["warnings"]
-    rows = [item for item in warnings if item["code"] == "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK"
-            and "vendor-note:card" in item["diagnostic"]]
+    rows = [item for item in warnings if item["code"] == "W_LAYOUT_ANNOTATION_LEADER_FALLBACK"]
     assert len(rows) == 1, warnings
     assert rows[0]["sourceRef"] == "/objects/build"
     assert rows[0]["sourceTitle"] == "Build"
-    assert "'Build'" in rows[0]["message"] and "vendor-note:card" in rows[0]["message"]
+    detail = json.loads(rows[0]["diagnostic"].split(":", 1)[1])
+    assert detail["annotationId"] == "vendor-note"
+    assert detail["candidateId"] == "leader-first"
+    assert "'Build'" in rows[0]["message"] and "keeps its declared leader" in rows[0]["message"]
     svg = (tmp_path / "out.svg").read_text(encoding="utf-8")
     assert 'data-scene-id="annotation-box:vendor-note"' in svg
     assert 'data-scene-id="annotation-text:vendor-note"' in svg
+    assert 'data-scene-id="annotation-leader:vendor-note"' in svg
