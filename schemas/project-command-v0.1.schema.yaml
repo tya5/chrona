@@ -8,7 +8,7 @@ additionalProperties: false
 properties:
   version: {description: "This project-command contract version.", const: chrona/project-command/v0.1}
   commandId: {description: "Stable identifier for this command; resending the same id with the same request replays the first result.", type: string, minLength: 1}
-  type: {description: "Operation to apply to the Project: setObject, setRelation, setCalendar, setEntity and setFieldRole upsert one member; removeObject, removeRelation and removeCalendar delete one.", enum: [setObject, removeObject, setRelation, removeRelation, setCalendar, removeCalendar, setEntity, setFieldRole]}
+  type: {description: "Operation to apply to the Project: setObject, setRelation, setCalendar, setEntity, setFieldRole and setAnnotation upsert one member, setProjectMeta edits the project header; removeObject, removeRelation, removeCalendar, removeEntity, removeFieldRole and removeAnnotation delete one.", enum: [setObject, removeObject, setRelation, removeRelation, setCalendar, removeCalendar, setEntity, setFieldRole, setAnnotation, removeAnnotation, setProjectMeta, removeEntity, removeFieldRole]}
   target:
     type: object
     description: "Project file selected by the command."
@@ -112,3 +112,60 @@ allOf:
           properties:
             role: {description: "The semantic role: responsible or phase.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
             binding: {description: "Object field name bound to the role.", type: string, minLength: 1, pattern: '\S'}
+  - description: "setAnnotation carries the annotation id and one complete Project annotation (kind, text, anchor.object); the anchor must name an existing object."
+    examples: [{}]
+    if: {properties: {type: {const: setAnnotation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, annotation]
+          additionalProperties: false
+          properties:
+            id: {description: "Annotation identifier: the key under annotations. An existing id is replaced.", type: string, minLength: 1}
+            annotation: {description: "The complete Project annotation that replaces or adds annotations.<id>: {kind, text, anchor:{object}}.", type: object}
+  - description: "removeAnnotation carries only the annotation id."
+    examples: [{}]
+    if: {properties: {type: {const: removeAnnotation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the annotation to remove.", type: string, minLength: 1}
+  - description: "setProjectMeta edits the project header: a given title or calendar replaces the current one, null removes it; the Project id cannot change."
+    examples: [{}]
+    if: {properties: {type: {const: setProjectMeta}}}
+    then:
+      properties:
+        payload:
+          type: object
+          minProperties: 1
+          additionalProperties: false
+          properties:
+            title: {description: "New Project title; null removes the title.", type: [string, "null"]}
+            calendar: {description: "New default calendar identifier (it must exist under calendars); null removes the default.", type: [string, "null"]}
+  - description: "removeEntity carries only the entity id; an entity that an object or another entity still names in a field is refused."
+    examples: [{}]
+    if: {properties: {type: {const: removeEntity}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the entity to remove.", type: string, minLength: 1}
+  - description: "removeFieldRole carries only the role; the field it was bound to is left on the objects."
+    examples: [{}]
+    if: {properties: {type: {const: removeFieldRole}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [role]
+          additionalProperties: false
+          properties:
+            role: {description: "The semantic role to unbind: responsible or phase.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}

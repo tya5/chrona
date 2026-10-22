@@ -115,6 +115,7 @@ def verify_project_receipt(
 _MAPPING_MEMBERS = {
     "setObject": ("objects", "object"), "setCalendar": ("calendars", "calendar"),
     "setEntity": ("entities", "entity"), "setFieldRole": ("fieldRoles", "binding"),
+    "setAnnotation": ("annotations", "annotation"),
 }
 """Command type -> (Project member it upserts into, payload key that holds the value)."""
 
@@ -127,6 +128,24 @@ def _key(command: dict[str, Any]) -> str:
 def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, list[str]] | None:
     """Edit ``candidate`` in place; return ``(code, details)`` when the command itself is refused."""
     payload, command_type = command["payload"], command["type"]
+    if command_type == "setAnnotation":
+        annotation = payload["annotation"]
+        anchor = annotation.get("anchor") if isinstance(annotation, dict) else None
+        anchored = anchor.get("object") if isinstance(anchor, dict) else None
+        objects = candidate.get("objects")
+        if isinstance(anchored, str) and not (isinstance(objects, dict) and anchored in objects):
+            return "E_PROJECT_OBJECT_MISSING", [f"/payload/annotation/anchor/object: the Project has no object {anchored!r}"
+                                                + _known(objects, "its objects include")]
+    if command_type == "setProjectMeta":
+        meta = candidate.get("project")
+        if not isinstance(meta, dict):
+            return "E_PROJECT_COMMAND", ["/payload: the Project's project member is not a mapping; fix the file first"]
+        for name, value in payload.items():
+            if value is None:
+                meta.pop(name, None)
+            else:
+                meta[name] = value
+        return None
     if command_type in _MAPPING_MEMBERS:
         member, value_key = _MAPPING_MEMBERS[command_type]
         table = candidate.get(member)
@@ -161,6 +180,21 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
         if not relations:
             del candidate["relations"]
         return None
+    if command_type in _REMOVALS:
+        member, label, missing, referenced, users_of = _REMOVALS[command_type]
+        key = payload["role" if command_type == "removeFieldRole" else "id"]
+        table = candidate.get(member)
+        if not isinstance(table, dict) or key not in table:
+            return missing, [f"/payload/{'role' if command_type == 'removeFieldRole' else 'id'}: the Project has no {label} {key!r}"
+                             + _known(table, f"its {member} include")]
+        users = users_of(candidate, key)
+        if users:
+            return referenced, [
+                f"/payload/id: {label} {key!r} is still named by {'; '.join(users[:MAX_ROWS])}; change those first"]
+        del table[key]
+        if not table:
+            del candidate[member]
+        return None
     if command_type == "removeCalendar":
         calendars, calendar_id = candidate.get("calendars"), payload["id"]
         if not isinstance(calendars, dict) or calendar_id not in calendars:
@@ -189,6 +223,48 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
         del objects[object_id]
         return None
     return "E_PROJECT_COMMAND", [f"/type: unsupported command type {command_type!r}"]
+
+
+def _known(table: Any, lead: str) -> str:
+    """``"; its X include a, b"`` for the first ids of a mapping member, or nothing."""
+    return f"; {lead} {', '.join(sorted(map(str, table))[:10])}" if isinstance(table, dict) and table else ""
+
+
+def _holds(value: Any, target: str) -> bool:
+    """Whether a field value is, or lists, the bare id ``target`` (the reference form of Spec 05 section 10)."""
+    if isinstance(value, str):
+        return value == target
+    if isinstance(value, (list, tuple)):
+        return any(_holds(item, target) for item in value)
+    if isinstance(value, dict):
+        return any(_holds(item, target) for item in value.values())
+    return False
+
+
+def _entity_users(project: Mapping[str, Any], entity_id: str) -> list[str]:
+    """What still names an entity: an object's or another entity's ``fields`` value equal to its id."""
+    found: list[str] = []
+    for member, label in (("objects", "object"), ("entities", "entity")):
+        for other_id, other in (project.get(member) or {}).items():
+            fields = other.get("fields") if isinstance(other, dict) else None
+            if member == "entities" and other_id == entity_id or not isinstance(fields, dict):
+                continue
+            found.extend(f"{label} {other_id!r} (fields.{name})" for name, value in fields.items() if _holds(value, entity_id))
+    return found
+
+
+def _no_users(project: Mapping[str, Any], key: str) -> list[str]:
+    """A field role and an annotation are named by nothing else inside the Project file."""
+    return []
+
+
+_REMOVALS = {
+    "removeEntity": ("entities", "entity", "E_PROJECT_ENTITY_MISSING", "E_PROJECT_ENTITY_REFERENCED", _entity_users),
+    "removeFieldRole": ("fieldRoles", "field role", "E_PROJECT_FIELD_ROLE_MISSING", "", _no_users),
+    "removeAnnotation": ("annotations", "annotation", "E_PROJECT_ANNOTATION_MISSING", "", _no_users),
+}
+"""Command type -> (member, label, missing code, referenced code, referrers). A field role and an annotation have no
+referrer inside the Project file (a View binds roles outside it), so they are never refused as referenced."""
 
 
 def _relation_index(relations: list[Any], relation: Mapping[str, Any]) -> int | None:
@@ -238,6 +314,10 @@ def _referrers(project: Mapping[str, Any], object_id: str) -> list[str]:
         for member in ("parent", "attachesTo"):
             if other.get(member) == object_id:
                 found.append(f"object {other_id!r} ({member})")
+    for name, annotation in (project.get("annotations") or {}).items():
+        anchor = annotation.get("anchor") if isinstance(annotation, dict) else None
+        if isinstance(anchor, dict) and anchor.get("object") == object_id:
+            found.append(f"annotation {name!r} (anchor)")
     return found
 
 
@@ -256,6 +336,8 @@ def validate_project_candidate(project: dict[str, Any], base_dir: Path | None = 
 def _own_location(candidate: Mapping[str, Any], command: dict[str, Any]) -> tuple[str, str] | None:
     """``(Project pointer, command pointer)`` of the value a set command wrote, so a finding inside it leads with the payload."""
     command_type = command["type"]
+    if command_type == "setProjectMeta":
+        return "/project", "/payload"
     if command_type == "setRelation":
         relations = candidate.get("relations")
         index = _relation_index(relations, command["payload"]["relation"]) if isinstance(relations, list) else None
