@@ -35,7 +35,7 @@ def transact_authoring_command(
     command: dict[str, Any],
     *,
     prepare: Callable[[Path, dict[str, Any]], PreparedFileMutation],
-    reject: Callable[[str, str, str], dict[str, Any]],
+    reject: Callable[..., dict[str, Any]],
     verify_receipt: Callable[[dict[str, Any], dict[str, Any], str, str], None],
 ) -> dict[str, Any]:
     """Replay or commit one validated authoring request under its workspace lock."""
@@ -53,12 +53,18 @@ def transact_authoring_command(
         request_identity = content_identity(request)
         if receipt is not None:
             if receipt["requestIdentity"] != request_identity:
+                applied = receipt["afterIdentity"]
+                current_now = applied == observed
                 return reject("E_AUTHORING_COMMAND_ID_REUSE", observed,
-                              f"commandId {command_id!r} already identifies a different canonical request")
+                              f"commandId {command_id!r} already identifies a different canonical request, and that "
+                              f"first command was applied (result revision {applied}, "
+                              f"{'the current workspace revision' if current_now else 'not the current workspace revision'}); "
+                              "to apply a new edit use a new commandId, to retry the first one resend it unchanged",
+                              firstApplied=True, appliedRevision=applied, revisionIsCurrent=current_now)
             if pending is not None and pending != command_id:
                 return reject("E_AUTHORING_AGGREGATE_RECOVERY", observed,
                               "a committed transaction marker requires recovery before another command")
-            return receipt["result"]
+            return receipt["result"] | {"replayed": True, "revisionIsCurrent": receipt["afterIdentity"] == observed}
         if pending is not None:
             return reject("E_AUTHORING_AGGREGATE_RECOVERY", observed,
                           "a committed transaction marker requires recovery before a new command")

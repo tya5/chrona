@@ -41,8 +41,8 @@ def apply_authoring_command(
     def prepare(canonical_path: Path, current: dict[str, Any]) -> PreparedFileMutation:
         return prepare_authoring_command(canonical_path, current, command)
 
-    def reject(code: str, observed_identity: str, detail: str = "") -> dict[str, Any]:
-        return _rejected(command, code, observed_identity, detail=detail)
+    def reject(code: str, observed_identity: str, detail: str = "", **fields: Any) -> dict[str, Any]:
+        return _rejected(command, code, observed_identity, detail=detail, fields=fields)
 
     return transact(
         workspace_path, command, prepare=prepare, reject=reject,
@@ -202,7 +202,7 @@ def _override_violations(command: dict[str, Any], identity: ClosureIdentity, can
 
 
 def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "",
-              details: list[str] | None = None) -> dict[str, Any]:
+              details: list[str] | None = None, fields: dict[str, Any] | None = None) -> dict[str, Any]:
     code, _, inline_detail = code.partition(":")
     detail = detail or inline_detail.strip()
     diagnostic: dict[str, Any] = {"code": code}
@@ -215,6 +215,7 @@ def _rejected(command: dict[str, Any], code: str, base: str, detail: str = "",
                        f"{command.get('baseRevision')}; query workspace_revision for "
                        f"{command['target']['path']!r} and retry"),
         }
+    diagnostic |= fields or {}
     rows = [{"code": code, "detail": item} for item in details] if details else [diagnostic]
     return {
         "version": "chrona/authoring-command-result/v0.1", "status": "rejected",
