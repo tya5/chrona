@@ -64,6 +64,7 @@ def await_gate(api: Any, run_id: int, *, sleep: Callable[[float], None] = time.s
                max_polls: int = MAX_POLLS, max_errors: int = MAX_CONSECUTIVE_ERRORS) -> str:
     """Poll one known run. Return its job summary on success, raise GateError otherwise."""
     errors = 0
+    last_state = ""
     for poll in range(1, max_polls + 1):
         try:
             run = api.request("GET", f"repos/{api.repo}/actions/runs/{run_id}")
@@ -74,11 +75,19 @@ def await_gate(api: Any, run_id: int, *, sleep: Callable[[float], None] = time.s
                 jobs = api.request("GET", f"repos/{api.repo}/actions/runs/{run_id}/jobs",
                                    fields=(("per_page", "100"),))
                 state = _job_state(jobs)
-                if conclusion != "success" or not all(f"{name}:completed:success" in state.split(",")
-                                                      for name in _REQUIRED_JOBS):
+                parts = state.split(",") if state else []
+                done = {name: f"{name}:completed:success" in parts for name in _REQUIRED_JOBS}
+                # A required job that completed without success is a real failure.
+                bad = [part for part in parts if ":completed:" in part and not part.endswith((":completed:success", ":completed:"))]
+                if conclusion != "success" or bad:
                     raise GateError(f"Trusted gate failed: run={run_id} conclusion={conclusion} {state}")
-                log(f"gate run {run_id} succeeded: {state}")
-                return state
+                if all(done.values()):
+                    log(f"gate run {run_id} succeeded: {state}")
+                    return state
+                # The run reports success before the jobs API shows every required job
+                # completed (#1832 row 6): keep polling within the bound.
+                last_state = state
+                log(f"poll {poll}/{max_polls} run={run_id} required jobs not yet completed: {state or '-'}")
             errors = 0
         except GitHubApiError as error:
             errors += 1
@@ -88,7 +97,8 @@ def await_gate(api: Any, run_id: int, *, sleep: Callable[[float], None] = time.s
             sleep(interval)
             continue
         sleep(interval)
-    raise GateError(f"E_GATE_TIMEOUT: run {run_id} not completed after {max_polls} polls")
+    detail = f" (last required jobs: {last_state})" if last_state else ""
+    raise GateError(f"E_GATE_TIMEOUT: run {run_id} not completed after {max_polls} polls{detail}")
 
 
 def _job_state(payload: Any) -> str:
