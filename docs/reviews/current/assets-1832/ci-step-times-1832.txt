@@ -1,0 +1,8 @@
+$ gh run view <run> -R tya5/chrona --json jobs   # step "Reject derived edits and materialize one PR snapshot" (source-only, then snapshot, one step)
+before  run 39437809785 head f5045af34 (PR #1836 base lineage, main-based PR) startedAt 2026-10-20T14:17:41Z completedAt 2026-10-20T14:21:12Z = 211 s
+after   run 39444878694 head 604aafe77 (PR #1836)                              startedAt 2026-10-20T15:04:12Z completedAt 2026-10-20T15:06:25Z = 133 s
+
+$ gh run view <run> --log --job derived-preview   # the step prints only one line, after both commands:
+2026-10-20T14:21:08.0255646Z Derived evidence: regenerated (109 files)
+2026-10-20T15:06:23.0747744Z Derived evidence: regenerated (109 files)
+source-only prints nothing on success, so the log has no timestamp between the two commands: the time of source-only alone is not recoverable from either run.

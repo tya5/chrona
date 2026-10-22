@@ -241,3 +241,38 @@ def test_compound_glyph_keeps_nonhost_clearance_and_registered_port_authority() 
     assert coincident_endpoint_port_ids(index, first.semantic_port, ("planned:glyph",)) == ("port:planned:glyph:end",)
     # The unrelated mark still blocks the route beyond the exposed port.
     assert index.collisions(ObstacleSegment(first.exposed_port, (200, 60)), classes=("mark",))
+
+
+# --- #1924: an axis in a slit between fill slices still takes the painted port -------------------
+
+def _slit_glyph_mark(*, slit: float = 0.6, stroke: float = 1.0) -> MarkPlacement:
+    """Two horizontal fill slices (like the yuya glyph) separated by a thin slit across the axis."""
+    from chrona.presentation.layout.mark_geometry import SymbolPartPlacement, symbol_parts
+    bounds = (100.0, 50.0, 20.0, 20.0)  # horizontal axis y=60
+    half = slit / 2
+    parts = symbol_parts({"shape": "glyph", "viewport": {"inlineSize": 20, "blockSize": 20}, "parts": [
+        {"paint": "fill", "data": f"M 4 2 L 16 2 L 16 {10 - half} L 4 {10 - half} Z"},
+        {"paint": "fill", "data": f"M 5 {10 + half} L 17 {10 + half} L 17 18 L 5 18 Z"}]}, bounds)
+    for_outline = tuple(SymbolPartPlacement(part.commands, paint_mode="stroke", stroke_width=stroke) for part in parts)
+    return MarkPlacement("planned:slit", "glyph", Rect(*(Decimal(str(v)) for v in bounds)),
+                         (100.0, 60.0), (120.0, 60.0), mark_shape="point", symbol_parts=(*parts, *for_outline))
+
+
+def test_axis_in_a_slit_between_fill_slices_takes_the_painted_port() -> None:
+    mark = _slit_glyph_mark()
+    ports = dict(connector_boundary_ports(mark, "at", (300, 60), painted=True))
+    # Widest bounding slice edge is 117 (+0.5 stroke); narrowest start is 104 (-0.5).
+    assert ports["end"] == pytest.approx((117.5, 60.0))
+    assert ports["start"] == pytest.approx((103.5, 60.0))
+    candidate = connector_egress_candidates(mark, "at", (300, 60), (), painted=True)[0]
+    assert candidate.semantic_port == pytest.approx((117.5, 60.0))
+    assert candidate.exposed_port == (120.0, 60.0)
+    # Not the viewport tip, and the leader endpoint lies on the painted outline (within 0.1).
+    assert abs(candidate.semantic_port[0] - 117.5) < 0.1
+    # Relations keep the viewport tips.
+    assert dict(connector_boundary_ports(mark, "at", (300, 60)))["end"] == (120.0, 60.0)
+
+
+def test_wide_gap_between_painted_parts_is_not_bridged() -> None:
+    from chrona.presentation.layout.ports import painted_cardinal_ports
+    assert "end" not in painted_cardinal_ports(_slit_glyph_mark(slit=6.0))
