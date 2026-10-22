@@ -500,6 +500,21 @@ minimum above the ceiling, or mandatory text that cannot fit is
 Full-share budgets retain the existing Grid cell-filling allocation; text is
 closed inside that cell rather than shrinking the host to its fitting copy.
 
+**Nested heading ceiling closure (#1906).** A neutral-probe heading budget
+is an upper bound, not a promise that every descendant keeps that entire
+width after sibling tracks are allocated. The final solve may narrow a
+heading's parent/cell allocation only while preserving its active slot ID,
+source kind and source path, and only when both the final available width
+and ceiling are no greater than their independently probed bounds. Measure
+the heading again at its actual final width before closing block geometry;
+do not reuse lines measured at the larger bound. Keep mandatory text and
+authored minima and the actual-width fit checks unchanged. A new/missing
+active source, an intrinsic/self-sized allocation that grows beyond the
+probe, or an infeasible minimum is still rejected. Table budgets, including
+`maxInlineShare`, retain exact probe/final equality; this heading rule is
+not a waiver of strict table feasibility. No retry count or width iteration
+is introduced: ordinary track allocation owns the final narrower width.
+
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
 container's item alignment on that axis.
