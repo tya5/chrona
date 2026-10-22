@@ -29,6 +29,7 @@ class MemberLabelAllocation:
     candidate: LabelPlacement | None
     search: MemberNameSearchCursor | None = None
     exchanged: bool = False
+    forced_suppression: bool = False
 
     def selected_preparation(self) -> PreparedMemberLabelCandidate:
         return (self.variants[self.candidate.side]

@@ -103,7 +103,7 @@ def test_content_first_names_are_hard_route_obstacles_for_safe_at_arrival(monkey
 
     context = replace(context, post_route_requests=(),
         base_text=(*context.base_text, *completed_content.text),
-        clean_obstacles=pre_route_index, routes_for=routes_for)
+        clean_obstacles=pre_route_index, routes_for=routes_for, pre_route_members=None)
     completed = plan.compose_routes_and_member_labels(context)
 
     assert [item.overflow for item in completed_content.text] == ["fit", "fit"]

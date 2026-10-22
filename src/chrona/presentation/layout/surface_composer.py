@@ -10,7 +10,8 @@ from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner
 from chrona.presentation.layout.surface_marks import (MARK_PAINT_ORDER_BASE, compose_surface_marks)
 from chrona.presentation.layout.surface_visuals import (place_mark_visuals, place_text_visuals)
 from chrona.presentation.layout.surface_member_labels import (
-    SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests, place_member_labels,
+    SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests,
+    prepare_member_labels,
 )
 from chrona.presentation.layout.surface_routes import (
     SurfaceRoutesContext, intrinsic_relation_endpoint_footprints,
@@ -50,7 +51,7 @@ from chrona.presentation.layout.surface_periods import compose_period_bands, per
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.label_visual_measurement import absent_label_visual_sources
 from chrona.presentation.layout.text import metric_for_role
-from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
+from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, SurfaceObstacle,
 )
@@ -250,20 +251,18 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         lane_label_suppressions.extend(batch.lane_label_suppressions)
         handled_candidate_visuals.update(batch.handled_visual_sources)
 
-    def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
-        accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
-
     first_fit = layout_manifest.relation_search == "first-fit"
     pre_route, post_route = member_label_requests.routing_phases(first_fit=first_fit)
-    place_label_phase(pre_route)
-    required_label_obstacle_ids = frozenset(
-        obstacle_id for label in pre_route
-        for obstacle_id in (label.placement_id, f"label-footprint:{label.placement_id}"))
+    pre_route_session = prepare_member_labels(member_label_context, pre_route, surface_obstacles)
+    surface_obstacles = pre_route_session.obstacles
+    required_label_obstacle_ids = pre_route_session.required_obstacle_ids
 
     route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
         member_label_context, post_route, tuple(text), surface_obstacles,
         lambda index, texts: replace(route_context, text=texts, obstacles=index,
-            required_label_obstacle_ids=required_label_obstacle_ids)))
+            required_label_obstacle_ids=required_label_obstacle_ids,
+            member_name_yield=pre_route_session.yield_for_endpoint),
+        pre_route_session))
 
     # Resolve fixed side content and final slots once, before annotation
     # evaluation, preserving the established primitive emission order.
@@ -313,6 +312,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     instance_rows = dict(routes_batch.instance_rows)
     comparison_clusters = dict(routes_batch.comparison_clusters)
     diagnostics.extend(routes_batch.diagnostics)
+    accept_member_label_batch(route_label_plan.pre_route_members)
     accept_member_label_batch(route_label_plan.members)
     relation_labels = route_label_plan.relation_labels
     text.extend(relation_labels.text)

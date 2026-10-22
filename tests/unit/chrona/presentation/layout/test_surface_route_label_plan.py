@@ -1,4 +1,5 @@
 """Routing consumes completed content once, then completes dependent labels."""
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -98,6 +99,51 @@ def test_routes_once_around_completed_content_then_places_terminal_names_and_ord
     assert result.obstacles.has("terminal-label")
     assert result.obstacles.has("optional-a") and result.obstacles.has("optional-b")
     assert not index.has("route-paint")
+
+
+def test_ordinary_relation_labels_keep_pre_route_names_after_route_completion(monkeypatch):
+    index = SurfaceObstacleIndex()
+    calls = []
+    context = _context(index, calls)
+    routes_batch = SimpleNamespace(relations=())
+    pre_name = _text("pre-route-name")
+    terminal_text = _text("terminal-label")
+    post_name = _text("post-route-name")
+
+    class PreRouteNames:
+        obstacles = index
+        text = (pre_name,)
+        required_obstacle_ids = frozenset({"pre-route-name"})
+
+        def adopt_obstacles(self, current):
+            self.obstacles = current
+
+        def yield_for_endpoint(self, request, current):
+            return None
+
+        def finish(self):
+            return SimpleNamespace()
+
+    context = replace(context, pre_route_members=PreRouteNames())
+    terminal_batch = SimpleNamespace(text=(terminal_text,), diagnostics=(), visible_label_overflows=())
+    member_batch = SimpleNamespace(text=(post_name,), diagnostics=(), visible_overflows=())
+    ordinary_batch = SimpleNamespace(text=(), diagnostics=(), visible_label_overflows=())
+
+    def compose_routes(route_context):
+        assert route_context.text == (_text("required-label"), pre_name)
+        return routes_batch
+
+    def place_relation_labels(route_context, routes, *, terminal):
+        if terminal:
+            return terminal_batch
+        assert route_context.text == (_text("required-label"), pre_name, terminal_text, post_name)
+        return ordinary_batch
+
+    monkeypatch.setattr(plan, "compose_surface_routes", compose_routes)
+    monkeypatch.setattr(plan, "place_relation_labels", place_relation_labels)
+    monkeypatch.setattr(plan, "place_member_labels", lambda *_args: member_batch)
+
+    plan.compose_routes_and_member_labels(context)
 
 
 def test_required_terminal_label_failure_propagates_after_one_route_attempt(monkeypatch):

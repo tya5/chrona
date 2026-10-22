@@ -12,6 +12,9 @@ from collections.abc import Callable
 from typing import Any, Mapping
 
 from chrona.presentation.layout.labels import LabelRect, place_label
+from chrona.presentation.layout.member_name_yield import (
+    MemberNameYield, MemberNameYieldRequest, endpoint_candidate_ink, endpoint_candidate_blocker_ids,
+)
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum, RelationUnroutableMode
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_relation_admission import complete_window_relation_endpoint_absence
@@ -205,6 +208,7 @@ class SurfaceRoutesContext:
     temporal_endpoints: tuple[TemporalEndpointPlacement, ...] = ()
     progress_pass: str = "relations"
     required_label_obstacle_ids: frozenset[str] = frozenset()
+    member_name_yield: MemberNameYield | None = None
 
 
 @dataclass(frozen=True)
@@ -248,7 +252,7 @@ class PreparedNormalRelation:
 
 @dataclass(frozen=True)
 class PreparedNormalRouteBatch:
-    """Stable normal-stage route domains prepared before the first route search."""
+    """Initial normal-stage route domains prepared before the first route search."""
 
     entries: tuple[PreparedNormalRelation, ...]
     ordered_relations: tuple[tuple[int, RelationPresentationFact], ...]
@@ -395,10 +399,10 @@ def _prepare_normal_relation_routes(context: SurfaceRoutesContext, *,
     """Prepare ordered normal-stage endpoint port-pair domains without routing them.
 
     The normal stub-availability query examines only completed mark/text/label
-    obstacles. Routing later adds dependency-route and port obstacles, neither
-    of which belongs to that query, so these normal candidate tuples remain
-    valid throughout the relation loop. Recovery domains are intentionally
-    prepared later against their live obstacle snapshots.
+    obstacles. Later route/port additions do not affect that query. If the
+    required-endpoint exception changes names, the caller refreshes the affected
+    endpoint admission against the new content snapshot. Recovery domains are
+    always prepared against their live obstacle snapshots.
     """
     request, projection = context.request, context.projection
     window_mode = getattr(projection, "window_mode", None)
@@ -941,6 +945,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return chosen
 
     hint_receipts = []
+    content_changed = False
     ordered_relations = prepared.ordered_relations
     observed_relations = (request.progress.routing(ordered_relations, pass_name=context.progress_pass)
                           if request.progress is not None else ordered_relations)
@@ -991,6 +996,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
             normal_domain = RelationObstacleDomain.normal(obstacles)
+            if content_changed:
+                # Only endpoint admission reads moved name geometry. Marks,
+                # row/instance identities and already-completed routes stay fixed.
+                entries = (entry_candidates(target_mark, relation.target_endpoint,
+                    source_nominal, comparison_clusters.get((target_mark.source_ref,
+                        instance_rows[target_id]), ()), relation,
+                    entry=context.layout_manifest.relation_entry, domain=normal_domain)
+                    if target_mark else
+                    (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
+                port_pairs = tuple((left, right) for left in source_candidates for right in entries)
+                if context.layout_manifest.relation_entry in {"side-when-free", "side"}:
+                    port_pairs = stub_pairs_first(port_pairs)
             hint_proposal = None
             hint_pairs = port_pairs
             if request.previous_route_hints is not None:
@@ -1221,6 +1238,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     raise LayoutError("E_LAYOUT_ROUTE_ATTEMPT_INVALID", scene_id,
                                       detail="paired stubs require closed endpoint titles")
                 stub_choice = None
+                blocked_stubs = []
                 for pair in first_fit_port_pairs(port_pairs):
                     geometry = paired_stub_geometry(pair,
                         source_run=endpoint_lead_run(pair[0], dependency_stroke, marker_start),
@@ -1238,13 +1256,45 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             and _stub_fragment_clears_physical_hosts(outgoing, pair[0], source=True,
                                 obstacles=obstacles)
                             and _stub_fragment_clears_physical_hosts(incoming, pair[1], source=False,
-                                obstacles=obstacles)
-                            and route_clears_retained_label_ink(outgoing, hard_content, dependency_stroke)
-                            and route_clears_retained_label_ink(incoming, hard_content, dependency_stroke)):
-                        stub_choice = (pair, outgoing, incoming,
+                                obstacles=obstacles)):
+                        choice = (pair, outgoing, incoming,
                             orient_terminal(start, outgoing, pair[0].side, source=True),
                             orient_terminal(end, incoming, pair[1].side, source=False))
+                        candidate_ink = endpoint_candidate_ink(scene_id, outgoing, incoming,
+                            choice[3], choice[4], dependency_stroke)
+                        blockers = endpoint_candidate_blocker_ids(candidate_ink, hard_content)
+                        if blockers:
+                            blocked_stubs.append((choice, blockers, candidate_ink))
+                            continue
+                        stub_choice = choice
                         break
+                if stub_choice is None and context.member_name_yield is not None:
+                    # Clear candidates have all been exhausted. The allocation
+                    # owner alone can prove that every blocking ID is a member
+                    # name, then replace whole groups in an independent snapshot.
+                    for choice, blockers, candidate_ink in blocked_stubs:
+                        pair, outgoing, incoming, start, end = choice
+                        if plot_clip is not None and not all(relation_geometry_inside_plot(
+                                plot_clip, path, marker_start=first, marker_end=last,
+                                stroke_width=dependency_stroke)
+                                for path, first, last in ((outgoing, start, None), (incoming, None, end))):
+                            continue
+                        yielded = context.member_name_yield(
+                            MemberNameYieldRequest(blockers, candidate_ink), obstacles)
+                        if yielded is None:
+                            continue
+                        obstacles = yielded.obstacles
+                        context = replace(context, obstacles=obstacles, text=yielded.text,
+                            required_label_obstacle_ids=yielded.required_obstacle_ids)
+                        hard_content = SurfaceObstacleIndex()
+                        hard_content.extend(item for item in obstacles.all()
+                            if item.placement_id in context.required_label_obstacle_ids)
+                        channels = shape_channels(obstacles, bounds=routing_bounds,
+                            row_edges=tuple(row_edges.values()), classes=route_classes)
+                        content_changed = True
+                        if not endpoint_candidate_blocker_ids(candidate_ink, hard_content):
+                            stub_choice = choice
+                            break
                 if stub_choice is None:
                     raise LayoutError("E_LAYOUT_ROUTE_ATTEMPT_INVALID", scene_id,
                                       detail="paired stub endpoint corridors are unavailable")

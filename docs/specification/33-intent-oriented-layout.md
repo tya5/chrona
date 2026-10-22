@@ -703,9 +703,10 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_obstacle_seed` | Seed the single ordered obstacle index from completed marks, required text and rule shapes; background bands stay outside it. Later phase owners extend the same index. |
 | `surface_mark_visibility` | Close selected source mark occurrences and window admission once, with typed source/final lane aliases; no membership or Scene geometry repair. |
 | `window_row_admission` | Close the View-declared `outside: omit` geometry-row mask from that exact source cache before sizing/allocation; retain the complete semantic projection, lane membership and relation identities (Specs06/50). |
-| `surface_member_labels` | Build member/item label requests, prepare measured side candidates, and coordinate allocation with the typed candidate and geometry owners. |
+| `surface_member_labels` | Build member/item label requests, retain measured member-name allocations and cursors through route closure, coordinate an approved endpoint-only yield, then emit each final text/visual group once. |
 | `surface_member_label_measurement` | Prepare each measured member-label side candidate from the request, closed Theme treatments and Layout slot geometry; project its selected Text only after allocation. |
 | `surface_member_label_allocation` | Close measured member-name groups against completed obstacles; try the bounded one-earlier-name exchange with each request's existing candidate cursor and preserve failed choices. |
+| `member_name_yield` | Carry the typed request/result for a required endpoint's exact member-name blockers and protected ink; it does not select or validate routes. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
 | `surface_route_label_plan` | Coordinate one route composition around completed member content, then complete terminal and ordinary relation labels against that route plan; no trial loop or route replay. |
 | `surface_routes` | Place dependency paths/ports and relation labels. |

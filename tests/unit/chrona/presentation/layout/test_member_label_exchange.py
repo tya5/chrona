@@ -4,7 +4,8 @@ from decimal import Decimal
 from chrona.presentation.layout.labels import CollisionDomain, LabelRect, LabelRequest
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
-from chrona.presentation.layout.surface_member_labels import place_member_labels
+from chrona.presentation.layout.member_name_yield import MemberNameYieldRequest
+from chrona.presentation.layout.surface_member_labels import place_member_labels, prepare_member_labels
 from chrona.presentation.layout.surface_quality import MarkPlacement, VisualRequest
 from chrona.presentation.model.closure import IconAsset
 from chrona.presentation.model.semantic_registry import inside_member_label_semantic
@@ -378,3 +379,69 @@ def test_exchange_selects_prepared_inside_role_and_replaces_complete_group():
     assert sum(item.source_ref == first_id for item in batch.shapes) == 1
     assert obstacles.get(f"label-footprint:{first_id}").geometry == (
         baseline_obstacles.get(f"label-footprint:{first_id}").geometry)
+
+
+def test_route_yield_replaces_one_cached_name_group_and_emits_final_group_once():
+    placement_id = "member-label:first"
+    context, obstacles = _hosted_context_and_obstacles(first_x=60, second_x=120,
+                                                        icon_on=placement_id)
+    request = _request(placement_id, "planned:first:first", "AAAA", 60, ("end", "start"))
+    baseline = place_member_labels(context, (request,), obstacles.copy())
+    session = prepare_member_labels(context, (request,), obstacles)
+    before = session.text[0]
+    assert before == baseline.text[0]
+    old_footprint = session.obstacles.get(f"label-footprint:{placement_id}")
+    blocker = MemberNameYieldRequest((placement_id,), ())
+
+    yielded = session.yield_for_endpoint(blocker, session.obstacles)
+
+    assert yielded is not None
+    assert yielded.text[0].bounds != before.bounds
+    assert yielded.obstacles.get(f"label-footprint:{placement_id}").geometry != old_footprint.geometry
+    assert yielded.required_obstacle_ids == session.required_obstacle_ids
+    after_first = yielded.text[0].bounds
+    yielded_again = session.yield_for_endpoint(blocker, yielded.obstacles)
+    assert yielded_again is not None and yielded_again.text[0].bounds != after_first
+    final = session.finish()
+    assert final.text == yielded_again.text
+    assert len([item for item in final.shapes if item.source_ref == placement_id]) == 1
+    assert len([item for item in final.icons if item.host_placement_id == placement_id]) == 1
+
+
+def test_route_yield_rejects_nonmember_blockers_and_exhaustion_suppresses_name():
+    placement_id = "member-label:first"
+    context, obstacles = _hosted_context_and_obstacles(first_x=60, second_x=120)
+    request = _request(placement_id, "planned:first:first", "AAAA", 60, ("end", "start"))
+    session = prepare_member_labels(context, (request,), obstacles)
+    assert session.yield_for_endpoint(MemberNameYieldRequest(("hard-mark",), ()),
+                                      session.obstacles) is None
+    session.finish()
+
+    context, obstacles = _hosted_context_and_obstacles(first_x=60, second_x=120)
+    request = replace(request, overflow="visible-overflow", visible_fallback_side="end")
+    session = prepare_member_labels(context, (request,), obstacles)
+    protected = SurfaceObstacle("protected-endpoint-ink", "mark", "timeline",
+        ObstacleRect(-10000, -10000, 10000, 10000))
+    result = session.yield_for_endpoint(
+        MemberNameYieldRequest((placement_id,), (protected,)), session.obstacles)
+
+    assert result is not None and result.text[0].overflow == "suppressed"
+    assert result.text[0].fallback_ladder[-1] == "suppress"
+    assert not result.obstacles.has(protected.placement_id)
+    final = session.finish()
+    assert final.text[0] == result.text[0]
+
+
+def test_route_yield_suppresses_member_name_without_retained_candidate_cursor():
+    placement_id = "member-label:first"
+    context, obstacles = _hosted_context_and_obstacles(first_x=60, second_x=120)
+    request = replace(_request(placement_id, "planned:first:first", "AAAA", 60, ("end", "start")),
+                      collision_region="group-header-point")
+    session = prepare_member_labels(context, (request,), obstacles)
+    assert session.text[0].overflow != "suppressed"
+
+    result = session.yield_for_endpoint(MemberNameYieldRequest((placement_id,), ()), session.obstacles)
+
+    assert result is not None and result.text[0].overflow == "suppressed"
+    assert result.text[0].fallback_ladder[-1] == "suppress"
+    assert session.finish().text == result.text

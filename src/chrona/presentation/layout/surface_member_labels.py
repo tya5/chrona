@@ -16,7 +16,7 @@ from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 from chrona.presentation.model.hierarchy_names import member_name_key
 from chrona.presentation.layout.obstacles import (
-    ROUTE_RESERVE_CLASS, ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex,
+    ROUTE_RESERVE_CLASS, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
@@ -29,6 +29,7 @@ from chrona.presentation.layout.surface_member_label_measurement import (
 from chrona.presentation.layout.surface_member_label_allocation import (
     MemberLabelAllocation, repair_member_names, member_group_obstacles, member_text_candidate,
 )
+from chrona.presentation.layout.member_name_yield import MemberNameYieldRequest, MemberNameYieldResult
 from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
@@ -44,7 +45,7 @@ from chrona.presentation.layout.key_row_lanes import key_row_label_ladder
 from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
-from chrona.presentation.model.projection import (WindowMode, active_placement, finish_delta_text,
+from chrona.presentation.model.projection import (active_placement, finish_delta_text,
     finish_delta_semantic, is_estimated_finish_delta, signed_delta_text)
 
 
@@ -101,6 +102,97 @@ class SurfaceMemberLabelsBatch:
     visible_overflow_subjects: tuple[tuple[str, tuple[DiagnosticSubject, ...]], ...] = ()
 
 
+@dataclass(frozen=True)
+class _MemberLabelAllocationPlan:
+    allocations: tuple[MemberLabelAllocation, ...]
+    diagnostics: tuple[str, ...]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...]
+    suppressions: tuple[LaneLabelSuppression, ...]
+    row_requirements: Mapping[str, Any]
+
+
+class MemberLabelAllocationSession:
+    """Retain measured name cursors until routes close, then emit groups once.
+
+    A later distinct endpoint refusal may advance this same cursor again;
+    each event consumes only its remaining declared candidates or permanently
+    suppresses the group. The cursor is never restarted and no names cascade.
+    """
+
+    def __init__(self, context: SurfaceMemberLabelContext,
+                 allocations: list[MemberLabelAllocation], obstacles: SurfaceObstacleIndex,
+                 required_obstacle_ids: frozenset[str], plan: _MemberLabelAllocationPlan) -> None:
+        self._context = context
+        self._allocations = allocations
+        self.obstacles = obstacles
+        self.required_obstacle_ids = required_obstacle_ids
+        self._groups = {id(allocation): member_group_obstacles(allocation) for allocation in allocations}
+        self._owners = {obstacle.placement_id: allocation for allocation in allocations
+                        for obstacle in self._groups[id(allocation)]}
+        self._paint_footprints = {mark.placement_id: span_mark_footprint(mark, context.request.theme_tokens)
+            for mark in context.marks if mark.mark_shape == "span" and obstacles.has(mark.placement_id)}
+        self._plan = plan
+        self._finished = False
+
+    def adopt_obstacles(self, obstacles: SurfaceObstacleIndex) -> None:
+        """Share the route plan's mutable inventory so later completed routes persist."""
+        if self._finished:
+            raise RuntimeError("member-label allocation session already finished")
+        self.obstacles = obstacles
+
+    @property
+    def text(self) -> tuple[TextPlacement, ...]:
+        return tuple(_project_member_label_text(item) for item in self._allocations)
+
+    def yield_for_endpoint(self, request: MemberNameYieldRequest,
+                            index: SurfaceObstacleIndex) -> MemberNameYieldResult | None:
+        if self._finished or not request.blocker_ids:
+            return None
+        affected_ids = {id(self._owners.get(identity)) for identity in request.blocker_ids}
+        if None in (self._owners.get(identity) for identity in request.blocker_ids):
+            return None
+        affected = [allocation for allocation in self._allocations if id(allocation) in affected_ids]
+        if any(allocation.request.semantic_id != "memberLabel" or allocation.candidate is None
+                for allocation in affected):
+            return None
+        old_groups = {id(allocation): self._groups[id(allocation)] for allocation in affected}
+        old_ids = tuple(item.placement_id for group in old_groups.values() for item in group)
+        if not old_ids or any(not index.has(identity) for identity in old_ids):
+            return None
+        probe = index.copy(geometry_overrides=self._paint_footprints, excluded_ids=(*old_ids, "as-of"))
+        for obstacle in (*request.protected_ink, *self._context.intrinsic_endpoint_footprints):
+            if not probe.has(obstacle.placement_id):
+                probe.add(obstacle)
+        proposed = {}
+        for allocation in affected:
+            next_candidate = (allocation.search.next_clear(probe)
+                              if allocation.search is not None else None)
+            candidate = next_candidate.placement if next_candidate is not None else None
+            proposed[id(allocation)] = (candidate, next_candidate is None)
+            proposal = replace(allocation, candidate=candidate,
+                               forced_suppression=next_candidate is None)
+            group = member_group_obstacles(proposal)
+            probe.extend(group)
+        for allocation in affected:
+            allocation.candidate, allocation.forced_suppression = proposed[id(allocation)]
+        for identity in old_ids:
+            self._owners.pop(identity, None)
+        updated = index.copy(excluded_ids=old_ids)
+        for allocation in affected:
+            new_group = member_group_obstacles(allocation)
+            self._groups[id(allocation)] = new_group
+            self._owners.update((obstacle.placement_id, allocation) for obstacle in new_group)
+            updated.extend(new_group)
+        self.obstacles = updated
+        return MemberNameYieldResult(updated, self.text, self.required_obstacle_ids)
+
+    def finish(self) -> SurfaceMemberLabelsBatch:
+        if self._finished:
+            raise RuntimeError("member-label allocation session already finished")
+        self._finished = True
+        return _emit_member_label_batch(self._context, self._plan)
+
+
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
     ordered = []
     if preferred and preferred != "auto":
@@ -154,6 +246,45 @@ def _validate_member_allocation(allocation: MemberLabelAllocation) -> None:
     if association is not None:
         allocation.candidate = _member_association_outcome(candidate, association,
             overflow=allocation.request.overflow, placement_id=allocation.request.placement_id)
+
+
+def _project_member_label_text(allocation: MemberLabelAllocation) -> TextPlacement:
+    request, candidate = allocation.request, allocation.candidate
+    selected = allocation.selected_preparation()
+    ladder = request.candidates + ((request.visible_fallback_side,)
+        if request.visible_fallback_side is not None and request.visible_fallback_side not in request.candidates else ())
+    if candidate is None:
+        suppression_ladder = ladder + (("suppress",)
+            if request.overflow == "suppress" or allocation.forced_suppression else ())
+        return replace(selected.provisional, overflow="suppressed", required=False,
+                       fallback_ladder=suppression_ladder, selected_rung="suppress")
+    chip_box = candidate.bounds
+    text_candidate = member_text_candidate(selected, candidate)
+    slot_bounds = selected.slot_bounds
+    crosses_slot = (text_candidate.bounds.x < slot_bounds.x or text_candidate.bounds.y < slot_bounds.y or
+                    text_candidate.bounds.right > slot_bounds.right or text_candidate.bounds.bottom > slot_bounds.bottom)
+    visible_overflow = candidate.visible_overflow or crosses_slot
+    measurement = selected.measurement
+    hosting_mark = allocation.host
+    final_association = selected.geometry.final_association
+    if allocation.delta_extra and final_association is not None:
+        final_association = replace(final_association,
+            maximum_distance=final_association.maximum_distance + allocation.delta_extra)
+    if final_association is not None and candidate.final_rung:
+        hosting_mark = allocation.own_marks[final_association.nearest_mark_index(chip_box)]
+    text = replace(project_prepared_member_text(selected,
+        inline=text_candidate.bounds.x + measurement.leading,
+        baseline_block=text_candidate.bounds.y + float(measurement.treatment.font_size),
+        overflow="visible-overflow" if visible_overflow else "fit"),
+        fallback_ladder=ladder, selected_rung=candidate.side,
+        host_placement_id=(hosting_mark.placement_id if hosting_mark is not None
+            and (allocation.associated_member or candidate.side == "inside") else None),
+        paint_order=max(HOSTED_TEXT_PAINT_ORDER, allocation.host.paint_order + 1)
+            if candidate.side == "inside" and allocation.host is not None else 300)
+    selected_style = allocation.styles.get(candidate.side)
+    if selected_style is not None:
+        text = replace(text, theme_role=selected_style.role, style_occurrence_key=selected_style.key)
+    return text
 
 
 def _finish_delta_anchor_diagnostic(request: LabelRequest, candidate: LabelPlacement) -> str | None:
@@ -479,15 +610,34 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
     return SurfaceMemberLabelRequests(pre_route, post_route, tuple(window_absences))
 
 
+def prepare_member_labels(context: SurfaceMemberLabelContext,
+                         requests: tuple[LabelRequest, ...],
+                         obstacles: SurfaceObstacleIndex) -> MemberLabelAllocationSession:
+    plan, session_index, required_ids = _allocate_member_labels(context, requests, obstacles)
+    return MemberLabelAllocationSession(context, list(plan.allocations), session_index,
+                                        required_ids, plan)
+
+
 def place_member_labels(context: SurfaceMemberLabelContext,
                         requests: tuple[LabelRequest, ...],
                         obstacles: SurfaceObstacleIndex) -> SurfaceMemberLabelsBatch:
-    """Place member labels and related label requests against completed obstacles."""
+    session = prepare_member_labels(context, requests, obstacles)
+    result = session.finish()
+    for item in session.obstacles.all():
+        if not obstacles.has(item.placement_id):
+            obstacles.add(item)
+    return result
+
+
+def _allocate_member_labels(context: SurfaceMemberLabelContext,
+                            requests: tuple[LabelRequest, ...],
+                            obstacles: SurfaceObstacleIndex
+                            ) -> tuple[_MemberLabelAllocationPlan, SurfaceObstacleIndex, frozenset[str]]:
+    """Allocate measured candidates before emission and retain their explicit cursors."""
     request, projection = context.request, context.projection
     layout_manifest = context.layout_manifest
     style_index = getattr(request.surface_content, "style_intents", None)
     timeline_rect = LabelRect(*context.timeline_bounds)
-    rows = {row.row_id: row for row in context.rows}
     marks = {mark.placement_id: mark for mark in context.marks}
     paint_footprints = {mark.placement_id: span_mark_footprint(mark, request.theme_tokens)
                         for mark in context.marks if mark.mark_shape == "span" and obstacles.has(mark.placement_id)}
@@ -495,24 +645,11 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         (request.fixed_lane_preflight.measured_labels if request.fixed_lane_preflight else ())}
     row_requirements = (dict(request.fixed_lane_preflight.row_requirements)
                         if request.fixed_lane_preflight is not None else {})
-    text: list[TextPlacement] = []
-    shapes: list[ShapePlacement] = []
-    icons: list[IconPlacement] = []
-    overflows: list[tuple[TextPlacement, LabelRect]] = []
-    decisions: list[PlacementDecision] = []
     diagnostics: list[str] = []
     diagnostic_provenance: list[DiagnosticProvenance] = []
-    visible_overflow_subjects: list[tuple[str, tuple[DiagnosticSubject, ...]]] = []
     suppressions: list[LaneLabelSuppression] = []
-    handled: set[str] = set()
     allocation_index = obstacles.copy()
     allocations: list[MemberLabelAllocation] = []
-
-    def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
-        inline, block, inline_size, block_size = bounds_from_rect(bounds)
-        if inline_size > 0 and block_size > 0:
-            obstacles.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
-                ObstacleRect(inline, block, inline + inline_size, block + block_size)))
 
     for label_request in requests:
         placement_obstacles = allocation_index.copy(geometry_overrides=paint_footprints,
@@ -550,8 +687,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                         associated_member=associated_member, own_marks=own_marks,
                         member_names=layout_manifest.member_names,
                         as_of_chip_measurement=context.as_of_chip_measurement))
-        measurement, provisional, geometry, slot_bounds = (
-            selected.measurement, selected.provisional, selected.geometry, selected.slot_bounds)
+        geometry = selected.geometry
         candidate_geometries = {side: value.geometry for side, value in prepared.items()} if prepared else None
         label_size, label_gap, placement_bounds = geometry.size, geometry.gap, geometry.bounds
         reach, association, final_association = geometry.maximum_end_gap, geometry.association, geometry.final_association
@@ -650,20 +786,42 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             _validate_member_allocation(allocation)
             repair_index.extend(member_group_obstacles(allocation))
 
+    required_ids = frozenset(identity for item in requests for identity in
+        (item.placement_id, f"label-footprint:{item.placement_id}"))
+    session_index = obstacles.copy()
+    for allocation in allocations:
+        session_index.extend(member_group_obstacles(allocation))
+    plan = _MemberLabelAllocationPlan(tuple(allocations), tuple(diagnostics),
+                                      tuple(diagnostic_provenance), tuple(suppressions), row_requirements)
+    return plan, session_index, required_ids
+
+
+def _emit_member_label_batch(context: SurfaceMemberLabelContext,
+                             plan: _MemberLabelAllocationPlan) -> SurfaceMemberLabelsBatch:
+    """Project each closed allocation into exactly one completed primitive group."""
+    request = context.request
+    rows = {row.row_id: row for row in context.rows}
+    allocations = plan.allocations
+    row_requirements = plan.row_requirements
+    diagnostics = list(plan.diagnostics)
+    diagnostic_provenance = list(plan.diagnostic_provenance)
+    suppressions = list(plan.suppressions)
+    text: list[TextPlacement] = []
+    shapes: list[ShapePlacement] = []
+    icons: list[IconPlacement] = []
+    overflows: list[tuple[TextPlacement, LabelRect]] = []
+    decisions: list[PlacementDecision] = []
+    visible_overflow_subjects: list[tuple[str, tuple[DiagnosticSubject, ...]]] = []
+    handled: set[str] = set()
+
     # Allocation closes before any Text/chip/icon group is emitted. A local
     # exchange can therefore replace a whole group without stale children or
     # registrations leaking into the completed surface inventory.
     for allocation in allocations:
         label_request, candidate = allocation.request, allocation.candidate
-        selected, styles = allocation.selected_preparation(), allocation.styles
-        host, own_marks = allocation.host, allocation.own_marks
-        associated_member = allocation.associated_member
-        measurement, provisional, geometry, slot_bounds = (
-            selected.measurement, selected.provisional, selected.geometry, selected.slot_bounds)
-        final_association = geometry.final_association
-        if allocation.delta_extra and final_association is not None:
-            final_association = replace(final_association,
-                maximum_distance=final_association.maximum_distance + allocation.delta_extra)
+        selected = allocation.selected_preparation()
+        measurement, provisional, slot_bounds = (
+            selected.measurement, selected.provisional, selected.slot_bounds)
         font_size = measurement.treatment.font_size
         label_metrics, visuals = measurement.metrics, measurement.visuals
         handled.update(visual.source_ref for visual, _, _, _ in visuals)
@@ -674,7 +832,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             if label_request.visible_fallback_side is not None and
             label_request.visible_fallback_side not in label_request.candidates else ())
         if candidate is None:
-            suppression_ladder = ladder + (("suppress",) if label_request.overflow == "suppress" else ())
+            suppression_ladder = ladder + (("suppress",)
+                if label_request.overflow == "suppress" or allocation.forced_suppression else ())
             if not suppression_ladder:
                 raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
             text.append(replace(provisional, overflow="suppressed", required=False,
@@ -690,7 +849,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 remaining = max(Decimal(0), lane_row.bounds.block_size - Decimal(str(
                     row_requirements[label_request.lane_row_id])))
                 short_sources = tuple(item for item in request.capacity_short_sources if item.source_id == "timeline")
-                capacity = not associated_member and remaining == 0 and bool(short_sources)
+                capacity = not allocation.associated_member and remaining == 0 and bool(short_sources)
                 suppressions.append(LaneLabelSuppression(label_request.placement_id,
                     label_request.lane_row_id, label_request.lane_member_id, lane_row.bounds,
                     Decimal(0) if capacity else remaining, "capacity" if capacity else "obstruction",
@@ -703,36 +862,14 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 diagnostic_provenance.append(DiagnosticProvenance(anchor_diagnostic, label_request.subjects))
         chip_box = candidate.bounds
         candidate = member_text_candidate(selected, candidate)
-        crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y or
-                        candidate.bounds.right > slot_bounds.right or candidate.bounds.bottom > slot_bounds.bottom)
-        visible_overflow = candidate.visible_overflow or crosses_slot
-        hosting_mark = host
-        if final_association is not None and candidate.final_rung:
-            # Only a name placed on the final own-mark rung is hosted by the own mark nearest its Text.
-            hosting_mark = own_marks[final_association.nearest_mark_index(chip_box)]
-        placed_text = replace(project_prepared_member_text(selected,
-            inline=candidate.bounds.x + leading,
-            baseline_block=candidate.bounds.y + float(font_size),
-            overflow="visible-overflow" if visible_overflow else "fit"),
-            fallback_ladder=ladder, selected_rung=candidate.side,
-            host_placement_id=(hosting_mark.placement_id if hosting_mark is not None and
-                (associated_member or candidate.side == "inside") else None),
-            paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
-                if candidate.side == "inside" and host is not None else 300)
-        selected_style = styles.get(candidate.side)
-        if selected_style is not None:
-            placed_text = replace(placed_text, theme_role=selected_style.role,
-                                  style_occurrence_key=selected_style.key)
+        placed_text = _project_member_label_text(allocation)
         text.append(placed_text)
-        register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
-        obstacles.add(SurfaceObstacle(f"label-footprint:{placed_text.placement_id}", "label-visual",
-            placed_text.collision_domain.slot, ObstacleRect(chip_box.x, chip_box.y, chip_box.right, chip_box.bottom)))
         if chip is not None:
             paint_bounds = Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)), Decimal(str(chip_box.width)),
                                 Decimal(str(chip_box.height)))
             symbol_parts = ()
             if chip_measurement is not None:
-                geometry, footprint = chip_measurement.geometry, chip_measurement.footprint
+                footprint = chip_measurement.footprint
                 origin_x, origin_y = chip_box.x - float(footprint.inline), chip_box.y - float(footprint.block)
                 try:
                     paint_bounds, symbol_parts = complete_label_chip_placement(
@@ -753,7 +890,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 collision_bounds=(Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)),
                     Decimal(str(chip_box.width)), Decimal(str(chip_box.height)))
                     if chip_measurement is not None else None)))
-        if visible_overflow:
+        if placed_text.overflow == "visible-overflow":
             overflows.append((placed_text, slot_bounds))
             if label_request.subjects:
                 visible_overflow_subjects.append((placed_text.placement_id, label_request.subjects))
