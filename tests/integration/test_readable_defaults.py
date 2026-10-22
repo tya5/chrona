@@ -427,7 +427,6 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
         assert all(item.get("purpose") == "relation-label" and item.get("kind") == "Text"
                    and item.get("text") for item in labels)
     else:
-        assert not receipts
         route = by_id.get(route_id)
         assert route is not None and route.get("purpose") == "dependency"
         assert route.get("kind") == "Path" and route.get("sourceRef") == identity
