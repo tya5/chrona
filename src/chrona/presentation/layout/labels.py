@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from heapq import heappop, heappush
 from math import ceil, floor, isfinite
 from math import hypot
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any, Callable, Iterable, Iterator, Literal
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
 from chrona.presentation.layout.obstacles import (
@@ -248,13 +248,43 @@ def _candidate_geometries(
 
 
 @dataclass(frozen=True)
+class MemberNameCandidateProvenance:
+    """Typed origin of a recorded member-name pose."""
+
+    kind: Literal["canonical", "full-band", "neighborhood", "visible-fallback"]
+    side: str
+    domain: Literal["normal", "final"]
+
+
+@dataclass(frozen=True)
 class MemberNameCandidate:
     """One hard-admissible candidate yielded by a member-name search."""
 
     placement: LabelPlacement
+    provenance: MemberNameCandidateProvenance
     blocker_placement_ids: tuple[str, ...] = ()
     occupied: bool = False
     is_fallback: bool = False
+
+
+@dataclass
+class _MemberNameSearchLedger:
+    neighborhood_spend: dict[tuple[str, str], int]
+    actual_evaluations: int = 0
+
+    def __init__(self) -> None:
+        self.neighborhood_spend = {}
+        self.actual_evaluations = 0
+
+    def charge(self, domain: tuple[str, str], *, limit: int = 512) -> bool:
+        spent = self.neighborhood_spend.get(domain, 0)
+        if spent >= limit:
+            return False
+        self.neighborhood_spend[domain] = spent + 1
+        return True
+
+    def spent(self, domain: tuple[str, str]) -> int:
+        return self.neighborhood_spend.get(domain, 0)
 
 
 class MemberNameSearchCursor:
@@ -278,7 +308,8 @@ class MemberNameSearchCursor:
                  candidate_geometries: Mapping[str, LabelCandidateGeometry] | None = None,
                  own_mark_right: float | None = None,
                  final_association: MemberNameAssociation | None = None,
-                 _budget_domain: str = "normal") -> None:
+                 _budget_domain: str = "normal",
+                 _ledger: _MemberNameSearchLedger | None = None) -> None:
         self.anchor = anchor
         self.size = size
         self.sides = tuple(candidates)
@@ -298,8 +329,10 @@ class MemberNameSearchCursor:
         self.own_mark_right = own_mark_right
         self.final_association = final_association
         self._budget_domain = _budget_domain
+        self._ledger = _ledger if _ledger is not None else _MemberNameSearchLedger()
         if ((own_mark_right is not None
              and (isinstance(own_mark_right, bool) or not isfinite(own_mark_right)))
+                or _budget_domain not in {"normal", "final"}
                 or overflow not in {"suppress", "visible-overflow", "diagnose"}
                 or (visible_fallback_side is not None
                     and (overflow != "visible-overflow" or visible_fallback_side not in self.sides))):
@@ -324,7 +357,6 @@ class MemberNameSearchCursor:
         self._normal_exhausted = False
         self._fallback_iterator: Iterator[tuple[str, LabelRect, bool]] | None = None
         self._fallback_done = False
-        self._neighborhood_counts: dict[tuple[str, str], int] = {}
 
     @property
     def evaluated_candidates(self) -> tuple[MemberNameCandidate, ...]:
@@ -340,22 +372,33 @@ class MemberNameSearchCursor:
 
     @property
     def neighborhood_evaluated_count(self) -> int:
-        return sum(self._neighborhood_counts.values())
+        return sum(self._ledger.neighborhood_spend.values())
+
+    @property
+    def neighborhood_domain_spend(self) -> Mapping[tuple[str, str], int]:
+        """Read-only copy of the existing per-domain 512-candidate ledger."""
+        return dict(self._ledger.neighborhood_spend)
+
+    @property
+    def total_actual_evaluations(self) -> int:
+        return self._ledger.actual_evaluations
 
     def next_candidate(self, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex | None = None
                        ) -> MemberNameCandidate | None:
         """Yield the next normal candidate, whether clear or occupied."""
         try:
-            side, rect, search_count, final_rung, canonical = next(self._normal_iterator)
+            side, rect, search_count, provenance, canonical = next(self._normal_iterator)
         except StopIteration:
             self._normal_exhausted = True
             return None
         probe = self._obstacles if obstacles is None else obstacles
+        self._ledger.actual_evaluations += 1
         occupied, blocker_ids = self._collision_details(rect, side, probe)
         result = MemberNameCandidate(
-            LabelPlacement(side, rect, search_count=search_count, final_rung=final_rung,
+            LabelPlacement(side, rect, search_count=search_count,
+                           final_rung=provenance.domain == "final",
                            canonical_obstructions=tuple(self._canonical_obstructions)),
-            blocker_ids, occupied, False)
+            provenance, blocker_ids, occupied, False)
         self._history.append(result)
         if canonical and occupied:
             self._canonical_obstructions.append(
@@ -369,6 +412,29 @@ class MemberNameSearchCursor:
             if not candidate.occupied:
                 return candidate
         return None
+
+    def revalidate(self, evidence: MemberNameCandidate,
+                   obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex
+                   ) -> MemberNameCandidate | None:
+        """Recheck one recorded pose against a changed inventory, without new poses.
+
+        Neighborhood rechecks charge the original side/rung's 512-candidate
+        ledger. Canonical and full-band poses are uncapped, as in their initial
+        domains. Rechecks increment actual work but never enter ordered history.
+        """
+        if (not isinstance(evidence, MemberNameCandidate) or evidence.is_fallback
+                or evidence.provenance.kind == "visible-fallback"
+                or not any(candidate is evidence for candidate in self._history)):
+            return None
+        provenance = evidence.provenance
+        domain = (provenance.domain, provenance.side)
+        if provenance.kind == "neighborhood" and not self._ledger.charge(domain):
+            return None
+        self._ledger.actual_evaluations += 1
+        occupied, blocker_ids = self._collision_details(
+            evidence.placement.bounds, provenance.side, obstacles)
+        return MemberNameCandidate(evidence.placement, provenance, blocker_ids,
+                                   occupied, False)
 
     def next_fallback(self, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex | None = None
                        ) -> MemberNameCandidate | None:
@@ -388,10 +454,13 @@ class MemberNameSearchCursor:
             if association is not None and not association.allows(rect):
                 continue
             probe = self._obstacles if obstacles is None else obstacles
+            self._ledger.actual_evaluations += 1
             occupied, blocker_ids = self._collision_details(rect, side, probe)
             result = MemberNameCandidate(
                 LabelPlacement(side, rect, True, final_rung=final_rung),
-                                         blocker_ids, occupied, True)
+                MemberNameCandidateProvenance("visible-fallback", side,
+                                              "final" if final_rung else "normal"),
+                blocker_ids, occupied, True)
             self._history.append(result)
             return result
         self._fallback_done = True
@@ -441,7 +510,8 @@ class MemberNameSearchCursor:
         return bool(hits), tuple(sorted({item.placement_id for item in hits
                                         if isinstance(item, LabelObstacle)}))
 
-    def _normal_candidates(self) -> Iterator[tuple[str, LabelRect, int, bool, bool]]:
+    def _normal_candidates(self) -> Iterator[tuple[str, LabelRect, int,
+                                                     MemberNameCandidateProvenance, bool]]:
         # Each domain is generated once; suspension preserves its remaining
         # contact events and accounting for a later local exchange probe.
         yield from _iter_member_name_candidates(self)
@@ -457,7 +527,8 @@ def start_member_name_search(anchor: LabelRect, size: tuple[float, float], candi
 
 
 def _iter_member_name_candidates(cursor: MemberNameSearchCursor
-                                ) -> Iterator[tuple[str, LabelRect, int, bool, bool]]:
+                                ) -> Iterator[tuple[str, LabelRect, int,
+                                                    MemberNameCandidateProvenance, bool]]:
     """Construct the finite declared ladder in its historical order."""
     sides = cursor.sides
     if not sides:
@@ -513,7 +584,8 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
                 raise
             if _member_candidate_allowed(preferred, side, side_bounds, cursor.anchor,
                                          side_end_gap, inset, association):
-                yield side, preferred, 0, False, True
+                yield (side, preferred, 0,
+                       MemberNameCandidateProvenance("canonical", side, cursor._budget_domain), True)
             else:
                 outside = (preferred.x < side_bounds.x or preferred.y < side_bounds.y
                            or preferred.right > side_bounds.right
@@ -553,7 +625,8 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
             if not _member_candidate_allowed(rect, side, side_bounds, cursor.anchor,
                                              side_end_gap, inset, association):
                 continue
-            yield side, rect, len(event_y), False, False
+            yield (side, rect, len(event_y),
+                   MemberNameCandidateProvenance("full-band", side, cursor._budget_domain), False)
 
     # The own-mark extension is a final normal rung, before visible overflow.
     if ("end" in sides and cursor.own_mark_right is not None
@@ -582,12 +655,11 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
                 inside_host_obstacle_id=cursor.inside_host_obstacle_id,
                 classes=cursor.classes, full_band=cursor.full_band,
                 association=final_association, maximum_stagger=cursor.maximum_stagger,
-                candidate_geometries=final_geometries, _budget_domain="final")
-            final_cursor._neighborhood_counts = dict(cursor._neighborhood_counts)
-            for side, rect, count, _final, canonical in final_cursor._normal_iterator:
-                cursor._neighborhood_counts = dict(final_cursor._neighborhood_counts)
+                candidate_geometries=final_geometries, _budget_domain="final",
+                _ledger=cursor._ledger)
+            for side, rect, count, provenance, canonical in final_cursor._normal_iterator:
                 cursor._canonical_obstructions = list(final_cursor._canonical_obstructions)
-                yield side, rect, count, True, canonical
+                yield side, rect, count, provenance, canonical
                 # Collision evaluation belongs to the outer cursor. Carry its
                 # canonical obstruction back before resuming the final domain.
                 final_cursor._canonical_obstructions = list(cursor._canonical_obstructions)
@@ -618,7 +690,8 @@ def _iter_contact_candidates(
         envelopes: Iterable[tuple[float, float, float, float]],
         *,
         admissible: Callable[[LabelRect, MemberNameAssociation | None, LabelRect], bool],
-        initial_count: int = 0,
+        ledger: _MemberNameSearchLedger,
+        budget_key: tuple[str, str],
         limit: int = 512,
 ) -> Iterator[tuple[str, LabelRect, int]]:
     """Shared finite contact-grid and lazy heap used by both label APIs."""
@@ -681,8 +754,7 @@ def _iter_contact_candidates(
             heappush(nearby, (abs(tangents[0]) + outward, item.rank, outward,
                               tangents[0], side, base, tangents, 0, side_bounds,
                               item.association))
-    count = initial_count
-    while nearby and count < limit:
+    while nearby and ledger.spent(budget_key) < limit:
         _, rank, outward, tangent, side, base, tangents, tangent_index, side_bounds, association = heappop(nearby)
         if outward != 0 or tangent != 0:
             candidate = (LabelRect(base.x + tangent, base.y - outward, base.width, base.height)
@@ -693,8 +765,8 @@ def _iter_contact_candidates(
                          if side == "start" else
                          LabelRect(base.x + outward, base.y + tangent, base.width, base.height))
             if admissible(candidate, association, side_bounds):
-                count += 1
-                yield side, candidate, count
+                if ledger.charge(budget_key, limit=limit):
+                    yield side, candidate, ledger.spent(budget_key)
         next_index = tangent_index + 1
         if next_index < len(tangents):
             next_tangent = tangents[next_index]
@@ -708,7 +780,8 @@ def _member_neighborhood(cursor: MemberNameSearchCursor, side: str,
                          association: MemberNameAssociation | None,
                          initial: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex,
                          *, anchor: LabelRect | None = None, final_rung: bool = False
-                         ) -> Iterator[tuple[str, LabelRect, int, bool, bool]]:
+                         ) -> Iterator[tuple[str, LabelRect, int,
+                                             MemberNameCandidateProvenance, bool]]:
     """Use the shared contact grid for one declared member-name side."""
     anchor = anchor or cursor.anchor
     base = _candidate(anchor, size, side, gap)
@@ -724,16 +797,15 @@ def _member_neighborhood(cursor: MemberNameSearchCursor, side: str,
             rect = item.bounds if isinstance(item, LabelObstacle) else item
             envelopes.append((rect.x, rect.y, rect.right, rect.bottom))
     budget_key = (cursor._budget_domain, side)
-    initial_count = cursor._neighborhood_counts.get(budget_key, 0)
     max_gap = maximum_end_gap - inset if side == "end" else None
     side_input = _ContactCandidateSide(0, side, base, bounds, association, gap, max_gap)
     for candidate_side, rect, count in _iter_contact_candidates(
             (side_input,), envelopes,
             admissible=lambda value, assoc, candidate_bounds: _member_candidate_allowed(
                 value, side, candidate_bounds, anchor, maximum_end_gap, inset, assoc),
-            initial_count=initial_count, limit=512):
-        cursor._neighborhood_counts[budget_key] = count
-        yield candidate_side, rect, count, final_rung, False
+            ledger=cursor._ledger, budget_key=budget_key, limit=512):
+        yield (candidate_side, rect, count,
+               MemberNameCandidateProvenance("neighborhood", side, cursor._budget_domain), False)
 
 
 @dataclass(frozen=True)
@@ -927,8 +999,10 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             for obstacle in blocked:
                 rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
                 envelopes.append((rect.x, rect.y, rect.right, rect.bottom))
+        contact_ledger = _MemberNameSearchLedger()
         for side, candidate, count in _iter_contact_candidates(
-                side_inputs, envelopes, admissible=admissible, limit=512):
+                side_inputs, envelopes, admissible=admissible, ledger=contact_ledger,
+                budget_key=("place-label", "shared"), limit=512):
             if clear(candidate, side):
                 return LabelPlacement(side, candidate, search_count=count,
                                       canonical_obstructions=tuple(obstructions))

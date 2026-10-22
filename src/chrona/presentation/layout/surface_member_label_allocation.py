@@ -94,15 +94,18 @@ def exchange_member_name(later: MemberLabelAllocation, earlier: tuple[MemberLabe
         return None
     owners = {obstacle.placement_id: allocation for allocation in earlier if allocation.movable
               for obstacle in member_group_obstacles(allocation)}
-    for evidence in later.search.evaluated_candidates:
-        blocker_ids = evidence.blocker_placement_ids
-        if evidence.is_fallback or not evidence.occupied or not blocker_ids:
+    for evidence in later.search.evaluated_normal_candidates:
+        current = later.search.revalidate(evidence, obstacles)
+        if current is None:
+            continue
+        blocker_ids = current.blocker_placement_ids
+        if not current.occupied or not blocker_ids:
             continue
         first = owners.get(blocker_ids[0])
         if first is None or any(owners.get(key) is not first for key in blocker_ids):
             continue
         old_ids = tuple(obstacle.placement_id for obstacle in member_group_obstacles(first))
-        held_later = replace(later, candidate=evidence.placement)
+        held_later = replace(later, candidate=current.placement)
         probe = obstacles.copy(excluded_ids=old_ids)
         probe.extend(member_group_obstacles(held_later))
         assert first.search is not None
@@ -112,7 +115,28 @@ def exchange_member_name(later: MemberLabelAllocation, earlier: tuple[MemberLabe
         # Neither accepted allocation nor the caller's index changes until both
         # names have normally clear completed geometry.
         first.candidate = alternative.placement
-        later.candidate = evidence.placement
+        later.candidate = current.placement
         first.exchanged = later.exchanged = True
         return first, old_ids
     return None
+
+
+def repair_member_names(allocations: tuple[MemberLabelAllocation, ...],
+                        obstacles: SurfaceObstacleIndex) -> SurfaceObstacleIndex:
+    """Close the failed-name queue without reordering normal admission.
+
+    Only the already-generated failed candidates and successful names' existing
+    unconsumed domains are available. Every probe sees all completed normal
+    groups and prior repairs, including later-admitted fixed names.
+    """
+    current = obstacles
+    for index in range(len(allocations) - 1, -1, -1):
+        allocation = allocations[index]
+        exchanged = exchange_member_name(allocation, allocations[:index], current)
+        if exchanged is None:
+            continue
+        earlier, old_ids = exchanged
+        current = current.copy(excluded_ids=old_ids)
+        current.extend(member_group_obstacles(earlier))
+        current.extend(member_group_obstacles(allocation))
+    return current

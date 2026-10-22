@@ -27,7 +27,7 @@ from chrona.presentation.layout.surface_member_label_measurement import (
     prepare_member_label_candidate, project_prepared_member_text,
 )
 from chrona.presentation.layout.surface_member_label_allocation import (
-    MemberLabelAllocation, exchange_member_name, member_group_obstacles, member_text_candidate,
+    MemberLabelAllocation, repair_member_names, member_group_obstacles, member_text_candidate,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
@@ -140,6 +140,20 @@ def _member_association_outcome(candidate: LabelPlacement | None, association: M
     if candidate is None and overflow != "suppress":
         raise LayoutError("E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE", f"/placement/{placement_id}")
     return candidate
+
+
+def _validate_member_allocation(allocation: MemberLabelAllocation) -> None:
+    """Retain the existing completed-text association/failure authority."""
+    geometry = allocation.selected_preparation().geometry
+    candidate = allocation.candidate
+    association = (geometry.final_association
+                   if candidate is not None and candidate.final_rung else geometry.association)
+    if allocation.delta_extra and association is not None:
+        association = replace(association,
+            maximum_distance=association.maximum_distance + allocation.delta_extra)
+    if association is not None:
+        allocation.candidate = _member_association_outcome(candidate, association,
+            overflow=allocation.request.overflow, placement_id=allocation.request.placement_id)
 
 
 def _finish_delta_anchor_diagnostic(request: LabelRequest, candidate: LabelPlacement) -> str | None:
@@ -617,31 +631,24 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 if label_request.candidates else None)
         allocation = MemberLabelAllocation(label_request, selected, prepared, styles,
             host, own_marks, associated_member, delta_extra, candidate, search)
-        exchanged = exchange_member_name(allocation, tuple(allocations), placement_obstacles)
-        if exchanged is not None:
-            earlier, old_ids = exchanged
-            allocation_index = allocation_index.copy(excluded_ids=old_ids)
-            allocation_index.extend(member_group_obstacles(earlier))
-        if allocation.candidate is None and search is not None:
+        ordinary_member = associated_member and not label_request.is_required_before_routes
+        if allocation.candidate is None and search is not None and not ordinary_member:
             fallback = search.next_fallback()
             allocation.candidate = fallback.placement if fallback is not None else None
-        selected = allocation.selected_preparation()
-        candidate = allocation.candidate
-        measurement, provisional, geometry, slot_bounds = (
-            selected.measurement, selected.provisional, selected.geometry, selected.slot_bounds)
-        association, final_association = geometry.association, geometry.final_association
-        if delta_extra and association is not None:
-            association = replace(association, maximum_distance=association.maximum_distance + delta_extra)
-        if delta_extra and final_association is not None:
-            final_association = replace(final_association,
-                                        maximum_distance=final_association.maximum_distance + delta_extra)
-        if association is not None:
-            candidate = _member_association_outcome(candidate,
-                final_association if candidate is not None and candidate.final_rung else association,
-                overflow=effective_overflow, placement_id=label_request.placement_id)
-        allocation.candidate = candidate
+        if allocation.candidate is not None or not ordinary_member:
+            _validate_member_allocation(allocation)
         allocations.append(allocation)
         allocation_index.extend(member_group_obstacles(allocation))
+
+    repair_index = allocation_index.copy(geometry_overrides=paint_footprints, excluded_ids=("as-of",))
+    repair_index.extend(context.intrinsic_endpoint_footprints)
+    repair_index = repair_member_names(tuple(allocations), repair_index)
+    for allocation in allocations:
+        if allocation.candidate is None and allocation.search is not None:
+            fallback = allocation.search.next_fallback(repair_index)
+            allocation.candidate = fallback.placement if fallback is not None else None
+            _validate_member_allocation(allocation)
+            repair_index.extend(member_group_obstacles(allocation))
 
     # Allocation closes before any Text/chip/icon group is emitted. A local
     # exchange can therefore replace a whole group without stale children or

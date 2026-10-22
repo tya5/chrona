@@ -199,11 +199,19 @@ def test_failed_exchange_with_no_alternative_keeps_accepted_group_unchanged():
 
 
 def test_later_request_does_not_cascade_by_moving_an_already_exchanged_name():
-    context, obstacles = _hosted_context_and_obstacles(first_x=60, second_x=120)
+    first = _mark("planned:first:first", 60)
+    second_host = MarkPlacement("planned:second:second", "planned:second:second",
+        Rect(Decimal(120), Decimal(52), Decimal(10), Decimal(10)), (120, 57), (130, 57),
+        slot_id="timeline", semantic_id="planned", mark_shape="point")
     third = _mark("planned:third:third", 155)
-    context = replace(context, marks=(*context.marks, third))
-    obstacles.add(SurfaceObstacle(third.placement_id, "mark", "timeline",
-        ObstacleRect(155, 40, 165, 50)))
+    context = replace(_placement_context(), marks=(first, second_host, third))
+    context.layout_manifest.member_names = {"search": "full-band"}
+    obstacles = SurfaceObstacleIndex()
+    for mark in (first, second_host, third):
+        x, y, width, height = (float(mark.bounds.inline), float(mark.bounds.block),
+                               float(mark.bounds.inline_size), float(mark.bounds.block_size))
+        obstacles.add(SurfaceObstacle(mark.placement_id, "mark", "timeline",
+            ObstacleRect(x, y, x + width, y + height)))
     first = _request("member-label:first", "planned:first:first", "AAAA", 60, ("end", "start"))
     second = _request("member-label:second", "planned:second:second", "BBBB", 120, ("start",))
     last = _request("member-label:third", third.placement_id, "CCCC", 155, ("start",))
@@ -212,11 +220,61 @@ def test_later_request_does_not_cascade_by_moving_an_already_exchanged_name():
 
     by_id = {item.placement_id: item for item in batch.text}
     assert by_id[first.placement_id].selected_rung == "start"
-    assert by_id[second.placement_id].selected_rung == "start"
-    assert by_id[last.placement_id].overflow == "suppressed"
+    assert by_id[second.placement_id].overflow == "suppressed"
+    assert by_id[last.placement_id].selected_rung == "start"
     assert obstacles.has(f"label-footprint:{first.placement_id}")
-    assert obstacles.has(f"label-footprint:{second.placement_id}")
-    assert not obstacles.has(f"label-footprint:{last.placement_id}")
+    assert not obstacles.has(f"label-footprint:{second.placement_id}")
+    assert obstacles.has(f"label-footprint:{last.placement_id}")
+
+
+def test_deferred_exchange_revalidates_cached_pose_against_later_normal_name():
+    first = _mark("planned:first:first", 60)
+    second = MarkPlacement("planned:second:second", "planned:second:second",
+        Rect(Decimal(130), Decimal(52), Decimal(10), Decimal(10)), (130, 57), (140, 57),
+        slot_id="timeline", semantic_id="planned", mark_shape="point")
+    third = MarkPlacement("planned:third:third", "planned:third:third",
+        Rect(Decimal(134), Decimal(52), Decimal(10), Decimal(10)), (134, 57), (144, 57),
+        slot_id="timeline", semantic_id="planned", mark_shape="point")
+    context = replace(_placement_context(), marks=(first, second, third))
+    context.layout_manifest.member_names = {"search": "full-band"}
+    obstacles = SurfaceObstacleIndex()
+    for mark in (first, second, third):
+        x, y, width, height = (float(mark.bounds.inline), float(mark.bounds.block),
+                               float(mark.bounds.inline_size), float(mark.bounds.block_size))
+        obstacles.add(SurfaceObstacle(mark.placement_id, "mark", "timeline",
+            ObstacleRect(x, y, x + width, y + height)))
+    first_request = _request("member-label:first", first.placement_id, "AA", 60, ("end", "start"))
+    blocked_request = _request("member-label:second", second.placement_id, "BBBBBB", 130, ("start",))
+    later_request = _request("member-label:third", third.placement_id, "CC", 134, ("start",))
+
+    baseline_context = replace(context, marks=(first,))
+    baseline_obstacles = SurfaceObstacleIndex()
+    baseline_obstacles.add(SurfaceObstacle(first.placement_id, "mark", "timeline",
+        ObstacleRect(60, 40, 70, 50)))
+    baseline = place_member_labels(baseline_context, (first_request,), baseline_obstacles)
+    batch = place_member_labels(context, (first_request, blocked_request, later_request), obstacles)
+
+    by_id = {item.placement_id: item for item in batch.text}
+    assert by_id[first_request.placement_id] == baseline.text[0]
+    assert by_id[blocked_request.placement_id].overflow == "suppressed"
+    assert by_id[later_request.placement_id].overflow != "suppressed"
+    assert obstacles.has(f"label-footprint:{first_request.placement_id}")
+    assert not obstacles.has(f"label-footprint:{blocked_request.placement_id}")
+    assert obstacles.has(f"label-footprint:{later_request.placement_id}")
+
+
+def test_normal_exchange_is_attempted_before_declared_visible_fallback():
+    context, obstacles = _hosted_context_and_obstacles(first_x=60, second_x=120)
+    first = _request("member-label:first", "planned:first:first", "AAAA", 60, ("end", "start"))
+    second = replace(_request("member-label:second", "planned:second:second", "BBBB", 120, ("start",)),
+        overflow="visible-overflow", visible_fallback_side="start")
+
+    batch = place_member_labels(context, (first, second), obstacles)
+
+    by_id = {item.placement_id: item for item in batch.text}
+    assert by_id[first.placement_id].selected_rung == "start"
+    assert by_id[second.placement_id].selected_rung == "start"
+    assert by_id[second.placement_id].overflow == "fit"
 
 
 def test_exchange_selects_prepared_inside_role_and_replaces_complete_group():

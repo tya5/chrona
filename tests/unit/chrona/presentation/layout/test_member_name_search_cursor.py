@@ -117,6 +117,11 @@ def test_exhausted_side_domains_cannot_restart_with_a_clear_probe(sides):
     assert cursor.next_clear(_index()) is None
     assert cursor.neighborhood_evaluated_count == 512 * len(sides)
     assert cursor.evaluated_count == evaluated
+    neighborhood = cursor.evaluated_normal_candidates[-1]
+    assert neighborhood.provenance.kind == "neighborhood"
+    actual_evaluations = cursor.total_actual_evaluations
+    assert cursor.revalidate(neighborhood, _index()) is None
+    assert cursor.total_actual_evaluations == actual_evaluations
 
 
 def test_final_own_mark_neighbor_retains_its_canonical_blocker_evidence():
@@ -135,6 +140,17 @@ def test_final_own_mark_neighbor_retains_its_canonical_blocker_evidence():
     obstruction, = candidate.placement.canonical_obstructions
     assert obstruction.occupied
     assert obstruction.blocker_placement_ids == ("blocker",)
+    assert candidate.provenance.kind == "neighborhood"
+    assert candidate.provenance.side == "end"
+    assert candidate.provenance.domain == "final"
+    spend_before = cursor.neighborhood_domain_spend
+    assert spend_before.get(("normal", "end"), 0) <= 512
+    assert spend_before.get(("final", "end"), 0) > 0
+    refreshed = cursor.revalidate(candidate, _index())
+    assert refreshed is not None
+    spend_after = cursor.neighborhood_domain_spend
+    assert spend_after[("final", "end")] == spend_before[("final", "end")] + 1
+    assert spend_after.get(("normal", "end"), 0) == spend_before.get(("normal", "end"), 0)
 
 
 def test_repair_probe_after_a_clear_selection_consumes_only_the_unsearched_suffix():
@@ -155,3 +171,81 @@ def test_repair_probe_after_a_clear_selection_consumes_only_the_unsearched_suffi
     assert cursor.next_clear(_index()) is None
     assert cursor.evaluated_count == 513
     assert cursor.evaluated_candidates[0] is accepted
+
+
+def test_revalidation_charges_neighborhood_ledger_and_resume_reads_the_shared_spend():
+    anchor = LabelRect(50, 50, 10, 10)
+    blocker = SurfaceObstacle("blocker", "mark", "timeline", ObstacleRect(60, 50, 80, 60))
+    cursor = start_member_name_search(anchor, (20, 10), ("end",),
+        bounds=LabelRect(0, 0, 200, 120), obstacles=_index(blocker), gap=0,
+        maximum_end_gap=100)
+
+    canonical = cursor.next_candidate()
+    neighbor = cursor.next_candidate()
+    assert canonical is not None and canonical.provenance.kind == "canonical"
+    assert neighbor is not None and neighbor.provenance.kind == "neighborhood"
+    assert neighbor.provenance.domain == "normal"
+    history_before = cursor.evaluated_candidates
+    actual_before = cursor.total_actual_evaluations
+    spent_before = cursor.neighborhood_evaluated_count
+
+    refreshed = cursor.revalidate(neighbor, _index())
+    assert refreshed is not None and not refreshed.occupied
+    assert refreshed.placement == neighbor.placement
+    assert cursor.evaluated_candidates == history_before
+    assert cursor.total_actual_evaluations == actual_before + 1
+    assert cursor.neighborhood_evaluated_count == spent_before + 1
+
+    resumed = cursor.next_candidate()
+    assert resumed is not None and resumed.provenance.kind == "neighborhood"
+    assert resumed.placement.search_count == cursor.neighborhood_evaluated_count
+
+
+def test_uncapped_canonical_and_full_band_revalidation_does_not_spend_neighborhood_quota():
+    anchor = LabelRect(10, 40, 10, 10)
+    cursor = start_member_name_search(anchor, (20, 10), ("end",),
+        bounds=LabelRect(0, 0, 100, 100), obstacles=_index(), gap=0,
+        maximum_end_gap=100)
+    canonical = cursor.next_candidate()
+    assert canonical is not None and canonical.provenance.kind == "canonical"
+    history_size = cursor.evaluated_count
+    actual_count = cursor.total_actual_evaluations
+    assert cursor.revalidate(canonical, _index()) is not None
+    assert cursor.revalidate(canonical, _index()) is not None
+    assert cursor.neighborhood_evaluated_count == 0
+    assert cursor.evaluated_count == history_size
+    assert cursor.total_actual_evaluations == actual_count + 2
+
+    full_band = start_member_name_search(anchor, (20, 10), ("end",),
+        bounds=LabelRect(0, 0, 100, 100), obstacles=_index(), gap=0,
+        maximum_end_gap=100, full_band=True)
+    event = full_band.next_candidate()
+    assert event is not None and event.provenance.kind == "full-band"
+    full_band_history = full_band.evaluated_count
+    full_band_actual = full_band.total_actual_evaluations
+    refreshed_event = full_band.revalidate(event, _index())
+    assert refreshed_event is not None
+    assert refreshed_event.placement == event.placement
+    assert full_band.neighborhood_evaluated_count == 0
+    assert full_band.evaluated_count == full_band_history
+    assert full_band.total_actual_evaluations == full_band_actual + 1
+    assert event.placement.search_count == len({40, 0, 90})
+
+
+def test_revalidation_refuses_foreign_and_fallback_evidence():
+    args = dict(anchor=LabelRect(10, 40, 10, 10), size=(20, 10), candidates=("end",),
+                bounds=LabelRect(0, 0, 100, 100), gap=0, maximum_end_gap=100)
+    first = start_member_name_search(**args)
+    second = start_member_name_search(**args)
+    candidate = first.next_candidate()
+    assert candidate is not None
+    assert second.revalidate(candidate, _index()) is None
+
+    blocked = start_member_name_search(
+        anchor=LabelRect(10, 40, 10, 10), size=(20, 10), candidates=("end",),
+        bounds=LabelRect(20, 40, 20, 10), obstacles=(LabelRect(20, 40, 40, 50),),
+        gap=0, maximum_end_gap=100, overflow="visible-overflow")
+    assert blocked.next_clear() is None
+    fallback = blocked.next_fallback()
+    assert fallback is not None and fallback.is_fallback
+    assert blocked.revalidate(fallback, _index()) is None
