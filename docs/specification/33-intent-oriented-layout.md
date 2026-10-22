@@ -1007,7 +1007,10 @@ plus the total contributor count. Attribute completed geometry and allocated
 slots, not self-derived full-canvas textures or overlays. Both table-timeline
 and dependency-network obey the same rule. Scene carries the completed warning;
 the shared report producer formats it with stable surface/source identity and
-`sourceRef: /body/environment/viewport`. Fitting surfaces emit none.
+`sourceRef: /body/environment/viewport`. Fitting surfaces emit none. The
+reported message points to the user guide `docs/guides/fixed-size-output.md`,
+which states that the viewport is a minimum and Chrona has no fit-to-page,
+shrinking or pagination (#1870).
 
 **Auto-block readability limit and paging decision (#1299).**
 
