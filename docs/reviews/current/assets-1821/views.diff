@@ -1,0 +1,69 @@
+--- chrona preset copy yuya: view.yaml
++++ view-override-wd.yaml
+@@ -16,6 +16,7 @@
+     countdown:
+       figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
+   wording:
++    keys: {delta.unit.workingDay: wd}
+     summary:
+       countdown.title: 完了まで
+   figures:
+--- chrona preset copy yuya: view.yaml
++++ view-override-営.yaml
+@@ -16,6 +16,7 @@
+     countdown:
+       figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
+   wording:
++    keys: {delta.unit.workingDay: 営}
+     summary:
+       countdown.title: 完了まで
+   figures:
+--- chrona preset copy yuya: view.yaml
++++ view-both.yaml
+@@ -49,7 +49,7 @@
+     - unmatchedActual
+   visibility:
+     labels:
+-      placement: table
++      placement: both
+       content:
+       - path
+       - finishDelta
+--- chrona preset copy yuya: view.yaml
++++ view-override-wd-both.yaml
+@@ -16,6 +16,7 @@
+     countdown:
+       figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
+   wording:
++    keys: {delta.unit.workingDay: wd}
+     summary:
+       countdown.title: 完了まで
+   figures:
+@@ -49,7 +50,7 @@
+     - unmatchedActual
+   visibility:
+     labels:
+-      placement: table
++      placement: both
+       content:
+       - path
+       - finishDelta
+--- chrona preset copy yuya: view.yaml
++++ view-override-営-both.yaml
+@@ -16,6 +16,7 @@
+     countdown:
+       figure: {kind: daysUntil, to: {project: lastPlannedFinish}}
+   wording:
++    keys: {delta.unit.workingDay: 営}
+     summary:
+       countdown.title: 完了まで
+   figures:
+@@ -49,7 +50,7 @@
+     - unmatchedActual
+   visibility:
+     labels:
+-      placement: table
++      placement: both
+       content:
+       - path
+       - finishDelta

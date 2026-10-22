@@ -1,0 +1,4 @@
+$ .venv/bin/python -m pytest -q -rs -n 4 tests/integration/test_finish_delta_unit_wording.py tests/integration/test_preset_font_sets.py tests/integration/test_ja_jp_builtin_wording.py tests/integration/test_update_a_plan_guide_weekly_1870.py tests/integration/test_locale_and_wording_guide.py  (on 734483472)
+
+.............................................                            [100%]
+45 passed in 26.89s

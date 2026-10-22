@@ -1,0 +1,67 @@
+$ git -C ../rv rev-parse --short HEAD
+734483472
+$ sed -n 8p src/chrona/resources/presets/bundles/editorial-readable-default/layout.yaml
+viewDefaults: {columnStyles: {facet: {format: signedDays, missing: blank, align: end, width: content, headerOrientation: horizontal}}}
+
+# bundled default preset (no --preset = chrona-default-draft, Layout editorial-readable-default); View column has no format
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --output default.svg --emit-scene default.json
+  status ok
+  Delta cells: +6d*  +2d*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset mission-light --output mission-light.svg --emit-scene mission-light.json
+  status rejected E_FORECAST_PRESENTATION_REQUIRED
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset control-room-dark --output control-room-dark.svg --emit-scene control-room-dark.json
+  status rejected E_FORECAST_PRESENTATION_REQUIRED
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset print-mono --output print-mono.svg --emit-scene print-mono.json
+  status rejected E_FORECAST_PRESENTATION_REQUIRED
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset executive-light --output executive-light.svg --emit-scene executive-light.json
+  status ok
+  Delta cells: +6d*  +2d*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset elevated-light --output elevated-light.svg --emit-scene elevated-light.json
+  status ok
+  Delta cells: +6d*  +2d*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset technical-print --output technical-print.svg --emit-scene technical-print.json
+  status ok
+  Delta cells: +6d*  +2d*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset muted-executive --output muted-executive.svg --emit-scene muted-executive.json
+  status ok
+  Delta cells: +6d*  +2d*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset wallboard-dark --output wallboard-dark.svg --emit-scene wallboard-dark.json
+  status ok
+  Delta cells: +6d*  +2d*
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --forecast --view view-no-format.yaml --preset editorial --output editorial.svg --emit-scene editorial.json
+  status ok
+  Delta cells: 6*  2*
+
+# mission-light, control-room-dark and print-mono reject --forecast (E_FORECAST_PRESENTATION_REQUIRED: no legend slot), so they are rendered without it
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --view view-no-format.yaml --preset mission-light --output mission-light-noforecast.svg --emit-scene mission-light-noforecast.json
+  status ok
+  Delta cells: +6d  
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --view view-no-format.yaml --preset control-room-dark --output control-room-dark-noforecast.svg --emit-scene control-room-dark-noforecast.json
+  status ok
+  Delta cells: +6d  
+$ chrona render plan.yaml --snapshot baseline.yaml --actual actual-b-day-before.yaml --view view-no-format.yaml --preset print-mono --output print-mono-noforecast.svg --emit-scene print-mono-noforecast.json
+  status ok
+  Delta cells: +6d  
+
+$ grep -o "<text[^>]*>[^<]*d\*</text>" default.svg | sed "s/<text[^>]*>//"
++6d*</text>
++2d*</text>
+
+$ git -C ../rv show e110e5037 -- docs/guides/update-a-plan.md
+diff --git a/docs/guides/update-a-plan.md b/docs/guides/update-a-plan.md
+index c3e987a28..47f8796f6 100644
+--- a/docs/guides/update-a-plan.md
++++ b/docs/guides/update-a-plan.md
+@@ -142,8 +142,10 @@ Reading `update-after.svg`:
+   against the current plan; it does not use the Snapshot as its delta baseline.
+ 
+ **A `Δ` column of your own.** The `Δ vs plan` column above is the design's: it declares its cell format. A column
+-you write in a View with `source: {facet: finishDelta}` and no `format` draws the bare number (`5*` for an
+-estimated forecast), without sign or unit. Add `format: signedDays` to the column to read `+5d*`; the unit text
++you write in a View with `source: {facet: finishDelta}` and no `format` takes the design's `facet` column
++style: the bundled presets except `editorial` (whose Layout mirrors the HALCYON-1 corpus) declare `format: signedDays`, so it reads `+5d*` for an estimated forecast. A design
++of your own without that style draws the bare number (`5*`), without sign or unit; add `format: signedDays` to the
++column or a `facet` style to its Layout Profile's `viewDefaults.columnStyles`. The unit text
+ follows `comparison.deltaUnit` and the locale (`d`, or `日` and `営業日` in `ja-JP`; see
+ [Locale and wording](locale-and-wording.md)):
+ 

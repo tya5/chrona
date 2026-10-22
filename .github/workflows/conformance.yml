@@ -81,13 +81,15 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
-      - name: Reject derived edits and materialize one PR snapshot
+      - name: Reject derived edits (source-only, timed as its own step)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          python -m tools.derived_workflow source-only "$BASE_SHA" "$HEAD_SHA"
-          python -m tools.derived_workflow snapshot "$BASE_SHA" derived-snapshot.tar.gz
+        run: python -m tools.derived_workflow source-only "$BASE_SHA" "$HEAD_SHA"
+      - name: Materialize one PR snapshot
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python -m tools.derived_workflow snapshot "$BASE_SHA" derived-snapshot.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: derived-snapshot-${{ github.event.pull_request.head.sha }}

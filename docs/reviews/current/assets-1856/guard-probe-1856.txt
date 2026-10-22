@@ -1,0 +1,12 @@
+$ python probe1856.py   # mutates wording_catalog() in memory only: adds en-US marker.probeNew = "probe"; then sets missing.unknown = "Unknown"
+guard fails as required: a new lower-case en-US value must be sentence case, or be added to the fragment exception in docs/guides/locale-and-wording.md and Spec 63 (#1856)
+guard also fails when a listed key stops being lower case
+
+$ python -c "..."   # the lower-case en-US values on main
+delta.unit.calendarDay 'd'
+delta.unit.workingDay 'd'
+marker.baselineNew 'new'
+marker.baselineRemoved 'removed'
+missing.inProgress 'in progress'
+missing.unknown 'unknown'
+6 lower-case values of 58

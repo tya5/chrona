@@ -1,0 +1,29 @@
+"""Run `derived_workflow source-only` end to end on a 38-path diff (19 declared outputs + 19 source paths)
+of the real repository, counting derived_paths(root) builds and wall time. Same script before and after."""
+import sys, time
+from pathlib import Path
+root = Path.cwd().resolve()
+sys.path.insert(0, str(root))
+from tools import derived_workflow as dw
+decl = sorted(p.relative_to(root).as_posix() for p in dw.derived_paths(root))
+step = max(1, len(decl) // 19)
+declared = decl[::step][:19]
+src = sorted(p.as_posix() for p in (root / "src/chrona").rglob("*.py"))[:19]
+src = [Path(s).relative_to(root).as_posix() for s in src]
+changed = tuple(sorted(declared + src))
+calls = []
+real = dw.derived_paths
+def counted(r):
+    calls.append(1); return real(r)
+dw.derived_paths = counted
+dw.changed_paths = lambda *_: changed
+sys.argv = ["derived_workflow", "source-only", "base", "head"]
+t = time.perf_counter()
+try:
+    dw.main(); out = "accepted"
+except SystemExit as e:
+    out = str(e)
+dt = time.perf_counter() - t
+rej = out.removeprefix("E_DERIVED_SOURCE_ONLY:").split(",") if out != "accepted" else []
+print(f"paths={len(changed)} (declared {len(declared)}, source {len(src)})")
+print(f"derived_paths builds={len(calls)} wall={dt:.1f}s rejected={len(rej)} sha={__import__('hashlib').sha256(out.encode()).hexdigest()[:12]}")
