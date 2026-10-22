@@ -549,24 +549,177 @@ class SurfaceObstacleIndex:
                                   actual_classes=tuple((host, self._by_id[host].obstacle_class
                                                         if host in self._by_id else None)
                                                        for host in hosts))
-        def shared_endpoint_branch(item: SurfaceObstacle) -> bool:
-            other = item.geometry
-            if (item.obstacle_class not in {"dependency-route", "leader-route"}
-                    or not isinstance(other, ObstacleSegment)
-                    or segment.start not in (other.start, other.end)):
-                return False
-            far = other.end if segment.start == other.start else other.start
-            cross = _cross(segment.start, segment.end, far)
-            dot = ((segment.end[0] - segment.start[0]) * (far[0] - segment.start[0])
-                   + (segment.end[1] - segment.start[1]) * (far[1] - segment.start[1]))
-            return abs(cross) > BOUNDARY_CONTACT_TOLERANCE or dot < 0
-
         return tuple(item for item in self.collisions(segment, classes=classes, regions=regions,
                                                        port_ids=port_ids)
-                     if item.placement_id not in hosts and not shared_endpoint_branch(item))
+                     if item.placement_id not in hosts and not _shared_endpoint_branch(item, segment))
+
+
+class SurfaceObstacleQueryOverlay(SurfaceObstacleIndex):
+    """Read-only one-obstacle view over an existing surface inventory.
+
+    The overlay intentionally does not initialize or copy the base index. Its
+    collision queries reuse the base index's prepared selections and spatial
+    grid, testing the one provisional obstacle with the same exact predicates.
+    It exists for short-lived annotation searches; accepted geometry always
+    remains owned by the base index.
+    """
+
+    __slots__ = ("_base", "_overlay", "_visibility_key", "_visibility_scope")
+
+    def __init__(self, base: SurfaceObstacleIndex, obstacle: SurfaceObstacle) -> None:
+        if not isinstance(base, SurfaceObstacleIndex) or isinstance(base, SurfaceObstacleQueryOverlay):
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "query overlay base",
+                                  actual_type=type(base).__name__)
+        if base.has(obstacle.placement_id):
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_ID_DUPLICATE", "query overlay",
+                                  placement_id=obstacle.placement_id)
+        object.__setattr__(self, "_base", base)
+        object.__setattr__(self, "_overlay", obstacle)
+        # This scope is private to this immutable body and base-selection
+        # generation. It never borrows a graph that omits the overlay.
+        object.__setattr__(self, "_visibility_key", None)
+        object.__setattr__(self, "_visibility_scope", None)
+
+    def __setattr__(self, name, value) -> None:
+        raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "read-only query overlay",
+                              operation="attribute assignment", attribute=name)
+
+    def add(self, obstacle: SurfaceObstacle) -> None:
+        raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "read-only query overlay", operation="add")
+
+    def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
+        raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "read-only query overlay", operation="extend")
+
+    def copy(self, **kwargs) -> SurfaceObstacleIndex:
+        raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "read-only query overlay", operation="copy")
+
+    def all(self) -> tuple[SurfaceObstacle, ...]:
+        return tuple(sorted((*self._base.all(), self._overlay), key=lambda item: item.placement_id))
+
+    def has(self, placement_id: str) -> bool:
+        return placement_id == self._overlay.placement_id or self._base.has(placement_id)
+
+    def get(self, placement_id: str) -> SurfaceObstacle | None:
+        if placement_id == self._overlay.placement_id:
+            return self._overlay
+        return self._base.get(placement_id)
+
+    def select(self, *, classes: Iterable[str] | None = None,
+               regions: Iterable[str] | None = None) -> tuple[SurfaceObstacle, ...]:
+        selected_classes = None if classes is None else frozenset(classes)
+        selected_regions = None if regions is None else frozenset(regions)
+        items = self._base.select(classes=selected_classes, regions=selected_regions)
+        if not SurfaceObstacleIndex._matches_selection(self._overlay,
+                                                        selected_classes, selected_regions):
+            return items
+        return tuple(sorted((*items, self._overlay), key=lambda item: item.placement_id))
+
+    def route_memo_scope(self, classes: Iterable[str] | None, regions: Iterable[str] | None,
+                         port_ids: Iterable[str]) -> tuple[_RouteMemo, int] | None:
+        selected_classes = None if classes is None else frozenset(classes)
+        selected_regions = None if regions is None else frozenset(regions)
+        base_scope = self._base.route_memo_scope(selected_classes, selected_regions, port_ids)
+        if base_scope is None or not SurfaceObstacleIndex._matches_selection(
+                self._overlay,
+                selected_classes, selected_regions):
+            return None if base_scope is None else base_scope
+        memo, base_content_id = base_scope
+        # Content identity is exact and per-base-selection; two different
+        # provisional bodies cannot alias even when every other query agrees.
+        content_id = memo.content_id((repr(("query-overlay-v1", base_content_id,
+                                            self._overlay)),))
+        return None if content_id is None else (memo, content_id)
+
+    def route_visibility_scope(self, classes: Iterable[str] | None, regions: Iterable[str] | None,
+                               port_ids: Iterable[str]) -> RouteVisibilityScope:
+        selected_classes = None if classes is None else frozenset(classes)
+        selected_regions = None if regions is None else frozenset(regions)
+        base_scope = self._base.route_visibility_scope(selected_classes, selected_regions, port_ids)
+        include_overlay = SurfaceObstacleIndex._matches_selection(
+            self._overlay, selected_classes, selected_regions)
+        if not include_overlay:
+            return base_scope
+        selection = self._base._selection(selected_classes, selected_regions)
+        key = (selected_classes, selected_regions, selection)
+        if key != self._visibility_key:
+            previous = base_scope.bases
+            additions = (self._overlay,)
+            if not base_scope.bases and base_scope.previous_bases:
+                previous = base_scope.previous_bases
+                additions = (*base_scope.additions, self._overlay)
+            scope = RouteVisibilityScope({}, base_scope.port_ids, previous, additions, {})
+            object.__setattr__(self, "_visibility_key", key)
+            object.__setattr__(self, "_visibility_scope", scope)
+        else:
+            scope = self._visibility_scope
+        assert scope is not None
+        return RouteVisibilityScope(scope.bases, base_scope.port_ids,
+                                    scope.previous_bases, scope.additions,
+                                    scope.endpoint_geometry)
+
+    def collisions(self, geometry: ObstacleGeometry, *, classes: Iterable[str] | None = None,
+                   regions: Iterable[str] | None = None, host_id: str | None = None,
+                   rule_host_id: str | None = None, port_ids: Iterable[str] = (),
+                   clearance: float = 0.0) -> tuple[SurfaceObstacle, ...]:
+        # The base owns all exemption validation. In particular, overlay IDs
+        # cannot masquerade as mark/rule/port identities.
+        selected_classes = None if classes is None else frozenset(classes)
+        selected_regions = None if regions is None else frozenset(regions)
+        found = self._base.collisions(geometry, classes=selected_classes, regions=selected_regions,
+                                      host_id=host_id, rule_host_id=rule_host_id,
+                                      port_ids=port_ids, clearance=clearance)
+        if self._overlay_collision(geometry, selected_classes, selected_regions, clearance):
+            found = (*found, self._overlay)
+        return tuple(sorted(found, key=lambda item: item.placement_id))
+
+    def _overlay_collision(self, geometry: ObstacleGeometry,
+                           classes: frozenset[str] | None,
+                           regions: frozenset[str] | None,
+                           clearance: float) -> bool:
+        if not SurfaceObstacleIndex._matches_selection(self._overlay, classes, regions):
+            return False
+        candidate_box = obstacle_envelope(geometry)
+        reach = clearance + self._overlay.clearance
+        overlay_box = obstacle_envelope(self._overlay.geometry)
+        return (_envelopes_overlap(candidate_box, overlay_box, reach)
+                and _intersects(geometry, self._overlay.geometry, reach))
+
+    def egress_collisions(self, segment: ObstacleSegment, *, host_ids: Iterable[str],
+                          classes: Iterable[str] | None = None,
+                          regions: Iterable[str] | None = None,
+                          port_ids: Iterable[str] = ()) -> tuple[SurfaceObstacle, ...]:
+        # Delegate first so the base applies its exact nonempty, mark-only host
+        # validation; then add the overlay through ordinary collision rules.
+        hosts = frozenset(host_ids)
+        selected_classes = None if classes is None else frozenset(classes)
+        selected_regions = None if regions is None else frozenset(regions)
+        base_hits = self._base.egress_collisions(segment, host_ids=hosts,
+                                                 classes=selected_classes,
+                                                 regions=selected_regions, port_ids=port_ids)
+
+        hits = base_hits
+        if (self._overlay_collision(segment, selected_classes, selected_regions, 0.0)
+                and self._overlay.placement_id not in hosts
+                and not _shared_endpoint_branch(self._overlay, segment)):
+            hits = (*hits, self._overlay)
+        return tuple(sorted(hits, key=lambda item: item.placement_id))
 
 
 def _envelopes_overlap(left: tuple[float, float, float, float],
                        right: tuple[float, float, float, float], clearance: float) -> bool:
     return (left[0] <= right[2] + clearance and right[0] - clearance <= left[2]
             and left[1] <= right[3] + clearance and right[1] - clearance <= left[3])
+
+
+def _shared_endpoint_branch(item: SurfaceObstacle, segment: ObstacleSegment) -> bool:
+    """Whether a route shares only the existing legal endpoint branch."""
+    other = item.geometry
+    if (item.obstacle_class not in {"dependency-route", "leader-route"}
+            or not isinstance(other, ObstacleSegment)
+            or segment.start not in (other.start, other.end)):
+        return False
+    far = other.end if segment.start == other.start else other.start
+    cross = _cross(segment.start, segment.end, far)
+    dot = ((segment.end[0] - segment.start[0]) * (far[0] - segment.start[0])
+           + (segment.end[1] - segment.start[1]) * (far[1] - segment.start[1]))
+    return abs(cross) > BOUNDARY_CONTACT_TOLERANCE or dot < 0
