@@ -89,6 +89,44 @@ Removed source subtrees have no frame/caption placement decision and emit no
 frame-omitted or slot-heading-omitted notice; those notices still apply to
 content-present nodes whose placement cannot fit.
 
+**Completion-selected source demand (#1906).** Potential legend entries and
+potential annotation destinations are measurement inventory, not proof that
+normal flow consumes them. Before accepting a composition, Layout closes the
+legend source against its actually realized entry sequence and the annotations
+source against its actually selected in-flow card, list, summary and status
+records. Plot callouts and note-index marks do not themselves consume footer
+flow. A narrative receipt alone is not a source-demand witness.
+
+The typed witness retains content and source identities, exact shown text,
+typography and visual treatment, line partitions, allocated inline witnesses,
+and intrinsic row/frame/chrome/gap block demand. Anchor-derived whitespace and
+absolute placement coordinates are not intrinsic demand. An empty selected
+flow source removes its leaf and newly empty ancestors, including gaps and
+frames, through normal tree normalization. Retain the immutable original
+resolved profile and declared destination inventory: a candidate that actually
+needs a pruned but declared destination requests internal activation and a
+fresh allocation. A genuinely undeclared destination retains its existing
+public configuration error. Merely declaring a fallback does not activate it;
+failed placement is never reclassified as absent content.
+
+Re-solve the complete authored profile and recompose dependent geometry when
+the source witness changes; never shrink only a Scene slot or crop the canvas.
+The final legend filter always reads the full potential inventory, not only
+the previous trial's subset. Every accepted witness must match the final
+completed content and measurements. Fresh mutable placement, obstacle and
+route-budget state is used per joint count/source trial; only the accepted
+joint invocation publishes geometry, diagnostics, executed-pass facts and
+buffered progress. Source closure sits inside the existing placed-note count
+coordinator. Completed geometry may be reused when exact normal-flow,
+preparation and source-witness dependencies match; equal viewport dimensions
+or entry counts alone are not a reuse witness.
+Memoize the joint finite content state (count trial, entry/consumer identities,
+selected text/treatment and line partitions). A repeated state without matching
+source-demand witnesses is `E_LAYOUT_SOURCE_CONTENT_UNSTABLE`, naming the
+sources and conflicting witnesses; numeric drift within the same content state
+is not acceptance or an unbounded retry. There is no new search quota, phantom
+key, viewport clamp, source-cap waiver or renderer-side recovery.
+
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
 schema. A resource contains exactly one of:
 
@@ -276,13 +314,14 @@ narrative occurrences in the immutable input. Try candidate counts N down to0;
 accept the first completed layout whose receipts equal its candidate. Each
 trial has fresh mutable placement/obstacle/diagnostic state and count-correct
 SourceInputs; rejected trials leak no placement/index state or diagnostics.
-At mostN+1 trials, not guessed-count convergence. No consistent count is
+At mostN+1 count candidates, not guessed-count convergence; each candidate
+closes the finite source-content states above. No consistent count is
 `E_LAYOUT_FIGURE_COUNT_UNSTABLE`, with domain/trial count; never substitute
-selected counts. No late template read means one ordinary composition; unused
+selected counts. No late template read means one ordinary source-closed result; unused
 late figures then resolve from its receipts. Scene/adapters do not recount
 or replace text after geometry. Existing resources remain unchanged.
 Route-budget facts are local to a complete Layout invocation: discard a
-rejected whole-count candidate, but retain every executed route/label pass
+rejected whole joint count/source candidate, but retain every executed route/label pass
 fact inside the accepted invocation, including rejected recovery passes (Spec50).
 Reject only typed candidate-admission failures, including unavailable number
 names or count-dependent required fit; retain their evidence on no solution.
@@ -298,7 +337,7 @@ Existing caption overflow/ellipsis policy does not acquire a new fit rejection.
 The complete count coordinator consumes SurfaceRenderPlanInput and returns the
 accepted prepared plan, projection facts and SurfaceLayoutComposition. It never
 projects Scene or calls Application geometry callbacks. With no active late read,
-it reuses ordinary preparation and composes once, then resolves unused late
+it reuses ordinary preparation to close one result, then resolves unused late
 figures from receipts. Ordinary preparation remains before the existing
 unused-input checkpoint; completion remains after it. An active late read
 defers whole candidate planning/completion until after that checkpoint,
@@ -747,6 +786,19 @@ a resource/layout configuration error. Never infer a panel from a project
 name or silently fabricate a slot. First-party placement policies and their
 Layout slots migrate together with this rule.
 
+For effective rail-first card policies, Layout prepares the complete Theme
+frame heights before committing the ordered stack. When the admitted primary
+rail cards' measured heights fit the rail, constrain each card's latest
+position to leave the remaining cards' measured block capacity below it.
+Keep anchor order and View-order ties, actual earlier occupied bounds, and
+normal candidate/connector validation. This avoids a greedy near-anchor
+placement forcing a later otherwise-fitting card into its terminal list.
+Preparation is shared with actual placement, not a second chrome/typography
+implementation. This capacity reservation is not a phantom obstacle or route;
+it cannot authorize unsafe ink or claim global feasibility. If the measured
+stack does not fit, retain the declared exhaustion behavior. Plot-first
+callouts do not acquire an unconditional footer reservation through this rule.
+
 ### 8.2 Annotation connector topology after the shared inventory
 
 The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)
@@ -814,6 +866,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_source_inputs` | Assemble source facts and visual advances from closed content and Theme/icon resources. |
 | `surface_render_plan` | Measure sources, close sizing/allocation and prepare native geometry from resolved intent; Application supplies data, not a geometry callback. |
 | `surface_count_closure` | Close count-bound planning/composition and accepted facts; read closed programs and typed narrative receipts, never project Scene. |
+| `surface_source_closure` | Close completion-selected source demand and typed destination activation inside each count trial; re-solve normal flow with fresh composition state. |
 | `surface_row_identity` | Complete the automatic-row identity warning from accepted member-label placements and selected row membership, without changing geometry. |
 | `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
@@ -831,6 +884,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_route_label_plan` | Coordinate one route composition around completed member content, then complete terminal and ordinary relation labels against that route plan; no trial loop or route replay. |
 | `surface_routes` | Place dependency paths/ports and relation labels. |
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
+| `annotation_card_measurement` | Prepare shared complete card/text/frame measurements for ordered rail capacity and actual annotation placement. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
 | `surface_observations` | Measure and place native observation tables, attributed source lines and row cells inside their content slot. |
 | `surface_heading` | Project closed heading measurements and baselines into title-slot text placements. |
@@ -861,6 +915,7 @@ The implementation exposes at least:
 | `E_LAYOUT_OVERRIDE_KIND` | Override attempts to change node kind or ID. |
 | `E_LAYOUT_NODE_DUPLICATE` | Duplicate stable node ID. |
 | `E_LAYOUT_SOURCE_UNAVAILABLE` | Required slot source is unavailable. |
+| `E_LAYOUT_SOURCE_CONTENT_UNSTABLE` | A repeated completion-selected content state does not close its intrinsic source-demand witnesses. |
 | `E_LAYOUT_TOKEN_UNKNOWN` | Referenced Theme token is missing. |
 | `E_LAYOUT_TOKEN_TYPE` | Distance token is not a non-negative number. |
 | `E_LAYOUT_MEASUREMENT_REQUIRED` | Intrinsic/baseline size lacks declared measurement. |
