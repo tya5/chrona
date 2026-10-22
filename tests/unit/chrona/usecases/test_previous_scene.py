@@ -303,7 +303,9 @@ def test_draft_captures_prior_bytes_without_modifying_file(tmp_path, previous_by
         "relation:relation:id:spec-pricing:spec:spec:pricing:pricing",
         "relation:relation:id:pos-press:positioning:positioning:press:press",
     }
-    assert {item.reason for item in invalidated.values()} == {"E_LAYOUT_ROUTE_THROUGH_MARK"}
+    # These prior paths leave the NORMAL endpoint temporal hull; prepare rejects
+    # them before the obstacle-collision check, retaining the routing failure code.
+    assert {item.reason for item in invalidated.values()} == {"E_CONNECTOR_UNROUTABLE"}
     assert all(item.searched for item in invalidated.values())
 
 

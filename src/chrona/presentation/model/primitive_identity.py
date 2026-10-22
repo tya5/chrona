@@ -19,7 +19,10 @@ def parse_symbol_part_id(primitive_id: object) -> tuple[str, int] | None:
     if (not separator or not base or not suffix or not suffix.isascii()
             or not suffix.isdecimal()):
         return None
-    index = int(suffix)
+    try:
+        index = int(suffix)
+    except ValueError:
+        return None
     if suffix != str(index):
         return None
     return base, index

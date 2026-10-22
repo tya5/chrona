@@ -24,6 +24,10 @@ def test_symbol_parts_use_the_one_canonical_explicit_paint_grammar():
     assert parse_symbol_part_id("planned:task:task:part١") is None
 
 
+def test_oversized_part_index_is_not_an_ingress_exception():
+    assert parse_symbol_part_id("planned:task:task:part" + "9" * 5000) is None
+
+
 def test_completed_symbol_parts_resolve_only_as_one_exact_contiguous_identity():
     base = "planned:task:task"
     parts = [_part(base + ":part0"), _part(base + ":part1"), _part(base + ":part2")]
