@@ -13,6 +13,9 @@ from tests.unit.chrona.app.test_agent_project_structure_commands import _call, _
 FIXED = {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-11-02", "end": "2026-11-06"}}
 SCHEDULED = {"type": "task", "schedule": {"mode": "scheduled", "amount": "5wd"}}
 NOTE = {"kind": "risk", "text": "Vendor slip", "anchor": {"object": "build"}}
+PERIOD = {"start": "2026-11-02", "end": "2026-11-13", "title": "Launch window"}
+SCENARIO = {"title": "Slip", "objects": {"build": {"title": "Build slipped"}}}
+EXTENSION = {"packageId": "team.delivery", "resource": {"profiles": {}}}
 
 RICH = {
     "version": "timeline/v0.7",
@@ -27,6 +30,9 @@ RICH = {
                   {**_relation(id="r3"), "to": {"object": "spare-task", "endpoint": "start"}}],
     "fieldRoles": {"responsible": "owner", "phase": "stage"},
     "annotations": {"n1": NOTE, "n2": {**NOTE, "text": "Second"}},
+    "periods": {"p1": copy.deepcopy(PERIOD), "p2": {**PERIOD, "title": "Second"}},
+    "extensions": [copy.deepcopy(EXTENSION), {**copy.deepcopy(EXTENSION), "packageId": "team.other"}],
+    "scenarios": {"s1": copy.deepcopy(SCENARIO), "s2": {"title": "Second"}},
 }
 SOLE = {  # every optional member holds one entry, so removing it deletes the member from the middle of the file
     "version": "timeline/v0.7",
@@ -37,6 +43,9 @@ SOLE = {  # every optional member holds one entry, so removing it deletes the me
     "relations": [_relation()],
     "fieldRoles": {"responsible": "owner"},
     "annotations": {"only": NOTE},
+    "periods": {"only": copy.deepcopy(PERIOD)},
+    "extensions": [copy.deepcopy(EXTENSION)],
+    "scenarios": {"only": copy.deepcopy(SCENARIO)},
 }
 MINIMAL = {"version": "timeline/v0.7", "project": {"id": "launch"}, "objects": {"design": copy.deepcopy(FIXED), "build": copy.deepcopy(FIXED)}}
 
@@ -74,6 +83,23 @@ CASES = [
     ("setAnnotation new in a new member", MINIMAL, "setAnnotation", {"id": "n3", "annotation": {**NOTE, "anchor": {"object": "design"}}}),
     ("removeAnnotation first", RICH, "removeAnnotation", {"id": "n1"}),
     ("removeAnnotation sole", SOLE, "removeAnnotation", {"id": "only"}),
+    ("setPeriod replace", RICH, "setPeriod", {"id": "p1", "period": {**PERIOD, "title": "Changed"}}),
+    ("setPeriod new", RICH, "setPeriod", {"id": "p3", "period": copy.deepcopy(PERIOD)}),
+    ("setPeriod new before", RICH, "setPeriod", {"id": "p3", "period": copy.deepcopy(PERIOD), "before": "p2"}),
+    ("setPeriod new in a new member", MINIMAL, "setPeriod", {"id": "p3", "period": copy.deepcopy(PERIOD)}),
+    ("removePeriod first", RICH, "removePeriod", {"id": "p1"}),
+    ("removePeriod sole", SOLE, "removePeriod", {"id": "only"}),
+    ("setScenario replace", RICH, "setScenario", {"id": "s1", "scenario": {"title": "Changed"}}),
+    ("setScenario new", RICH, "setScenario", {"id": "s3", "scenario": copy.deepcopy(SCENARIO)}),
+    ("setScenario new in a new member", MINIMAL, "setScenario", {"id": "s3", "scenario": copy.deepcopy(SCENARIO)}),
+    ("removeScenario first", RICH, "removeScenario", {"id": "s1"}),
+    ("removeScenario sole", SOLE, "removeScenario", {"id": "only"}),
+    ("setExtension replace", RICH, "setExtension", {"packageId": "team.other", "extension": {**EXTENSION, "packageId": "team.other", "resource": {"profiles": {"x": {}}}}}),
+    ("setExtension new", RICH, "setExtension", {"packageId": "team.third", "extension": {**EXTENSION, "packageId": "team.third"}}),
+    ("setExtension new at index", RICH, "setExtension", {"packageId": "team.third", "extension": {**EXTENSION, "packageId": "team.third"}, "index": 1}),
+    ("setExtension new in a new member", MINIMAL, "setExtension", {"packageId": "team.third", "extension": {**EXTENSION, "packageId": "team.third"}}),
+    ("removeExtension first", RICH, "removeExtension", {"packageId": "team.delivery"}),
+    ("removeExtension sole", SOLE, "removeExtension", {"packageId": "team.delivery"}),
     ("setProjectMeta replace title", RICH, "setProjectMeta", {"title": "Launch 2"}),
     ("setProjectMeta add title", SOLE, "setProjectMeta", {"title": "Launch"}),
     ("setProjectMeta remove title", RICH, "setProjectMeta", {"title": None}),

@@ -8,7 +8,7 @@ additionalProperties: false
 properties:
   version: {description: "This project-command contract version.", const: chrona/project-command/v0.1}
   commandId: {description: "Stable identifier for this command; resending the same id with the same request replays the first result.", type: string, minLength: 1}
-  type: {description: "Operation to apply to the Project: setObject, setRelation, setCalendar, setEntity, setFieldRole and setAnnotation upsert one member, setProjectMeta edits the project header; removeObject, removeRelation, removeCalendar, removeEntity, removeFieldRole and removeAnnotation delete one.", enum: [setObject, removeObject, setRelation, removeRelation, setCalendar, removeCalendar, setEntity, setFieldRole, setAnnotation, removeAnnotation, setProjectMeta, removeEntity, removeFieldRole]}
+  type: {description: "Operation to apply to the Project: setObject, setRelation, setCalendar, setEntity, setFieldRole, setAnnotation, setExtension, setPeriod and setScenario upsert one member, setProjectMeta edits the project header; removeObject, removeRelation, removeCalendar, removeEntity, removeFieldRole, removeAnnotation, removeExtension, removePeriod and removeScenario delete one.", enum: [setObject, removeObject, setRelation, removeRelation, setCalendar, removeCalendar, setEntity, setFieldRole, setAnnotation, removeAnnotation, setProjectMeta, removeEntity, removeFieldRole, setExtension, removeExtension, setPeriod, removePeriod, setScenario, removeScenario]}
   target:
     type: object
     description: "Project file selected by the command."
@@ -183,3 +183,78 @@ allOf:
           additionalProperties: false
           properties:
             role: {description: "The semantic role to unbind: responsible or phase.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
+  - description: "setPeriod carries the period id and one complete Project period (start, end, title?); a start or end that names an object endpoint must name an existing one."
+    examples: [{}]
+    if: {properties: {type: {const: setPeriod}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, period]
+          additionalProperties: false
+          properties:
+            id: {description: "Period identifier: the key under periods. An existing id is replaced.", type: string, minLength: 1}
+            period: {description: "The complete Project period that replaces or adds periods.<id>. {start, end, title?}.", type: object}
+            before: {description: "When the key is new, insert it immediately before this existing key of periods instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the periods member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "removePeriod carries only the period id."
+    examples: [{}]
+    if: {properties: {type: {const: removePeriod}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the period to remove.", type: string, minLength: 1}
+  - description: "setScenario carries the scenario id and one complete Project scenario (title?, objects?, relations?); an overlay that removes a missing object or relation, or that makes the Project invalid, is refused at its pointer."
+    examples: [{}]
+    if: {properties: {type: {const: setScenario}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, scenario]
+          additionalProperties: false
+          properties:
+            id: {description: "Scenario identifier: the key under scenarios. An existing id is replaced.", type: string, minLength: 1}
+            scenario: {description: "The complete Project scenario that replaces or adds scenarios.<id>. {title?, objects?, relations?:{add?, remove?}}.", type: object}
+            before: {description: "When the key is new, insert it immediately before this existing key of scenarios instead of appending; ignored when the key already exists (it keeps its position).", type: string, minLength: 1}
+            memberBefore: {description: "When the command creates the scenarios member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "removeScenario carries only the scenario id."
+    examples: [{}]
+    if: {properties: {type: {const: removeScenario}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the scenario to remove.", type: string, minLength: 1}
+  - description: "setExtension carries the package id and one complete extension declaration whose packageId equals it (a pinned file reference {packageId, path, revision, contentIdentity?} or an inline {packageId, resource}); an entry with the same packageId is replaced, any other is appended."
+    examples: [{}]
+    if: {properties: {type: {const: setExtension}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [packageId, extension]
+          additionalProperties: false
+          properties:
+            packageId: {description: "Extension package identifier: the packageId of the declaration under extensions.", type: string, minLength: 1}
+            extension: {description: "The complete extension declaration that replaces or adds the entry with this packageId.", type: object}
+            index: {description: "When the package is new, insert it at this 0-based position of extensions instead of appending (at most the current length); ignored when it replaces an existing entry.", type: integer, minimum: 0}
+            memberBefore: {description: "When the command creates the extensions member (the Project had none), insert it before this top-level Project key instead of at the end; the key must exist.", type: string, minLength: 1}
+  - description: "removeExtension carries only the package id; a package that an object type still names (its profiles) is refused."
+    examples: [{}]
+    if: {properties: {type: {const: removeExtension}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [packageId]
+          additionalProperties: false
+          properties:
+            packageId: {description: "Package identifier of the extension to remove.", type: string, minLength: 1}
