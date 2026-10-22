@@ -328,7 +328,8 @@ def test_halcyon_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     snapshot = next(item for item in legend_labels if item.get("data-scene-id") == "legend:snapshot")
     assert "Baseline" in "".join(snapshot.itertext())
     assert all(f'data-scene-id="legend:scale:model:{value}"' in svg for value in ("EM", "QM", "FM"))
-    assert 'data-purpose="progress-fill"' in svg
+    # Every gate is a finished Actual, which is complete by observation and draws no progress fill.
+    assert 'data-purpose="progress-fill"' not in svg
     assert not any(diagnostic.startswith("W_THEME_ROLE_UNREAD") for diagnostic in scene["diagnostics"])
     assert any(diagnostic.startswith("W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT")
                for diagnostic in scene["diagnostics"]) == (completed_block > block)
