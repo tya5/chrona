@@ -1,0 +1,50 @@
+version: chrona/theme/v0.16
+kind: theme
+id: wallboard-programme-board
+# Slide 02 only: the wallboard Theme plus the sidebar panel, kicker, spaced upper-case group
+# headers and the inline-legend tokens the programme-board sidebar Layout needs.
+body:
+  extends:
+    id: wallboard
+    path: wallboard.yaml
+  values:
+    size.kicker: {type: number, value: 16}
+    size.group: {type: number, value: 13}
+    size.legend: {type: number, value: 14}
+    upper: {type: textTransform, value: uppercase}
+    spacing.caps: {type: number, value: 0.12}
+    panel.side: {type: number, value: 450}
+    timeline-row-height: {type: number, value: 26}
+    legend-block: {type: number, value: 24}
+    legend-gap: {type: number, value: 28}
+    legend-item-min: {type: number, value: 90}
+  roles:
+    kicker:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.kicker
+      lineHeight: leading.tight
+      letterSpacing: spacing.caps
+      textTransform: upper
+      numericSpacing: numeric-spacing
+    slot-heading:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.group
+      lineHeight: leading.body
+      letterSpacing: spacing.caps
+      textTransform: upper
+      numericSpacing: numeric-spacing
+    heading:
+      fontWeight: weight.regular
+    groupHeader:
+      fontWeight: weight.regular
+      fontSize: size.group
+      letterSpacing: spacing.caps
+      textTransform: upper
+  colorBindings:
+    region-frame-sidebar.fill: surfaceRaised
+    kicker.fill: accent
+    group-header.fill: textMuted
+    slot-heading.fill: textMuted
+    group-header-band.fill: surface

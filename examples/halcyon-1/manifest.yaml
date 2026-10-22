@@ -57,16 +57,16 @@ slides:
       id: halcyon-1-02-programme-board
       body:
         view:
-          id: halcyon-02-programme-board
+          id: halcyon-02-programme-board-sidebar
           kind: view
           store: {provider: local, identity: halcyon-1-example}
-          address: views/02-programme-board.yaml
+          address: views/02-programme-board-sidebar.yaml
           revision: {token: example-v1}
         theme:
-          id: wallboard
+          id: wallboard-programme-board
           kind: theme
           store: {provider: local, identity: halcyon-1-example}
-          address: themes/wallboard.yaml
+          address: themes/02-programme-board.yaml
           revision: {token: example-v1}
         colorScheme:
           id: control-room-dark
@@ -75,10 +75,10 @@ slides:
           address: schemes/control-room-dark.yaml
           revision: {token: example-v1}
         layout:
-          id: wallboard-programme-board
+          id: programme-board-sidebar
           kind: layout-profile
           store: {provider: local, identity: halcyon-1-example}
-          address: layouts/wallboard-programme-board.yaml
+          address: layouts/programme-board-sidebar.yaml
           revision: {token: example-v1}
         inputs:
           summaryProfile:
@@ -88,10 +88,10 @@ slides:
             address: profiles/summary-countdown.yaml
             revision: {token: example-v1}
           detailProfile:
-            id: halcyon-board-legend
+            id: halcyon-programme-board-legend
             kind: review-detail-profile
             store: {provider: local, identity: halcyon-1-example}
-            address: profiles/detail.yaml
+            address: profiles/programme-board-legend.yaml
             revision: {token: example-v1}
         environment:
           viewport: {inlineSize: 1920, blockSize: 1080}
