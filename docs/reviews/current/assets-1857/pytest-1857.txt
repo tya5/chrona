@@ -1,0 +1,5 @@
+$ .venv/bin/python -m pytest -q -rs -n 4 tests/integration/test_update_a_plan_guide.py tests/integration/test_public_preset_evidence.py tests/integration/test_view_defaults.py  (on 734483472)
+
+........................................................................ [ 98%]
+.                                                                        [100%]
+73 passed in 9.57s
