@@ -1,0 +1,4 @@
+# cwd: worktree on origin/main b1935990b (docs-only descendants 734483472 add no code)
+$ PYTHONPATH=$W/src:$W python -m pytest tests/unit/chrona/presentation/model/test_wording_tables.py -q
+.........................                                                [100%]
+25 passed in 9.90s
