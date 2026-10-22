@@ -1,0 +1,8 @@
+$ cd <worktree> && PYTHONPATH=<worktree>/src:<worktree> python probe-1832.py   # real repository, 38 changed paths
+-- before: 0bf7031c6 (parent of the #1836 merge 0f1dbe938)
+paths=38 (declared 19, source 19)
+derived_paths builds=38 wall=111.8s rejected=19 sha=8a1e037a93ad
+-- after: b1935990b (origin/main)
+paths=38 (declared 19, source 19)
+derived_paths builds=1 wall=3.0s rejected=19 sha=8a1e037a93ad
+(an earlier identical run of the 'before' tree measured wall=134.9s with builds=38; same rejected list hash 8a1e037a93ad. The runs vary by about 20 s on this machine; the build count does not.)
