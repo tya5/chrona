@@ -164,3 +164,80 @@ def test_coincident_port_aliases_are_exact_and_host_scoped() -> None:
     assert coincident_endpoint_port_ids(index, (18, 24),
                                          ("planned:item", "planned:scenario:item")) == (
         "port:planned:item:end", "port:planned:scenario:item:start")
+
+
+# --- #1913: ports of a compound point glyph come from its painted outline -------------------------
+
+def _inset_compound_mark(*, stroke: float = 1.0, bounds=(100.0, 50.0, 20.0, 20.0)) -> MarkPlacement:
+    """A two-part glyph (filled diamond plus ring) painted inside the middle of its viewport."""
+    from chrona.presentation.layout.mark_geometry import SymbolPartPlacement, symbol_parts
+    x, y, w, h = bounds
+    glyph = {"shape": "glyph", "viewport": {"inlineSize": 10, "blockSize": 10}, "parts": [
+        {"paint": "fill", "data": "M 5 2 L 8 5 L 5 8 L 2 5 Z"},
+        {"paint": "stroke", "data": "M 3 3 L 7 3 L 7 7 L 3 7 Z", "strokeWidth": 0.5,
+         "lineCap": "butt", "lineJoin": "miter"}]}
+    parts = symbol_parts(glyph, bounds)
+    # The completed fill edge as Layout adds it (complete_point_outline).
+    parts = (*parts, SymbolPartPlacement(parts[0].commands, paint_mode="stroke", stroke_width=stroke))
+    return MarkPlacement("planned:glyph", "glyph", Rect(*(Decimal(str(v)) for v in bounds)),
+                         (x, y + h / 2), (x + w, y + h / 2), mark_shape="point", symbol_parts=parts)
+
+
+def test_inset_compound_glyph_ports_touch_the_painted_outline_not_the_viewport() -> None:
+    mark = _inset_compound_mark()
+    # Fill diamond spans x in [104, 116] (scale 2), centre (110, 60); the outline stroke adds 0.5.
+    ports = dict(connector_boundary_ports(mark, "at", (300, 60), painted=True))
+    assert ports["end"] == pytest.approx((116.5, 60.0))
+    assert ports["start"] == pytest.approx((103.5, 60.0))
+    assert ports["above"] == pytest.approx((110.0, 53.5))
+    assert ports["below"] == pytest.approx((110.0, 66.5))
+    # The viewport edge is 3.5 units beyond the paint.
+    assert ports["end"][0] < 120.0 - 3.0
+    candidate = connector_egress_candidates(mark, "at", (300, 60), (), painted=True)[0]
+    assert candidate.side == "end"
+    # The leader starts on the paint and crosses the inset inside its own host to the unchanged exposed port.
+    assert candidate.semantic_port == pytest.approx((116.5, 60.0))
+    assert candidate.exposed_port == (120.0, 60.0)
+    assert candidate.corridor == (candidate.semantic_port, candidate.exposed_port)
+    assert candidate.host_ids == ("planned:glyph",)
+    assert connector_boundary_port(mark, "at", (300, 60), painted=True) == pytest.approx((116.5, 60.0))
+
+
+def test_relation_ports_keep_the_viewport_tips_of_a_compound_glyph() -> None:
+    """Only annotation leaders opt in; relation routing is unchanged by #1913."""
+    mark = _inset_compound_mark()
+    assert dict(connector_boundary_ports(mark, "at", (300, 60)))["end"] == (120.0, 60.0)
+    assert connector_egress_candidates(mark, "at", (300, 60), ())[0].exposed_port == (120.0, 60.0)
+
+
+def test_compound_glyph_without_stroke_part_ends_exactly_on_the_fill_edge() -> None:
+    mark = _inset_compound_mark()
+    mark = MarkPlacement(mark.placement_id, mark.source_ref, mark.bounds, mark.start_port, mark.end_port,
+                         mark_shape="point", symbol_parts=mark.symbol_parts[:2])
+    assert dict(connector_boundary_ports(mark, "at", (300, 60), painted=True))["end"] == pytest.approx((116.0, 60.0))
+
+
+def test_diamond_and_ordinary_point_ports_stay_on_viewport_tips() -> None:
+    from chrona.presentation.layout.mark_geometry import symbol_parts
+    plain = _mark("point")
+    diamond = MarkPlacement("planned:d", "item", plain.bounds, (10, 24), (18, 24), mark_shape="point",
+                            symbol_parts=symbol_parts({"shape": "diamond"}, (10.0, 20.0, 8.0, 8.0)))
+    for mark in (plain, diamond):
+        for painted in (False, True):
+            assert dict(connector_boundary_ports(mark, "at", (30, 40), painted=painted)) == {
+                "end": (18, 24), "start": (10, 24), "above": (14, 20), "below": (14, 28)}
+            first = connector_egress_candidates(mark, "at", (30, 40), (), painted=painted)[0]
+            assert first.semantic_port == first.exposed_port == (18, 24)
+
+
+def test_compound_glyph_keeps_nonhost_clearance_and_registered_port_authority() -> None:
+    mark = _inset_compound_mark()
+    ink_port = (116.5, 60.0)
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("mark:other", "mark", "timeline", ObstacleRect(121, 55, 130, 65)))
+    index.add(SurfaceObstacle("port:planned:glyph:end", "port", "timeline",
+                              ObstacleRect(ink_port[0] - .01, ink_port[1] - .01, ink_port[0] + .01, ink_port[1] + .01)))
+    first = connector_egress_candidates(mark, "at", (300, 60), (), painted=True)[0]
+    assert coincident_endpoint_port_ids(index, first.semantic_port, ("planned:glyph",)) == ("port:planned:glyph:end",)
+    # The unrelated mark still blocks the route beyond the exposed port.
+    assert index.collisions(ObstacleSegment(first.exposed_port, (200, 60)), classes=("mark",))

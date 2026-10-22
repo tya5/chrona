@@ -7,7 +7,7 @@ from math import isfinite
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
-from chrona.presentation.layout.surface_quality import MarkPlacement
+from chrona.presentation.layout.surface_quality import MarkPlacement, PathCommand
 
 
 @dataclass(frozen=True)
@@ -70,8 +70,77 @@ def coincident_endpoint_port_ids(index: SurfaceObstacleIndex,
     return tuple(result)
 
 
+def _viewport_extent(mark: MarkPlacement) -> tuple[float, float, float, float]:
+    bounds = mark.bounds
+    left, top = float(bounds.inline), float(bounds.block)
+    return left, top, left + float(bounds.inline_size), top + float(bounds.block_size)
+
+
+def _flatten(commands: tuple[PathCommand, ...], *, close: bool) -> tuple[tuple[tuple[float, float], tuple[float, float]], ...]:
+    segments: list[tuple[tuple[float, float], tuple[float, float]]] = []
+    start = current = None
+    for command in commands:
+        if command.kind == "move":
+            if close and start is not None and current != start:
+                segments.append((current, start))
+            start = current = (float(command.points[0][0]), float(command.points[0][1]))
+        elif current is None:
+            continue
+        elif command.kind == "line":
+            point = (float(command.points[0][0]), float(command.points[0][1]))
+            segments.append((current, point))
+            current = point
+        elif command.kind == "quadratic":
+            (cx, cy), (ex, ey) = command.points
+            previous = current
+            for step in range(1, 17):
+                t = step / 16
+                point = ((1 - t) ** 2 * current[0] + 2 * (1 - t) * t * cx + t * t * ex,
+                         (1 - t) ** 2 * current[1] + 2 * (1 - t) * t * cy + t * t * ey)
+                segments.append((previous, point))
+                previous = point
+            current = (float(ex), float(ey))
+    if close and start is not None and current != start:
+        segments.append((current, start))
+    return tuple(segments)
+
+
+def painted_cardinal_ports(mark: MarkPlacement) -> dict[str, tuple[float, float]]:
+    """Outermost painted points on the viewport's cardinal axes of a compound point glyph.
+
+    Only a point mark that carries completed painted glyph parts qualifies; a
+    built-in diamond or ordinary point has no painted parts and keeps its
+    viewport tips. Stroke parts extend the fill edge by half their width.
+    A side whose axis never meets paint is omitted so the caller falls back.
+    """
+    if mark.mark_shape != "point":
+        return {}
+    left, top, right, bottom = _viewport_extent(mark)
+    center_x, center_y = (left + right) / 2, (top + bottom) / 2
+    best: dict[str, float] = {}
+    for part in mark.symbol_parts:
+        if part.paint_mode not in {"fill", "stroke"}:
+            continue
+        half = float(part.stroke_width or 0.0) / 2 if part.paint_mode == "stroke" else 0.0
+        for (x1, y1), (x2, y2) in _flatten(part.commands, close=part.paint_mode == "fill"):
+            if y1 != y2 and min(y1, y2) <= center_y <= max(y1, y2):
+                x = x1 + (center_y - y1) * (x2 - x1) / (y2 - y1)
+                best["end"] = max(best.get("end", float("-inf")), x + half)
+                best["start"] = min(best.get("start", float("inf")), x - half)
+            if x1 != x2 and min(x1, x2) <= center_x <= max(x1, x2):
+                y = y1 + (center_x - x1) * (y2 - y1) / (x2 - x1)
+                best["below"] = max(best.get("below", float("-inf")), y + half)
+                best["above"] = min(best.get("above", float("inf")), y - half)
+    result = {}
+    if "end" in best:
+        result["end"], result["start"] = (best["end"], center_y), (best["start"], center_y)
+    if "below" in best:
+        result["below"], result["above"] = (center_x, best["below"]), (center_x, best["above"])
+    return result
+
+
 def connector_boundary_ports(mark: MarkPlacement, endpoint: str,
-                             toward: tuple[float, float]) -> tuple[tuple[str, tuple[float, float]], ...]:
+                             toward: tuple[float, float], *, painted: bool = False) -> tuple[tuple[str, tuple[float, float]], ...]:
     """Enumerate finite outline ports in deterministic distance/side order."""
     if endpoint == "start" and mark.mark_shape != "point":
         return () if mark.start_port is None else (("start", mark.start_port),)
@@ -79,22 +148,23 @@ def connector_boundary_ports(mark: MarkPlacement, endpoint: str,
         return () if mark.end_port is None else (("end", mark.end_port),)
     if endpoint not in {"at", "body", "start", "finish", "end"}:
         raise ValueError(f"E_PRESENTATION_ANCHOR_MISSING: connector endpoint={endpoint!r}; expected at, body, start, finish, or end")
-    bounds = mark.bounds
-    left, top = float(bounds.inline), float(bounds.block)
-    right, bottom = left + float(bounds.inline_size), top + float(bounds.block_size)
+    left, top, right, bottom = _viewport_extent(mark)
     center_x, center_y = (left + right) / 2, (top + bottom) / 2
     # Cardinal tips are on a diamond point glyph's outline. For a span body,
     # these are its four boundary midpoints. Stable tie order: end/start/above/below.
-    ports = (("end", (right, center_y)), ("start", (left, center_y)),
-             ("above", (center_x, top)), ("below", (center_x, bottom)))
+    # A compound point glyph may be inset in its viewport: its tips are where the
+    # cardinal axes leave the completed painted outline (#1913).
+    ink = painted_cardinal_ports(mark) if painted else {}
+    ports = (("end", ink.get("end", (right, center_y))), ("start", ink.get("start", (left, center_y))),
+             ("above", ink.get("above", (center_x, top))), ("below", ink.get("below", (center_x, bottom))))
     return tuple(sorted(ports, key=lambda item: (abs(item[1][0] - toward[0]) + abs(item[1][1] - toward[1]),
                                                  ports.index(item))))
 
 
 def connector_boundary_port(mark: MarkPlacement, endpoint: str,
-                            toward: tuple[float, float]) -> tuple[float, float]:
+                            toward: tuple[float, float], *, painted: bool = False) -> tuple[float, float]:
     """Return the preferred boundary port for callers without route search."""
-    ports = connector_boundary_ports(mark, endpoint, toward)
+    ports = connector_boundary_ports(mark, endpoint, toward, painted=painted)
     if not ports:
         raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", "/layout/connectorPort",
                           node_id=mark.placement_id[:120],
@@ -225,13 +295,18 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
                                 toward: tuple[float, float],
                                 siblings: tuple[MarkPlacement, ...], *, entry: str = "any", stub_length: float = 0.0,
                                 stub_free: Callable[[ConnectorEgress], bool] | None = None,
-                                explicit_neighbors: tuple[MarkPlacement, ...] = ()) -> tuple[ConnectorEgress, ...]:
+                                explicit_neighbors: tuple[MarkPlacement, ...] = (), painted: bool = False) -> tuple[ConnectorEgress, ...]:
     """Keep the temporal port while leaving only its connected comparison host.
 
     ``entry="side-when-free"`` (``relationRouting.entry``, #1030) puts a stub candidate first for a span ``start``
     whose ``toward`` lies left of the cluster (the mirrored ``end``: right of it): the route must end ``stub_length``
     beside the port and run straight into it. It is offered only when ``stub_free`` accepts the stub; the distance
     order follows it unchanged, so a stub that cannot be routed falls back to today's order.
+
+    ``painted=True`` (annotation leaders, #1913) takes a compound point glyph's semantic tips from its completed
+    painted outline instead of its viewport box. The exposed port stays at the viewport edge, so the leader starts on
+    the paint and crosses the inset inside its own host through the existing corridor; diamond and ordinary points
+    have no painted parts and are unchanged.
     """
     if endpoint not in {"start", "finish", "end", "at", "body"}:
         raise ValueError(f"E_PRESENTATION_ANCHOR_MISSING: connector endpoint={endpoint!r}; expected start, finish, end, at, or body")
@@ -260,13 +335,16 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
     bottom = max(float(item.bounds.block + item.bounds.block_size) for item in extent_marks)
     candidates = []
     if mark.mark_shape == "point" or endpoint in {"at", "body"}:
-        semantic_ports = connector_boundary_ports(mark, endpoint, toward)
+        semantic_ports = connector_boundary_ports(mark, endpoint, toward, painted=painted)
     else:
         semantic = mark.start_port if endpoint == "start" else mark.end_port
         semantic_ports = tuple((side, semantic) for side in ("end", "start", "above", "below"))
     for side, semantic in semantic_ports:
-        exposed = {"end": (right, semantic[1]), "start": (left, semantic[1]),
-                   "above": (semantic[0], top), "below": (semantic[0], bottom)}[side]
+        # Paint (outline stroke) may overshoot the viewport: never pull the exposed port back inside it.
+        exposed = {"end": (max(right, semantic[0]) if painted else right, semantic[1]),
+                   "start": (min(left, semantic[0]) if painted else left, semantic[1]),
+                   "above": (semantic[0], min(top, semantic[1]) if painted else top),
+                   "below": (semantic[0], max(bottom, semantic[1]) if painted else bottom)}[side]
         natural = "start" if endpoint == "start" else "end"
         through_body = (mark.mark_shape != "point" and endpoint not in {"at", "body"}
                         and side in {"start", "end"} and side != natural)
