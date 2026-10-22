@@ -1,369 +1,80 @@
-name: conformance
+# Verification-only branch. NEVER merge this replacement into main.
+# Reuses the registered dispatch filename; publishes no production gate/status.
+name: issue-1906-serial-timing
 on:
-  push:
-    branches: [main]
-  pull_request:
-  schedule:
-    - cron: '0 4 * * *'
   workflow_dispatch:
-    inputs:
-      expected_sha:
-        description: 'Optional exact SHA for a dispatched release CI run'
-        type: string
-        required: false
-      select_ready_main:
-        description: 'Select the current ready main SHA instead of this dispatch SHA'
-        type: boolean
-        required: false
-        default: false
-      os_failure_probe:
-        description: 'Optional OS-specific failure probe (never for release acceptance)'
-        type: choice
-        options: [none, windows-latest]
-        default: none
 permissions:
   contents: read
-  checks: read
 concurrency:
-  group: conformance-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: issue-1906-serial-timing
+  cancel-in-progress: false
 jobs:
-  ready-sha:
-    name: Freeze the immutable CI source SHA
+  serial-timing:
+    name: Isolated before-after timing (not release CI)
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      sha: ${{ steps.resolve.outputs.sha }}
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
-          fetch-depth: 1
-      - id: resolve
-        name: Resolve event SHA or validate current ready main
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
-          SELECT_READY_MAIN: ${{ inputs.select_ready_main }}
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-        run: python tools/scheduled_readiness.py
-
-  classify-pr:
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    outputs:
-      path: ${{ steps.classify.outputs.path }}
-    steps:
+          path: benchmark
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - id: classify
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: echo "path=$(python tools/classify_ci_change.py "$BASE_SHA" "$HEAD_SHA")" >> "$GITHUB_OUTPUT"
-
-  derived-preview:
-    if: ${{ github.event_name == 'pull_request' }}
-    needs: classify-pr
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
+          ref: 820688585bb58031369c4f04b88c9a604b26ec27
+          path: before
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: e5cc70efb75f283f569eb1f04ebfc2f144d3efa2
+          path: after
+      - uses: actions/checkout@v4
+        with:
+          ref: cbc183f6b9243181eaef102afa4f9377c9b899ca
+          path: inputs
+          sparse-checkout: trial-17/plan
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
-      - name: Reject derived edits (source-only, timed as its own step)
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python -m tools.derived_workflow source-only "$BASE_SHA" "$HEAD_SHA"
-      - name: Materialize one PR snapshot
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python -m tools.derived_workflow snapshot "$BASE_SHA" derived-snapshot.tar.gz
-      - uses: actions/upload-artifact@v4
+          python-version: '3.13'
+      - name: Prepare separate project venvs with matching dependency versions
+        shell: bash
+        run: |
+          python -m venv before/.venv
+          before/.venv/bin/python -m pip install -e './before[render]' -e before/packages/chrona-fonts-noto-cjk
+          before/.venv/bin/python -m pip freeze --exclude-editable > constraints.txt
+          python -m venv after/.venv
+          after/.venv/bin/python -m pip install -c constraints.txt -e './after[render]' -e after/packages/chrona-fonts-noto-cjk
+          mkdir evidence
+          cp constraints.txt evidence/dependencies.txt
+      - name: One serial profiled render per source on this otherwise dedicated runner
+        shell: bash
+        run: |
+          cd inputs/trial-17
+          for bench_side in before after; do
+            "$GITHUB_WORKSPACE/$bench_side/.venv/bin/python" "$GITHUB_WORKSPACE/benchmark/tools/issue_1906_serial_profile.py" \
+              --worktree "$GITHUB_WORKSPACE/$bench_side" \
+              --trial "$GITHUB_WORKSPACE/inputs/trial-17" \
+              --output "$GITHUB_WORKSPACE/evidence/$bench_side"
+          done
+      - name: Validate the controlled pair and print measured totals
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          before = json.loads(Path('evidence/before/receipt.json').read_text())
+          after = json.loads(Path('evidence/after/receipt.json').read_text())
+          assert before['exitCode'] == after['exitCode'] == 0
+          assert before['inputSha256'] == after['inputSha256']
+          assert before['python'] == after['python']
+          assert before['head'] == '820688585bb58031369c4f04b88c9a604b26ec27'
+          assert after['head'] == 'e5cc70efb75f283f569eb1f04ebfc2f144d3efa2'
+          print({side: {key: row[key] for key in ('wallSeconds', 'cpuSeconds', 'scope')}
+                 for side, row in (('before', before), ('after', after))})
+          PY
+      - name: Upload bounded experimental evidence (never a release gate)
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
-          path: |
-            derived-snapshot.tar.gz
-            derived-snapshot.tar.gz.json
-            derived-before.tar.gz
-            derived-preview.md
-          if-no-files-found: error
+          name: issue-1906-serial-before-after
+          path: evidence/
           retention-days: 14
-
-  pr-conformance:
-    needs: [classify-pr, derived-preview]
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
-      - uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
-      - name: Apply the snapshot and verify its declared retirements
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
-      - id: conformance
-        continue-on-error: true
-        run: python conformance/run_conformance.py
-      - name: Finalize independent CI outcomes
-        if: ${{ always() }}
-        run: >-
-          python tools/check_ci_outcomes.py
-          --required conformance=${{ steps.conformance.outcome }}
-
-  pr-pytest:
-    needs: [classify-pr, derived-preview]
-    if: ${{ github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render,mcp]' -e packages/chrona-fonts-noto-cjk
-      - uses: actions/download-artifact@v4
-        with:
-          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
-      - name: Apply the snapshot and verify its declared retirements
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
-      - id: pytest
-        continue-on-error: true
-        run: pytest -n 4 --dist worksteal --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration -m "not corpus"
-      - name: Finalize independent CI outcomes
-        if: ${{ always() }}
-        run: >-
-          python tools/check_ci_outcomes.py
-          --required pytest-shard-${{ matrix.shard }}=${{ steps.pytest.outcome }}
-
-  reproduction-newest-python:
-    needs: [classify-pr, derived-preview, ready-sha]
-    if: ${{ !cancelled() && needs.ready-sha.result == 'success' && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.ready-sha.outputs.sha }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
-      - uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
-      - name: Apply PR snapshot when this is a code PR
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
-      - name: Reproduce every public materializer context from the shared snapshot
-        run: pytest -q tests/integration/test_materialize_example.py::test_declared_examples_reproduce_by_public_cli
-
-  mcp-floor:
-    needs: [classify-pr, ready-sha]
-    if: ${{ !cancelled() && needs.ready-sha.result == 'success' && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.ready-sha.outputs.sha }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Install chrona with the oldest MCP SDK the extra allows
-        run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk 'mcp==2.0.0'
-      - name: Verify test-import and CI-selection guards with optional MCP installed
-        run: pytest -q tests/unit/tools/test_corpus_import_policy.py tests/unit/tools/test_ci_corpus_selection.py
-      - name: Run the MCP binding and the real stdio end-to-end tests against that floor
-        run: pytest -q -p no:cacheprovider tests/mcp tests/cli/test_mcp_command.py
-
-  derived-ready:
-    needs: [classify-pr, derived-preview, pr-conformance, pr-pytest, reproduction-newest-python]
-    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Confirm expected validation and exact candidate gate
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          GH_TOKEN: ${{ github.token }}
-          PR_KIND: ${{ needs.classify-pr.outputs.path }}
-          PREVIEW: ${{ needs.derived-preview.result }}
-          CONFORMANCE: ${{ needs.pr-conformance.result }}
-          PYTEST: ${{ needs.pr-pytest.result }}
-          NEWEST: ${{ needs.reproduction-newest-python.result }}
-        run: |
-          if [[ "$EVENT_NAME" == pull_request ]]; then
-            if [[ "$PR_BASE_REF" != main ]]; then
-              echo "unsupported PR base ref: $PR_BASE_REF"; exit 1
-            fi
-            test "$PREVIEW" = success
-            test "$CONFORMANCE" = success
-            if [[ "$PR_KIND" != code && "$PR_KIND" != docs ]]; then
-              echo "unknown PR class: $PR_KIND"; exit 1
-            fi
-            if [[ "$PR_KIND" == docs ]]; then
-              test "$PYTEST" = skipped
-              test "$NEWEST" = skipped
-              # Docs cannot change derived evidence: a previously ready base
-              # is sufficient, but stale heads and unknown/conflicting merges
-              # are not. This path never waits for another main sync.
-              metadata="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
-                --jq '[.head.sha, .base.ref, (.mergeable | tostring)] | @tsv')"
-              read -r pr_head current_ref mergeable <<< "$metadata"
-              test "$pr_head" = "$PR_HEAD_SHA"
-              test "$current_ref" = main
-              test "$mergeable" = true
-              current="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$PR_BASE_SHA/check-runs" \
-                -f check_name=derived-main -f filter=all -f per_page=100 \
-                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
-              test "$current" = completed:success
-              echo "docs PR accepted on previously ready base $PR_BASE_SHA; no new sync wait"
-              exit 0
-            fi
-            if [[ "$PR_KIND" == code ]]; then
-              test "$PYTEST" = success
-              test "$NEWEST" = success
-            fi
-            ready=false
-            for attempt in $(seq 1 60); do
-              # Stop promptly once a newer push superseded this head (#1229).
-              pr_head="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha)"
-              if [[ "$pr_head" != "$PR_HEAD_SHA" ]]; then
-                echo "superseded by $pr_head"; exit 1
-              fi
-              current="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$PR_BASE_SHA/check-runs" \
-                -f check_name=derived-main -f filter=all -f per_page=100 \
-                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
-              if [[ "$current" == "completed:success" ]]; then ready=true; break; fi
-              if [[ "$current" == completed:* && "$current" != completed:success ]]; then
-                echo "latest trusted derived-main failed on PR base $PR_BASE_SHA: $current"; exit 1
-              fi
-              sleep 30
-            done
-            test "$ready" = true
-            current_base="$(git ls-remote origin "refs/heads/$PR_BASE_REF" | cut -f1)"
-            test "$current_base" = "$PR_BASE_SHA"
-          fi
-
-  full-matrix:
-    if: >-
-      ${{ !cancelled() && needs.ready-sha.result == 'success' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
-    needs: [ready-sha]
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.ready-sha.outputs.sha }}
-      - name: Verify exact full-CI SHA when supplied
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        shell: bash
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-        run: |
-          if [[ -n "$EXPECTED_SHA" ]]; then
-            test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-            test "$GITHUB_SHA" = "$EXPECTED_SHA"
-          fi
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render,mcp]' -e packages/chrona-fonts-noto-cjk
-      - name: Verify literal contributor setup in a fresh venv
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: python tools/run_contributor_setup.py
-      - id: conformance
-        continue-on-error: true
-        run: python conformance/run_conformance.py
-      - id: pytest
-        if: ${{ always() }}
-        continue-on-error: true
-        shell: bash
-        run: |
-          if [[ '${{ matrix.os }}' == 'ubuntu-latest' ]]; then
-            unit_status=0
-            .venv/bin/python -m pytest tests/unit -n 4 || unit_status=$?
-            remainder_status=0
-            python -m pytest --ignore=tests/unit -n 4 || remainder_status=$?
-            test "$unit_status" = 0 && test "$remainder_status" = 0
-          else
-            python -m pytest -n 4
-          fi
-      - id: os_probe
-        if: ${{ always() }}
-        continue-on-error: true
-        env:
-          TARGET_OS: ${{ inputs.os_failure_probe }}
-          MATRIX_OS: ${{ matrix.os }}
-        shell: bash
-        run: test "$TARGET_OS" != "$MATRIX_OS"
-      - id: wheel_smoke
-        if: ${{ always() && steps.conformance.outcome == 'success' && steps.pytest.outcome == 'success' && steps.os_probe.outcome == 'success' }}
-        shell: bash
-        run: |
-          python -m pip wheel . --no-deps -w dist
-          python tools/check_wheel_size.py dist/chrona-*.whl
-          python -m pip install --force-reinstall --no-deps dist/*.whl
-          smoke_dir="$(mktemp -d)"
-          cd "$smoke_dir"
-          python "$GITHUB_WORKSPACE/tools/wheel_smoke.py"
-          cd "$GITHUB_WORKSPACE"
-          # the documented commands, as a user runs them: the wheel in a fresh venv, no -e, no font package, an empty directory
-          python tools/wheel_doc_check.py dist/chrona-*.whl
-      - name: Finalize independent CI outcomes
-        if: ${{ always() }}
-        run: >-
-          python tools/check_ci_outcomes.py
-          --required conformance=${{ steps.conformance.outcome }}
-          --required pytest=${{ steps.pytest.outcome }}
-          --required os-probe=${{ steps.os_probe.outcome }}
-          --dependent wheel-smoke=${{ steps.wheel_smoke.outcome }}
+          if-no-files-found: error
