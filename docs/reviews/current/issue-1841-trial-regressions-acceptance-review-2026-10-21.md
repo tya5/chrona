@@ -2,72 +2,104 @@
 
 # Issue 1841 — trial regression acceptance review
 
-Current [work record](https://github.com/tya5/chrona/issues/1841#issuecomment-6295885856),
-[approved design](https://github.com/tya5/chrona/issues/1841#issuecomment-6330996672),
-and [architecture / implementation plan](https://github.com/tya5/chrona/issues/1841#issuecomment-6331069065).
-Specs 08/30/38/50 retain Layout ownership of completed geometry, candidate
-accounting, group identity and routes; Scene/adapters do not allocate them.
-The deferred repair contract was published before source in
-[`f7a2e64e5`](https://github.com/tya5/chrona/commit/f7a2e64e5eec4bca26b97b85582db1aac631fa78).
+Candidate: [820688585](https://github.com/tya5/chrona/commit/820688585bb58031369c4f04b88c9a604b26ec27), [PR1849](https://github.com/tya5/chrona/pull/1849).
+[Current work record](https://github.com/tya5/chrona/issues/1841#issuecomment-6295885856);
+[architecture / implementation plan](https://github.com/tya5/chrona/issues/1841#issuecomment-6331843745).
+Pre-code normative authority: deferred repair [f7a2e64e5](https://github.com/tya5/chrona/commit/f7a2e64e5eec4bca26b97b85582db1aac631fa78)
+and required-endpoint exception [1d991babe](https://github.com/tya5/chrona/commit/1d991babe1303751d34ebeae09ba531cf8fe1a3e).
+**PR checks passed; release pending:** [CI39721069352](https://github.com/tya5/chrona/actions/runs/39721069352)
+succeeded on this exact candidate, including ready main f613e6165: all three pytest
+shards, conformance, MCP floor, newest-Python reproduction and derived-ready passed.
+Previous CI39718841904 passed conformance/MCP/reproduction but found eight stale
+preparation/session/fragment assertions. Those tests are migrated (10 focused cases pass);
+all geometry/resource source files remain identical to71413b1aa. Main's independent
+fixed-page diagnostic-guide update passes nine focused transport/artifact checks.
+Do not close until the three-OS release on the exact main containing this review succeeds.
 
-## Integrated evidence
+## Architecture and verification
 
-Candidate [`9416405ec`](https://github.com/tya5/chrona/commit/9416405ecb196f1eaea08e7cbb773b7d5b61104c),
-[PR 1849](https://github.com/tya5/chrona/pull/1849), includes ready main `9271af7`.
-250 focused tests, 135 CLI tests and schema equivalence passed. Official snapshot
-from [CI 39711731435](https://github.com/tya5/chrona/actions/runs/39711731435),
-artifact `12397522751`, SHA-256
-`a6d85597e1c31896e77de2c2c4105eb076335d2006b1825a5dec1805b975a07d`,
-contains 50 Scenes and 50 SVGs; its six focused SVGs exactly match the locally
-inspected renders. The run found an unclassified integer counter and a missing
-generated Theme role reference row, corrected in
-[`fa9582376`](https://github.com/tya5/chrona/commit/fa9582376).
-38 counter/cursor/exchange tests and four reference tests pass after correction.
-Final-head CI, complete corpus disposition and publication remain required.
+Layout retains measured member-name candidates and their existing ledger until route closure.
+Only after clear required-endpoint candidates are exhausted can exact member-name blockers
+advance or yield with diagnosis. Whole text/chip/icon/style/host groups change atomically;
+all other required content and completed routes survive. The same actual stroke/head ink is
+checked before and after. No new quota, global replay, clearance waiver, corpus adaptation,
+or Scene/adapter allocation. Independent review found no release-blocking ownership/safety gap.
 
-Follow-up source is public on `wip/issue-1841-recovery-contract` at
-[`d2559ab3a`](https://github.com/tya5/chrona/commit/d2559ab3a7bf140a688aeeb9fb1414c0e21b92e6),
-including ready main `73d831833`. Test/ownership migrations and one shared
-completed node-approach registration owner fix omitted stub diagnostics under
-the existing contract. 54 focused tests and 50 combined integration controls
-pass (overlapping sets). All six focal SVG byte streams and primitive maps
-remain identical; only 02/19 add a truthful shared-approach receipt each.
-The [official per-slide/receipt ledger](https://github.com/tya5/chrona/pull/1849#issuecomment-6331591571)
-discloses every new recovery receipt, 32 added member names and one lost existing
-name on 12-glyph-gates. Old baseline solver stages were not recorded; route
-existence alone does not establish NORMAL. Previously materializable off-manifest
-preset cases expose a [point-ingress/name design gate](https://github.com/tya5/chrona/issues/1841#issuecomment-6331475701).
-Do not waive those tests or introduce another scheduling rule while awaiting
-its disposition. Canonical PR 1849 remains at 9416405ec with failed CI; its
-derived-ready failure follows the failed conformance/pytest prerequisites.
+Local commands: `pytest -q tests/cli/test_cli_characterization.py` (135 passed);
+the four member-yield/session/route-plan files (23 passed); attached milestones plus
+default/starter checks (7 passed); review/ledger validators (13 passed);
+`python -m tools.derived_workflow source-only origin/main HEAD` passed.
+Additional focused sets overlap these counts; they are not added together.
 
-HALCYON 02/11/19 retain all previous member-name identities/text and add Launch
-and Pre-ship review (20 to 22 names each). 16 retains all 26, including Launch
-services confirmed, Ground station upgrade and Bus functional test. All logical
-relations remain in the six focused contexts (24/24/25/24/25/10). Root inspected
-actual SVG previews 02/16/25 and roadmap Sunday: Launch is visible and the
-station/signoff note tails retain their connected geometry.
+## Official rendered evidence
 
-Fresh trial 12 uses published inputs
-[`81d11c3c`](https://github.com/tya5/chrona/tree/81d11c3cb6823d1b4ddae6a4659db7f4a8d75de6/trial-12):
-matching w2 Scene, w3 Actual, w0 Snapshot, forecast and explicit preset locale.
-All six renders succeed. Each preset's plain/hinted w3 maps of **all 255 Path
-and 197 Text primitives** are exactly equal. Each hint summary has 107 relations:
-75 accepted/revalidated, 32 invalidated/searched, zero absent/unusable. Concurrent
-wall observations (two workers, whole seconds) are target-b/en-US 28/29/22 s and
-yuya/ja-JP 29/29/23 s for w2/plain/hinted, not a performance guarantee.
+Exact820 artifact12400987197 from CI39721069352, official SHA-256
+`ba343ff398a95ddff0eea0da610dc92a6c001b9189ef9060f95084e97d635a98`;
+snapshot TAR SHA-256 `594f8a86dff6e45a1624d6dff3e56ac7ffb98410d73a08270258e00deee60c8d`.
+All **50 Scenes and50 SVGs exactly equal71413b1aa**; all SVGs and primitive maps
+also exactly equal previously inspected941. Against941,39 Scenes are byte-identical;
+the other11 differ only in diagnostic order or additional shared-approach info.
+The [complete per-slide / recovery / text ledger](https://github.com/tya5/chrona/pull/1849#issuecomment-6331591571)
+covers the same bytes. Baseline solver stages were not recorded: absence
+of an old receipt is not evidence of NORMAL.
 
-Fresh trial 16 uses published inputs
-[`88781e7e`](https://github.com/tya5/chrona/tree/88781e7eafa331be04fb69154e161d5727b31497/trial-16):
-v1 project + yuya/ja-JP; v2 adds Actual and baseline Snapshot, no forecast.
-Both succeed, retain 20 logical relations and have 228/296 primitives.
-Root inspected both actual SVG previews, r08's identical route/opaque-halo
-point arrays, and its marks-stage receipt. The note leader has explicit fallback
-diagnosis. The observer reports zero errors/warnings; this is not a NORMAL
-temporal-hull or critical-temporal-excursion claim. Removed axis decorations
-follow #1855. Three finished-Actual progress fills and their key are also absent
-on ready main, per [Spec 61](../../specification/61-progress-fill-marks.md) and
-approved [`086f4851`](https://github.com/tya5/chrona/commit/086f4851d70077c2cf13d9ea9b490892783a55c5).
+Against published main:48/50 SVGs change; primitives +419/−83/~837.
+All545 actual logical relation identities survive; physical paths545→574 represent29
+paired-stub expansions. Counts exclude legend swatches. Member names336→367 (+32/−1);
+the lost 12-glyph-gates Bus functional test name and attached-fixture Range safety
+omission are approved residual [#1908](https://github.com/tya5/chrona/issues/1908),
+not hidden failures. Required routes and endpoint titles remain visible.
+
+| Focused context | Actual logical / physical paths | Member-name and visible gate |
+| --- | ---: | --- |
+| HALCYON02 |24 / 28|22 names; Launch and Pre-ship review added; no prior name lost |
+| HALCYON11 |24 / 27|22 names; same retained-name gate |
+| HALCYON16 |24 / 25|26 names, including Launch services confirmed, Ground station upgrade and Bus functional test |
+| HALCYON19 |24 / 28|22 names; same retained-name gate |
+| HALCYON25 Sunday |24 / 24|Actual station-note / tail geometry unchanged from inspected941 |
+| Roadmap Sunday |9 / 9|Actual signoff-note geometry unchanged from inspected941 |
+
+## Fresh public-input replays
+
+Trial12 inputs [81d11c3c](https://github.com/tya5/chrona/tree/81d11c3cb6823d1b4ddae6a4659db7f4a8d75de6/trial-12):
+archive SHA-256 `db380c2824ea527aa7fd4e0f3354e79edff6c8ae4c22d0025787b7c33be40dad`.
+Matching w2 Scene, w3 Actual, w0 Snapshot, forecast and explicit locale.
+All six renders succeed; each preset's plain/hinted maps of all255 Path and197 Text
+primitives are identical. Each hint summary:75 accepted/revalidated,32 invalidated/searched,
+zero absent/unusable. Serial wall observations (seconds, not thresholds):
+
+| Preset / locale |w2|w3 plain|w3 hinted|
+| --- | ---: | ---: | ---: |
+|target-b / en-US|26.83|26.47|20.18|
+|yuya / ja-JP|27.56|27.85|22.20|
+
+Trial16 inputs [88781e7e](https://github.com/tya5/chrona/tree/88781e7eafa331be04fb69154e161d5727b31497/trial-16):
+archive SHA-256 `d2e3cf88253013b8950fdf5e1001aefcbbfa9525827ca51d1396d4943db5ec3f`.
+v1 uses project + yuya/ja-JP; v2 adds Actual and baseline Snapshot, no forecast.
+Both succeed, retain20 actual logical relations and228/296 primitives; observer zero
+errors/warnings. r08's route and opaque halo have identical points and a marks-stage receipt;
+this is declared recovery, not NORMAL/protected clearance. Current canonical Yuya
+working-day units yield `+0営業日`; an older local replay with different effective profile
+identities is not used as a byte-regression baseline. Finished-Actual fill absence follows
+[Spec61](../../specification/61-progress-fill-marks.md), not a missing dependency.
+
+Trial17 inputs [cbc183f6](https://github.com/tya5/chrona/tree/cbc183f6b9243181eaef102afa4f9377c9b899ca/trial-17),
+same `one.sh marquee {A,E} en-US` arguments, default viewport, current source.
+Root inspected actual after A/E and before E rasters. Published `detour.py` is a
+heuristic, not the hull validator: all previously flagged paths now have explicit
+marks recovery receipts and no longer trigger the heuristic. Before stages are unrecorded.
+The named E s1t3→s3t4 path changes minX544.6 (predecessor start768.0) to859.8.
+Note-leader/layout issues remain separate [#1906](https://github.com/tya5/chrona/issues/1906).
+
+| Case | Far-left heuristic before → after | Actual before / after rasters |
+| --- | --- | --- |
+|A,80 tasks|22/41 → 0/41|[before](assets-1841/trial17-before-A.png) / [after](assets-1841/trial17-after-A.png)|
+|E,three years|4/16 → 0/16|[before](assets-1841/trial17-before-E.png) / [after](assets-1841/trial17-after-E.png)|
+
+Rasters preserve intrinsic SVG size (A1600×2192; E1600×1149), resvg0.48.1,
+five bundled Noto faces only, system fonts disabled. After SVG SHA-256:
+A `573ae39747bb20ef233f5640675507b3d8b1bd791cb7c231a0f4e069972c792e`;
+E `2c2736bc12e4cc49460549cd19e9e1d0be97ec209e8039f6c1e6302640fd44d1`.
 
 ## Literal issue acceptance
 
@@ -78,16 +110,15 @@ approved [`086f4851`](https://github.com/tya5/chrona/commit/086f4851d70077c2cf13
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | hints validate against the completed host geometry whatever the primitive kind. On the trial input, hinted renders accept the unchanged routes and the time drops (before/after recorded). | met | [Host controls](../../../tests/unit/chrona/usecases/test_previous_scene.py), [original before/after timing audit](https://github.com/tya5/chrona/issues/1841#issuecomment-6296684466), integrated trial 12 above; released on review-containing main `4e779217` / [CI 39553831077](https://github.com/tya5/chrona/actions/runs/39553831077). | — |
-| 2 | one shared measure/place rounding for every content-width text; a synthetic case for cells and headers. | met | [Fractional header/cell controls](../../../tests/unit/chrona/presentation/layout/test_table_forward_fit.py); released on review-containing main `4e779217` / CI 39553831077. | — |
-| 3 | the title is honoured; the guide example runs on the default preset in the docs tests. | met | [Actual SVG headings](../../../tests/integration/test_network_heading_parts.py), [executable guide](../../../tests/integration/test_network_view_guide.py); released on review-containing main `4e779217` / CI 39553831077. | — |
-| 4 | a route segment may not run along a mark's edge (treat edge contact as an obstacle); a synthetic case. | not met | [Published closed-contact tests](https://github.com/tya5/chrona/blob/d2559ab3a7bf140a688aeeb9fb1414c0e21b92e6/tests/unit/chrona/presentation/layout/test_primary_mark_closed_contact.py), official snapshot and visual evidence above. Final-head CI, complete corpus disposition and review-containing-main release remain required. | — |
-| 5 | network rank placement keeps unchanged nodes (hint or stable ordering), and row pitch is quantised so rows above an insertion stay byte-identical. | met | By [approved contract](https://github.com/tya5/chrona/issues/1841#issuecomment-6297232443): fractional authored pitch/fill redistribution and rank-demand movement remain intentional. [Spec 33](../../specification/33-intent-oriented-layout.md), [Spec 50](../../specification/50-constraint-driven-gantt-surface-quality.md); no rounding, new node hints or preset tuning. | — |
-| 6 | a route's horizontal extent stays within its endpoints' times plus the port leads, unless it is diagnosed as recovery. | not met | [Published temporal-hull tests](https://github.com/tya5/chrona/blob/d2559ab3a7bf140a688aeeb9fb1414c0e21b92e6/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), integrated trial 16 above. Final corpus/release evidence remains required. | — |
+|1|hints validate against the completed host geometry whatever the primitive kind. On the trial input, hinted renders accept the unchanged routes and the time drops (before/after recorded).|met|[Host controls](../../../tests/unit/chrona/usecases/test_previous_scene.py), [original timing audit](https://github.com/tya5/chrona/issues/1841#issuecomment-6296684466), fresh trial12 above; released review-containing main4e779217 / [CI39553831077](https://github.com/tya5/chrona/actions/runs/39553831077).| — |
+|2|one shared measure/place rounding for every content-width text; a synthetic case for cells and headers.|met|[Fractional cell/header tests](../../../tests/unit/chrona/presentation/layout/test_table_forward_fit.py); released main4e779217 / CI39553831077.| — |
+|3|the title is honoured; the guide example runs on the default preset in the docs tests.|met|[SVG heading tests](../../../tests/integration/test_network_heading_parts.py), [executable guide](../../../tests/integration/test_network_view_guide.py); released main4e779217 / CI39553831077.| — |
+|4|a route segment may not run along a mark's edge (treat edge contact as an obstacle); a synthetic case.|met|[Closed-contact controls](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_primary_mark_closed_contact.py), [endpoint controls](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), final official50-context rendered review above and CI39721069352. Separate main release gate remains pending.| — |
+|5|network rank placement keeps unchanged nodes (hint or stable ordering), and row pitch is quantised so rows above an insertion stay byte-identical.|met|[Approved contract6297232443](https://github.com/tya5/chrona/issues/1841#issuecomment-6297232443): authored fractional pitch/fill redistribution and rank-demand movement remain intentional; [Spec33](../../specification/33-intent-oriented-layout.md), [Spec50](../../specification/50-constraint-driven-gantt-surface-quality.md).| — |
+|6|a route's horizontal extent stays within its endpoints' times plus the port leads, unless it is diagnosed as recovery.|met|[Temporal-hull / endpoint tests](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_relation_endpoint_geometry.py), [protected-domain tests](https://github.com/tya5/chrona/blob/71413b1aab463e2dfccea3b42637c47f384d40b2/tests/unit/chrona/presentation/layout/test_protected_finite_route_domain.py), fresh trials16/17, explicit final-corpus receipts above and CI39721069352. Separate main release gate remains pending.| — |
 
 ## Programme-level criteria (optional)
 
-Keep issue open until complete corpus changes and every HALCYON
-NORMAL-to-recovery transition are reviewed, final PR checks pass, and exact
-published main containing this review passes three-OS release CI. No safety
-waiver, new quota, corpus adaptation or further scheduling rule is authorized.
+Release acceptance remains separate from focused/rendered behavior: keep issue1841 open
+until exact review-containing-main three-OS full pytest/conformance/wheel, MCP floor
+and newest-Python public-materializer reproduction are successful.

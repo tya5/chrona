@@ -160,9 +160,9 @@ Distinct members in `laneMembers` are packed; a member is shown only when its co
 
 | Project | Slide | Shown | Packed | Shown/packed |
 | --- | --- | ---: | ---: | ---: |
-| halcyon-1 | programme-board | 15 | 26 | 15/26 |
+| halcyon-1 | programme-board | 22 | 26 | 22/26 |
 | halcyon-1 | launch-campaign | 11 | 12 | 11/12 |
-| halcyon-1 | overlay-briefing | 16 | 26 | 16/26 |
-| halcyon-1 | glyph-gates | 16 | 26 | 16/26 |
+| halcyon-1 | overlay-briefing | 22 | 26 | 22/26 |
+| halcyon-1 | glyph-gates | 24 | 26 | 24/26 |
 | halcyon-1 | gallery-editorial-lanes | 26 | 26 | 26/26 |
-| halcyon-1 | gallery-text-compression | 15 | 26 | 15/26 |
+| halcyon-1 | gallery-text-compression | 22 | 26 | 22/26 |

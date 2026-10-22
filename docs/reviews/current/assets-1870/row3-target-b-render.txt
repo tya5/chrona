@@ -1,0 +1,10 @@
+$ chrona render skills/chrona/examples/notes-and-lanes/plan.yaml --preset target-b --locale en-US --output notes-en-US.svg
+  status ok
+  drawn header texts:
+    >RISK · Test<
+    >NOTE · Build<
+$ chrona render skills/chrona/examples/notes-and-lanes/plan.yaml --preset target-b --locale ja-JP --output notes-ja-JP.svg
+  status ok
+  drawn header texts:
+    >RISK · Test<
+    >NOTE · Build<

@@ -1,0 +1,6 @@
+$ chrona render docs/reviews/current/assets-1870/plan-gate-risk.yaml --preset target-b --viewport 600x300 --output small.svg
+  status ok
+   W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT | the completed canvas exceeds the declared viewport, which is only a minimum; to fit a fixed slide or page show fewer rows or use a denser design (docs/guides/fixed-size-output.md): surface table-timeline at /body/environment/viewport: declared 600x300, actual origin 0,0 size 600x345; contributors: timeline (block-end 26.375), annotations (block-end 26.375), legend (block-end 17)
+$ chrona render ... --preset target-b --viewport 1123x794 --output a4.svg
+  status ok
+<svg xmlns="http://www.w3.org/2000/svg" width="1123" height="794" viewBox="0 0 1123 794" role="img">
