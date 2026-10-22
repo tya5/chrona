@@ -530,6 +530,18 @@ demand is an incompatibility, not permission to retry indefinitely. The finite
 admitted group inventory bounds this closure without a new search quota.
 No Scene/adapter resizing, source renumbering, or table-ceiling waiver occurs.
 
+The declared viewport is a minimum, not an implicit source ceiling. Close
+required intrinsic inline demand through normal-flow ancestry before probing
+source ceilings; a fill-sized ancestor does not make that demand disappear.
+Keep the original declaration separately for the canvas-growth diagnostic.
+A header spanning table and timeline belongs to their smallest common layout
+container: carry its measured minimum on that container, not on either child
+source. Include the owner's declared padding and the header's inset geometry;
+retain tab/band domains. Source and container minima share the finite admitted
+group closure, and an authored incompatible cap names that owner and group.
+This is intrinsic Layout sizing, not route-time viewport repair or an
+incremental viewport-plus-shortage search.
+
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
 container's item alignment on that axis.
