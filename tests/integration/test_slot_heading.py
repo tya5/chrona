@@ -26,9 +26,14 @@ TARGETS = ["g0-t1", "g1-t2", "g2-t1"]
 HEADING = "slot-heading:annotations"
 
 
-def _rail_candidate():
-    return sr.candidate("rail", region={"kind": "slot", "source": "annotations"}, search_kind="row-aligned",
-                        connector="leader")
+def _rail_candidates():
+    """Try the declared rail leader, then a boxed note and explicit full-list terminal."""
+    region = {"kind": "slot", "source": "annotations"}
+    return (
+        sr.candidate("rail", region=region, search_kind="row-aligned", connector="leader"),
+        sr.candidate("card", region=region, search_kind="row-aligned", connector="none"),
+        sr.candidate("terminal", region=region, search_kind="row-aligned", connector="none"),
+    )
 
 
 def _beside_the_timeline(parts) -> None:
@@ -79,7 +84,7 @@ def _render(tmp_path, *, heading=None, name="r", beside=True, role=True, notes=T
         configure(parts)
     source = sr.chain_project()
     if notes:
-        sr.add_notes(source, parts["view"], TARGETS, [_rail_candidate()], words=3)
+        sr.add_notes(source, parts["view"], TARGETS, _rail_candidates(), words=3)
     return sr.render(directory, source, presentation=parts, viewport=viewport, detail=detail)
 
 
@@ -350,7 +355,7 @@ def test_a_caption_goes_with_a_slot_the_completed_footer_band_carried_down(tmp_p
     sr.fix_inline(parts, "annotations", 300, token="rail-width")
     sr.find_node(parts["layout"], "annotations")["heading"] = {"text": "Notes"}
     source = sr.chain_project()
-    sr.add_notes(source, parts["view"], TARGETS, [_rail_candidate()], words=3)
+    sr.add_notes(source, parts["view"], TARGETS, _rail_candidates(), words=3)
     headed = sr.render(directory, source, presentation=parts, detail=detail)
     heading, slot = _by_id(headed)[HEADING], _slot(headed, "annotations")
     assert slot.bounds[1] > _slot(headed, "group-details").bounds[1]  # the successor stands under the footer

@@ -9,6 +9,8 @@ Normative authority: [Spec06](../../specification/06-view-model.md), [Spec07](..
 
 Frozen [trial17 inputs](https://github.com/tya5/chrona/tree/cbc183f6b9243181eaef102afa4f9377c9b899ca/trial-17) were unchanged:49/56 original jobs succeeded; seven old C3 profiles lack the now-required explicit safe list destination and correctly reject. All seven additional current-profile+A4 jobs succeeded. A4 changes only page size, not Project/Actual/Snapshot. Affected-case replays replace stale evidence:four Sunday widths, two Yuya D locales, and [six final annotation cases](assets-1906/annotation-replay.json) on unchanged sourcef4a51c6ca. Commands follow the published jobs/one.sh using the project venv; no corpus text/date/golden edits. Rasters use bundled Noto faces only, system fonts disabled, preview width1400.
 
+[Reviewer-authorized](https://github.com/tya5/chrona/issues/1906#issuecomment-6335461637) declaration migration [6f46be756](https://github.com/tya5/chrona/commit/6f46be756): Controller Z slot-heading and annotation-rounded keep leader first, then explicitly declare a boxed same-slot card and terminal list. Both actual SVGs retain two styled boxes, full text, heading/border/radius treatment and containment, with no list replacement. Local per-slide primitive deltas are184→183 (removed1 leader; changed17/15 respectively); each replaces the unsafe direct-route warning with named rail-card fallback. The official50-context ledger remains pending CI. Synthetic appearance fixtures declare the same safe exhaustion; the dedicated start-border control still requires a real rail leader and unchanged outer edge, and the capsule control requires wrapped text.
+
 ## Literal issue acceptance
 
 ### Issue #1906
@@ -29,7 +31,7 @@ Frozen [trial17 inputs](https://github.com/tya5/chrona/tree/cbc183f6b9243181eaef
 
 ## Programme-level criteria (optional)
 
-Local changed-file tests: `pytest -q -m 'not corpus' <all changed tests/*.py>`:573 passed,5 public-byte corpus cases deselected. The adjacent heading/legend/group/annotation set passed357; counts overlap and are not added. Five stale local public-byte failures require the CI-owned regenerated snapshot, not weaker assertions or manually authored output. Source-only guard passes. Required release: official50-context delta review, PR checks, then exact review-containing-main three-OS pytest/conformance/wheel, MCP floor and newest-Python reproduction; evidence is linked from the living record.
+Local changed-file tests: `pytest -q -m 'not corpus' <all changed tests/*.py>`:573 passed,5 public-byte corpus cases deselected. The adjacent heading/legend/group/annotation set passed357; counts overlap and are not added. After the approved policy migration, the combined rail-overflow/slot-heading/border/radius/kind-header suite passes98 tests, retaining real-leader, wrapped-text and appearance assertions; independent fixture review found no blocker. Five stale local public-byte failures require the CI-owned regenerated snapshot, not weaker assertions or manually authored output. Source-only guard and13 acceptance/closed-specification tool tests pass. Required release: official50-context delta review, PR checks, then exact review-containing-main three-OS pytest/conformance/wheel, MCP floor and newest-Python reproduction; evidence is linked from the living record.
 
 ## Profile and architectural conclusion
 
