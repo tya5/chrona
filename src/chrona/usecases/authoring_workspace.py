@@ -69,9 +69,9 @@ def create_workspace(
             },
         }
         workspace_path = staged / "workspace.yaml"
-        workspace_path.write_text(
-            yaml.safe_dump(workspace, allow_unicode=True, sort_keys=False), encoding="utf-8",
-        )
+        # Bytes, not text mode: authoring commands rewrite this file as LF bytes, so a newline-translating
+        # write here would make an inverse's restored bytes differ from the created ones on Windows.
+        workspace_path.write_bytes(yaml.safe_dump(workspace, allow_unicode=True, sort_keys=False).encode("utf-8"))
         # Resolving the full immutable guided closure validates the compact
         # project, copied preset, and all declared preset resources together.
         resolve_guided_draft_render(workspace_path=workspace_path)
