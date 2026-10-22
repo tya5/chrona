@@ -1,0 +1,323 @@
+annotations:
+  a1:
+    anchor:
+      object: g1
+    kind: note
+    text: The external security assessor has asked for a second penetration test round
+      after the gateway redesign, which pushes sign-off into the following sprint
+      and delays the beta cohort invitation.
+  a2:
+    anchor:
+      object: s3t3
+    kind: risk
+    text: Two engineers on leave
+  a3:
+    anchor:
+      object: s1t2
+    kind: note
+    text: Scope cut agreed with sponsor
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+fieldRoles:
+  responsible: owner
+objects:
+  g1:
+    schedule:
+      at: '2027-01-28'
+      mode: fixed-point
+    title: Kickoff
+    type: gate
+  g2:
+    schedule:
+      at: '2027-02-21'
+      mode: fixed-point
+    title: Design review
+    type: gate
+  g3:
+    schedule:
+      at: '2027-03-17'
+      mode: fixed-point
+    title: Alpha
+    type: gate
+  g4:
+    schedule:
+      at: '2027-04-10'
+      mode: fixed-point
+    title: Beta start
+    type: gate
+  s1:
+    schedule:
+      mode: rollup
+    title: Platform
+    type: group
+  s1t1:
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    parent: s1
+    schedule:
+      end: '2027-02-07'
+      mode: fixed-span
+      start: '2027-01-08'
+    title: Consolidate the legacy authentication providers into a single gateway
+    type: task
+  s1t2:
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    parent: s1
+    schedule:
+      end: '2027-03-08'
+      mode: fixed-span
+      start: '2027-02-14'
+    title: Negotiate the enterprise data processing agreement with all EU customers
+    type: task
+  s1t3:
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    parent: s1
+    schedule:
+      end: '2027-04-02'
+      mode: fixed-span
+      start: '2027-03-13'
+    title: Migrate the reporting warehouse from nightly batch to streaming ingestion
+    type: task
+  s1t4:
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    parent: s1
+    schedule:
+      end: '2027-05-03'
+      mode: fixed-span
+      start: '2027-04-14'
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    type: task
+  s2:
+    schedule:
+      mode: rollup
+    title: Mobile
+    type: group
+  s2t1:
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    parent: s2
+    schedule:
+      end: '2027-02-05'
+      mode: fixed-span
+      start: '2027-01-07'
+    title: Negotiate the enterprise data processing agreement with all EU customers
+    type: task
+  s2t2:
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    parent: s2
+    schedule:
+      end: '2027-03-03'
+      mode: fixed-span
+      start: '2027-02-06'
+    title: Migrate the reporting warehouse from nightly batch to streaming ingestion
+    type: task
+  s2t3:
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    parent: s2
+    schedule:
+      end: '2027-04-04'
+      mode: fixed-span
+      start: '2027-03-05'
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    type: task
+  s2t4:
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    parent: s2
+    schedule:
+      end: '2027-05-05'
+      mode: fixed-span
+      start: '2027-04-11'
+    title: Prepare and rehearse the disaster-recovery failover across both regions
+    type: task
+  s3:
+    schedule:
+      mode: rollup
+    title: Data
+    type: group
+  s3t1:
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    parent: s3
+    schedule:
+      end: '2027-02-03'
+      mode: fixed-span
+      start: '2027-01-04'
+    title: Migrate the reporting warehouse from nightly batch to streaming ingestion
+    type: task
+  s3t2:
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    parent: s3
+    schedule:
+      end: '2027-02-19'
+      mode: fixed-span
+      start: '2027-02-09'
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    type: task
+  s3t3:
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    parent: s3
+    schedule:
+      end: '2027-04-01'
+      mode: fixed-span
+      start: '2027-03-06'
+    title: Prepare and rehearse the disaster-recovery failover across both regions
+    type: task
+  s3t4:
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    parent: s3
+    schedule:
+      end: '2027-04-29'
+      mode: fixed-span
+      start: '2027-04-08'
+    title: Rewrite the onboarding flow so that new users reach value within a session
+    type: task
+  s4:
+    schedule:
+      mode: rollup
+    title: Go-to-market
+    type: group
+  s4t1:
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    parent: s4
+    schedule:
+      end: '2027-02-07'
+      mode: fixed-span
+      start: '2027-01-11'
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    type: task
+  s4t2:
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    parent: s4
+    schedule:
+      end: '2027-02-28'
+      mode: fixed-span
+      start: '2027-02-09'
+    title: Prepare and rehearse the disaster-recovery failover across both regions
+    type: task
+  s4t4:
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    parent: s4
+    schedule:
+      end: '2027-04-28'
+      mode: fixed-span
+      start: '2027-04-08'
+    title: Consolidate the legacy authentication providers into a single gateway
+    type: task
+project:
+  calendar: office
+  id: trial17-B
+  title: Unified identity platform and mobile refresh, 2027
+relations:
+- from:
+    endpoint: end
+    object: s3t2
+  id: d-s3t2-s3t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t3
+  id: d-s3t3-s3t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t1
+  id: d-s2t1-s2t2
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t2
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t1
+  id: d-s2t1-s2t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t2
+  id: d-s2t2-s1t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t3
+  id: d-s3t3-s2t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t2
+  id: d-s3t2-s1t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t1
+  id: d-s1t1-g2
+  lag: 0d
+  to:
+    endpoint: at
+    object: g2
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t2
+  id: d-s1t2-g3
+  lag: 0d
+  to:
+    endpoint: at
+    object: g3
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t3
+  id: d-s1t3-g4
+  lag: 0d
+  to:
+    endpoint: at
+    object: g4
+  type: dependency
+version: timeline/v0.7

@@ -1,0 +1,83 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: trial17-E-observed
+body:
+  asOf: '2028-01-22'
+  observations:
+  - id: s1t1-1
+    sequence: 1
+    projectObjectId: s1t1
+    actual:
+      start: '2027-02-01'
+      finish: '2027-08-03'
+      progress: 1
+  - id: s1t2-1
+    sequence: 1
+    projectObjectId: s1t2
+    actual:
+      start: '2027-09-15'
+      openUntil: asOf
+      progress: 0.66
+  - id: s2t1-1
+    sequence: 1
+    projectObjectId: s2t1
+    actual:
+      start: '2027-01-21'
+      finish: '2027-07-26'
+      progress: 1
+  - id: s2t2-1
+    sequence: 1
+    projectObjectId: s2t2
+    actual:
+      start: '2027-09-07'
+      openUntil: asOf
+      progress: 0.75
+  - id: s3t1-1
+    sequence: 1
+    projectObjectId: s3t1
+    actual:
+      start: '2027-02-03'
+      finish: '2027-08-08'
+      progress: 1
+  - id: s3t2-1
+    sequence: 1
+    projectObjectId: s3t2
+    actual:
+      start: '2027-09-09'
+      openUntil: asOf
+      progress: 0.56
+  - id: s4t1-1
+    sequence: 1
+    projectObjectId: s4t1
+    actual:
+      start: '2027-01-24'
+      finish: '2027-05-20'
+      progress: 1
+  - id: s4t2-1
+    sequence: 1
+    projectObjectId: s4t2
+    actual:
+      start: '2027-06-22'
+      finish: '2027-11-06'
+      progress: 1
+  - id: s4t3-1
+    sequence: 1
+    projectObjectId: s4t3
+    actual:
+      start: '2027-12-23'
+      openUntil: asOf
+      progress: 0.55
+  - id: s5t1-1
+    sequence: 1
+    projectObjectId: s5t1
+    actual:
+      start: '2027-01-18'
+      finish: '2027-07-18'
+      progress: 1
+  - id: s5t2-1
+    sequence: 1
+    projectObjectId: s5t2
+    actual:
+      start: '2027-07-26'
+      finish: '2028-01-11'
+      progress: 1

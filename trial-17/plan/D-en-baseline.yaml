@@ -1,0 +1,73 @@
+annotations:
+  a1:
+    anchor:
+      object: g1
+    kind: note
+    text: Vendor contract still unsigned
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+fieldRoles:
+  responsible: owner
+objects:
+  g1:
+    schedule:
+      at: '2027-03-08'
+      mode: fixed-point
+    title: Kickoff
+    type: gate
+  s1:
+    schedule:
+      mode: rollup
+    title: Platform
+    type: group
+  s1t1:
+    fields:
+      owner: Ana
+    parent: s1
+    schedule:
+      end: '2027-03-05'
+      mode: fixed-span
+      start: '2027-03-01'
+    title: Platform Requirements 1
+    type: task
+  s1t2:
+    fields:
+      owner: Ben
+    parent: s1
+    schedule:
+      end: '2027-03-09'
+      mode: fixed-span
+      start: '2027-03-06'
+    title: Platform Architecture 2
+    type: task
+  s1t3:
+    fields:
+      owner: Chen
+    parent: s1
+    schedule:
+      end: '2027-03-13'
+      mode: fixed-span
+      start: '2027-03-09'
+    title: Platform Prototype 3
+    type: task
+project:
+  calendar: office
+  id: trial17-D
+  title: Hotfix release
+relations:
+- from:
+    endpoint: end
+    object: s1t1
+  id: d-s1t1-g1
+  lag: 0d
+  to:
+    endpoint: at
+    object: g1
+  type: dependency
+version: timeline/v0.7

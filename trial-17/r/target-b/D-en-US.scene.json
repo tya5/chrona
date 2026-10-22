@@ -1,0 +1,472 @@
+{
+  "version": "chrona/scene/v0.7",
+  "kind": "scene",
+  "provenance": {
+    "mode": "draft",
+    "chronaVersion": "0.1.0a0",
+    "resources": [
+      {
+        "kind": "actual-set",
+        "id": "trial17-D-observed",
+        "revision": "draft",
+        "contentIdentity": "sha256:9401758935e0250926654a745c92468fa9e07f1d312f342d8ed79573a96bd2f9"
+      },
+      {
+        "kind": "color-scheme",
+        "id": "target-b",
+        "revision": "draft",
+        "contentIdentity": "sha256:81f20516f91587aab07d99e5a648a37e1dc4cb1bcb9df0c776ac270ced8c242c"
+      },
+      {
+        "kind": "layout-profile",
+        "id": "target-b",
+        "revision": "draft",
+        "contentIdentity": "sha256:8823d2647dafa229c73d0b1d287f1f07771fb9e7d58462114c8dc5d48f75d899"
+      },
+      {
+        "kind": "project",
+        "id": "trial17-D",
+        "revision": "draft",
+        "contentIdentity": "sha256:1d70d3b6eb3e8b500a7e1f0067d98810645b8d37d64411a47b91b3ab1fbfc011"
+      },
+      {
+        "kind": "review-detail-profile",
+        "id": "halcyon-target-b-legend",
+        "revision": "draft",
+        "contentIdentity": "sha256:750551626aa3608fefc9a645d9fbd64d944fd627521bbc0217fe8ebf03dafc2b"
+      },
+      {
+        "kind": "semantic-vocabulary",
+        "id": "chrona-core",
+        "revision": "v0.1",
+        "contentIdentity": "sha256:eb611c492006adef85dc3519ff55407edf68cb4b98008ddd57a9fcaaea47a692"
+      },
+      {
+        "kind": "snapshot-project",
+        "id": "trial17-D",
+        "revision": "draft",
+        "contentIdentity": "sha256:cdceda97d5b241f3ce742458238a1c6e5f95bd65e530dc872b7ec776689ba286"
+      },
+      {
+        "kind": "theme",
+        "id": "target-b",
+        "revision": "draft",
+        "contentIdentity": "sha256:21c2968019c278fef5e77c89c58a05578b7905198079d5bfbde946eea3890b6e"
+      },
+      {
+        "kind": "view",
+        "id": "chrona-preset-design-default",
+        "revision": "draft",
+        "contentIdentity": "sha256:5fd40e71e8fce790da840e5a68a79580bba3522dba0c9c53ffba629a2a27f3d6"
+      }
+    ]
+  },
+  "viewport": {
+    "inlineSize": 1600.0,
+    "blockSize": 362.0
+  },
+  "requiredCapabilities": [
+    "mark.marker-geometry",
+    "mark.symbol-outline"
+  ],
+  "surfaces": [
+    {
+      "id": "table-timeline",
+      "slots": [
+        {
+          "id": "annotations",
+          "source": "annotations",
+          "bounds": {
+            "inline": 1322.0,
+            "block": 67.3,
+            "inlineSize": 250.0,
+            "blockSize": 230.7
+          },
+          "priority": "optional",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "legend",
+          "source": "legend",
+          "bounds": {
+            "inline": 28.0,
+            "block": 312.0,
+            "inlineSize": 1544.0,
+            "blockSize": 22.0
+          },
+          "priority": "preferred",
+          "overflow": "ellipsize-with-source"
+        },
+        {
+          "id": "table",
+          "source": "table",
+          "bounds": {
+            "inline": 28.0,
+            "block": 67.3,
+            "inlineSize": 422.0,
+            "blockSize": 230.7
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline",
+          "source": "timeline",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 464.0,
+            "block": 111.3,
+            "inlineSize": 844.0,
+            "blockSize": 186.7
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline-axis",
+          "source": "timeline-axis",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 464.0,
+            "block": 67.3,
+            "inlineSize": 844.0,
+            "blockSize": 44.0
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "title",
+          "source": "title",
+          "bounds": {
+            "inline": 28.0,
+            "block": 28.0,
+            "inlineSize": 153.67000000000002,
+            "blockSize": 25.3
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "review-surface",
+          "source": "review-surface",
+          "bounds": {
+            "inline": 28.0,
+            "block": 67.3,
+            "inlineSize": 1280.0,
+            "blockSize": 230.7
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        }
+      ],
+      "rows": [
+        {
+          "id": "s1t1",
+          "objectId": "s1t1",
+          "groupId": "Ana",
+          "bounds": {
+            "inline": 464.0,
+            "block": 131.3,
+            "inlineSize": 844.0,
+            "blockSize": 22.081249999999997
+          }
+        },
+        {
+          "id": "s1t2",
+          "objectId": "s1t2",
+          "groupId": "Ben",
+          "bounds": {
+            "inline": 464.0,
+            "block": 173.38125000000002,
+            "inlineSize": 844.0,
+            "blockSize": 22.081249999999997
+          }
+        },
+        {
+          "id": "s1t3",
+          "objectId": "s1t3",
+          "groupId": "Chen",
+          "bounds": {
+            "inline": 464.0,
+            "block": 215.46250000000003,
+            "inlineSize": 844.0,
+            "blockSize": 22.081249999999997
+          }
+        },
+        {
+          "id": "g1",
+          "objectId": "g1",
+          "groupId": "Unassigned",
+          "bounds": {
+            "inline": 464.0,
+            "block": 257.54375000000005,
+            "inlineSize": 844.0,
+            "blockSize": 22.081249999999997
+          }
+        }
+      ],
+      "columns": [
+        {
+          "id": "Task",
+          "label": "Task",
+          "bounds": {
+            "inline": 28.0,
+            "block": 67.3,
+            "inlineSize": 342.28200000000004,
+            "blockSize": 230.7
+          }
+        },
+        {
+          "id": "Δ finish",
+          "label": "Δ vs plan",
+          "bounds": {
+            "inline": 384.28200000000004,
+            "block": 67.3,
+            "inlineSize": 65.718,
+            "blockSize": 230.7
+          }
+        }
+      ],
+      "groups": [
+        {
+          "id": "Ana",
+          "headerBounds": {
+            "inline": 28.0,
+            "block": 111.3,
+            "inlineSize": 1280.0,
+            "blockSize": 20.0
+          },
+          "contentBounds": {
+            "inline": 464.0,
+            "block": 111.3,
+            "inlineSize": 844.0,
+            "blockSize": 42.08125
+          }
+        },
+        {
+          "id": "Ben",
+          "headerBounds": {
+            "inline": 28.0,
+            "block": 153.38125000000002,
+            "inlineSize": 1280.0,
+            "blockSize": 20.0
+          },
+          "contentBounds": {
+            "inline": 464.0,
+            "block": 153.38125000000002,
+            "inlineSize": 844.0,
+            "blockSize": 42.08125
+          }
+        },
+        {
+          "id": "Chen",
+          "headerBounds": {
+            "inline": 28.0,
+            "block": 195.46250000000003,
+            "inlineSize": 1280.0,
+            "blockSize": 20.0
+          },
+          "contentBounds": {
+            "inline": 464.0,
+            "block": 195.46250000000003,
+            "inlineSize": 844.0,
+            "blockSize": 42.08125
+          }
+        },
+        {
+          "id": "Unassigned",
+          "headerBounds": {
+            "inline": 28.0,
+            "block": 237.54375000000005,
+            "inlineSize": 1280.0,
+            "blockSize": 20.0
+          },
+          "contentBounds": {
+            "inline": 464.0,
+            "block": 237.54375000000005,
+            "inlineSize": 844.0,
+            "blockSize": 42.08125
+          }
+        }
+      ],
+      "primitives": [
+        {"id":"title","kind":"Text","sourceRef":"title","sourceKind":"review","purpose":"title-text","visualRole":"text","bounds":{"inline":28.0,"block":31.168,"inlineSize":153.67000000000002,"blockSize":25.299999999999997},"slotId":"title","text":"Hotfix release","baseline":[28.0,53.168],"textLayout":{"bounds":{"inline":28.0,"block":31.168,"inlineSize":153.67000000000002,"blockSize":25.299999999999997},"baseline":[28.0,53.168],"lines":["Hotfix release"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":22.0,"lineHeight":1.15,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[153.67000000000002]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"column:Task","kind":"Text","sourceRef":"view:tableColumns","sourceKind":"review","purpose":"table-column-label","visualRole":"tableColumnLabel","bounds":{"inline":28.0,"block":67.3,"inlineSize":26.07,"blockSize":15.95},"slotId":"table","text":"Task","baseline":[28.0,78.3],"textLayout":{"bounds":{"inline":28.0,"block":67.3,"inlineSize":26.07,"blockSize":15.95},"baseline":[28.0,78.3],"lines":["Task"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":11.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","letterSpacing":0.88,"numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[26.07]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"tableColumnId":"Task","paintOrder":300},
+        {"id":"column:Δ finish","kind":"Text","sourceRef":"view:tableColumns","sourceKind":"review","purpose":"table-column-label","visualRole":"tableColumnLabel","bounds":{"inline":384.28200000000004,"block":67.3,"inlineSize":53.218,"blockSize":15.95},"slotId":"table","text":"Δ vs plan","baseline":[384.28200000000004,78.3],"textLayout":{"bounds":{"inline":384.28200000000004,"block":67.3,"inlineSize":53.218,"blockSize":15.95},"baseline":[384.28200000000004,78.3],"lines":["Δ vs plan"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":11.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","letterSpacing":0.88,"numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[53.218]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"cell:s1t1:Task","kind":"Text","sourceRef":"s1t1","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":28.0,"block":133.27812500000002,"inlineSize":207.85,"blockSize":18.125},"slotId":"table","text":"Platform / Platform Requirements 1","baseline":[28.0,145.77812500000002],"textLayout":{"bounds":{"inline":28.0,"block":133.27812500000002,"inlineSize":207.85,"blockSize":18.125},"baseline":[28.0,145.77812500000002],"lines":["Platform / Platform Requirements 1"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[207.85]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"s1t1","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:s1t1:Δ finish","kind":"Text","sourceRef":"s1t1","sourceKind":"review","purpose":"table-cell","visualRole":"variance-on-track","bounds":{"inline":416.18800000000005,"block":133.640625,"inlineSize":21.312,"blockSize":17.4},"slotId":"table","text":"+0d","baseline":[416.18800000000005,145.640625],"textLayout":{"bounds":{"inline":416.18800000000005,"block":133.640625,"inlineSize":21.312,"blockSize":17.4},"baseline":[416.18800000000005,145.640625],"lines":["+0d"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[21.312]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"tableRowId":"s1t1","tableColumnId":"Δ finish","paintOrder":300,"contrastTreatment":"required"},
+        {"id":"cell:s1t2:Task","kind":"Text","sourceRef":"s1t2","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":28.0,"block":175.35937500000003,"inlineSize":198.75,"blockSize":18.125},"slotId":"table","text":"Platform / Platform Architecture 2","baseline":[28.0,187.85937500000003],"textLayout":{"bounds":{"inline":28.0,"block":175.35937500000003,"inlineSize":198.75,"blockSize":18.125},"baseline":[28.0,187.85937500000003],"lines":["Platform / Platform Architecture 2"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[198.75]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"s1t2","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:s1t2:Δ finish","kind":"Text","sourceRef":"s1t2","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":437.50000000000006,"block":175.721875,"inlineSize":0.0,"blockSize":17.4},"slotId":"table","text":"","baseline":[437.50000000000006,187.721875],"textLayout":{"bounds":{"inline":437.50000000000006,"block":175.721875,"inlineSize":0.0,"blockSize":17.4},"baseline":[437.50000000000006,187.721875],"lines":[""],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"s1t2","tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"cell:s1t3:Task","kind":"Text","sourceRef":"s1t3","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":28.0,"block":217.44062500000004,"inlineSize":184.8375,"blockSize":18.125},"slotId":"table","text":"Platform / Platform Prototype 3","baseline":[28.0,229.94062500000004],"textLayout":{"bounds":{"inline":28.0,"block":217.44062500000004,"inlineSize":184.8375,"blockSize":18.125},"baseline":[28.0,229.94062500000004],"lines":["Platform / Platform Prototype 3"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[184.8375]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"s1t3","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:s1t3:Δ finish","kind":"Text","sourceRef":"s1t3","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":437.50000000000006,"block":217.80312500000002,"inlineSize":0.0,"blockSize":17.4},"slotId":"table","text":"","baseline":[437.50000000000006,229.80312500000002],"textLayout":{"bounds":{"inline":437.50000000000006,"block":217.80312500000002,"inlineSize":0.0,"blockSize":17.4},"baseline":[437.50000000000006,229.80312500000002],"lines":[""],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"s1t3","tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"cell:g1:Task","kind":"Text","sourceRef":"g1","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":28.0,"block":259.521875,"inlineSize":39.800000000000004,"blockSize":18.125},"slotId":"table","text":"Kickoff","baseline":[28.0,272.021875],"textLayout":{"bounds":{"inline":28.0,"block":259.521875,"inlineSize":39.800000000000004,"blockSize":18.125},"baseline":[28.0,272.021875],"lines":["Kickoff"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[39.800000000000004]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"g1","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:g1:Δ finish","kind":"Text","sourceRef":"g1","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":437.50000000000006,"block":259.88437500000003,"inlineSize":0.0,"blockSize":17.4},"slotId":"table","text":"","baseline":[437.50000000000006,271.88437500000003],"textLayout":{"bounds":{"inline":437.50000000000006,"block":259.88437500000003,"inlineSize":0.0,"blockSize":17.4},"baseline":[437.50000000000006,271.88437500000003],"lines":[""],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"tableRowId":"g1","tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"group-header:Ana","kind":"Text","sourceRef":"Ana","sourceKind":"review","purpose":"group-header","visualRole":"text","bounds":{"inline":28.0,"block":112.6,"inlineSize":23.292,"blockSize":17.4},"slotId":"table","text":"Ana","baseline":[28.0,124.6],"textLayout":{"bounds":{"inline":28.0,"block":112.6,"inlineSize":23.292,"blockSize":17.4},"baseline":[28.0,124.6],"lines":["Ana"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[23.292]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"group-header:Ben","kind":"Text","sourceRef":"Ben","sourceKind":"review","purpose":"group-header","visualRole":"text","bounds":{"inline":28.0,"block":154.68125000000003,"inlineSize":22.944,"blockSize":17.4},"slotId":"table","text":"Ben","baseline":[28.0,166.68125000000003],"textLayout":{"bounds":{"inline":28.0,"block":154.68125000000003,"inlineSize":22.944,"blockSize":17.4},"baseline":[28.0,166.68125000000003],"lines":["Ben"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[22.944]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"group-header:Chen","kind":"Text","sourceRef":"Chen","sourceKind":"review","purpose":"group-header","visualRole":"text","bounds":{"inline":28.0,"block":196.76250000000005,"inlineSize":30.468000000000004,"blockSize":17.4},"slotId":"table","text":"Chen","baseline":[28.0,208.76250000000005],"textLayout":{"bounds":{"inline":28.0,"block":196.76250000000005,"inlineSize":30.468000000000004,"blockSize":17.4},"baseline":[28.0,208.76250000000005],"lines":["Chen"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[30.468000000000004]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"group-header:Unassigned","kind":"Text","sourceRef":"Unassigned","sourceKind":"review","purpose":"group-header","visualRole":"text","bounds":{"inline":28.0,"block":238.84375000000006,"inlineSize":69.828,"blockSize":17.4},"slotId":"table","text":"Unassigned","baseline":[28.0,250.84375000000006],"textLayout":{"bounds":{"inline":28.0,"block":238.84375000000006,"inlineSize":69.828,"blockSize":17.4},"baseline":[28.0,250.84375000000006],"lines":["Unassigned"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[69.828]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"slot-heading:annotations","kind":"Text","sourceRef":"annotations","sourceKind":"review","purpose":"slot-heading","visualRole":"slot-heading","bounds":{"inline":1322.0,"block":81.325,"inlineSize":40.611999999999995,"blockSize":15.95},"slotId":"annotations","text":"NOTES","baseline":[1322.0,92.32499999999999],"textLayout":{"bounds":{"inline":1322.0,"block":81.325,"inlineSize":40.611999999999995,"blockSize":15.95},"baseline":[1322.0,92.32499999999999],"lines":["NOTES"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":11.0,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","letterSpacing":1.1,"textTransform":"uppercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"group-header-band:Ana","kind":"Rect","sourceRef":"Ana","sourceKind":"decoration","purpose":"group-header-band","visualRole":"group-header-band","bounds":{"inline":28.0,"block":111.3,"inlineSize":1280.0,"blockSize":20.0},"slotId":"review-surface","paint":{"fill":"#E8EFFA","dash":[],"opacity":1.0},"paintOrder":9},
+        {"id":"group-header-band:Ben","kind":"Rect","sourceRef":"Ben","sourceKind":"decoration","purpose":"group-header-band","visualRole":"group-header-band","bounds":{"inline":28.0,"block":153.38125000000002,"inlineSize":1280.0,"blockSize":20.0},"slotId":"review-surface","paint":{"fill":"#E4F4EE","dash":[],"opacity":1.0},"paintOrder":9},
+        {"id":"group-header-band:Chen","kind":"Rect","sourceRef":"Chen","sourceKind":"decoration","purpose":"group-header-band","visualRole":"group-header-band","bounds":{"inline":28.0,"block":195.46250000000003,"inlineSize":1280.0,"blockSize":20.0},"slotId":"review-surface","paint":{"fill":"#FBF0E1","dash":[],"opacity":1.0},"paintOrder":9},
+        {"id":"group-header-band:Unassigned","kind":"Rect","sourceRef":"Unassigned","sourceKind":"decoration","purpose":"group-header-band","visualRole":"group-header-band","bounds":{"inline":28.0,"block":237.54375000000005,"inlineSize":1280.0,"blockSize":20.0},"slotId":"review-surface","paint":{"fill":"#F1E9F8","dash":[],"opacity":1.0},"paintOrder":9},
+        {"id":"calendar-closed:2027-02-27","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":464.0,"block":111.3,"inlineSize":67.625,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":8},
+        {"id":"calendar-closed:2027-02-28","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":531.625,"block":111.3,"inlineSize":50.625,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":8},
+        {"id":"calendar-closed:2027-03-06","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":835.375,"block":111.3,"inlineSize":50.625,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":8},
+        {"id":"calendar-closed:2027-03-07","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":886.0,"block":111.3,"inlineSize":50.625,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":8},
+        {"id":"calendar-closed:2027-03-13","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1189.75,"block":111.3,"inlineSize":50.625,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":8},
+        {"id":"calendar-closed:2027-03-14","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1240.375,"block":111.3,"inlineSize":67.625,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":8},
+        {"id":"planned:s1t1:s1t1","kind":"Rect","sourceRef":"s1t1","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":582.25,"block":136.260625,"inlineSize":202.5,"blockSize":8.0},"slotId":"timeline","paint":{"fill":"#C7D6F3","stroke":"#3F6FD0","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":101},
+        {"id":"actual:s1t1:s1t1","kind":"Rect","sourceRef":"s1t1","sourceKind":"object","purpose":"actual","visualRole":"actual","bounds":{"inline":582.25,"block":145.06062500000002,"inlineSize":202.5,"blockSize":3.36},"slotId":"timeline","paint":{"fill":"#101828","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.0,"paintOrder":102},
+        {"id":"planned:s1t2:s1t2","kind":"Rect","sourceRef":"s1t2","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":835.375,"block":178.34187500000002,"inlineSize":151.875,"blockSize":8.0},"slotId":"timeline","paint":{"fill":"#C7D6F3","stroke":"#3F6FD0","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":101},
+        {"id":"planned:s1t3:s1t3","kind":"Rect","sourceRef":"s1t3","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":987.25,"block":220.42312500000003,"inlineSize":202.5,"blockSize":8.0},"slotId":"timeline","paint":{"fill":"#C7D6F3","stroke":"#3F6FD0","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":101},
+        {"id":"planned:g1:g1:part0","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":929.625,"block":261.584375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#101828","dash":[],"opacity":1.0},"cornerRadius":1.5,"symbol":{"outline":[{"kind":"move","points":[[936.625,261.584375]]},{"kind":"line","points":[[943.625,268.584375]]},{"kind":"line","points":[[936.625,275.584375]]},{"kind":"line","points":[[929.625,268.584375]]},{"kind":"line","points":[[936.625,261.584375]]}]},"paintOrder":101},
+        {"id":"planned:g1:g1:part1","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":929.625,"block":261.584375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"symbol":{"outline":[{"kind":"move","points":[[936.625,261.5843811035156]]},{"kind":"line","points":[[943.625,268.5843811035156]]},{"kind":"line","points":[[936.625,275.5843811035156]]},{"kind":"line","points":[[929.625,268.5843811035156]]},{"kind":"line","points":[[936.625,261.5843811035156]]}]},"paintOrder":102},
+        {"id":"axis-label:2:0","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"axis-label2","bounds":{"inline":864.012,"block":69.9625,"inlineSize":43.976,"blockSize":16.675},"slotId":"timeline-axis","text":"Q1 2027","baseline":[864.012,81.46249999999999],"textLayout":{"bounds":{"inline":864.012,"block":69.9625,"inlineSize":43.976,"blockSize":16.675},"baseline":[864.012,81.46249999999999],"lines":["Q1 2027"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":11.5,"lineHeight":1.45,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[43.976]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":200,"hostPlacementId":"axis-band-rect:0:0"},
+        {"id":"axis-label:4:1","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"axis-label3","bounds":{"inline":925.3389999999999,"block":91.6,"inlineSize":22.572,"blockSize":17.4},"slotId":"timeline-axis","text":"Mar","baseline":[925.3389999999999,103.6],"textLayout":{"bounds":{"inline":925.3389999999999,"block":91.6,"inlineSize":22.572,"blockSize":17.4},"baseline":[925.3389999999999,103.6],"lines":["Mar"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[22.572]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-band-rect:0:0","kind":"Rect","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-band","visualRole":"axis-band-decoration","bounds":{"inline":464.0,"block":67.3,"inlineSize":844.0,"blockSize":22.0},"slotId":"timeline-axis","paint":{"fill":"#EEF2F7","dash":[],"opacity":1.0},"paintOrder":10},
+        {"id":"axis-grid:1:0","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-grid","visualRole":"axis-major","bounds":{"inline":481.0,"block":111.3,"inlineSize":0.0,"blockSize":168.32500000000005},"slotId":"timeline-axis","paint":{"stroke":"#C6CFDA","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[481.0,111.3],[481.0,279.62500000000006]],"paintOrder":11},
+        {"id":"axis-grid:5:1","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-grid","visualRole":"axis-minor","bounds":{"inline":582.25,"block":111.3,"inlineSize":0.0,"blockSize":168.32500000000005},"slotId":"timeline-axis","paint":{"stroke":"#EEF2F7","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[582.25,111.3],[582.25,279.62500000000006]],"paintOrder":11},
+        {"id":"axis-separator:0","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-cell-separator","visualRole":"axis-cell-separator","bounds":{"inline":582.25,"block":89.3,"inlineSize":0.0,"blockSize":22.0},"slotId":"timeline-axis","paint":{"stroke":"#D5DCE6","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[582.25,89.3],[582.25,111.3]],"paintOrder":12},
+        {"id":"axis-rule","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-rule","visualRole":"axis-rule","bounds":{"inline":464.0,"block":111.3,"inlineSize":844.0,"blockSize":0.0},"slotId":"timeline-axis","paint":{"stroke":"#D5DCE6","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[464.0,111.3],[1308.0,111.3]],"paintOrder":12},
+        {"id":"as-of","kind":"Path","sourceRef":"actual-set","sourceKind":"actual","purpose":"as-of","visualRole":"as-of","bounds":{"inline":784.75,"block":111.3,"inlineSize":0.0,"blockSize":168.32500000000005},"slotId":"timeline","paint":{"stroke":"#C77A12","strokeWidth":1.0,"dash":[4.0,3.0],"opacity":1.0},"points":[[784.75,111.3],[784.75,279.62500000000006]],"paintOrder":100},
+        {"id":"as-of-label","kind":"Text","sourceRef":"actual-set","sourceKind":"review","purpose":"as-of-label","visualRole":"as-of-label","bounds":{"inline":755.9169999999999,"block":284.08750000000003,"inlineSize":57.666,"blockSize":12.075},"slotId":"timeline","text":"as of 5 mar","baseline":[755.9169999999999,294.58750000000003],"textLayout":{"bounds":{"inline":755.9169999999999,"block":284.08750000000003,"inlineSize":57.666,"blockSize":12.075},"baseline":[755.9169999999999,294.58750000000003],"lines":["as of 5 mar"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":10.5,"lineHeight":1.15,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[57.666]}},"paint":{"fill":"#FFFFFF","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend-swatch:milestone:79df017d9ade9ecf:part0","kind":"Symbol","sourceRef":"milestone:79df017d9ade9ecf","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":239.416,"block":314.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#101828","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[245.416,314.7]]},{"kind":"line","points":[[251.416,320.7]]},{"kind":"line","points":[[245.416,326.7]]},{"kind":"line","points":[[239.416,320.7]]},{"kind":"line","points":[[245.416,314.7]]}]},"paintOrder":0},
+        {"id":"legend-swatch:milestone:79df017d9ade9ecf:part1","kind":"Symbol","sourceRef":"milestone:79df017d9ade9ecf","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":239.416,"block":314.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[245.416,314.7]]},{"kind":"line","points":[[251.416,320.7]]},{"kind":"line","points":[[245.416,326.7]]},{"kind":"line","points":[[239.416,320.7]]},{"kind":"line","points":[[245.416,314.7]]}]},"paintOrder":1},
+        {"id":"relation:relation:id:d-s1t1-g1:s1t1:s1t1:g1:g1","kind":"Path","sourceRef":"relation:id:d-s1t1-g1","sourceKind":"relation","purpose":"dependency","visualRole":"dependency","bounds":{"inline":0,"block":0,"inlineSize":0,"blockSize":0},"slotId":"timeline","paint":{"stroke":"#7C8999","strokeWidth":1.0,"dash":[],"opacity":1.0},"pathCommands":[{"kind":"move","points":[[784.75,140.260625]]},{"kind":"line","points":[[784.75,264.584375]]},{"kind":"quadratic","points":[[784.75,268.584375],[788.75,268.584375]]},{"kind":"line","points":[[929.625,268.584375]]}],"points":[[784.75,140.260625],[784.75,268.584375],[929.625,268.584375]],"markerEnd":{"outline":[{"kind":"move","points":[[0.0,0.0]]},{"kind":"line","points":[[6.0,3.0]]},{"kind":"line","points":[[0.0,6.0]]},{"kind":"line","points":[[0.0,0.0]]}],"headLength":6.0,"headWidth":6.0,"attachmentOffset":1.0,"paintMode":"fill"},"paintOrder":250,"fromInstanceId":"s1t1:s1t1","toInstanceId":"g1:g1"},
+        {"id":"legend-swatch:dependency","kind":"Path","sourceRef":"dependency","sourceKind":"relation","purpose":"dependency","visualRole":"dependency","bounds":{"inline":457.884,"block":320.2,"inlineSize":22.0,"blockSize":1.0},"slotId":"legend","paint":{"stroke":"#7C8999","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[457.884,320.7],[479.884,320.7]],"markerEnd":{"outline":[{"kind":"move","points":[[0.0,0.0]]},{"kind":"line","points":[[6.0,3.0]]},{"kind":"line","points":[[0.0,6.0]]},{"kind":"line","points":[[0.0,0.0]]}],"headLength":6.0,"headWidth":6.0,"attachmentOffset":1.0,"paintMode":"fill"},"paintOrder":250},
+        {"id":"row-rule:s1t1","kind":"Path","sourceRef":"s1t1","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":28.0,"block":153.38125,"inlineSize":1280.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#D5DCE6","strokeWidth":0.5,"dash":[],"opacity":0.7},"points":[[28.0,153.38125],[1308.0,153.38125]],"paintOrder":10},
+        {"id":"row-rule:s1t2","kind":"Path","sourceRef":"s1t2","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":28.0,"block":195.4625,"inlineSize":1280.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#D5DCE6","strokeWidth":0.5,"dash":[],"opacity":0.7},"points":[[28.0,195.4625],[1308.0,195.4625]],"paintOrder":10},
+        {"id":"row-rule:s1t3","kind":"Path","sourceRef":"s1t3","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":28.0,"block":237.54375000000002,"inlineSize":1280.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#D5DCE6","strokeWidth":0.5,"dash":[],"opacity":0.7},"points":[[28.0,237.54375000000002],[1308.0,237.54375000000002]],"paintOrder":10},
+        {"id":"row-rule:g1","kind":"Path","sourceRef":"g1","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":28.0,"block":279.62500000000006,"inlineSize":1280.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#D5DCE6","strokeWidth":0.5,"dash":[],"opacity":0.7},"points":[[28.0,279.62500000000006],[1308.0,279.62500000000006]],"paintOrder":10},
+        {"id":"chip:as-of-label","kind":"Rect","sourceRef":"actual-set","sourceKind":"review","purpose":"label-chip","visualRole":"as-of-label-chip","bounds":{"inline":752.242,"block":282.25000000000006,"inlineSize":65.01599999999999,"blockSize":15.75},"slotId":"timeline","paint":{"fill":"#B8761F","dash":[],"opacity":1.0},"cornerRadius":3.0,"paintOrder":299},
+        {"id":"legend-swatch:planned","kind":"Rect","sourceRef":"planned","sourceKind":"legend","purpose":"legend-swatch","visualRole":"planned","bounds":{"inline":28.0,"block":316.7,"inlineSize":22.0,"blockSize":8.0},"slotId":"legend","paint":{"fill":"#C7D6F3","stroke":"#3F6FD0","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":1},
+        {"id":"legend-swatch:actual:0c57abe9145636fd","kind":"Rect","sourceRef":"actual:0c57abe9145636fd","sourceKind":"legend","purpose":"legend-swatch","visualRole":"actual","bounds":{"inline":151.348,"block":319.02,"inlineSize":22.0,"blockSize":3.36},"slotId":"legend","paint":{"fill":"#101828","stroke":"#101828","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.0,"paintOrder":0},
+        {"id":"legend-swatch:calendar-closed","kind":"Rect","sourceRef":"calendar-closed","sourceKind":"legend","purpose":"legend-swatch","visualRole":"calendar-closed","bounds":{"inline":308.628,"block":314.7,"inlineSize":22.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#F4F6F9","dash":[],"opacity":1.0},"paintOrder":0},
+        {"id":"annotation-box:a1-note","kind":"Rect","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-box","visualRole":"annotation-note-box","bounds":{"inline":1322.0,"block":244.79281250000003,"inlineSize":250.0,"blockSize":45.37499999999999},"slotId":"annotations","paint":{"fill":"#EEF2F7","stroke":"#EEF2F7","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":2.99,"paintOrder":400,"viewerFit":"text-follows-box"},
+        {"id":"annotation-border:a1-note:start","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-accent","visualRole":"annotation-kind-accent","bounds":{"inline":1322.0,"block":244.79281250000003,"inlineSize":3.0,"blockSize":45.375},"slotId":"timeline","paint":{"fill":"#1D5FD1","dash":[],"opacity":1.0},"symbol":{"outline":[{"kind":"move","points":[[1324.99,290.1678125]]},{"kind":"quadratic","points":[[1323.7515014485045,290.1678125],[1322.8757507242522,289.2920617757478]]},{"kind":"quadratic","points":[[1322.0,288.4163110514956],[1322.0,287.1778125]]},{"kind":"line","points":[[1322.0,247.78281250000003]]},{"kind":"quadratic","points":[[1322.0,246.54431394850448],[1322.8757507242522,245.66856322425227]]},{"kind":"quadratic","points":[[1323.7515014485045,244.79281250000003],[1324.99,244.79281250000003]]},{"kind":"line","points":[[1325.0,244.79281250000003]]},{"kind":"line","points":[[1325.0,290.1678125]]},{"kind":"line","points":[[1324.99,290.1678125]]}]},"paintOrder":400},
+        {"id":"legend:planned","kind":"Text","sourceRef":"planned","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":56.0,"block":312.0,"inlineSize":69.348,"blockSize":17.4},"slotId":"legend","text":"current plan","baseline":[56.0,324.0],"textLayout":{"bounds":{"inline":56.0,"block":312.0,"inlineSize":69.348,"blockSize":17.4},"baseline":[56.0,324.0],"lines":["current plan"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[69.348]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:actual:0c57abe9145636fd","kind":"Text","sourceRef":"actual:0c57abe9145636fd","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":179.348,"block":312.0,"inlineSize":34.068,"blockSize":17.4},"slotId":"legend","text":"actual","baseline":[179.348,324.0],"textLayout":{"bounds":{"inline":179.348,"block":312.0,"inlineSize":34.068,"blockSize":17.4},"baseline":[179.348,324.0],"lines":["actual"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[34.068]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:milestone:79df017d9ade9ecf","kind":"Text","sourceRef":"milestone:79df017d9ade9ecf","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":257.416,"block":312.0,"inlineSize":25.212,"blockSize":17.4},"slotId":"legend","text":"gate","baseline":[257.416,324.0],"textLayout":{"bounds":{"inline":257.416,"block":312.0,"inlineSize":25.212,"blockSize":17.4},"baseline":[257.416,324.0],"lines":["gate"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[25.212]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:calendar-closed","kind":"Text","sourceRef":"calendar-closed","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":336.628,"block":312.0,"inlineSize":95.256,"blockSize":17.4},"slotId":"legend","text":"non-working day","baseline":[336.628,324.0],"textLayout":{"bounds":{"inline":336.628,"block":312.0,"inlineSize":95.256,"blockSize":17.4},"baseline":[336.628,324.0],"lines":["non-working day"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[95.256]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:dependency","kind":"Text","sourceRef":"dependency","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":485.884,"block":312.0,"inlineSize":69.156,"blockSize":17.4},"slotId":"legend","text":"dependency","baseline":[485.884,324.0],"textLayout":{"bounds":{"inline":485.884,"block":312.0,"inlineSize":69.156,"blockSize":17.4},"baseline":[485.884,324.0],"lines":["dependency"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[69.156]}},"paint":{"fill":"#5B6B7F","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"annotation-kind-text:a1-note:0","kind":"Text","sourceRef":"a1-note","sourceKind":"review","purpose":"annotation-kind-label","visualRole":"annotation-kind-label","bounds":{"inline":1333.05,"block":252.84281250000004,"inlineSize":84.84,"blockSize":12.6},"slotId":"annotations","text":"NOTE · Kickoff","baseline":[1333.05,263.34281250000004],"textLayout":{"bounds":{"inline":1333.05,"block":252.84281250000004,"inlineSize":84.84,"blockSize":12.6},"baseline":[1333.05,263.34281250000004],"lines":["NOTE · Kickoff"],"family":"Noto Sans, sans-serif","weight":700,"fontSize":10.5,"lineHeight":1.2,"assetIdentity":"sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f","letterSpacing":0.84,"numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[84.84]}},"paint":{"fill":"#1D5FD1","dash":[],"opacity":1.0},"paintOrder":401,"contrastTreatment":"required"},
+        {"id":"annotation-text:a1-note","kind":"Text","sourceRef":"a1-note","sourceKind":"review","purpose":"annotation-text","visualRole":"annotation-note-text","bounds":{"inline":1333.05,"block":265.44281250000006,"inlineSize":161.83950000000002,"blockSize":16.675},"slotId":"annotations","text":"Vendor contract still unsigned","baseline":[1333.05,276.94281250000006],"textLayout":{"bounds":{"inline":1333.05,"block":265.44281250000006,"inlineSize":161.83950000000002,"blockSize":16.675},"baseline":[1333.05,276.94281250000006],"lines":["Vendor contract still unsigned"],"family":"Noto Sans, sans-serif","weight":400,"fontSize":11.5,"lineHeight":1.45,"assetIdentity":"sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[161.83950000000002]}},"paint":{"fill":"#101828","dash":[],"opacity":1.0},"paintOrder":401,"contrastTreatment":"required"},
+        {"id":"annotation-leader:a1-note","kind":"Path","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-leader","visualRole":"annotation-note-leader","bounds":{"inline":0,"block":0,"inlineSize":0,"blockSize":0},"slotId":"annotations","paint":{"stroke":"#1D5FD1","strokeWidth":1.0,"dash":[2.0,3.0],"opacity":1.0},"points":[[943.625,268.584375],[943.625,266.084375],[1322.0,266.084375],[1322.0,267.4803125]],"paintOrder":250}
+      ],
+      "scale": {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-02-27",
+        "domainEnd": "2027-03-15",
+        "rangeStart": 481.0,
+        "rangeEnd": 1291.0,
+        "origin": 481.0,
+        "unitRatio": 50.625
+      },
+      "canvasPaint": {
+        "fill": "#FFFFFF",
+        "dash": [],
+        "opacity": 1.0
+      },
+      "canvasBounds": {
+        "inline": 0.0,
+        "block": 0.0,
+        "inlineSize": 1600.0,
+        "blockSize": 362.0
+      },
+      "decorationDispositions": [
+        {
+          "visualRole": "axis-band-decoration2",
+          "disposition": "absent"
+        },
+        {
+          "visualRole": "group-band",
+          "disposition": "absent"
+        },
+        {
+          "visualRole": "row-band",
+          "disposition": "absent"
+        }
+      ]
+    }
+  ],
+  "manifest": {
+    "version": "chrona/scene-manifest/v0.1",
+    "settingsVersion": "chrona/render-context/v0.17",
+    "viewport": {
+      "inlineSize": 1600.0,
+      "blockSize": 362.0
+    },
+    "selectedObjectIds": [
+      "s1t1",
+      "s1t2",
+      "s1t3",
+      "g1"
+    ],
+    "fontAssetIdentities": [
+      "sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3",
+      "sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f"
+    ],
+    "contentFamilyCounts": {
+      "relations": 1,
+      "annotations": 1,
+      "notes": 0,
+      "legendEntries": 9,
+      "summaryPanels": 0,
+      "groupDetails": 0,
+      "milestones": 0,
+      "observationRows": 0
+    },
+    "surfaceScales": [
+      {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-02-27",
+        "domainEnd": "2027-03-15",
+        "rangeStart": 481.0,
+        "rangeEnd": 1291.0,
+        "origin": 481.0,
+        "unitRatio": 50.625
+      }
+    ],
+    "visualRoleCounts": {
+      "actual": 2,
+      "annotation-kind-accent": 1,
+      "annotation-kind-label": 1,
+      "annotation-note-box": 1,
+      "annotation-note-leader": 1,
+      "annotation-note-text": 1,
+      "as-of": 1,
+      "as-of-label": 1,
+      "as-of-label-chip": 1,
+      "axis-band-decoration": 1,
+      "axis-cell-separator": 1,
+      "axis-label2": 1,
+      "axis-label3": 1,
+      "axis-major": 1,
+      "axis-minor": 1,
+      "axis-rule": 1,
+      "calendar-closed": 7,
+      "dependency": 2,
+      "gate": 4,
+      "group-header-band": 4,
+      "legend": 5,
+      "planned": 4,
+      "row-rule": 4,
+      "slot-heading": 1,
+      "tableColumnLabel": 2,
+      "text": 12,
+      "variance-on-track": 1
+    }
+  },
+  "diagnostics": [
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED:{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}",
+    "I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED:{\"count\":1}",
+    "W_SCENE_STATE_TEXT_CONTRAST:{\"primitiveIds\":[\"as-of-label\"],\"scenePath\":\"/surfaces/0:table-timeline\"}",
+    "W_PRESENTATION_SCALE_NOT_SEPARABLE:owner:Ana:Ben:tritanopia",
+    "W_PRESENTATION_SCALE_NOT_SEPARABLE:owner:Ana:Unassigned:protanopia",
+    "W_PRESENTATION_SCALE_NOT_SEPARABLE:owner:Ana:Unassigned:deuteranopia"
+  ]
+}

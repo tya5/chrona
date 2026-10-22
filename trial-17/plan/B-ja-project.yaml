@@ -1,0 +1,336 @@
+version: timeline/v0.7
+project:
+  id: trial17-B
+  title: 全社統合認証基盤と顧客向けモバイル刷新計画二〇二七年度版
+  calendar: office
+fieldRoles:
+  responsible: owner
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+objects:
+  s1:
+    type: group
+    title: 基盤
+    schedule:
+      mode: rollup
+  s1t1:
+    type: task
+    title: 既存の認証基盤を単一のゲートウェイへ統合し旧方式を段階的に廃止する作業
+    parent: s1
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    schedule:
+      mode: fixed-span
+      start: '2027-01-08'
+      end: '2027-02-07'
+  s1t2:
+    type: task
+    title: 欧州の全法人顧客とデータ処理契約を再交渉して署名を完了させるまでの手続き
+    parent: s1
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    schedule:
+      mode: fixed-span
+      start: '2027-02-14'
+      end: '2027-03-08'
+  s1t3:
+    type: task
+    title: 夜間バッチ方式の集計基盤をストリーミング取り込み方式へ全面的に移行する計画
+    parent: s1
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    schedule:
+      mode: fixed-span
+      start: '2027-03-13'
+      end: '2027-04-10'
+  s1t4:
+    type: task
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    parent: s1
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    schedule:
+      mode: fixed-span
+      start: '2027-04-14'
+      end: '2027-05-03'
+  s2:
+    type: group
+    title: モバイル
+    schedule:
+      mode: rollup
+  s2t1:
+    type: task
+    title: 欧州の全法人顧客とデータ処理契約を再交渉して署名を完了させるまでの手続き
+    parent: s2
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    schedule:
+      mode: fixed-span
+      start: '2027-01-07'
+      end: '2027-02-05'
+  s2t2:
+    type: task
+    title: 夜間バッチ方式の集計基盤をストリーミング取り込み方式へ全面的に移行する計画
+    parent: s2
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    schedule:
+      mode: fixed-span
+      start: '2027-02-06'
+      end: '2027-03-03'
+  s2t3:
+    type: task
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    parent: s2
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    schedule:
+      mode: fixed-span
+      start: '2027-03-05'
+      end: '2027-04-04'
+  s2t4:
+    type: task
+    title: 両リージョン間の災害復旧切り替え手順を整備し本番相当の環境で予行演習を行う
+    parent: s2
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    schedule:
+      mode: fixed-span
+      start: '2027-04-11'
+      end: '2027-05-05'
+  s3:
+    type: group
+    title: データ
+    schedule:
+      mode: rollup
+  s3t1:
+    type: task
+    title: 夜間バッチ方式の集計基盤をストリーミング取り込み方式へ全面的に移行する計画
+    parent: s3
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    schedule:
+      mode: fixed-span
+      start: '2027-01-04'
+      end: '2027-02-03'
+  s3t2:
+    type: task
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    parent: s3
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    schedule:
+      mode: fixed-span
+      start: '2027-02-09'
+      end: '2027-03-01'
+  s3t3:
+    type: task
+    title: 両リージョン間の災害復旧切り替え手順を整備し本番相当の環境で予行演習を行う
+    parent: s3
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    schedule:
+      mode: fixed-span
+      start: '2027-03-06'
+      end: '2027-04-01'
+  s3t4:
+    type: task
+    title: 新規利用者が最初の利用で価値を実感できるように導入フロー全体を作り直す作業
+    parent: s3
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    schedule:
+      mode: fixed-span
+      start: '2027-04-08'
+      end: '2027-04-29'
+  s4:
+    type: group
+    title: 市場投入
+    schedule:
+      mode: rollup
+  s4t1:
+    type: task
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    parent: s4
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    schedule:
+      mode: fixed-span
+      start: '2027-01-11'
+      end: '2027-02-07'
+  s4t2:
+    type: task
+    title: 両リージョン間の災害復旧切り替え手順を整備し本番相当の環境で予行演習を行う
+    parent: s4
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    schedule:
+      mode: fixed-span
+      start: '2027-02-09'
+      end: '2027-02-28'
+  s4t3:
+    type: task
+    title: 新規利用者が最初の利用で価値を実感できるように導入フロー全体を作り直す作業
+    parent: s4
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    schedule:
+      mode: fixed-span
+      start: '2027-03-07'
+      end: '2027-04-01'
+  s4t4:
+    type: task
+    title: 既存の認証基盤を単一のゲートウェイへ統合し旧方式を段階的に廃止する作業
+    parent: s4
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    schedule:
+      mode: fixed-span
+      start: '2027-04-08'
+      end: '2027-04-28'
+  g1:
+    type: gate
+    title: キックオフ
+    schedule:
+      mode: fixed-point
+      at: '2027-01-28'
+  g2:
+    type: gate
+    title: 設計審査
+    schedule:
+      mode: fixed-point
+      at: '2027-02-21'
+  g3:
+    type: gate
+    title: アルファ
+    schedule:
+      mode: fixed-point
+      at: '2027-03-17'
+  g4:
+    type: gate
+    title: ベータ開始
+    schedule:
+      mode: fixed-point
+      at: '2027-04-10'
+relations:
+- id: d-s3t2-s3t3
+  type: dependency
+  from:
+    object: s3t2
+    endpoint: end
+  to:
+    object: s3t3
+    endpoint: start
+  lag: 0d
+- id: d-s3t3-s3t4
+  type: dependency
+  from:
+    object: s3t3
+    endpoint: end
+  to:
+    object: s3t4
+    endpoint: start
+  lag: 0d
+- id: d-s2t1-s2t2
+  type: dependency
+  from:
+    object: s2t1
+    endpoint: end
+  to:
+    object: s2t2
+    endpoint: start
+  lag: 0d
+- id: d-s2t1-s2t3
+  type: dependency
+  from:
+    object: s2t1
+    endpoint: end
+  to:
+    object: s2t3
+    endpoint: start
+  lag: 0d
+- id: d-s2t2-s1t3
+  type: dependency
+  from:
+    object: s2t2
+    endpoint: end
+  to:
+    object: s1t3
+    endpoint: start
+  lag: 0d
+- id: d-s3t3-s2t4
+  type: dependency
+  from:
+    object: s3t3
+    endpoint: end
+  to:
+    object: s2t4
+    endpoint: start
+  lag: 0d
+- id: d-s4t3-s3t4
+  type: dependency
+  from:
+    object: s4t3
+    endpoint: end
+  to:
+    object: s3t4
+    endpoint: start
+  lag: 0d
+- id: d-s3t2-s1t3
+  type: dependency
+  from:
+    object: s3t2
+    endpoint: end
+  to:
+    object: s1t3
+    endpoint: start
+  lag: 0d
+- id: d-s1t1-g2
+  type: dependency
+  from:
+    object: s1t1
+    endpoint: end
+  to:
+    object: g2
+    endpoint: at
+  lag: 0d
+- id: d-s1t2-g3
+  type: dependency
+  from:
+    object: s1t2
+    endpoint: end
+  to:
+    object: g3
+    endpoint: at
+  lag: 0d
+- id: d-s1t3-g4
+  type: dependency
+  from:
+    object: s1t3
+    endpoint: end
+  to:
+    object: g4
+    endpoint: at
+  lag: 0d
+annotations:
+  a1:
+    kind: note
+    text: ゲートウェイ再設計の後に外部のセキュリティ評価者から二回目の侵入試験を求められたため、承認が次のスプリントへずれ込み、ベータ参加者への招待も遅れる見込みです。
+    anchor:
+      object: g1
+  a2:
+    kind: risk
+    text: 技術者2名が休暇
+    anchor:
+      object: s3t3
+  a3:
+    kind: note
+    text: スポンサーと範囲縮小に合意
+    anchor:
+      object: s1t2

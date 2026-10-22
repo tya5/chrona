@@ -1,0 +1,73 @@
+version: timeline/v0.7
+project:
+  id: trial17-D
+  title: 小規模修正リリース
+  calendar: office
+fieldRoles:
+  responsible: owner
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+objects:
+  s1:
+    type: group
+    title: 基盤
+    schedule:
+      mode: rollup
+  s1t1:
+    type: task
+    title: 基盤要件定義1
+    parent: s1
+    fields:
+      owner: 佐藤
+    schedule:
+      mode: fixed-span
+      start: '2027-03-01'
+      end: '2027-03-05'
+  s1t2:
+    type: task
+    title: 基盤方式設計2
+    parent: s1
+    fields:
+      owner: 鈴木
+    schedule:
+      mode: fixed-span
+      start: '2027-03-06'
+      end: '2027-03-09'
+  s1t3:
+    type: task
+    title: 基盤試作3
+    parent: s1
+    fields:
+      owner: 高橋
+    schedule:
+      mode: fixed-span
+      start: '2027-03-09'
+      end: '2027-03-13'
+  g1:
+    type: gate
+    title: キックオフ
+    schedule:
+      mode: fixed-point
+      at: '2027-03-08'
+relations:
+- id: d-s1t1-g1
+  type: dependency
+  from:
+    object: s1t1
+    endpoint: end
+  to:
+    object: g1
+    endpoint: at
+  lag: 0d
+annotations:
+  a1:
+    kind: note
+    text: ベンダー契約が未締結
+    anchor:
+      object: g1

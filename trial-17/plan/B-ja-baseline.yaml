@@ -1,0 +1,317 @@
+annotations:
+  a1:
+    anchor:
+      object: g1
+    kind: note
+    text: ゲートウェイ再設計の後に外部のセキュリティ評価者から二回目の侵入試験を求められたため、承認が次のスプリントへずれ込み、ベータ参加者への招待も遅れる見込みです。
+  a2:
+    anchor:
+      object: s3t3
+    kind: risk
+    text: 技術者2名が休暇
+  a3:
+    anchor:
+      object: s1t2
+    kind: note
+    text: スポンサーと範囲縮小に合意
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+fieldRoles:
+  responsible: owner
+objects:
+  g1:
+    schedule:
+      at: '2027-01-28'
+      mode: fixed-point
+    title: キックオフ
+    type: gate
+  g2:
+    schedule:
+      at: '2027-02-21'
+      mode: fixed-point
+    title: 設計審査
+    type: gate
+  g3:
+    schedule:
+      at: '2027-03-17'
+      mode: fixed-point
+    title: アルファ
+    type: gate
+  g4:
+    schedule:
+      at: '2027-04-10'
+      mode: fixed-point
+    title: ベータ開始
+    type: gate
+  s1:
+    schedule:
+      mode: rollup
+    title: 基盤
+    type: group
+  s1t1:
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    parent: s1
+    schedule:
+      end: '2027-02-07'
+      mode: fixed-span
+      start: '2027-01-08'
+    title: 既存の認証基盤を単一のゲートウェイへ統合し旧方式を段階的に廃止する作業
+    type: task
+  s1t2:
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    parent: s1
+    schedule:
+      end: '2027-03-08'
+      mode: fixed-span
+      start: '2027-02-14'
+    title: 欧州の全法人顧客とデータ処理契約を再交渉して署名を完了させるまでの手続き
+    type: task
+  s1t3:
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    parent: s1
+    schedule:
+      end: '2027-04-02'
+      mode: fixed-span
+      start: '2027-03-13'
+    title: 夜間バッチ方式の集計基盤をストリーミング取り込み方式へ全面的に移行する計画
+    type: task
+  s1t4:
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    parent: s1
+    schedule:
+      end: '2027-05-03'
+      mode: fixed-span
+      start: '2027-04-14'
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    type: task
+  s2:
+    schedule:
+      mode: rollup
+    title: モバイル
+    type: group
+  s2t1:
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    parent: s2
+    schedule:
+      end: '2027-02-05'
+      mode: fixed-span
+      start: '2027-01-07'
+    title: 欧州の全法人顧客とデータ処理契約を再交渉して署名を完了させるまでの手続き
+    type: task
+  s2t2:
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    parent: s2
+    schedule:
+      end: '2027-03-03'
+      mode: fixed-span
+      start: '2027-02-06'
+    title: 夜間バッチ方式の集計基盤をストリーミング取り込み方式へ全面的に移行する計画
+    type: task
+  s2t3:
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    parent: s2
+    schedule:
+      end: '2027-04-04'
+      mode: fixed-span
+      start: '2027-03-05'
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    type: task
+  s2t4:
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    parent: s2
+    schedule:
+      end: '2027-05-05'
+      mode: fixed-span
+      start: '2027-04-11'
+    title: 両リージョン間の災害復旧切り替え手順を整備し本番相当の環境で予行演習を行う
+    type: task
+  s3:
+    schedule:
+      mode: rollup
+    title: データ
+    type: group
+  s3t1:
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    parent: s3
+    schedule:
+      end: '2027-02-03'
+      mode: fixed-span
+      start: '2027-01-04'
+    title: 夜間バッチ方式の集計基盤をストリーミング取り込み方式へ全面的に移行する計画
+    type: task
+  s3t2:
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    parent: s3
+    schedule:
+      end: '2027-02-19'
+      mode: fixed-span
+      start: '2027-02-09'
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    type: task
+  s3t3:
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    parent: s3
+    schedule:
+      end: '2027-04-01'
+      mode: fixed-span
+      start: '2027-03-06'
+    title: 両リージョン間の災害復旧切り替え手順を整備し本番相当の環境で予行演習を行う
+    type: task
+  s3t4:
+    fields:
+      owner: 勅使河原 左衛門三郎（品質保証部）
+    parent: s3
+    schedule:
+      end: '2027-04-29'
+      mode: fixed-span
+      start: '2027-04-08'
+    title: 新規利用者が最初の利用で価値を実感できるように導入フロー全体を作り直す作業
+    type: task
+  s4:
+    schedule:
+      mode: rollup
+    title: 市場投入
+    type: group
+  s4t1:
+    fields:
+      owner: 一二三 四五六七（データ基盤推進室）
+    parent: s4
+    schedule:
+      end: '2027-02-07'
+      mode: fixed-span
+      start: '2027-01-11'
+    title: 顧客向けモバイル画面すべてのアクセシビリティ監査を実施して指摘事項を修正する
+    type: task
+  s4t2:
+    fields:
+      owner: 長谷川・ヴァンデンブルック 美智子（基盤信頼性グループ）
+    parent: s4
+    schedule:
+      end: '2027-02-28'
+      mode: fixed-span
+      start: '2027-02-09'
+    title: 両リージョン間の災害復旧切り替え手順を整備し本番相当の環境で予行演習を行う
+    type: task
+  s4t4:
+    fields:
+      owner: 小鳥遊 久留美（モバイル開発統括）
+    parent: s4
+    schedule:
+      end: '2027-04-28'
+      mode: fixed-span
+      start: '2027-04-08'
+    title: 既存の認証基盤を単一のゲートウェイへ統合し旧方式を段階的に廃止する作業
+    type: task
+project:
+  calendar: office
+  id: trial17-B
+  title: 全社統合認証基盤と顧客向けモバイル刷新計画二〇二七年度版
+relations:
+- from:
+    endpoint: end
+    object: s3t2
+  id: d-s3t2-s3t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t3
+  id: d-s3t3-s3t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t1
+  id: d-s2t1-s2t2
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t2
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t1
+  id: d-s2t1-s2t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t2
+  id: d-s2t2-s1t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t3
+  id: d-s3t3-s2t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t2
+  id: d-s3t2-s1t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t1
+  id: d-s1t1-g2
+  lag: 0d
+  to:
+    endpoint: at
+    object: g2
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t2
+  id: d-s1t2-g3
+  lag: 0d
+  to:
+    endpoint: at
+    object: g3
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t3
+  id: d-s1t3-g4
+  lag: 0d
+  to:
+    endpoint: at
+    object: g4
+  type: dependency
+version: timeline/v0.7

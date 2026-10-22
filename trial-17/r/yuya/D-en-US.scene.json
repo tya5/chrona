@@ -1,0 +1,590 @@
+{
+  "version": "chrona/scene/v0.7",
+  "kind": "scene",
+  "provenance": {
+    "mode": "draft",
+    "chronaVersion": "0.1.0a0",
+    "resources": [
+      {
+        "kind": "actual-set",
+        "id": "trial17-D-observed",
+        "revision": "draft",
+        "contentIdentity": "sha256:9401758935e0250926654a745c92468fa9e07f1d312f342d8ed79573a96bd2f9"
+      },
+      {
+        "kind": "color-scheme",
+        "id": "yuya",
+        "revision": "draft",
+        "contentIdentity": "sha256:dcf7a8779964fce7181c1512bbb076241814265b5db0b9e9c959f1ed3d145e7b"
+      },
+      {
+        "kind": "icon-catalog",
+        "id": "chrona-annotation-parts-v2026-10-09",
+        "revision": "draft",
+        "contentIdentity": "sha256:6cd6591036f927a7df4fe2ee75274bcb38dd90790e4823e9121ff0d2be55f5c9"
+      },
+      {
+        "kind": "icon-catalog",
+        "id": "chrona-target-parts-v2026-10-09",
+        "revision": "draft",
+        "contentIdentity": "sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee"
+      },
+      {
+        "kind": "layout-profile",
+        "id": "yuya",
+        "revision": "draft",
+        "contentIdentity": "sha256:abd573083ba342a2b04ebd3c8a95778d8464d7f2e68ff498fdbc6d0f29467fa5"
+      },
+      {
+        "kind": "project",
+        "id": "trial17-D",
+        "revision": "draft",
+        "contentIdentity": "sha256:1d70d3b6eb3e8b500a7e1f0067d98810645b8d37d64411a47b91b3ab1fbfc011"
+      },
+      {
+        "kind": "review-detail-profile",
+        "id": "halcyon-yuya-legend",
+        "revision": "draft",
+        "contentIdentity": "sha256:16f6fe7e506ad3027af92eb48569bfe1354e32e56aac0f8ffa3c40de50e0c21e"
+      },
+      {
+        "kind": "semantic-vocabulary",
+        "id": "chrona-core",
+        "revision": "v0.1",
+        "contentIdentity": "sha256:eb611c492006adef85dc3519ff55407edf68cb4b98008ddd57a9fcaaea47a692"
+      },
+      {
+        "kind": "snapshot-project",
+        "id": "trial17-D",
+        "revision": "draft",
+        "contentIdentity": "sha256:cdceda97d5b241f3ce742458238a1c6e5f95bd65e530dc872b7ec776689ba286"
+      },
+      {
+        "kind": "theme",
+        "id": "yuya",
+        "revision": "draft",
+        "contentIdentity": "sha256:76fa05bb75e3aa6edb2697b7c4d85a2676dfba9316d66d07a0d33311d70c6775"
+      },
+      {
+        "kind": "view",
+        "id": "chrona-preset-design-default",
+        "revision": "draft",
+        "contentIdentity": "sha256:5fd40e71e8fce790da840e5a68a79580bba3522dba0c9c53ffba629a2a27f3d6"
+      }
+    ]
+  },
+  "viewport": {
+    "inlineSize": 1600.0,
+    "blockSize": 360.0
+  },
+  "requiredCapabilities": [
+    "mark.marker-geometry",
+    "mark.symbol-outline"
+  ],
+  "surfaces": [
+    {
+      "id": "table-timeline",
+      "slots": [
+        {
+          "id": "annotations",
+          "source": "annotations",
+          "bounds": {
+            "inline": 1308.0,
+            "block": 139.1,
+            "inlineSize": 250.0,
+            "blockSize": 142.9
+          },
+          "priority": "optional",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "legend",
+          "source": "legend",
+          "bounds": {
+            "inline": 42.0,
+            "block": 296.0,
+            "inlineSize": 1516.0,
+            "blockSize": 22.0
+          },
+          "priority": "preferred",
+          "overflow": "ellipsize-with-source"
+        },
+        {
+          "id": "table",
+          "source": "table",
+          "bounds": {
+            "inline": 42.0,
+            "block": 139.1,
+            "inlineSize": 412.6666666666667,
+            "blockSize": 142.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline",
+          "source": "timeline",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 468.6666666666667,
+            "block": 183.1,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 98.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "timeline-axis",
+          "source": "timeline-axis",
+          "scaleId": "primary",
+          "bounds": {
+            "inline": 468.6666666666667,
+            "block": 139.1,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 44.0
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "title",
+          "source": "title",
+          "bounds": {
+            "inline": 50.0,
+            "block": 50.0,
+            "inlineSize": 232.89999999999998,
+            "blockSize": 39.1
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "review-surface",
+          "source": "review-surface",
+          "bounds": {
+            "inline": 42.0,
+            "block": 139.1,
+            "inlineSize": 1252.0,
+            "blockSize": 142.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "frame:plaque",
+          "source": "frame:plaque",
+          "bounds": {
+            "inline": 30.5,
+            "block": 30.5,
+            "inlineSize": 495.0,
+            "blockSize": 78.1
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "frame:plaque-rule",
+          "source": "frame:plaque-rule",
+          "bounds": {
+            "inline": 36.75,
+            "block": 36.75,
+            "inlineSize": 482.5,
+            "blockSize": 65.6
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        },
+        {
+          "id": "frame:board",
+          "source": "frame:board",
+          "bounds": {
+            "inline": 32.0,
+            "block": 129.1,
+            "inlineSize": 1536.0,
+            "blockSize": 198.9
+          },
+          "priority": "required",
+          "overflow": "visible-overflow"
+        }
+      ],
+      "rows": [
+        {
+          "id": "s1t1",
+          "objectId": "s1t1",
+          "groupId": "Ana",
+          "bounds": {
+            "inline": 468.6666666666667,
+            "block": 183.1,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        },
+        {
+          "id": "s1t2",
+          "objectId": "s1t2",
+          "groupId": "Ben",
+          "bounds": {
+            "inline": 468.6666666666667,
+            "block": 203.23125,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        },
+        {
+          "id": "s1t3",
+          "objectId": "s1t3",
+          "groupId": "Chen",
+          "bounds": {
+            "inline": 468.6666666666667,
+            "block": 223.36249999999998,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        },
+        {
+          "id": "g1",
+          "objectId": "g1",
+          "groupId": "Unassigned",
+          "bounds": {
+            "inline": 468.6666666666667,
+            "block": 243.49374999999998,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        }
+      ],
+      "columns": [
+        {
+          "id": "Task",
+          "label": "Task",
+          "bounds": {
+            "inline": 63.225,
+            "block": 139.1,
+            "inlineSize": 312.03166666666664,
+            "blockSize": 142.9
+          }
+        },
+        {
+          "id": "Δ finish",
+          "label": "Δ vs plan",
+          "bounds": {
+            "inline": 389.25666666666666,
+            "block": 139.1,
+            "inlineSize": 65.41,
+            "blockSize": 142.9
+          }
+        }
+      ],
+      "groups": [
+        {
+          "id": "Ana",
+          "contentBounds": {
+            "inline": 468.6666666666667,
+            "block": 183.1,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        },
+        {
+          "id": "Ben",
+          "contentBounds": {
+            "inline": 468.6666666666667,
+            "block": 203.23125,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        },
+        {
+          "id": "Chen",
+          "contentBounds": {
+            "inline": 468.6666666666667,
+            "block": 223.36249999999998,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        },
+        {
+          "id": "Unassigned",
+          "contentBounds": {
+            "inline": 468.6666666666667,
+            "block": 243.49374999999998,
+            "inlineSize": 825.3333333333334,
+            "blockSize": 20.13125
+          }
+        }
+      ],
+      "primitives": [
+        {"id":"region-frame:plaque","kind":"Rect","sourceRef":"layout-node:plaque","sourceKind":"decoration","purpose":"region-frame","visualRole":"region-frame-plaque","bounds":{"inline":30.5,"block":30.5,"inlineSize":495.0,"blockSize":78.1},"slotId":"frame:plaque","paint":{"fill":"#1B1512","stroke":"#B22D1B","strokeWidth":5.0,"dash":[],"opacity":1.0},"paintOrder":0},
+        {"id":"region-frame:plaque-rule","kind":"Rect","sourceRef":"layout-node:plaque-rule","sourceKind":"decoration","purpose":"region-frame","visualRole":"region-frame-rule","bounds":{"inline":36.75,"block":36.75,"inlineSize":482.5,"blockSize":65.6},"slotId":"frame:plaque-rule","paint":{"stroke":"#D6A444","strokeWidth":1.5,"dash":[],"opacity":1.0},"paintOrder":0},
+        {"id":"region-frame:board","kind":"Rect","sourceRef":"layout-node:board","sourceKind":"decoration","purpose":"region-frame","visualRole":"region-frame-board","bounds":{"inline":32.0,"block":129.1,"inlineSize":1536.0,"blockSize":198.9},"slotId":"frame:board","paint":{"fill":"#EFE3C8","stroke":"#B22D1B","strokeWidth":8.0,"dash":[],"opacity":1.0},"paintOrder":0},
+        {"id":"title","kind":"Text","sourceRef":"title","sourceKind":"review","purpose":"title-text","visualRole":"heading","bounds":{"inline":50.0,"block":57.989999999999995,"inlineSize":232.89999999999998,"blockSize":39.099999999999994},"slotId":"title","text":"Hotfix release","baseline":[50.0,91.99],"textLayout":{"bounds":{"inline":50.0,"block":57.989999999999995,"inlineSize":232.89999999999998,"blockSize":39.099999999999994},"baseline":[50.0,91.99],"lines":["Hotfix release"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":34.0,"lineHeight":1.15,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[232.89999999999998]}},"paint":{"fill":"#D6A444","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"column:Task","kind":"Text","sourceRef":"view:tableColumns","sourceKind":"review","purpose":"table-column-label","visualRole":"tableColumnLabel","bounds":{"inline":63.225,"block":139.1,"inlineSize":26.642,"blockSize":15.95},"slotId":"table","text":"Task","baseline":[63.225,150.1],"textLayout":{"bounds":{"inline":63.225,"block":139.1,"inlineSize":26.642,"blockSize":15.95},"baseline":[63.225,150.1],"lines":["Task"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":11.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","letterSpacing":0.88,"numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[26.642]}},"paint":{"fill":"#6B5A48","dash":[],"opacity":1.0},"tableColumnId":"Task","paintOrder":300},
+        {"id":"column:Δ finish","kind":"Text","sourceRef":"view:tableColumns","sourceKind":"review","purpose":"table-column-label","visualRole":"tableColumnLabel","bounds":{"inline":389.25666666666666,"block":139.1,"inlineSize":52.91,"blockSize":15.95},"slotId":"table","text":"Δ vs plan","baseline":[389.25666666666666,150.1],"textLayout":{"bounds":{"inline":389.25666666666666,"block":139.1,"inlineSize":52.91,"blockSize":15.95},"baseline":[389.25666666666666,150.1],"lines":["Δ vs plan"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":11.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","letterSpacing":0.88,"numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[52.91]}},"paint":{"fill":"#6B5A48","dash":[],"opacity":1.0},"tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"cell:s1t1:Task","kind":"Text","sourceRef":"s1t1","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":63.225,"block":184.103125,"inlineSize":207.68749999999997,"blockSize":18.125},"slotId":"table","text":"Platform / Platform Requirements 1","baseline":[63.225,196.603125],"textLayout":{"bounds":{"inline":63.225,"block":184.103125,"inlineSize":207.68749999999997,"blockSize":18.125},"baseline":[63.225,196.603125],"lines":["Platform / Platform Requirements 1"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[207.68749999999997]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"s1t1","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:s1t1:Δ finish","kind":"Text","sourceRef":"s1t1","sourceKind":"review","purpose":"table-cell","visualRole":"variance-on-track","bounds":{"inline":420.27866666666665,"block":184.465625,"inlineSize":21.888,"blockSize":17.4},"slotId":"table","text":"+0d","baseline":[420.27866666666665,196.465625],"textLayout":{"bounds":{"inline":420.27866666666665,"block":184.465625,"inlineSize":21.888,"blockSize":17.4},"baseline":[420.27866666666665,196.465625],"lines":["+0d"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[21.888]}},"paint":{"fill":"#6B5A48","dash":[],"opacity":1.0},"tableRowId":"s1t1","tableColumnId":"Δ finish","paintOrder":300,"contrastTreatment":"required"},
+        {"id":"cell:s1t2:Task","kind":"Text","sourceRef":"s1t2","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":63.225,"block":204.234375,"inlineSize":197.525,"blockSize":18.125},"slotId":"table","text":"Platform / Platform Architecture 2","baseline":[63.225,216.734375],"textLayout":{"bounds":{"inline":63.225,"block":204.234375,"inlineSize":197.525,"blockSize":18.125},"baseline":[63.225,216.734375],"lines":["Platform / Platform Architecture 2"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[197.525]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"s1t2","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:s1t2:Δ finish","kind":"Text","sourceRef":"s1t2","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":442.16666666666663,"block":204.59687499999998,"inlineSize":0.0,"blockSize":17.4},"slotId":"table","text":"","baseline":[442.16666666666663,216.59687499999998],"textLayout":{"bounds":{"inline":442.16666666666663,"block":204.59687499999998,"inlineSize":0.0,"blockSize":17.4},"baseline":[442.16666666666663,216.59687499999998],"lines":[""],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"s1t2","tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"cell:s1t3:Task","kind":"Text","sourceRef":"s1t3","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":63.225,"block":224.365625,"inlineSize":184.11249999999998,"blockSize":18.125},"slotId":"table","text":"Platform / Platform Prototype 3","baseline":[63.225,236.865625],"textLayout":{"bounds":{"inline":63.225,"block":224.365625,"inlineSize":184.11249999999998,"blockSize":18.125},"baseline":[63.225,236.865625],"lines":["Platform / Platform Prototype 3"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[184.11249999999998]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"s1t3","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:s1t3:Δ finish","kind":"Text","sourceRef":"s1t3","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":442.16666666666663,"block":224.72812499999998,"inlineSize":0.0,"blockSize":17.4},"slotId":"table","text":"","baseline":[442.16666666666663,236.72812499999998],"textLayout":{"bounds":{"inline":442.16666666666663,"block":224.72812499999998,"inlineSize":0.0,"blockSize":17.4},"baseline":[442.16666666666663,236.72812499999998],"lines":[""],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"s1t3","tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"cell:g1:Task","kind":"Text","sourceRef":"g1","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":63.225,"block":244.496875,"inlineSize":40.4875,"blockSize":18.125},"slotId":"table","text":"Kickoff","baseline":[63.225,256.996875],"textLayout":{"bounds":{"inline":63.225,"block":244.496875,"inlineSize":40.4875,"blockSize":18.125},"baseline":[63.225,256.996875],"lines":["Kickoff"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[40.4875]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"g1","tableColumnId":"Task","paintOrder":300},
+        {"id":"cell:g1:Δ finish","kind":"Text","sourceRef":"g1","sourceKind":"review","purpose":"table-cell","visualRole":"text","bounds":{"inline":442.16666666666663,"block":244.859375,"inlineSize":0.0,"blockSize":17.4},"slotId":"table","text":"","baseline":[442.16666666666663,256.859375],"textLayout":{"bounds":{"inline":442.16666666666663,"block":244.859375,"inlineSize":0.0,"blockSize":17.4},"baseline":[442.16666666666663,256.859375],"lines":[""],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"tabular","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"tableRowId":"g1","tableColumnId":"Δ finish","paintOrder":300},
+        {"id":"slot-heading:annotations","kind":"Text","sourceRef":"annotations","sourceKind":"review","purpose":"slot-heading","visualRole":"slot-heading","bounds":{"inline":1308.0,"block":153.125,"inlineSize":41.613,"blockSize":15.95},"slotId":"annotations","text":"NOTES","baseline":[1308.0,164.125],"textLayout":{"bounds":{"inline":1308.0,"block":153.125,"inlineSize":41.613,"blockSize":15.95},"baseline":[1308.0,164.125],"lines":["NOTES"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":11.0,"lineHeight":1.45,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","letterSpacing":1.1,"textTransform":"uppercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"calendar-closed:2027-02-27","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":468.6666666666667,"block":183.1,"inlineSize":64.4064674377442,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-02-28","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":533.0731341044109,"block":183.1,"inlineSize":49.75145848592126,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-03-06","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":831.5818850199382,"block":183.1,"inlineSize":49.75145848592115,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-03-07","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":881.3333435058594,"block":183.1,"inlineSize":49.75145848592126,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-03-13","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1179.8420944213867,"block":183.1,"inlineSize":49.75145848592115,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"calendar-closed:2027-03-14","kind":"Rect","sourceRef":"project-calendar","sourceKind":"decoration","purpose":"calendar-closed","visualRole":"calendar-closed","bounds":{"inline":1229.5935529073079,"block":183.1,"inlineSize":64.40644709269213,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":12},
+        {"id":"group-tab:Ana","kind":"Rect","sourceRef":"Ana","sourceKind":"decoration","purpose":"group-tab","visualRole":"group-tab","bounds":{"inline":45.0,"block":186.1,"inlineSize":15.225,"blockSize":14.13125},"slotId":"review-surface","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"paintOrder":11},
+        {"id":"group-tab:Ben","kind":"Rect","sourceRef":"Ben","sourceKind":"decoration","purpose":"group-tab","visualRole":"group-tab","bounds":{"inline":45.0,"block":206.23125,"inlineSize":15.225,"blockSize":14.13125},"slotId":"review-surface","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"paintOrder":11},
+        {"id":"group-tab:Chen","kind":"Rect","sourceRef":"Chen","sourceKind":"decoration","purpose":"group-tab","visualRole":"group-tab","bounds":{"inline":45.0,"block":226.36249999999998,"inlineSize":15.225,"blockSize":14.13125},"slotId":"review-surface","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"paintOrder":11},
+        {"id":"group-tab:Unassigned","kind":"Rect","sourceRef":"Unassigned","sourceKind":"decoration","purpose":"group-tab","visualRole":"group-tab","bounds":{"inline":45.0,"block":246.49374999999998,"inlineSize":15.225,"blockSize":14.13125},"slotId":"review-surface","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"paintOrder":11},
+        {"id":"planned:s1t1:s1t1","kind":"Rect","sourceRef":"s1t1","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":582.8245925903321,"block":187.565625,"inlineSize":199.00583394368493,"blockSize":8.0},"slotId":"timeline","paint":{"fill":"#2F6F5E","stroke":"#2F6F5E","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":101},
+        {"id":"actual:s1t1:s1t1","kind":"Rect","sourceRef":"s1t1","sourceKind":"object","purpose":"actual","visualRole":"actual","bounds":{"inline":582.8245925903321,"block":196.365625,"inlineSize":199.00583394368493,"blockSize":3.36},"slotId":"timeline","paint":{"fill":"#B22D1B","stroke":"#B22D1B","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.9999359999999999,"paintOrder":102},
+        {"id":"planned:s1t2:s1t2","kind":"Rect","sourceRef":"s1t2","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":831.5818850199382,"block":207.696875,"inlineSize":149.25437545776367,"blockSize":8.0},"slotId":"timeline","paint":{"fill":"#2F6F5E","stroke":"#2F6F5E","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":101},
+        {"id":"planned:s1t3:s1t3","kind":"Rect","sourceRef":"s1t3","sourceKind":"object","purpose":"planned","visualRole":"planned","bounds":{"inline":980.8362604777019,"block":227.828125,"inlineSize":199.00583394368482,"blockSize":8.0},"slotId":"timeline","paint":{"fill":"#2F6F5E","stroke":"#2F6F5E","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":101},
+        {"id":"planned:g1:g1:part0","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[928.1098019917806,247.02604166666666]]},{"kind":"line","points":[[934.0598019917807,247.02604166666666]]},{"kind":"quadratic","points":[[934.468135325114,247.02604166666666],[934.468135325114,247.434375]]},{"kind":"line","points":[[934.468135325114,248.01770833333333]]},{"kind":"quadratic","points":[[934.468135325114,248.42604166666666],[934.0598019917807,248.42604166666666]]},{"kind":"line","points":[[928.1098019917806,248.42604166666666]]},{"kind":"quadratic","points":[[927.7014686584473,248.42604166666666],[927.7014686584473,248.01770833333333]]},{"kind":"line","points":[[927.7014686584473,247.434375]]},{"kind":"quadratic","points":[[927.7014686584473,247.02604166666666],[928.1098019917806,247.02604166666666]]},{"kind":"line","points":[[928.1098019917806,247.02604166666666]]}]},"paintOrder":101},
+        {"id":"planned:g1:g1:part1","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[928.1098019917806,258.6927083333333]]},{"kind":"line","points":[[934.0598019917807,258.6927083333333]]},{"kind":"quadratic","points":[[934.468135325114,258.6927083333333],[934.468135325114,259.1010416666667]]},{"kind":"line","points":[[934.468135325114,259.684375]]},{"kind":"quadratic","points":[[934.468135325114,260.09270833333335],[934.0598019917807,260.09270833333335]]},{"kind":"line","points":[[928.1098019917806,260.09270833333335]]},{"kind":"quadratic","points":[[927.7014686584473,260.09270833333335],[927.7014686584473,259.684375]]},{"kind":"line","points":[[927.7014686584473,259.1010416666667]]},{"kind":"quadratic","points":[[927.7014686584473,258.6927083333333],[928.1098019917806,258.6927083333333]]},{"kind":"line","points":[[928.1098019917806,258.6927083333333]]}]},"paintOrder":102},
+        {"id":"planned:g1:g1:part2","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[931.0848019917806,248.89270833333333]]},{"kind":"quadratic","points":[[931.6564686584474,248.89270833333333],[932.210635325114,249.03270833333332]]},{"kind":"quadratic","points":[[932.7648019917806,249.16687499999998],[933.2664686584473,249.43520833333332]]},{"kind":"quadratic","points":[[933.7739686584473,249.70354166666667],[934.1998019917806,250.08270833333333]]},{"kind":"quadratic","points":[[934.6198019917806,250.461875],[934.9406353251139,250.934375]]},{"kind":"line","points":[[927.2289686584473,250.934375]]},{"kind":"quadratic","points":[[927.5498019917807,250.461875],[927.9698019917806,250.08270833333333]]},{"kind":"quadratic","points":[[928.395635325114,249.70354166666667],[928.903135325114,249.43520833333332]]},{"kind":"quadratic","points":[[929.4048019917807,249.16687499999998],[929.9589686584472,249.03270833333332]]},{"kind":"quadratic","points":[[930.5131353251139,248.89270833333333],[931.0848019917806,248.89270833333333]]},{"kind":"line","points":[[931.0848019917806,248.89270833333333]]}]},"paintOrder":103},
+        {"id":"planned:g1:g1:part3","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[935.2789686584473,251.51770833333333]]},{"kind":"quadratic","points":[[935.483135325114,251.92604166666666],[935.5998019917806,252.369375]]},{"kind":"quadratic","points":[[935.7164686584473,252.81270833333332],[935.7398019917806,253.26770833333333]]},{"kind":"line","points":[[926.4298019917807,253.26770833333333]]},{"kind":"quadratic","points":[[926.453135325114,252.81270833333332],[926.5698019917807,252.369375]]},{"kind":"quadratic","points":[[926.6864686584473,251.92604166666666],[926.890635325114,251.51770833333333]]},{"kind":"line","points":[[935.2789686584473,251.51770833333333]]}]},"paintOrder":104},
+        {"id":"planned:g1:g1:part4","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[935.7398019917806,253.85104166666665]]},{"kind":"quadratic","points":[[935.7164686584473,254.30604166666666],[935.5998019917806,254.749375]]},{"kind":"quadratic","points":[[935.483135325114,255.19270833333331],[935.2789686584473,255.60104166666665]]},{"kind":"line","points":[[926.890635325114,255.60104166666665]]},{"kind":"quadratic","points":[[926.6864686584473,255.19270833333331],[926.5698019917807,254.749375]]},{"kind":"quadratic","points":[[926.453135325114,254.30604166666666],[926.4298019917807,253.85104166666665]]},{"kind":"line","points":[[935.7398019917806,253.85104166666665]]}]},"paintOrder":105},
+        {"id":"planned:g1:g1:part5","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[934.9406353251139,256.184375]]},{"kind":"quadratic","points":[[934.6198019917806,256.656875],[934.1998019917806,257.0360416666667]]},{"kind":"quadratic","points":[[933.7739686584473,257.41520833333334],[933.2664686584473,257.68354166666666]]},{"kind":"quadratic","points":[[932.7648019917806,257.951875],[932.210635325114,258.08604166666663]]},{"kind":"quadratic","points":[[931.6564686584474,258.2260416666667],[931.0848019917806,258.2260416666667]]},{"kind":"line","points":[[931.0848019917806,258.2260416666667]]},{"kind":"quadratic","points":[[930.5131353251139,258.2260416666667],[929.9589686584472,258.08604166666663]]},{"kind":"quadratic","points":[[929.4048019917807,257.951875],[928.903135325114,257.68354166666666]]},{"kind":"quadratic","points":[[928.395635325114,257.41520833333334],[927.9698019917806,257.0360416666667]]},{"kind":"quadratic","points":[[927.5498019917807,256.656875],[927.2289686584473,256.184375]]},{"kind":"line","points":[[934.9406353251139,256.184375]]}]},"paintOrder":106},
+        {"id":"planned:g1:g1:part6","kind":"Symbol","sourceRef":"g1","sourceKind":"object","purpose":"planned","visualRole":"gate","bounds":{"inline":924.0848019917806,"block":246.559375,"inlineSize":14.0,"blockSize":14.0},"slotId":"timeline","paint":{"stroke":"#8E2414","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":2.625,"symbol":{"outline":[{"kind":"move","points":[[935.2789916992188,251.51771545410156]]},{"kind":"quadratic","points":[[935.483154296875,251.92604064941406],[935.5998229980469,252.36937713623047]]},{"kind":"quadratic","points":[[935.7164916992188,252.81271362304688],[935.7398071289062,253.26771545410156]]},{"kind":"line","points":[[926.4298095703125,253.26771545410156]]},{"kind":"quadratic","points":[[926.453125,252.81271362304688],[926.5697937011719,252.36937713623047]]},{"kind":"quadratic","points":[[926.6864624023438,251.92604064941406],[926.890625,251.51771545410156]]},{"kind":"line","points":[[935.2789916992188,251.51771545410156]]},{"kind":"move","points":[[935.7398071289062,253.85104370117188]]},{"kind":"quadratic","points":[[935.7164916992188,254.30604553222656],[935.5998229980469,254.74937438964844]]},{"kind":"quadratic","points":[[935.483154296875,255.1927032470703],[935.2789916992188,255.60104370117188]]},{"kind":"line","points":[[926.890625,255.60104370117188]]},{"kind":"quadratic","points":[[926.6864624023438,255.1927032470703],[926.5697937011719,254.74937438964844]]},{"kind":"quadratic","points":[[926.453125,254.30604553222656],[926.4298095703125,253.85104370117188]]},{"kind":"line","points":[[935.7398071289062,253.85104370117188]]},{"kind":"move","points":[[931.0847778320312,248.89271545410156]]},{"kind":"quadratic","points":[[931.656494140625,248.89271545410156],[932.2106323242188,249.03271484375]]},{"kind":"quadratic","points":[[932.7648315429688,249.1668701171875],[933.2664794921875,249.43521118164062]]},{"kind":"quadratic","points":[[933.7739868164062,249.7035369873047],[934.1998291015625,250.08270263671875]]},{"kind":"quadratic","points":[[934.6198120117188,250.4618682861328],[934.9406127929688,250.9343719482422]]},{"kind":"line","points":[[927.2289428710938,250.9343719482422]]},{"kind":"quadratic","points":[[927.5498046875,250.4618682861328],[927.9697875976562,250.08270263671875]]},{"kind":"quadratic","points":[[928.3956298828125,249.7035369873047],[928.9031372070312,249.43521118164062]]},{"kind":"quadratic","points":[[929.40478515625,249.1668701171875],[929.958984375,249.03271484375]]},{"kind":"quadratic","points":[[930.5131225585938,248.89271545410156],[931.0847778320312,248.89271545410156]]},{"kind":"move","points":[[934.9406127929688,256.18438720703125]]},{"kind":"quadratic","points":[[934.6198120117188,256.6568603515625],[934.1998291015625,257.0360412597656]]},{"kind":"quadratic","points":[[933.7739868164062,257.41522216796875],[933.2664794921875,257.68353271484375]]},{"kind":"quadratic","points":[[932.7648315429688,257.9518737792969],[932.2106323242188,258.0860290527344]]},{"kind":"quadratic","points":[[931.656494140625,258.2260437011719],[931.0848083496094,258.2260437011719]]},{"kind":"quadratic","points":[[930.5131225585938,258.2260437011719],[929.958984375,258.0860290527344]]},{"kind":"quadratic","points":[[929.40478515625,257.9518737792969],[928.9031372070312,257.68353271484375]]},{"kind":"quadratic","points":[[928.3956298828125,257.41522216796875],[927.9697875976562,257.0360412597656]]},{"kind":"quadratic","points":[[927.5498046875,256.6568603515625],[927.2289428710938,256.18438720703125]]},{"kind":"line","points":[[934.9406127929688,256.18438720703125]]},{"kind":"move","points":[[928.1098022460938,247.0260467529297]]},{"kind":"line","points":[[934.059814453125,247.0260467529297]]},{"kind":"quadratic","points":[[934.4681396484375,247.0260467529297],[934.4681396484375,247.4343719482422]]},{"kind":"line","points":[[934.4681396484375,248.01771545410156]]},{"kind":"quadratic","points":[[934.4681396484375,248.42604064941406],[934.059814453125,248.42604064941406]]},{"kind":"line","points":[[928.1098022460938,248.42604064941406]]},{"kind":"quadratic","points":[[927.7014770507812,248.42604064941406],[927.7014770507812,248.01771545410156]]},{"kind":"line","points":[[927.7014770507812,247.4343719482422]]},{"kind":"quadratic","points":[[927.7014770507812,247.0260467529297],[928.1098022460938,247.0260467529297]]},{"kind":"move","points":[[928.1098022460938,258.6927185058594]]},{"kind":"line","points":[[934.059814453125,258.6927185058594]]},{"kind":"quadratic","points":[[934.4681396484375,258.6927185058594],[934.4681396484375,259.1010437011719]]},{"kind":"line","points":[[934.4681396484375,259.68438720703125]]},{"kind":"quadratic","points":[[934.4681396484375,260.09271240234375],[934.059814453125,260.09271240234375]]},{"kind":"line","points":[[928.1098022460938,260.09271240234375]]},{"kind":"quadratic","points":[[927.7014770507812,260.09271240234375],[927.7014770507812,259.68438720703125]]},{"kind":"line","points":[[927.7014770507812,259.1010437011719]]},{"kind":"quadratic","points":[[927.7014770507812,258.6927185058594],[928.1098022460938,258.6927185058594]]}]},"paintOrder":107},
+        {"id":"axis-label:2:0","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"axis-label2","bounds":{"inline":858.6380935058594,"block":141.7625,"inlineSize":45.3905,"blockSize":16.675},"slotId":"timeline-axis","text":"Q1 2027","baseline":[858.6380935058594,153.2625],"textLayout":{"bounds":{"inline":858.6380935058594,"block":141.7625,"inlineSize":45.3905,"blockSize":16.675},"baseline":[858.6380935058594,153.2625],"lines":["Q1 2027"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":11.5,"lineHeight":1.45,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[45.3905]}},"paint":{"fill":"#D6A444","dash":[],"opacity":1.0},"paintOrder":200,"hostPlacementId":"axis-band-rect:0:0"},
+        {"id":"axis-label:4:1","kind":"Text","sourceRef":"timeline-axis","sourceKind":"review","purpose":"axis-label","visualRole":"axis-label3","bounds":{"inline":920.5068019917808,"block":163.4,"inlineSize":21.156,"blockSize":17.4},"slotId":"timeline-axis","text":"Mar","baseline":[920.5068019917808,175.39999999999998],"textLayout":{"bounds":{"inline":920.5068019917808,"block":163.4,"inlineSize":21.156,"blockSize":17.4},"baseline":[920.5068019917808,175.39999999999998],"lines":["Mar"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[21.156]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":200},
+        {"id":"axis-band-rect:0:0","kind":"Rect","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-band","visualRole":"axis-band-decoration","bounds":{"inline":468.6666666666667,"block":139.1,"inlineSize":825.3333333333333,"blockSize":22.0},"slotId":"timeline-axis","paint":{"fill":"#1B1512","dash":[],"opacity":1.0},"paintOrder":10},
+        {"id":"axis-grid:1:0","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-grid","visualRole":"axis-major","bounds":{"inline":483.3216756184897,"block":183.1,"inlineSize":0.0,"blockSize":80.52499999999998},"slotId":"timeline-axis","paint":{"stroke":"#9C8B74","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[483.3216756184897,183.1],[483.3216756184897,263.625]],"paintOrder":11},
+        {"id":"axis-grid:5:1","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-grid","visualRole":"axis-minor","bounds":{"inline":582.8245925903321,"block":183.1,"inlineSize":0.0,"blockSize":80.52499999999998},"slotId":"timeline-axis","paint":{"stroke":"#C6BBA4","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[582.8245925903321,183.1],[582.8245925903321,263.625]],"paintOrder":11},
+        {"id":"axis-separator:0","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-cell-separator","visualRole":"axis-cell-separator","bounds":{"inline":582.824593,"block":161.1,"inlineSize":0.0,"blockSize":22.0},"slotId":"timeline-axis","paint":{"stroke":"#C6BBA4","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[582.824593,161.1],[582.824593,183.1]],"paintOrder":12},
+        {"id":"axis-rule","kind":"Path","sourceRef":"timeline-axis","sourceKind":"axis","purpose":"axis-rule","visualRole":"axis-rule","bounds":{"inline":468.6666666666667,"block":183.1,"inlineSize":825.3333333333333,"blockSize":0.0},"slotId":"timeline-axis","paint":{"stroke":"#231A14","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[468.6666666666667,183.1],[1294.0,183.1]],"paintOrder":12},
+        {"id":"as-of","kind":"Path","sourceRef":"actual-set","sourceKind":"actual","purpose":"as-of","visualRole":"as-of","bounds":{"inline":781.8304265340171,"block":183.1,"inlineSize":0.0,"blockSize":80.52499999999998},"slotId":"timeline","paint":{"stroke":"#203A6B","strokeWidth":1.0,"dash":[4.0,3.0],"opacity":1.0},"points":[[781.8304265340171,183.1],[781.8304265340171,263.625]],"paintOrder":100},
+        {"id":"as-of-label","kind":"Text","sourceRef":"actual-set","sourceKind":"review","purpose":"as-of-label","visualRole":"as-of-label","bounds":{"inline":753.758676534017,"block":268.0875,"inlineSize":56.1435,"blockSize":12.075},"slotId":"timeline","text":"as of 5 mar","baseline":[753.758676534017,278.5875],"textLayout":{"bounds":{"inline":753.758676534017,"block":268.0875,"inlineSize":56.1435,"blockSize":12.075},"baseline":[753.758676534017,278.5875],"lines":["as of 5 mar"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":10.5,"lineHeight":1.15,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[56.1435]}},"paint":{"fill":"#F8F1DF","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part0","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[233.118,299.09999999999997]]},{"kind":"line","points":[[238.21800000000002,299.09999999999997]]},{"kind":"quadratic","points":[[238.568,299.09999999999997],[238.568,299.45]]},{"kind":"line","points":[[238.568,299.95]]},{"kind":"quadratic","points":[[238.568,300.3],[238.21800000000002,300.3]]},{"kind":"line","points":[[233.118,300.3]]},{"kind":"quadratic","points":[[232.768,300.3],[232.768,299.95]]},{"kind":"line","points":[[232.768,299.45]]},{"kind":"quadratic","points":[[232.768,299.09999999999997],[233.118,299.09999999999997]]},{"kind":"line","points":[[233.118,299.09999999999997]]}]},"paintOrder":0},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part1","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[233.118,309.09999999999997]]},{"kind":"line","points":[[238.21800000000002,309.09999999999997]]},{"kind":"quadratic","points":[[238.568,309.09999999999997],[238.568,309.45]]},{"kind":"line","points":[[238.568,309.95]]},{"kind":"quadratic","points":[[238.568,310.3],[238.21800000000002,310.3]]},{"kind":"line","points":[[233.118,310.3]]},{"kind":"quadratic","points":[[232.768,310.3],[232.768,309.95]]},{"kind":"line","points":[[232.768,309.45]]},{"kind":"quadratic","points":[[232.768,309.09999999999997],[233.118,309.09999999999997]]},{"kind":"line","points":[[233.118,309.09999999999997]]}]},"paintOrder":1},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part2","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[235.668,300.7]]},{"kind":"quadratic","points":[[236.15800000000002,300.7],[236.633,300.82]]},{"kind":"quadratic","points":[[237.108,300.935],[237.538,301.16499999999996]]},{"kind":"quadratic","points":[[237.973,301.395],[238.338,301.71999999999997]]},{"kind":"quadratic","points":[[238.698,302.045],[238.973,302.45]]},{"kind":"line","points":[[232.363,302.45]]},{"kind":"quadratic","points":[[232.638,302.045],[232.99800000000002,301.71999999999997]]},{"kind":"quadratic","points":[[233.363,301.395],[233.798,301.16499999999996]]},{"kind":"quadratic","points":[[234.228,300.935],[234.703,300.82]]},{"kind":"quadratic","points":[[235.178,300.7],[235.668,300.7]]},{"kind":"line","points":[[235.668,300.7]]}]},"paintOrder":2},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part3","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[239.263,302.95]]},{"kind":"quadratic","points":[[239.43800000000002,303.3],[239.538,303.68]]},{"kind":"quadratic","points":[[239.638,304.06],[239.65800000000002,304.45]]},{"kind":"line","points":[[231.678,304.45]]},{"kind":"quadratic","points":[[231.698,304.06],[231.798,303.68]]},{"kind":"quadratic","points":[[231.898,303.3],[232.073,302.95]]},{"kind":"line","points":[[239.263,302.95]]}]},"paintOrder":3},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part4","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[239.65800000000002,304.95]]},{"kind":"quadratic","points":[[239.638,305.34],[239.538,305.71999999999997]]},{"kind":"quadratic","points":[[239.43800000000002,306.09999999999997],[239.263,306.45]]},{"kind":"line","points":[[232.073,306.45]]},{"kind":"quadratic","points":[[231.898,306.09999999999997],[231.798,305.71999999999997]]},{"kind":"quadratic","points":[[231.698,305.34],[231.678,304.95]]},{"kind":"line","points":[[239.65800000000002,304.95]]}]},"paintOrder":4},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part5","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E0512F","dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[238.973,306.95]]},{"kind":"quadratic","points":[[238.698,307.35499999999996],[238.338,307.68]]},{"kind":"quadratic","points":[[237.973,308.005],[237.538,308.235]]},{"kind":"quadratic","points":[[237.108,308.465],[236.633,308.58]]},{"kind":"quadratic","points":[[236.15800000000002,308.7],[235.668,308.7]]},{"kind":"line","points":[[235.668,308.7]]},{"kind":"quadratic","points":[[235.178,308.7],[234.703,308.58]]},{"kind":"quadratic","points":[[234.228,308.465],[233.798,308.235]]},{"kind":"quadratic","points":[[233.363,308.005],[232.99800000000002,307.68]]},{"kind":"quadratic","points":[[232.638,307.35499999999996],[232.363,306.95]]},{"kind":"line","points":[[238.973,306.95]]}]},"paintOrder":5},
+        {"id":"legend-swatch:milestone:62d9a9a23bc592c0:part6","kind":"Symbol","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"gate","bounds":{"inline":229.668,"block":298.7,"inlineSize":12.0,"blockSize":12.0},"slotId":"legend","paint":{"stroke":"#8E2414","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.0,"symbol":{"outline":[{"kind":"move","points":[[239.26299979019166,302.9499998807907]]},{"kind":"quadratic","points":[[239.43799998092652,303.29999990463256],[239.5379998855591,303.6799998998642]]},{"kind":"quadratic","points":[[239.63799979019166,304.0599998950958],[239.65799977111817,304.4499998807907]]},{"kind":"line","points":[[231.6780000500679,304.4499998807907]]},{"kind":"quadratic","points":[[231.69800003099442,304.0599998950958],[231.79800002503396,303.6799998998642]]},{"kind":"quadratic","points":[[231.8980000190735,303.29999990463256],[232.07300003099442,302.9499998807907]]},{"kind":"line","points":[[239.26299979019166,302.9499998807907]]},{"kind":"move","points":[[239.65799977111817,304.9499997615814]]},{"kind":"quadratic","points":[[239.63799979019166,305.34000010490416],[239.5379998855591,305.7200001001358]]},{"kind":"quadratic","points":[[239.43799998092652,306.1000000953674],[239.26299979019166,306.4499997615814]]},{"kind":"line","points":[[232.07300003099442,306.4499997615814]]},{"kind":"quadratic","points":[[231.8980000190735,306.1000000953674],[231.79800002503396,305.7200001001358]]},{"kind":"quadratic","points":[[231.69800003099442,305.34000010490416],[231.6780000500679,304.9499997615814]]},{"kind":"line","points":[[239.65799977111817,304.9499997615814]]},{"kind":"move","points":[[235.668,300.70000005960463]]},{"kind":"quadratic","points":[[236.15800024795533,300.70000005960463],[236.6330001525879,300.81750003695487]]},{"kind":"quadratic","points":[[237.10800005722047,300.9350000143051],[237.54050018119813,301.16499997377394]]},{"kind":"quadratic","points":[[237.9730003051758,301.3949999332428],[238.33550013828278,301.7199999809265]]},{"kind":"quadratic","points":[[238.69799997138978,302.0450000286102],[238.9730000667572,302.45]]},{"kind":"line","points":[[232.3629999332428,302.45]]},{"kind":"quadratic","points":[[232.63800002861024,302.0450000286102],[233.00050004053116,301.7199999809265]]},{"kind":"quadratic","points":[[233.3630000524521,301.3949999332428],[233.79549999761582,301.16499997377394]]},{"kind":"quadratic","points":[[234.22799994277955,300.9350000143051],[234.70300002622605,300.81750003695487]]},{"kind":"quadratic","points":[[235.17800010967255,300.70000005960463],[235.668,300.70000005960463]]},{"kind":"move","points":[[238.9730000667572,306.95]]},{"kind":"quadratic","points":[[238.69799997138978,307.35499997138976],[238.33550013828278,307.6800000190735]]},{"kind":"quadratic","points":[[237.9730003051758,308.0050000667572],[237.54050018119813,308.23500020503997]]},{"kind":"quadratic","points":[[237.10800005722047,308.46500034332274],[236.6330001525879,308.5825000524521]]},{"kind":"quadratic","points":[[236.15800024795533,308.6999997615814],[235.66800017881394,308.6999997615814]]},{"kind":"quadratic","points":[[235.17800010967255,308.6999997615814],[234.70300002622605,308.5825000524521]]},{"kind":"quadratic","points":[[234.22799994277955,308.46500034332274],[233.79549999761582,308.23500020503997]]},{"kind":"quadratic","points":[[233.3630000524521,308.0050000667572],[233.00050004053116,307.6800000190735]]},{"kind":"quadratic","points":[[232.63800002861024,307.35499997138976],[232.3629999332428,306.95]]},{"kind":"line","points":[[238.9730000667572,306.95]]},{"kind":"move","points":[[233.11799992847443,299.1000000208616]]},{"kind":"line","points":[[238.2179997138977,299.1000000208616]]},{"kind":"quadratic","points":[[238.56800009536744,299.1000000208616],[238.56800009536744,299.45]]},{"kind":"line","points":[[238.56800009536744,299.94999997019767]]},{"kind":"quadratic","points":[[238.56800009536744,300.3000000834465],[238.2179997138977,300.3000000834465]]},{"kind":"line","points":[[233.11799992847443,300.3000000834465]]},{"kind":"quadratic","points":[[232.76799990463257,300.3000000834465],[232.76799990463257,299.94999997019767]]},{"kind":"line","points":[[232.76799990463257,299.45]]},{"kind":"quadratic","points":[[232.76799990463257,299.1000000208616],[233.11799992847443,299.1000000208616]]},{"kind":"move","points":[[233.11799992847443,309.1000000953674]]},{"kind":"line","points":[[238.2179997138977,309.1000000953674]]},{"kind":"quadratic","points":[[238.56800009536744,309.1000000953674],[238.56800009536744,309.4499997615814]]},{"kind":"line","points":[[238.56800009536744,309.95]]},{"kind":"quadratic","points":[[238.56800009536744,310.299999666214],[238.2179997138977,310.299999666214]]},{"kind":"line","points":[[233.11799992847443,310.299999666214]]},{"kind":"quadratic","points":[[232.76799990463257,310.299999666214],[232.76799990463257,309.95]]},{"kind":"line","points":[[232.76799990463257,309.4499997615814]]},{"kind":"quadratic","points":[[232.76799990463257,309.1000000953674],[233.11799992847443,309.1000000953674]]}]},"paintOrder":6},
+        {"id":"relation:relation:id:d-s1t1-g1:s1t1:s1t1:g1:g1","kind":"Path","sourceRef":"relation:id:d-s1t1-g1","sourceKind":"relation","purpose":"dependency","visualRole":"dependency","bounds":{"inline":0,"block":0,"inlineSize":0,"blockSize":0},"slotId":"timeline","paint":{"stroke":"#9C8B74","strokeWidth":1.0,"dash":[],"opacity":1.0},"pathCommands":[{"kind":"move","points":[[781.8304265340171,194.065625]]},{"kind":"line","points":[[781.8304265340171,249.559375]]},{"kind":"quadratic","points":[[781.8304265340171,253.559375],[785.8304265340171,253.559375]]},{"kind":"line","points":[[924.0848019917806,253.559375]]}],"points":[[781.8304265340171,194.065625],[781.8304265340171,253.559375],[924.0848019917806,253.559375]],"markerStart":{"outline":[{"kind":"move","points":[[2.5,0.0]]},{"kind":"quadratic","points":[[5.0,0.0],[5.0,2.5]]},{"kind":"quadratic","points":[[5.0,5.0],[2.5,5.0]]},{"kind":"quadratic","points":[[0.0,5.0],[0.0,2.5]]},{"kind":"quadratic","points":[[0.0,0.0],[2.5,0.0]]}],"headLength":5.0,"headWidth":5.0,"attachmentOffset":0.0,"paintMode":"fill"},"markerEnd":{"outline":[{"kind":"move","points":[[0.0,0.0]]},{"kind":"line","points":[[6.0,3.0]]},{"kind":"line","points":[[0.0,6.0]]},{"kind":"line","points":[[0.0,0.0]]}],"headLength":6.0,"headWidth":6.0,"attachmentOffset":1.0,"paintMode":"fill"},"paintOrder":250,"fromInstanceId":"s1t1:s1t1","toInstanceId":"g1:g1"},
+        {"id":"legend-swatch:dependency","kind":"Path","sourceRef":"dependency","sourceKind":"relation","purpose":"dependency","visualRole":"dependency","bounds":{"inline":423.14,"block":304.2,"inlineSize":22.0,"blockSize":1.0},"slotId":"legend","paint":{"stroke":"#9C8B74","strokeWidth":1.0,"dash":[],"opacity":1.0},"points":[[423.14,304.7],[445.14,304.7]],"markerEnd":{"outline":[{"kind":"move","points":[[0.0,0.0]]},{"kind":"line","points":[[6.0,3.0]]},{"kind":"line","points":[[0.0,6.0]]},{"kind":"line","points":[[0.0,0.0]]}],"headLength":6.0,"headWidth":6.0,"attachmentOffset":1.0,"paintMode":"fill"},"paintOrder":250},
+        {"id":"row-rule:s1t1","kind":"Path","sourceRef":"s1t1","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":42.0,"block":203.23125,"inlineSize":1252.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#231A14","strokeWidth":0.5,"dash":[],"opacity":0.12},"points":[[42.0,203.23125],[1294.0,203.23125]],"paintOrder":10},
+        {"id":"row-rule:s1t2","kind":"Path","sourceRef":"s1t2","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":42.0,"block":223.3625,"inlineSize":1252.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#231A14","strokeWidth":0.5,"dash":[],"opacity":0.12},"points":[[42.0,223.3625],[1294.0,223.3625]],"paintOrder":10},
+        {"id":"row-rule:s1t3","kind":"Path","sourceRef":"s1t3","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":42.0,"block":243.49374999999998,"inlineSize":1252.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#231A14","strokeWidth":0.5,"dash":[],"opacity":0.12},"points":[[42.0,243.49374999999998],[1294.0,243.49374999999998]],"paintOrder":10},
+        {"id":"row-rule:g1","kind":"Path","sourceRef":"g1","sourceKind":"decoration","purpose":"row-rule","visualRole":"row-rule","bounds":{"inline":42.0,"block":263.625,"inlineSize":1252.0,"blockSize":0.0},"slotId":"timeline","paint":{"stroke":"#231A14","strokeWidth":0.5,"dash":[],"opacity":0.12},"points":[[42.0,263.625],[1294.0,263.625]],"paintOrder":10},
+        {"id":"chip:as-of-label","kind":"Rect","sourceRef":"actual-set","sourceKind":"review","purpose":"label-chip","visualRole":"as-of-label-chip","bounds":{"inline":750.0836765340171,"block":266.25,"inlineSize":63.493500000000004,"blockSize":15.75},"slotId":"timeline","paint":{"fill":"#203A6B","dash":[],"opacity":1.0},"cornerRadius":2.9909250000000003,"paintOrder":299},
+        {"id":"legend-swatch:planned","kind":"Rect","sourceRef":"planned","sourceKind":"legend","purpose":"legend-swatch","visualRole":"planned","bounds":{"inline":42.0,"block":300.7,"inlineSize":22.0,"blockSize":8.0},"slotId":"legend","paint":{"fill":"#2F6F5E","stroke":"#2F6F5E","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":1.5,"paintOrder":1},
+        {"id":"legend-swatch:actual:84510d640ea7a7d0","kind":"Rect","sourceRef":"actual:84510d640ea7a7d0","sourceKind":"legend","purpose":"legend-swatch","visualRole":"actual","bounds":{"inline":152.82000000000002,"block":303.02,"inlineSize":22.0,"blockSize":3.36},"slotId":"legend","paint":{"fill":"#B22D1B","stroke":"#B22D1B","strokeWidth":1.0,"dash":[],"opacity":1.0},"cornerRadius":0.9999359999999999,"paintOrder":0},
+        {"id":"legend-swatch:calendar-closed","kind":"Rect","sourceRef":"calendar-closed","sourceKind":"legend","purpose":"legend-swatch","visualRole":"calendar-closed","bounds":{"inline":286.36400000000003,"block":298.7,"inlineSize":22.0,"blockSize":12.0},"slotId":"legend","paint":{"fill":"#E9DEC3","dash":[],"opacity":1.0},"paintOrder":0},
+        {"id":"annotation-box:a1-note","kind":"Rect","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-box","visualRole":"annotation-note-box","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"annotations","paint":{"fill":"#F8F1DF","stroke":"#F8F1DF","strokeWidth":1.0,"dash":[],"opacity":1.0},"paintOrder":400,"viewerFit":"text-follows-box"},
+        {"id":"annotation-artwork:a1-note:layer0:part0","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-artwork","visualRole":"annotation-artwork","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"timeline","paint":{"stroke":"#2F6F5E","strokeWidth":1.375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1367.636075949367,209.225]]},{"kind":"line","points":[[1433.0,202.475]]},{"kind":"line","points":[[1498.363924050633,209.225]]}]},"paintOrder":400},
+        {"id":"annotation-artwork:a1-note:layer0:part1","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-artwork","visualRole":"annotation-artwork","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"timeline","paint":{"fill":"#2F6F5E","dash":[],"opacity":1.0},"symbol":{"outline":[{"kind":"move","points":[[1313.625,216.225]]},{"kind":"line","points":[[1318.25,216.225]]},{"kind":"line","points":[[1547.75,216.225]]},{"kind":"line","points":[[1552.375,216.225]]},{"kind":"line","points":[[1552.375,220.85]]},{"kind":"line","points":[[1552.375,267.625]]},{"kind":"line","points":[[1552.375,272.25]]},{"kind":"line","points":[[1547.75,272.25]]},{"kind":"line","points":[[1318.25,272.25]]},{"kind":"line","points":[[1313.625,272.25]]},{"kind":"line","points":[[1313.625,267.625]]},{"kind":"line","points":[[1313.625,220.85]]},{"kind":"line","points":[[1313.625,216.225]]},{"kind":"move","points":[[1318.25,220.85]]},{"kind":"line","points":[[1318.25,267.625]]},{"kind":"line","points":[[1547.75,267.625]]},{"kind":"line","points":[[1547.75,220.85]]},{"kind":"line","points":[[1318.25,220.85]]}]},"paintOrder":400},
+        {"id":"annotation-artwork:a1-note:layer1:part0","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-artwork","visualRole":"annotation-artwork-rods","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"timeline","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"symbol":{"outline":[{"kind":"move","points":[[1313.25,209.225]]},{"kind":"line","points":[[1318.25,209.225]]},{"kind":"line","points":[[1547.75,209.225]]},{"kind":"line","points":[[1552.75,209.225]]},{"kind":"quadratic","points":[[1555.5,209.225],[1555.5,211.975]]},{"kind":"line","points":[[1555.5,211.975]]},{"kind":"quadratic","points":[[1555.5,214.725],[1552.75,214.725]]},{"kind":"line","points":[[1547.75,214.725]]},{"kind":"line","points":[[1318.25,214.725]]},{"kind":"line","points":[[1313.25,214.725]]},{"kind":"quadratic","points":[[1310.5,214.725],[1310.5,211.975]]},{"kind":"line","points":[[1310.5,211.975]]},{"kind":"quadratic","points":[[1310.5,209.225],[1313.25,209.225]]},{"kind":"line","points":[[1313.25,209.225]]}]},"paintOrder":400},
+        {"id":"annotation-artwork:a1-note:layer1:part1","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-artwork","visualRole":"annotation-artwork-rods","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"timeline","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"symbol":{"outline":[{"kind":"move","points":[[1313.5,273.5]]},{"kind":"line","points":[[1318.25,273.5]]},{"kind":"line","points":[[1547.75,273.5]]},{"kind":"line","points":[[1552.5,273.5]]},{"kind":"quadratic","points":[[1555.5,273.5],[1555.5,276.5]]},{"kind":"line","points":[[1555.5,276.5]]},{"kind":"quadratic","points":[[1555.5,279.5],[1552.5,279.5]]},{"kind":"line","points":[[1547.75,279.5]]},{"kind":"line","points":[[1318.25,279.5]]},{"kind":"line","points":[[1313.5,279.5]]},{"kind":"quadratic","points":[[1310.5,279.5],[1310.5,276.5]]},{"kind":"line","points":[[1310.5,276.5]]},{"kind":"quadratic","points":[[1310.5,273.5],[1313.5,273.5]]},{"kind":"line","points":[[1313.5,273.5]]}]},"paintOrder":400},
+        {"id":"annotation-artwork:a1-note:layer1:part2","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-artwork","visualRole":"annotation-artwork-rods","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"timeline","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"symbol":{"outline":[{"kind":"move","points":[[1314.5,276.5]]},{"kind":"quadratic","points":[[1314.5,277.15],[1314.25,277.7375]]},{"kind":"quadratic","points":[[1314.0,278.3375],[1313.55,278.8]]},{"kind":"quadratic","points":[[1313.0875,279.25],[1312.4875,279.5]]},{"kind":"quadratic","points":[[1311.9,279.75],[1311.25,279.75]]},{"kind":"quadratic","points":[[1310.6,279.75],[1310.0125,279.5]]},{"kind":"quadratic","points":[[1309.4125,279.25],[1308.95,278.8]]},{"kind":"quadratic","points":[[1308.5,278.3375],[1308.25,277.7375]]},{"kind":"quadratic","points":[[1308.0,277.15],[1308.0,276.5]]},{"kind":"quadratic","points":[[1308.0,275.85],[1308.25,275.2625]]},{"kind":"quadratic","points":[[1308.5,274.6625],[1308.95,274.2]]},{"kind":"quadratic","points":[[1309.4125,273.75],[1310.0125,273.5]]},{"kind":"quadratic","points":[[1310.6,273.25],[1311.25,273.25]]},{"kind":"quadratic","points":[[1311.9,273.25],[1312.4875,273.5]]},{"kind":"quadratic","points":[[1313.0875,273.75],[1313.55,274.2]]},{"kind":"quadratic","points":[[1314.0,274.6625],[1314.25,275.2625]]},{"kind":"quadratic","points":[[1314.5,275.85],[1314.5,276.5]]},{"kind":"line","points":[[1314.5,276.5]]}]},"paintOrder":400},
+        {"id":"annotation-artwork:a1-note:layer1:part3","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-artwork","visualRole":"annotation-artwork-rods","bounds":{"inline":1308.0,"block":200.475,"inlineSize":250.0,"blockSize":81.525},"slotId":"timeline","paint":{"fill":"#C89A5E","dash":[],"opacity":1.0},"symbol":{"outline":[{"kind":"move","points":[[1558.0,276.5]]},{"kind":"quadratic","points":[[1558.0,277.15],[1557.75,277.7375]]},{"kind":"quadratic","points":[[1557.5,278.3375],[1557.05,278.8]]},{"kind":"quadratic","points":[[1556.5875,279.25],[1555.9875,279.5]]},{"kind":"quadratic","points":[[1555.4,279.75],[1554.75,279.75]]},{"kind":"quadratic","points":[[1554.1,279.75],[1553.5125,279.5]]},{"kind":"quadratic","points":[[1552.9125,279.25],[1552.45,278.8]]},{"kind":"quadratic","points":[[1552.0,278.3375],[1551.75,277.7375]]},{"kind":"quadratic","points":[[1551.5,277.15],[1551.5,276.5]]},{"kind":"quadratic","points":[[1551.5,275.85],[1551.75,275.2625]]},{"kind":"quadratic","points":[[1552.0,274.6625],[1552.45,274.2]]},{"kind":"quadratic","points":[[1552.9125,273.75],[1553.5125,273.5]]},{"kind":"quadratic","points":[[1554.1,273.25],[1554.75,273.25]]},{"kind":"quadratic","points":[[1555.4,273.25],[1555.9875,273.5]]},{"kind":"quadratic","points":[[1556.5875,273.75],[1557.05,274.2]]},{"kind":"quadratic","points":[[1557.5,274.6625],[1557.75,275.2625]]},{"kind":"quadratic","points":[[1558.0,275.85],[1558.0,276.5]]},{"kind":"line","points":[[1558.0,276.5]]}]},"paintOrder":400},
+        {"id":"annotation-kind-stamp:a1-note:part0","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":1.1953125,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1525.0703125,226.5375]]},{"kind":"line","points":[[1539.6796875,226.5375]]},{"kind":"quadratic","points":[[1541.9375,226.5375],[1541.9375,228.7953125]]},{"kind":"line","points":[[1541.9375,243.4046875]]},{"kind":"quadratic","points":[[1541.9375,245.6625],[1539.6796875,245.6625]]},{"kind":"line","points":[[1525.0703125,245.6625]]},{"kind":"quadratic","points":[[1522.8125,245.6625],[1522.8125,243.4046875]]},{"kind":"line","points":[[1522.8125,228.7953125]]},{"kind":"quadratic","points":[[1522.8125,226.5375],[1525.0703125,226.5375]]},{"kind":"line","points":[[1525.0703125,226.5375]]}]},"paintOrder":400},
+        {"id":"annotation-kind-stamp:a1-note:part1","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1528.0453125,231.03984375]]},{"kind":"line","points":[[1530.973828125,231.03984375]]}]},"paintOrder":401},
+        {"id":"annotation-kind-stamp:a1-note:part2","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1527.1953125,232.68671874999998]]},{"kind":"line","points":[[1531.704296875,232.68671874999998]]}]},"paintOrder":402},
+        {"id":"annotation-kind-stamp:a1-note:part3","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1527.92578125,234.33359375]]},{"kind":"line","points":[[1530.973828125,234.33359375]]}]},"paintOrder":403},
+        {"id":"annotation-kind-stamp:a1-note:part4","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1527.92578125,235.9140625]]},{"kind":"line","points":[[1530.973828125,235.9140625]]}]},"paintOrder":404},
+        {"id":"annotation-kind-stamp:a1-note:part5","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1527.92578125,237.50117187499998]]},{"kind":"line","points":[[1531.21953125,237.50117187499998]]},{"kind":"line","points":[[1531.21953125,241.16015625]]},{"kind":"line","points":[[1527.92578125,241.16015625]]},{"kind":"line","points":[[1527.92578125,237.50117187499998]]}]},"paintOrder":405},
+        {"id":"annotation-kind-stamp:a1-note:part6","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1532.5609375,231.166015625]]},{"kind":"line","points":[[1537.308984375,231.166015625]]},{"kind":"line","points":[[1537.308984375,236.40546874999998]]}]},"paintOrder":406},
+        {"id":"annotation-kind-stamp:a1-note:part7","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1532.68046875,235.18359375]]},{"kind":"line","points":[[1537.308984375,235.18359375]]}]},"paintOrder":407},
+        {"id":"annotation-kind-stamp:a1-note:part8","kind":"Symbol","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-kind-stamp","visualRole":"annotation-kind-stamp","bounds":{"inline":1521.75,"block":225.475,"inlineSize":21.25,"blockSize":21.25},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":0.99609375,"dash":[],"opacity":1.0,"strokeFinish":{"lineCap":"round","lineJoin":"round","fidelity":"required"}},"symbol":{"outline":[{"kind":"move","points":[[1532.926171875,235.18359375]]},{"kind":"line","points":[[1532.926171875,240.794921875]]},{"kind":"line","points":[[1533.29140625,241.16015625]]},{"kind":"line","points":[[1536.82421875,241.16015625]]},{"kind":"line","points":[[1537.43515625,240.794921875]]},{"kind":"line","points":[[1537.5546875,238.842578125]]}]},"paintOrder":408},
+        {"id":"legend:planned","kind":"Text","sourceRef":"planned","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":70.0,"block":296.0,"inlineSize":68.82000000000001,"blockSize":17.4},"slotId":"legend","text":"current plan","baseline":[70.0,308.0],"textLayout":{"bounds":{"inline":70.0,"block":296.0,"inlineSize":68.82000000000001,"blockSize":17.4},"baseline":[70.0,308.0],"lines":["current plan"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[68.82000000000001]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:actual:84510d640ea7a7d0","kind":"Text","sourceRef":"actual:84510d640ea7a7d0","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":180.82000000000002,"block":296.0,"inlineSize":34.848,"blockSize":17.4},"slotId":"legend","text":"actual","baseline":[180.82000000000002,308.0],"textLayout":{"bounds":{"inline":180.82000000000002,"block":296.0,"inlineSize":34.848,"blockSize":17.4},"baseline":[180.82000000000002,308.0],"lines":["actual"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[34.848]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:milestone:62d9a9a23bc592c0","kind":"Text","sourceRef":"milestone:62d9a9a23bc592c0","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":247.668,"block":296.0,"inlineSize":24.695999999999998,"blockSize":17.4},"slotId":"legend","text":"gate","baseline":[247.668,308.0],"textLayout":{"bounds":{"inline":247.668,"block":296.0,"inlineSize":24.695999999999998,"blockSize":17.4},"baseline":[247.668,308.0],"lines":["gate"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[24.695999999999998]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:calendar-closed","kind":"Text","sourceRef":"calendar-closed","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":314.36400000000003,"block":296.0,"inlineSize":94.776,"blockSize":17.4},"slotId":"legend","text":"non-working day","baseline":[314.36400000000003,308.0],"textLayout":{"bounds":{"inline":314.36400000000003,"block":296.0,"inlineSize":94.776,"blockSize":17.4},"baseline":[314.36400000000003,308.0],"lines":["non-working day"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[94.776]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"legend:dependency","kind":"Text","sourceRef":"dependency","sourceKind":"review","purpose":"legend-label","visualRole":"legend","bounds":{"inline":451.14,"block":296.0,"inlineSize":69.276,"blockSize":17.4},"slotId":"legend","text":"dependency","baseline":[451.14,308.0],"textLayout":{"bounds":{"inline":451.14,"block":296.0,"inlineSize":69.276,"blockSize":17.4},"baseline":[451.14,308.0],"lines":["dependency"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.0,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","textTransform":"lowercase","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[69.276]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":300},
+        {"id":"annotation-kind-text:a1-note:0","kind":"Text","sourceRef":"a1-note","sourceKind":"review","purpose":"annotation-kind-label","visualRole":"annotation-kind-label","bounds":{"inline":1323.0,"block":225.475,"inlineSize":55.856,"blockSize":18.4},"slotId":"annotations","text":"Kickoff","baseline":[1323.0,241.475],"textLayout":{"bounds":{"inline":1323.0,"block":225.475,"inlineSize":55.856,"blockSize":18.4},"baseline":[1323.0,241.475],"lines":["Kickoff"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":700,"fontSize":16.0,"lineHeight":1.15,"assetIdentity":"sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[55.856]}},"paint":{"fill":"#231A14","dash":[],"opacity":1.0},"paintOrder":401,"contrastTreatment":"required"},
+        {"id":"annotation-text:a1-note","kind":"Text","sourceRef":"a1-note","sourceKind":"review","purpose":"annotation-text","visualRole":"annotation-note-text","bounds":{"inline":1323.0,"block":243.875,"inlineSize":174.525,"blockSize":18.125},"slotId":"annotations","text":"Vendor contract still unsigned","baseline":[1323.0,256.375],"textLayout":{"bounds":{"inline":1323.0,"block":243.875,"inlineSize":174.525,"blockSize":18.125},"baseline":[1323.0,256.375],"lines":["Vendor contract still unsigned"],"family":"Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif","weight":400,"fontSize":12.5,"lineHeight":1.45,"assetIdentity":"sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0","numericSpacing":"proportional","orientation":"horizontal","rotationDegrees":0,"fit":{"mode":"text-follows-box","adjust":"spacing","lineInlineSizes":[174.525]}},"paint":{"fill":"#6B5A48","dash":[],"opacity":1.0},"paintOrder":401,"contrastTreatment":"required"},
+        {"id":"annotation-leader:a1-note","kind":"Path","sourceRef":"a1-note","sourceKind":"annotation","purpose":"annotation-leader","visualRole":"annotation-note-leader","bounds":{"inline":0,"block":0,"inlineSize":0,"blockSize":0},"slotId":"annotations","paint":{"stroke":"#203A6B","strokeWidth":1.0,"dash":[2.0,3.0],"opacity":1.0},"points":[[938.0848019917806,253.559375],[938.0848019917806,251.059375],[1308.0,251.059375],[1308.0,241.2375]],"paintOrder":250}
+      ],
+      "scale": {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-02-27",
+        "domainEnd": "2027-03-15",
+        "rangeStart": 483.3216756184897,
+        "rangeEnd": 1279.3450113932292,
+        "origin": 483.3216756184897,
+        "unitRatio": 49.75145848592122
+      },
+      "canvasPaint": {
+        "fill": "#0E2B31",
+        "dash": [],
+        "opacity": 1.0
+      },
+      "canvasBounds": {
+        "inline": 0.0,
+        "block": 0.0,
+        "inlineSize": 1600.0,
+        "blockSize": 360.0
+      },
+      "fitWarnings": [
+        {
+          "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+          "placementId": "group-tag:Ana:0",
+          "sourceRef": "Ana",
+          "failureKind": "group-tag-text",
+          "behaviour": "suppress-with-source",
+          "requiredInline": 15.225,
+          "requiredBlock": 19.6665,
+          "availableInline": 15.225,
+          "availableBlock": 3.6312499999999996
+        },
+        {
+          "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+          "placementId": "group-tag:Ben:0",
+          "sourceRef": "Ben",
+          "failureKind": "group-tag-text",
+          "behaviour": "suppress-with-source",
+          "requiredInline": 15.225,
+          "requiredBlock": 19.9815,
+          "availableInline": 15.225,
+          "availableBlock": 3.6312499999999996
+        },
+        {
+          "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+          "placementId": "group-tag:Chen:0",
+          "sourceRef": "Chen",
+          "failureKind": "group-tag-text",
+          "behaviour": "suppress-with-source",
+          "requiredInline": 15.225,
+          "requiredBlock": 26.438999999999997,
+          "availableInline": 15.225,
+          "availableBlock": 3.6312499999999996
+        },
+        {
+          "code": "W_LAYOUT_TEXT_ELLIPSIZED",
+          "placementId": "group-tag:Unassigned:0",
+          "sourceRef": "Unassigned",
+          "failureKind": "group-tag-text",
+          "behaviour": "suppress-with-source",
+          "requiredInline": 15.225,
+          "requiredBlock": 60.2385,
+          "availableInline": 15.225,
+          "availableBlock": 3.6312499999999996
+        }
+      ],
+      "decorationDispositions": [
+        {
+          "visualRole": "axis-band-decoration2",
+          "disposition": "absent"
+        },
+        {
+          "visualRole": "group-band",
+          "disposition": "absent"
+        },
+        {
+          "visualRole": "row-band",
+          "disposition": "absent"
+        }
+      ]
+    }
+  ],
+  "manifest": {
+    "version": "chrona/scene-manifest/v0.1",
+    "settingsVersion": "chrona/render-context/v0.17",
+    "viewport": {
+      "inlineSize": 1600.0,
+      "blockSize": 360.0
+    },
+    "selectedObjectIds": [
+      "s1t1",
+      "s1t2",
+      "s1t3",
+      "g1"
+    ],
+    "fontAssetIdentities": [
+      "sha256:84ad23bbb20113059ed4500bbfe2c83631269a26195c16ee2eef25c42c363d55",
+      "sha256:84d0bd9a7231cd598c221dfe23bdf4ecb4f996e505ce9bdcd3b1336866802af0"
+    ],
+    "contentFamilyCounts": {
+      "relations": 1,
+      "annotations": 1,
+      "notes": 0,
+      "legendEntries": 9,
+      "summaryPanels": 0,
+      "groupDetails": 0,
+      "milestones": 0,
+      "observationRows": 0
+    },
+    "surfaceScales": [
+      {
+        "surfaceId": "table-timeline",
+        "scaleId": "primary",
+        "domainStart": "2027-02-27",
+        "domainEnd": "2027-03-15",
+        "rangeStart": 483.3216756184897,
+        "rangeEnd": 1279.3450113932292,
+        "origin": 483.3216756184897,
+        "unitRatio": 49.75145848592122
+      }
+    ],
+    "visualRoleCounts": {
+      "actual": 2,
+      "annotation-artwork": 2,
+      "annotation-artwork-rods": 4,
+      "annotation-kind-label": 1,
+      "annotation-kind-stamp": 9,
+      "annotation-note-box": 1,
+      "annotation-note-leader": 1,
+      "annotation-note-text": 1,
+      "as-of": 1,
+      "as-of-label": 1,
+      "as-of-label-chip": 1,
+      "axis-band-decoration": 1,
+      "axis-cell-separator": 1,
+      "axis-label2": 1,
+      "axis-label3": 1,
+      "axis-major": 1,
+      "axis-minor": 1,
+      "axis-rule": 1,
+      "calendar-closed": 7,
+      "dependency": 2,
+      "gate": 14,
+      "group-tab": 4,
+      "heading": 1,
+      "legend": 5,
+      "planned": 4,
+      "region-frame-board": 1,
+      "region-frame-plaque": 1,
+      "region-frame-rule": 1,
+      "row-rule": 4,
+      "slot-heading": 1,
+      "tableColumnLabel": 2,
+      "text": 7,
+      "variance-on-track": 1
+    }
+  },
+  "diagnostics": [
+    "I_FONT_ROLE_RESOLVED:role=annotation;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=annotation-kind-label;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=annotation-note-text;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=as-of-label;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=axis;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=axisMonth;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=axisQuarter;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=groupHeader;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=heading;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=legend;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=metric;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=numeric;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=period-label;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=slot-heading;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=subtitle;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=summary;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=table-cell-secondary;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=tableColumnLabel;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_FONT_ROLE_RESOLVED:role=text;requested=Noto Sans JP, Hiragino Sans, Yu Gothic, sans-serif;face=Noto Sans JP",
+    "I_LAYOUT_RELATION_POLICY_SUPERSEDED:{\"layoutMember\":\"relationRouting.unroutable\",\"layoutValue\":\"relax\",\"surfaceId\":\"table-timeline\",\"viewMember\":\"visibility.relations.overflow\",\"viewValue\":\"suppress\"}",
+    "I_VIEW_FIELD_GROUP_SUMMARIES_OMITTED:{\"count\":1}",
+    "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:Ana:0\",\"sourceRef\":\"Ana\"}",
+    "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:Ben:0\",\"sourceRef\":\"Ben\"}",
+    "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:Chen:0\",\"sourceRef\":\"Chen\"}",
+    "W_LAYOUT_TEXT_ELLIPSIZED:{\"failureKind\":\"group-tag-text\",\"placementId\":\"group-tag:Unassigned:0\",\"sourceRef\":\"Unassigned\"}"
+  ]
+}

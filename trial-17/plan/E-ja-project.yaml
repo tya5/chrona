@@ -1,0 +1,529 @@
+version: timeline/v0.7
+project:
+  id: trial17-E
+  title: 三か年工場移転計画
+  calendar: office
+fieldRoles:
+  responsible: owner
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+objects:
+  s1:
+    type: group
+    title: 基盤
+    schedule:
+      mode: rollup
+  s1t1:
+    type: task
+    title: 基盤要件定義1
+    parent: s1
+    fields:
+      owner: 佐藤
+    schedule:
+      mode: fixed-span
+      start: '2027-02-01'
+      end: '2027-08-03'
+  s1t2:
+    type: task
+    title: 基盤方式設計2
+    parent: s1
+    fields:
+      owner: 鈴木
+    schedule:
+      mode: fixed-span
+      start: '2027-09-15'
+      end: '2028-01-28'
+  s1t3:
+    type: task
+    title: 基盤試作3
+    parent: s1
+    fields:
+      owner: 高橋
+    schedule:
+      mode: fixed-span
+      start: '2028-03-02'
+      end: '2028-08-22'
+  s1t4:
+    type: task
+    title: 基盤結合4
+    parent: s1
+    fields:
+      owner: 田中
+    schedule:
+      mode: fixed-span
+      start: '2028-09-21'
+      end: '2029-01-18'
+  s1t5:
+    type: task
+    title: 基盤検証5
+    parent: s1
+    fields:
+      owner: 伊藤
+    schedule:
+      mode: fixed-span
+      start: '2029-01-19'
+      end: '2029-06-12'
+  s1t6:
+    type: task
+    title: 基盤展開6
+    parent: s1
+    fields:
+      owner: 渡辺
+    schedule:
+      mode: fixed-span
+      start: '2029-07-16'
+      end: '2029-11-25'
+  s2:
+    type: group
+    title: モバイル
+    schedule:
+      mode: rollup
+  s2t1:
+    type: task
+    title: モバイル結合1
+    parent: s2
+    fields:
+      owner: 鈴木
+    schedule:
+      mode: fixed-span
+      start: '2027-01-21'
+      end: '2027-07-26'
+  s2t2:
+    type: task
+    title: モバイル検証2
+    parent: s2
+    fields:
+      owner: 高橋
+    schedule:
+      mode: fixed-span
+      start: '2027-09-07'
+      end: '2028-01-31'
+  s2t3:
+    type: task
+    title: モバイル展開3
+    parent: s2
+    fields:
+      owner: 田中
+    schedule:
+      mode: fixed-span
+      start: '2028-03-16'
+      end: '2028-07-09'
+  s2t4:
+    type: task
+    title: モバイル移行4
+    parent: s2
+    fields:
+      owner: 伊藤
+    schedule:
+      mode: fixed-span
+      start: '2028-08-15'
+      end: '2029-02-20'
+  s2t5:
+    type: task
+    title: モバイル堅牢化5
+    parent: s2
+    fields:
+      owner: 渡辺
+    schedule:
+      mode: fixed-span
+      start: '2029-02-26'
+      end: '2029-08-18'
+  s2t6:
+    type: task
+    title: モバイルレビュー6
+    parent: s2
+    fields:
+      owner: 山本
+    schedule:
+      mode: fixed-span
+      start: '2029-09-12'
+      end: '2030-03-27'
+  s3:
+    type: group
+    title: データ
+    schedule:
+      mode: rollup
+  s3t1:
+    type: task
+    title: データ移行1
+    parent: s3
+    fields:
+      owner: 高橋
+    schedule:
+      mode: fixed-span
+      start: '2027-02-02'
+      end: '2027-08-11'
+  s3t2:
+    type: task
+    title: データ堅牢化2
+    parent: s3
+    fields:
+      owner: 田中
+    schedule:
+      mode: fixed-span
+      start: '2027-09-09'
+      end: '2028-01-24'
+  s3t3:
+    type: task
+    title: データレビュー3
+    parent: s3
+    fields:
+      owner: 伊藤
+    schedule:
+      mode: fixed-span
+      start: '2028-01-27'
+      end: '2028-08-09'
+  s3t4:
+    type: task
+    title: データ試行4
+    parent: s3
+    fields:
+      owner: 渡辺
+    schedule:
+      mode: fixed-span
+      start: '2028-08-30'
+      end: '2029-03-18'
+  s3t5:
+    type: task
+    title: データ教育5
+    parent: s3
+    fields:
+      owner: 山本
+    schedule:
+      mode: fixed-span
+      start: '2029-03-24'
+      end: '2029-09-23'
+  s3t6:
+    type: task
+    title: データ監査6
+    parent: s3
+    fields:
+      owner: 中村
+    schedule:
+      mode: fixed-span
+      start: '2029-10-30'
+      end: '2030-05-11'
+  s4:
+    type: group
+    title: 市場投入
+    schedule:
+      mode: rollup
+  s4t1:
+    type: task
+    title: 市場投入試行1
+    parent: s4
+    fields:
+      owner: 田中
+    schedule:
+      mode: fixed-span
+      start: '2027-01-24'
+      end: '2027-05-18'
+  s4t2:
+    type: task
+    title: 市場投入教育2
+    parent: s4
+    fields:
+      owner: 伊藤
+    schedule:
+      mode: fixed-span
+      start: '2027-06-21'
+      end: '2027-11-09'
+  s4t3:
+    type: task
+    title: 市場投入監査3
+    parent: s4
+    fields:
+      owner: 渡辺
+    schedule:
+      mode: fixed-span
+      start: '2027-12-22'
+      end: '2028-05-13'
+  s4t4:
+    type: task
+    title: 市場投入計測4
+    parent: s4
+    fields:
+      owner: 山本
+    schedule:
+      mode: fixed-span
+      start: '2028-06-17'
+      end: '2028-12-22'
+  s4t5:
+    type: task
+    title: 市場投入梱包5
+    parent: s4
+    fields:
+      owner: 中村
+    schedule:
+      mode: fixed-span
+      start: '2029-01-01'
+      end: '2029-06-10'
+  s4t6:
+    type: task
+    title: 市場投入多言語化6
+    parent: s4
+    fields:
+      owner: 佐藤
+    schedule:
+      mode: fixed-span
+      start: '2029-07-23'
+      end: '2029-12-27'
+  s5:
+    type: group
+    title: セキュリティ
+    schedule:
+      mode: rollup
+  s5t1:
+    type: task
+    title: セキュリティ計測1
+    parent: s5
+    fields:
+      owner: 伊藤
+    schedule:
+      mode: fixed-span
+      start: '2027-01-18'
+      end: '2027-07-18'
+  s5t2:
+    type: task
+    title: セキュリティ梱包2
+    parent: s5
+    fields:
+      owner: 渡辺
+    schedule:
+      mode: fixed-span
+      start: '2027-07-26'
+      end: '2028-01-06'
+  s5t3:
+    type: task
+    title: セキュリティ多言語化3
+    parent: s5
+    fields:
+      owner: 山本
+    schedule:
+      mode: fixed-span
+      start: '2028-01-31'
+      end: '2028-07-09'
+  s5t4:
+    type: task
+    title: セキュリティ要件定義4
+    parent: s5
+    fields:
+      owner: 中村
+    schedule:
+      mode: fixed-span
+      start: '2028-07-14'
+      end: '2028-12-30'
+  s5t5:
+    type: task
+    title: セキュリティ方式設計5
+    parent: s5
+    fields:
+      owner: 佐藤
+    schedule:
+      mode: fixed-span
+      start: '2029-02-09'
+      end: '2029-06-27'
+  s5t6:
+    type: task
+    title: セキュリティ試作6
+    parent: s5
+    fields:
+      owner: 鈴木
+    schedule:
+      mode: fixed-span
+      start: '2029-07-12'
+      end: '2030-01-20'
+  g1:
+    type: gate
+    title: キックオフ
+    schedule:
+      mode: fixed-point
+      at: '2027-06-09'
+  g2:
+    type: gate
+    title: 設計審査
+    schedule:
+      mode: fixed-point
+      at: '2027-11-12'
+  g3:
+    type: gate
+    title: アルファ
+    schedule:
+      mode: fixed-point
+      at: '2028-04-17'
+  g4:
+    type: gate
+    title: ベータ開始
+    schedule:
+      mode: fixed-point
+      at: '2028-09-20'
+  g5:
+    type: gate
+    title: セキュリティ承認
+    schedule:
+      mode: fixed-point
+      at: '2029-02-24'
+  g6:
+    type: gate
+    title: 機能凍結
+    schedule:
+      mode: fixed-point
+      at: '2029-07-30'
+relations:
+- id: d-s3t1-s3t2
+  type: dependency
+  from:
+    object: s3t1
+    endpoint: end
+  to:
+    object: s3t2
+    endpoint: start
+  lag: 0d
+- id: d-s3t4-s3t5
+  type: dependency
+  from:
+    object: s3t4
+    endpoint: end
+  to:
+    object: s3t5
+    endpoint: start
+  lag: 0d
+- id: d-s1t4-s1t5
+  type: dependency
+  from:
+    object: s1t4
+    endpoint: end
+  to:
+    object: s1t5
+    endpoint: start
+  lag: 0d
+- id: d-s4t4-s4t5
+  type: dependency
+  from:
+    object: s4t4
+    endpoint: end
+  to:
+    object: s4t5
+    endpoint: start
+  lag: 0d
+- id: d-s3t3-s3t4
+  type: dependency
+  from:
+    object: s3t3
+    endpoint: end
+  to:
+    object: s3t4
+    endpoint: start
+  lag: 0d
+- id: d-s5t2-s5t3
+  type: dependency
+  from:
+    object: s5t2
+    endpoint: end
+  to:
+    object: s5t3
+    endpoint: start
+  lag: 0d
+- id: d-s5t2-s3t3
+  type: dependency
+  from:
+    object: s5t2
+    endpoint: end
+  to:
+    object: s3t3
+    endpoint: start
+  lag: 0d
+- id: d-s5t5-s4t6
+  type: dependency
+  from:
+    object: s5t5
+    endpoint: end
+  to:
+    object: s4t6
+    endpoint: start
+  lag: 0d
+- id: d-s1t5-s5t6
+  type: dependency
+  from:
+    object: s1t5
+    endpoint: end
+  to:
+    object: s5t6
+    endpoint: start
+  lag: 0d
+- id: d-s1t4-s5t5
+  type: dependency
+  from:
+    object: s1t4
+    endpoint: end
+  to:
+    object: s5t5
+    endpoint: start
+  lag: 0d
+- id: d-s1t3-s3t4
+  type: dependency
+  from:
+    object: s1t3
+    endpoint: end
+  to:
+    object: s3t4
+    endpoint: start
+  lag: 0d
+- id: d-s4t1-g1
+  type: dependency
+  from:
+    object: s4t1
+    endpoint: end
+  to:
+    object: g1
+    endpoint: at
+  lag: 0d
+- id: d-s4t2-g2
+  type: dependency
+  from:
+    object: s4t2
+    endpoint: end
+  to:
+    object: g2
+    endpoint: at
+  lag: 0d
+- id: d-s2t2-g3
+  type: dependency
+  from:
+    object: s2t2
+    endpoint: end
+  to:
+    object: g3
+    endpoint: at
+  lag: 0d
+- id: d-s1t3-g4
+  type: dependency
+  from:
+    object: s1t3
+    endpoint: end
+  to:
+    object: g4
+    endpoint: at
+  lag: 0d
+annotations:
+  a1:
+    kind: note
+    text: ベンダー契約が未締結
+    anchor:
+      object: g1
+  a2:
+    kind: risk
+    text: 技術者2名が休暇
+    anchor:
+      object: s2t5
+  a3:
+    kind: note
+    text: スポンサーと範囲縮小に合意
+    anchor:
+      object: s3t6

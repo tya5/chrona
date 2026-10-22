@@ -1,0 +1,62 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: trial17-B-observed
+body:
+  asOf: '2027-02-15'
+  observations:
+  - id: s1t1-1
+    sequence: 1
+    projectObjectId: s1t1
+    actual:
+      start: '2027-01-09'
+      finish: '2027-02-04'
+      progress: 1
+  - id: s1t2-1
+    sequence: 1
+    projectObjectId: s1t2
+    actual:
+      start: '2027-02-14'
+      openUntil: asOf
+      progress: 0.28
+  - id: s2t1-1
+    sequence: 1
+    projectObjectId: s2t1
+    actual:
+      start: '2027-01-07'
+      finish: '2027-02-07'
+      progress: 1
+  - id: s2t2-1
+    sequence: 1
+    projectObjectId: s2t2
+    actual:
+      start: '2027-02-07'
+      openUntil: asOf
+      progress: 0.47
+  - id: s3t1-1
+    sequence: 1
+    projectObjectId: s3t1
+    actual:
+      start: '2027-01-04'
+      finish: '2027-02-03'
+      progress: 1
+  - id: s3t2-1
+    sequence: 1
+    projectObjectId: s3t2
+    actual:
+      start: '2027-02-10'
+      openUntil: asOf
+      progress: 0.77
+  - id: s4t1-1
+    sequence: 1
+    projectObjectId: s4t1
+    actual:
+      start: '2027-01-11'
+      finish: '2027-02-12'
+      progress: 1
+  - id: s4t2-1
+    sequence: 1
+    projectObjectId: s4t2
+    actual:
+      start: '2027-02-09'
+      openUntil: asOf
+      progress: 0.8

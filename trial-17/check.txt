@@ -1,0 +1,172 @@
+== marquee A en-US  canvas 1600x2192
+    text-text overlaps 4: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note | annotation-kind-label:annotation-kind-text:a6-note:0 x annotation-heading:annotation-heading:a6-note | annotation-heading:annotation-heading:a4-note x annotation-text:annotation-text:a4-note | annotation-kind-label:annotation-kind-text:a5-note:0 x annotation-heading:annotation-heading:a5-note
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+== marquee B en-US  canvas 1600x763
+    text-text overlaps 3: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note | annotation-heading:annotation-heading:a2-note x annotation-text:annotation-text:a2-note | annotation-kind-label:annotation-kind-text:a3-note:0 x annotation-heading:annotation-heading:a3-note
+    leader segments through bars 1: a3-note->s4t3
+== marquee C1 en-US  canvas 1280x1018
+    canvas height 1018 > requested 720
+    text-text overlaps 3: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note | annotation-kind-label:annotation-kind-text:a3-note:0 x annotation-heading:annotation-heading:a3-note | annotation-heading:annotation-heading:a3-note x annotation-text:annotation-text:a3-note
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 2
+== marquee C2 en-US  canvas 1024x1018
+    canvas height 1018 > requested 768
+    text-text overlaps 3: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note | annotation-kind-label:annotation-kind-text:a3-note:0 x annotation-heading:annotation-heading:a3-note | annotation-heading:annotation-heading:a3-note x annotation-text:annotation-text:a3-note
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 2
+== marquee C3 en-US  canvas 1123x1018
+    canvas height 1018 > requested 794
+    text-text overlaps 3: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note | annotation-kind-label:annotation-kind-text:a3-note:0 x annotation-heading:annotation-heading:a3-note | annotation-heading:annotation-heading:a3-note x annotation-text:annotation-text:a3-note
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 2
+== marquee C4 en-US  canvas 944x1018
+    canvas width 944 > requested 900
+    text-text overlaps 3: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note | annotation-kind-label:annotation-kind-text:a3-note:0 x annotation-heading:annotation-heading:a3-note | annotation-heading:annotation-heading:a3-note x annotation-text:annotation-text:a3-note
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 2
+== marquee D en-US  canvas 1600x443
+    text-text overlaps 1: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note
+== marquee E en-US  canvas 1600x1149
+    text-text overlaps 1: annotation-heading:annotation-heading:a1-note x annotation-text:annotation-text:a1-note
+== sunday A en-US  canvas 1600x2190
+    dependency segments through other bars 1/41 deps: relation:id:d-s3t2-s4t4->s4t3
+== sunday B en-US  canvas 1600x766
+    text-text overlaps 2: kicker-text:kicker x legend-label:legend:dependency | title-text:title x legend-label:legend:milestone:56daea67c2dbbbb9
+    dependency through text 5
+    annotation boxes covering marks/text 4: a1-note covers g1, a1-note covers g1, a2-note covers s2t2, a3-note covers s1t2
+== sunday C1 en-US  canvas 1280x1021
+    canvas height 1021 > requested 720
+== sunday C2 en-US  canvas 1116x1021
+    canvas width 1116 > requested 1024
+    canvas height 1021 > requested 768
+== sunday C3 en-US  canvas 1123x1021
+    canvas height 1021 > requested 794
+    annotation boxes covering marks/text 1: a2-note covers s2t5
+== sunday C4 en-US  canvas 1106x1021
+    canvas width 1106 > requested 900
+    annotation boxes covering marks/text 1: a2-note covers s2t5
+== sunday D en-US  canvas 1600x447
+== sunday E en-US  canvas 1600x1151
+    annotation boxes covering marks/text 1: a3-note covers s3t6
+== target-b A en-US  canvas 1600x2384
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+== target-b B en-US  canvas 1600x731
+== target-b C1 en-US  canvas 1280x1008
+    canvas height 1008 > requested 720
+    annotation order inversions (anchor vs box) 1
+== target-b C2 en-US  canvas 1024x1008
+    canvas height 1008 > requested 768
+    annotation order inversions (anchor vs box) 1
+== target-b C3 en-US  canvas 1123x1008
+    canvas height 1008 > requested 794
+    annotation order inversions (anchor vs box) 1
+== target-b C4 en-US  canvas 900x1008
+    annotation order inversions (anchor vs box) 1
+== target-b D en-US  canvas 1600x362
+== target-b E en-US  canvas 1600x1161
+== titlecard A en-US  canvas 1600x2173
+== titlecard A ja-JP  canvas 1600x2173
+== titlecard B en-US  canvas 1748x848
+    canvas width 1748 > requested 1600
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+    leader segments through bars 1: a3-note->s4t3
+== titlecard B ja-JP  canvas 1888x848
+    canvas width 1888 > requested 1600
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+    leader segments through bars 1: a3-note->s4t3
+== titlecard C1 en-US  canvas 1280x1014
+    canvas height 1014 > requested 720
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C1 ja-JP  canvas 1280x1014
+    canvas height 1014 > requested 720
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C2 en-US  canvas 1139x1014
+    canvas width 1139 > requested 1024
+    canvas height 1014 > requested 768
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C2 ja-JP  canvas 1111x1014
+    canvas width 1111 > requested 1024
+    canvas height 1014 > requested 768
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C3 en-US  canvas 1139x1014
+    canvas width 1139 > requested 1123
+    canvas height 1014 > requested 794
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C3 ja-JP  canvas 1123x1014
+    canvas height 1014 > requested 794
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C4 en-US  canvas 1139x1014
+    canvas width 1139 > requested 900
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard C4 ja-JP  canvas 1111x1014
+    canvas width 1111 > requested 900
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== titlecard D en-US  canvas 1600x454
+== titlecard D ja-JP  canvas 1600x454
+== titlecard E en-US  canvas 1600x1143
+== titlecard E ja-JP  canvas 1600x1143
+== yuya A en-US  canvas 1600x2131
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+== yuya A ja-JP  canvas 1600x2131
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+== yuya B en-US  canvas 1600x741
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+    leader segments through bars 1: a3-note->s4t3
+== yuya B ja-JP  canvas 1600x719
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+    leader segments through bars 1: a3-note->s4t3
+== yuya C1 en-US  canvas 1280x864
+    canvas height 864 > requested 720
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya C1 ja-JP  canvas 1280x864
+    canvas height 864 > requested 720
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya C2 en-US  canvas 1024x864
+    canvas height 864 > requested 768
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya C2 ja-JP  canvas 1024x864
+    canvas height 864 > requested 768
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya C3 en-US  canvas 1123x864
+    canvas height 864 > requested 794
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya C3 ja-JP  canvas 1123x864
+    canvas height 864 > requested 794
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya C4 en-US  canvas 900x864
+    annotation leaders crossing each other: 4 pairs
+    annotation order inversions (anchor vs box) 3
+    leader segments through bars 1: a4-note->s2t6
+== yuya C4 ja-JP  canvas 900x864
+    annotation leaders crossing each other: 2 pairs
+    annotation order inversions (anchor vs box) 3
+== yuya D en-US  canvas 1600x360
+== yuya D ja-JP  canvas 1600x360
+== yuya E en-US  canvas 1600x1004
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1
+== yuya E ja-JP  canvas 1600x1004
+    annotation leaders crossing each other: 1 pairs
+    annotation order inversions (anchor vs box) 1

@@ -1,0 +1,13 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: trial17-D-observed
+body:
+  asOf: '2027-03-05'
+  observations:
+  - id: s1t1-1
+    sequence: 1
+    projectObjectId: s1t1
+    actual:
+      start: '2027-03-01'
+      finish: '2027-03-05'
+      progress: 1

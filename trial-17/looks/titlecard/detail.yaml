@@ -1,0 +1,11 @@
+version: chrona/review-detail-profile/v0.1
+id: halcyon-titlecard-legend
+body:
+  legend:
+    - {role: snapshot, label: {wording: legend.baseline}}
+    - {role: planned, label: {wording: legend.plan}}
+    - {role: actual, label: {wording: legend.actual}}
+    - {role: missing-actual, label: {wording: legend.missing-actual}}
+    - {role: milestone, label: {wording: legend.gate}}
+    - {role: calendar-closed, label: {wording: legend.holiday}}
+    - {role: dependency, label: {wording: legend.dependency}}

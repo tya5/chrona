@@ -1,0 +1,453 @@
+annotations:
+  a1:
+    anchor:
+      object: g1
+    kind: note
+    text: Vendor contract still unsigned
+  a2:
+    anchor:
+      object: s2t5
+    kind: risk
+    text: Two engineers on leave
+  a3:
+    anchor:
+      object: s3t6
+    kind: note
+    text: Scope cut agreed with sponsor
+  a4:
+    anchor:
+      object: g4
+    kind: risk
+    text: Rate limits block load test
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+fieldRoles:
+  responsible: owner
+objects:
+  g1:
+    schedule:
+      at: '2027-01-29'
+      mode: fixed-point
+    title: Kickoff
+    type: gate
+  g2:
+    schedule:
+      at: '2027-02-23'
+      mode: fixed-point
+    title: Design review
+    type: gate
+  g3:
+    schedule:
+      at: '2027-03-20'
+      mode: fixed-point
+    title: Alpha
+    type: gate
+  g4:
+    schedule:
+      at: '2027-04-14'
+      mode: fixed-point
+    title: Beta start
+    type: gate
+  g5:
+    schedule:
+      at: '2027-05-09'
+      mode: fixed-point
+    title: Security sign-off
+    type: gate
+  s1:
+    schedule:
+      mode: rollup
+    title: Platform
+    type: group
+  s1t1:
+    fields:
+      owner: Ana
+    parent: s1
+    schedule:
+      end: '2027-02-01'
+      mode: fixed-span
+      start: '2027-01-07'
+    title: Platform Requirements 1
+    type: task
+  s1t2:
+    fields:
+      owner: Ben
+    parent: s1
+    schedule:
+      end: '2027-02-25'
+      mode: fixed-span
+      start: '2027-02-07'
+    title: Platform Architecture 2
+    type: task
+  s1t3:
+    fields:
+      owner: Chen
+    parent: s1
+    schedule:
+      end: '2027-03-15'
+      mode: fixed-span
+      start: '2027-03-01'
+    title: Platform Prototype 3
+    type: task
+  s1t4:
+    fields:
+      owner: Dee
+    parent: s1
+    schedule:
+      end: '2027-04-13'
+      mode: fixed-span
+      start: '2027-03-28'
+    title: Platform Integration 4
+    type: task
+  s1t5:
+    fields:
+      owner: Eli
+    parent: s1
+    schedule:
+      end: '2027-05-02'
+      mode: fixed-span
+      start: '2027-04-13'
+    title: Platform Validation 5
+    type: task
+  s1t6:
+    fields:
+      owner: Fay
+    parent: s1
+    schedule:
+      end: '2027-05-24'
+      mode: fixed-span
+      start: '2027-05-06'
+    title: Platform Rollout 6
+    type: task
+  s2:
+    schedule:
+      mode: rollup
+    title: Mobile
+    type: group
+  s2t1:
+    fields:
+      owner: Ben
+    parent: s2
+    schedule:
+      end: '2027-01-31'
+      mode: fixed-span
+      start: '2027-01-06'
+    title: Mobile Integration 1
+    type: task
+  s2t2:
+    fields:
+      owner: Chen
+    parent: s2
+    schedule:
+      end: '2027-02-25'
+      mode: fixed-span
+      start: '2027-02-05'
+    title: Mobile Validation 2
+    type: task
+  s2t3:
+    fields:
+      owner: Dee
+    parent: s2
+    schedule:
+      end: '2027-03-18'
+      mode: fixed-span
+      start: '2027-03-03'
+    title: Mobile Rollout 3
+    type: task
+  s2t4:
+    fields:
+      owner: Eli
+    parent: s2
+    schedule:
+      end: '2027-04-11'
+      mode: fixed-span
+      start: '2027-03-23'
+    title: Mobile Migration 4
+    type: task
+  s2t5:
+    fields:
+      owner: Fay
+    parent: s2
+    schedule:
+      end: '2027-05-10'
+      mode: fixed-span
+      start: '2027-04-17'
+    title: Mobile Hardening 5
+    type: task
+  s2t6:
+    fields:
+      owner: Gus
+    parent: s2
+    schedule:
+      end: '2027-06-08'
+      mode: fixed-span
+      start: '2027-05-13'
+    title: Mobile Review 6
+    type: task
+  s3:
+    schedule:
+      mode: rollup
+    title: Data
+    type: group
+  s3t1:
+    fields:
+      owner: Chen
+    parent: s3
+    schedule:
+      end: '2027-02-03'
+      mode: fixed-span
+      start: '2027-01-08'
+    title: Data Migration 1
+    type: task
+  s3t2:
+    fields:
+      owner: Dee
+    parent: s3
+    schedule:
+      end: '2027-02-24'
+      mode: fixed-span
+      start: '2027-02-06'
+    title: Data Hardening 2
+    type: task
+  s3t3:
+    fields:
+      owner: Eli
+    parent: s3
+    schedule:
+      end: '2027-03-22'
+      mode: fixed-span
+      start: '2027-02-24'
+    title: Data Review 3
+    type: task
+  s3t4:
+    fields:
+      owner: Fay
+    parent: s3
+    schedule:
+      end: '2027-04-20'
+      mode: fixed-span
+      start: '2027-03-24'
+    title: Data Pilot 4
+    type: task
+  s3t5:
+    fields:
+      owner: Gus
+    parent: s3
+    schedule:
+      end: '2027-05-06'
+      mode: fixed-span
+      start: '2027-04-20'
+    title: Data Training 5
+    type: task
+  s3t6:
+    fields:
+      owner: Hana
+    parent: s3
+    schedule:
+      end: '2027-06-15'
+      mode: fixed-span
+      start: '2027-05-20'
+    title: Data Audit 6
+    type: task
+  s4:
+    schedule:
+      mode: rollup
+    title: Go-to-market
+    type: group
+  s4t1:
+    fields:
+      owner: Dee
+    parent: s4
+    schedule:
+      end: '2027-01-21'
+      mode: fixed-span
+      start: '2027-01-06'
+    title: Go-to-market Pilot 1
+    type: task
+  s4t2:
+    fields:
+      owner: Eli
+    parent: s4
+    schedule:
+      end: '2027-02-13'
+      mode: fixed-span
+      start: '2027-01-25'
+    title: Go-to-market Training 2
+    type: task
+  s4t3:
+    fields:
+      owner: Fay
+    parent: s4
+    schedule:
+      end: '2027-03-09'
+      mode: fixed-span
+      start: '2027-02-18'
+    title: Go-to-market Audit 3
+    type: task
+  s4t4:
+    fields:
+      owner: Gus
+    parent: s4
+    schedule:
+      end: '2027-04-07'
+      mode: fixed-span
+      start: '2027-03-13'
+    title: Go-to-market Telemetry 4
+    type: task
+  s4t6:
+    fields:
+      owner: Ana
+    parent: s4
+    schedule:
+      end: '2027-05-19'
+      mode: fixed-span
+      start: '2027-05-04'
+    title: Go-to-market Localization 6
+    type: task
+project:
+  calendar: office
+  id: trial17-C
+  title: Nova app launch plan
+relations:
+- from:
+    endpoint: end
+    object: s4t2
+  id: d-s4t2-s4t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s4t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t1
+  id: d-s1t1-s1t2
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t2
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t1
+  id: d-s3t1-s3t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t3
+  id: d-s2t3-s2t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t2
+  id: d-s3t2-s3t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s4t3
+  id: d-s4t3-s4t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s4t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t4
+  id: d-s3t4-s3t6
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t6
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t1
+  id: d-s3t1-s1t3
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t3
+  type: dependency
+- from:
+    endpoint: end
+    object: s4t4
+  id: d-s4t4-s3t5
+  lag: 0d
+  to:
+    endpoint: start
+    object: s3t5
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t4
+  id: d-s3t4-s1t6
+  lag: 0d
+  to:
+    endpoint: start
+    object: s1t6
+  type: dependency
+- from:
+    endpoint: end
+    object: s3t2
+  id: d-s3t2-s2t4
+  lag: 0d
+  to:
+    endpoint: start
+    object: s2t4
+  type: dependency
+- from:
+    endpoint: end
+    object: s4t1
+  id: d-s4t1-g1
+  lag: 0d
+  to:
+    endpoint: at
+    object: g1
+  type: dependency
+- from:
+    endpoint: end
+    object: s4t2
+  id: d-s4t2-g2
+  lag: 0d
+  to:
+    endpoint: at
+    object: g2
+  type: dependency
+- from:
+    endpoint: end
+    object: s2t3
+  id: d-s2t3-g3
+  lag: 0d
+  to:
+    endpoint: at
+    object: g3
+  type: dependency
+- from:
+    endpoint: end
+    object: s1t4
+  id: d-s1t4-g4
+  lag: 0d
+  to:
+    endpoint: at
+    object: g4
+  type: dependency
+version: timeline/v0.7

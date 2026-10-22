@@ -1,0 +1,342 @@
+version: timeline/v0.7
+project:
+  id: trial17-B
+  title: Unified identity platform and mobile refresh, 2027
+  calendar: office
+fieldRoles:
+  responsible: owner
+calendars:
+  office:
+    working_days:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+objects:
+  s1:
+    type: group
+    title: Platform
+    schedule:
+      mode: rollup
+  s1t1:
+    type: task
+    title: Consolidate the legacy authentication providers into a single gateway
+    parent: s1
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    schedule:
+      mode: fixed-span
+      start: '2027-01-08'
+      end: '2027-02-07'
+  s1t2:
+    type: task
+    title: Negotiate the enterprise data processing agreement with all EU customers
+    parent: s1
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    schedule:
+      mode: fixed-span
+      start: '2027-02-14'
+      end: '2027-03-08'
+  s1t3:
+    type: task
+    title: Migrate the reporting warehouse from nightly batch to streaming ingestion
+    parent: s1
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    schedule:
+      mode: fixed-span
+      start: '2027-03-13'
+      end: '2027-04-10'
+  s1t4:
+    type: task
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    parent: s1
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    schedule:
+      mode: fixed-span
+      start: '2027-04-14'
+      end: '2027-05-03'
+  s2:
+    type: group
+    title: Mobile
+    schedule:
+      mode: rollup
+  s2t1:
+    type: task
+    title: Negotiate the enterprise data processing agreement with all EU customers
+    parent: s2
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    schedule:
+      mode: fixed-span
+      start: '2027-01-07'
+      end: '2027-02-05'
+  s2t2:
+    type: task
+    title: Migrate the reporting warehouse from nightly batch to streaming ingestion
+    parent: s2
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    schedule:
+      mode: fixed-span
+      start: '2027-02-06'
+      end: '2027-03-03'
+  s2t3:
+    type: task
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    parent: s2
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    schedule:
+      mode: fixed-span
+      start: '2027-03-05'
+      end: '2027-04-04'
+  s2t4:
+    type: task
+    title: Prepare and rehearse the disaster-recovery failover across both regions
+    parent: s2
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    schedule:
+      mode: fixed-span
+      start: '2027-04-11'
+      end: '2027-05-05'
+  s3:
+    type: group
+    title: Data
+    schedule:
+      mode: rollup
+  s3t1:
+    type: task
+    title: Migrate the reporting warehouse from nightly batch to streaming ingestion
+    parent: s3
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    schedule:
+      mode: fixed-span
+      start: '2027-01-04'
+      end: '2027-02-03'
+  s3t2:
+    type: task
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    parent: s3
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    schedule:
+      mode: fixed-span
+      start: '2027-02-09'
+      end: '2027-03-01'
+  s3t3:
+    type: task
+    title: Prepare and rehearse the disaster-recovery failover across both regions
+    parent: s3
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    schedule:
+      mode: fixed-span
+      start: '2027-03-06'
+      end: '2027-04-01'
+  s3t4:
+    type: task
+    title: Rewrite the onboarding flow so that new users reach value within a session
+    parent: s3
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    schedule:
+      mode: fixed-span
+      start: '2027-04-08'
+      end: '2027-04-29'
+  s4:
+    type: group
+    title: Go-to-market
+    schedule:
+      mode: rollup
+  s4t1:
+    type: task
+    title: Run the accessibility audit of every customer-facing mobile screen and
+      fix
+    parent: s4
+    fields:
+      owner: Anastasiya Vasilyevna Kuznetsova-Pemberton
+    schedule:
+      mode: fixed-span
+      start: '2027-01-11'
+      end: '2027-02-07'
+  s4t2:
+    type: task
+    title: Prepare and rehearse the disaster-recovery failover across both regions
+    parent: s4
+    fields:
+      owner: Maximiliana Konstantinopoulou-Oyelaran (Platform Reliability)
+    schedule:
+      mode: fixed-span
+      start: '2027-02-09'
+      end: '2027-02-28'
+  s4t3:
+    type: task
+    title: Rewrite the onboarding flow so that new users reach value within a session
+    parent: s4
+    fields:
+      owner: Bartholomew Featherstonehaugh-Nakamura III
+    schedule:
+      mode: fixed-span
+      start: '2027-03-07'
+      end: '2027-04-01'
+  s4t4:
+    type: task
+    title: Consolidate the legacy authentication providers into a single gateway
+    parent: s4
+    fields:
+      owner: Wolfgang Schwarzenegger-Rodriguez
+    schedule:
+      mode: fixed-span
+      start: '2027-04-08'
+      end: '2027-04-28'
+  g1:
+    type: gate
+    title: Kickoff
+    schedule:
+      mode: fixed-point
+      at: '2027-01-28'
+  g2:
+    type: gate
+    title: Design review
+    schedule:
+      mode: fixed-point
+      at: '2027-02-21'
+  g3:
+    type: gate
+    title: Alpha
+    schedule:
+      mode: fixed-point
+      at: '2027-03-17'
+  g4:
+    type: gate
+    title: Beta start
+    schedule:
+      mode: fixed-point
+      at: '2027-04-10'
+relations:
+- id: d-s3t2-s3t3
+  type: dependency
+  from:
+    object: s3t2
+    endpoint: end
+  to:
+    object: s3t3
+    endpoint: start
+  lag: 0d
+- id: d-s3t3-s3t4
+  type: dependency
+  from:
+    object: s3t3
+    endpoint: end
+  to:
+    object: s3t4
+    endpoint: start
+  lag: 0d
+- id: d-s2t1-s2t2
+  type: dependency
+  from:
+    object: s2t1
+    endpoint: end
+  to:
+    object: s2t2
+    endpoint: start
+  lag: 0d
+- id: d-s2t1-s2t3
+  type: dependency
+  from:
+    object: s2t1
+    endpoint: end
+  to:
+    object: s2t3
+    endpoint: start
+  lag: 0d
+- id: d-s2t2-s1t3
+  type: dependency
+  from:
+    object: s2t2
+    endpoint: end
+  to:
+    object: s1t3
+    endpoint: start
+  lag: 0d
+- id: d-s3t3-s2t4
+  type: dependency
+  from:
+    object: s3t3
+    endpoint: end
+  to:
+    object: s2t4
+    endpoint: start
+  lag: 0d
+- id: d-s4t3-s3t4
+  type: dependency
+  from:
+    object: s4t3
+    endpoint: end
+  to:
+    object: s3t4
+    endpoint: start
+  lag: 0d
+- id: d-s3t2-s1t3
+  type: dependency
+  from:
+    object: s3t2
+    endpoint: end
+  to:
+    object: s1t3
+    endpoint: start
+  lag: 0d
+- id: d-s1t1-g2
+  type: dependency
+  from:
+    object: s1t1
+    endpoint: end
+  to:
+    object: g2
+    endpoint: at
+  lag: 0d
+- id: d-s1t2-g3
+  type: dependency
+  from:
+    object: s1t2
+    endpoint: end
+  to:
+    object: g3
+    endpoint: at
+  lag: 0d
+- id: d-s1t3-g4
+  type: dependency
+  from:
+    object: s1t3
+    endpoint: end
+  to:
+    object: g4
+    endpoint: at
+  lag: 0d
+annotations:
+  a1:
+    kind: note
+    text: The external security assessor has asked for a second penetration test round
+      after the gateway redesign, which pushes sign-off into the following sprint
+      and delays the beta cohort invitation.
+    anchor:
+      object: g1
+  a2:
+    kind: risk
+    text: Two engineers on leave
+    anchor:
+      object: s3t3
+  a3:
+    kind: note
+    text: Scope cut agreed with sponsor
+    anchor:
+      object: s1t2

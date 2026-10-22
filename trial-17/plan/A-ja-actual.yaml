@@ -1,0 +1,237 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: trial17-A-observed
+body:
+  asOf: '2027-04-08'
+  observations:
+  - id: s1t1-1
+    sequence: 1
+    projectObjectId: s1t1
+    actual:
+      start: '2027-01-09'
+      finish: '2027-02-06'
+      progress: 1
+  - id: s1t2-1
+    sequence: 1
+    projectObjectId: s1t2
+    actual:
+      start: '2027-02-10'
+      finish: '2027-03-02'
+      progress: 1
+  - id: s1t3-1
+    sequence: 1
+    projectObjectId: s1t3
+    actual:
+      start: '2027-03-07'
+      finish: '2027-04-01'
+      progress: 1
+  - id: s1t4-1
+    sequence: 1
+    projectObjectId: s1t4
+    actual:
+      start: '2027-04-06'
+      openUntil: asOf
+      progress: 0.47
+  - id: s2t1-1
+    sequence: 1
+    projectObjectId: s2t1
+    actual:
+      start: '2027-01-05'
+      finish: '2027-02-04'
+      progress: 1
+  - id: s2t2-1
+    sequence: 1
+    projectObjectId: s2t2
+    actual:
+      start: '2027-02-02'
+      finish: '2027-03-05'
+      progress: 1
+  - id: s2t3-1
+    sequence: 1
+    projectObjectId: s2t3
+    actual:
+      start: '2027-03-04'
+      finish: '2027-04-01'
+      progress: 1
+  - id: s2t4-1
+    sequence: 1
+    projectObjectId: s2t4
+    actual:
+      start: '2027-04-01'
+      openUntil: asOf
+      progress: 0.29
+  - id: s3t1-1
+    sequence: 1
+    projectObjectId: s3t1
+    actual:
+      start: '2027-01-06'
+      finish: '2027-02-09'
+      progress: 1
+  - id: s3t2-1
+    sequence: 1
+    projectObjectId: s3t2
+    actual:
+      start: '2027-02-07'
+      finish: '2027-03-04'
+      progress: 1
+  - id: s3t3-1
+    sequence: 1
+    projectObjectId: s3t3
+    actual:
+      start: '2027-03-10'
+      finish: '2027-04-02'
+      progress: 1
+  - id: s3t4-1
+    sequence: 1
+    projectObjectId: s3t4
+    actual:
+      start: '2027-03-31'
+      openUntil: asOf
+      progress: 0.6
+  - id: s4t1-1
+    sequence: 1
+    projectObjectId: s4t1
+    actual:
+      start: '2027-01-11'
+      finish: '2027-02-01'
+      progress: 1
+  - id: s4t2-1
+    sequence: 1
+    projectObjectId: s4t2
+    actual:
+      start: '2027-02-05'
+      finish: '2027-02-21'
+      progress: 1
+  - id: s4t3-1
+    sequence: 1
+    projectObjectId: s4t3
+    actual:
+      start: '2027-02-26'
+      finish: '2027-03-18'
+      progress: 1
+  - id: s4t4-1
+    sequence: 1
+    projectObjectId: s4t4
+    actual:
+      start: '2027-03-22'
+      openUntil: asOf
+      progress: 0.78
+  - id: s5t1-1
+    sequence: 1
+    projectObjectId: s5t1
+    actual:
+      start: '2027-01-08'
+      finish: '2027-01-25'
+      progress: 1
+  - id: s5t2-1
+    sequence: 1
+    projectObjectId: s5t2
+    actual:
+      start: '2027-01-26'
+      finish: '2027-02-13'
+      progress: 1
+  - id: s5t3-1
+    sequence: 1
+    projectObjectId: s5t3
+    actual:
+      start: '2027-02-14'
+      finish: '2027-03-01'
+      progress: 1
+  - id: s5t4-1
+    sequence: 1
+    projectObjectId: s5t4
+    actual:
+      start: '2027-03-09'
+      finish: '2027-04-03'
+      progress: 1
+  - id: s5t5-1
+    sequence: 1
+    projectObjectId: s5t5
+    actual:
+      start: '2027-04-06'
+      openUntil: asOf
+      progress: 0.76
+  - id: s6t1-1
+    sequence: 1
+    projectObjectId: s6t1
+    actual:
+      start: '2027-01-06'
+      finish: '2027-01-28'
+      progress: 1
+  - id: s6t2-1
+    sequence: 1
+    projectObjectId: s6t2
+    actual:
+      start: '2027-01-30'
+      finish: '2027-02-16'
+      progress: 1
+  - id: s6t3-1
+    sequence: 1
+    projectObjectId: s6t3
+    actual:
+      start: '2027-02-17'
+      finish: '2027-03-14'
+      progress: 1
+  - id: s6t4-1
+    sequence: 1
+    projectObjectId: s6t4
+    actual:
+      start: '2027-03-17'
+      finish: '2027-04-07'
+      progress: 1
+  - id: s7t1-1
+    sequence: 1
+    projectObjectId: s7t1
+    actual:
+      start: '2027-01-07'
+      finish: '2027-02-06'
+      progress: 1
+  - id: s7t2-1
+    sequence: 1
+    projectObjectId: s7t2
+    actual:
+      start: '2027-02-06'
+      finish: '2027-03-02'
+      progress: 1
+  - id: s7t3-1
+    sequence: 1
+    projectObjectId: s7t3
+    actual:
+      start: '2027-03-08'
+      finish: '2027-04-05'
+      progress: 1
+  - id: s7t4-1
+    sequence: 1
+    projectObjectId: s7t4
+    actual:
+      start: '2027-04-04'
+      openUntil: asOf
+      progress: 0.26
+  - id: s8t1-1
+    sequence: 1
+    projectObjectId: s8t1
+    actual:
+      start: '2027-01-08'
+      finish: '2027-01-28'
+      progress: 1
+  - id: s8t2-1
+    sequence: 1
+    projectObjectId: s8t2
+    actual:
+      start: '2027-02-04'
+      finish: '2027-02-19'
+      progress: 1
+  - id: s8t3-1
+    sequence: 1
+    projectObjectId: s8t3
+    actual:
+      start: '2027-02-21'
+      finish: '2027-03-21'
+      progress: 1
+  - id: s8t4-1
+    sequence: 1
+    projectObjectId: s8t4
+    actual:
+      start: '2027-03-26'
+      openUntil: asOf
+      progress: 0.36
