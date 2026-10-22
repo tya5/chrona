@@ -735,6 +735,9 @@ class SurfaceLayoutRequest:
     page_size: str | None = None
     # Smallest common native-flow owner of the table+timeline header span, resolved by SourceSizingSession.
     group_header_inline_owner: str | None = None
+    # A prior completed source-use trial may prune a declared destination.
+    # Annotation selection may request its activation, never fabricate bounds.
+    inactive_declared_sources: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)

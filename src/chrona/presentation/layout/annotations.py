@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 from heapq import heappop, heappush
 from math import isfinite
 from typing import Iterable
@@ -293,18 +294,26 @@ def annotation_rail_candidates(annotation: AnnotationIntent, resolved: Annotatio
         return ()
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     occupied = () if index is not None else tuple(obstacles)
-    aligned = min(max(anchor_y - height / 2, rail.y), rail.bottom - height)
+    # Complete rail arithmetic in the layout's decimal domain. Binary float
+    # subtraction at a shared edge can otherwise invent an overlap (for
+    # example 217.55 + 623.05 - 126.35 becomes 714.2499999999999).
+    rail_top = Decimal(str(rail.y))
+    rail_bottom = rail_top + Decimal(str(rail.height))
+    frame_height = Decimal(str(height))
+    aligned = min(max(Decimal(str(anchor_y)) - frame_height / 2, rail_top),
+                  rail_bottom - frame_height)
     positions = [aligned]
     for step in range(1, int(rail.height // max(1.0, height)) + 1):
-        positions.extend((aligned + step * height, aligned - step * height))
+        positions.extend((aligned + step * frame_height, aligned - step * frame_height))
     candidates = []
     for position in positions:
-        box = LabelRect(rail.x, position, width, height)
-        collides = (bool(index.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom)))
+        box = LabelRect(rail.x, float(position), width, height)
+        bottom = float(position + frame_height)
+        collides = (bool(index.collisions(ObstacleRect(box.x, box.y, box.right, bottom)))
                     if index is not None else any(
                         box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom
                         for item in occupied))
-        if rail.y <= box.y and box.bottom <= rail.bottom and not collides:
+        if rail_top <= position and position + frame_height <= rail_bottom and not collides:
             candidates.append(AnnotationBox(
                 resolved, LabelPlacement("rail", box, width > rail.width), connector_kind == "leader"))
     return tuple(candidates)

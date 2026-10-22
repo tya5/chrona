@@ -114,7 +114,8 @@ def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accept
     routes = surface_routes.compose_surface_routes
     def observe_routes(context):
         batch = routes(context)
-        routed[dict(context.request.projection.figures)["notes"]].extend(batch.routing_info)
+        routed[dict(context.request.projection.figures)["notes"]].append(
+            (context.request, batch.routing_info))
         return batch
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe_routes)
     events = []
@@ -125,9 +126,17 @@ def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accept
     assert _by_id(rendered)["title"].text == "03 completed notes"
     assert b"03 completed notes" in rendered.artifact.content
     assert [(t.count, t.outcome, t.actual) for t in completed[0].trials] == [(4, "mismatch", 3), (3, "accepted", 3)]
-    assert len(requests) == 2 and requests[0] is not requests[1]
+    # Each count trial first composes against the potential-source profile,
+    # then recomposes with its exact completed source witness. The two count
+    # candidates therefore produce four distinct mutable requests.
+    assert len(requests) == 4
+    assert all(left is not right for index, left in enumerate(requests)
+               for right in requests[index + 1:])
     assert requests[0].mark_visibility_index is not None
-    assert requests[0].mark_visibility_index is not requests[1].mark_visibility_index
+    assert all(left.mark_visibility_index is not right.mark_visibility_index
+               for index, left in enumerate(requests)
+               for right in requests[index + 1:])
+    assert [dict(request.projection.figures)["notes"] for request in requests] == [4, 4, 3, 3]
     assert [e.completed for e in events if e.pass_name == "count-trial"] == [3]
     assert not any(item.scene_id in {"annotation-summary:note-2", "annotation-text:note-2"}
                    for item in rendered.surface.primitives)
@@ -137,8 +146,11 @@ def test_mismatched_trial_is_discarded_and_progress_is_published_only_for_accept
     assert any(isinstance(item, RelationSearchBudgetHit if search == "best" else RelationRoutingSummary)
                for item in facts)
     assert routed[4] and routed[3]
-    assert facts == routed[3]  # all executed accepted-pass facts, not both whole-layout trials
-    assert len(facts) < len(routed[4]) + len(routed[3])
+    assert len(routed[4]) == len(routed[3]) == 2
+    assert routed[4][0][0] is not routed[4][1][0]
+    assert routed[3][0][0] is not routed[3][1][0]
+    assert facts == list(routed[3][-1][1])  # only converged source geometry publishes facts
+    assert len(facts) < sum(len(infos) for _, infos in (*routed[4], *routed[3]))
 
 
 @pytest.mark.parametrize("late", [False, True])

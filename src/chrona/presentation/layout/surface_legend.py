@@ -58,6 +58,8 @@ class SurfaceLegendBatch:
     label_targets: tuple[tuple[str, str], ...] = ()
     diagnostics: tuple[str, ...] = ()
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    entries: tuple[SurfaceLegendEntry, ...] = ()
+    measured_layout: MeasuredLegend | None = None
 
 
 def _completed_point_key_parts(token: Mapping[str, Any], bounds: tuple[float, float, float, float],
@@ -1010,4 +1012,5 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     marks = [replace(mark, legend_encoding_coverage=coverage.get(mark.source_ref)) for mark in marks]
     shapes = [replace(shape, legend_encoding_coverage=coverage.get(shape.source_ref)) for shape in shapes]
     return SurfaceLegendBatch(replacement, tuple(marks), tuple(shapes), tuple(relations), tuple(text),
-                              tuple(side_content_warnings), legend, tuple(label_targets))
+                              tuple(side_content_warnings), legend, tuple(label_targets),
+                              entries=entries, measured_layout=completed_layout)

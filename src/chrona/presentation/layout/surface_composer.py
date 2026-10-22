@@ -25,8 +25,9 @@ from chrona.presentation.layout.surface_content import (
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.realized_legend import (
-    completed_legend_slots, recompose_realized_legend, reserve_potential_legend,
+    completed_legend_slots, filtered_realized_entries, recompose_realized_legend, reserve_potential_legend,
 )
+from chrona.presentation.layout.source_use import CompletedSourceUse
 from chrona.presentation.layout.slot_heading import SlotHeadings, content_slot, full_slot
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
@@ -326,8 +327,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     diagnostics.extend(relation_labels.diagnostics)
     visible_label_overflows.extend(relation_labels.visible_label_overflows)
 
+    realized_entries = filtered_realized_entries(
+        request, tuple(marks), tuple(shapes), tuple(relations), tuple(text))
     legend_batch = recompose_realized_legend(request, legend_batch, tuple(marks), tuple(shapes),
-        tuple(relations), tuple(text), metric_values, metric_for, side_content_warnings)
+        tuple(relations), tuple(text), metric_values, metric_for, side_content_warnings,
+        entries=realized_entries)
+    source_use = CompletedSourceUse(
+        realized_entries, legend_batch.measured_layout if legend_batch is not None else None,
+        annotation_batch.source_consumers)
 
     if legend_batch is not None:
         diagnostics.extend(legend_batch.diagnostics)
@@ -393,6 +400,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         lane_label_suppressions=lane_label_suppressions,
         info_diagnostics=(*routes_batch.routing_info, *routes_batch.resolution_info, *deadline_captions.info),
         narrative_receipts=tuple(narrative_receipts),
+        source_use=source_use,
         diagnostic_provenance=tuple(diagnostic_provenance),
         window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))

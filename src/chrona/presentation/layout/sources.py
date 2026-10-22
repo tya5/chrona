@@ -87,6 +87,14 @@ class MeasuredLegend:
 
 
 @dataclass(frozen=True)
+class CompletedSourceMeasurement:
+    """A producer's closed, intrinsic demand; never its positioned envelope."""
+
+    measurement: Measurement
+    runs: tuple[MeasuredTextRun, ...] = ()
+
+
+@dataclass(frozen=True)
 class SourceInput:
     """Semantic content facts needed to measure one closed presentation source."""
 
@@ -120,6 +128,7 @@ class SourceInput:
     # generic stack behavior untouched; a supplied zero is meaningful. This
     # is appended to preserve the positional construction contract.
     run_block_minima: tuple[Decimal, ...] | None = None
+    completed: CompletedSourceMeasurement | None = None
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
         if not self.content_present:
@@ -259,6 +268,10 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         if not value.content_present:
             result[source] = Measurement(*(Decimal(0) for _ in range(6)))
             run_measurements[source] = ()
+            continue
+        if value.completed is not None:
+            result[source] = value.completed.measurement
+            run_measurements[source] = value.completed.runs
             continue
         runs = value.text_runs()
         heading_budget = ((heading_inline or {}).get(source)

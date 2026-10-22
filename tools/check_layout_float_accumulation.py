@@ -29,6 +29,8 @@ DECIMAL_SEEDED_SUM_FUNCTIONS = {
     # Extracted source factory preserves the previous Application precision:
     # every visual advance is Decimal(str(width + gap)), seeded by Decimal(0).
     "surface_source_inputs.py": frozenset({"_annotation_source_input"}),
+    # Producer-owned intrinsic block demand remains Decimal through allocation.
+    "source_use.py": frozenset({"annotation_input"}),
 }
 
 

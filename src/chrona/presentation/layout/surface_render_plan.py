@@ -21,6 +21,7 @@ from chrona.presentation.layout.slot_heading import (
 from chrona.presentation.layout.sources import MeasuredSources, resolve_theme_metrics, measure_sources
 from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.source_presence import omit_absent_layout_sources
+from chrona.presentation.layout.source_use import CompletedSourceUse
 from chrona.presentation.layout.surface_legend import (
     LegendArrangement, complete_legend_layout, legend_arrangement, legend_source_input)
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
@@ -101,7 +102,9 @@ class SlotHeadingCopyError(LayoutError):
     """A declared View caption references no headed profile node."""
 
 
-def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfaceRenderPlan:
+def prepare_surface_render_plan(value: SurfaceRenderPlanInput, *,
+                                source_use: CompletedSourceUse | None = None,
+                                activate_annotations: bool = False) -> PreparedSurfaceRenderPlan:
     """Measure and allocate using the exact existing natural/fixed candidate policy."""
     project, view, projection = value.project, value.view, value.projection
     selected_content, summary, table_content = value.content, value.summary, value.table
@@ -128,6 +131,10 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         view_heading=heading_content or HeadingContent(str(project.get("project", {}).get("title", ""))),
         visual_requests=visual_requests, icon_assets=icon_assets, theme=theme,
         row_admission=row_admission)
+    if source_use is not None and not activate_annotations:
+        source_inputs["annotations"] = source_use.annotation_input()
+    measured_legend_entries = (source_use.legend_entries if source_use is not None
+                               else selected_content.legend_entries)
     if isinstance(value.heading, HeadingTextPrograms):
         source_inputs = bind_heading_dependencies(source_inputs, value.heading)
     required_metrics = (("timeline.groupHeader.blockSize",)
@@ -157,7 +164,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             source_inputs.update(heading_part_sources(network_heading))
     try:
         source_inputs["legend"] = legend_source_input(
-            selected_content.legend_entries,
+            measured_legend_entries,
             tokens=ThemeTokenView(theme),
             mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
             font_metrics=font_metrics,
@@ -184,7 +191,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         absent_sources.add("summary")
     if not source_inputs["annotations"].content_present:
         absent_sources.add("annotations")
-    if not selected_content.legend_entries:
+    if not measured_legend_entries:
         absent_sources.add("legend")
     if not selected_content.notes:
         absent_sources.add("notes")  # an empty notes source reserves no block and no gap (#1649)
@@ -216,7 +223,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         resolved_layout, measured_before_headings, measured, viewport_inline=viewport["inlineSize"],
         floor=completion_floor, measurements=measurements,
         sizing=sizing_context(completion_floor) if source_sizing.active else None,
-        content_sized=value.content_sized, entries=selected_content.legend_entries,
+        content_sized=value.content_sized, entries=measured_legend_entries,
         tokens=ThemeTokenView(theme), font_metrics=font_metrics)
     if completed is not None:
         # Complete the source measurement at the width allocated by the provisional solve. The
@@ -272,6 +279,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             row_admission=row_admission,
             scene_precision=value.scene_precision,
             group_header_inline_owner=source_sizing.group_header_inline_owner,
+            inactive_declared_sources=frozenset(absent_sources & claimed_sources),
         )
 
     if view.surface != "table-timeline" and value.content_sized:
@@ -346,7 +354,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
                 viewport_inline=viewport["inlineSize"], floor=completion_floor,
                 measurements=measurements,
                 sizing=sizing_context(completion_floor) if source_sizing.active else None,
-                content_sized=value.content_sized, entries=selected_content.legend_entries,
+                content_sized=value.content_sized, entries=measured_legend_entries,
                 tokens=ThemeTokenView(theme), font_metrics=font_metrics)
             if completed is not None:
                 measured = reserve_slot_heading_blocks(

@@ -29,6 +29,13 @@ def reserve_potential_legend(request, legend_slot, slots, headings, metric_value
     """Complete the conservative batch for earlier fixed geometry decisions."""
     if legend_slot is None:
         return None, slots
+    measured = request.measured_sources.legend_layout
+    if measured is not None:
+        # The full candidate inventory remains on the caller's request for
+        # final ink filtering. Only the provisional reservation uses the
+        # previous completed trial's selection.
+        request = replace(request, surface_content=replace(
+            request.surface_content, legend_entries=measured.entry_witnesses))
     batch = place_legend(SurfaceLegendContext(request,
         inline_content_slot(content_slot(legend_slot, headings.reserved("legend")),
                             headings.reserved_inline("legend")), metric_values, metric_for))
@@ -202,10 +209,11 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
 
 
 def recompose_realized_legend(request, legend, marks, shapes, relations, text,
-                              metric_values, metric_for, warnings):
+                              metric_values, metric_for, warnings, *, entries=None):
     if legend is None:
         return None
-    entries = filtered_realized_entries(request, marks, shapes, relations, text)
+    if entries is None:
+        entries = filtered_realized_entries(request, marks, shapes, relations, text)
     completed = place_legend(SurfaceLegendContext(
         replace(request, surface_content=replace(request.surface_content, legend_entries=entries)),
         legend.allocated_slot, metric_values, metric_for))
