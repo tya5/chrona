@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.paper_size import PAGE_SIZE_NAMES
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 
 
@@ -64,6 +65,7 @@ class CanvasViewportWarning:
     actual: Rect
     contributors: tuple[CanvasContributor, ...]
     contributor_count: int
+    page_size: str | None = None
 
     code = "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT"
     source_ref = "/body/environment/viewport"
@@ -73,6 +75,8 @@ class CanvasViewportWarning:
             raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: surface_id must be a non-empty string")
         if not isinstance(self.declared, DeclaredViewport):
             raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: declared must be DeclaredViewport")
+        if self.page_size is not None and self.page_size not in PAGE_SIZE_NAMES:
+            raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: unknown configured page size {self.page_size!r}")
         _validate_rect(self.actual, "actual")
         if (not isinstance(self.contributors, tuple)
                 or any(not isinstance(item, CanvasContributor) for item in self.contributors)
@@ -120,6 +124,7 @@ def canvas_viewport_warning(
     declared: DeclaredViewport | None,
     actual: Rect,
     contributors: Iterable[tuple[str, Rect]],
+    page_size: str | None = None,
 ) -> CanvasViewportWarning | None:
     """Return deterministic overflow evidence without changing completed geometry.
 
@@ -131,6 +136,8 @@ def canvas_viewport_warning(
         return None
     if not isinstance(declared, DeclaredViewport):
         raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: declared must be DeclaredViewport or None")
+    if page_size is not None and page_size not in PAGE_SIZE_NAMES:
+        raise ValueError(f"E_LAYOUT_VIEWPORT_FACT_INVALID: unknown configured page size {page_size!r}")
     if not isinstance(surface_id, str) or not surface_id:
         raise ValueError("E_LAYOUT_VIEWPORT_FACT_INVALID: surface_id must be a non-empty string")
 
@@ -159,6 +166,7 @@ def canvas_viewport_warning(
         surface_id=surface_id,
         declared=declared,
         actual=actual,
+        page_size=page_size,
         contributors=tuple(attributed[:5]),
         contributor_count=len(attributed),
     )

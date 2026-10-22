@@ -226,16 +226,16 @@ def test_default_burst_fit_keeps_circle_outline_and_svg_bytes(tmp_path):
 def test_absent_shape_preserves_characterized_scene_and_svg_bytes(tmp_path):
     rendered = _render_asof(tmp_path)
     scene = serialize_scene(rendered.scene)
-    # The Scene digest includes the builtin View provenance change from #1701;
-    # geometry and SVG bytes remain characterized.
-    assert len(scene) == 26369
+    # The approved axis-window rules omit the narrow January tier here; the
+    # Scene and SVG characterization therefore pins the current axis output.
+    assert len(scene) == 24890
     vocabulary = builtin_semantic_vocabulary()
     assert [resource for resource in rendered.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(scene).hexdigest() == "fd146cb2a58f60ce28dba4cf884235f5a0a51ab954ad0b35678e8b968f8819ad"
-    assert len(rendered.artifact.content) == 8173
-    assert sha256(rendered.artifact.content).hexdigest() == "f5031fb8939295b170a188ec7971b109dc5f8372f7011a21e40584d32451964a"
+    assert sha256(scene).hexdigest() == "51e5a7e7ec912fa169003cd6ab95108bffc1d93c7e6404727843c333e3de1918"
+    assert len(rendered.artifact.content) == 7555
+    assert sha256(rendered.artifact.content).hexdigest() == "64798ed47e12e7f2343eb06e9175b63d6f1187ad59dc34090b8ced038e7f3cf9"
 
 
 def test_absent_shape_and_explicit_rectangle_are_scene_and_svg_byte_identical(tmp_path):

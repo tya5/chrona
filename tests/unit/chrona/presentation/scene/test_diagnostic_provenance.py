@@ -140,6 +140,7 @@ def test_row_density_fit_warning_carries_project_subject_without_changing_geomet
     review_row = ReviewRowProjection("row-obj-1", "Object title", "", "obj-1", (item,))
     manifest = SimpleNamespace(decisions=(), fit_warnings=(), viewport=viewport)
     request = SimpleNamespace(theme_tokens=Tokens(), font_metrics=None, layout_manifest=manifest,
+                              page_size=None,
                               fixed_lane_preflight=None,
                               declared_viewport=None, auto_block_limit=None)
 

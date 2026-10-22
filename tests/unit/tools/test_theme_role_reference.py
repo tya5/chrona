@@ -52,3 +52,13 @@ def test_checked_in_reference_is_exactly_generated(tmp_path):
     stale = tmp_path / "theme-role-reference.md"
     stale.write_text("stale\n", encoding="utf-8")
     assert not check_reference(stale)
+
+
+def test_row_pitch_reference_names_the_minimum_and_completed_demand_owners():
+    page = render_reference()
+    assert "`timeline.row.minBlockSize` is a minimum, not a fixed row pitch" in page
+    assert "fontSize × lineHeight × wrapped line count" in page
+    assert "`timeline.row.paddingBlock`" in page
+    assert "`timeline.mark.blockSize`" in page
+    assert "selected role/occurrence geometry" in page
+    assert "fill distribution can enlarge it further" in page

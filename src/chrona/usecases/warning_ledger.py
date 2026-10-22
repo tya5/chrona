@@ -9,6 +9,7 @@ from typing import Any, Iterable, Mapping
 from chrona.usecases.diagnostic_messages import describe_warning, warning_message
 from chrona.core.diagnostics import Diagnostic
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning
 
 
 @dataclass(frozen=True)
@@ -61,7 +62,7 @@ def collect_render_warnings(
     forecast_warnings: Iterable[Diagnostic] = (),
     contrast_warnings: Iterable[Any] = (),
     surface_provenance: Iterable[DiagnosticProvenance] = (),
-    canvas_warning: Any | None = None,
+    canvas_warning: CanvasViewportWarning | None = None,
     auto_block_warning: Any | None = None,
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
@@ -139,6 +140,8 @@ def collect_render_warnings(
             declared={"inlineSize": _json_number(declared.inline_size),
                       "blockSize": _json_number(declared.block_size)
                       if declared.block_size is not None else None},
+            **({"pageSize": canvas_warning.page_size}
+               if canvas_warning.page_size is not None else {}),
             actual={"inlineStart": _json_number(actual.inline),
                     "blockStart": _json_number(actual.block),
                     "inlineSize": _json_number(actual.inline_size),

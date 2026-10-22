@@ -179,6 +179,7 @@ def schema_document(name: str) -> Mapping[str, Any]:
 # Frozen shared schema fragments available to the schema registry.
 SCHEMA_PARTS: tuple[str, ...] = (
     "common-v0.1.schema.yaml",
+    "common-v0.2.schema.yaml",
     "graphics-v0.1.schema.yaml",
     "presentation-resource-v0.1.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",

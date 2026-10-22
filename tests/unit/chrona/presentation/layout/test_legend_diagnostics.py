@@ -415,7 +415,7 @@ def test_completed_encoded_pair_warning_uses_typed_scale_and_final_visible_figur
     blue = _paint(fill="#0000FF")
     near_blue = _paint(fill="#0000FE")
     duplicate_facts = tuple(ScaleCollision("risk", "high", "medium", vision, 0.0)
-                            for vision in ("normal", "protanopia", "deuteranopia", "tritanopia"))
+                            for vision in ("normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"))
     encoded = SurfaceLegendEntry("scale:risk:high", "High", view_scale_id="risk",
         view_scale_domain_value="high",
         scale_collisions=duplicate_facts)
@@ -518,6 +518,7 @@ def test_completed_identical_ordinary_keys_with_distinct_meanings_warn_in_all_mo
         "W_LEGEND_COLOR_NOT_SEPARABLE:protanopia:0.0",
         "W_LEGEND_COLOR_NOT_SEPARABLE:deuteranopia:0.0",
         "W_LEGEND_COLOR_NOT_SEPARABLE:tritanopia:0.0",
+        "W_LEGEND_COLOR_NOT_SEPARABLE:grayscale:0.0",
     }
 
     text = tuple(SimpleNamespace(placement_id=entry.text_placement_id,

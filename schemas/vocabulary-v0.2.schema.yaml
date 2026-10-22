@@ -5,6 +5,9 @@ description: >-
   Versioned finite vocabularies shared by live schemas. Definitions are referenced
   by `urn:chrona:vocabulary-v0.2#/$defs/<name>` and frozen in the schema inventory.
 $defs:
+  snapshotComparisonFacet:
+    description: "A Snapshot-derived table fact independent of Actual observations or forecast estimation."
+    const: snapshotFinishDelta
   visualProfile:
     description: "Exact renderer-neutral visual capability profile."
     examples: ["chrona-output/visual/v0.7-pdf"]
@@ -15,3 +18,16 @@ $defs:
       - chrona-output/visual/v0.7-svg
       - chrona-output/visual/v0.7-png
       - chrona-output/visual/v0.7-pdf
+  pageSize:
+    description: "Named Draft viewport default: ISO 216 paper or US Letter/Legal, with orientation. Physical dimensions close to nearest integer CSS pixels at Draft ingress."
+    enum:
+      - a3-portrait
+      - a3-landscape
+      - a4-portrait
+      - a4-landscape
+      - a5-portrait
+      - a5-landscape
+      - letter-portrait
+      - letter-landscape
+      - legal-portrait
+      - legal-landscape
