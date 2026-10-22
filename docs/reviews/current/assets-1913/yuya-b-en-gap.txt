@@ -1,0 +1,18 @@
+Yuya B-en a1-note -> g1 leader start vs painted glyph outline (SVG: preset yuya, locale en-US,
+trial-17 plan/B-en-{project,actual,baseline}.yaml at cbc183f6b)
+before (f846f5524^): leader d=M843.685 515.183L843.685 586.25L1308 586...
+   leader start x=843.685 y=515.183; max fill x=841.34; outline stroke width=1.0 -> painted edge x=841.840
+   gap leader-start to fill edge = 2.345; to painted (stroke) edge = 1.845
+after  (main b1935990b): leader d=M843.685 515.183L843.685 586.25L1308 586...
+   leader start x=843.685 y=515.183; max fill x=841.34; outline stroke width=1.0 -> painted edge x=841.840
+   gap leader-start to fill edge = 2.345; to painted (stroke) edge = 1.845
+before.svg and after.svg are byte-identical (cmp)
+50d013e9dfbc5c671d874ae3815f8186401d37b2210953b50c3e4637e95bd74f  before.svg
+50d013e9dfbc5c671d874ae3815f8186401d37b2210953b50c3e4637e95bd74f  after.svg
+
+Why the fix does not reach this glyph (painted_cardinal_ports probe on planned:g1:g1, parts 7: six fill + one stroke 1.0):
+  {'below': (836.6848, 522.2164), 'above': (836.6848, 508.1498)}   <- no 'end'/'start' entry
+  The horizontal axis y=515.1831 falls in the 0.584-unit slit between the fill slices
+  y 513.141..514.891 (part3) and y 515.475..517.225 (part4); no flattened segment crosses it,
+  so "end"/"start" are omitted and the viewport tip (843.685, 515.183) is used as before.
+  egress candidate with painted=True: semantic_port == exposed_port == (843.6848, 515.1831).
