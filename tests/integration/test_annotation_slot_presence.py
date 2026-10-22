@@ -187,7 +187,7 @@ def test_terminal_list_without_declared_slot_fails_at_placement_source(tmp_path,
     assert raised.value.source_ref == expected_source
 
 
-def test_blocked_leader_candidates_retain_note_in_safe_terminal_list(tmp_path, monkeypatch):
+def test_blocked_card_candidates_retain_note_in_safe_terminal_list(tmp_path, monkeypatch):
     from chrona.presentation.layout import surface_annotations
 
     source = _project()
@@ -199,7 +199,9 @@ def test_blocked_leader_candidates_retain_note_in_safe_terminal_list(tmp_path, m
         connector="leader", search_kind="row-aligned"))
     body["annotations"][0]["candidates"].append(_terminal_list_candidate("final-list"))
 
-    monkeypatch.setattr(surface_annotations, "route_annotation_candidate", lambda *_args, **_kwargs: None)
+    # Routing alone cannot discard a mandatory rail leader. The terminal list
+    # is reached only when the full card body has no admitted placement.
+    monkeypatch.setattr(surface_annotations, "annotation_rail_candidates", lambda *_args, **_kwargs: ())
     rendered = _render(tmp_path, source, parts)
     primitives = rendered.surface.primitives
 
