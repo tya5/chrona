@@ -232,5 +232,3 @@ def test_unrelated_composition_error_propagates_unchanged(monkeypatch):
             lambda value, plan: (_ for _ in ()).throw(failure))
 
     assert caught.value is failure
-
-
