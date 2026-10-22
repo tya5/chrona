@@ -21,7 +21,7 @@ from chrona.presentation.model.preset_target import PresetVisualProfileFallback
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
     ArtifactPin,
-    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, IconEntry, IconPath, LayoutProfileContract,
+    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ColorSchemeContract, ContractError, SchemaContractError, IconCatalogContract, IconEntry, IconPath, LayoutProfileContract,
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
@@ -34,6 +34,7 @@ from chrona.presentation.model.authoring import AuthoringError, normalize_author
 from chrona.presentation.model.layout_inheritance import (
     LayoutInheritanceError, is_derived_layout, resolve_snapshot_layout,
 )
+from chrona.presentation.layout.paper_size import viewport_for_page_size
 from chrona.presentation.model.theme_inheritance import (
     ThemeInheritanceError, is_derived_theme, resolve_draft_theme, resolve_snapshot_theme,
 )
@@ -138,6 +139,15 @@ class RenderClosure:
                 or resource.contract.bindings != expected.bindings):
             raise ClosureError("E_RESOURCE_IDENTITY_MISMATCH", "/resources/semantic-vocabulary",
                                "the closure vocabulary differs from the host lookup authority")
+
+    @property
+    def color_scheme(self) -> ColorSchemeContract:
+        item = self.resource("color-scheme")
+        if item is None:
+            raise ClosureError("E_CLOSURE_REQUIRED", detail="the closure has no color-scheme resource")
+        if not isinstance(item.contract, ColorSchemeContract):
+            raise self._kind_error(item, ColorSchemeContract)
+        return item.contract
 
     @property
     def project(self) -> ProjectContract:
@@ -295,7 +305,7 @@ def resolve_draft_render(
     font_metrics_path: Path | None = None,
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
-    viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
+    viewport: tuple[int, int | None] | None = None,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
     relations: Literal["none", "semantic"] | None = None,
     previous_scene_path: Path | None = None,
@@ -314,6 +324,7 @@ def resolve_draft_render(
     preset_members = (_acquire_draft_preset_members(
         preset, preset_path, preset_root,
         include_catalogs=not bool(icon_catalog_paths), include_compatible_schemes=False,
+        snapshot_reader=package_reader,
     )
                       if preset is not None and preset_path is not None else None)
     preset_paths = preset_members.paths if preset_members is not None else {}
@@ -339,7 +350,7 @@ def resolve_draft_render(
         if path is None:
             continue
         acquired = preset_members.source(kind) if preset_members is not None and path == preset_paths.get(kind) else None
-        sources.append(acquired or _load_draft_source(kind, path))
+        sources.append(acquired or _load_draft_source(kind, path, snapshot_reader=package_reader))
     selected_style_path = style_path or preset_paths.get("style")
     if selected_style_path is not None:
         acquired = preset_members.source("style") if preset_members is not None and selected_style_path == preset_paths.get("style") else None
@@ -448,6 +459,7 @@ def _preset_visual_profile(preset: object, requested: str | None, target_kind: s
 def _acquire_draft_preset_members(
     preset: Any, preset_path: Path, preset_root: Path | None = None, *,
     include_catalogs: bool = True, include_compatible_schemes: bool = True,
+    snapshot_reader: SnapshotReader | None = None,
 ) -> DraftPresetMembers:
     """Acquire, resolve and validate one complete preset closure for either Draft ingress."""
     if not isinstance(preset.contract, PresentationPresetContract):
@@ -464,7 +476,7 @@ def _acquire_draft_preset_members(
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"preset {preset.id!r} declares no valid {name!r} resource")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
-        sources.append(_load_draft_source(kind, path))
+        sources.append(_load_draft_source(kind, path, snapshot_reader=snapshot_reader))
         paths[kind] = path
         declarations[kind] = name, declaration, path
 
@@ -514,7 +526,7 @@ def _acquire_draft_preset_members(
 
 
 def resolve_guided_draft_render(
-    *, workspace_path: Path, viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
+    *, workspace_path: Path, viewport: tuple[int, int | None] | None = None,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
     forecast: bool = False,
     package_reader: SnapshotReader | None = None,
@@ -529,7 +541,8 @@ def resolve_guided_draft_render(
     if not isinstance(preset_resource.contract, PresentationPresetContract):
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     visual_profile, profile_fallback = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
-    preset_members = _acquire_draft_preset_members(preset_resource, preset_path)
+    preset_members = _acquire_draft_preset_members(preset_resource, preset_path,
+                                                  snapshot_reader=package_reader)
     resources_by_path = preset_members.documents_by_path
     try:
         normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
@@ -626,7 +639,7 @@ def _normalized_draft_source(kind: str, document: Mapping[str, Any]) -> Presenta
 
 
 def _draft_render_from_resources(
-    resources: list[ClosureResource], *, viewport: tuple[int, int | None], locale: str, target_kind: str,
+    resources: list[ClosureResource], *, viewport: tuple[int, int | None] | None, locale: str, target_kind: str,
     visual_profile: str = "chrona-output/visual/v0.5-baseline",
     typesetter: TypesetterIdentity | None = None,
     provenance: GuidedAuthoringProvenance | None = None,
@@ -641,6 +654,14 @@ def _draft_render_from_resources(
     profile_package_edges: tuple[ProfilePackageSourceEdge, ...] = (),
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
+
+    if viewport is None:
+        layout_resource = by_kind["layout-profile"]
+        if not isinstance(layout_resource.contract, LayoutProfileContract):
+            raise _closure_kind_error("layout-profile", "LayoutProfileContract", layout_resource.contract)
+        page_size = layout_resource.contract.layout_input.get("pageSize")
+        viewport = (viewport_for_page_size(page_size) if page_size is not None
+                    else DEFAULT_DRAFT_VIEWPORT)
 
     try:
         theme_value = resolve_theme(
@@ -842,17 +863,26 @@ def _draft_relation_override(source: PresentationResourceSource,
     return PresentationResourceSource(identity, value)
 
 
-def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
+def _load_draft_source(kind: str, path: Path, *,
+                       snapshot_reader: SnapshotReader | None = None) -> PresentationResourceSource:
     """Read one declared Draft file without allowing it into typed closure yet."""
     payload = path.read_bytes()
     try:
         source = safe_load(payload)
         derived = kind == "theme" and is_derived_theme(source)
         value = resolve_draft_theme(path, payload=payload) if derived else source
+        if kind == "layout-profile" and is_derived_layout(value):
+            if snapshot_reader is None:
+                raise ClosureError("E_CLOSURE_REQUIRED", "/extends",
+                                   "a derived Draft Layout requires a snapshot reader for its pinned base")
+            value = resolve_snapshot_layout(value, snapshot_reader)
+            derived = True
         referenced = kind == "theme" and isinstance(value, dict) and uses_references(value)
         if referenced:
             value = resolve_references(value)
     except ThemeInheritanceError as error:
+        raise ClosureError(error.code, detail=error.detail or None) from error
+    except LayoutInheritanceError as error:
         raise ClosureError(error.code, detail=error.detail or None) from error
     except ThemeReferenceError as error:
         raise ClosureError(error.code, error.pointer, error.detail) from error

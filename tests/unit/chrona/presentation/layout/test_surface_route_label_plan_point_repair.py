@@ -41,7 +41,11 @@ def test_route_repair_for_span_to_point_preserves_the_at_arrival_and_optional_na
               "d": {"start": date(2026, 2, 12), "end": date(2026, 2, 18)},
               "e": {"start": date(2026, 2, 24), "end": date(2026, 3, 10)}}
     view = _view("automatic")
-    view = replace(view, comparison=replace(view.comparison, baseline_marks=None))
+    # This geometry-sensitive witness needs the former derived-window span;
+    # zero is now an exact authored margin, so request the three days directly.
+    view = replace(view,
+        window=replace(view.window, margin_days=3),
+        comparison=replace(view.comparison, baseline_marks=None))
     projection = build_review_projection(project, placed, view, None)
     measured = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
         {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),

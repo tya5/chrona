@@ -83,6 +83,7 @@ class PreparedSurfaceRenderPlan:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...]
     viewport: tuple[float, float]
     declared_viewport: DeclaredViewport
+    page_size: str | None = None
 
 
 class SurfacePlanFontError(Exception):
@@ -257,6 +258,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,
             declared_viewport=declared_viewport,
+            page_size=resolved_layout.profile.get("pageSize"),
             auto_block_limit=resolved_layout.distances.get("/reviewSurface/maxBlockSize"),
             progress=value.progress,
             previous_route_hints=value.previous_route_hints,
@@ -310,7 +312,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         )
     return PreparedSurfaceRenderPlan(manifest, resolved_layout, measured, surface_content,
         surface_preparation, capacity_short_sources,
-        (float(viewport["inlineSize"]), float(viewport["blockSize"])), declared_viewport)
+        (float(viewport["inlineSize"]), float(viewport["blockSize"])), declared_viewport,
+        resolved_layout.profile.get("pageSize"))
 
 
 def admit_detail_content(content: SurfaceContentInput, *, detail: ReviewDetailInput | None,

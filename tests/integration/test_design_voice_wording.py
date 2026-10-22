@@ -28,8 +28,10 @@ def test_the_folded_other_legend_entry_is_a_table_key(tmp_path, monkeypatch, cap
     owners = ["Ada", "Benoit", "Chika", "Diego", "Eleni", "Farah", "Gabe", "Hana"]
     project = folded._plan(tmp_path, monkeypatch, capsys, owners)
     scene = tmp_path / "scene.json"
+    scheme = folded._mission_light_scheme_without_print_claim(tmp_path)
     result = folded._run(monkeypatch, capsys, "render", "--preset", "mission-light", str(project),
-                         "--layout", str(folded._mission_light_layout_with_legend(tmp_path)), "--locale", locale,
+                         "--layout", str(folded._mission_light_layout_with_legend(tmp_path)),
+                         "--scheme", str(scheme), "--locale", locale,
                          "-o", str(tmp_path / "out.svg"), "--emit-scene", str(scene))
     assert result["status"] == "ok"
     texts = _scene_texts(scene)

@@ -295,6 +295,7 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
         placed = _refresh_canvas_paint(placed, request.theme_tokens)
     warning = canvas_viewport_warning(
         surface_id="dependency-network", declared=request.declared_viewport, actual=placed.canvas_bounds,
+        page_size=request.page_size,
         contributors=chain(
             ((slot.slot_id, slot.bounds) for slot in slots.values()),
             ((item.slot_id, item.bounds) for item in (*placed.nodes, *placed.text)),

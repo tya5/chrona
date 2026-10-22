@@ -8,6 +8,9 @@ required: [version, id, flowDirection, dependencyNetworkFlowDirection, requiredT
 properties:
   version: {description: "This Layout Profile contract version.", const: "chrona/layout-profile/v0.10"}
   id: {description: "Stable Layout Profile identifier.", $ref: "#/$defs/id"}
+  pageSize:
+    description: "Named Draft viewport default in physical page dimensions. This does not paginate or resize content; immutable Render Context and explicit Draft viewports take precedence."
+    $ref: "urn:chrona:vocabulary-v0.2#/$defs/pageSize"
   flowDirection: {description: "Review-surface coordinate flow; Chrona presently supports horizontal only.", const: horizontal}
   dependencyNetworkFlowDirection: {description: "Graph-only node-axis direction; this does not select text writing.", enum: [horizontal, vertical-rl, vertical-lr]}
   requiredThemeTokens:
