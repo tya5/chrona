@@ -106,6 +106,28 @@ def progress_fill_bounds(host: Rect, fraction: float,
                 host.block_size - 2 * block_inset)
 
 
+def actual_progress_fraction(fraction: float, actual: Mapping[str, Any] | None, host: MarkPlacement,
+                             planned: MarkPlacement | None) -> float | None:
+    """The fraction of the Actual host an `actual` progress fill covers (#1869, Spec 61 section 1).
+
+    Progress is the share of the planned span, drawn from the observed start: the fill is ``progress`` times the
+    planned mark's extent, clipped to the Actual mark. An Actual with a finish is complete by observation and draws
+    none. With no span to compare (a point Actual, an unmatched Actual, a planned mark with no extent) the fraction
+    of the host itself is kept.
+    """
+    actual = actual or {}
+    if isinstance(actual.get("finish"), date):
+        return None
+    if planned is None or actual.get("at") is not None:
+        return fraction
+    host_size, planned_size = float(host.bounds.inline_size), float(planned.bounds.inline_size)
+    if planned_size <= 0:
+        return fraction
+    if host_size <= 0:
+        return None
+    return min(1.0, fraction * planned_size / host_size)
+
+
 def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement,
                             fraction: float, inset_ratio: Decimal,
                             radius_ratio: Decimal) -> ShapePlacement | None:
@@ -520,6 +542,13 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 if host is None or fraction == 0:
                     continue
                 original_host = original_mark_by_id.get(host.placement_id, host)
+                if progress_source == "actual":
+                    planned_mark = mark_by_id.get(f"planned:{instance_id}")
+                    fraction = actual_progress_fraction(
+                        float(fraction), item.actual, original_host,
+                        original_mark_by_id.get(planned_mark.placement_id, planned_mark) if planned_mark else None)
+                    if not fraction:
+                        continue
                 shape = complete_progress_shape(host, original_host=original_host,
                     fraction=float(fraction), inset_ratio=progress_inset, radius_ratio=progress_radius)
                 if shape is not None:
