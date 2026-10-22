@@ -399,12 +399,12 @@ def test_as_of_fallback_continues_after_body_free_box_has_no_route(monkeypatch) 
                         lambda *args, **kwargs: iter((first, later)))
     original_egresses = search.connector_egress_candidates
 
-    def egresses(anchor, endpoint, target, siblings):
+    def egresses(anchor, endpoint, target, siblings, **kwargs):
         # The first box is body-free but has no legal source egress; the next
         # coarse box has a complete strict route in the same bounded search.
         if target == (first.x + first.width / 2, first.y + first.height / 2):
             return ()
-        return original_egresses(anchor, endpoint, target, siblings)
+        return original_egresses(anchor, endpoint, target, siblings, **kwargs)
 
     monkeypatch.setattr(search, "connector_egress_candidates", egresses)
     result = nearest_free_routed_tail_box(
