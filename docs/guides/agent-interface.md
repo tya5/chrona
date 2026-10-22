@@ -102,6 +102,18 @@ use the same validation, revision and replay rules. The Store is named by a conf
 default `.chrona/store.yaml`), and every Store root in that file must lie inside the workspace. The result carries the
 same Automation Result the command line writes to `--result`.
 
+A workspace with no Store needs none made by hand. `create_store` writes `.chrona/store.yaml` (one local Store, root
+`.chrona/store`, `integrity: required`) and `publish_resource {kind, path | document}` seeds it with an immutable resource
+and returns its `reference`: that object is the `target` of a `captureSnapshot`, `applyActualIntakeBatch` or
+`revertActualCommand` command (`baseRevision` is `reference.revision.token`), and the `project` and `batch` of an intake
+payload. `kind` is `project` (a file that validates; changed bytes are a new revision, the same bytes a replay),
+`actual-set` or `actual-intake-batch`; give the last two inline as `document`, since no other tool writes them. An Actual Set
+is published once: it then changes only by command, and each accepted command's `automationResult.resultTarget` is the next
+reference. A different document under an Actual Set's id is `E_STORE_RESOURCE_EXISTS`; a second `create_store` with another
+identity is `E_STORE_CONFIG_EXISTS`. The whole loop is: `create_store`, `publish_resource` (project, actual-set, batch),
+`apply_command` with `captureSnapshot` (the baseline), `apply_command` with `applyActualIntakeBatch`, and `apply_command`
+with `revertActualCommand {commandId}` to undo the intake.
+
 ### Reading pinned evidence from a Store
 
 Two read-only tools reach a Store, the same one `apply_command` writes, and work with or without `--allow-write`:
@@ -143,6 +155,8 @@ The following table is checked directly against the server registry.
 | `create_project` | Create a Project file | yes |
 | `apply_project_command` | Apply a Project command | yes |
 | `save_baseline` | Save a baseline copy of a Project | yes |
+| `create_store` | Create a workspace Store | yes |
+| `publish_resource` | Publish a resource into the Store | yes |
 <!-- /chrona:agent-tool-table -->
 
 Every result carries a `status`: `ok`, `rejected` (the plan is refused: read each diagnostic's `code` and

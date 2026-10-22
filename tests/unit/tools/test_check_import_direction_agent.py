@@ -108,7 +108,7 @@ def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_
     assert {module for module in seen if not module.startswith("chrona.usecases.")} == {
         "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources", "chrona.operational.store_commands",
         "chrona.operational.store_reads", "chrona.operational.authoring_commands",
-        "chrona.operational.workspace_initialization"}
+        "chrona.operational.workspace_initialization", "chrona.operational.store_provisioning"}
 
 
 OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n",
