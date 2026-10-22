@@ -44,13 +44,16 @@ def test_completed_search_domains_reach_real_scene_and_svg(
     }
     compose, resolve = surface_routes.compose_surface_routes, surface_routes.search_relation_resolution
     resolutions = []
+    route_batches = []
 
     def blocked(context):
         left, top, inline, block = context.timeline_bounds
         if not context.obstacles.has("synthetic:blocker"):
             context.obstacles.add(SurfaceObstacle("synthetic:blocker", "mark", "timeline",
                 ObstacleRect(left - 1000, top - 1000, left + inline + 1000, top + block + 1000)))
-        return compose(context)
+        batch = compose(context)
+        route_batches.append(batch)
+        return batch
 
     def observed(*args, **kwargs):
         result = resolve(*args, **kwargs)
@@ -87,6 +90,13 @@ def test_completed_search_domains_reach_real_scene_and_svg(
         assert len(facts) == 1
         assert facts[0]["stage"] == stage
         assert isinstance(facts[0]["critical"], bool)
+        if stage == "stub":
+            fragments = {item.fragment_endpoint: item.relation_id for item in route_batches[-1].relations
+                         if item.fragment_endpoint is not None}
+            assert set(fragments) == {"source", "target"}
+            assert facts[0]["fragmentIds"] == [fragments["source"], fragments["target"]]
+        else:
+            assert "fragmentIds" not in facts[0]
         assert summaries == [{"surfaceId": facts[0]["surfaceId"], "count": 1, "stages": {stage: 1}}]
     else:
         assert facts == summaries == []

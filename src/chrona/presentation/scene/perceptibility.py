@@ -91,7 +91,8 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         fan_in_members, fan_in_findings = _relation_fan_in_groups(scene_path, surface.get("primitives"))
         findings.extend(fan_in_findings)
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
-        findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_duplicate_findings(
+            scene_path, surface_id, surface.get("primitives"), diagnostics))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_mark_findings(scene_path, surface, diagnostics))
         findings.extend(_relation_segment_findings(scene_path, surface.get("primitives")))
@@ -112,7 +113,8 @@ def _suppressed_primitive_findings(scene_path: str, primitives: Sequence[_Primit
             for item in primitives if item.primitive_id in suppressed_ids]
 
 
-def _relation_duplicate_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
+def _relation_duplicate_findings(scene_path: str, surface_id: str, raw_primitives: Any,
+                                 diagnostics: list[str]) -> list[ScenePerceptibilityFinding]:
     """A relation is drawn once: two paths for one relation id are a duplication, never silent (#1031).
 
     Only relation placements (`relation:` ids) count; the legend's dependency swatch shares the source kind.
@@ -122,9 +124,73 @@ def _relation_duplicate_findings(scene_path: str, raw_primitives: Any) -> list[S
         if (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
                 and isinstance(raw.get("sourceRef"), str) and str(raw.get("id")).startswith("relation:")):
             paths.setdefault(raw["sourceRef"], []).append(raw["id"])
-    return [_finding("E_SCENE_RELATION_PATH_DUPLICATE", "error", scene_path, tuple(ids), None,
-                     (("relation", relation), ("paths", len(ids))))
-            for relation, ids in sorted(paths.items()) if len(ids) > 1]
+    stub_pairs = _valid_stub_fragment_pairs(surface_id, diagnostics)
+    by_id = {raw["id"]: raw for raw in raw_primitives if isinstance(raw, Mapping)
+             and isinstance(raw.get("id"), str)} if isinstance(raw_primitives, list) else {}
+    findings = []
+    for relation, ids in sorted(paths.items()):
+        if len(ids) <= 1:
+            continue
+        pair = tuple(sorted(ids))
+        ordered_pair = stub_pairs.get(pair)
+        source, target = ((by_id.get(ordered_pair[0]), by_id.get(ordered_pair[1]))
+                          if ordered_pair is not None else (None, None))
+        paired_stub = (len(ids) == 2 and len(set(ids)) == 2 and pair in stub_pairs
+            and isinstance(relation, str) and bool(relation)
+            and isinstance(source, Mapping) and isinstance(target, Mapping)
+            and source.get("sourceRef") == target.get("sourceRef") == relation
+            and "fromInstanceId" not in source and "toInstanceId" not in source
+            and "fromInstanceId" not in target and "toInstanceId" not in target)
+        if not paired_stub:
+            findings.append(_finding("E_SCENE_RELATION_PATH_DUPLICATE", "error", scene_path, tuple(ids), None,
+                                     (("relation", relation), ("paths", len(ids)))))
+    return findings
+
+
+def _valid_stub_fragment_pairs(surface_id: str, diagnostics: list[str]
+                               ) -> dict[tuple[str, str], tuple[str, str]]:
+    """Read only unambiguous explicit STUB receipts; never infer fragment IDs."""
+    prefix = "I_LAYOUT_RELATION_RESOLUTION:"
+    candidates: list[tuple[Mapping[str, Any], tuple[str, str] | None, bool]] = []
+    for diagnostic in diagnostics:
+        if not diagnostic.startswith(prefix):
+            continue
+        try:
+            payload = json.loads(diagnostic[len(prefix):])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, Mapping) or payload.get("surfaceId") != surface_id:
+            continue
+        raw_ids = payload.get("fragmentIds")
+        pair = (tuple(raw_ids) if isinstance(raw_ids, list) and len(raw_ids) == 2
+                and all(isinstance(item, str) and item for item in raw_ids)
+                and raw_ids[0] != raw_ids[1] else None)
+        exact = (payload.get("stage") == "stub"
+            and set(payload) == {"surfaceId", "relationId", "stage", "critical", "fragmentIds"}
+            and isinstance(payload.get("relationId"), str) and bool(payload["relationId"])
+            and isinstance(payload.get("critical"), bool) and pair is not None)
+        candidates.append((payload, pair, exact))
+
+    pair_claims: dict[tuple[str, str], int] = {}
+    relation_claims: dict[str, int] = {}
+    fragment_claims: dict[str, int] = {}
+    for payload, pair, _ in candidates:
+        if pair is not None:
+            key = tuple(sorted(pair))
+            pair_claims[key] = pair_claims.get(key, 0) + 1
+        # Even a malformed pair cannot ambiguously claim a valid pair's IDs.
+        raw_ids = payload.get("fragmentIds")
+        for fragment_id in raw_ids if isinstance(raw_ids, list) else ():
+            if isinstance(fragment_id, str) and fragment_id:
+                fragment_claims[fragment_id] = fragment_claims.get(fragment_id, 0) + 1
+        relation_id = payload.get("relationId")
+        if isinstance(relation_id, str) and relation_id:
+            relation_claims[relation_id] = relation_claims.get(relation_id, 0) + 1
+
+    return {tuple(sorted(pair)): pair for payload, pair, exact in candidates
+        if exact and pair is not None and pair_claims.get(tuple(sorted(pair))) == 1
+        and relation_claims.get(payload["relationId"]) == 1
+        and all(fragment_claims.get(item) == 1 for item in pair)}
 
 
 def _relation_reversal_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:

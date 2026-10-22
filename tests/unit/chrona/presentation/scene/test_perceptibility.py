@@ -21,8 +21,9 @@ def _primitive(identifier, kind="Text", *, bounds=None, slot="slot", order=0, ho
     return value
 
 
-def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF", version="chrona/scene/v0.6"):
-    return {"version": version, "kind": "scene", "surfaces": [{"id": "review", "slots": [
+def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF", version="chrona/scene/v0.6",
+           diagnostics=()):
+    return {"version": version, "kind": "scene", "diagnostics": list(diagnostics), "surfaces": [{"id": "review", "slots": [
         {"id": "slot", "bounds": _bounds(), "overflow": overflow},
     ], "canvasPaint": {"fill": canvas_paint, "opacity": 1}, "primitives": list(primitives)}]}
 
@@ -341,6 +342,87 @@ def test_two_paths_for_one_relation_are_an_error_and_one_path_each_is_not_1031()
     finding = next(item for item in findings if item.code == "E_SCENE_RELATION_PATH_DUPLICATE")
     assert (finding.severity, finding.primitive_ids) == ("error", ("relation:a:x:y", "relation:a:x:snapshot:y"))
     assert dict(finding.measured_facts) == {"relation": "a", "paths": 2}
+
+
+def _stub_pair_paths(source_ref="logical-relation"):
+    source = _relation_path("relation:fragment-A", source_ref)
+    source.update(points=[[0, 0], [5, 0]], markerStart={}, markerEnd=None)
+    target = _relation_path("relation:fragment-B", source_ref)
+    target.update(points=[[10, 0], [15, 0]], markerStart=None, markerEnd={})
+    return source, target
+
+
+def _stub_receipt(*, surface="review", occurrence="relation:occurrence",
+                  fragment_ids=("relation:fragment-A", "relation:fragment-B"),
+                  stage="stub", critical=False):
+    return "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps({
+        "surfaceId": surface, "relationId": occurrence, "stage": stage,
+        "critical": critical, "fragmentIds": list(fragment_ids)}, separators=(",", ":"))
+
+
+def test_only_explicit_valid_stub_fragment_pair_is_not_a_duplicate():
+    paths = _stub_pair_paths()
+    findings = evaluate_scene_perceptibility(_scene(*paths,
+        diagnostics=(_stub_receipt(),)))
+    assert not any(item.code == "E_SCENE_RELATION_PATH_DUPLICATE" for item in findings)
+
+
+def test_explicit_stub_pair_does_not_depend_on_painted_terminals():
+    source, target = _stub_pair_paths()
+    source.pop("markerStart")
+    source.pop("markerEnd")
+    target.pop("markerStart")
+    target.pop("markerEnd")
+    findings = evaluate_scene_perceptibility(_scene(source, target, diagnostics=(_stub_receipt(),)))
+    assert not any(item.code == "E_SCENE_RELATION_PATH_DUPLICATE" for item in findings)
+
+
+@pytest.mark.parametrize("invalid", [
+    "missing", "malformed", "duplicate", "wrong-surface", "wrong-stage", "mismatched-ids",
+    "third-path", "graph-reference", "explicit-null-refs", "wrong-stage-conflict", "overlapping-pair",
+    "malformed-overlapping-pair",
+])
+def test_invalid_stub_evidence_never_suppresses_relation_duplicate(invalid):
+    source, target = _stub_pair_paths()
+    receipt = _stub_receipt()
+    extra_paths = ()
+    if invalid == "missing":
+        receipts = ()
+    elif invalid == "malformed":
+        payload = json.loads(receipt.split(":", 1)[1])
+        payload["extra"] = True
+        receipts = ("I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload),)
+    elif invalid == "duplicate":
+        receipts = (receipt, receipt)
+    elif invalid == "wrong-surface":
+        receipts = (_stub_receipt(surface="other"),)
+    elif invalid == "wrong-stage":
+        receipts = (_stub_receipt(stage="marks"),)
+    elif invalid == "mismatched-ids":
+        receipts = (_stub_receipt(fragment_ids=("not-source", "not-target")),)
+    elif invalid == "third-path":
+        extra_paths = (_relation_path("relation:occurrence:extra", "logical-relation"),)
+        receipts = (receipt,)
+    elif invalid == "graph-reference":
+        source["fromInstanceId"] = "from-node"
+        source["toInstanceId"] = "to-node"
+        receipts = (receipt,)
+    elif invalid == "explicit-null-refs":
+        source["fromInstanceId"] = None
+        source["toInstanceId"] = None
+        receipts = (receipt,)
+    elif invalid == "wrong-stage-conflict":
+        receipts = (receipt, _stub_receipt(stage="marks"))
+    elif invalid == "overlapping-pair":
+        receipts = (receipt, _stub_receipt(fragment_ids=("relation:fragment-A", "relation:fragment-C")))
+    elif invalid == "malformed-overlapping-pair":
+        receipts = (receipt, _stub_receipt(occurrence="another-occurrence", fragment_ids=(
+            "relation:fragment-A", "relation:fragment-B", "relation:fragment-C")))
+    else:
+        raise AssertionError(invalid)
+    findings = evaluate_scene_perceptibility(_scene(source, target, *extra_paths, diagnostics=receipts))
+    finding, = [item for item in findings if item.code == "E_SCENE_RELATION_PATH_DUPLICATE"]
+    assert finding.severity == "error"
 
 
 def test_the_legend_dependency_swatch_is_not_a_relation_path_1031():

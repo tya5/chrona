@@ -337,18 +337,24 @@ class RelationResolutionStage(str, Enum):
 
 @dataclass(frozen=True)
 class RelationResolutionInfo:
-    """One completed instance's recovery, never a discarded search-trial fact."""
+    """One completed instance's recovery; STUB carries its actual ordered Scene path IDs."""
 
     surface_id: str
     relation_id: str
     stage: RelationResolutionStage
     critical: bool
+    fragment_ids: tuple[str, str] | None = None
 
     def __post_init__(self) -> None:
         if (any(not isinstance(value, str) or not value for value in (self.surface_id, self.relation_id))
                 or not isinstance(self.critical, bool)
                 or not isinstance(self.stage, RelationResolutionStage)
-                or self.stage is RelationResolutionStage.NORMAL):
+                or self.stage is RelationResolutionStage.NORMAL
+                or (self.stage is RelationResolutionStage.STUB
+                    and (not isinstance(self.fragment_ids, tuple) or len(self.fragment_ids) != 2
+                         or any(not isinstance(item, str) or not item for item in self.fragment_ids)
+                         or self.fragment_ids[0] == self.fragment_ids[1]))
+                or (self.stage is not RelationResolutionStage.STUB and self.fragment_ids is not None)):
             raise _diagnostic_error("relation resolution requires an instance and non-normal typed stage")
 
     @property
@@ -356,8 +362,11 @@ class RelationResolutionInfo:
         return "I_LAYOUT_RELATION_RESOLUTION"
 
     def payload(self) -> dict[str, object]:
-        return {"surfaceId": self.surface_id, "relationId": self.relation_id,
-                "stage": self.stage.value, "critical": self.critical}
+        payload: dict[str, object] = {"surfaceId": self.surface_id, "relationId": self.relation_id,
+                                      "stage": self.stage.value, "critical": self.critical}
+        if self.fragment_ids is not None:
+            payload["fragmentIds"] = list(self.fragment_ids)
+        return payload
 
     def scene_diagnostic(self) -> str:
         return self.code + ":" + json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))

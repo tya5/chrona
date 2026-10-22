@@ -59,8 +59,15 @@ def resolution_counts(scene):
             if stage is RelationResolutionStage.NORMAL or relation_id in seen:
                 raise ValueError('invalid or duplicate completed recovery receipt')
             seen.add(relation_id)
-            paths = ({relation_id + ':stub-source', relation_id + ':stub-target'}
-                     if stage is RelationResolutionStage.STUB else {relation_id})
+            if stage is RelationResolutionStage.STUB:
+                fragment_ids = fact.get('fragmentIds')
+                if (not isinstance(fragment_ids, list) or len(fragment_ids) != 2
+                        or any(not isinstance(item, str) or not item for item in fragment_ids)
+                        or len(set(fragment_ids)) != 2):
+                    raise ValueError('stub receipt has no explicit fragment identity')
+                paths = set(fragment_ids)
+            else:
+                paths = {relation_id}
             if not paths <= identifiers:
                 raise ValueError('recovery receipt has no complete projected relation')
             covered.update(paths)

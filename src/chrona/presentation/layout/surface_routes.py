@@ -1271,7 +1271,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     _register_route_paint(obstacles, fragment.relation_id, fragment.points,
                         dependency_stroke, route_owner_id=scene_id)
                 resolution_infos.append(RelationResolutionInfo("table-timeline", scene_id,
-                    RelationResolutionStage.STUB, relation.critical))
+                    RelationResolutionStage.STUB, relation.critical,
+                    tuple(fragment.relation_id for fragment in fragments)))
                 continue
             fallback = selected_pair is None
             if (outcome is not None and not outcome.used_back_route
