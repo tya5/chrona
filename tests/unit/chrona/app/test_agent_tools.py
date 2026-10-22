@@ -108,12 +108,12 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 # --- the registry --------------------------------------------------------------------------------------------
 
 def test_the_tool_set_lists_read_only_tools_and_gated_writers_in_order():
-    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command", "apply_authoring_command", "create_workspace", "validate_workspace", "workspace_revision", "render_workspace", "create_project", "apply_project_command"]
+    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command", "apply_authoring_command", "create_workspace", "validate_workspace", "workspace_revision", "render_workspace", "create_project", "apply_project_command", "save_baseline"]
     document = registry_document()
     assert document["toolSet"] == "chrona/agent-tools/v0.9"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
-        writes = tool["name"] in {"apply_command", "apply_authoring_command", "create_workspace", "create_project", "apply_project_command"}
+        writes = tool["name"] in {"apply_command", "apply_authoring_command", "create_workspace", "create_project", "apply_project_command", "save_baseline"}
         assert tool["annotations"] == {"readOnlyHint": not writes, "destructiveHint": writes, "idempotentHint": True,
                                        "openWorldHint": False}
         assert tool["description"] and tool["title"]
@@ -154,6 +154,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
         "validate_workspace": {"workspace"}, "workspace_revision": {"workspace"},
         "render_workspace": {"workspace", "viewport", "locale", "format", "inline"},
         "create_project": {"file", "project"}, "apply_project_command": {"project", "command"},
+        "save_baseline": {"project", "name"},
         "render_review": {"contextReference", "storeConfig", "inline"},
         "compare_baseline": {"baselineReference", "candidateReference", "storeConfig"},
         "render_draft": {"project", "actual", "preset", "view", "style", "theme", "scheme", "layout", "viewport", "locale",

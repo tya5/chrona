@@ -142,6 +142,7 @@ The following table is checked directly against the server registry.
 | `render_workspace` | Render a guided workspace | no |
 | `create_project` | Create a Project file | yes |
 | `apply_project_command` | Apply a Project command | yes |
+| `save_baseline` | Save a baseline copy of a Project | yes |
 <!-- /chrona:agent-tool-table -->
 
 Every result carries a `status`: `ok`, `rejected` (the plan is refused: read each diagnostic's `code` and
@@ -250,13 +251,18 @@ exactly what the edit changed, including the position of a removed key; for a fi
 the file the inverse is refused as stale (`E_AUTHORING_BASE_REVISION`): read `validate_project` and make the opposite
 edit yourself. The inverse's own result carries the inverse of the inverse, which redoes the edit.
 
+To compare with the plan as it was, call `save_baseline {project, name}` before editing. It copies the file unchanged to
+`baselines/<name>.yaml` next to the Project and returns that path and its `contentIdentity`; an existing name with other
+content is refused (`E_BASELINE_FILE_EXISTS`), the same content again is a replay. After the edits, `render_draft` with
+`snapshot` set to that path draws the baseline's ghosts and deltas. This is the file route; the Store route is separate.
+
 ### Limits
 
 - Read paths name existing files inside the server workspace: no `..`, absolute
   paths, escaping symlinks or inputs over2 MiB. Only `create_workspace` accepts a
   new directory, under an existing real parent; it never overwrites a destination.
 - The writing tools (`apply_command`, `apply_authoring_command`, `create_workspace`, `create_project`,
-  `apply_project_command`) require `--allow-write`. Initialization copies a local
+  `apply_project_command`, `save_baseline`) require `--allow-write`. Initialization copies a local
   bundle; authoring edits use durable CAS/replay; Store commands support Actual
   intake, snapshot capture, `revertActualCommand` and `redoActualCommand` through
   the same locked transaction as the CLI. No tool writes a rendered picture.

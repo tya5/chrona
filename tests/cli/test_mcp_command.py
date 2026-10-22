@@ -40,7 +40,7 @@ def test_list_tools_prints_the_registry_and_needs_no_sdk(monkeypatch, capsys):
     assert [tool["name"] for tool in json.loads(out)["tools"]] == [
         "validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline",
         "check_command", "apply_command", "apply_authoring_command", "create_workspace",
-        "validate_workspace", "workspace_revision", "render_workspace", "create_project", "apply_project_command"]
+        "validate_workspace", "workspace_revision", "render_workspace", "create_project", "apply_project_command", "save_baseline"]
 
 
 def test_list_tools_validates_an_explicit_workspace(monkeypatch, capsys, tmp_path):
