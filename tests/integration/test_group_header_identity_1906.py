@@ -74,4 +74,3 @@ def test_folded_only_group_fallback_keeps_entity_identity_in_svg(tmp_path):
     assert folded_mark.bounds[0] >= table.bounds[0] + table.bounds[2]
     assert not any(item.scene_id.startswith(f"group-tag:{group_id}:") for item in rendered.surface.primitives)
     _assert_full_header_in_scene_and_svg(rendered, group_id, label)
-

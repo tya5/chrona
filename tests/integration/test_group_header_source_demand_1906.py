@@ -160,4 +160,3 @@ def test_shared_group_header_owner_floor_grows_root_before_retry(tmp_path, monke
     assert warning.failure_kind == "group-header-unbreakable-inline"
     assert warning.behaviour == "grow-owner-inline"
     assert warning.required_inline == observed[1]
-

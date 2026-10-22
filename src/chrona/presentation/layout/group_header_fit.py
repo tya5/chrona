@@ -263,5 +263,3 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
     return GroupHeaderFitPlan(tuple(groups), header_inline_start, header_inline_size,
                               minimum_header_block_size, source_inline_prefix,
                               vertical_tag_plan, source_inline_demand, vertical_tag_block_inset)
-
-
