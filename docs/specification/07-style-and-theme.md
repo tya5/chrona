@@ -930,6 +930,15 @@ Each group changes from preferred to fallback at most once in a candidate,
 so this closure is bounded by the admitted group inventory, not a new quota.
 The full-name header wraps before requesting width growth; an indivisible
 unit or a hard height cap yields a group-named shortage, never an empty name.
+An allocated table width is not itself a hard cap. If the fallback's
+indivisible minimum exceeds it, carry that measured minimum and group identity
+back to the table source's pre-routing inline-demand closure. Normal tracks
+must receive that demand before final rows, marks and routes; without an
+authored incompatible cap the completed surface grows with the named cause,
+rather than rejecting a valid group name. Retain strict declared table-share
+ceilings and authored fixed/max constraints; an incompatible one is diagnosed
+with the group that requires the minimum. Do not widen the table merely to
+preserve an optional vertical tag that already fits.
 
 Do not mutate Theme writing mode, invent a second typography role, or
 reinterpret a `group-tab` whose `tabTarget` is `tag`. Its declared plate
