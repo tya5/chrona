@@ -378,6 +378,19 @@ and `timeline.mark.gap` while measuring and composing one source. Layout Profile
 fields reference the same reusable number tokens directly. Metric names never select facts
 or place source slots; they replace renderer defaults for source-internal visual geometry.
 
+`timeline.mark.labelGap` (#1936) is an optional Theme metric binding to a
+finite nonnegative number token in physical pixels. It sets the minimum
+mark-to-side-member-label gap used by the shared measured label footprint;
+the complete text/chip/icon group and painted mark envelope participate.
+An authored value replaces, rather than adds to, the fallback gap. This
+includes ordinary member names and their standalone side delta component,
+not axis, as-of, relation-label or annotation spacing.
+When unbound, retain `max(1px, 0.25 × the label font size)`. It does not
+change the association/reach maximum, reserve a second label allocator, or
+waive completed relation-arrowhead ink clearance. Layout measurement and
+placement consume the same resolved value across automatic, explicit and
+lane rows; Scene and adapters do not add offsets.
+
 ### 5.2 Tokens
 
 For legend `textTransform`, wording and literal data have separate treatment
