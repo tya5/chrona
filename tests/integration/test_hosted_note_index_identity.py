@@ -36,7 +36,7 @@ def _parts(*, multipart: bool):
 
 @pytest.mark.parametrize(
     ("multipart", "expected_host"),
-    [(False, ":gate-0"), (True, ":gate-0:part:0")],
+    [(False, ":gate-0"), (True, ":gate-0:part0")],
     ids=("single-part", "multipart-outline-glyph"),
 )
 def test_note_index_scene_and_svg_reference_exact_emitted_mark_host(
@@ -71,12 +71,12 @@ def test_note_index_scene_and_svg_reference_exact_emitted_mark_host(
     host_id = mark_parts[0].scene_id
     if multipart:
         assert len(mark_parts) == 3  # two declared fills plus the role outline
-        assert mark_parts[0].scene_id.endswith(":part:0")
-        assert mark_parts[1].scene_id.endswith(":part:1")
+        assert mark_parts[0].scene_id.endswith(":part0")
+        assert mark_parts[1].scene_id.endswith(":part1")
         assert mark_parts[2].paint.stroke is not None
     else:
         assert len(mark_parts) == 1
-        assert ":part:" not in host_id
+        assert ":part" not in host_id
     assert index.host_placement_id == host_id
     assert index.host_placement_id.endswith(expected_host)
     assert host_id in primitives

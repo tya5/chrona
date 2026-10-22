@@ -17,6 +17,7 @@ from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids,
     semantic_binding,
 )
+from chrona.presentation.model.primitive_identity import completed_symbol_part_group
 from chrona.presentation.scene.contrast_policy import effective_surface_paint_pairs
 from chrona.presentation.scene.ink_touch import InkTouchError
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
@@ -506,15 +507,14 @@ def _known_endpoint_marks(relation: Mapping[str, Any], marks: list[Mapping[str, 
         identifier = f"planned:{endpoint}"
         exact = [mark for mark in marks if mark.get("id") == identifier]
         parts = [mark for mark in marks if isinstance(mark.get("id"), str)
-                 and mark["id"].startswith(identifier + ":part:")]
-        if len(exact) == 1 and not parts:
+                 and mark["id"].startswith(identifier + ":part")]
+        if len(exact) == 1 and not parts and exact[0].get("kind") in {"Rect", "Symbol"}:
             result.add(identifier)
             continue
-        indexes = [mark["id"].removeprefix(identifier + ":part:") for mark in parts]
-        if (exact or not parts or any(not index.isdigit() for index in indexes)
-                or len(indexes) != len(set(indexes))):
+        siblings = completed_symbol_part_group(marks, identifier)
+        if exact or siblings is None:
             return None
-        result.update(mark["id"] for mark in parts)
+        result.update(mark["id"] for mark in siblings)
     return frozenset(result)
 
 

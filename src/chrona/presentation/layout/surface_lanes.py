@@ -43,8 +43,8 @@ from chrona.presentation.layout.window_row_admission import (
 from chrona.presentation.layout.surface_geometry import bounds_from_rect as _bounds
 from chrona.presentation.layout.surface_quality import (
     IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
-    completed_symbol_primitive_ids,
 )
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 
@@ -375,9 +375,8 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
         purpose = semantic_binding(shape.semantic_id).purpose
         obstacle = ObstacleRect(left, top, left + width, top + height)
         if chip_parts:
-            for index, _part in enumerate(chip_parts):
-                primitive_id = (shape.placement_id if index == 0
-                                else f"{shape.placement_id}:part{index}")
+            primitive_ids = completed_symbol_primitive_ids(shape.placement_id, chip_parts)
+            for index, primitive_id in enumerate(primitive_ids):
                 add("shape", shape.placement_id, shape.lane_row_id, shape.lane_member_id,
                     purpose, LaneEmissionFacet(f"shape:{shape.placement_id}:part{index}", "shape",
                                                shape.placement_id, primitive_id, obstacle,

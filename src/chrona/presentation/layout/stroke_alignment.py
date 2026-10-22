@@ -8,8 +8,8 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_quality import (
     AlignedStrokePlacement, PathCommand, StrokeClip, is_closed_stroke_contour,
-    completed_symbol_primitive_ids,
 )
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 

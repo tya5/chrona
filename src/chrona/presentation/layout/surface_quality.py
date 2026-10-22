@@ -21,6 +21,7 @@ from chrona.presentation.model.style_rules import StyleOccurrenceKey
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.theme_paint import ThemePaintWitness
 from chrona.presentation.style import LegendEncodingCoverage
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids as _completed_symbol_primitive_ids
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
@@ -35,12 +36,6 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.window_row_admission import WindowRowOmissionProof
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
-
-
-def completed_symbol_primitive_ids(placement_id: str, parts: tuple[Any, ...]) -> tuple[str, ...]:
-    """Close the existing renderer-neutral identity of each completed glyph part."""
-    return tuple(f"{placement_id}:part{index}" if part.paint_mode is not None else placement_id
-                 for index, part in enumerate(parts))
 
 
 def _diagnostic_value(value: Any) -> str:
@@ -1087,7 +1082,7 @@ class SurfacePlacement:
         emitted_mark_hosts = {
             primitive_id: (mark, index)
             for mark in self.marks if mark.placement_id not in lane_mark_ids
-            for index, primitive_id in enumerate(completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts))
+            for index, primitive_id in enumerate(_completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts))
         }
         emitted_mark_hosts.update({
             facet.primitive_id: (hosts.get(emission.placement_id), facet.part_index or 0)

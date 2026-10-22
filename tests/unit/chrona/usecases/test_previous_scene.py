@@ -210,6 +210,23 @@ def test_exact_composite_symbol_siblings_recover_one_forecast_placement():
     assert not any(mark.placement_id in {first["id"], second["id"]} for mark in marks)
 
 
+def test_lane_only_part_colon_index_siblings_do_not_recover_a_host():
+    base, first, second = _composite_symbol_parts()
+    first["id"] = f"{base}:part:0"
+    second["id"] = f"{base}:part:1"
+    marks = _hint_marks((first, second))
+    assert base not in {mark.placement_id for mark in marks}
+
+
+def test_one_explicitly_painted_symbol_part_recovers_its_base_identity():
+    base, first, _ = _composite_symbol_parts()
+    first["id"] = f"{base}:part0"
+    marks = _hint_marks((first,))
+    assert [(mark.placement_id, mark.bounds) for mark in marks] == [
+        (base, tuple(float(first["bounds"][key]) for key in ("inline", "block", "inlineSize", "blockSize")))
+    ]
+
+
 @pytest.mark.parametrize("conflict", ["sourceRef", "purpose", "bounds"])
 def test_conflicting_composite_symbol_siblings_are_not_coalesced(conflict):
     base, first, second = _composite_symbol_parts()

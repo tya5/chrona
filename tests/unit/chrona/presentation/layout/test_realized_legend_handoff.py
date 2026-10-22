@@ -6,7 +6,8 @@ import pytest
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.mark_geometry import SymbolPartPlacement
-from chrona.presentation.layout.surface_quality import MarkPlacement, PathCommand, ShapePlacement, completed_symbol_primitive_ids
+from chrona.presentation.layout.surface_quality import MarkPlacement, PathCommand, ShapePlacement
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 from chrona.presentation.layout.realized_legend import visible_placement
 from chrona.presentation.model.legend_paint import RealizedLegendKey
 from chrona.presentation.model.surface_content import SurfaceLegendEntry

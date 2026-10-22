@@ -46,7 +46,6 @@ def _mark_findings(findings):
 
 @pytest.mark.parametrize("suffixes", [
     (":part0", ":part1", ":part2"),
-    (":part:0", ":part:1", ":part:2"),
 ])
 @pytest.mark.parametrize("inks", [(BLACK, BLACK, BLACK), (BLACK, "#111111", "#222222")])
 def test_similarly_inked_parts_have_no_sibling_contrast_findings(suffixes, inks):
@@ -60,7 +59,6 @@ def test_similarly_inked_parts_have_no_sibling_contrast_findings(suffixes, inks)
 
 @pytest.mark.parametrize("suffixes", [
     (":part0", ":part1", ":part2"),
-    (":part:0", ":part:1", ":part:2"),
 ])
 def test_figure_is_judged_once_against_its_external_ground(suffixes):
     marks = [
@@ -78,15 +76,23 @@ def test_figure_is_judged_once_against_its_external_ground(suffixes):
 
 
 def test_best_readable_part_channel_wins_and_keeps_its_actual_identity():
-    first = _mark("planned:object-1:instance-1:part:0", BLACK, order=100, stroke=WHITE)
-    second = _mark("planned:object-1:instance-1:part:1", BLACK, order=101)
+    first = _mark("planned:object-1:instance-1:part0", BLACK, order=100, stroke=WHITE)
+    second = _mark("planned:object-1:instance-1:part1", BLACK, order=101)
     findings = _mark_findings(evaluate_scene_contrast(_scene(_host("board", BLACK), first, second)))
 
     assert len(findings) == 1
     finding, = findings
     assert (finding.primitive_id, finding.paint_channel, finding.severity) == (
-        "planned:object-1:instance-1:part:0", "stroke", "info")
+        "planned:object-1:instance-1:part0", "stroke", "info")
     assert finding.ground_id == "board" and finding.contrast_ratio == 21.0
+
+
+def test_lane_only_part_colon_index_spelling_is_not_a_composite_identity():
+    from chrona.presentation.scene.contrast_policy import _mark_figures
+
+    parts = [_mark("planned:object-1:instance-1:part:0", BLACK),
+             _mark("planned:object-1:instance-1:part:1", BLACK, order=101)]
+    assert _mark_figures(parts) == {}
 
 
 def test_sibling_is_excluded_during_translucent_external_ground_recursion():
@@ -147,14 +153,14 @@ def test_same_source_distinct_placements_remain_distinct_figures():
     marks = (
         _mark("planned:object-1:left:part0", BLACK, source="same-source", bounds=left),
         _mark("planned:object-1:left:part1", BLACK, source="same-source", order=101, bounds=left),
-        _mark("planned:object-1:right:part:0", BLACK, source="same-source", bounds=right),
-        _mark("planned:object-1:right:part:1", BLACK, source="same-source", order=101, bounds=right),
+        _mark("planned:object-1:right:part0", BLACK, source="same-source", bounds=right),
+        _mark("planned:object-1:right:part1", BLACK, source="same-source", order=101, bounds=right),
     )
 
     findings = _mark_findings(evaluate_scene_contrast(_scene(*marks)))
 
     assert {item.primitive_id for item in findings} == {
-        "planned:object-1:left:part0", "planned:object-1:right:part:0",
+        "planned:object-1:left:part0", "planned:object-1:right:part0",
     }
     assert all(item.severity == "info" for item in findings)
 
@@ -180,8 +186,8 @@ def test_figures_on_other_surfaces_or_with_other_roles_remain_separate():
 @pytest.mark.parametrize("failure", ["unsupported-ground", "malformed-part"])
 def test_unreadable_group_fails_closed_even_when_another_part_is_readable(failure):
     host = _host("board", BLACK, opacity=2) if failure == "unsupported-ground" else _host("board", BLACK)
-    valid = _mark("planned:object-1:instance-1:part:0", BLACK, order=100, stroke=WHITE)
-    malformed = _mark("planned:object-1:instance-1:part:1", BLACK, order=101)
+    valid = _mark("planned:object-1:instance-1:part0", BLACK, order=100, stroke=WHITE)
+    malformed = _mark("planned:object-1:instance-1:part1", BLACK, order=101)
     if failure == "malformed-part":
         malformed["paint"]["fill"] = None
     findings = _mark_findings(evaluate_scene_contrast(_scene(host, valid, malformed)))

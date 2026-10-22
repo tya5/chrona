@@ -8,6 +8,9 @@ from typing import Any
 
 from chrona.presentation.contracts.resources import FrozenDict, freeze
 from chrona.presentation.scene.serialization import SceneSerializationError, validate_scene_document
+from chrona.presentation.model.primitive_identity import (
+    completed_symbol_part_groups, parse_symbol_part_id,
+)
 from chrona.presentation.layout.relation_hint_model import (
     HintMark, HintMarker, HintRelation, HintSurface, PreviousRouteHints,
 )
@@ -64,49 +67,11 @@ def decode_previous_scene(payload: bytes, project_id: str, *,
 _PRIMARY_MARK_PURPOSES = {"planned", "actual", "baseline", "forecast"}
 
 
-def _part_parent(primitive_id: str) -> tuple[str, int] | None:
-    base, separator, suffix = primitive_id.rpartition(":part")
-    if not separator or not base or not suffix.isdigit():
-        return None
-    try:
-        index = int(suffix)
-    except ValueError:
-        return None
-    if suffix != str(index):
-        return None
-    return base, index
-
-
 def _hint_marks(primitives: Sequence[Mapping[str, Any]]) -> tuple[HintMark, ...]:
     """Decode primary hosts, coalescing only exact completed Symbol siblings."""
-    groups: dict[str, list[tuple[int, Mapping[str, Any]]]] = {}
-    by_id = {item["id"]: item for item in primitives}
-    for primitive in primitives:
-        parsed = _part_parent(primitive["id"])
-        if parsed is not None:
-            groups.setdefault(parsed[0], []).append((parsed[1], primitive))
-
-    coalesced: dict[str, Mapping[str, Any]] = {}
-    collisions: set[str] = set()
-    for base, indexed in groups.items():
-        siblings = [item for _, item in indexed]
-        sibling_ids = [item["id"] for item in siblings]
-        if base in by_id or len(set(sibling_ids)) != len(sibling_ids):
-            collisions.update((base, *sibling_ids))
-            continue
-        indices = sorted(index for index, _ in indexed)
-        first = next((item for index, item in indexed if index == 0), siblings[0])
-        same_metadata = all(
-            item.get("kind") == "Symbol"
-            and item.get("sourceRef") == first.get("sourceRef")
-            and item.get("purpose") == first.get("purpose")
-            and item.get("bounds") == first.get("bounds")
-            for item in siblings
-        )
-        if (same_metadata and first.get("kind") == "Symbol"
-                and first.get("purpose") in _PRIMARY_MARK_PURPOSES
-                and indices == list(range(len(indices)))):
-            coalesced[base] = first
+    groups, collisions = completed_symbol_part_groups(primitives)
+    coalesced = {base: siblings[0] for base, siblings in groups.items()
+                 if siblings[0].get("purpose") in _PRIMARY_MARK_PURPOSES}
 
     marks = []
     emitted_groups: set[str] = set()
@@ -114,7 +79,7 @@ def _hint_marks(primitives: Sequence[Mapping[str, Any]]) -> tuple[HintMark, ...]
         purpose = primitive.get("purpose")
         if purpose not in _PRIMARY_MARK_PURPOSES or primitive["id"] in collisions:
             continue
-        parsed = _part_parent(primitive["id"])
+        parsed = parse_symbol_part_id(primitive["id"])
         if parsed is not None and parsed[0] in coalesced:
             base = parsed[0]
             if base in emitted_groups:

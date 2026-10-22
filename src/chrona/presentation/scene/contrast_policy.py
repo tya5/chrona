@@ -15,6 +15,7 @@ from chrona.presentation.model.semantic_registry import (
     is_frame_glyph_role,
     is_label_chip_role,
 )
+from chrona.presentation.model.primitive_identity import parse_symbol_part_id
 from chrona.presentation.style import EncodingWitness
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
 from chrona.presentation.scene.ink_touch import InkTouchError, fill_touches
@@ -354,13 +355,12 @@ def _mark_figures(primitives: Sequence[Any]) -> dict[int, tuple[tuple[int, Mappi
         binding = contrast_binding_for_primitive(role, primitive.get("kind"), primitive.get("purpose"))
         if binding is None or binding.contrast_class != ContrastClass.MARK:
             continue
-        base, separator, part = identifier.rpartition(":part")
-        part = part.removeprefix(":")
-        if not base or not separator or not part or not part.isascii() or not part.isdecimal():
+        parsed = parse_symbol_part_id(identifier)
+        if parsed is None:
             continue
         if not isinstance(primitive.get("sourceRef"), str) or not primitive["sourceRef"]:
             continue
-        groups.setdefault(base, []).append((index, int(part), primitive))
+        groups.setdefault(parsed[0], []).append((index, parsed[1], primitive))
     figures = {}
     common = ("sourceRef", "sourceKind", "purpose", "visualRole", "bounds", "slotId")
     for parts in groups.values():

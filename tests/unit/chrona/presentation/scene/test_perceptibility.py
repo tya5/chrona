@@ -491,6 +491,70 @@ def test_matching_declared_mark_or_overlap_recovery_is_informational(stage):
     assert dict(finding.measured_facts) == {"relation": "r", "inside": 1.0, "stage": stage}
 
 
+def _composite_endpoint_scene(*, source_suffixes=("0", "1"), target_suffixes=("0", "1"),
+                              source_bounds=None, target_bounds=None):
+    document = _recovered_crossing_scene()
+    primitives = document["surfaces"][0]["primitives"]
+    source = next(item for item in primitives if item.get("id") == "planned:source")
+    target = next(item for item in primitives if item.get("id") == "planned:target")
+    primitives.remove(source)
+    primitives.remove(target)
+    for base, suffixes, bounds in (
+        ("planned:source", source_suffixes, source_bounds or source["bounds"]),
+        ("planned:target", target_suffixes, target_bounds or target["bounds"]),
+    ):
+        for index, suffix in enumerate(suffixes):
+            part = _primitive(f"{base}:part{suffix}", "Symbol", bounds=dict(bounds), order=10 + index)
+            part.update(sourceKind="object", sourceRef=base.removeprefix("planned:"), purpose="planned",
+                        visualRole="planned", paint={"fill": "#000000", "opacity": 1})
+            primitives.append(part)
+    return document
+
+
+def test_native_compact_composite_endpoint_ids_authorize_only_nonendpoint_recovery_crossings():
+    findings = [item for item in evaluate_scene_perceptibility(_composite_endpoint_scene())
+                if item.code in {"E_SCENE_RELATION_THROUGH_MARK",
+                                 "I_SCENE_RELATION_RECOVERED_THROUGH_MARK"}]
+    assert len(findings) == 1
+    assert (findings[0].code, findings[0].primitive_ids) == (
+        "I_SCENE_RELATION_RECOVERED_THROUGH_MARK",
+        ("relation:r:source:target", "planned:foreign"))
+
+
+@pytest.mark.parametrize("stage", ["marks", "overlap"])
+def test_composite_endpoint_crossing_is_not_excused_by_a_valid_recovery_receipt(stage):
+    document = _composite_endpoint_scene(source_bounds=_bounds(0, 2, 8, 6))
+    document["diagnostics"][0] = document["diagnostics"][0].replace('"marks"', json.dumps(stage))
+    findings = evaluate_scene_perceptibility(document)
+    endpoint_findings = [item for item in findings
+                         if item.primitive_ids[1:] in {
+                             ("planned:source:part0",), ("planned:source:part1",)}]
+    assert len(endpoint_findings) == 2
+    assert all(item.code == "E_SCENE_RELATION_THROUGH_MARK" for item in endpoint_findings)
+
+
+@pytest.mark.parametrize("variant", ["alternate", "mixed", "gap", "base-collision", "bounds"])
+def test_unresolved_composite_endpoint_identity_cannot_authorize_a_recovered_crossing(variant):
+    document = _composite_endpoint_scene()
+    primitives = document["surfaces"][0]["primitives"]
+    source_parts = [item for item in primitives if str(item.get("id", "")).startswith("planned:source:part")]
+    if variant == "alternate":
+        for part in source_parts:
+            part["id"] = part["id"].replace(":part", ":part:")
+    elif variant == "mixed":
+        source_parts[1]["id"] = source_parts[1]["id"].replace(":part", ":part:")
+    elif variant == "gap":
+        source_parts[1]["id"] = "planned:source:part2"
+    elif variant == "base-collision":
+        primitives.append(_primitive("planned:source", "Rect", bounds=_bounds(0, 2, 5, 6)))
+    else:
+        source_parts[1]["bounds"]["inlineSize"] += 1
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "E_SCENE_RELATION_THROUGH_MARK"]
+    assert findings
+    assert any(item.primitive_ids[1] == "planned:foreign" for item in findings)
+
+
 @pytest.mark.parametrize("invalidator", [
     "missing-halo", "wrong-halo-id", "wrong-path", "wrong-source", "wrong-paint-clip",
     "wrong-stroke-clip", "wrong-ground", "not-wider", "wrong-order", "missing-receipt",

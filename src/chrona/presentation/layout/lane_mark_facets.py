@@ -14,6 +14,7 @@ from chrona.presentation.layout.obstacles import (
     ObstacleGeometry, ObstacleRect, ObstacleSegment, obstacle_envelope,
 )
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, VisualRequest
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 from chrona.presentation.model.semantic_registry import mark_style_role
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
 
@@ -496,6 +497,7 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
     if not mark.symbol_parts:
         raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id)
     result: list[LaneMarkFacet] = []
+    primitive_ids = completed_symbol_primitive_ids(mark.placement_id, mark.symbol_parts)
     for index, part in enumerate(mark.symbol_parts):
         commands = _commands(part.commands)
         points = tuple(point for _, pairs in commands for point in pairs)
@@ -518,7 +520,7 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
             stroke_width, part.line_cap, part.line_join, getattr(mark, "theme_role", None),
             getattr(mark, "style_occurrence_key", None),
         )
-        primitive_id = mark.placement_id if len(mark.symbol_parts) == 1 else f"{mark.placement_id}:part:{index}"
+        primitive_id = primitive_ids[index]
         result.append(_facet(instance, item, mark, primitive_id, "Symbol", commands,
                              bounds, footprint, mark if index == 0 else None,
                              glyph=part_payload))
