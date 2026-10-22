@@ -195,14 +195,29 @@ expressions. Japanese source text and author key order stay readable after edits
 `apply_authoring_command` accepts the workspace path and an inline command (or
 a contained command file). The command carries `version`, `commandId`, `type`,
 `target: {kind: "authoring-workspace", path: "workspace.yaml"}`, `baseRevision`
-and `payload`. Its registry schema and description give the five operations:
-`setWorkspaceTask`, `setWorkspaceActual`, `selectPresentationPreset`,
-`setPresentationOverride` and `materializePresentationPreset`.
+and `payload`. Its registry schema and description give the eight operations:
+`setWorkspaceTask` and `removeWorkspaceTask`, `setWorkspaceActual` and `removeWorkspaceActual`,
+`selectPresentationPreset`, `setPresentationOverride` and `removePresentationOverride`, and
+`materializePresentationPreset`.
 Use creation/query `workspaceRevision` as the first base, then carry each
-accepted `authoringResult.resultRevision` into the next command. Revert an edit to
-an existing task or Actual with its inverse command at the current revision (send
-the previous values back). No CLI call, manual file read or deliberately stale
-command is needed to discover a revision.
+accepted `authoringResult.resultRevision` into the next command. No CLI call,
+manual file read or deliberately stale command is needed to discover a revision.
+
+**Revert an edit.** An accepted `authoringResult` carries `inverse`, a complete command
+(`commandId` is the original id plus `-inverse`, `baseRevision` is the result revision). Send it as the `command` of
+another `apply_authoring_command`: for a workspace in canonical form (written by `create_workspace` or an earlier
+command) the file is byte-identical to the one before the edit. This holds for an added or replaced task, an added,
+replaced or removed Actual, a removed task, and a new, replaced or removed override set; the inverse of an
+addition is the matching removal, and the inverse of a removal sets the entry back at its former `index`.
+`materializePresentationPreset` is the one exception (`reversible: false`, no `inverse`). Once another edit has
+changed the workspace the inverse is refused as stale (`E_AUTHORING_BASE_REVISION`); the inverse's own result carries
+the inverse of the inverse, which redoes the edit.
+
+**Baseline.** Call `save_baseline {project: "plan/workspace.yaml", name}` before editing. It writes the workspace's
+inline Project, as an ordinary `timeline/v0.7` Project, to `plan/baselines/<name>.yaml` and returns that path and its
+`contentIdentity` (an existing name with other content is `E_BASELINE_FILE_EXISTS`, the same content again is a
+replay). After the edits, `render_workspace` with `snapshot` set to that path draws the baseline as `render_draft`
+does; the preset's View must draw a snapshot baseline (for example `target-b`).
 
 **Retrying a command.** Sending the same `commandId` and request again writes nothing and returns the first result
 with `replayed: true` and `revisionIsCurrent`: `true` when `resultRevision` is still the workspace revision, `false`
@@ -223,11 +238,10 @@ advance. No tool copies a second builtin preset into an existing workspace, so t
 change the look call `create_workspace` again with the other builtin `preset`, a new
 `directory` and the same `project`, then render that workspace.
 
-**Undo an added task.** There is no delete operation: `setWorkspaceTask` adds a new
-`id` or replaces the task with that `id`, and undoing an addition is not an inverse
-edit. To drop a task, call `create_workspace` with a new `directory` and the project
-without it (it never overwrites), and keep working in the new workspace. Until then
-the old workspace is unchanged and still renders.
+**Undo an added task.** The `inverse` of an added task is `removeWorkspaceTask {taskId}`. You can also send
+`removeWorkspaceTask` yourself; it is refused while an Actual names the task (remove the Actual first with
+`removeWorkspaceActual {taskId}`). `setWorkspaceTask` and `setWorkspaceActual` take an optional `index` to insert a
+new entry at a position (an existing entry is replaced in place and refuses `index`).
 
 ### Editing a full `project.yaml` without a shell
 

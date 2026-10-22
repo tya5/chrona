@@ -8,7 +8,7 @@ additionalProperties: false
 properties:
   version: {description: "This authoring-command contract version.", const: chrona/authoring-command/v0.1}
   commandId: {description: "Stable identifier for this command.", type: string, minLength: 1}
-  type: {description: "Operation to apply to the workspace.", enum: [setWorkspaceTask, setWorkspaceActual, selectPresentationPreset, setPresentationOverride, materializePresentationPreset]}
+  type: {description: "Operation to apply to the workspace.", enum: [setWorkspaceTask, removeWorkspaceTask, setWorkspaceActual, removeWorkspaceActual, selectPresentationPreset, setPresentationOverride, removePresentationOverride, materializePresentationPreset]}
   target:
     type: object
     description: "Guided authoring workspace selected by the command."
@@ -30,6 +30,7 @@ allOf:
           required: [task]
           additionalProperties: false
           properties:
+            index: {description: "Optional position at which a NEW task is inserted (0 = first); omitted appends. Refused for a task that already exists. Inverses of a removal carry it.", type: integer, minimum: 0}
             task:
               type: object
               required: [id, title, planned]
@@ -44,6 +45,36 @@ allOf:
                   properties:
                     start: {$ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
                     finish: {$ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
+  - description: "Task-removal commands name the task."
+    examples: [{}]
+    if: {properties: {type: {const: removeWorkspaceTask}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [taskId]
+          additionalProperties: false
+          properties:
+            taskId: {description: "The task to remove; refused while an actual still names it.", type: string, minLength: 1}
+  - description: "Actual-removal commands name the task whose observation is removed."
+    examples: [{}]
+    if: {properties: {type: {const: removeWorkspaceActual}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [taskId]
+          additionalProperties: false
+          properties:
+            taskId: {description: "The task whose observation is removed.", type: string, minLength: 1}
+  - description: "Override-removal commands carry no payload members."
+    examples: [{}]
+    if: {properties: {type: {const: removePresentationOverride}}}
+    then:
+      properties:
+        payload:
+          type: object
+          additionalProperties: false
   - description: "Actual-edit commands require one complete compact observation payload."
     examples: [{}]
     if: {properties: {type: {const: setWorkspaceActual}}}
@@ -54,6 +85,7 @@ allOf:
           required: [actual]
           additionalProperties: false
           properties:
+            index: {description: "Optional position at which a NEW observation is inserted (0 = first); omitted appends. Refused for a task that already has one. Inverses of a removal carry it.", type: integer, minimum: 0}
             actual:
               type: object
               required: [taskId, actual]

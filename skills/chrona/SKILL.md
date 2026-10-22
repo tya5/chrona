@@ -102,14 +102,14 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
 | `check_command` | `chrona command-check` | Previews an inline Store command or contained command file; writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
-| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an inline authoring command or contained command file; requires `--allow-write`. |
+| `apply_authoring_command` | `chrona authoring-command-apply` | Applies an inline authoring command or contained command file; the accepted result's `inverse` reverts it; requires `--allow-write`. |
 | `create_workspace` | Library entry (no CLI equivalent) | Creates a new workspace directory from a builtin preset and compact project; requires `--allow-write`. |
 | `validate_workspace` | Library entry (no CLI equivalent) | Validates a workspace and its complete preset/resource closure; returns its revision. |
 | `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
-| `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; writes no output file. |
+| `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; `snapshot` takes a baseline; writes no output file. |
 | `create_project` | Library entry (no CLI equivalent) | Creates a new `project.yaml` from a complete Project; requires `--allow-write`. |
 | `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` (every Project member except `version`, including extensions) at a `baseRevision`; the accepted result's `inverse` reverts it; requires `--allow-write`. |
-| `save_baseline` | Library entry (no CLI equivalent) | Copies `project.yaml` to `baselines/<name>.yaml` (step 1); pass it as `render_draft` `snapshot`; requires `--allow-write`. |
+| `save_baseline` | Library entry (no CLI equivalent) | Copies `project.yaml` (or a guided `workspace.yaml`'s Project) to `baselines/<name>.yaml`; pass it as `snapshot`; requires `--allow-write`. |
 | `create_store` | Library entry (no CLI equivalent) | Creates `.chrona/store.yaml` and its root for the Store route; requires `--allow-write`. |
 | `publish_resource` | Library entry (no CLI equivalent) | Seeds the Store with a Project, Actual Set or intake batch (file or inline) and returns the `reference` `apply_command` takes as `target`; requires `--allow-write`. |
 

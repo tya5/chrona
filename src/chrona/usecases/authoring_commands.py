@@ -71,7 +71,7 @@ def prepare_authoring_command(
             return PreparedFileMutation(files=files, result_revision=next_revision, result=result)
 
         candidate = deepcopy(current)
-        _apply(candidate, command)
+        inverse_edit = _apply(candidate, command)
         if command["type"] == "selectPresentationPreset":
             _check_preset_identity(canonical_path.parent, command["payload"]["preset"])
         identity = ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate))
@@ -85,7 +85,8 @@ def prepare_authoring_command(
                                         result=_rejected(command, error.diagnostic_id, base, details=details))
         payload = yaml.safe_dump(candidate, allow_unicode=True, sort_keys=False).encode("utf-8")
         next_revision = content_identity(candidate)
-        result = _accepted(command, base, next_revision)
+        result = _accepted(command, base, next_revision) | {
+            "inverse": _inverse_command(command, inverse_edit, next_revision)}
         return PreparedFileMutation(files={canonical_path.name: payload}, result_revision=next_revision, result=result)
     except FileExistsError as error:
         message = str(error)
@@ -108,6 +109,12 @@ def verify_authoring_receipt(
     result_errors = tuple(schema_validator("authoring-command-result-v0.1.schema.yaml").iter_errors(result))
     if request_errors or result_errors:
         raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained request or result violates its schema")
+    inverse = result.get("inverse")
+    if inverse is not None and (
+        tuple(schema_validator("authoring-command-v0.1.schema.yaml").iter_errors(inverse))
+        or inverse["baseRevision"] != after_identity or inverse["target"] != request["target"]
+    ):
+        raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained inverse is not a command on the result revision")
     if (
         result["status"] != "accepted"
         or result["commandId"] != request["commandId"]
@@ -118,22 +125,85 @@ def verify_authoring_receipt(
         raise ValueError("E_AUTHORING_REPLAY_UNAVAILABLE: retained result identities do not match the accepted request")
 
 
-def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> None:
+def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Edit ``candidate`` in place; return the (type, payload) of the command that restores it."""
     body, payload, command_type = candidate["body"], command["payload"], command["type"]
     if command_type == "setWorkspaceTask":
         task, tasks = payload["task"], body["project"]["tasks"]
         index = next((i for i, item in enumerate(tasks) if item["id"] == task["id"]), None)
-        tasks.append(task) if index is None else tasks.__setitem__(index, task)
-    elif command_type == "setWorkspaceActual":
-        actual, actuals = payload["actual"], body.setdefault("actuals", [])
+        if index is None:
+            _insert(tasks, task, payload.get("index"))
+            return "removeWorkspaceTask", {"taskId": task["id"]}
+        if "index" in payload:
+            raise ValueError(f"E_AUTHORING_COMMAND: task {task['id']!r} exists; 'index' places a new task only")
+        previous, tasks[index] = tasks[index], task
+        return "setWorkspaceTask", {"task": previous}
+    if command_type == "removeWorkspaceTask":
+        tasks = body["project"]["tasks"]
+        index = _position(tasks, "id", payload["taskId"], "task")
+        if any(item["taskId"] == payload["taskId"] for item in body.get("actuals", ())):
+            raise ValueError(f"E_AUTHORING_COMMAND: task {payload['taskId']!r} has an actual; remove it with "
+                             "removeWorkspaceActual first")
+        return "setWorkspaceTask", {"task": tasks.pop(index), "index": index}
+    if command_type == "setWorkspaceActual":
+        actual = payload["actual"]
+        actuals = body.get("actuals", [])
         index = next((i for i, item in enumerate(actuals) if item["taskId"] == actual["taskId"]), None)
-        actuals.append(actual) if index is None else actuals.__setitem__(index, actual)
-    elif command_type == "selectPresentationPreset":
-        body["presentation"]["binding"]["preset"] = payload["preset"]
-    elif command_type == "setPresentationOverride":
-        body["presentation"]["binding"]["overrides"] = payload["overrides"]
+        if index is None:
+            _insert(body.setdefault("actuals", actuals), actual, payload.get("index"))
+            return "removeWorkspaceActual", {"taskId": actual["taskId"]}
+        if "index" in payload:
+            raise ValueError(f"E_AUTHORING_COMMAND: an actual for {actual['taskId']!r} exists; 'index' places a new actual only")
+        previous, actuals[index] = actuals[index], actual
+        return "setWorkspaceActual", {"actual": previous}
+    if command_type == "removeWorkspaceActual":
+        actuals = body.get("actuals", [])
+        index = _position(actuals, "taskId", payload["taskId"], "actual")
+        removed = actuals.pop(index)
+        if not actuals:
+            del body["actuals"]
+        return "setWorkspaceActual", {"actual": removed, "index": index}
+    if command_type == "selectPresentationPreset":
+        binding = body["presentation"]["binding"]
+        previous, binding["preset"] = binding["preset"], payload["preset"]
+        return "selectPresentationPreset", {"preset": previous}
+    if command_type == "setPresentationOverride":
+        binding = body["presentation"]["binding"]
+        previous = binding.get("overrides")
+        binding["overrides"] = payload["overrides"]
+        return ("setPresentationOverride", {"overrides": previous}) if previous is not None else (
+            "removePresentationOverride", {})
+    if command_type == "removePresentationOverride":
+        binding = body["presentation"]["binding"]
+        if "overrides" not in binding:
+            raise ValueError("E_AUTHORING_COMMAND: the binding has no overrides to remove")
+        return "setPresentationOverride", {"overrides": binding.pop("overrides")}
+    raise ValueError(f"E_AUTHORING_COMMAND: unsupported command type {command_type!r}")
+
+
+def _insert(items: list[Any], item: Any, index: Any) -> None:
+    if index is None:
+        items.append(item)
+    elif index > len(items):
+        raise ValueError(f"E_AUTHORING_COMMAND: index {index} is beyond the {len(items)} existing entries")
     else:
-        raise ValueError(f"E_AUTHORING_COMMAND: unsupported command type {command_type!r}")
+        items.insert(index, item)
+
+
+def _position(items: list[Any], key: str, value: str, noun: str) -> int:
+    for position, item in enumerate(items):
+        if item[key] == value:
+            return position
+    raise ValueError(f"E_AUTHORING_COMMAND: no {noun} {value!r} to remove")
+
+
+def _inverse_command(command: dict[str, Any], edit: tuple[str, dict[str, Any]], result_revision: str) -> dict[str, Any]:
+    """The authoring command that restores what ``command`` changed, bound to the revision it produced."""
+    inverse_type, inverse_payload = edit
+    return {
+        "version": "chrona/authoring-command/v0.1", "commandId": f"{command['commandId']}-inverse", "type": inverse_type,
+        "target": deepcopy(command["target"]), "baseRevision": result_revision, "payload": inverse_payload,
+    }
 
 
 def _check_preset_identity(root: Path, selector: dict[str, Any]) -> None:
