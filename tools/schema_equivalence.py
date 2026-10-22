@@ -1090,6 +1090,14 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("authoring-command", "inline:authoring-command-materialize", "/payload/directory", "path"),
     ProbeSite("authoring-command-result", "inline:authoring-command-result", "/commandBaseRevision", "sha256"),
     ProbeSite("authoring-command-result", "inline:authoring-command-result", "/commandId", "identifier"),
+    ProbeSite("project-command", "inline:project-command-set", "/commandId", "identifier"),
+    ProbeSite("project-command", "inline:project-command-set", "/target/path", "path"),
+    ProbeSite("project-command", "inline:project-command-set", "/baseRevision", "sha256"),
+    ProbeSite("project-command", "inline:project-command-set", "/payload/id", "identifier"),
+    ProbeSite("project-command", "inline:project-command-remove", "/payload/id", "identifier"),
+    ProbeSite("project-command-result", "inline:project-command-result", "/commandBaseRevision", "sha256"),
+    ProbeSite("project-command-result", "inline:project-command-result", "/projectRevision", "sha256"),
+    ProbeSite("project-command-result", "inline:project-command-result", "/commandId", "identifier"),
     ProbeSite("presentation-materialization-receipt", "inline:materialization-receipt",
               "/body/presetContentIdentity", "sha256"),
     ProbeSite("presentation-materialization-receipt", "inline:materialization-receipt", "/id", "identifier"),
@@ -1134,6 +1142,12 @@ def _inline_command(command_type: str, payload: dict[str, Any]) -> dict[str, Any
             "baseRevision": _REVISION, "payload": payload}
 
 
+def _project_command(command_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+    return {"version": "chrona/project-command/v0.1", "commandId": "change-1", "type": command_type,
+            "target": {"kind": "project", "path": "project.yaml"},
+            "baseRevision": _REVISION, "payload": payload}
+
+
 INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
     "project-derived-point": lambda: {
         "version": "timeline/v0.7", "project": {"id": "derived-point"}, "objects": {
@@ -1149,6 +1163,13 @@ INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
     "authoring-command-result": lambda: {
         "version": "chrona/authoring-command-result/v0.1", "status": "accepted", "commandId": "change-1",
         "commandBaseRevision": _REVISION, "workspaceRevision": _REVISION, "resultRevision": _REVISION,
+        "diagnostics": []},
+    "project-command-set": lambda: _project_command("setObject", {"id": "gate", "object": {
+        "type": "gate", "schedule": {"mode": "scheduled-point", "constraints": {"at": {"min": "2026-01-01"}}}}}),
+    "project-command-remove": lambda: _project_command("removeObject", {"id": "gate"}),
+    "project-command-result": lambda: {
+        "version": "chrona/project-command-result/v0.1", "status": "accepted", "commandId": "change-1",
+        "commandBaseRevision": _REVISION, "projectRevision": _REVISION, "resultRevision": _REVISION,
         "diagnostics": []},
     "materialization-receipt": lambda: {
         "version": "chrona/presentation-materialization-receipt/v0.1", "kind": "presentation-materialization-receipt",

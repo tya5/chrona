@@ -108,12 +108,12 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 # --- the registry --------------------------------------------------------------------------------------------
 
 def test_the_tool_set_lists_read_only_tools_and_gated_writers_in_order():
-    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command", "apply_authoring_command", "create_workspace", "validate_workspace", "workspace_revision", "render_workspace"]
+    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "render_review", "compare_baseline", "check_command", "apply_command", "apply_authoring_command", "create_workspace", "validate_workspace", "workspace_revision", "render_workspace", "create_project", "apply_project_command"]
     document = registry_document()
-    assert document["toolSet"] == "chrona/agent-tools/v0.8"
+    assert document["toolSet"] == "chrona/agent-tools/v0.9"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
-        writes = tool["name"] in {"apply_command", "apply_authoring_command", "create_workspace"}
+        writes = tool["name"] in {"apply_command", "apply_authoring_command", "create_workspace", "create_project", "apply_project_command"}
         assert tool["annotations"] == {"readOnlyHint": not writes, "destructiveHint": writes, "idempotentHint": True,
                                        "openWorldHint": False}
         assert tool["description"] and tool["title"]
@@ -153,6 +153,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
         "create_workspace": {"directory", "project", "preset"},
         "validate_workspace": {"workspace"}, "workspace_revision": {"workspace"},
         "render_workspace": {"workspace", "viewport", "locale", "format", "inline"},
+        "create_project": {"file", "project"}, "apply_project_command": {"project", "command"},
         "render_review": {"contextReference", "storeConfig", "inline"},
         "compare_baseline": {"baselineReference", "candidateReference", "storeConfig"},
         "render_draft": {"project", "actual", "preset", "view", "style", "theme", "scheme", "layout", "viewport", "locale",
@@ -235,6 +236,8 @@ def test_missing_arguments_mean_an_empty_object(scope):
 
 def test_validate_ok_carries_the_project_identity_of_the_file_bytes(scope, workspace):
     result = run(scope, "validate_project", project="small.yaml")
+    revision = result.structured.pop("projectRevision")  # the content identity of the parsed Project (#1892 row 1)
+    assert revision.startswith("sha256:") and revision != result.structured["projectIdentity"]
     assert result.structured == {
         "status": "ok", "diagnostics": [],
         "projectIdentity": "sha256:" + hashlib.sha256((workspace / "small.yaml").read_bytes()).hexdigest(),

@@ -1,4 +1,4 @@
-"""Exclusive publication boundary for a new guided workspace directory."""
+"""Exclusive publication boundary for a new guided workspace directory, and for one new Project file (#1892)."""
 from __future__ import annotations
 
 import os
@@ -96,3 +96,29 @@ def _remove_owned(
                 destination.rmdir()
         except OSError:
             pass
+
+
+def publish_new_file(destination: Path, payload: bytes) -> None:
+    """Write ``payload`` to ``destination`` only if nothing exists there: stage beside it, then link into place.
+
+    A link fails when the destination appeared meanwhile, so an existing file is never overwritten and a reader
+    never sees a partly written Project.
+    """
+    destination = Path(destination)
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError(f"E_PROJECT_EXISTS: {destination.name} already exists")
+    parent = destination.parent
+    if not parent.is_dir() or parent.is_symlink():
+        raise ValueError(f"E_WORKSPACE_PARENT: destination parent {parent.name!r} must be an existing real directory")
+    staged = parent / f".{destination.name}.{os.getpid()}.new"
+    try:
+        with staged.open("xb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.link(staged, destination)
+        except FileExistsError as error:
+            raise FileExistsError(f"E_PROJECT_EXISTS: {destination.name} appeared during publication") from error
+    finally:
+        staged.unlink(missing_ok=True)

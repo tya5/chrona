@@ -518,4 +518,4 @@ def test_both_tools_are_read_only_and_listed_whatever_the_write_flag_is():
         assert document[name]["annotations"] == {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True,
                                                  "openWorldHint": False}
         assert "read-only" in specs[name].description and "--allow-write" in specs[name].description
-    assert registry_document()["toolSet"] == "chrona/agent-tools/v0.8"
+    assert registry_document()["toolSet"] == "chrona/agent-tools/v0.9"

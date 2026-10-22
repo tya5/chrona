@@ -10,8 +10,7 @@ Chrona computes a schedule and picture from YAML. Edit the plan, never the gener
 ## When to use it
 
 - Dates must be right: durations in working days, a holiday calendar, dependencies, lags.
-- The plan will be edited and re-rendered, or a reviewer will diff the result.
-- Each revision will be compared with the earlier plan and actual progress.
+- The plan will be edited and re-rendered, a reviewer will diff the result, and each revision will be compared with the earlier plan and actual progress.
 
 For a README/PR sketch or decorative one-off, read
 [references/mermaid-or-chrona.md](references/mermaid-or-chrona.md) first: Chrona is the wrong tool.
@@ -109,9 +108,10 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `validate_workspace` | Library entry (no CLI equivalent) | Validates a workspace and its complete preset/resource closure; returns its revision. |
 | `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
 | `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; writes no output file. |
+| `create_project` | Library entry (no CLI equivalent) | Creates a new `project.yaml` from a complete Project; requires `--allow-write`. |
+| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` with `setObject`/`removeObject` at a `baseRevision`; requires `--allow-write`. |
 
-Edit standalone `project.yaml` directly; use `apply_command` for Stores.
-For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
+Edit standalone `project.yaml` directly, or over MCP with `apply_project_command` (`validate_project` returns its `projectRevision`); use `apply_command` for Stores. For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
 
 ## The model in five lines
 

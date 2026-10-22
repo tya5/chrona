@@ -20,6 +20,7 @@ EQUIVALENT_COMMANDS = {
     "apply_authoring_command": "chrona authoring-command-apply",
     "create_workspace": None, "validate_workspace": None,
     "workspace_revision": "chrona workspace revision", "render_workspace": "chrona render-workspace",
+    "create_project": None, "apply_project_command": None,
 }
 
 
