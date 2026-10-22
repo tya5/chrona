@@ -71,7 +71,7 @@ viewDefaults:
     title: {missing: em-dash, align: start, width: {minmax: {min: content, max: {fr: 1}}}, headerOrientation: horizontal}
     field: {textRole: table-cell-secondary, missing: em-dash, align: start, width: content, headerOrientation: horizontal}
     facet:
-      format: signedNumber
+      format: signedDays
       zero: plain
       missing: blank
       missingBy: {inProgress: blank, dueUnobserved: blank, notYetDue: blank}

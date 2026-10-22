@@ -141,8 +141,10 @@ def test_a_missing_provider_and_no_cjk_face_still_refuses_the_glyph(starter, no_
             config = stage_project_package_store(Path(directory), project, root)
             reader = DraftExtensionPackageReader(lambda: load_store_config(str(config)))
             with use_installed_fonts(NO_FONTS), pytest.raises(RenderFailed) as caught:
+                # ja-JP draws the yuya CJK text; en-US no longer needs a CJK glyph since the Δ unit follows the locale (#1821).
                 render_draft(DraftRenderRequest(project=project_path, actual=root / "actual.yaml",
-                                                target_kind="svg", preset=identifier, package_reader=reader))
+                                                target_kind="svg", preset=identifier, package_reader=reader,
+                                                locale="ja-JP"))
     else:
         with use_installed_fonts(NO_FONTS), pytest.raises(RenderFailed) as caught:
             render_draft(DraftRenderRequest(project=project_path, actual=root / "actual.yaml",
