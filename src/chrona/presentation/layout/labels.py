@@ -378,6 +378,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         return not collision_details(candidate, side)[0]
 
     obstructions: list[LabelSlotObstruction] = []
+    remembered_overflow: tuple[str, LabelRect] | None = None
     for side in sides:
         geometry = geometries.get(side) if geometries is not None else None
         side_size = geometry.size if geometry is not None else size
@@ -512,6 +513,12 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                     if clear(candidate, side):
                         return LabelPlacement(side, candidate, search_count=count,
                                               canonical_obstructions=tuple(obstructions))
+                    # Reuse this hard-filter-safe candidate only if normal and
+                    # canonical visible placement fail; never start another search.
+                    if (remembered_overflow is None and overflow == "visible-overflow"
+                            and candidate_filter is not None
+                            and (visible_fallback_side is None or side == visible_fallback_side)):
+                        remembered_overflow = (side, candidate)
             next_index = tangent_index + 1
             if next_index < len(tangents):
                 next_tangent = tangents[next_index]
@@ -537,6 +544,10 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             except ValueError as exc:
                 if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
                     raise
+        if remembered_overflow is not None:
+            side, candidate = remembered_overflow
+            return LabelPlacement(side, candidate, True, count,
+                                  canonical_obstructions=tuple(obstructions))
         raise _label_error("E_PRESENTATION_LABEL_UNPLACEABLE", "visible fallback candidates",
                            sides=(visible_fallback_side,) if visible_fallback_side is not None else sides,
                            size=size, anchor=anchor, bounds=bounds)
