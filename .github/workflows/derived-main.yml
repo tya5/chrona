@@ -66,7 +66,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: |
-          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$EXPECTED_SHA" \
-            -f state=success -f context=derived-ready \
-            -f description="derived-main passed on this exact commit" \
-            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          publish() {
+            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$EXPECTED_SHA" \
+              -f state=success -f context=derived-ready \
+              -f description="derived-main passed on this exact commit" \
+              -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          }
+          # One retry for a transient API error (e.g. "unexpected end of JSON input").
+          publish || { echo "status publish failed; retrying once" >&2; sleep 5; publish; }

@@ -73,7 +73,7 @@ def prepare_project_command(
     if command["baseRevision"] != base:
         return _prepared_rejection(command, "E_AUTHORING_BASE_REVISION", base)
     candidate = deepcopy(current)
-    refusal = _apply(candidate, command)
+    refusal = _apply(candidate, command, canonical_path.parent)
     if refusal is not None:
         code, details = refusal
         return PreparedFileMutation(files={}, result_revision=None, result=_rejected(command, code, base, details=details))
@@ -122,7 +122,8 @@ def verify_project_receipt(
 _MAPPING_MEMBERS = {
     "setObject": ("objects", "object"), "setCalendar": ("calendars", "calendar"),
     "setEntity": ("entities", "entity"), "setFieldRole": ("fieldRoles", "binding"),
-    "setAnnotation": ("annotations", "annotation"),
+    "setAnnotation": ("annotations", "annotation"), "setPeriod": ("periods", "period"),
+    "setScenario": ("scenarios", "scenario"),
 }
 """Command type -> (Project member it upserts into, payload key that holds the value)."""
 
@@ -132,9 +133,11 @@ def _key(command: dict[str, Any]) -> str:
     return command["payload"]["role" if command["type"] == "setFieldRole" else "id"]
 
 
-def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, list[str]] | None:
+def _apply(candidate: dict[str, Any], command: dict[str, Any], base_dir: Path | None = None) -> tuple[str, list[str]] | None:
     """Edit ``candidate`` in place; return ``(code, details)`` when the command itself is refused."""
     payload, command_type = command["payload"], command["type"]
+    if command_type in ("setExtension", "removeExtension"):
+        return _apply_extension(candidate, command, base_dir)
     if command_type == "setAnnotation":
         annotation = payload["annotation"]
         anchor = annotation.get("anchor") if isinstance(annotation, dict) else None
@@ -173,7 +176,7 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
                 return refusal
         if (refusal := _place(table, _key(command), deepcopy(payload[value_key]), payload.get("before"), "/payload/before", member)):
             return refusal
-        return None
+        return _scenario_refusal(candidate, _key(command)) if command_type == "setScenario" else None
     if command_type == "setRelation":
         relations = candidate.get("relations")
         if relations is not None and not isinstance(relations, list):
@@ -208,6 +211,12 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
             return "E_PROJECT_RELATION_MISSING", [
                 f"/payload/id: the Project has no relation with id {relation_id!r}"
                 + (f"; its relation ids are {known[:200]}" if known else "; only a relation that declares an id can be removed")]
+        named = [f"scenario {name!r} (relations.remove)" for name, scenario in (candidate.get("scenarios") or {}).items()
+                 if isinstance(scenario, dict) and isinstance(scenario.get("relations"), dict)
+                 and relation_id in (scenario["relations"].get("remove") or ())]
+        if named:
+            return "E_PROJECT_RELATION_REFERENCED", [
+                f"/payload/id: relation {relation_id!r} is still removed by {'; '.join(named[:MAX_ROWS])}; change those first"]
         relations[:] = [item for item in relations if not (isinstance(item, dict) and item.get("id") == relation_id)]
         if not relations:
             del candidate["relations"]
@@ -257,6 +266,83 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
         del objects[object_id]
         return None
     return "E_PROJECT_COMMAND", [f"/type: unsupported command type {command_type!r}"]
+
+
+def _scenario_refusal(candidate: dict[str, Any], scenario_id: str) -> tuple[str, list[str]] | None:
+    """Resolve the scenario that was just written: an overlay that names a missing object or relation is refused at its pointer."""
+    from chrona.core.scenarios import ScenarioError, resolve_scenario
+
+    try:
+        resolve_scenario(candidate, scenario_id)
+    except ScenarioError as error:
+        found = error.diagnostic
+        head = f"/scenarios/{scenario_id}"
+        pointer = "/payload/scenario" + found.path[len(head):] if found.path.startswith(head) else "/payload/scenario"
+        return found.id, [f"{pointer}: {found.message}"]
+    return None
+
+
+def _extension_id(item: Any) -> str | None:
+    """The package id an ``extensions`` entry declares (a legacy bare string is its own id)."""
+    if isinstance(item, str):
+        return item
+    return item.get("packageId") if isinstance(item, dict) and isinstance(item.get("packageId"), str) else None
+
+
+def _extension_index(extensions: list[Any], package_id: str) -> int | None:
+    return next((i for i, item in enumerate(extensions) if _extension_id(item) == package_id), None)
+
+
+def _apply_extension(candidate: dict[str, Any], command: dict[str, Any], base_dir: Path | None) -> tuple[str, list[str]] | None:
+    """``setExtension`` and ``removeExtension``: ``extensions`` is a list keyed by each entry's ``packageId``."""
+    payload, package_id = command["payload"], command["payload"]["packageId"]
+    extensions = candidate.get("extensions")
+    if extensions is not None and not isinstance(extensions, list):
+        return "E_PROJECT_COMMAND", ["/payload: the Project's extensions member is not a list; fix the file first"]
+    index = _extension_index(extensions or [], package_id)
+    if command["type"] == "removeExtension":
+        if index is None:
+            known = ", ".join(str(_extension_id(item)) for item in (extensions or []))
+            return "E_PROJECT_EXTENSION_MISSING", [
+                f"/payload/packageId: the Project declares no extension {package_id!r}" + (f"; its extensions are {known[:200]}" if known else "")]
+        users = _extension_users(candidate, extensions[index], base_dir)
+        if users:
+            return "E_PROJECT_EXTENSION_REFERENCED", [
+                f"/payload/packageId: extension {package_id!r} is still used by {'; '.join(users[:MAX_ROWS])}; change those first"]
+        del extensions[index]
+        if not extensions:
+            del candidate["extensions"]
+        return None
+    extension = deepcopy(payload["extension"])
+    if _extension_id(extension) != package_id:
+        return "E_PROJECT_COMMAND", [f"/payload/extension/packageId: it must equal the command's packageId {package_id!r}"]
+    if extensions is None:
+        extensions = []
+        if (refusal := _place(candidate, "extensions", extensions, payload.get("memberBefore"), "/payload/memberBefore", "Project member")):
+            return refusal
+    if index is not None:
+        extensions[index] = extension
+    elif payload.get("index", len(extensions)) > len(extensions):
+        return "E_PROJECT_COMMAND", [f"/payload/index: the Project has {len(extensions)} extensions, so a new one cannot be inserted at {payload['index']}"]
+    else:
+        extensions.insert(payload.get("index", len(extensions)), extension)
+    return None
+
+
+def _extension_users(project: Mapping[str, Any], declaration: Any, base_dir: Path | None) -> list[str]:
+    """Objects whose ``type`` is a profile the extension package defines (or the package id itself)."""
+    from chrona.extensions.profiles import resolve_local_extension_manifests
+
+    package_id = _extension_id(declaration)
+    profiles: set[str] = {package_id} if package_id else set()
+    if isinstance(declaration, dict):
+        manifest = declaration.get("resource")
+        if manifest is None and base_dir is not None:
+            manifest = resolve_local_extension_manifests({"extensions": [declaration]}, base_dir)[0].get(package_id)
+        defined = manifest.get("profiles") if isinstance(manifest, dict) else None
+        profiles |= {name for name in defined if isinstance(name, str)} if isinstance(defined, dict) else set()
+    return [f"object {object_id!r} (type {item['type']})" for object_id, item in (project.get("objects") or {}).items()
+            if isinstance(item, dict) and item.get("type") in profiles]
 
 
 def _place(table: dict[str, Any], key: str, value: Any, before: str | None, pointer: str, label: str) -> tuple[str, list[str]] | None:
@@ -314,7 +400,7 @@ def _entity_users(project: Mapping[str, Any], entity_id: str) -> list[str]:
 
 
 def _no_users(project: Mapping[str, Any], key: str) -> list[str]:
-    """A field role and an annotation are named by nothing else inside the Project file."""
+    """A field role, an annotation, a period and a scenario are named by nothing else inside the Project file."""
     return []
 
 
@@ -322,8 +408,10 @@ _REMOVALS = {
     "removeEntity": ("entities", "entity", "E_PROJECT_ENTITY_MISSING", "E_PROJECT_ENTITY_REFERENCED", _entity_users),
     "removeFieldRole": ("fieldRoles", "field role", "E_PROJECT_FIELD_ROLE_MISSING", "", _no_users),
     "removeAnnotation": ("annotations", "annotation", "E_PROJECT_ANNOTATION_MISSING", "", _no_users),
+    "removePeriod": ("periods", "period", "E_PROJECT_PERIOD_MISSING", "", _no_users),
+    "removeScenario": ("scenarios", "scenario", "E_PROJECT_SCENARIO_MISSING", "", _no_users),
 }
-"""Command type -> (member, label, missing code, referenced code, referrers). A field role and an annotation have no
+"""Command type -> (member, label, missing code, referenced code, referrers). A field role, an annotation, a period and a scenario have no
 referrer inside the Project file (a View binds roles outside it), so they are never refused as referenced."""
 
 
@@ -378,13 +466,23 @@ def _referrers(project: Mapping[str, Any], object_id: str) -> list[str]:
         anchor = annotation.get("anchor") if isinstance(annotation, dict) else None
         if isinstance(anchor, dict) and anchor.get("object") == object_id:
             found.append(f"annotation {name!r} (anchor)")
+    for name, period in (project.get("periods") or {}).items():
+        for side in ("start", "end"):
+            boundary = period.get(side) if isinstance(period, dict) else None
+            if isinstance(boundary, dict) and boundary.get("object") == object_id:
+                found.append(f"period {name!r} ({side})")
+    for name, scenario in (project.get("scenarios") or {}).items():
+        overrides = scenario.get("objects") if isinstance(scenario, dict) else None
+        if isinstance(overrides, dict) and object_id in overrides and overrides[object_id] is None:
+            found.append(f"scenario {name!r} (objects.{object_id} removal)")
     return found
 
 
 # --- the inverse -----------------------------------------------------------------------------------------------
 
 _REMOVE_OF = {"setObject": "removeObject", "setCalendar": "removeCalendar", "setEntity": "removeEntity",
-              "setFieldRole": "removeFieldRole", "setAnnotation": "removeAnnotation"}
+              "setFieldRole": "removeFieldRole", "setAnnotation": "removeAnnotation",
+              "setPeriod": "removePeriod", "setScenario": "removeScenario"}
 _SET_OF = {removal: setter for setter, removal in _REMOVE_OF.items()}
 
 
@@ -442,6 +540,18 @@ def _inverse_edit(current: Mapping[str, Any], candidate: Mapping[str, Any], comm
         if (placed := _member_before(current, candidate, member)) is not None:
             restored["memberBefore"] = placed
         return setter, restored
+    if command_type in ("setExtension", "removeExtension"):
+        extensions = current.get("extensions") if isinstance(current.get("extensions"), list) else []
+        package_id = payload["packageId"]
+        index = _extension_index(extensions, package_id)
+        if command_type == "setExtension":
+            if index is not None:
+                return "setExtension", {"packageId": package_id, "extension": json_value(extensions[index])}
+            return "removeExtension", {"packageId": package_id}
+        restored = {"packageId": package_id, "extension": json_value(extensions[index]), "index": index}
+        if (placed := _member_before(current, candidate, "extensions")) is not None:
+            restored["memberBefore"] = placed
+        return "setExtension", restored
     relations = current.get("relations") if isinstance(current.get("relations"), list) else []
     if command_type == "setRelation":
         relation = payload["relation"]
@@ -484,6 +594,10 @@ def _own_location(candidate: Mapping[str, Any], command: dict[str, Any]) -> tupl
     if command_type in _MAPPING_MEMBERS:
         member, value_key = _MAPPING_MEMBERS[command_type]
         return f"/{member}/{_key(command)}", f"/payload/{value_key}"
+    if command_type == "setExtension":
+        extensions = candidate.get("extensions")
+        index = _extension_index(extensions, command["payload"]["packageId"]) if isinstance(extensions, list) else None
+        return (f"/extensions/{index}", "/payload/extension") if index is not None else None
     return None
 
 

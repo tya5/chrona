@@ -1,0 +1,21 @@
+import copy, sys
+sys.path.insert(0, "tests/unit/chrona/presentation/model")
+import test_wording_tables as t
+orig = t.wording_catalog
+def mutated():
+    c = {k: dict(v) for k, v in orig().items()}
+    c["en-US"]["marker.probeNew"] = "probe"
+    return c
+t.wording_catalog = mutated
+try:
+    t.test_a_lower_case_en_us_value_is_only_a_named_fragment_or_unit_symbol()
+    print("NO FAILURE (guard missing)")
+except AssertionError as e:
+    print("guard fails as required:", str(e).splitlines()[0][:160])
+def listed_gone():
+    c = {k: dict(v) for k, v in orig().items()}; c["en-US"]["missing.unknown"] = "Unknown"; return c
+t.wording_catalog = listed_gone
+try:
+    t.test_a_lower_case_en_us_value_is_only_a_named_fragment_or_unit_symbol(); print("NO FAILURE")
+except AssertionError:
+    print("guard also fails when a listed key stops being lower case")

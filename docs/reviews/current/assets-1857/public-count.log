@@ -1,0 +1,9 @@
+$ git log --first-parent --format="%h %p %s" -3 9d6e31a90
+9d6e31a90 e110e5037 Unsupported Theme role property error lists the properties the role accepts (Refs #1854) (#1859)
+e110e5037 441b17407 0d8acfc1c Merge pull request #1861 from tya5/reviewer/1857-default-delta-format
+441b17407 c027baad7 docs: literal acceptance review for #1813 (Refs #1813) (#1860)
+$ git diff --stat 441b17407 e110e5037 -- examples  (empty = #1861 edited no example)
+$ git ls-tree -r --name-only e110e5037 examples | grep -c "generated/.*\.svg$"
+50
+$ gh api repos/tya5/chrona/commits/e110e5037.../check-runs -f check_name=derived-main
+derived-main completed success https://github.com/tya5/chrona/actions/runs/39520010879/job/118961269276

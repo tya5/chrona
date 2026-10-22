@@ -282,10 +282,19 @@ message says so and names the revision. Additive; no result version change.
   profiles outside the Project file, so nothing inside it can still name a role and an unbound role reads as absent,
   Spec 06 §6.2); `setProjectMeta {title?, calendar?}` replaces the given `project` header members, `null` removes
   one, the Project `id` cannot change and a `calendar` must exist (Core reference rule). `removeObject` now also
-  refuses an object that an annotation anchors on. Members deliberately without a command (`version`, `periods`,
-  `scenarios`, `extensions`) are listed with the reason in `tests/unit/chrona/app/test_project_command_coverage.py`,
-  which fails when a Project schema member is neither covered nor listed. The `type` enum grows without a version
-  change.
+  refuses an object that an annotation anchors on, a period boundary references or a scenario removes
+  (`E_PROJECT_OBJECT_REFERENCED`), and `removeRelation {id}` refuses a relation a scenario's `relations.remove` lists
+  (`E_PROJECT_RELATION_REFERENCED`). #1920 completes the member table: `setExtension {packageId, extension}` upserts
+  the `extensions` entry with that `packageId` (a list member: `extension.packageId` must equal it, otherwise
+  `E_PROJECT_COMMAND`; `index` places a new entry; resolution of a `path` declaration is the Core extension check at
+  `/payload/extension/...`); `removeExtension {packageId}` (`E_PROJECT_EXTENSION_MISSING`, and
+  `E_PROJECT_EXTENSION_REFERENCED` while an object `type` is a profile the package defines); `setPeriod {id, period}` /
+  `removePeriod {id}` (`E_PROJECT_PERIOD_MISSING`) upsert `periods.<id>`, a boundary that names an object endpoint is
+  checked by the Core period rule; `setScenario {id, scenario}` / `removeScenario {id}` (`E_PROJECT_SCENARIO_MISSING`)
+  upsert `scenarios.<id>` and resolve the overlay, so a removal of a missing object or relation is refused at
+  `/payload/scenario/...` with the resolver's `E_SCENARIO_*` code. Only `version` has no command (the format tag is a
+  constant); `tests/unit/chrona/app/test_project_command_coverage.py` fails when a Project schema member is neither
+  covered nor listed. The `type` enum grows without a version change.
 - The transaction is the one of Spec51 §4.2 (`transact_authoring_command`): the lock, the compare-and-set on
   `baseRevision` (`E_AUTHORING_BASE_REVISION` with `expectedRevision`), the replay ledger (same `commandId` and request
   returns the first result with `replayed: true` and `revisionIsCurrent`; the same id for another request is
