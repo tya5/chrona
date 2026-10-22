@@ -202,6 +202,12 @@ failures use the existing failed envelope. Diagnostics identify command fields
 (`/baseRevision`, `/commandId`, `/target/path`) or the workspace/command path as appropriate.
 Command/result versions remain v0.1; the new tool changes the tool-set version.
 
+A replay is distinguishable from a fresh application (#1892 row 3): the retained `authoringResult` carries
+`replayed: true` and `revisionIsCurrent` (whether `resultRevision` is still the workspace revision), and a fresh
+application carries neither. `E_AUTHORING_COMMAND_ID_REUSE` states that the first command was applied: its
+`authoringResult` row has `firstApplied: true`, `appliedRevision` and `revisionIsCurrent`, and the MCP diagnostic
+message says so and names the revision. Additive; no result version change.
+
 ### 2.4 Workspace lifecycle (#1725)
 
 - `create_workspace {directory, project, preset?}` initializes the Spec51

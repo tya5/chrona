@@ -168,8 +168,14 @@ Both ordinary and materializing commands take the existing workspace OS lock.
 Under it, recover a pending transaction, look up a receipt, then perform fresh
 base comparison, preparation and publication. Exact accepted retries return
 the original `authoring-command-result/v0.1` without writes, even after later
-commands. The result gains no replay flag. Same ID with a different canonical
-request/target is `E_AUTHORING_COMMAND_ID_REUSE`.
+commands. A replay is marked (#1892 row 3): the retained result gains
+`replayed: true` and `revisionIsCurrent`, true when its `resultRevision` equals
+the workspace revision observed now. Both are absent from a fresh application and
+from the receipt. Same ID with a different canonical request/target is
+`E_AUTHORING_COMMAND_ID_REUSE`; because only an applied command leaves a receipt,
+its diagnostic carries `firstApplied: true`, `appliedRevision` and
+`revisionIsCurrent` and its detail says the first command was applied. The
+fields are additive and optional, so the result version stays v0.1.
 
 Append-only receipts live in a workspace-adjacent private directory, with hashed
 command-ID filenames (SHA-256 of the exact UTF-8 ID, never a raw path); they retain the canonical request, request/workspace

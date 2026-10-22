@@ -879,8 +879,9 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "materializePresentationPreset {directory?}. Get baseRevision from create_workspace/workspace_revision "
         "or the last authoringResult.resultRevision. Inverse edits revert source changes at a new revision. "
         "All paths stay inside the server workspace. Requires --allow-write; no approval step. "
-        "A stale baseRevision is rejected without writing. A durable receipt returns the exact first accepted "
-        "result for the same commandId and request; reusing that ID with another request is rejected. "
+        "A stale baseRevision is rejected without writing. A durable receipt returns the first accepted "
+        "result for the same commandId and request with replayed true and revisionIsCurrent; reusing that ID with "
+        "another request is rejected and says the first command was applied. "
         "Returns authoringResult, with status ok when accepted or rejected with typed diagnostics.",
         _workspace_command_schema(),
         _output_schema({"authoringResult": {"type": "object",

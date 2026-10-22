@@ -134,5 +134,5 @@ def test_replace_that_commits_then_raises_still_returns_and_replays_acceptance(t
     accepted = _apply(path, command)
     assert accepted["status"] == "accepted"
     assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["project"]["tasks"][0]["title"] == "Changed"
-    assert _apply(path, command) == accepted
+    assert _apply(path, command) == accepted | {"replayed": True, "revisionIsCurrent": True}
     assert not persistence._transaction_marker(path).exists()
