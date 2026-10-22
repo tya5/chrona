@@ -106,17 +106,27 @@ def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(mo
     def capture(layout_request, *, prepared=None):
         preflight_scale = layout_request.fixed_lane_preflight.scale
         composition = original(layout_request, prepared=prepared)
-        compositions.append((preflight_scale, composition.placement))
+        compositions.append((layout_request, preflight_scale, composition.placement))
         return composition
 
     monkeypatch.setattr(builder, "compose_surface_layout", capture)
-    render_review(request)
+    rendered = render_review(request)
 
-    assert len(compositions) == 1
-    preflight_scale, placement = compositions[0]
-    assert preflight_scale is placement.scale
+    # Each rejected joint-source realization is isolated in a fresh request;
+    # preflight and final geometry share one completed scale within that trial.
+    trial_ids = [id(layout_request) for layout_request, _, _ in compositions]
+    assert trial_ids and len(trial_ids) == len(set(trial_ids))
+    for _, preflight_scale, placement in compositions:
+        assert preflight_scale is placement.scale
+        assert placement.scale is not None
+    # The last composition is the accepted trial returned to the adapter.
+    placement = compositions[-1][2]
     scale = placement.scale
-    assert scale is not None
+    scene_slots = {slot.source: slot for slot in rendered.surface.slots}
+    for slot in placement.slots:
+        completed = scene_slots[slot.source_ref]
+        assert completed.bounds == pytest.approx((float(slot.bounds.inline), float(slot.bounds.block),
+                                                   float(slot.bounds.inline_size), float(slot.bounds.block_size)))
     first_tier = sorted(
         (shape for shape in placement.shapes
          if shape.placement_id.startswith("axis-band-rect:0:")),
@@ -326,9 +336,13 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     parts["view"]["body"]["window"] = {
         "mode": "explicit", "start": "2026-01-05", "end": "2026-03-01"}
     source = sr.bunched_project()
-    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"],
-        [sr.candidate("plot-near", connector="leader"),
-         sr.candidate("plot-no-tail", connector="none")])
+    annotation_slot = {"kind": "slot", "source": "annotations"}
+    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"], [
+        sr.candidate("plot-near", connector="leader"),
+        sr.candidate("plot-no-tail", connector="none"),
+        sr.candidate("rail-card", region=annotation_slot, search_kind="row-aligned", connector="none"),
+        sr.candidate("terminal-list", region=annotation_slot, search_kind="row-aligned", connector="none"),
+    ])
     rendered = sr.render(tmp_path, source, presentation=parts)
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics

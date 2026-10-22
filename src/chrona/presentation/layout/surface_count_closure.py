@@ -13,9 +13,10 @@ from chrona.presentation.layout.model import CountDependentHeadingFitError, Layo
 from chrona.presentation.layout.slot_heading import compile_slot_heading_programs, source_has_content
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_completion import SurfaceLayoutComposition
+from chrona.presentation.layout.surface_source_closure import complete_source_render_plan
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
-from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan, SurfaceRenderPlanInput, prepare_surface_render_plan
+from chrona.presentation.layout.surface_render_plan import PreparedSurfaceRenderPlan, SurfaceRenderPlanInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.projection import ReviewProjection
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -144,8 +145,7 @@ def complete_surface_render_plan(seed: CountReadInput, *, initial: PreparedSurfa
     """Accept the highest consistent count, or one ordinary completion when no late read exists."""
     value = seed.value
     if not seed.active:
-        plan = initial if initial is not None else prepare_surface_render_plan(value)
-        composition = _compose(value, plan)
+        plan, composition = complete_source_render_plan(value, _compose, initial=initial)
         receipts = composition.placement.narrative_receipts if value.view.surface == "table-timeline" else ()
         projection = _with_count(value, len(receipts))
         return CompletedSurfaceRenderPlan(plan, projection, composition, (CountTrial(None, "ordinary", len(receipts)),))
@@ -159,8 +159,7 @@ def complete_surface_render_plan(seed: CountReadInput, *, initial: PreparedSurfa
         candidate = replace(value, projection=_with_count(value, count),
                             progress=value.progress.buffered(events.append) if value.progress is not None else None)
         try:
-            plan = prepare_surface_render_plan(candidate)
-            composition = _compose(candidate, plan)
+            plan, composition = complete_source_render_plan(candidate, _compose)
         except FigureTextReadError as error:
             failure = error.failure
             if (not isinstance(failure, CountTextError) or failure.supported_range is None

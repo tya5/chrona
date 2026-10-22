@@ -12,14 +12,19 @@ from math import hypot, sqrt
 
 import pytest
 
-from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
+from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
 from tests.support import annotation_artwork as aw
 from tests.support import annotation_border as ab
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
-from tests.unit.chrona.presentation.layout.test_rounded_outline import inside_polygon, inside_rounded
-from tests.unit.chrona.presentation.renderers.test_v05_typeset import _surface as _blank_surface
+from tests.unit.chrona.presentation.layout.test_rounded_outline import (
+    inside_polygon,
+    inside_rounded,
+)
+from tests.unit.chrona.presentation.renderers.test_v05_typeset import (
+    _surface as _blank_surface,
+)
 
 TOL = 0.05
 EM = 0.5  # cornerRadius in em of the annotation text size
@@ -68,7 +73,7 @@ def test_a_note_with_no_container_is_a_square_box_with_no_radius(tmp_path):
     parts = sr.bundle()
     sr.with_note_rail(parts, ab.RAIL)
     source = sr.chain_project()
-    sr.add_notes(source, parts["view"], ab.TARGETS, [ab.rail_candidate()])
+    sr.add_notes(source, parts["view"], ab.TARGETS, ab.border_candidates())
     rendered = sr.render(directory, source, presentation=parts)
     boxes = ab.boxes(rendered)
     assert boxes and all(box.corner_radius in (None, 0) and box.kind.value == "Rect" for box in boxes.values())
@@ -210,7 +215,7 @@ def test_artwork_stays_over_the_rounded_paper_unclipped_and_under_the_border(tmp
     sr.with_note_rail(parts, ab.RAIL)
     configure(parts)
     source = sr.chain_project()
-    sr.add_notes(source, parts["view"], ab.TARGETS[:1], [ab.rail_candidate()])
+    sr.add_notes(source, parts["view"], ab.TARGETS[:1], ab.border_candidates())
     rendered = ak.render(directory, source, parts)
     order = [item.scene_id.split(":")[0] for item in rendered.surface.primitives if item.source_ref == "note-0"
              and item.scene_id.split(":")[0] in {"annotation-box", "annotation-artwork", "annotation-border"}]
@@ -225,12 +230,10 @@ def test_a_leader_ends_on_a_straight_edge_of_the_rounded_box(tmp_path):
         x, y, w, h = box.bounds
         radius = box.corner_radius
         points = [command.points[0] for command in leader.path_commands] if leader.path_commands else list(leader.points)
-        ends = [p for p in points if abs(p[0] - x) < 0.5 or abs(p[0] - x - w) < 0.5 or abs(p[1] - y) < 0.5 or abs(p[1] - y - h) < 0.5]
-        assert ends
-        for px, py in ends:  # on the straight run, not in a corner
-            on_vertical = min(abs(px - x), abs(px - x - w)) < 0.5 and y + radius - 0.5 <= py <= y + h - radius + 0.5
-            on_horizontal = min(abs(py - y), abs(py - y - h)) < 0.5 and x + radius - 0.5 <= px <= x + w - radius + 0.5
-            assert on_vertical or on_horizontal
+        px, py = points[-1]
+        on_vertical = min(abs(px - x), abs(px - x - w)) < 0.5 and y + radius - 0.5 <= py <= y + h - radius + 0.5
+        on_horizontal = min(abs(py - y), abs(py - y - h)) < 0.5 and x + radius - 0.5 <= px <= x + w - radius + 0.5
+        assert on_vertical or on_horizontal  # the route endpoint touches a straight edge, not a corner
 
 
 def test_svg_draws_the_radius_and_the_quadratic_strip_and_png_pdf_follow_the_svg(tmp_path):

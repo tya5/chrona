@@ -213,9 +213,14 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):
     _materialize_fixture_example("controller-z", "annotations", tmp_path / "annotations", tmp_path / "staging")
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
-    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
+    for identifier in ("architecture-callout", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact
         assert f'data-scene-id="annotation-text:{identifier}"' in artifact
+    # The View declares a rail-then-suppress fallback for this highlight. Its
+    # terminal list is a completed visible representation, not a box.
+    assert 'data-scene-id="annotation-list:evb-highlight"' in artifact
+    assert "Board arrival decision." in artifact
+    assert 'data-scene-id="annotation-box:evb-highlight"' not in artifact
     for identifier in ("architecture-callout", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-leader:{identifier}"' in artifact
     # Completed route and tail envelopes now leave this callout a safe place;

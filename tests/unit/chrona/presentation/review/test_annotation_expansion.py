@@ -102,11 +102,28 @@ def test_explicit_reference_overrides_automatic_and_keeps_original_order():
     assert [entry.value["id"] for entry in result] == ["second", "first", "another", "gamma-note"]
     assert result[0].value["placement"] == {"side": "start", "alignment": "end"}
     assert result[0].anchor_source_ref == "/body/annotations/0/anchor"
+    assert result[0].placement_source_ref == "/body/annotations/0/placement"
+    assert replace(result[0], placement_source_ref="/body/annotationPlacement/note") == result[0]
+    assert "placement_source_ref" not in repr(result[0])
 
 
 def test_explicit_missing_placement_inherits_whole_purpose_policy():
     parsed = view(annotations=[explicit(placement=False)])
     assert parsed.annotations[0]["placement"] == POLICY["note"]["placement"]
+    expanded = expand_annotations(parsed, {}, projection(item("task")))
+    assert expanded[0].placement_source_ref == "/body/annotationPlacement/note"
+
+
+def test_automatic_annotation_retains_the_policy_source_not_a_fake_view_ordinal():
+    expanded = expand_annotations(view(), {"alpha": note("task")}, projection(item("task")))
+    assert expanded[0].placement_source_ref == "/body/annotationPlacement/note"
+
+
+def test_explicit_candidate_policy_retains_its_authored_field_pointer():
+    annotation = explicit(placement=False)
+    annotation["candidates"] = [sr.candidate("plot", connector="none")]
+    expanded = expand_annotations(view(annotations=[annotation]), {}, projection(item("task")))
+    assert expanded[0].placement_source_ref == "/body/annotations/0/candidates"
 
 
 def test_missing_placement_without_opt_in_remains_schema_invalid():
@@ -118,7 +135,7 @@ def test_explicit_missing_policy_is_a_typed_declared_source_failure():
     with pytest.raises(ContractError) as error:
         view(policy={}, annotations=[explicit(placement=False)])
     assert error.value.diagnostic_id == "E_PRESENTATION_ANNOTATION_POLICY_MISSING"
-    assert error.value.source_ref == "/body/annotations/0"
+    assert error.value.source_ref == "/body/annotationPlacement/note"
 
 
 def test_automatic_missing_policy_is_not_silently_skipped():

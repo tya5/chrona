@@ -4,6 +4,7 @@ from xml.etree import ElementTree as ET
 
 import pytest
 
+from tests.support import annotation_border as ab
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
 
@@ -43,9 +44,7 @@ def _render(path, *, title=SUBJECT, kind_title="RISK", kind_secondary="WARNING",
         container["tiltDegrees"] = [tilt]
     theme["values"]["note-container"] = {"type": "annotationContainer", "value": container}
     theme["roles"]["annotation-note-box"]["annotationContainer"] = "note-container"
-    parts["view"]["body"]["annotations"][0]["candidates"] = [sr.candidate(
-        "rail", region={"kind": "slot", "source": "annotations"}, search_kind="row-aligned",
-        connector="none")]
+    parts["view"]["body"]["annotations"][0]["candidates"] = ab.border_candidates()
     parts["view"]["body"]["visibility"]["annotations"]["marker"] = "none"
     if not rail:
         parts["view"]["body"]["annotations"][0]["candidates"] = [sr.candidate("plot", connector="none")]
@@ -85,16 +84,23 @@ def test_filled_subject_wraps_and_keeps_actual_svg_viewport(tmp_path, tilt, stam
 
 @pytest.mark.parametrize("options", [{"title": "X" * 40}, {"forbid": True}, {"fill": False}, {"rail": False}])
 def test_nonwrappable_or_content_heading_keeps_natural_line(tmp_path, options):
-    _, box, heading, _ = _render(tmp_path, **options)
+    result, box, heading, _ = _render(tmp_path, **options)
     assert len(heading.text_layout.lines) == 1
     assert box.bounds[2] > 300
+    if options.get("rail", True):
+        assert any(warning.payload.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
+                   and warning.payload.get("placementId") == "annotation-heading:view-n0"
+                   and warning.payload.get("behaviour") == "visible-overflow"
+                   for warning in result.warning_records)
 
 
 def test_short_filled_heading_remains_one_line(tmp_path):
-    _, box, heading, body = _render(tmp_path, title="Short")
+    result, box, heading, body = _render(tmp_path, title="Short")
     assert len(heading.text_layout.lines) == 1
     assert box.bounds[2] == pytest.approx(300)
     assert body.bounds[1] >= heading.bounds[1] + heading.bounds[3] - 0.01
+    assert not any(warning.payload.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
+                   for warning in result.warning_records)
 
 
 def test_filled_kind_title_and_secondary_wrap_with_their_own_role_metrics(tmp_path):
@@ -142,9 +148,9 @@ def test_kind_title_stays_single_line_when_note_is_content_sized_or_wrap_forbidd
     ("報告 REPORT", "警告 WARNING", True),
 ])
 def test_fitting_heading_keeps_scene_and_svg_bytes(tmp_path, monkeypatch, kind_title, kind_secondary, cjk):
-    from chrona.presentation.layout import surface_annotations
+    from chrona.presentation.layout import annotation_card_measurement
     with monkeypatch.context() as context:
-        context.setattr(surface_annotations, "complete_kind_frame", lambda measure, **kwargs: measure)
+        context.setattr(annotation_card_measurement, "complete_kind_frame", lambda measure, **kwargs: measure)
         before, *_ = _render(tmp_path / "before", title="Short", kind_title=kind_title,
                              kind_secondary=kind_secondary, cjk=cjk)
     after, *_ = _render(tmp_path / "after", title="Short", kind_title=kind_title,

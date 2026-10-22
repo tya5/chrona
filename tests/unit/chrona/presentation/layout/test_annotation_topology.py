@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from itertools import islice
 
+import pytest
+
 from chrona.presentation.layout.annotation_topology import (
     _sparse_elbows, local_route_bounds, route_annotation_candidate,
     strict_route_candidates, visible_segments,
@@ -11,6 +13,8 @@ from chrona.presentation.layout.annotation_search import _route_crosses_rule_onc
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
+from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.annotation_topology import rail_leader_crossings
 
 
 def test_opposite_side_axial_interleave_reaches_y_first_before_four_bend_routes() -> None:
@@ -130,6 +134,20 @@ def test_bridge_never_exempts_text_or_rule() -> None:
                                     for a, b in visible_segments(trial))
 
 
+@pytest.mark.parametrize("obstacle_class", ["leader-route", "rule"])
+def test_next_leader_cannot_cross_completed_leader_or_bar(obstacle_class: str) -> None:
+    index = SurfaceObstacleIndex()
+    segment = ((5, 0), (5, 10)) if obstacle_class == "leader-route" else ((0, 5), (10, 5))
+    index.add(SurfaceObstacle("already-completed", obstacle_class, "annotations",
+                              ObstacleSegment(*segment)))
+
+    trial = route_annotation_candidate(
+        (0, 5), (10, 5), index, bounds=(0, 0, 10, 10), max_bends=0,
+        max_detour_ratio=1, dense=False)
+
+    assert trial is None
+
+
 def test_local_corridor_excludes_slide_perimeter() -> None:
     assert local_route_bounds((1200, 300, 20, 20), (24, 1130, 312, 20),
                               (336, 1140), (0, 0, 1600, 1200)) == (180.0, 144.0, 1376.0, 1200)
@@ -159,3 +177,111 @@ def test_collinear_retrace_and_duplicates_never_create_zero_length_legs():
         assert candidates
         assert all(path[0] == start and path[-1] == end
                    and all(a != b for a, b in zip(path, path[1:])) for path in candidates)
+
+
+def test_rail_leader_crossings_reports_all_obstacle_classes_and_stroke_envelope() -> None:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("a-mark", "mark", "plot", ObstacleRect(4, 11, 6, 12)))
+    index.add(SurfaceObstacle("known-port", "port", "plot", ObstacleRect(2, 9, 3, 11)))
+    index.add(SurfaceObstacle("unexpected-port", "port", "plot", ObstacleRect(3, 9, 4, 11)))
+    index.add(SurfaceObstacle("b-rule", "rule", "plot",
+                              ObstacleSegment((8, 0), (8, 20), stroke_width=1)))
+    index.add(SurfaceObstacle("c-text", "text", "annotations", ObstacleRect(12, 9, 13, 11)))
+    index.add(SurfaceObstacle("d-leader", "leader-route", "annotations",
+                              ObstacleSegment((16, 0), (16, 20), stroke_width=1)))
+    # The mark's lower edge is 1.5px from the centerline; the leader stroke
+    # radius is 2px, so its painted envelope crosses it.
+    found = rail_leader_crossings(((0, 10), (20, 10)), index, stroke_width=4,
+                                  source=ConnectorEgress("end", (0, 10), (0, 10), ()),
+                                  target_id="note", port_ids=("known-port",))
+    assert tuple(item.placement_id for item in found) == (
+        "a-mark", "b-rule", "c-text", "d-leader", "unexpected-port")
+
+
+def test_rail_leader_crossings_exempts_expected_source_and_terminal_target_legs() -> None:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("source-host", "mark", "plot", ObstacleRect(0, 0, 10, 10)))
+    index.add(SurfaceObstacle("annotation-box:target-box", "annotation-box", "annotations",
+                              ObstacleRect(20, 0, 30, 10)))
+    source = ConnectorEgress("end", (10, 5), (10, 5), ("source-host",))
+    assert rail_leader_crossings(((10, 5), (20, 5)), index, stroke_width=1,
+                                 source=source, target_id="target-box") == ()
+
+    # Returning through the source host on a later leg is not covered by the
+    # first-leg egress exemption.
+    reentry = rail_leader_crossings(((10, 5), (15, 5), (5, 5), (20, 5)), index,
+                                    stroke_width=1, source=source, target_id="target-box")
+    assert tuple(item.placement_id for item in reentry) == ("source-host",)
+
+    # A tilted frame's exact final extension may end inside its indexed AABB.
+    # Only the supplied target-to-tip segment is exempt; the preceding routed
+    # leg still must terminate at the AABB boundary without traversing it.
+    tilted_contact = rail_leader_crossings(
+        ((10, 5), (20, 5), (22, 5)), index, stroke_width=1,
+        source=source, target_id="target-box", target_extension=((20, 5), (22, 5)))
+    assert tilted_contact == ()
+
+    # Ending at the far edge after traversing the target interior is not a
+    # terminal port contact, even though it is the last and only leg.
+    through_target = rail_leader_crossings(((10, 5), (30, 5)), index, stroke_width=0,
+                                           source=source, target_id="target-box")
+    assert tuple(item.placement_id for item in through_target) == ("annotation-box:target-box",)
+
+    # Target-box contact on a nonterminal leg remains reportable.
+    earlier_target = rail_leader_crossings(((10, 5), (30, 5), (30, 15)), index,
+                                           stroke_width=0, source=source,
+                                           target_id="target-box")
+    assert tuple(item.placement_id for item in earlier_target) == ("annotation-box:target-box",)
+
+
+def test_rail_leader_crossings_allows_diagonal_outward_source_boundary_contact_only() -> None:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("source", "mark", "plot", ObstacleRect(0, 0, 10, 10)))
+    source = ConnectorEgress("end", (10, 5), (10, 5), ("source",))
+    diagonal_outward = rail_leader_crossings(((10, 5), (12, 3)), index, stroke_width=1,
+                                             source=source, target_id="note")
+    assert diagonal_outward == ()
+
+    # Departing from an interior point is not authorized just because the
+    # segment has a positive component along the declared side.
+    interior_source = ConnectorEgress("end", (5, 5), (5, 5), ("source",))
+    interior = rail_leader_crossings(((5, 5), (12, 3)), index, stroke_width=0,
+                                     source=interior_source, target_id="note")
+    assert tuple(item.placement_id for item in interior) == ("source",)
+
+
+def test_rail_leader_crossings_exact_corridor_exemption_is_first_leg_only() -> None:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("anchor", "mark", "plot", ObstacleRect(0, 0, 10, 10)))
+    index.add(SurfaceObstacle("comparison", "mark", "plot", ObstacleRect(10, 0, 12, 10)))
+    source = ConnectorEgress("end", (10, 5), (12, 5), ("anchor",),
+                             corridor_host_ids=("comparison",))
+    corridor_points = ((10, 5), (12, 5), (20, 5))
+    assert rail_leader_crossings(corridor_points, index, stroke_width=0,
+                                 source=source, target_id="note") == ()
+
+    # If the completed polyline re-enters a corridor host after the exact
+    # initial corridor, that later contact is reportable.
+    reentry = rail_leader_crossings(((10, 5), (12, 5), (15, 5), (11, 5), (20, 5)),
+                                    index, stroke_width=0, source=source,
+                                    target_id="note")
+    assert tuple(item.placement_id for item in reentry) == ("comparison",)
+
+
+def test_rail_leader_crossings_reads_late_additions_and_deduplicates_stably() -> None:
+    index = SurfaceObstacleIndex()
+    path = ((0, 10), (20, 10), (0, 10))
+    # Warm the index's prepared collision selection before adding more content.
+    index.collisions(ObstacleSegment((0, 0), (1, 0)))
+    index.add(SurfaceObstacle("z-route", "dependency-route", "timeline",
+                              ObstacleSegment((10, 0), (10, 20))))
+    index.add(SurfaceObstacle("a-rule", "rule", "timeline",
+                              ObstacleSegment((5, 0), (5, 20))))
+    first = rail_leader_crossings(path, index, stroke_width=0,
+                                 source=ConnectorEgress("end", (0, 10), (0, 10), ()),
+                                 target_id="note")
+    second = rail_leader_crossings(path, index, stroke_width=0,
+                                  source=ConnectorEgress("end", (0, 10), (0, 10), ()),
+                                  target_id="note")
+    assert first == second
+    assert tuple(item.placement_id for item in first) == ("a-rule", "z-route")

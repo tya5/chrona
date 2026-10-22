@@ -167,17 +167,18 @@ def test_the_text_is_bounded_by_the_room_the_tab_and_its_gap_leave_and_the_sourc
 
     text = _by_id(tabbed)["group-header:bus"]
     assert _by_id(plain)["group-header:bus"].text == title and "…" not in title
-    assert text.text.endswith("…") and text.text.startswith("Title Title")
+    assert text.text == title and "…" not in text.text
     assert text.bounds[2] <= room
     if position == "end":
         assert text.bounds[0] + text.bounds[2] <= _by_id(tabbed)["group-tab:bus"].bounds[0] - 10
     else:
-        assert text.bounds[0] + text.bounds[2] <= header[0] + header[2]
-    assert _ellipsized(tabbed) == {f"group-header:{owner}" for owner in OWNERS}
+        assert text.bounds[0] >= (_by_id(tabbed)["group-tab:bus"].bounds[0]
+                                  + _by_id(tabbed)["group-tab:bus"].bounds[2] + 10)
+    assert _ellipsized(tabbed) == set()
     assert _ellipsized(plain) == set()
 
 
-def test_layout_marks_the_shortened_header_text_ellipsized_and_the_others_fit(tmp_path, monkeypatch):
+def test_layout_marks_the_full_header_text_fit_and_the_others_fit(tmp_path, monkeypatch):
     from chrona.presentation.layout import surface_count_closure as v05_builder
 
     placed = []
@@ -191,17 +192,20 @@ def test_layout_marks_the_shortened_header_text_ellipsized_and_the_others_fit(tm
     header = _headers(_render(tmp_path, _parts(declare=False), _source(title)))["bus"]
     (tmp_path / "tab").mkdir()
     placed.clear()
-    _render(tmp_path / "tab", _parts(inline=header[2] - 200, gap=10), _source(title))
+    tabbed_result = _render(tmp_path / "tab", _parts(inline=header[2] - 200, gap=10), _source(title))
     (tmp_path / "fit").mkdir()
     placed_tab = placed[-1]
-    _render(tmp_path / "fit", _parts(), _source())
+    fit_result = _render(tmp_path / "fit", _parts(), _source())
 
     def dispositions(composition) -> set[tuple[str, str]]:
         return {(item.placement_id, item.overflow) for item in composition.placement.text
                 if item.placement_id.startswith("group-header:")}
 
-    assert {overflow for _, overflow in dispositions(placed_tab)} == {"ellipsized"}
+    assert {overflow for _, overflow in dispositions(placed_tab)} == {"fit"}
+    assert all(_by_id(tabbed_result)[f"group-header:{owner}"].text == title for owner in OWNERS)
+    assert _ellipsized(tabbed_result) == set()
     assert {overflow for _, overflow in dispositions(placed[-1])} == {"fit"}
+    assert _ellipsized(fit_result) == set()
 
 
 def test_a_header_without_a_tab_keeps_its_text_whatever_its_width(tmp_path):
@@ -254,7 +258,7 @@ def test_a_presentation_of_band_has_no_header_and_so_no_tab(tmp_path):
     ({"block": 0}, "tabBlockSize"),
     ({"block": 40}, "tabBlockSize"),
     ({"gap": -1}, "tabGap"),
-    ({"inline": 1520, "gap": 8}, "tabInlineSize"),
+    ({"inline": 10000, "gap": 8}, "tabInlineSize"),
 ])
 def test_a_tab_that_cannot_be_drawn_is_a_declaration_error_naming_the_role_and_property(tmp_path, knobs, prop):
     with pytest.raises(RenderFailed) as caught:

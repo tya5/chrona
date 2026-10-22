@@ -12,6 +12,7 @@ from chrona.presentation.layout.canvas_viewport import auto_block_size_warning, 
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence
 from chrona.presentation.layout.model import (LayoutError, Rect)
+from chrona.presentation.layout.source_use import CompletedSourceUse
 from chrona.presentation.layout.pattern_placement import (PatternedPlacement, PatternPathCommand, complete_pattern_placement)
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.surface_backgrounds import (
@@ -46,6 +47,7 @@ class SurfaceLayoutComposition:
     review_rows: tuple[Any, ...]
     track_placements: tuple[TrackPlacement, ...]
     mark_absences: tuple[MarkFacetAbsence, ...] = ()
+    source_use: CompletedSourceUse | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +90,7 @@ class SurfaceCompletionContext:
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     narrative_receipts: tuple[NarrativeReceipt, ...] = ()
+    source_use: CompletedSourceUse | None = None
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -495,4 +498,5 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  lane_window_row_absences=lane_window_row_absences,
                                  narrative_receipts=context.narrative_receipts)
     placement.assert_valid()
-    return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
+    return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences),
+                                    context.source_use)

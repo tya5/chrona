@@ -47,7 +47,7 @@ def test_surface_pipeline_reuses_the_completed_native_preparation_once(tmp_path,
 
     def observe_prepare(request, *, natural=None):
         result = prepare(request, natural=natural)
-        prepared.append(result)
+        prepared.append((request, result))
         return result
 
     def observe_compose(request, *, prepared=None):
@@ -57,9 +57,19 @@ def test_surface_pipeline_reuses_the_completed_native_preparation_once(tmp_path,
     monkeypatch.setattr(use_case, "prepare_surface_content", observe_prepare)
     monkeypatch.setattr(v05_builder, "compose_surface_layout", observe_compose)
     rendered = _render(tmp_path, heading={"text": "Notes"})
-    assert len(prepared) == len(forwarded) == 1
-    assert forwarded[0][1] is prepared[0]
-    assert forwarded[0][0] is prepared[0].inline.request
+    prepared_by_identity = {id(result): result for _, result in prepared}
+    forwarded_by_identity = {}
+    for request, result in forwarded:
+        assert result is not None
+        assert id(result) not in forwarded_by_identity
+        forwarded_by_identity[id(result)] = (request, result)
+    assert prepared_by_identity
+    assert all(request is result.inline.request for request, result in forwarded_by_identity.values())
+    # Native preparation is completed once in each joint trial; plan wrapping
+    # may replace its request with the finalized manifest before composition.
+    assert len(prepared) == len(forwarded) == len(prepared_by_identity) == len(forwarded_by_identity)
+    assert len({id(request) for request, _ in prepared}) == len(prepared)
+    assert len({id(request) for request, _ in forwarded}) == len(forwarded)
     assert b">NOTES<" in rendered.artifact.content
 
 

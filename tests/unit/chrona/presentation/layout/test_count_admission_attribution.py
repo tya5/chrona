@@ -111,5 +111,12 @@ def test_unrelated_table_floor_keeps_its_detector_and_diagnostic():
 def test_source_budget_closure_failure_is_not_reclassified_as_count_fit():
     before = engine.SourceInlineBudget("copy", "/node", D(2), D(2), "heading")
     with pytest.raises(LayoutError) as caught:
-        engine.validate_source_inline_budgets({"copy": before}, {"copy": replace(before, ceiling=D(1))})
+        engine.validate_source_inline_budgets({"copy": before}, {"copy": replace(before, ceiling=D(3))})
     assert type(caught.value) is LayoutError
+
+
+def test_heading_budget_may_narrow_below_its_probe_without_a_count_fit_failure():
+    before = engine.SourceInlineBudget("copy", "/node", D(2), D(2), "heading")
+
+    engine.validate_source_inline_budgets(
+        {"copy": before}, {"copy": replace(before, available_inline=D(1), ceiling=D(1))})

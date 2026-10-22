@@ -10,6 +10,7 @@ from xml.etree import ElementTree
 
 import pytest
 
+from chrona.usecases.render_review import RenderFailed
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
@@ -19,12 +20,21 @@ RAIL_CANDIDATE = sr.candidate(
     "rail", region={"kind": "slot", "source": "annotations"},
     search_kind="row-aligned", connector="leader",
 )
+RAIL_CARD_CANDIDATE = sr.candidate(
+    "rail-card", region={"kind": "slot", "source": "annotations"},
+    search_kind="row-aligned", connector="none",
+)
+TERMINAL_LIST_CANDIDATE = sr.candidate(
+    "terminal-list", region={"kind": "slot", "source": "annotations"},
+    search_kind="row-aligned", connector="none",
+)
 
 
 def _parts(*, rail: int = 300, heading_size: int = 15, fill: bool = True,
-           rail_block: int | None = None, wide_heading: bool = False):
-    source = sr.chain_project(groups=5)
-    targets = ("g0-t1", "g2-t2", "g4-t1")
+           rail_block: int | None = None, wide_heading: bool = False,
+           terminal_list: bool = True):
+    source = sr.chain_project(groups=1, per_group=3)
+    targets = ("g0-t0", "g0-t1", "g0-t2")
     source["annotations"] = {
         f"n{index}": {"kind": kind, "text": f"Synthetic {kind} annotation {index} with a few words.",
                       "anchor": {"object": target}}
@@ -38,7 +48,9 @@ def _parts(*, rail: int = 300, heading_size: int = 15, fill: bool = True,
     view = parts["view"]["body"]
     view["visibility"]["annotations"]["marker"] = "none"
     for annotation in view["annotations"]:
-        annotation["candidates"] = [deepcopy(RAIL_CANDIDATE)]
+        annotation["candidates"] = [deepcopy(RAIL_CANDIDATE), deepcopy(RAIL_CARD_CANDIDATE)]
+        if terminal_list:
+            annotation["candidates"].append(deepcopy(TERMINAL_LIST_CANDIDATE))
     theme = parts["theme"]["body"]
     for kind in theme["annotationKinds"].values():
         kind["title"] = "{label} {secondary}"
@@ -98,7 +110,8 @@ def test_overlap_oracle_accepts_roundoff_but_rejects_a_serializable_overlap():
 
 def _assert_boxes_do_not_overlap(rendered):
     boxes = _prims(rendered, "annotation-box")
-    assert len(boxes) == 3
+    list_records = _prims(rendered, "annotation-list")
+    assert len(boxes) + len(list_records) == 3
     values = list(boxes.values())
     for index, box in enumerate(values):
         assert all(not _overlap(box, other) for other in values[index + 1:])
@@ -110,15 +123,17 @@ def _assert_boxes_do_not_overlap(rendered):
             if item.scene_id.startswith("annotation-kind-bar:")]
     for item in (*texts, *bars):
         note_id = item.scene_id.split(":", 1)[1].split(":", 1)[0]
+        if note_id not in boxes:
+            continue
         x, y, width, height = item.bounds
         box_x, box_y, box_width, box_height = boxes[note_id].bounds
         assert x >= box_x - 0.01 and y >= box_y - 0.01
         assert x + width <= box_x + box_width + 0.01
         assert y + height <= box_y + box_height + 0.01
-    children = (*texts, *bars)
-    for index, item in enumerate(children):
+    occupied = [*boxes.values(), *list_records.values()]
+    for index, item in enumerate(occupied):
         note_id = item.scene_id.split(":", 1)[1].split(":", 1)[0]
-        for other in children[index + 1:]:
+        for other in occupied[index + 1:]:
             other_note = other.scene_id.split(":", 1)[1].split(":", 1)[0]
             if note_id != other_note:
                 assert not _overlap(item, other)
@@ -127,13 +142,31 @@ def _assert_boxes_do_not_overlap(rendered):
 def _assert_svg_contains_notes(rendered):
     root = ElementTree.fromstring(rendered.artifact.content)
     scene_ids = {node.attrib.get("data-scene-id") for node in root.iter()}
-    assert {f"annotation-box:view-n{index}" for index in range(3)} <= scene_ids
-    assert {f"annotation-heading:view-n{index}" for index in range(3)} <= scene_ids
+    rendered_ids = {f"view-n{index}" for index in range(3)}
+    for annotation_id in rendered_ids:
+        if f"annotation-box:{annotation_id}" in scene_ids:
+            assert f"annotation-heading:{annotation_id}" in scene_ids
+        else:
+            assert f"annotation-list:{annotation_id}" in scene_ids
+    primitives = {item.scene_id: item for item in rendered.surface.primitives}
+    expected = {
+        "view-n0": "Synthetic risk annotation 0 with a few words.",
+        "view-n1": "Synthetic note annotation 1 with a few words.",
+        "view-n2": "Synthetic risk annotation 2 with a few words.",
+    }
+    for annotation_id, body in expected.items():
+        text = primitives.get(f"annotation-text:{annotation_id}") or primitives[
+            f"annotation-list:{annotation_id}"]
+        assert text.text == body
+        svg_text = next(node for node in root.iter()
+                        if node.attrib.get("data-scene-id") == text.scene_id)
+        assert "".join("".join(svg_text.itertext()).split()) == "".join(body.split())
 
 
 @pytest.mark.parametrize("heading_size", [15, 17, 20, 22])
 def test_fill_note_boxes_with_kind_headings_remain_complete_in_svg(tmp_path, heading_size):
     _, rendered = _render(tmp_path, heading_size=heading_size, fill=True)
+    assert len(_prims(rendered, "annotation-box")) == 3
     _assert_boxes_do_not_overlap(rendered)
     _assert_svg_contains_notes(rendered)
 
@@ -141,16 +174,41 @@ def test_fill_note_boxes_with_kind_headings_remain_complete_in_svg(tmp_path, hea
 @pytest.mark.parametrize("wide_heading", [False, True])
 def test_content_sized_short_and_wide_headings_do_not_overlap_when_rail_is_narrow(tmp_path, wide_heading):
     _, rendered = _render(tmp_path, rail=180, heading_size=22, fill=False, wide_heading=wide_heading)
-    boxes = _prims(rendered, "annotation-box")
-    assert len(boxes) == 3
     _assert_boxes_do_not_overlap(rendered)
     if wide_heading:
-        assert any(box.bounds[2] > 180 for box in boxes.values())
+        # The rail explicitly allows visible overflow. A clear full-width
+        # natural card retains its heading instead of silently becoming a list.
+        boxes = _prims(rendered, "annotation-box")
+        assert boxes and any(box.bounds[2] > 180 for box in boxes.values())
+        assert any(warning.code == "W_LAYOUT_LABEL_OVERFLOW"
+                   and warning.source_ref in boxes
+                   for warning in rendered.surface.fit_warnings)
     _assert_svg_contains_notes(rendered)
 
 
-def test_marker_none_exhausted_rail_stacks_full_boxes_and_reports_overflow(tmp_path):
-    _, rendered = _render(tmp_path, heading_size=22, fill=True, rail_block=150)
+def test_marker_none_exhausted_rail_stacks_full_records_and_reports_overflow(tmp_path):
+    _, rendered = _render(tmp_path, heading_size=22, fill=True, rail_block=150,
+                          terminal_list=True)
     _assert_boxes_do_not_overlap(rendered)
     _assert_svg_contains_notes(rendered)
-    assert any(warning.code == "W_LAYOUT_LABEL_OVERFLOW" for warning in rendered.surface.fit_warnings)
+    assert any(warning.code == "W_LAYOUT_LABEL_OVERFLOW" and warning.source_ref == "view-n2"
+               for warning in rendered.surface.fit_warnings)
+
+
+def test_a_rail_without_visible_overflow_uses_its_declared_list_for_wide_cards(tmp_path):
+    source, parts = _parts(rail=180, heading_size=22, fill=False, wide_heading=True)
+    sr.find_node(parts["layout"], "annotations")["overflow"] = "clip-optional"
+    rendered = ak.render(tmp_path, source, parts)
+    assert not _prims(rendered, "annotation-box")
+    assert len(_prims(rendered, "annotation-list")) == 3
+    _assert_boxes_do_not_overlap(rendered)
+    _assert_svg_contains_notes(rendered)
+
+
+def test_exhausted_rail_without_declared_terminal_destination_is_rejected(tmp_path):
+    source, parts = _parts(rail=1, rail_block=1, terminal_list=False)
+    for annotation in parts["view"]["body"]["annotations"]:
+        annotation["candidates"] = [deepcopy(RAIL_CANDIDATE)]
+    with pytest.raises(RenderFailed) as caught:
+        ak.render(tmp_path, source, parts)
+    assert caught.value.code == "E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED"

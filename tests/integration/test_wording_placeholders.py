@@ -78,7 +78,7 @@ def test_a_slot_template_follows_ja_jp(tmp_path):
                                                                 "block": "header-row"}
     _template_counts(parts)
     source = sr.chain_project()
-    sr.add_notes(source, parts["view"], base.TARGETS, [base._rail_candidate()], words=3)
+    sr.add_notes(source, parts["view"], base.TARGETS, base._rail_candidates(), words=3)
     rendered = sr.render(tmp_path, source, presentation=parts, locale="ja-JP",
                          font_metrics_path=_font_descriptor(tmp_path))
     assert _by_id(rendered)[HEADING].text.startswith("注記 ")

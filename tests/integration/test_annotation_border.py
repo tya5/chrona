@@ -8,6 +8,7 @@ nothing stands between a border and the box edge, a border composes with tilt, a
 """
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,7 @@ TOL = 0.01
 
 
 def _render(tmp_path, border, **kwargs):
+    kwargs.setdefault("candidates", ab.border_candidates())
     return ab.render_notes(tmp_path, border, **kwargs)
 
 
@@ -61,8 +63,9 @@ def test_two_sides_meet_in_a_mitre_and_each_spans_its_full_side(tmp_path):
 
 
 def test_a_width_zero_side_emits_no_primitive_and_no_space(tmp_path):
-    with_zero = _render(tmp_path, {"start": {"width": 3}, "end": {"width": 0}, "top": {"width": 0}}, name="a")
-    plain = _render(tmp_path, {"start": {"width": 3}}, name="b")
+    with_zero = _render(tmp_path, {"start": {"width": 3}, "end": {"width": 0}, "top": {"width": 0}},
+                        name="a", words=0)
+    plain = _render(tmp_path, {"start": {"width": 3}}, name="b", words=0)
     assert set(ab.strips(with_zero)) == {"start"}
     assert {k: v.bounds for k, v in ab.boxes(with_zero).items()} == {k: v.bounds for k, v in ab.boxes(plain).items()}
 
@@ -102,18 +105,20 @@ def test_nothing_stands_between_the_border_and_the_box_edge(tmp_path):
 
 def test_a_theme_without_a_border_is_byte_identical(tmp_path):
     plain = _render(tmp_path, None, name="a", inset=ab.INSET)
-    bare = ab.render_notes(tmp_path, None, name="b", inset=ab.INSET, ink_roles=())
+    bare = ab.render_notes(tmp_path, None, name="b", inset=ab.INSET, ink_roles=(),
+                           candidates=ab.border_candidates())
     assert bare.artifact.content == plain.artifact.content
     assert not ab.prims(plain, "annotation-border")
 
 
 def test_the_ink_of_each_side_is_its_own_role_and_the_kind_paint_uses_the_kind_colour(tmp_path):
-    rendered = _render(tmp_path, {"start": {"width": 3}, "end": {"width": 3}, "top": {"width": 3}, "bottom": {"width": 3}})
+    rendered = _render(tmp_path, {"start": {"width": 3}, "end": {"width": 3}, "top": {"width": 3},
+                                  "bottom": {"width": 3}}, words=0)
     fills = {side: item.paint.fill.upper() for side, item in ab.strips(rendered).items()}
     assert len(set(fills.values())) == 3  # start and bottom share a colour binding, end and top differ
     assert fills["start"] == fills["bottom"] and fills["end"] != fills["start"] != fills["top"]
     kind = _render(tmp_path, {"start": {"width": 3, "paint": "kind"}, "top": {"width": 2}}, kind_ink=True, name="k",
-                   configure=lambda parts: ak.with_kind_theme(parts, bar=False, label_fill="text"))
+                   configure=lambda parts: ak.with_kind_theme(parts, bar=False, label_fill="text"), words=0)
     strips = ab.strips(kind)
     assert strips["start"].paint.fill.upper() == ak.KIND_COLORS["kind-report"]
     assert strips["top"].paint.fill.upper() == fills["top"]  # an ink side is never recoloured by the kind
@@ -121,10 +126,10 @@ def test_the_ink_of_each_side_is_its_own_role_and_the_kind_paint_uses_the_kind_c
 
 def test_a_declared_side_with_no_ink_role_is_a_theme_error(tmp_path):
     with pytest.raises(Exception) as caught:
-        _render(tmp_path, {"start": {"width": 3}}, ink_roles=())
+        _render(tmp_path, {"start": {"width": 3}}, ink_roles=(), words=0)
     assert "E_THEME_ROLE_REQUIRED" in str(caught.value)
     with pytest.raises(Exception) as caught:
-        _render(tmp_path, {"start": {"width": 3, "paint": "kind"}}, name="k")
+        _render(tmp_path, {"start": {"width": 3, "paint": "kind"}}, name="k", words=0)
     assert "E_THEME_ROLE_REQUIRED" in str(caught.value)
 
 
@@ -190,7 +195,7 @@ def test_the_paint_order_is_box_artwork_border_kind_frame_text(tmp_path):
     sr.with_note_rail(parts, ab.RAIL)
     configure(parts)
     source = sr.chain_project()
-    sr.add_notes(source, parts["view"], ab.TARGETS[:1], [ab.rail_candidate()])
+    sr.add_notes(source, parts["view"], ab.TARGETS[:1], ab.border_candidates(), words=0)
     rendered = ak.render(directory, source, parts)
     order = [item.scene_id.split(":")[0] for item in sorted(
         (item for item in rendered.surface.primitives if item.source_ref == "note-0"
@@ -203,9 +208,18 @@ def test_the_paint_order_is_box_artwork_border_kind_frame_text(tmp_path):
 
 
 def test_a_leader_still_ends_on_the_outer_edge_of_the_bordered_box(tmp_path):
-    rendered = _render(tmp_path, {"start": {"width": 8}}, inset=ab.INSET)
-    plain = _render(tmp_path, None, inset=ab.INSET, name="p")
+    def source():
+        return sr.project({"a": sr.span("a", date(2026, 2, 2), 30, title="Task")})
+
+    leader = ab.rail_candidate()
+    rendered = _render(tmp_path, {"start": {"width": 8}}, inset=ab.INSET, name="bordered-leader",
+                       source=source(), targets=["a"], candidates=[leader], words=0, beside_timeline=True)
+    plain = _render(tmp_path, None, inset=ab.INSET, name="plain-leader", source=source(), targets=["a"],
+                    candidates=[leader], words=0, beside_timeline=True)
+    assert len(ab.boxes(rendered)) == 1
+    assert len(ab.prims(rendered, "annotation-leader")) == 1
     for note, box in ab.boxes(rendered).items():
+        assert set(ab.strips(rendered, note)) == {"start"}
         leader = ab.prims(rendered, "annotation-leader").get(note) or next(
             item for item in rendered.surface.primitives if item.source_ref == note and "leader" in item.scene_id)
         x, y, w, h = box.bounds

@@ -137,8 +137,15 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     scheme["body"]["categories"]["launch"] = scheme["body"]["categories"]["bus"]
     scheme_path = tmp_path / "collide.yaml"
     scheme_path.write_text(yaml.safe_dump(scheme, sort_keys=False), encoding="utf-8")
+    # This control is about scale diagnostics, not note placement. Keep the
+    # public View's axes/scale intact while explicitly excluding its unrelated
+    # crowded callouts from this synthetic colour collision witness.
+    view = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    view["body"]["visibility"]["annotations"] = {"mode": "none", "marker": "none"}
+    view_path = tmp_path / "scale-only-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     capsys.readouterr()
-    _render(tmp_path, monkeypatch, "collide", "--view", str(ROOT / "examples/halcyon-1/views/02-programme-board.yaml"),
+    _render(tmp_path, monkeypatch, "collide", "--view", str(view_path),
             "--theme", str(ROOT / "examples/halcyon-1/themes/wallboard.yaml"), "--scheme", str(scheme_path),
             "--layout", str(ROOT / "examples/halcyon-1/layouts/wallboard.yaml"))
     output = capsys.readouterr()

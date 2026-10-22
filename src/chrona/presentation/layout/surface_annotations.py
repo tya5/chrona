@@ -1,76 +1,126 @@
 """Owns annotation boxes, text, visuals and connectors; reads completed marks, rows and slots and searches the one obstacle index."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
+import json
 from datetime import date
 from decimal import Decimal
-from collections.abc import Mapping
-from math import isfinite
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple
 
+from chrona.presentation.layout.annotation_artwork import place_artwork
+from chrona.presentation.layout.annotation_border import NO_BORDER, place_border
+from chrona.presentation.layout.annotation_card_measurement import (
+    AnnotationCardMeasurement,
+    _physical_radius_clearance,
+    measure_annotation_card,
+    suffix_block_capacity,
+)
+from chrona.presentation.layout.annotation_kind_frame import (
+    EMPTY_FRAME,
+    place_kind_frame,
+)
+from chrona.presentation.layout.annotation_search import (
+    nearest_free_box,
+    nearest_free_routed_tail_box,
+    nearest_free_tail_box,
+)
+from chrona.presentation.layout.annotation_tilt import (
+    nearest_boundary_point,
+    polygon_commands,
+    rotate_commands,
+    rotate_shape,
+    rotate_text,
+    rotated_corners,
+)
+from chrona.presentation.layout.annotation_topology import (
+    AnnotationRouteTrial,
+    local_route_bounds,
+    rail_leader_crossings,
+    route_annotation_candidate,
+    visible_segments,
+)
+from chrona.presentation.layout.annotations import (
+    AnnotationBox,
+    annotation_rail_candidates,
+    nearest_box_port,
+    project_annotation_box,
+    resolve_annotation_anchor,
+)
+from chrona.presentation.layout.balloon_geometry import balloon_outline
+from chrona.presentation.layout.comparison_marks import ComparisonMark
+from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
+from chrona.presentation.layout.labels import (
+    LabelPlacement,
+    LabelRect,
+    place_label,
+)
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.model.theme_tokens import ThemeTokenError
+from chrona.presentation.model.placement_candidates import PlacementCandidate
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect,
+    ObstacleSegment,
+    SurfaceObstacle,
+    SurfaceObstacleIndex,
+    SurfaceObstacleQueryOverlay,
+)
+from chrona.presentation.layout.ports import (
+    ConnectorEgress,
+    coincident_endpoint_port_ids,
+    connector_egress_candidates,
+    physical_host_neighbors,
+)
+from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.layout.rounded_outline import (
+    clamp_radius,
+    commands_points,
+    resolve_corner_radius,
+    rounded_rect_commands,
+)
+from chrona.presentation.layout.routing import (
+    relation_route_quality,
+)
+from chrona.presentation.layout.source_use import SourceConsumer, SourceDestinationActivation, SourceTextUse
+from chrona.presentation.layout.surface_geometry import (
+    HOSTED_TEXT_PAINT_ORDER,
+)
+from chrona.presentation.layout.surface_geometry import (
+    bounds_from_rect as _bounds,
+)
+from chrona.presentation.layout.surface_geometry import (
+    coordinate_for_date as _coordinate,
+)
 from chrona.presentation.layout.surface_marks import (
     folded_instance_id as _folded_instance_id,
+)
+from chrona.presentation.layout.surface_quality import (
+    CollisionDomain,
+    IconPlacement,
+    LayoutImageFill,
+    MarkPlacement,
+    NarrativeReceipt,
+    PathCommand,
+    PlacementDecision,
+    RelationPlacement,
+    RowPlacement,
+    ScalePlacement,
+    ShapePlacement,
+    SlotPlacement,
+    SurfaceLayoutRequest,
+    TextPlacement,
+    annotation_presentation,
 )
 from chrona.presentation.layout.surface_visuals import (
     measure_candidate_visuals,
 )
-from chrona.presentation.model.semantic_registry import (
-    semantic_binding)
 from chrona.presentation.layout.text import measure_text_width, place_text, wrap_text
-from chrona.presentation.layout.annotations import (
-    AnnotationBox, annotation_rail_candidates, nearest_box_port, project_annotation_box,
-    resolve_annotation_anchor,
-)
-from chrona.presentation.layout.annotation_search import (
-    largest_free_extent, least_covering_box, nearest_free_box, nearest_free_tail_box,
-    nearest_free_routed_tail_box,
-)
-from chrona.presentation.layout.annotation_artwork import place_artwork
-from chrona.presentation.layout.annotation_border import NO_BORDER, place_border, resolve_border
-from chrona.presentation.layout.rounded_outline import (
-    CORNER_CLEARANCE, clamp_radius, commands_points, resolve_corner_radius, rounded_rect_commands,
-)
-from chrona.presentation.layout.annotation_inline_size import FilledNote, fill_note, fill_target
-from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
-from chrona.presentation.model.theme_tokens import ViewerFitToken
-from chrona.presentation.layout.annotation_kind_frame import (
-    EMPTY_FRAME, KindFrameMeasure, complete_kind_frame, measure_kind_frame, place_kind_frame,
-)
-from chrona.presentation.layout.annotation_tilt import (
-    nearest_boundary_point, rotate_commands, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
-)
-from chrona.presentation.layout.balloon_geometry import balloon_outline
-from chrona.presentation.layout.labels import LabelPlacement
-from chrona.presentation.layout.annotation_topology import (
-    AnnotationRouteTrial, local_route_bounds, route_annotation_candidate, visible_segments,
-)
-from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import (
-    LabelRect, place_label,
-)
-from chrona.presentation.layout.obstacles import (
-    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
-)
-from chrona.presentation.layout.ports import (
-    ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates,
-    physical_host_neighbors,
+from chrona.presentation.layout.viewer_fit import fit_text
+from chrona.presentation.model.diagnostic_sources import (
+    DiagnosticProvenance,
+    DiagnosticSubject,
 )
 from chrona.presentation.model.placement_candidates import candidate_order
-from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.layout.routing import (
-    relation_route_quality,
-)
-from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, LayoutImageFill, ShapePlacement, SurfaceLayoutRequest,
-    NarrativeReceipt, SlotPlacement, TextPlacement, annotation_presentation,
-)
-from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
-from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
-from chrona.presentation.layout.surface_geometry import (
-    HOSTED_TEXT_PAINT_ORDER,
-    bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
-)
+from chrona.presentation.model.semantic_registry import semantic_binding
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_route_label_plan import RouteLabelPlan
@@ -79,17 +129,90 @@ if TYPE_CHECKING:
 ANNOTATION_PAINT_ORDER = 400
 
 
-class _NoteVariant(NamedTuple):
-    """One content/list candidate and its completed filled alternative."""
+class _PreparedAnnotationAnchor(NamedTuple):
+    source_index: int
+    annotation: Any
+    resolved: Any
+    matching: tuple[Any, ...]
+    folded_match: tuple[Any, Any] | None
+    anchor_bounds: LabelRect
+    anchor_y: float
+    selected_items: tuple[Any, ...]
+    anchor_host: Any
 
-    content: str
-    lines: tuple[str, ...]
-    measured_width: float
-    frame_size: tuple[float, float]
-    search_size: tuple[float, float]
-    filled: FilledNote | None
-    fill_size: tuple[float, float] | None
-    filled_kind: KindFrameMeasure
+
+def _prepare_annotation_anchors(annotations: tuple[Any, ...], *, projection: Any,
+                                review_rows: tuple[Any, ...], rows: tuple[RowPlacement, ...],
+                                scale: ScalePlacement, mark_by_id: Mapping[str, MarkPlacement]
+                                ) -> tuple[_PreparedAnnotationAnchor, ...]:
+    """Resolve source anchors once, then order physical placement by anchor y."""
+    annotation_marks = comparison_marks(projection)
+    prepared: list[_PreparedAnnotationAnchor] = []
+    for index, annotation in enumerate(annotations):
+        resolved = resolve_annotation_anchor(annotation, annotation_marks)
+        matching = [(review_row, row) for review_row, row in zip(review_rows, rows, strict=True)
+                    if any(item.object_id == resolved.object_id for item in review_row.items)]
+        anchor = annotation.anchor
+        row_id, item_id = anchor.get("rowId"), anchor.get("itemId")
+        if row_id is not None or item_id is not None:
+            matching = [(review_row, row) for review_row, row in matching
+                        if (row_id is None or review_row.row_id == row_id)
+                        and (item_id is None or any(item.item_id == item_id and item.object_id == resolved.object_id
+                                                    for item in review_row.items))]
+        folded_matches = [(folded, mark_by_id.get(f"{resolved.facet}:{_folded_instance_id(folded, folded.item)}"))
+                          for folded in getattr(projection, "folded_points", ())
+                          if folded.item.object_id == resolved.object_id]
+        if row_id is not None or item_id is not None:
+            folded_matches = [(folded, mark) for folded, mark in folded_matches
+                              if (row_id is None or row_id == f"group-header:{folded.group_id}:{folded.item.object_id}")
+                              and (item_id is None or item_id == folded.item.item_id)]
+        if len(matching) + len(folded_matches) > 1:
+            raise _anchor_failure(annotation, "anchor matches multiple rows or folded points",
+                                  code="E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS",
+                                  row_id=row_id, item_id=item_id,
+                                  match_count=len(matching) + len(folded_matches))
+        anchor_host = None
+        selected_items: tuple[Any, ...] = ()
+        folded_match = None
+        if matching:
+            anchor_bounds = annotation_anchor_bounds(
+                resolved.mark, resolved.endpoint, matching[0][1], scale,
+                source_ref=annotation.anchor_source_ref,
+                annotation_id=annotation.annotation_id)
+            selected_items = tuple(item for item in matching[0][0].items
+                                   if item.object_id == resolved.object_id
+                                   and (item_id is None or item.item_id == item_id))
+            anchor_item = selected_items[0] if selected_items else None
+            anchor_instance_id = ((f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
+                                   if projection.rows else anchor_item.object_id)
+                                  if anchor_item is not None else "")
+            anchor_host = mark_by_id.get(f"{resolved.facet}:{anchor_instance_id}")
+        elif folded_matches and folded_matches[0][1] is not None:
+            folded_match = folded_matches[0]
+            anchor_host = folded_match[1]
+            anchor_bounds = LabelRect(*_bounds(anchor_host.bounds))
+            selected_items = (folded_match[0].item,)
+        else:
+            raise _anchor_failure(annotation, "selected mark has no matching rendered row or folded point")
+        # Keep the existing synthetic anchor_bounds for candidate geometry.  Ordering
+        # is instead by the completed physical anchor: endpoint ports for temporal
+        # endpoints, mark center for body/point anchors (including folded marks).
+        if folded_match is not None:
+            physical_port = None
+        elif resolved.endpoint == "start":
+            physical_port = anchor_host.start_port
+        elif resolved.endpoint in {"finish", "end"}:
+            physical_port = anchor_host.end_port
+        else:
+            physical_port = None
+        anchor_y = (float(physical_port[1]) if physical_port is not None
+                    else float(anchor_host.bounds.block + anchor_host.bounds.block_size / 2))
+        prepared.append(_PreparedAnnotationAnchor(
+            index, annotation, resolved, tuple(matching), folded_match,
+            anchor_bounds, anchor_y, selected_items, anchor_host))
+    return tuple(sorted(
+        prepared,
+        key=lambda item: (item.anchor_y, item.source_index)))
 
 
 def _anchor_operand(value: object) -> str:
@@ -142,39 +265,6 @@ def _radius_aware_box_port(box: LabelRect, target: tuple[float, float], radius: 
     return min(ports, key=lambda port: (abs(port[0] - x) + abs(port[1] - y), ports.index(port)))
 
 
-def _capsule_axis_radius(size: float, before: float, after: float) -> float:
-    """Solve ``r = (content + max(before, kr) + max(after, kr)) / 2`` by its three linear regions."""
-    k = CORNER_CLEARANCE
-    content = max(0.0, size - before - after)
-    low, high = sorted((before, after))
-    candidates = (
-        ((content + before + after) / 2, low / k),
-        ((content + high) / (2 - k), high / k),
-        (content / (2 - 2 * k), float("inf")),
-    )
-    lower = 0.0
-    for radius, upper in candidates:
-        if lower - 1e-9 <= radius <= upper + 1e-9:
-            return max(0.0, radius)
-        lower = upper
-    return max(0.0, candidates[-1][0])
-
-
-def _physical_radius_clearance(value: Any, width: float, height: float,
-                               insets: tuple[float, float, float, float]) -> float:
-    """A finite text inset that keeps content on paper for the completed physical radius."""
-    if value == "capsule":
-        top, right, bottom, left = insets
-        radius = min(_capsule_axis_radius(width, left, right),
-                     _capsule_axis_radius(height, top, bottom))
-        return CORNER_CLEARANCE * radius
-    # The actual radius can only be clamped below the declared px value, so this
-    # requested-radius clearance is conservative for every eventual box size.
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(float(value)) or value < 0:
-        raise ValueError("Corner radius requires finite nonnegative px or capsule")
-    return CORNER_CLEARANCE * float(value)
-
-
 def _is_annotation_list_candidate(candidate: Any) -> bool:
     """Whether this selected candidate places its text in the declared note list."""
     region = candidate.region
@@ -186,6 +276,16 @@ def _is_annotation_list_candidate(candidate: Any) -> bool:
             for member in region.members
         )
     return False
+
+
+def _is_terminal_annotation_list_candidate(candidate: Any, candidates: tuple[Any, ...]) -> bool:
+    """Only the final declared slot/none candidate owns natural list completion."""
+    if not candidates or candidate is not candidates[-1]:
+        return False
+    return (candidate.region.kind == "slot"
+            and candidate.region.source == "annotations"
+            and candidate.search.kind == "row-aligned"
+            and candidate.connector.kind == "none")
 
 
 @dataclass(frozen=True)
@@ -245,6 +345,7 @@ class SurfaceAnnotationBatch:
     suppressed_callout_ids: frozenset[str]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     narrative_receipts: tuple[NarrativeReceipt, ...] = ()
+    source_consumers: tuple[SourceConsumer, ...] = ()
 
 
 def _register_balloon_tail_edges(surface_obstacles: SurfaceObstacleIndex, annotation_id: str,
@@ -269,7 +370,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
     """Place annotations, reflowing a declared note list after monotone suppressions."""
     annotations = context.request.surface_content.annotations
     if context.by_source.get("annotations") is None or not annotations:
-        return _place_annotations_once(context, frozenset(), frozenset())
+        return _place_annotations_once(context, frozenset(), frozenset(), progress_pass="annotation-leaders")
 
     suppressed_indexes: frozenset[str] = frozenset()
     suppressed_callouts: frozenset[str] = frozenset()
@@ -279,7 +380,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
     final_index: SurfaceObstacleIndex | None = None
     batch: SurfaceAnnotationBatch | None = None
 
-    for _ in range(limit):
+    for attempt in range(limit):
         working_index = original_index.copy()
 
         def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
@@ -297,7 +398,9 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
 
         working_context = replace(context, surface_obstacles=working_index,
                                    register_rect=register_rect, register_port=register_port)
-        batch = _place_annotations_once(working_context, suppressed_indexes, suppressed_callouts)
+        pass_name = "annotation-leaders" if attempt == 0 else f"annotation-leaders-reflow-{attempt}"
+        batch = _place_annotations_once(working_context, suppressed_indexes, suppressed_callouts,
+                                        progress_pass=pass_name)
         discovered_indexes = suppressed_indexes | batch.suppressed_index_ids
         discovered_callouts = suppressed_callouts | batch.suppressed_callout_ids
         if discovered_indexes == suppressed_indexes and discovered_callouts == suppressed_callouts:
@@ -345,7 +448,8 @@ def complete_route_annotations(plan: "RouteLabelPlan", context: SurfaceAnnotatio
 
 def _place_annotations_once(context: SurfaceAnnotationContext,
                             suppressed_index_ids: frozenset[str],
-                            suppressed_callout_ids: frozenset[str]) -> SurfaceAnnotationBatch:
+                            suppressed_callout_ids: frozenset[str], *,
+                            progress_pass: str = "annotation-leaders") -> SurfaceAnnotationBatch:
     """Place every annotation box, its text, visuals and connector; the obstacle index is the only shared state."""
     request, projection, layout_manifest, contract = context.request, context.projection, context.layout_manifest, context.contract
     review_rows, rows, by_source, scale = context.review_rows, context.rows, context.by_source, context.scale
@@ -372,10 +476,34 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     discovered_callout_suppressions = set(suppressed_callout_ids)
     annotation_slot = by_source.get("annotations")
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
-    rail_records: list[TextPlacement] = []
-    # Full callout footprints govern exhausted-rail completion, independently
-    # of the numbered list's ordering and its body-only text records.
-    rail_boxes: list[LabelRect] = []
+    rail_records: list[Rect] = []
+    source_consumers: list[SourceConsumer] = []
+
+    def source_treatment_witness(*, container: Any, box_border: Any, kind_theme: Any,
+                                 annotation_visuals: tuple[Any, ...],
+                                 kind_frame: Any, request: Any) -> tuple[object, ...]:
+        """Declared treatment identity, excluding resolved/dependent frame dimensions."""
+        container_witness = None
+        if container is not None:
+            artwork = tuple((item.glyph, item.slice_insets, item.unit_em, item.role,
+                             item.declaration_pointer, item.layer_index,
+                             getattr(request.icon_assets.get(item.glyph), "content_identity", None))
+                            for item in container.artwork)
+            image = request.icon_assets.get(container.image_ref) if container.image_ref else None
+            border = tuple(sorted((side, token.width, token.paint)
+                                  for side, token in (container.border or {}).items()))
+            container_witness = (container.outline, container.corner_radius, container.tail_base,
+                                 container.image_ref, getattr(image, "content_identity", None),
+                                 container.slice_insets_em, container.content_insets_em,
+                                 container.tilt_degrees, artwork, container.inline_size,
+                                 container.max_inline_em, border)
+        visual_witness = tuple(
+            (visual.source_ref, visual.ref, visual.side, icon.content_identity,
+             icon.viewport, Decimal(str(width)), Decimal(str(gap)))
+            for visual, icon, width, gap in annotation_visuals)
+        border_witness = (box_border.start, box_border.end, box_border.top,
+                          box_border.bottom, tuple(sorted((box_border.paints or {}).items())))
+        return (container_witness, border_witness, kind_theme, kind_frame, visual_witness)
 
     def add_diagnostic(value: str, annotation: Any,
                        extra_subjects: tuple[DiagnosticSubject, ...] = ()) -> None:
@@ -389,32 +517,40 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
 
     def ordered_rail_candidates(annotation: Any, resolved: Any, *, anchor_y: float,
                                 text_size: tuple[float, float], rail: LabelRect,
-                                allow_inline_overflow: bool = False) -> tuple[AnnotationBox, ...]:
+                                allow_inline_overflow: bool = False,
+                                connector_kind: str = "leader",
+                                reserve_capacity: bool = False) -> tuple[AnnotationBox, ...]:
         """Enumerate free rail boxes at or below the preceding completed list entry."""
         previous_bottom = max(
-            (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
-            default=rail.y)
-        height = text_size[1]
+            (item.block + item.block_size for item in rail_records),
+            default=annotation_slot.bounds.block)
+        suffix = (rail_capacity_below.get(annotation.annotation_id, 0.0)
+                  if reserve_capacity else 0.0)
+        latest_bottom = (annotation_slot.bounds.block + annotation_slot.bounds.block_size
+                         - Decimal(str(suffix)))
         candidates = annotation_rail_candidates(
-            annotation, resolved, anchor_y=max(anchor_y, previous_bottom + height / 2),
+            annotation, resolved, anchor_y=anchor_y,
             text_size=text_size, rail=rail, obstacles=surface_obstacles,
-            allow_inline_overflow=allow_inline_overflow)
+            allow_inline_overflow=allow_inline_overflow, connector_kind=connector_kind,
+            block_bounds=(previous_bottom, latest_bottom))
         return tuple(candidate for candidate in candidates
-                     if candidate.placement.bounds.y >= previous_bottom)
+                     if candidate.placement.bounds.y >= float(previous_bottom)
+                     and candidate.placement.bounds.bottom <= float(latest_bottom) + 1e-9)
 
     def complete_list_record(*, annotation: Any, resolved: Any, placement_id: str,
                              content: str, lines: tuple[str, ...], text_size: tuple[float, float],
                              font_size: float, typography_role: str,
-                             presentation: Any, anchor_y: float) -> tuple[TextPlacement, bool]:
+                             presentation: Any, anchor_y: float,
+                             available_inline: float) -> tuple[TextPlacement, bool]:
         """Place a finalized list record, stacking explicitly when the slot cannot fit it."""
         assert annotation_slot is not None
         rail = LabelRect(*_bounds(annotation_slot.bounds))
         previous_bottom = max(
-            (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
+            (float(item.block + item.block_size) for item in rail_records),
             default=rail.y)
         candidates = ordered_rail_candidates(
             annotation, resolved, anchor_y=anchor_y, text_size=text_size,
-            rail=rail)
+            rail=rail, connector_kind="none")
         placed: TextPlacement | None = None
         for candidate_box in candidates:
             bounds = candidate_box.placement.bounds
@@ -451,15 +587,84 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         placed = replace(placed, paint_order=ANNOTATION_PAINT_ORDER + 1)
         text.append(placed)
         register_rect(placed.placement_id, "text", "annotations", placed.bounds)
-        rail_records.append(placed)
+        rail_records.append(placed.bounds)
+        disposition = ("status" if placement_id.startswith("annotation-status:") else
+                       "summary" if placement_id.startswith("annotation-summary:") else "list")
+        source_consumers.append(SourceConsumer(
+            placement_id, disposition, placed.bounds.inline_size, placed.bounds.block_size,
+            (SourceTextUse.from_placement(placed, available_inline=Decimal(str(available_inline))),),
+            (typography_role, placed.font_family, placed.font_weight, placed.font_size,
+             placed.line_height, placed.letter_spacing, placed.text_transform,
+             placed.numeric_spacing, placed.horizontal_scale)))
         if overflow:
             visible_label_overflows.append((placed, rail))
         return placed, overflow
 
     if annotation_slot or request.surface_content.annotations:
-        annotation_marks = comparison_marks(projection)
+        prepared_anchors = _prepare_annotation_anchors(
+            request.surface_content.annotations, projection=projection,
+            review_rows=review_rows, rows=rows, scale=scale, mark_by_id=mark_by_id)
         kind_theme = None  # the Theme's kind roles, read once and only when an annotation's kind is dressed (#584)
-        for index, annotation in enumerate(request.surface_content.annotations):
+        declarations = (request.progress.routing(prepared_anchors, pass_name=progress_pass)
+                        if request.progress is not None else prepared_anchors)
+        # Prepare full Theme card geometry in physical anchor order before any
+        # rail placement. The same measurement objects feed placement below.
+        premeasured_cards: dict[str, AnnotationCardMeasurement] = {}
+        annotation_visual_cache: dict[str, tuple[Any, ...]] = {}
+        admitted_cards: list[tuple[str, float]] = []
+        if annotation_slot is not None:
+            for prepared in prepared_anchors:
+                annotation = prepared.annotation
+                annotation_id = annotation.annotation_id
+                if (annotation.purpose not in {"callout", "highlight", "note", "explanatory-arrow"}
+                        or annotation_id in suppressed_callout_ids):
+                    continue
+                intent = prepared.selected_items[0].presentation if prepared.selected_items else None
+                preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
+                candidates, _ = candidate_order(annotation.candidates, annotation.purpose,
+                                                annotation.fallback_ladder, preferred)
+                if (not candidates or candidates[0].search.kind != "row-aligned"
+                        or not _is_annotation_list_candidate(candidates[0])
+                        or _is_terminal_annotation_list_candidate(candidates[0], candidates)):
+                    continue
+                presentation = annotation_presentation(annotation.purpose)
+                body_content = (f"{annotation.number}. {annotation.content}"
+                                if annotation.number is not None else annotation.content)
+                has_index_suppression = annotation_id in suppressed_index_ids
+                list_content = (f"{body_content} (index not shown on plot)"
+                                if has_index_suppression else body_content)
+                visuals = measure_candidate_visuals(
+                    f"annotation-text:{annotation_id}", "annotation", request).visuals
+                annotation_visual_cache[annotation_id] = visuals
+                leading = geometry_sum(width + gap for visual, _, width, gap in visuals
+                                        if visual.side == "leading")
+                trailing = geometry_sum(width + gap for visual, _, width, gap in visuals
+                                        if visual.side == "trailing")
+                text_role = semantic_binding(presentation.text_semantic_id).theme_role
+                treatment = request.theme_tokens.text_treatment(text_role)
+                size, line_height = float(treatment.font_size), float(treatment.line_height)
+                metrics = metric_for(text_role)
+                available = max(1.0, float(annotation_slot.bounds.inline_size) - leading - trailing)
+                card = measure_annotation_card(
+                    annotation=annotation, index=prepared.source_index, intent=intent,
+                    body_content=body_content, list_content=list_content,
+                    has_index_suppression=has_index_suppression,
+                    annotation_visuals=visuals, annotation_leading=leading,
+                    annotation_trailing=trailing, size=size, line_height=line_height,
+                    annotation_metrics=metrics, annotation_treatment=treatment,
+                    text_available=available, request=request, metric_for=metric_for,
+                    kind_theme=kind_theme, annotation_slot=annotation_slot)
+                premeasured_cards[annotation_id] = card
+                kind_theme = card.kind_theme
+                variant = card.list_variant if has_index_suppression else card.plot_variant
+                height = (variant.filled.frame_block
+                          if card.fill_declared and variant.filled is not None
+                          else variant.frame_size[1])
+                admitted_cards.append((annotation_id, height))
+        rail_capacity_below = suffix_block_capacity(
+            tuple(admitted_cards), float(annotation_slot.bounds.block_size)) if annotation_slot else {}
+        for prepared in declarations:
+            index, annotation = prepared.source_index, prepared.annotation
             presentation = annotation_presentation(annotation.purpose)
             annotation_id, body_content = annotation.annotation_id, annotation.content
             body_content = f"{annotation.number}. {body_content}" if annotation.number is not None else body_content
@@ -467,51 +672,18 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             has_index_suppression = annotation_id in suppressed_index_ids
             list_content = (f"{body_content} (index not shown on plot)"
                             if has_index_suppression else body_content)
-            annotation_visuals = measure_candidate_visuals(
-                f"annotation-text:{annotation_id}", "annotation", request).visuals
+            annotation_visuals = annotation_visual_cache.get(annotation_id)
+            if annotation_visuals is None:
+                annotation_visuals = measure_candidate_visuals(
+                    f"annotation-text:{annotation_id}", "annotation", request).visuals
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in annotation_visuals)
             annotation_leading = geometry_sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "leading")
             annotation_trailing = geometry_sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "trailing")
-            resolved = resolve_annotation_anchor(annotation, annotation_marks)
-            matching = [(review_row, row) for review_row, row in zip(review_rows, rows, strict=True)
-                        if any(item.object_id == resolved.object_id for item in review_row.items)]
-            anchor = annotation.anchor
-            row_id, item_id = anchor.get("rowId"), anchor.get("itemId")
-            if row_id is not None or item_id is not None:
-                matching = [(review_row, row) for review_row, row in matching
-                            if (row_id is None or review_row.row_id == row_id)
-                            and (item_id is None or any(item.item_id == item_id and item.object_id == resolved.object_id for item in review_row.items))]
-            folded_matches = [(folded, mark_by_id.get(f"{resolved.facet}:{_folded_instance_id(folded, folded.item)}"))
-                              for folded in getattr(projection, "folded_points", ())
-                              if folded.item.object_id == resolved.object_id]
-            if row_id is not None or item_id is not None:
-                folded_matches = [(folded, mark) for folded, mark in folded_matches
-                                  if (row_id is None or row_id == f"group-header:{folded.group_id}:{folded.item.object_id}")
-                                  and (item_id is None or item_id == folded.item.item_id)]
-            if len(matching) + len(folded_matches) > 1:
-                raise _anchor_failure(annotation, "anchor matches multiple rows or folded points",
-                                      code="E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS",
-                                      row_id=row_id, item_id=item_id,
-                                      match_count=len(matching) + len(folded_matches))
-            if matching:
-                anchor_bounds = annotation_anchor_bounds(
-                    resolved.mark, resolved.endpoint, matching[0][1], scale,
-                    source_ref=annotation.anchor_source_ref,
-                    annotation_id=annotation.annotation_id)
-                selected_items = tuple(item for item in matching[0][0].items
-                                       if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
-                anchor_item = selected_items[0] if selected_items else None
-                anchor_instance_id = ((f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
-                                       if projection.rows else anchor_item.object_id)
-                                      if anchor_item is not None else "")
-                anchor_host = mark_by_id.get(f"{resolved.facet}:{anchor_instance_id}")
-            elif folded_matches and folded_matches[0][1] is not None:
-                folded, mark = folded_matches[0]
-                anchor_bounds = LabelRect(*_bounds(mark.bounds))
-                selected_items = (folded.item,)
-                anchor_host = mark
-            else:
-                raise _anchor_failure(annotation, "selected mark has no matching rendered row or folded point")
+            resolved = prepared.resolved
+            matching = prepared.matching
+            anchor_bounds = prepared.anchor_bounds
+            selected_items = prepared.selected_items
+            anchor_host = prepared.anchor_host
             as_of_side_constraint: tuple[float, str] | None = None
             if contract.time.as_of is not None and start <= contract.time.as_of < end:
                 as_of_x = _coordinate(contract.time.as_of, scale)
@@ -523,6 +695,15 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if annotation_slot is not None:
                 text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
             else:
+                if (annotation.candidates
+                        and _is_terminal_annotation_list_candidate(
+                            annotation.candidates[-1], annotation.candidates)
+                        and "annotations" not in request.inactive_declared_sources):
+                    raise LayoutError(
+                        "E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED",
+                        annotation.placement_source_ref,
+                        detail=f"annotation_id={annotation_id!r}; declared terminal list candidate "
+                               "requires the annotations slot")
                 # A plot/content-only candidate list declares its own text
                 # width bound (#466); an annotation with no annotations slot
                 # must declare at least one bounded nearest-free/adjacent
@@ -530,6 +711,10 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 declared_max_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
                                        if candidate.search.max_inline_em is not None), default=None)
                 if declared_max_em is None:
+                    if "annotations" in request.inactive_declared_sources:
+                        raise SourceDestinationActivation(
+                            "annotations", annotation_id,
+                            annotation.candidates[0].candidate_id if annotation.candidates else "legacy-rail")
                     raise LayoutError("E_LAYOUT_ANNOTATION_WIDTH_UNBOUNDED", f"/annotations/{index}")
                 text_available = max(1.0, declared_max_em * size - annotation_leading - annotation_trailing)
             text_width = min(text_available, max(size * 4, measure_text_width(
@@ -542,7 +727,6 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             tail_route_state_limit = tail_route_states_examined = 0
             tail_route_search_exhausted = False
             other_side_of_as_of = False
-            forced_overflow: tuple[LabelRect, tuple[float, float]] | None = None
             tail_topology: str | None = None
             kind_measure = EMPTY_FRAME
             tilt_angle = 0.0  # the Theme's deterministic tilt for this annotation's position (#584)
@@ -555,8 +739,53 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
                                    tuple[tuple[float, float], ...],
                                    tuple[tuple[float, float], ...]] | None = None
+            diagnosed_rail_candidate: PlacementCandidate | None = None
+            completed_as_list = False
 
-            def trial_leader(candidate_box: Any, rung: str
+            def complete_terminal_list_record(candidate: Any) -> None:
+                nonlocal completed_as_list
+                if annotation_slot is None:
+                    if "annotations" in request.inactive_declared_sources:
+                        raise SourceDestinationActivation(
+                            "annotations", annotation_id, candidate.candidate_id)
+                    raise LayoutError(
+                        "E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED",
+                        annotation.placement_source_ref,
+                        detail=f"annotation_id={annotation_id!r}; declared terminal list candidate "
+                               "requires the annotations slot")
+                list_text = list_content
+                available = max(1.0, float(annotation_slot.bounds.inline_size)
+                                - annotation_leading - annotation_trailing)
+                lines = wrap_text(
+                    list_text, available_inline=available, font_size=size,
+                    font_metrics=annotation_metrics,
+                    letter_spacing=float(annotation_treatment.letter_spacing),
+                    text_transform=annotation_treatment.transform)
+                measured_width = max(measure_text_width(
+                    line, font_size=size, font_metrics=annotation_metrics,
+                    letter_spacing=float(annotation_treatment.letter_spacing),
+                    text_transform=annotation_treatment.transform) for line in lines)
+                complete_list_record(
+                    annotation=annotation, resolved=resolved,
+                    placement_id=f"annotation-list:{annotation_id}",
+                    content=list_text, lines=lines,
+                    text_size=(measured_width, size * line_height * len(lines)),
+                    font_size=size, typography_role=annotation_text_role,
+                    presentation=presentation,
+                    anchor_y=prepared.anchor_y, available_inline=available)
+                placement_decisions.append(PlacementDecision(
+                    f"annotation:{annotation_id}", annotation_id, tuple(ladder),
+                    candidate.candidate_id, "placed", search_count=annotation_search_count))
+                if candidates and candidate is not candidates[0]:
+                    add_diagnostic(
+                        f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{candidate.candidate_id}",
+                        annotation)
+                if annotation.content:
+                    narrative_receipts.append(NarrativeReceipt(
+                        "annotation", annotation_id, f"annotation-list:{annotation_id}", "summary"))
+                completed_as_list = True
+
+            def trial_leader(candidate_box: Any, rung: str, declared_candidate: Any | None = None
                              ) -> tuple[ConnectorEgress, AnnotationRouteTrial,
                                         tuple[tuple[float, float], ...],
                                         tuple[tuple[float, float], ...]] | None:
@@ -623,17 +852,25 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                            for item in surface_obstacles.collisions(stub, classes=("mark",)))):
                                 continue
                         route_specs.append((source_egress, tuple(prefix), known_ports))
+                candidate_obstacle = SurfaceObstacle(
+                    f"annotation-box:{annotation_id}", "annotation-box", "annotations",
+                    ObstacleRect(candidate_bounds.x, candidate_bounds.y,
+                                 candidate_bounds.right, candidate_bounds.bottom))
+                candidate_index = SurfaceObstacleQueryOverlay(surface_obstacles, candidate_obstacle)
                 # Probe every finite sparse endpoint before spending the
                 # dense-grid budget on any one poor endpoint.
                 for dense_search, candidates in ((False, route_specs), (True, route_specs[:2])):
                     for source_egress, prefix, known_ports in candidates:
                         annotation_search_count += 1
                         trial = route_annotation_candidate(
-                            prefix[-1], target, surface_obstacles,
+                            prefix[-1], target, candidate_index,
                             bounds=route_bounds, port_ids=known_ports,
                             max_bends=layout_manifest.annotation_max_bends,
                             max_detour_ratio=layout_manifest.annotation_max_detour_ratio,
-                            allow_bridge=rung == "rail", dense=dense_search,
+                            allow_bridge=(declared_candidate is not None
+                                          and declared_candidate.connector.kind == "leader"
+                                          and _is_annotation_list_candidate(declared_candidate)),
+                            dense=dense_search,
                             connector_stroke_width=connector_stroke_width)
                         if trial is None:
                             continue
@@ -647,11 +884,6 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             container = None
             role_corner_radius = None
             box_border = NO_BORDER
-            # The box role's viewer-fit mode (#1050) is read outside the search below, whose handler reports a Layout
-            # pointer: a refused declaration keeps its own Theme pointer.
-            viewer_fit = (request.theme_tokens.viewer_fit(semantic_binding(presentation.box_semantic_id).theme_role)
-                          if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}
-                          else ViewerFitToken())
             fill_declared = used_fill = False
             filled = fill_size = None
             content_top = content_right = content_bottom = content_left = 0.0
@@ -659,161 +891,27 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
-                    wrap_declared = ((intent or {}).get("text") or {}).get("wrap") if isinstance(intent, dict) else None
-                    wrap = wrap_declared or "forbid"
-                    # A declared candidate's maxInlineEm is a text-width bound
-                    # for a plot/content search (#466): it forces wrapping so
-                    # a long note becomes a narrow, tall box rather than one
-                    # too wide to fit any free lattice position.
-                    plot_wrap_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
-                                        if candidate.search.max_inline_em is not None), default=None)
-                    wrap_available = float(plot_wrap_em) * size if plot_wrap_em is not None else text_available
-                    annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
-                    container = request.theme_tokens.annotation_container(annotation_box_role)
-                    role_corner_radius = request.theme_tokens.optional_token(
-                        annotation_box_role, "cornerRadius", "radius")
-                    # A Theme-dressed Project kind adds a header and optional stamp column.
-                    # Content sizing keeps a text-width bound; fill sizing subtracts all chrome below.
-                    kind_token = request.theme_tokens.annotation_kind(annotation.kind)
-                    if kind_token is not None and kind_theme is None:
-                        kind_theme = request.theme_tokens.annotation_kind_frame()
-                    kind_measure = measure_kind_frame(
-                        kind=kind_token, subject=annotation.subject, subject_id=annotation.subject_id,
-                        frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
-                        outline=container.outline if container is not None else None,
-                        pointer=f"/annotations/{index}", text_size=size,
-                        header_texts=annotation.kind_header_lines, heading_content=annotation.kind_heading_text)
-                    require_followable_content(viewer_fit, has_kind_frame=not kind_measure.empty,
-                                               has_visual=bool(annotation_visuals), pointer=f"/annotations/{index}")
-                    wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
-                    if plot_wrap_em is not None:
-                        wrap = "allow"
-                    # A container with a content inset (always an image-backed one, #465; optionally a
-                    # rectangle or balloon, #991) measures text into that smaller box, then
-                    # expands it by the inset to the paint box the search and
-                    # collision below actually use -- the box a rectangle or
-                    # balloon container already uses today, unchanged.
-                    content_top = content_right = content_bottom = content_left = 0.0
-                    if container is not None and container.content_insets_em is not None:
-                        content_top, content_right, content_bottom, content_left = (
-                            float(value) * size for value in container.content_insets_em)
-                    # A box border (#1049) lies on the box edge and the inset is measured from inside it: the
-                    # effective insets are border + content inset, read by the text origin, the kind frame's content
-                    # box, the wrap chrome and the box size alike.
-                    box_border = resolve_border(container.border) if container is not None else NO_BORDER
-                    border_top, border_right, border_bottom, border_left = box_border.insets
-                    content_top += border_top
-                    content_right += border_right
-                    content_bottom += border_bottom
-                    content_left += border_left
-                    if (container is not None and container.outline == "rectangle"
-                            and role_corner_radius is None and container.corner_radius > 0):
-                        # A rounded corner removes paper (#1087): every inset keeps the text and the kind frame on it.
-                        clearance = float(container.corner_radius) * size * CORNER_CLEARANCE
-                        content_top, content_right, content_bottom, content_left = (
-                            max(value, clearance) for value in (content_top, content_right, content_bottom, content_left))
-
-                    # A border-bleeding bar uses the inner-border rectangle, not the inset
-                    # content box. Let only its labels use that extra width; heading/body
-                    # measurement continues to use the content box.
-                    bar_extra_inline = (max(0.0, content_left + content_right - box_border.start - box_border.end)
-                                        if kind_measure.bar_bleed == "border" else 0.0)
-
-                    def measure_note(measured_content: str, wrap_bound: float, may_wrap: bool, *, complete_frame: bool = False
-                                     ) -> tuple[tuple[str, ...], float, tuple[float, float]]:
-                        frame = (complete_kind_frame(
-                            kind_measure, available_inline=wrap_bound + annotation_leading + annotation_trailing,
-                            may_wrap=may_wrap, bar_extra_inline=bar_extra_inline,
-                            theme_tokens=request.theme_tokens, metric_for=metric_for)
-                            if complete_frame else kind_measure)
-                        lines = (wrap_text(measured_content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
-                                           letter_spacing=float(annotation_treatment.letter_spacing),
-                                           text_transform=annotation_treatment.transform)
-                                 if may_wrap else (measured_content,))
-                        widest = max(measure_text_width(line, font_size=size, font_metrics=annotation_metrics,
-                                                        letter_spacing=float(annotation_treatment.letter_spacing),
-                                                        text_transform=annotation_treatment.transform)
-                                     for line in lines)
-                        body_inline = annotation_leading + widest + annotation_trailing
-                        return lines, widest, (
-                            max(body_inline, frame.header_inline) + frame.inline_insets
-                            + content_left + content_right,
-                            max(size * line_height * len(lines) + frame.header_block, frame.stamp_block)
-                            + content_top + content_bottom)
-
-                    # A tilted note is searched and registered through the axis-aligned bounds of its rotated
-                    # frame; once a position is chosen the whole frame is rotated about their centre (#584).
-                    tilt_angle = tilt_for(container.tilt_degrees if container is not None else None, index)
-                    if tilt_angle:
-                        if annotation_visuals:
-                            raise LayoutError("E_LAYOUT_ANNOTATION_TILT_VISUAL", f"/annotations/{index}")
-                    # `inlineSize: fill` (#1051): on a row-aligned rung of an annotations slot the note takes the slot's
-                    # inline size and wraps in what its chrome leaves; any other rung keeps the content size above.
-                    fill_declared = container is not None and container.inline_size == "fill"
-                    def measure_variant(measured_content: str, *, list_entry: bool) -> _NoteVariant:
-                        may_wrap = (wrap == "allow" or (list_entry and has_index_suppression))
-                        lines, measured_width, frame_size = measure_note(
-                            measured_content, wrap_available, may_wrap)
-                        search_size = (rotated_extent(*frame_size, tilt_angle) if tilt_angle else frame_size)
-                        filled_variant = None
-                        filled_kind = kind_measure
-                        if fill_declared and annotation_slot is not None:
-                            fill_may_wrap = (wrap_declared != "forbid" or plot_wrap_em is not None or list_entry)
-                            filled_variant = fill_note(
-                                lambda bound: measure_note(measured_content, bound, fill_may_wrap, complete_frame=True),
-                                target=fill_target(float(annotation_slot.bounds.inline_size),
-                                                   max_inline_em=(float(container.max_inline_em)
-                                                                  if container.max_inline_em is not None else None),
-                                                   text_size=size),
-                                chrome=(annotation_leading + annotation_trailing + kind_measure.inline_insets
-                                        + content_left + content_right),
-                                tilt_degrees=tilt_angle)
-                            filled_kind = complete_kind_frame(
-                                kind_measure,
-                                available_inline=filled_variant.wrap_inline + annotation_leading + annotation_trailing,
-                                may_wrap=fill_may_wrap, bar_extra_inline=bar_extra_inline,
-                                theme_tokens=request.theme_tokens, metric_for=metric_for)
-                        measured_fill_size = (
-                            rotated_extent(filled_variant.frame_inline, filled_variant.frame_block, tilt_angle)
-                            if filled_variant is not None and tilt_angle else
-                            (filled_variant.frame_inline, filled_variant.frame_block)
-                            if filled_variant is not None else None)
-                        return _NoteVariant(measured_content, lines, measured_width, frame_size, search_size,
-                                            filled_variant, measured_fill_size, filled_kind)
-
-                    plot_variant = measure_variant(body_content, list_entry=False)
-                    list_variant = (measure_variant(list_content, list_entry=True)
-                                    if has_index_suppression else plot_variant)
-                    if (role_corner_radius is not None
-                            and (container is None or container.outline in {"rectangle", "balloon"})):
-                        # Insets enlarge content-sized boxes, so avoid a radius/inset loop: a physical px value
-                        # uses its requested radius as a finite conservative bound; capsule computes its exact
-                        # shorter-side radius from the three piecewise-linear inset regions. Re-measure once.
-                        variants = (plot_variant,) if list_variant is plot_variant else (plot_variant, list_variant)
-                        base_insets = (content_top, content_right, content_bottom, content_left)
-                        required = 0.0
-                        for variant in variants:
-                            dimensions = [(*variant.frame_size, False)]
-                            if variant.filled is not None:
-                                dimensions.append((variant.filled.frame_inline, variant.filled.frame_block, True))
-                            for dimension in dimensions:
-                                measured_width, measured_height = dimension[:2]
-                                filled_width = len(dimension) == 3 and dimension[2]
-                                if role_corner_radius == "capsule" and filled_width:
-                                    # Fill width can exceed its slot when wrapping leaves an unbreakable word.
-                                    # Re-insetting can add at most 2c to that measured width; solve c >= k(W+2c)/2.
-                                    clearance = (CORNER_CLEARANCE * measured_width
-                                                / (2 * (1 - CORNER_CLEARANCE)))
-                                else:
-                                    clearance = _physical_radius_clearance(
-                                        role_corner_radius, measured_width, measured_height, base_insets)
-                                required = max(required, clearance)
-                        content_top, content_right, content_bottom, content_left = (
-                            max(value, required) for value in base_insets)
-                        if base_insets != (content_top, content_right, content_bottom, content_left):
-                            plot_variant = measure_variant(body_content, list_entry=False)
-                            list_variant = (measure_variant(list_content, list_entry=True)
-                                            if has_index_suppression else plot_variant)
+                    card = premeasured_cards.get(annotation_id)
+                    if card is None:
+                        card = measure_annotation_card(
+                            annotation=annotation, index=index, intent=intent,
+                            body_content=body_content, list_content=list_content,
+                            has_index_suppression=has_index_suppression,
+                            annotation_visuals=annotation_visuals,
+                            annotation_leading=annotation_leading, annotation_trailing=annotation_trailing,
+                            size=size, line_height=line_height, annotation_metrics=annotation_metrics,
+                            annotation_treatment=annotation_treatment, text_available=text_available,
+                            request=request, metric_for=metric_for, kind_theme=kind_theme,
+                            annotation_slot=annotation_slot)
+                    container, role_corner_radius = card.container, card.role_corner_radius
+                    kind_theme = card.kind_theme
+                    box_border, viewer_fit = card.box_border, card.viewer_fit
+                    fill_declared, filled, fill_size = card.fill_declared, card.filled, card.fill_size
+                    content_top, content_right = card.content_top, card.content_right
+                    content_bottom, content_left = card.content_bottom, card.content_left
+                    kind_measure, tilt_angle = card.kind_measure, card.tilt_angle
+                    plot_variant, list_variant = card.plot_variant, card.list_variant
+                    wrap, wrap_declared, plot_wrap_em = card.wrap, card.wrap_declared, card.plot_wrap_em
                     (content, annotation_lines, text_width, frame_size, annotation_size,
                      filled, fill_size, filled_kind) = plot_variant
 
@@ -841,19 +939,39 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         use_variant(candidate)
                         used_fill = False
                         rung = candidate.candidate_id
+                        if _is_terminal_annotation_list_candidate(candidate, candidates):
+                            complete_terminal_list_record(candidate)
+                            break
                         if candidate.search.kind == "row-aligned":
+                            if annotation_slot is None and "annotations" in request.inactive_declared_sources:
+                                raise SourceDestinationActivation(
+                                    "annotations", annotation_id, candidate.candidate_id)
                             candidate_boxes = ordered_rail_candidates(
-                                annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                annotation, resolved, anchor_y=prepared.anchor_y,
                                 text_size=fill_size or annotation_size,
-                                rail=LabelRect(*_bounds(annotation_slot.bounds)))
+                                rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                allow_inline_overflow=(annotation_slot is not None
+                                                       and annotation_slot.overflow == "visible-overflow"),
+                                connector_kind=candidate.connector.kind,
+                                reserve_capacity=annotation_id in rail_capacity_below)
                             for candidate_box in candidate_boxes:
                                 annotation_search_count += 1
-                                leader_trial = trial_leader(candidate_box, rung)
+                                leader_trial = trial_leader(candidate_box, rung, candidate)
                                 if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
                                     continue
                                 box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                                 used_fill = filled is not None
                                 break
+                            if (box is None and candidate_boxes
+                                    and candidate.region.kind == "slot"
+                                    and candidate.region.source == "annotations"
+                                    and candidate.connector.kind == "leader"):
+                                # All existing clear-route trials failed. The
+                                # declared rail connection is mandatory, but
+                                # its body still has to be an ordinary fit.
+                                box, selected_rung = candidate_boxes[0], rung
+                                diagnosed_rail_candidate = candidate
+                                used_fill = filled is not None
                         elif candidate.search.kind == "nearest-free":
                             region_bounds = LabelRect(*_bounds(timeline.bounds))
                             host_id = anchor_host.placement_id if anchor_host is not None else None
@@ -928,7 +1046,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     nonlocal coarse_leader_trial
                                     candidate_box = AnnotationBox(
                                         resolved, LabelPlacement(rung, free_box, False), leader_required)
-                                    coarse_leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    coarse_leader_trial = (trial_leader(candidate_box, rung, candidate)
+                                                            if leader_required else None)
                                     return not (leader_required and presentation.leader_semantic_id is not None
                                                 and coarse_leader_trial is None)
 
@@ -943,7 +1062,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 if free_box is not None:
                                     candidate_box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), leader_required)
                                     leader_trial = (coarse_leader_trial if search_pass == "coarse" else
-                                                    trial_leader(candidate_box, rung) if leader_required else None)
+                                                    trial_leader(candidate_box, rung, candidate)
+                                                    if leader_required else None)
                                     if not (leader_required and presentation.leader_semantic_id is not None and leader_trial is None):
                                         box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                         else:
@@ -954,7 +1074,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             candidate_boxes = (candidate_box,) if candidate_box is not None else ()
                             for candidate_box in candidate_boxes:
                                 annotation_search_count += 1
-                                leader_trial = trial_leader(candidate_box, rung)
+                                leader_trial = trial_leader(candidate_box, rung, candidate)
                                 if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
                                     continue
                                 box, selected_rung, selected_leader = candidate_box, rung, leader_trial
@@ -962,7 +1082,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         if box is not None:
                             status_in_list = _is_annotation_list_candidate(candidate)
                             break
-                    if (box is None and annotation_id not in suppressed_callout_ids
+                    if (box is None and not completed_as_list and annotation_id not in suppressed_callout_ids
                             and as_of_side_constraint is not None and anchor_host is not None
                             and container is not None and container.outline == "balloon"):
                         as_of_obstacle = next((item for item in surface_obstacles.all()
@@ -1039,6 +1159,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         add_diagnostic(
                             f"W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:{annotation_id}:{selected_rung}:other-side-of-as-of",
                             annotation)
+                    if completed_as_list:
+                        continue
                     if box is None:
                         if annotation_id in suppressed_callout_ids:
                             placement_decisions.append(PlacementDecision(
@@ -1046,8 +1168,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 "suppress", "suppressed", search_count=annotation_search_count))
                             add_diagnostic(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}", annotation)
                             discovered_callout_suppressions.add(annotation_id)
-                            if annotation_slot is not None and annotation.number is not None:
-                                summary_content = (f"{annotation.number}. {annotation.content} "
+                            if annotation_slot is not None:
+                                number_prefix = f"{annotation.number}. " if annotation.number is not None else ""
+                                summary_content = (f"{number_prefix}{annotation.content} "
                                                    "(callout not shown on plot)")
                                 summary_lines = wrap_text(
                                     summary_content, available_inline=max(1.0, text_available),
@@ -1068,7 +1191,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     text_size=(summary_width, summary_height), font_size=size,
                                     typography_role=annotation_text_role,
                                     presentation=presentation,
-                                    anchor_y=anchor_bounds.y + anchor_bounds.height / 2)
+                                    anchor_y=prepared.anchor_y,
+                                    available_inline=max(1.0, text_available))
                                 if annotation.content and summary_placement.overflow != "suppressed":
                                     narrative_receipts.append(NarrativeReceipt(
                                         "annotation", annotation_id, summary_placement.placement_id, "summary"))
@@ -1080,102 +1204,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             add_diagnostic(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}", annotation)
                             discovered_callout_suppressions.add(annotation_id)
                             continue
-                        # A normal annotation is never silently suppressed or
-                        # rejected.  Complete its first declared placement in
-                        # visible-overflow mode after the explicit fit ladder
-                        # has been exhausted.
-                        selected_rung = next(rung for rung in ladder if rung != "suppress")
-                        first_candidate = next((item for item in candidates if item.candidate_id == selected_rung), None)
-                        status_in_list = (first_candidate is None
-                                          or _is_annotation_list_candidate(first_candidate))
-                        use_variant(first_candidate)
-                        if selected_rung == "rail":
-                            used_fill = filled is not None
-                            rail = LabelRect(*_bounds(annotation_slot.bounds))
-                            text_size = fill_size or annotation_size
-                            rail_candidates = ordered_rail_candidates(
-                                annotation, resolved,
-                                anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                text_size=text_size, rail=rail, allow_inline_overflow=True)
-                            previous_bottom = max((
-                                rail.y,
-                                *(item.bottom for item in rail_boxes),
-                                *(float(item.bounds.block + item.bounds.block_size)
-                                  for item in rail_records)))
-                            fallback_bounds = LabelRect(
-                                rail.x, max(rail.y, previous_bottom), text_size[0], text_size[1])
-                            box = rail_candidates[0] if rail_candidates else AnnotationBox(
-                                resolved, LabelPlacement("rail", fallback_bounds, True), True)
-                        elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
-                            # #449 never refuses: complete the first declared
-                            # candidate visibly after its explicit search ends.
-                            # A tail keeps its declared integrated topology.
-                            region_bounds = LabelRect(*_bounds(timeline.bounds))
-                            anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
-                                             anchor_bounds.y + anchor_bounds.height / 2)
-                            width, height = annotation_size
-                            forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
-                                                   region_bounds.right - width),
-                                               min(max(anchor_center[1] - height / 2, region_bounds.y),
-                                                   region_bounds.bottom - height), width, height)
-                            forced_host_id = anchor_host.placement_id if anchor_host is not None else None
-                            # The box never covers a mark of another object while a position
-                            # without one exists (#1869); otherwise it covers the fewest and
-                            # a warning names them.
-                            least = least_covering_box(
-                                region=region_bounds, anchor_center=anchor_center, box_size=annotation_size,
-                                max_positions=first_candidate.search.max_positions,
-                                obstacles=surface_obstacles,
-                                obstacle_classes=first_candidate.obstacles.classes,
-                                mark_owner=lambda placement_id: (
-                                    mark_by_id[placement_id].source_ref
-                                    if placement_id in mark_by_id else placement_id),
-                                own_owner=(anchor_host.source_ref if anchor_host is not None else resolved.object_id), host_id=forced_host_id)
-                            if least is not None:
-                                forced = least.box
-                                for owner in least.covered_owners:
-                                    covered_subjects = next(
-                                        (mark.subjects for mark in completed_marks
-                                         if mark.source_ref == owner and mark.subjects), ())
-                                    add_diagnostic(
-                                        f"W_LAYOUT_ANNOTATION_COVERS_MARK:{annotation_id}:{owner}",
-                                        annotation, extra_subjects=covered_subjects)
-                            if first_candidate.connector.kind == "tail":
-                                # Preserve the declared integrated tail topology while
-                                # honoring the completed least-covering box decision.
-                                tail_tip = nearest_box_port(
-                                    anchor_bounds,
-                                    (forced.x + forced.width / 2, forced.y + forced.height / 2))
-                                tail_topology = "direct-tail"
-                            # The space the declared candidate had: its own region on the
-                            # anchor's side of the as-of rule, minus its declared obstacles.
-                            side_region = region_bounds
-                            if as_of_side_constraint is not None:
-                                as_of_x, side_of_rule = as_of_side_constraint
-                                side_region = (
-                                    LabelRect(region_bounds.x, region_bounds.y,
-                                              max(0.0, min(as_of_x, region_bounds.right) - region_bounds.x),
-                                              region_bounds.height) if side_of_rule == "start" else
-                                    LabelRect(max(as_of_x, region_bounds.x), region_bounds.y,
-                                              max(0.0, region_bounds.right - max(as_of_x, region_bounds.x)),
-                                              region_bounds.height))
-                            forced_overflow = (
-                                LabelRect(region_bounds.x, region_bounds.y,
-                                          *largest_free_extent(
-                                              region=side_region, box_size=annotation_size,
-                                              obstacles=surface_obstacles,
-                                              obstacle_classes=first_candidate.obstacles.classes,
-                                              host_id=forced_host_id,
-                                              reach_from=(anchor_bounds if first_candidate.connector.kind in ("tail", "leader") else None))),
-                                annotation_size)
-                            box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
-                        else:
-                            box = project_annotation_box(
-                                annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
-                                candidate_sides=(selected_rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=surface_obstacles, overflow="visible-overflow", required=True)
-                        if box is None:  # Defensive: visible-overflow is a total Layout policy.
-                            raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/annotations/{index}")
+                        raise LayoutError(
+                            "E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED",
+                            annotation.placement_source_ref,
+                            detail=f"annotation_id={annotation_id!r}; exhausted safe candidates require "
+                                   "explicit suppression or a final annotations-slot row-aligned candidate "
+                                   "with connector:none")
                     placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
                                                                  tuple(ladder), selected_rung, "placed",
                                                                  search_count=annotation_search_count,
@@ -1219,7 +1253,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                  candidate_sides=(annotation.side,),
                                                  viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=surface_obstacles,
                                                  overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
-            except LayoutError:
+            except (LayoutError, ThemeTokenError):
                 raise
             except ValueError as error:
                 raise LayoutError(str(error), f"/annotations/{index}") from error
@@ -1229,9 +1263,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             box_overflow = box.placement.visible_overflow
             overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
                                  else LabelRect(*_bounds(timeline.bounds)))
-            overflow_required = forced_overflow[1] if forced_overflow is not None else None
-            if forced_overflow is not None:
-                overflow_viewport = forced_overflow[0]
+            overflow_required = ((bounds.width, bounds.height) if box_overflow else None)
             annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
                                      Decimal(str(bounds.width)), Decimal(str(bounds.height)))
             if tilt_angle:
@@ -1287,6 +1319,11 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if viewer_fit.mode != "raw":
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            if annotation_slot is not None and status_in_list:
+                # The list cursor owns the complete occupied card, not only a
+                # numbered body line. Marker-free cards and kind/title/header
+                # extents must keep later list entries below the full record.
+                rail_records.append(annotation_bounds)
             if tail_tip is not None:
                 # A numbered index is placed later in this same annotation
                 # pass. Keep the two visible balloon-tail edges in the shared
@@ -1294,8 +1331,6 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 # the accepted tail after the tail's own search has finished.
                 _register_balloon_tail_edges(surface_obstacles, annotation_id,
                                              shapes[-1].path_commands, tail_tip)
-            if annotation_slot is not None and status_in_list:
-                rail_boxes.append(bounds)
             # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.
             artwork_shapes = place_artwork(
                 container.artwork if container is not None else (), annotation_id=annotation_id,
@@ -1327,6 +1362,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                   for item in kind_text)
                 if box_overflow:
                     kind_text = tuple(replace(item, overflow="visible-overflow") for item in kind_text)
+                intrinsic_kind_text = kind_text
                 if tilt_angle:
                     kind_shapes = tuple(rotate_shape(item, tilt_center, tilt_angle) for item in kind_shapes)
                     kind_text = tuple(rotate_text(item, tilt_center, tilt_angle) for item in kind_text)
@@ -1336,6 +1372,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
                     if box_overflow:
                         visible_label_overflows.append((kind_line, overflow_viewport, overflow_required))
+            else:
+                intrinsic_kind_text = ()
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=frame_x + annotation_leading + content_left + kind_measure.body_inset_left,
                                            baseline_block=(frame_y + content_top
@@ -1350,14 +1388,30 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                          box_id=f"annotation-box:{annotation_id}", end_inset=content_right)
             if box_overflow:
                 placed_annotation = replace(placed_annotation, overflow="visible-overflow")
+            intrinsic_body_text = placed_annotation
             if tilt_angle:
                 placed_annotation = rotate_text(placed_annotation, tilt_center, tilt_angle)
             text.append(placed_annotation)
+            if status_in_list and box is not None:
+                intrinsic_card_placements = (*intrinsic_kind_text, intrinsic_body_text)
+                card_text = tuple(SourceTextUse.from_placement(
+                    item, available_inline=(Decimal(str(item.available_inline_size))
+                                            if item.available_inline_size is not None
+                                            else Decimal(str(text_width))))
+                    for item in intrinsic_card_placements)
+                source_consumers.append(SourceConsumer(
+                    f"annotation-card:{annotation_id}", "card",
+                    Decimal(str(frame_width)), Decimal(str(frame_height)), card_text,
+                    (annotation_text_role, size, line_height, source_treatment_witness(
+                         container=container, box_border=box_border,
+                         kind_theme=request.theme_tokens.annotation_kind(annotation.kind),
+                         annotation_visuals=annotation_visuals,
+                         kind_frame=kind_theme, request=request),
+                     tilt_angle, fill_declared),
+                    (content_top, content_right, content_bottom, content_left)))
             if annotation.content and placed_annotation.overflow != "suppressed":
                 narrative_receipts.append(NarrativeReceipt("annotation", annotation_id, placed_annotation.placement_id))
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
-            if annotation_slot is not None and annotation.number is not None and status_in_list:
-                rail_records.append(placed_annotation)
             if box_overflow:
                 visible_label_overflows.append((placed_annotation, overflow_viewport, overflow_required))
             if annotation_visuals:
@@ -1451,7 +1505,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         text_size=(status_width, status_height), font_size=size,
                         typography_role=annotation_text_role,
                         presentation=presentation,
-                        anchor_y=anchor_bounds.y + anchor_bounds.height / 2)
+                        anchor_y=prepared.anchor_y,
+                        available_inline=max(1.0, rail.width - annotation_leading - annotation_trailing))
             if (box.leader_required or routed_tail_tip is not None) and presentation.leader_semantic_id is not None:
                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                  anchor_bounds.y + anchor_bounds.height / 2)
@@ -1472,6 +1527,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)),
                         explicit_neighbors=endpoint_host_neighbors(anchor_host, resolved.endpoint), painted=True)[0]
                     points = (selected_source.semantic_port, target)
+                    if diagnosed_rail_candidate is not None and selected_source.corridor:
+                        points = (*selected_source.corridor, target)
                     path_commands = ()
                     visible_route_segments = tuple(zip(points, points[1:]))
                 else:
@@ -1486,6 +1543,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     tip = nearest_boundary_point(tilt_polygon, target)
                     if tip != target:
                         points = (*points, tip)
+                        visible_route_segments = (*visible_route_segments, (target, tip))
                         if path_commands:
                             path_commands = (*path_commands, PathCommand("line", (tip,)))
                 source_side = selected_source.side
@@ -1497,6 +1555,23 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 leader_semantic_id = presentation.leader_semantic_id
                 leader_stroke_width = float(request.theme_tokens.number(
                     semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
+                if diagnosed_rail_candidate is not None:
+                    crossings = rail_leader_crossings(
+                        tuple(points), surface_obstacles, stroke_width=leader_stroke_width,
+                        source=selected_source, target_id=annotation_id,
+                        port_ids=(source_port_obstacle_id, target_port_obstacle_id),
+                        target_extension=((target, points[-1])
+                                          if tilt_angle and points[-1] != target else None))
+                    detail = {
+                        "annotationId": annotation_id,
+                        "candidateId": diagnosed_rail_candidate.candidate_id,
+                        "reason": "diagnosed-hairline",
+                        "crossings": [{"placementId": item.placement_id,
+                                       "obstacleClass": item.obstacle_class,
+                                       "regionId": item.region_id} for item in crossings],
+                    }
+                    add_diagnostic("W_LAYOUT_ANNOTATION_LEADER_FALLBACK:" +
+                                   json.dumps(detail, sort_keys=True, separators=(",", ":")), annotation)
                 marker_end = (marker_geometry(
                     request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role),
                     stroke_width=leader_stroke_width)
@@ -1519,7 +1594,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
         frozenset(handled_candidate_visuals), frozenset(discovered_index_suppressions),
-        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance), tuple(narrative_receipts))
+        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance), tuple(narrative_receipts),
+        tuple(source_consumers))
 
 
 def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:

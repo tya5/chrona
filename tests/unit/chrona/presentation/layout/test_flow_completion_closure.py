@@ -130,7 +130,10 @@ def test_flow_fixed_inline_extent_controls_wrapping_instead_of_measured_composit
         ("min-content", 10),
         ("max-content", 80),
         ({"fitContent": 30}, 30),
-        ({"minmax": {"min": {"fixed": 15}, "max": {"fixed": 60}}}, 60),
+        # A bounded interval keeps the child's natural preferred size when it
+        # fits inside the declared range; the finite maximum is no longer a
+        # fixed target.
+        ({"minmax": {"min": {"fixed": 15}, "max": {"fixed": 60}}}, 40),
         ({"aspectRatio": 2}, 20),
         ("fill", 40),
         ({"fr": 2}, 40),
@@ -147,6 +150,20 @@ def test_flow_item_uses_its_declared_intrinsic_or_bounded_inline_target(inline_s
                                   measurements=measures))
 
     assert placed["item"].inline_size == Decimal(expected)
+
+
+def test_flow_clamps_natural_preference_to_finite_minmax_maximum():
+    child = slot("item", inline={"minmax": {"min": {"fixed": 15}, "max": {"fixed": 60}}},
+                 block={"fixed": 10})
+    flow = _flow(inline={"fixed": 200}, children=[child])
+    measures = {"item": measurement(min_inline=10, preferred_inline=80, max_inline=100,
+                                     preferred_block=10)}
+    profile = _profile_for(flow, measures)
+
+    placed = _bounds(solve_layout(profile, viewport_inline=220, viewport_block=50,
+                                  measurements=measures))
+
+    assert placed["item"].inline_size == Decimal(60)
 
 
 @pytest.mark.parametrize(

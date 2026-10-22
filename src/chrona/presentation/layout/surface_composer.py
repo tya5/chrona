@@ -27,6 +27,7 @@ from chrona.presentation.layout.surface_content import (
 from chrona.presentation.layout.realized_legend import (
     completed_legend_slots, recompose_realized_legend, reserve_potential_legend,
 )
+from chrona.presentation.layout.source_use import CompletedSourceUse
 from chrona.presentation.layout.slot_heading import SlotHeadings, content_slot, full_slot
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
@@ -36,7 +37,10 @@ from chrona.presentation.layout.surface_annotations import (
 )
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_heading import place_surface_headings
-from chrona.presentation.layout.surface_groups import (compose_group_presentation, translate_group_header_text)
+from chrona.presentation.layout.surface_groups import (
+    compose_group_presentation, groups_after_group_header_fold, resolve_group_tab,
+    translate_group_header_text,
+)
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_header_strips, compose_group_tabs,
     compose_row_group_backgrounds, replace_group_header_band,
@@ -120,6 +124,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     group_batch = compose_group_presentation(
         request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None,
+        group_header_fit_plan=base.group_header_fit_plan,
         text_end_limit=(Decimal(str(base.table_bounds[0])) + Decimal(str(base.table_bounds[2]))
                         if base.layout_manifest.background_extents.get("groupHeaderBand") in {"text", "table"}
                         else None))
@@ -188,8 +193,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         shapes = list(replace_group_header_band(
             tuple(shapes), update, extent=base.layout_manifest.background_extents.get("groupHeaderBand", "")))
     shapes.extend(compose_group_header_strips(base=base, groups=tuple(groups), theme_tokens=request.theme_tokens))
+    tab = resolve_group_tab(request.theme_tokens)
+    tab_groups = groups_after_group_header_fold(
+        groups=tuple(groups), tab=tab, fit_plan=base.group_header_fit_plan)
     shapes.extend(compose_group_tabs(
-        groups=tuple(groups), theme_tokens=request.theme_tokens,
+        groups=tab_groups, theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))
     shapes.extend(mark_batch.progress_shapes)
     deadline_batch = compose_deadline_marks(
@@ -308,9 +316,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
-    instance_anchors = dict(routes_batch.instance_anchors)
-    instance_rows = dict(routes_batch.instance_rows)
-    comparison_clusters = dict(routes_batch.comparison_clusters)
     diagnostics.extend(routes_batch.diagnostics)
     accept_member_label_batch(route_label_plan.pre_route_members)
     accept_member_label_batch(route_label_plan.members)
@@ -319,7 +324,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     diagnostics.extend(relation_labels.diagnostics)
     visible_label_overflows.extend(relation_labels.visible_label_overflows)
 
-    legend_batch = recompose_realized_legend(request, legend_batch, tuple(marks), tuple(shapes),
+    legend_batch, realized_entries = recompose_realized_legend(request, legend_batch, tuple(marks), tuple(shapes),
         tuple(relations), tuple(text), metric_values, metric_for, side_content_warnings)
 
     if legend_batch is not None:
@@ -386,6 +391,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         lane_label_suppressions=lane_label_suppressions,
         info_diagnostics=(*routes_batch.routing_info, *routes_batch.resolution_info, *deadline_captions.info),
         narrative_receipts=tuple(narrative_receipts),
+        source_use=CompletedSourceUse(
+            realized_entries, legend_batch.measured_layout if legend_batch is not None else None,
+            annotation_batch.source_consumers),
         diagnostic_provenance=tuple(diagnostic_provenance),
         window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))

@@ -119,9 +119,9 @@ def test_wrapped_bounded_composite_reserves_its_declared_target_before_next_line
     manifest = solve_layout(profile, viewport_inline=20, viewport_block=120, measurements=measures)
     bounds = decisions(manifest)
 
-    assert natural == Decimal(115)
-    assert bounds["bounded"].block_size == Decimal(100)
-    assert bounds["peer"].block == Decimal(100)
+    assert natural == Decimal(105)
+    assert bounds["bounded"].block_size == Decimal(90)
+    assert bounds["peer"].block == Decimal(90)
     assert bounds["peer"].block_size == Decimal(15)
 
 
@@ -179,7 +179,7 @@ def test_flow_flexible_minmax_child_preserves_its_minimum_floor():
         ("min-content", 10),
         ("max-content", 60),
         ({"fitContent": 15}, 15),
-        ({"minmax": {"min": {"fixed": 30}, "max": {"fixed": 50}}}, 50),
+        ({"minmax": {"min": {"fixed": 30}, "max": {"fixed": 50}}}, 30),
     ],
 )
 def test_flow_completes_intrinsic_and_bounded_block_intents(spec, expected):

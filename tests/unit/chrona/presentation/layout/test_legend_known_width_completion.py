@@ -14,7 +14,7 @@ ROLES = ("planned", "actual", "milestone")
 LABELS = {"planned": "Planned", "actual": "Actual", "milestone": "Gate"}
 
 
-def _render(tmp_path, monkeypatch, *, width, host_block, mark_size=None):
+def _render(tmp_path, monkeypatch, *, width, host_block, mark_size=None, labels=None):
     parts = sr.bundle("executive-light")
     legend = sr.find_node(parts["layout"], "legend")
     legend.update(direction="inline", overflow="ellipsize-with-source", inlineSize="fill",
@@ -50,8 +50,9 @@ def _render(tmp_path, monkeypatch, *, width, host_block, mark_size=None):
         "task": sr.span("task", date(2026, 2, 2), 30),
         "gate": sr.point("gate", date(2026, 3, 9)),
     }))
+    labels = labels or LABELS
     detail = {"version": "chrona/review-detail-profile/v0.1", "id": "known-width-legend",
-              "body": {"legend": [{"role": role, "label": LABELS[role]} for role in ROLES]}}
+              "body": {"legend": [{"role": role, "label": labels[role]} for role in ROLES]}}
     actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "legend-actual",
               "body": {"asOf": "2026-03-15", "observations": [
                   {"id": "task-observed", "sequence": 1, "projectObjectId": "task",
@@ -132,3 +133,29 @@ def test_draft_auto_uses_the_same_completed_rows_for_canvas_height(tmp_path, mon
     assert plan.measured.measurements["legend"].preferred_block == 16
     assert not _legend_warning(rendered)
     assert plan.viewport[1] < 900
+
+
+def test_draft_auto_wraps_long_entry_and_keeps_source_text_visible(tmp_path, monkeypatch):
+    label = "Long readable legend entry"
+    rendered, plan = _render(tmp_path, monkeypatch, width=100, host_block=None,
+                             labels={**LABELS, "planned": label})
+
+    assert len(plan.measured.legend_layout.entries[0].lines) > 1
+    assert " ".join(plan.measured.legend_layout.entries[0].lines) == label
+    assert plan.measured.measurements["legend"].preferred_block == plan.measured.legend_layout.block_size
+    assert not any(warning.code == "W_LAYOUT_TEXT_ELLIPSIZED" for warning in rendered.surface.fit_warnings)
+    drawn = _svg_text(rendered)
+    assert label.replace(" ", "") in "".join("".join(text.split()) for text in drawn)
+
+
+def test_explicit_viewport_wraps_legend_before_widening_canvas(tmp_path, monkeypatch):
+    label = "Long readable legend entry"
+    rendered, plan = _render(tmp_path, monkeypatch, width=100, host_block=300,
+                             labels={**LABELS, "planned": label})
+
+    assert plan.viewport[0] == 1200
+    assert len(plan.measured.legend_layout.entries[0].lines) > 1
+    assert " ".join(plan.measured.legend_layout.entries[0].lines) == label
+    assert not any(warning.code == "W_LAYOUT_TEXT_ELLIPSIZED" for warning in rendered.surface.fit_warnings)
+    drawn = _svg_text(rendered)
+    assert label.replace(" ", "") in "".join("".join(text.split()) for text in drawn)

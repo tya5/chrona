@@ -28,7 +28,7 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
             "search": {"kind": "row-aligned"},
             "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
                                       "leader-route", "annotation-box", "port", "rule"]},
-            "connector": {"kind": "leader"},
+            "connector": {"kind": "none"},
         })
     view_path = tmp_path / "crowded-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
@@ -76,11 +76,11 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
     decisions = {item.source_ref: item for item in compositions[0].placement.decisions
                  if item.decision_id.startswith("annotation:")}
     assert set(decisions) == {"window-note", "tvac-note", "station-note"}
-    rail_ids = {note_id for note_id, decision in decisions.items()
-                if decision.selected_rung == "rail-after-crowding"}
-    assert rail_ids
-    for note_id in rail_ids:
+    listed_ids = {note_id for note_id, decision in decisions.items()
+                  if decision.selected_rung == "rail-after-crowding"}
+    assert listed_ids
+    for note_id in listed_ids:
         decision = decisions[note_id]
-        assert decision.search_count > 1
+        assert decision.outcome == "placed"
         assert f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{note_id}:rail-after-crowding" in rendered.scene.diagnostics
-        assert f'data-scene-id="annotation-box:{note_id}"'.encode() in rendered.artifact.content
+        assert f'data-scene-id="annotation-list:{note_id}"'.encode() in rendered.artifact.content

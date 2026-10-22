@@ -280,6 +280,10 @@ before fitting. Close every part's lines and the whole heading's baseline stack
 at the independently allocated track width before block allocation. If even the
 measured ellipsis and that reservation cannot fit, fail with
 `E_LAYOUT_TEXT_OVERFLOW`; do not report table infeasibility or enlarge the track.
+When sibling allocation narrows a nested heading below its independently
+probed ceiling, Layout remeasures its lines at that final width before block
+allocation (Specification 33, nested heading ceiling closure). This does not
+change omitted `wrap: forbid`, authored minima, or strict table budget equality.
 
 When a bounded cell with declared affixes requires ellipsis, retain its prefix
 and suffix verbatim around the longest measured source-core prefix plus `…`.

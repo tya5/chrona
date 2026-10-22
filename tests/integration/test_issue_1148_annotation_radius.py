@@ -55,7 +55,8 @@ def test_capsule_fill_radius_keeps_wrapped_text_inside_the_final_corner(tmp_path
 
     tmp_path.mkdir(parents=True, exist_ok=True)
     parts = sr.bundle()
-    sr.with_note_rail(parts, 80)
+    # Leave enough inline room for the wrapped, inset capsule frames to fit as cards.
+    sr.with_note_rail(parts, 180)
     theme = parts["theme"]["body"]
     theme["values"]["physical-radius"] = {"type": "radius", "value": "capsule"}
     theme["values"]["physical-radius-container"] = {
@@ -65,9 +66,13 @@ def test_capsule_fill_radius_keeps_wrapped_text_inside_the_final_corner(tmp_path
     theme["roles"]["annotation-note-box"].update(
         cornerRadius="physical-radius", annotationContainer="physical-radius-container")
     source = sr.chain_project()
-    candidate = sr.candidate("rail", region={"kind": "slot", "source": "annotations"},
-                             search_kind="row-aligned", connector="leader")
-    sr.add_notes(source, parts["view"], ["g0-t1", "g1-t2", "g2-t1"], [candidate], words=12)
+    region = {"kind": "slot", "source": "annotations"}
+    candidates = (
+        sr.candidate("rail", region=region, search_kind="row-aligned", connector="leader"),
+        sr.candidate("card", region=region, search_kind="row-aligned", connector="none"),
+        sr.candidate("terminal", region=region, search_kind="row-aligned", connector="none"),
+    )
+    sr.add_notes(source, parts["view"], ["g0-t1", "g1-t2", "g2-t1"], candidates, words=12)
     rendered = sr.render(tmp_path, source, presentation=parts)
     boxes = _prims(rendered, "annotation-box")
     texts = _prims(rendered, "annotation-text")
@@ -76,6 +81,7 @@ def test_capsule_fill_radius_keeps_wrapped_text_inside_the_final_corner(tmp_path
     assert boxes
     for note, box in boxes.items():
         text = texts[note]
+        assert len(text.text_layout.lines) >= 2
         radius = min(box.bounds[2], box.bounds[3]) / 2
         assert box.corner_radius == pytest.approx(radius)
         assert text.bounds[0] - box.bounds[0] >= clearance * radius - 0.05

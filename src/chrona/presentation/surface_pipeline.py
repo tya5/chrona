@@ -131,9 +131,11 @@ def compose_resolved_review_surface(seed: CountReadInput, *, visual_profile: Vis
                                     initial: PreparedSurfaceRenderPlan | None = None,
                                     admitted: PreparedSurfaceInput | None = None) -> SurfaceRenderResult:
     """Project one accepted Layout completion; never measure or implement count trials here."""
+    if admitted is not None and (initial is None or admitted.layout_manifest is not initial.manifest):
+        raise ValueError("admitted ordinary plan does not match initial preparation")
     completed = complete_surface_render_plan(seed, initial=initial)
     plan, value = completed.plan, seed.value
-    if admitted is None:
+    if admitted is None or admitted.layout_manifest is not plan.manifest:
         admitted = build_surface_input(
             projection=completed.projection, surface_content=plan.content, layout_manifest=plan.manifest,
             resolved_theme=value.theme, font_metrics=value.font_metrics, measured_sources=plan.measured,
@@ -144,8 +146,6 @@ def compose_resolved_review_surface(seed: CountReadInput, *, visual_profile: Vis
             capacity_short_sources=plan.capacity_short_sources, declared_viewport=plan.declared_viewport,
             auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"), progress=value.progress,
             previous_route_hints=value.previous_route_hints)
-    elif admitted.layout_manifest is not plan.manifest:
-        raise ValueError("admitted ordinary plan does not match accepted completion")
     composition = completed.composition
     if completed.projection.surface == "table-timeline":
         composition = complete_row_identity_warning(

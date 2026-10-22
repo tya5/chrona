@@ -10,7 +10,10 @@ from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
 from chrona.presentation.heading_text import HeadingTextPrograms
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.layout.canvas_viewport import DeclaredViewport
-from chrona.presentation.layout.engine import measure_natural_normal_flow_block, resolve_content_block_extent, solve_layout
+from chrona.presentation.layout.engine import (
+    measure_natural_normal_flow_block, resolve_content_block_extent, solve_layout,
+)
+from chrona.presentation.layout.group_header_fit import GroupHeaderInlineDemand, GroupHeaderOwnerInlineDemand
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.slot_heading import (
@@ -18,14 +21,15 @@ from chrona.presentation.layout.slot_heading import (
 from chrona.presentation.layout.sources import MeasuredSources, resolve_theme_metrics, measure_sources
 from chrona.presentation.layout.source_sizing import SourceSizingSession
 from chrona.presentation.layout.source_presence import omit_absent_layout_sources
+from chrona.presentation.layout.source_use import CompletedSourceUse
 from chrona.presentation.layout.surface_legend import (
-    LegendArrangement, legend_arrangement, legend_source_input, wrapped_legend_line_block)
+    LegendArrangement, complete_legend_layout, legend_arrangement, legend_source_input)
 from chrona.presentation.layout.surface_preparation import SurfacePreRowGeometry, prepare_surface_content, prepare_surface_natural_candidate
 from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
 from chrona.presentation.layout.window_row_admission import (
     complete_window_row_admission, geometry_surface_content, geometry_table,
 )
-from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
+from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, FitWarning, SurfaceLayoutRequest, VisualRequest
 from chrona.presentation.layout.temporal_capacity import TemporalInlineCapacity
 from chrona.presentation.layout.relation_hint_model import PreviousRouteHints
 from chrona.presentation.layout.surface_source_inputs import (
@@ -37,7 +41,8 @@ from chrona.presentation.layout.legend_candidates import prepare_realized_legend
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
-from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, SurfaceLegendEntry, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.wording_tables import wording_resolver
@@ -84,6 +89,7 @@ class PreparedSurfaceRenderPlan:
     viewport: tuple[float, float]
     declared_viewport: DeclaredViewport
     page_size: str | None = None
+    measured_legend_entries: tuple[SurfaceLegendEntry, ...] | None = None
 
 
 class SurfacePlanFontError(Exception):
@@ -97,7 +103,9 @@ class SlotHeadingCopyError(LayoutError):
     """A declared View caption references no headed profile node."""
 
 
-def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfaceRenderPlan:
+def prepare_surface_render_plan(value: SurfaceRenderPlanInput, *,
+                                source_use: CompletedSourceUse | None = None,
+                                activate_annotations: bool = False) -> PreparedSurfaceRenderPlan:
     """Measure and allocate using the exact existing natural/fixed candidate policy."""
     project, view, projection = value.project, value.view, value.projection
     selected_content, summary, table_content = value.content, value.summary, value.table
@@ -124,6 +132,10 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         view_heading=heading_content or HeadingContent(str(project.get("project", {}).get("title", ""))),
         visual_requests=visual_requests, icon_assets=icon_assets, theme=theme,
         row_admission=row_admission)
+    if source_use is not None and not activate_annotations:
+        source_inputs["annotations"] = source_use.annotation_input()
+    measured_legend_entries = (source_use.legend_entries if source_use is not None
+                               else selected_content.legend_entries)
     if isinstance(value.heading, HeadingTextPrograms):
         source_inputs = bind_heading_dependencies(source_inputs, value.heading)
     required_metrics = (("timeline.groupHeader.blockSize",)
@@ -153,7 +165,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             source_inputs.update(heading_part_sources(network_heading))
     try:
         source_inputs["legend"] = legend_source_input(
-            selected_content.legend_entries,
+            measured_legend_entries,
             tokens=ThemeTokenView(theme),
             mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
             font_metrics=font_metrics,
@@ -180,7 +192,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         absent_sources.add("summary")
     if not source_inputs["annotations"].content_present:
         absent_sources.add("annotations")
-    if not selected_content.legend_entries:
+    if not measured_legend_entries:
         absent_sources.add("legend")
     if not selected_content.notes:
         absent_sources.add("notes")  # an empty notes source reserves no block and no gap (#1649)
@@ -212,7 +224,8 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         resolved_layout, measured_before_headings, measured, viewport_inline=viewport["inlineSize"],
         floor=completion_floor, measurements=measurements,
         sizing=sizing_context(completion_floor) if source_sizing.active else None,
-        content_sized=value.content_sized)
+        content_sized=value.content_sized, entries=measured_legend_entries,
+        tokens=ThemeTokenView(theme), font_metrics=font_metrics)
     if completed is not None:
         # Complete the source measurement at the width allocated by the provisional solve. The
         # fixed outer canvas remains fixed; only content-sized allocation follows the completed rows.
@@ -237,6 +250,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
         raise SurfacePlanFontError(error) from error
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
         theme_tokens=ThemeTokenView(theme), chip_measurement=as_of_chip_measurement)))
+    requested_block_size = viewport["blockSize"]
 
     def candidate_request(candidate: LayoutManifest, *, short_sources=()) -> SurfaceLayoutRequest:
         content = admit_detail_content(
@@ -265,55 +279,118 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput) -> PreparedSurfac
             mark_visibility_index=mark_visibility_index,
             row_admission=row_admission,
             scene_precision=value.scene_precision,
+            group_header_inline_owner=source_sizing.group_header_inline_owner,
+            inactive_declared_sources=frozenset(absent_sources & claimed_sources),
         )
 
-    if view.surface == "table-timeline":
-        def candidate_demand(candidate: LayoutManifest) -> Mapping[str, Decimal]:
-            natural = prepare_surface_natural_candidate(candidate_request(candidate))
-            return {"timeline": natural.required_timeline_block(foot_reserve=foot_reserve)}
-
-        block_resolution = resolve_content_block_extent(
-            resolved_layout, viewport_inline=viewport["inlineSize"],
-            minimum_block=natural_block_floor if value.content_sized else viewport["blockSize"],
-            measurements=measurements,
-            required_blocks=candidate_demand,
-            content_sized=value.content_sized,
-            sizing=sizing_context if source_sizing.active else None,
-        )
-        viewport["blockSize"] = block_resolution.extent
-        capacity_short_sources = tuple(CapacitySourceEvidence(
-            item.source_id, item.required_block, item.allocated_block)
-            for item in block_resolution.short_sources)
-    elif value.content_sized:
+    if view.surface != "table-timeline" and value.content_sized:
         raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
                           detail=(f"surface={view.surface}; choose a fixed WIDTHxHEIGHT viewport "
                                   "(for example, --viewport 1600x900); auto height is supported only "
                                   "for table-timeline"))
-    manifest = solve_layout(
-        resolved_layout, viewport_inline=viewport["inlineSize"],
-        viewport_block=viewport["blockSize"], measurements=measurements,
-        content_sized=value.content_sized,
-        sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
-    )
-    measured = source_sizing.close_manifest(manifest)
-
-    fixed_lane_preflight = None
     surface_preparation = None
-    if view.surface == "table-timeline":
-        natural = prepare_surface_natural_candidate(candidate_request(manifest, short_sources=capacity_short_sources))
-        surface_preparation = prepare_surface_content(natural.inline.request, natural=natural)
-        surface_content = surface_preparation.inline.request.surface_content
-        fixed_lane_preflight = surface_preparation.inline.request.fixed_lane_preflight
-    else:
-        surface_content = admit_detail_content(
-            selected_content,
-            detail=value.detail,
-            layout_manifest=manifest,
-        )
+    while True:
+        viewport["blockSize"] = (natural_block_floor if value.content_sized else requested_block_size)
+        try:
+            if view.surface == "table-timeline":
+                def candidate_demand(candidate: LayoutManifest) -> Mapping[str, Decimal]:
+                    natural = prepare_surface_natural_candidate(candidate_request(candidate))
+                    return {"timeline": natural.required_timeline_block(foot_reserve=foot_reserve)}
+
+                block_resolution = resolve_content_block_extent(
+                    resolved_layout, viewport_inline=viewport["inlineSize"],
+                    minimum_block=natural_block_floor if value.content_sized else viewport["blockSize"],
+                    measurements=measurements,
+                    required_blocks=candidate_demand,
+                    content_sized=value.content_sized,
+                    sizing=sizing_context if source_sizing.active else None,
+                )
+                viewport["blockSize"] = block_resolution.extent
+                capacity_short_sources = tuple(CapacitySourceEvidence(
+                    item.source_id, item.required_block, item.allocated_block)
+                    for item in block_resolution.short_sources)
+            manifest = solve_layout(
+                resolved_layout, viewport_inline=viewport["inlineSize"],
+                viewport_block=viewport["blockSize"], measurements=measurements,
+                content_sized=value.content_sized,
+                sizing=sizing_context(viewport["blockSize"]) if source_sizing.active else None,
+            )
+            measured = source_sizing.close_manifest(manifest)
+            if view.surface == "table-timeline":
+                natural = prepare_surface_natural_candidate(
+                    candidate_request(manifest, short_sources=capacity_short_sources))
+                surface_preparation = prepare_surface_content(natural.inline.request, natural=natural)
+                surface_content = surface_preparation.inline.request.surface_content
+            else:
+                surface_content = admit_detail_content(
+                    selected_content,
+                    detail=value.detail,
+                    layout_manifest=manifest,
+                )
+            break
+        except (GroupHeaderInlineDemand, GroupHeaderOwnerInlineDemand) as demand:
+            # A newly discovered required full-name minimum is fed back through
+            # ordinary source measurement and track allocation before any route
+            # is made. The finite group identity set is the closure bound.
+            if isinstance(demand, GroupHeaderInlineDemand):
+                source_sizing.add_group_header_demand(demand)
+            else:
+                source_sizing.add_group_header_owner_demand(demand)
+            measured_before_headings = source_sizing.with_group_header_demands(measured_before_headings)
+            measured = source_sizing.measured
+            measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+            required_inline = source_sizing.required_normal_flow_inline(measurements)
+            viewport["inlineSize"] = max(
+                value.viewport_inline,
+                int(required_inline.to_integral_value(rounding=ROUND_CEILING)),
+            )
+            if value.content_sized:
+                natural_block_floor = max(1, int(measure_natural_normal_flow_block(
+                    resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
+                    sizing=sizing_context(requested_block_size) if source_sizing.active else None,
+                ).to_integral_value(rounding=ROUND_CEILING)))
+            completion_floor = natural_block_floor if value.content_sized else viewport["blockSize"]
+            completed = _complete_wrapped_legend(
+                resolved_layout, measured_before_headings, measured,
+                viewport_inline=viewport["inlineSize"], floor=completion_floor,
+                measurements=measurements,
+                sizing=sizing_context(completion_floor) if source_sizing.active else None,
+                content_sized=value.content_sized, entries=measured_legend_entries,
+                tokens=ThemeTokenView(theme), font_metrics=font_metrics)
+            if completed is not None:
+                measured = reserve_slot_heading_blocks(
+                    completed, resolved_layout, ThemeTokenView(theme),
+                    content=selected_content, font_metrics=font_metrics)
+            measured = source_sizing.refresh(measured)
+            measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+            if value.content_sized:
+                natural_block_floor = max(1, int(measure_natural_normal_flow_block(
+                    resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements,
+                    sizing=sizing_context(requested_block_size) if source_sizing.active else None,
+                ).to_integral_value(rounding=ROUND_CEILING)))
+    if viewport["inlineSize"] > value.viewport_inline and source_sizing.group_header_growth_demands:
+        growth_warnings = tuple(FitWarning(
+            "W_LAYOUT_VISIBLE_OVERFLOW", f"group-header:{demand.group_id}", demand.group_id,
+            "group-header-unbreakable-inline", "grow-owner-inline",
+            float(demand.minimum_source_inline if isinstance(demand, GroupHeaderInlineDemand)
+                  else demand.minimum_owner_inline),
+            0.0,
+            float(demand.available_source_inline if isinstance(demand, GroupHeaderInlineDemand)
+                  else demand.available_owner_inline),
+            0.0, (DiagnosticSubject(demand.group_id, demand.label),),
+        ) for demand in source_sizing.group_header_growth_demands)
+        manifest = replace(manifest, fit_warnings=(*manifest.fit_warnings, *growth_warnings))
+        if surface_preparation is not None:
+            inline = replace(
+                surface_preparation.inline,
+                request=replace(surface_preparation.inline.request, layout_manifest=manifest),
+                layout_manifest=manifest,
+            )
+            surface_preparation = replace(surface_preparation, inline=inline)
     return PreparedSurfaceRenderPlan(manifest, resolved_layout, measured, surface_content,
         surface_preparation, capacity_short_sources,
         (float(viewport["inlineSize"]), float(viewport["blockSize"])), declared_viewport,
-        resolved_layout.profile.get("pageSize"))
+        resolved_layout.profile.get("pageSize"), measured_legend_entries)
 
 
 def admit_detail_content(content: SurfaceContentInput, *, detail: ReviewDetailInput | None,
@@ -360,7 +437,8 @@ def uses_independent_view_heading(surface: str, profile: ResolvedLayoutProfile |
 def _complete_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: MeasuredSources,
                            measured: MeasuredSources, *, viewport_inline: int, floor: int,
                            measurements: Mapping[str, Any], sizing: Any,
-                           content_sized: bool) -> MeasuredSources | None:
+                           content_sized: bool, entries: tuple[Any, ...], tokens: Any,
+                           font_metrics: Any) -> MeasuredSources | None:
     """Return the sources with a `line` legend measured at its resolved inline size, or None to keep the stack.
 
     Which inline size the legend slot gets is known only after a solve, so the conservative stack (every entry on
@@ -369,7 +447,7 @@ def _complete_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: M
     """
     legend = unheaded.inputs.get("legend")
     node = _legend_slot(resolved_layout.profile["root"])
-    if legend is None or node is None or legend.run_flow != "line" or not legend.runs:
+    if legend is None or node is None or legend.run_flow not in {"line", "grid", "stack"} or not legend.runs:
         return None
     try:
         manifest = solve_layout(resolved_layout, viewport_inline=viewport_inline, viewport_block=floor,
@@ -381,15 +459,26 @@ def _complete_wrapped_legend(resolved_layout: ResolvedLayoutProfile, unheaded: M
     if decision is None or len(sizes) != len(legend.runs) or "legend" not in measured.measurements:
         return None
     caption_inline = measured.measurements["legend"].preferred_inline - unheaded.measurements["legend"].preferred_inline
-    block = wrapped_legend_line_block(
-        sizes, gap=legend.run_gap, row_block=legend.row_block,
-        item_min_inline=legend_arrangement(resolved_layout).item_min_inline_size,
-        available_inline=decision.bounds.inline_size - caption_inline)
+    available_inline = decision.bounds.inline_size - caption_inline
+    source_runs = unheaded.inputs["legend"].text_runs()
+    completed_entries = tuple(replace(entry, label=run.content, label_variants=())
+                              for entry, run in zip(entries, source_runs, strict=True))
+    arrangement = legend_arrangement(resolved_layout)
+    layout = complete_legend_layout(
+        completed_entries, available_inline=available_inline,
+        item_min_inline=arrangement.item_min_inline_size,
+        gap=legend.run_gap, tokens=tokens,
+        mark_block_size=float(unheaded.metric_values["timeline.mark.blockSize"]),
+        font_metrics=font_metrics,
+        direction="inline" if arrangement.direction == "inline" else "stack",
+        columns=arrangement.columns, column_distribution=arrangement.column_distribution,
+        caption_inline=caption_inline)
+    block = layout.block_size
     current = unheaded.measurements["legend"]
     if block == current.preferred_block:
-        return None
+        return replace(unheaded, legend_layout=layout)
     completed = replace(current, preferred_block=block, max_block=block * 2)
-    return replace(unheaded, measurements={**unheaded.measurements, "legend": completed})
+    return replace(unheaded, measurements={**unheaded.measurements, "legend": completed}, legend_layout=layout)
 
 
 def _legend_slot(node: Mapping[str, Any]) -> Mapping[str, Any] | None:

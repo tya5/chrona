@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sys
 from datetime import date
+from pathlib import Path
 
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
@@ -130,16 +131,57 @@ annotations:
 """
 
 
-def test_a_real_render_names_the_note_whose_leader_fell_back(tmp_path, monkeypatch, capsys):
+def test_a_real_render_names_the_note_whose_declared_leader_candidate_fell_back(tmp_path, monkeypatch, capsys):
     from chrona.app.cli import main
+    from chrona.presentation.layout import surface_annotations
+    import yaml
 
     plan = tmp_path / "plan.yaml"
     plan.write_text(NOTE_PLAN, encoding="utf-8")
+    root = Path(__file__).resolve().parents[2]
+    view = yaml.safe_load((root / "src/chrona/resources/presets/bundles/design-default/view.yaml")
+                          .read_text(encoding="utf-8"))
+    view["body"]["annotations"] = [{
+        "id": "vendor-note", "purpose": "note", "projectAnnotation": "vendor",
+        "anchor": {"kind": "object", "id": "build", "facet": "planned", "endpoint": "end"},
+        "candidates": [{
+            "id": "leader-first", "region": {"kind": "slot", "source": "annotations"},
+            "search": {"kind": "row-aligned"},
+            "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
+                                        "leader-route", "annotation-box", "port", "rule"]},
+            "connector": {"kind": "leader"},
+        }, {
+            "id": "card", "region": {"kind": "slot", "source": "annotations"},
+            "search": {"kind": "row-aligned"},
+            "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
+                                        "leader-route", "annotation-box", "port", "rule"]},
+            "connector": {"kind": "none"},
+        }, {
+            "id": "terminal-list", "region": {"kind": "slot", "source": "annotations"},
+            "search": {"kind": "row-aligned"},
+            "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
+                                        "leader-route", "annotation-box", "port", "rule"]},
+            "connector": {"kind": "none"},
+        }],
+    }]
+    view_path = tmp_path / "notes-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    # A failed clear-route search keeps the declared full card and leader,
+    # rather than advancing to the following connector-free card candidate.
+    monkeypatch.setattr(surface_annotations, "route_annotation_candidate", lambda *args, **kwargs: None)
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(plan), "--preset", "target-b",
-                                      "--output", str(tmp_path / "out.svg")])
+                                      "--view", str(view_path), "--output", str(tmp_path / "out.svg")])
     main()
     warnings = json.loads(capsys.readouterr().out)["warnings"]
-    rows = [item for item in warnings if item["code"] == "W_LAYOUT_ROUTE_FALLBACK"
-            and item["placementId"].startswith("annotation-leader:")]
-    assert rows, "the target-b rail leader falls back for this plan"
-    assert all("leader of note " in item["message"] and "relation route" not in item["message"] for item in rows)
+    rows = [item for item in warnings if item["code"] == "W_LAYOUT_ANNOTATION_LEADER_FALLBACK"]
+    assert len(rows) == 1, warnings
+    assert rows[0]["sourceRef"] == "/objects/build"
+    assert rows[0]["sourceTitle"] == "Build"
+    detail = json.loads(rows[0]["diagnostic"].split(":", 1)[1])
+    assert detail["annotationId"] == "vendor-note"
+    assert detail["candidateId"] == "leader-first"
+    assert "'Build'" in rows[0]["message"] and "keeps its declared leader" in rows[0]["message"]
+    svg = (tmp_path / "out.svg").read_text(encoding="utf-8")
+    assert 'data-scene-id="annotation-box:vendor-note"' in svg
+    assert 'data-scene-id="annotation-text:vendor-note"' in svg
+    assert 'data-scene-id="annotation-leader:vendor-note"' in svg

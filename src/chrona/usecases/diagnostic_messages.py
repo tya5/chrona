@@ -138,6 +138,7 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_REGION_FRAME_CORNER_REDUCED": "the corner radius of a region frame was reduced to half its shorter side because the frame is smaller than twice the declared radius",
     "W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED": "the search for a route for an annotation tail ran out of candidates",
     "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK": "an annotation was placed at a later candidate than the first one declared",
+    "W_LAYOUT_ANNOTATION_LEADER_FALLBACK": "a note keeps its declared leader after clear routing was exhausted; the crossing inventory names the completed obstacles it touches",
     "W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE": "an annotation was placed on the other side of the as-of rule because no anchor-side fit was found",
     "W_LAYOUT_ANNOTATION_FILL_NOT_SLOT": "a note box declared inlineSize fill but was not placed in an annotations slot, so it keeps the size of its text",
     "W_LAYOUT_ANNOTATION_COVERS_MARK": "an annotation box covers a mark of another object because no free placement exists",

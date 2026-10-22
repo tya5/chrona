@@ -87,8 +87,13 @@ def test_fill_lanes_count_every_packed_name_as_shown_or_suppressed(tmp_path):
     # This density proof intentionally fixes the plot, independent of derived
     # selected-planned padding (whose label improvement has its own tests).
     parts["view"]["body"]["window"] = {"mode": "explicit", "start": "2026-01-05", "end": "2026-03-01"}
-    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"],
-                 [sr.candidate("plot-near", connector="leader"), sr.candidate("plot-no-tail", connector="none")])
+    annotation_slot = {"kind": "slot", "source": "annotations"}
+    sr.add_notes(source, parts["view"], ["g0-t2", "g1-t3", "g2-t1"], [
+        sr.candidate("plot-near", connector="leader"),
+        sr.candidate("plot-no-tail", connector="none"),
+        sr.candidate("rail-card", region=annotation_slot, search_kind="row-aligned", connector="none"),
+        sr.candidate("terminal-list", region=annotation_slot, search_kind="row-aligned", connector="none"),
+    ])
     rendered = sr.render(tmp_path, source, presentation=parts)
     surface = rendered.surface
 
@@ -102,7 +107,9 @@ def test_fill_lanes_count_every_packed_name_as_shown_or_suppressed(tmp_path):
     assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={len(suppressed)}" in rendered.scene.diagnostics
     assert not [item for item in surface.primitives if item.purpose == "member-label-leader"]
     boxes = [item for item in surface.primitives if item.scene_id.startswith("annotation-box:")]
-    assert len(boxes) == 3
+    terminal_lists = [item for item in surface.primitives if item.scene_id.startswith("annotation-list:")]
+    assert {item.source_ref for item in (*boxes, *terminal_lists)} == {"note-0", "note-1", "note-2"}
+    assert len(boxes) + len(terminal_lists) == 3
     # A box with no free placement is drawn in visible overflow (W_LAYOUT_LABEL_OVERFLOW). It never covers another
     # object's mark (#1869), so on a plot this dense it may stand over a name that was placed before it.
     forced = {item.placement_id.removeprefix("annotation-text:") for item in surface.fit_warnings

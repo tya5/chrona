@@ -7,7 +7,9 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_lanes import review_rows as _review_rows, preflight_fixed_lane_layout
-from chrona.presentation.layout.surface_base import SurfaceInlineGeometry, prepare_surface_inline
+from chrona.presentation.layout.surface_base import (
+    SurfaceInlineGeometry, close_surface_rows, prepare_surface_inline,
+)
 from chrona.presentation.layout.slot_heading import SlotHeadings, complete_slot_headings, content_slot
 from chrona.presentation.layout.surface_table import (
     SurfaceTableHeaderSeed, prepare_table_header_seed, table_row_indent_intents,
@@ -188,6 +190,24 @@ def _complete_surface_natural_geometry(prefix: _SurfaceNaturalPrefix) -> Surface
     row_start = inline.timeline.bounds.block + prefix_block
     row_viewport = Rect(timeline_content.bounds.inline, row_start, timeline_content.bounds.inline_size,
                         max(Decimal(0), inline.timeline.bounds.block_size - prefix_block))
+    if inline.group_header_fit_plan is not None:
+        closed_rows = close_surface_rows(request, inline, row_viewport)
+        # The ordinary horizontal-header natural demand already includes one
+        # baseline header block per group. Only wrapped extra lines are new
+        # demand; vertical-tag layouts reserve no header block until a tag is
+        # demoted, so those fallback sizes are counted in full.
+        baseline_header_block = (0.0 if inline.group_header_fit_plan.vertical_tag_plan
+                                 else inline.group_header_size)
+        fallback_header_block = geometry_sum(
+            max(0.0, size - baseline_header_block)
+            for size in (closed_rows.group_header_sizes or {}).values())
+        if closed_rows.fit_plan is not inline.group_header_fit_plan or fallback_header_block:
+            inline = replace(
+                inline,
+                group_header_fit_plan=closed_rows.fit_plan,
+                natural_block_requirement=(inline.natural_block_requirement
+                                           + Decimal(str(fallback_header_block))),
+            )
     return SurfaceNaturalGeometry(inline, prefix.axis_frame, prefix.axis_measurement, axis_summary,
                                   headings, table_seed, prefix.axis_slot, timeline_content, row_viewport, prefix_block)
 

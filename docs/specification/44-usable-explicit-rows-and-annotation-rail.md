@@ -12,22 +12,28 @@ A snapshot member uses visual role `snapshot`; Theme defines `snapshot.fill`. Pr
 
 ## Annotation rail
 
-The rail is one configuration of the [unified annotation candidate model](06-view-model.md#9-annotations-and-layout-intent): an `annotations` slot region, row-aligned search, shared completed-surface obstacle query and leader connector from the mark port. Timeline row rectangles are not candidate-placement obstacles. Layout completes the box and leader; Scene projects them unchanged. Legacy rail declarations normalize to this candidate without changing their output.
+The rail is one configuration of the [unified annotation candidate model](06-view-model.md#9-annotations-and-layout-intent): an `annotations` slot region, row-aligned search, shared completed-surface obstacle query and leader connector from the mark port. Timeline row rectangles are not candidate-placement obstacles. Layout completes the box and leader; Scene projects them unchanged. Legacy rail declarations retain their normalized intent; completion follows the current safety and declared overflow policies.
 
-A required annotation with no fitting rail position uses a stable visible
-placement and, when necessary, a direct leader route with Layout warnings.
-An optional annotation may be omitted only under its explicit policy. This
-is a Layout placement rule, not a new annotation resource.
+A required annotation does not authorize a box over another object's mark.
+A declared rail leader follows Specification33's mandatory-connection rule:
+clear routing first, then an explicitly diagnosed hairline naming crossed
+obstacles rather than losing its leader. This is a connector-only exception;
+plot callouts/tails stay strict. Box exhaustion follows Specification33's explicit
+terminal-list/suppression rule; Layout does not invent a destination.
+An optional annotation may be omitted only under its explicit policy.
 
-After ordinary rail search exhausts, visible-overflow completion may retain
-the full natural frame's inline overhang while searching the same finite
-vertical positions against the shared obstacle inventory. If no position
-fits, place the frame below all preceding completed rail boxes and list
-records, including unnumbered boxes. Track full box extents, not only body
-text. The box and required heading/body text carry the visible-overflow
-disposition and existing warnings. Ordinary fitting candidates and numbered
-list order remain unchanged; required peer notes must not share a clamped
-fallback position.
+A slot declaring `visible-overflow` permits the full natural frame's inline
+overhang while searching the same finite vertical positions against the
+shared obstacle inventory. This preserves Specification07's unbreakable or
+explicitly nonwrapping filled-note text; overhang alone is not an unsafe
+candidate. The whole frame must still clear other completed content and any
+required leader must complete atomically, either clear or with the explicitly
+diagnosed rail-crossing disposition. Track full box extents, not only
+body text. The box and required heading/body text carry the visible-overflow
+disposition and existing note-named warnings. When no safe box completes, the
+explicit terminal list naturally stacks below preceding boxes and list
+records as specified in Specification33. Physical anchor order and View-order
+ties apply; required peer notes must not share a clamped fallback position.
 
 ## Reusable Project-note placement (#1343)
 

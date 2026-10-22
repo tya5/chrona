@@ -41,6 +41,21 @@ def segment_vertical(text: str) -> tuple[tuple[str, str], ...]:
     return tuple(result)
 
 
+def _vertical_advance(segment: tuple[str, str], *, size: float, spacing: float,
+                      metric: Any, numeric_spacing: str) -> float:
+    if segment[0] == "upright":
+        return size
+    return measure_text_width(segment[1], font_size=size, font_metrics=metric, letter_spacing=spacing,
+                              numeric_spacing=numeric_spacing)
+
+
+def _vertical_extent(segments: tuple[tuple[str, str], ...], *, size: float, spacing: float,
+                     metric: Any, numeric_spacing: str) -> float:
+    return geometry_sum(_vertical_advance(item, size=size, spacing=spacing, metric=metric,
+                                           numeric_spacing=numeric_spacing) for item in segments) \
+        + spacing * max(0, len(segments) - 1)
+
+
 @dataclass(frozen=True)
 class VerticalLabel:
     """The placements of one vertical label and what it needed against what it had (#981)."""
@@ -53,6 +68,19 @@ class VerticalLabel:
 def place_vertical_label(**kwargs: Any) -> tuple[TextPlacement, ...]:
     """Place `label` as one column centred in `column_size`, from `block_start`, cut to `available_block`."""
     return place_vertical_label_fit(**kwargs).placements
+
+
+def vertical_label_required_block(*, label: str, typography_role: str,
+                                 theme_tokens: Any, font_metrics: Any) -> float:
+    """Natural full-label block extent shared by pre-row fit and vertical placement."""
+    treatment = theme_tokens.text_treatment(typography_role)
+    metric = metric_for_role(theme_tokens, typography_role, font_metrics)
+    size, spacing = float(treatment.font_size), float(treatment.letter_spacing)
+    painted = paint_text(label, text_transform=treatment.transform)
+
+    segments = segment_vertical(painted)
+    return _vertical_extent(segments, size=size, spacing=spacing, metric=metric,
+                            numeric_spacing=treatment.numeric_spacing)
 
 
 def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: str, column_inline: float,
@@ -69,18 +97,14 @@ def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: s
     # The centre of the em box above the baseline, from the face's own ascent and descent.
     centre_above_baseline = (metric.ascent + metric.descent) / 2 / metric.units_per_em * size
 
-    def advance(segment: tuple[str, str]) -> float:
-        if segment[0] == "upright":
-            return size
-        return measure_text_width(segment[1], font_size=size, font_metrics=metric, letter_spacing=spacing,
-                                  numeric_spacing=treatment.numeric_spacing)
-
     def extent(segments: tuple[tuple[str, str], ...]) -> float:
-        return geometry_sum(advance(item) for item in segments) + spacing * max(0, len(segments) - 1)
+        return _vertical_extent(segments, size=size, spacing=spacing, metric=metric,
+                                numeric_spacing=treatment.numeric_spacing)
 
     segments = segment_vertical(painted)
     overflow = "fit"
-    required = extent(segments)
+    required = vertical_label_required_block(label=label, typography_role=typography_role,
+                                             theme_tokens=theme_tokens, font_metrics=font_metrics)
     # Half an em of clear space at each end keeps the tags of neighbouring groups apart. A label that fits its room
     # whole is never cut for that clear space: it keeps as much of it as the room leaves (#1891).
     inset = size / 2
@@ -108,7 +132,8 @@ def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: s
                       overflow=overflow, collision_region=collision_region, collision_domain=collision_domain,
                       semantic_id=semantic_id, available_inline_start=column_inline,
                       available_inline_size=column_size, source_content=label if overflow == "ellipsized" else None)
-        step = advance((kind, content))
+        step = _vertical_advance((kind, content), size=size, spacing=spacing, metric=metric,
+                                 numeric_spacing=treatment.numeric_spacing)
         if kind == "upright":
             width = measure_text_width(content, font_size=size, font_metrics=metric, letter_spacing=0,
                                        numeric_spacing=treatment.numeric_spacing)

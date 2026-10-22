@@ -96,7 +96,9 @@ def test_other_project_notes_use_kind_bindings_and_only_one_narrative_occurrence
     rendered = sr.render(tmp_path, source, presentation=parts)
     assert (source, parts) == before
     notes = [item for item in rendered.surface.primitives if item.scene_id.startswith("annotation-text:")]
-    assert [item.scene_id for item in notes] == ["annotation-text:new-gate-note", "annotation-text:new-span-note"]
+    # Physical anchor y precedes View declaration order; the span body's center
+    # is above the point marker even though its annotation is declared second.
+    assert [item.scene_id for item in notes] == ["annotation-text:new-span-note", "annotation-text:new-gate-note"]
     svg = ElementTree.fromstring(rendered.artifact.content)
     svg_text = {node.get("data-scene-id", node.get("id")): " ".join(node.itertext())
                 for node in svg.iter("{http://www.w3.org/2000/svg}text")}

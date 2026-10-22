@@ -89,6 +89,47 @@ Removed source subtrees have no frame/caption placement decision and emit no
 frame-omitted or slot-heading-omitted notice; those notices still apply to
 content-present nodes whose placement cannot fit.
 
+**Completion-selected source demand (#1906).** Potential legend entries and
+potential annotation destinations are measurement inventory, not proof that
+normal flow consumes them. Before accepting a composition, Layout closes the
+legend source against its actually realized entry sequence and the annotations
+source against its actually selected in-flow card, list, summary and status
+records. Plot callouts and note-index marks do not themselves consume footer
+flow. A narrative receipt alone is not a source-demand witness.
+
+The typed witness retains content and source identities, exact shown text,
+typography and visual treatment, line partitions, allocated inline witnesses,
+and intrinsic row/frame/chrome/gap block demand. Anchor-derived whitespace and
+absolute placement coordinates are not intrinsic demand. An empty selected
+flow source removes its leaf and newly empty ancestors, including gaps and
+frames, through normal tree normalization. Retain the immutable original
+resolved profile and declared destination inventory: a candidate that actually
+needs a pruned but declared destination requests internal activation and a
+fresh allocation. A genuinely undeclared destination retains its existing
+public configuration error. Merely declaring a fallback does not activate it;
+failed placement is never reclassified as absent content.
+
+Re-solve the complete authored profile and recompose dependent geometry when
+the source witness changes; never shrink only a Scene slot or crop the canvas.
+The final legend filter always reads the full potential inventory, not only
+the previous trial's subset. Every accepted witness must match the final
+completed content and measurements. Fresh mutable placement, obstacle and
+route-budget state is used per joint count/source trial; only the accepted
+joint invocation publishes geometry, diagnostics, executed-pass facts and
+buffered progress. Source closure sits inside the existing placed-note count
+coordinator. Completed geometry may be reused when exact normal-flow,
+preparation and source-witness dependencies match; equal viewport dimensions
+or entry counts alone are not a reuse witness.
+Memoize the joint finite content state (count trial, entry/consumer identities,
+selected text/treatment and line partitions). A repeated state without matching
+source-demand witnesses is `E_LAYOUT_SOURCE_CONTENT_UNSTABLE`, naming the
+sources and conflicting witnesses; numeric drift within the same content state
+is not acceptance or an unbounded retry. Allocated inline/block dimensions and
+derived chrome are exact witness payload, not finite-state identity; including
+them in that identity must not turn numeric drift into fresh retry states.
+There is no new search quota, phantom
+key, viewport clamp, source-cap waiver or renderer-side recovery.
+
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
 schema. A resource contains exactly one of:
 
@@ -175,6 +216,48 @@ those rows (#1649); a fixed canvas keeps its declared outer dimensions and slot
 constraints, not a stale conservative legend height. Unknown inline allocations
 retain the conservative stack. Row height includes the tallest actual swatch
 as well as the text line box; measurement and placement share the wrapping rule.
+
+**Narrow legend closure (#1906).** A drawn swatch and its label are one
+indivisible entry: allocating the swatch while leaving no readable label is
+not a fit. At a known inline bound, a wrapping legend closes both entry rows
+and each label's lines before final slot allocation. Use the same completed
+lines, swatch reservation and per-row maximum block demand in measurement
+and placement; never re-fit the label against a different remaining width.
+An entry's minimum inline demand includes its actual swatch, label gap and
+one indivisible line-break unit, measured with the existing text rules. Move
+an entry to the next row before exhausting that demand. A label that cannot
+fit even on a fresh row wraps; an indivisible unit or swatch that cannot fit
+requires growth with a source-linked overflow diagnostic. The completed
+legend bounds enclose every drawn entry. A hard parent constraint reports
+the real legend/track shortage rather than emitting an empty label or
+misreporting that geometric shortage as duplicate legend meaning. Existing
+grid declarations, paint, entry order and semantic ambiguity checks remain
+independent of this closure. Declared ellipsis may shorten a label only when
+it retains readable source text; otherwise wrapping/growth applies.
+
+The same no-empty-label closure applies to a declared legend grid. Preserve
+its column count and reading order. Below natural column demand, allocate
+the available width between each column's measured entry minima and natural
+preference using the shared deterministic track allocation, then close label
+lines and each row's maximum block demand at those widths. If the sum of
+column minima and gaps cannot fit, that indivisible minimum is the named
+growth/constraint-shortage cause. Do not replace a declared grid with an
+inline flow, drop columns, or leave swatches at natural-width positions while
+fitting their labels against a different allocation. A block legend closes
+its label lines at its one-column width by the same rule.
+For constrained grids this replaces the natural-width packed-overflow
+fallback above: `spread` uses equal shares when every measured minimum fits
+its share, otherwise the same minimum-constrained track allocation applies.
+At natural-fit widths the existing `start`/`spread` arrangement is unchanged.
+
+Heading wrapping remains the explicit View intent in Specification 24:
+omitted `heading.text.wrap` still means `forbid`. First-party designs that
+intend bounded title/subtitle wrapping declare `allow` in their existing
+Layout `viewDefaults.heading`; this does not override an authored View
+heading or change the schema's absent-field behavior. Layout completes those
+lines and their header demand before placing neighboring slots. Explicit
+viewport width is a minimum canvas size, not clipping or fit-to-page: wrap
+eligible text first and identify the indivisible content causing any growth.
 A `notes` source with no notes is absent: its slot reserves no block and no gap (#1649).
 The [#427 dispatch amendment](../design/issue-427-legend-swatches-design-amendment-2026-09-26.md)
 qualifies this rule: known mark/line/decoration roles use the closed
@@ -234,13 +317,14 @@ narrative occurrences in the immutable input. Try candidate counts N down to0;
 accept the first completed layout whose receipts equal its candidate. Each
 trial has fresh mutable placement/obstacle/diagnostic state and count-correct
 SourceInputs; rejected trials leak no placement/index state or diagnostics.
-At mostN+1 trials, not guessed-count convergence. No consistent count is
+At mostN+1 count candidates, not guessed-count convergence; each candidate
+closes the finite source-content states above. No consistent count is
 `E_LAYOUT_FIGURE_COUNT_UNSTABLE`, with domain/trial count; never substitute
-selected counts. No late template read means one ordinary composition; unused
+selected counts. No late template read means one ordinary source-closed result; unused
 late figures then resolve from its receipts. Scene/adapters do not recount
 or replace text after geometry. Existing resources remain unchanged.
 Route-budget facts are local to a complete Layout invocation: discard a
-rejected whole-count candidate, but retain every executed route/label pass
+rejected whole joint count/source candidate, but retain every executed route/label pass
 fact inside the accepted invocation, including rejected recovery passes (Spec50).
 Reject only typed candidate-admission failures, including unavailable number
 names or count-dependent required fit; retain their evidence on no solution.
@@ -256,7 +340,7 @@ Existing caption overflow/ellipsis policy does not acquire a new fit rejection.
 The complete count coordinator consumes SurfaceRenderPlanInput and returns the
 accepted prepared plan, projection facts and SurfaceLayoutComposition. It never
 projects Scene or calls Application geometry callbacks. With no active late read,
-it reuses ordinary preparation and composes once, then resolves unused late
+it reuses ordinary preparation to close one result, then resolves unused late
 figures from receipts. Ordinary preparation remains before the existing
 unused-input checkpoint; completion remains after it. An active late read
 defers whole candidate planning/completion until after that checkpoint,
@@ -387,6 +471,27 @@ Each node declares `inlineSize` and `blockSize`. A size is one of:
 variants require intrinsic measurements. `fill` participates in equal distribution of
 remaining space after fixed, intrinsic, bounded, gap and padding requirements.
 
+A `minmax` is an interval, not a fixed-size request at its maximum. When its
+resolved maximum is finite and has no explicit fractional weight, it
+participates as a bounded unit-weight track: it may shrink toward its minimum
+when space is scarce, and never grows beyond its maximum. Apply the same rule
+on both axes and in every container's shared track arithmetic. An explicit
+`fr` maximum retains that declared weight. A standalone `fixed` size remains
+fixed, `fitContent` retains its intrinsic rule, and equal minimum/maximum
+bounds remain a point. This intentionally replaces the previous interpretation
+that treated a finite `minmax` maximum as a non-shrinkable fixed target (#1906).
+The bound-freezing allocator below is unchanged; source ceilings still cannot
+erase an authored minimum or enlarge an authored maximum.
+If a content-derived intrinsic minimum exceeds a finite maximum, the upper
+bound still wins for the track; apply the content's declared overflow inside
+that bounded allocation instead of moving the overflow to its parent. An
+explicit non-intrinsic minimum above the maximum is
+`E_LAYOUT_CONSTRAINT_CONTRADICTORY`. Independent source budgets and mandatory
+group-name feasibility remain authoritative errors: this content-overflow
+rule cannot erase their measured minimum or waive a source ceiling. Flow
+also clamps a valid interval's preferred size within its bounds; a preferred
+size above the maximum is not by itself an infeasible minimum.
+
 A flexible track's (`fr` or `fill`) used size is resolved by CSS Grid's own iterative
 "find the size of an `fr`" procedure (#487, ADR-0032), not a single-pass formula: a
 flexible track's `minmax` minimum is a floor its share must clear, never an amount its
@@ -457,6 +562,48 @@ minimum above the ceiling, or mandatory text that cannot fit is
 `E_LAYOUT_TEXT_OVERFLOW` for a heading, not `E_LAYOUT_TABLE_OVERFLOW`.
 Full-share budgets retain the existing Grid cell-filling allocation; text is
 closed inside that cell rather than shrinking the host to its fitting copy.
+
+**Nested heading ceiling closure (#1906).** A neutral-probe heading budget
+is an upper bound, not a promise that every descendant keeps that entire
+width after sibling tracks are allocated. The final solve may narrow a
+heading's parent/cell allocation only while preserving its active slot ID,
+source kind and source path, and only when both the final available width
+and ceiling are no greater than their independently probed bounds. Measure
+the heading again at its actual final width before closing block geometry;
+do not reuse lines measured at the larger bound. Keep mandatory text and
+authored minima and the actual-width fit checks unchanged. A new/missing
+active source, an intrinsic/self-sized allocation that grows beyond the
+probe, or an infeasible minimum is still rejected. Table budgets, including
+`maxInlineShare`, retain exact probe/final equality; this heading rule is
+not a waiver of strict table feasibility. No retry count or width iteration
+is introduced: ordinary track allocation owns the final narrower width.
+
+**Required group-name inline demand (#1906).** Before route completion, a
+typed full-name fallback demand may raise the table source's mandatory inline
+minimum, including the already reserved tag/header insets. Retain its group
+identity for the growth or incompatible-cap diagnostic. Apply that minimum
+both to the source measurement and to bounded remeasurement; text fitting
+cannot erase required group content. Re-close normal-flow and native row
+geometry before routing. This demand is raised only for a group whose
+preferred vertical name does not fit, or whose required bounded horizontal
+header does not fit, and whose horizontal indivisible unit exceeds its
+allocation; not for every potentially long group label. Every
+reclosure must add a previously unsatisfied measured group minimum; unchanged
+demand is an incompatibility, not permission to retry indefinitely. The finite
+admitted group inventory bounds this closure without a new search quota.
+No Scene/adapter resizing, source renumbering, or table-ceiling waiver occurs.
+
+The declared viewport is a minimum, not an implicit source ceiling. Close
+required intrinsic inline demand through normal-flow ancestry before probing
+source ceilings; a fill-sized ancestor does not make that demand disappear.
+Keep the original declaration separately for the canvas-growth diagnostic.
+A header spanning table and timeline belongs to their smallest common layout
+container: carry its measured minimum on that container, not on either child
+source. Include the owner's declared padding and the header's inset geometry;
+retain tab/band domains. Source and container minima share the finite admitted
+group closure, and an authored incompatible cap names that owner and group.
+This is intrinsic Layout sizing, not route-time viewport repair or an
+incremental viewport-plus-shortage search.
 
 Every slot declares `place.inline` and `place.block`. Containers declare `alignItems`
 for the cross axis and `justifyContent` for the main axis. A slot value overrides its
@@ -613,20 +760,79 @@ successful opposite-side placement emits
 reason `other-side-of-as-of`, including when the first candidate fits. If the
 pass fails, retain the existing fallback and diagnostics.
 
-When every declared `nearest-free` candidate has failed, the terminal visible
-placement of an annotation box (#1869) MUST NOT cover a mark of an object other
-than the annotation's anchor while any lattice position within the first
-declared candidate's `maxPositions` budget (fine, then coarse) avoids one. Positions are
-ranked by whether they cover another object's mark at all (one that does not
-always wins), then the text and label visuals met (a note box never hides a
-name), the number of other objects' marks covered, the other declared obstacles
-met, the area of those marks covered, then nearest first. When every position covers another object's mark, the least-covering
-one is used and Layout emits `W_LAYOUT_ANNOTATION_COVERS_MARK:<annotation-id>:<object-id>`
-once per covered object, naming that object. The `W_LAYOUT_LABEL_OVERFLOW` of
-such a box reports the box size as the size required and, as the size
-available, the largest free rectangle of the candidate's region (on the
-anchor's side of an in-window as-of rule, and connected to the anchor when the
-candidate has a connector), not the region itself.
+**Safe annotation exhaustion (#1906).** A placed plot callout MUST have its
+declared connector touching the resolved anchor, and its body, tail and any
+routed connector MUST clear other objects' marks. Exhaustion does not permit
+a detached balloon, a least-covering box over another object's mark, or an
+unvalidated direct plot leader. Evaluate the existing ordered candidates without
+changing their individual search budgets. The diagnosed rail-leader completion
+below is a deliberate exception for the connector only, not plot callouts,
+tails or card-body clearance.
+An annotations slot's declared `visible-overflow` may admit a natural frame's
+inline overhang under Specification07/44; it does not waive full-frame obstacle
+clearance or connector validation and must name the note in its diagnostic.
+A final declared candidate with
+`region: {kind: slot, source: annotations}`, `search: {kind: row-aligned}`
+and `connector: {kind: none}` is an explicit terminal list destination.
+This candidate declares list text, not a card whose connector happens to be
+absent. A nonterminal slot/row-aligned candidate with `connector: none`
+retains the Theme's card frame, kind header and title without a leader;
+declare it before the terminal list when card presentation must be preserved.
+Try the terminal list's normal text fit first; when its allocated slot is
+insufficient, complete the whole note as a naturally stacked list record and report the existing
+source-linked visible-overflow diagnostic naming that note. Preserve the
+body of unnumbered notes too, without inventing an ordinal. This list entry
+is not a detached plot callout and has no fabricated connector. Its slot
+must actually exist. If safe candidates exhaust without an explicit suppress
+outcome or such a declared terminal destination, fail with
+`E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED` at the annotation's placement policy,
+naming the annotation and required declaration; a missing declared slot is
+a resource/layout configuration error. Never infer a panel from a project
+name or silently fabricate a slot. First-party placement policies and their
+Layout slots migrate together with this rule.
+
+For effective rail-first card policies, Layout prepares the complete Theme
+frame heights before committing the ordered stack. When the admitted primary
+rail cards' measured heights fit the rail, constrain each card's latest
+position to leave the remaining cards' measured block capacity below it.
+Keep anchor order and View-order ties, actual earlier occupied bounds, and
+normal candidate/connector validation. This avoids a greedy near-anchor
+placement forcing a later otherwise-fitting card into its terminal list.
+Preparation is shared with actual placement, not a second chrome/typography
+implementation. This capacity reservation is not a phantom obstacle or route;
+it cannot authorize unsafe ink or claim global feasibility. If the measured
+stack does not fit, retain the declared exhaustion behavior. Plot-first
+callouts do not acquire an unconditional footer reservation through this rule.
+
+**Mandatory rail leaders (owner decision, #1906).** A candidate declaring
+`region: {kind: slot, source: annotations}`, `search: {kind: row-aligned}`
+and `connector: {kind: leader}` keeps its declared connection whenever its
+full card body fits. Try the existing clear/bridged routes for the finite
+ordered body candidates first, under the existing budgets and quality limits.
+If no such pair is admitted, complete the first otherwise-valid body candidate
+with a direct hairline from its resolved mark endpoint to its card boundary.
+Retain its declared Theme leader paint; do not invent a stroke, shrink text,
+drop the leader, or silently choose a connector-free card because routing failed.
+This fallback is diagnosed, not a claim that its path is clear. It may cross
+completed obstacles, including work-item marks, an as-of rule, text or other
+strokes; name every actual crossing rather than hiding one class of collision.
+
+Layout measures the final painted connector, including its actual stroke width
+and any tilted-card boundary extension, against the same completed obstacle
+index. Retain typed crossing identities/classes/regions and report them in
+`W_LAYOUT_ANNOTATION_LEADER_FALLBACK` with the annotation and candidate IDs.
+Only the declared source/target contact and initial host-egress corridor are
+expected attachment, not obstacle waivers for later re-entry. The diagnostic
+still names route exhaustion when the crossing set is empty. A bounded search
+miss is not global infeasibility. Scene/adapters project the completed path
+and existing Theme paint; they never choose the fallback or detect crossings.
+
+This explicitly supersedes the absolute no-crossing condition for rail
+leaders in the original #1906 row 4, following owner decision
+[6351461724](https://github.com/tya5/chrona/pull/1914#issuecomment-6351461724).
+Anchor/View-tie stacking, full-card containment/obstacle checks, explicit list
+exhaustion when no body fits, and plot/tail safety remain unchanged. An authored
+`connector: none` remains intentional; only a declared rail leader is mandatory.
 
 ### 8.2 Annotation connector topology after the shared inventory
 
@@ -638,9 +844,12 @@ obstacle inventory. A failed pair MUST NOT leave provisional obstacles behind.
 
 Strict connectors avoid all declared obstacles. A rail leader MAY use an
 explicit, bounded bridged-orthogonal topology after strict search. A bridge
-MAY cross only a prior leader or semantic dependency stroke, transversely and
+MAY cross only a semantic dependency stroke, transversely and
 away from junctions/endpoints. It MUST NOT cross a mark, text, annotation box,
-port other than a named endpoint, or rule barrier. Layout completes a visible
+another annotation leader, port other than a named endpoint, or rule barrier.
+After these clear-route attempts exhaust, the separately diagnosed mandatory
+rail hairline above is permitted; it is not a strict or bridged-clear route.
+Layout completes a visible
 gap in the later annotation connector at each crossing; the crossed stroke
 remains continuous. The connector remains a single source-linked placement,
 and Scene/adapters MUST NOT decide the crossing or gap. A tail connector MUST
@@ -654,10 +863,11 @@ completed geometry. See the
 [#466 C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
 The local search corridor, route quality, crossing count,
 and exhaustion are bounded and recorded in the placement decision. If all
-declared candidates fail, an explicit suppress outcome or the visible
-fallback policy applies; fallback MUST NOT be reported as a collision-free
-fit. The later candidate grammar will specify the public spelling of these
-policies. The local corridor is based on the source mark and selected box
+declared candidates fail, the safe annotation-exhaustion rule above applies;
+fallback MUST NOT be reported as a collision-free fit. A candidate's declared
+connector kind, not its arbitrary candidate ID, decides whether a leader is
+required and whether rail topology is applicable. `connector: none` performs
+no leader search and emits no leader. The local corridor is based on the source mark and selected box
 attachment point, not the full box extent; see the
 [#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
 
@@ -694,6 +904,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_source_inputs` | Assemble source facts and visual advances from closed content and Theme/icon resources. |
 | `surface_render_plan` | Measure sources, close sizing/allocation and prepare native geometry from resolved intent; Application supplies data, not a geometry callback. |
 | `surface_count_closure` | Close count-bound planning/composition and accepted facts; read closed programs and typed narrative receipts, never project Scene. |
+| `surface_source_closure` | Close completion-selected source demand and typed destination activation inside each count trial; re-solve normal flow with fresh composition state. |
 | `surface_row_identity` | Complete the automatic-row identity warning from accepted member-label placements and selected row membership, without changing geometry. |
 | `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
@@ -711,6 +922,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_route_label_plan` | Coordinate one route composition around completed member content, then complete terminal and ordinary relation labels against that route plan; no trial loop or route replay. |
 | `surface_routes` | Place dependency paths/ports and relation labels. |
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
+| `annotation_card_measurement` | Prepare shared complete card/text/frame measurements for ordered rail capacity and actual annotation placement. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
 | `surface_observations` | Measure and place native observation tables, attributed source lines and row cells inside their content slot. |
 | `surface_heading` | Project closed heading measurements and baselines into title-slot text placements. |
@@ -741,6 +953,7 @@ The implementation exposes at least:
 | `E_LAYOUT_OVERRIDE_KIND` | Override attempts to change node kind or ID. |
 | `E_LAYOUT_NODE_DUPLICATE` | Duplicate stable node ID. |
 | `E_LAYOUT_SOURCE_UNAVAILABLE` | Required slot source is unavailable. |
+| `E_LAYOUT_SOURCE_CONTENT_UNSTABLE` | A repeated completion-selected content state does not close its intrinsic source-demand witnesses. |
 | `E_LAYOUT_TOKEN_UNKNOWN` | Referenced Theme token is missing. |
 | `E_LAYOUT_TOKEN_TYPE` | Distance token is not a non-negative number. |
 | `E_LAYOUT_MEASUREMENT_REQUIRED` | Intrinsic/baseline size lacks declared measurement. |
@@ -892,21 +1105,25 @@ plot index, box, or leader is fabricated. These statuses are Layout-derived,
 not View/Project facts or adapter decisions. Layout measures and places the
 final list entries after resolving plot visibility; it may not renumber them
 or repair a completed Scene in an adapter. When suppression adds a summary or
-status, entries may reflow in View order within the declared slot; Layout
+status, entries reflow in completed anchor vertical order within the declared
+slot, with original View order breaking ties (#1906); Layout
 must recomplete affected boxes and required leaders against the obstacle
 inventory, never move text alone or revive a suppressed plot callout.
 Reflow may additionally suppress an index or callout that no longer fits,
 but never restores either once suppressed in that composition. Repeat only
 when the suppressed identity set strictly grows; this bounds visibility
 transitions by the finite annotation/index inventory and prevents stale status.
-In the no-suppression case, the
-existing Scene and adapter output remain byte-identical. This preserves
-intentional callout suppression while preventing a silent numbering gap.
+Numbering and content remain View-owned even when physical panel placement
+changes. Physical annotation placement visits completed anchors top to bottom
+(ties by original View ordinal), preserving each annotation's declared
+candidate order. Layout resolves anchors before this pass and retains source
+ordinals for identity, numbering, diagnostics and deterministic Theme treatment.
+This preserves intentional callout suppression while preventing a silent numbering gap.
 Without that slot, Layout does not fabricate a list or change the existing
 plot-only annotation behavior. List overflow must remain explicitly diagnosed,
 never silently omit an entry.
 If a new status or summary has no non-overlapping position in the declared
-slot, place it after preceding rail records in View order and mark its text
+slot, place it after preceding rail records in anchor order and mark its text
 as `visible-overflow`, with the existing label-overflow diagnostic. Do not
 clamp multiple required records onto the same fallback position or silently
 grow the canvas. The author controls sufficient slot capacity.
@@ -1050,13 +1267,28 @@ and never influences geometry, routing order, budgets or artifacts. Progress
 sink I/O failure detaches that sink without rejecting rendering. Core has no
 terminal or observer dependency; use cases report phases around existing work.
 
-For each Layout routing pass, report `0/N` then `k/N` in existing routing order,
+For each Layout relation-routing pass, report `0/N` then `k/N` in existing routing order,
 where N counts selected semantic relation declarations, not physical row/facet
 instances, and k advances after all instances of a declaration complete or are
 omitted. Separately name rehearsal passes; do not present their repeated work
 as a monotonic final-route count. Zero selected relations performs no search.
 Quiet/progress artifact and byte-characterization tests isolate this side
 channel from the independently declared default-height policy migration.
+
+Annotation connector completion reports its own named `routing` pass,
+`annotation-leaders`, before starting candidate search and after completing
+each annotation; its total counts annotation declarations, not semantic
+relations, connector trials or physical fragments (#1906). Reflows name
+their attempts separately rather than pretending repeated work is monotonic.
+The same best-effort observer contract applies; no observer may change
+placement or suppress a note. Annotation searches query the shared surface
+obstacle inventory. A provisional balloon body uses an ephemeral read-only
+query overlay, not a rebuilt index containing every surface obstacle for
+each candidate. Its exact body geometry participates in collision, port,
+visibility and memo identity; rejected overlays never mutate accepted ink.
+This does not change budgets, candidate ordering or clearance predicates.
+Measure leader routing separately from index construction: the latter is
+not assumed to explain a slow render without profile evidence.
 
 ### 13.1 Content-coherent table-timeline allocation (#468)
 

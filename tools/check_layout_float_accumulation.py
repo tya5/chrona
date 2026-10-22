@@ -23,9 +23,14 @@ DECIMAL_SEEDED_SUM_FUNCTIONS = {
     "surface_base.py": frozenset({"prepare_surface_inline"}),
     "table_measurement.py": frozenset({"measure_bounded_table"}),
     "tracks.py": frozenset({"resolve_flexible_tracks"}),
+    # Both sums reduce Decimal-derived legend widths/minima with an explicit
+    # Decimal zero; keep their precision classification function-scoped.
+    "surface_legend.py": frozenset({"complete_legend_layout", "legend_source_input"}),
     # Extracted source factory preserves the previous Application precision:
     # every visual advance is Decimal(str(width + gap)), seeded by Decimal(0).
     "surface_source_inputs.py": frozenset({"_annotation_source_input"}),
+    # Producer-owned intrinsic block demand remains Decimal through allocation.
+    "source_use.py": frozenset({"annotation_input"}),
 }
 
 

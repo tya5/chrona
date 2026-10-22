@@ -734,7 +734,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
 
     item_titles = {item.object_id: item.title for item in projection.items}
 
-    def _annotation(index: int, annotation: Mapping[str, Any], anchor_source_ref: str) -> AnnotationIntent:
+    def _annotation(index: int, annotation: Mapping[str, Any], anchor_source_ref: str,
+                    placement_source_ref: str) -> AnnotationIntent:
         anchor = {str(key): ("finish" if key == "endpoint" and value == "end" else str(value)) for key, value in annotation["anchor"].items()}  # `end` aliases `finish` (I662 S4a)
         purpose = str(annotation["purpose"])
         number = index + 1 if annotation_numbered else None
@@ -750,21 +751,24 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         declared_candidates = annotation.get("candidates")
         if declared_candidates is not None:
             # The declared candidate-list spelling (#466): no legacy fallback
-            # ladder applies, and Layout falls back to visible-overflow on
-            # the first declared candidate if every one is exhausted.
+            # ladder applies; safe exhaustion is closed by the final declared
+            # list candidate or an explicit suppression rung.
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
                                     content, number, (), parse_candidates(declared_candidates),
                                     kind=kind, subject=subject, subject_id=subject_id,
-                                    anchor_source_ref=anchor_source_ref)
+                                    anchor_source_ref=anchor_source_ref,
+                                    placement_source_ref=placement_source_ref)
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
                                 legacy_candidate_order(purpose, annotation_fallback)[0],
                                 kind=kind, subject=subject, subject_id=subject_id,
-                                anchor_source_ref=anchor_source_ref)
+                                anchor_source_ref=anchor_source_ref,
+                                placement_source_ref=placement_source_ref)
 
-    annotations = tuple(_annotation(index, annotation.value, annotation.anchor_source_ref)
+    annotations = tuple(_annotation(index, annotation.value, annotation.anchor_source_ref,
+                                    annotation.placement_source_ref)
                         for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through
     # its View annotation and no longer duplicated into the notes slot (#466).

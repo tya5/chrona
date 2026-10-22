@@ -8,7 +8,8 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, SlotHeading
 from chrona.presentation.layout.slot_heading import (
-    SlotHeadings, complete_slot_headings, content_slot, full_slot, headed_slot_ids, reserve_slot_heading_blocks,
+    SlotHeadings, complete_slot_headings, content_slot, full_slot, headed_slot_ids, inline_full_slot,
+    reserve_slot_heading_blocks,
 )
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
@@ -61,6 +62,15 @@ def _run(slots, heading, *, source="annotations", request=None):
     by_source = {slot.source_ref: slot for slot in slots}
     return complete_slot_headings(request=request or _request(), slots=by_source,
                                   decisions={source: _decision(source, heading)})
+
+
+def test_inline_caption_restoration_encloses_content_that_grew_past_its_allocation():
+    allocated = _slot("legend", 100, 50, inline=10, inline_size=114)
+    completed_content = _slot("legend", 100, 50, inline=30, inline_size=374)
+    full = inline_full_slot(allocated, completed_content, Decimal(20))
+    assert full.bounds.inline == allocated.bounds.inline
+    assert full.bounds.inline_size == Decimal(394)
+    assert inline_full_slot(allocated, completed_content, Decimal(0)) == completed_content
 
 
 AXIS = _slot("timeline-axis", 100, 50, inline=100, inline_size=400)  # a band from 100 to 150

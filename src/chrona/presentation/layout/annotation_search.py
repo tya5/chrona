@@ -17,7 +17,8 @@ from chrona.presentation.layout.annotations import nearest_box_port
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import (
-    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
+    SurfaceObstacleQueryOverlay, obstacle_envelope,
 )
 from chrona.presentation.layout.annotation_topology import (
     AnnotationRouteTrial, route_strict_bounded, strict_route_candidates,
@@ -498,6 +499,9 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
         if obstacles.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom),
                                 classes=obstacle_classes, host_id=host_id):
             continue
+        candidate_index = SurfaceObstacleQueryOverlay(
+            obstacles, SurfaceObstacle("candidate:balloon-box", "annotation-box", "plot",
+                                       ObstacleRect(box.x, box.y, box.right, box.bottom)))
         target = (box.x + box.width / 2, box.y + box.height / 2)
         box_best = None
         for egress in connector_egress_candidates(anchor, endpoint, target, siblings, painted=True):
@@ -520,11 +524,6 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                 radius = min(corner_radius, box.width / 2, box.height / 2)
                 base_a, base_b = tail_base_points(box, tip, edge=edge, tail_base=tail_base,
                                                   corner_radius=radius)
-                candidate_index = SurfaceObstacleIndex()
-                candidate_index.extend(obstacles.all())
-                candidate_index.add(SurfaceObstacle("candidate:balloon-box", "annotation-box",
-                                                    "plot", ObstacleRect(
-                                                        box.x, box.y, box.right, box.bottom)))
                 source_points = egress.corridor or (egress.exposed_port,)
                 endpoint_ports = tuple(dict.fromkeys((
                     *coincident_endpoint_port_ids(obstacles, egress.semantic_port,
@@ -639,6 +638,9 @@ def _nearest_free_routed_tail_box_across_rule(
         if obstacles.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom),
                                 classes=obstacle_classes, host_id=host_id):
             continue
+        candidate_index = SurfaceObstacleQueryOverlay(
+            obstacles, SurfaceObstacle("candidate:balloon-box", "annotation-box", "plot",
+                                       ObstacleRect(box.x, box.y, box.right, box.bottom)))
         target = (box.x + box.width / 2, box.y + box.height / 2)
         streams = []
         for egress in connector_egress_candidates(anchor, endpoint, target, siblings, painted=True):
@@ -680,11 +682,6 @@ def _nearest_free_routed_tail_box_across_rule(
                          else (lambda value: value < as_of_x))
                 if not all(far_x(point[0]) for point in (tip, base_a, base_b)):
                     continue
-                candidate_index = SurfaceObstacleIndex()
-                candidate_index.extend(obstacles.all())
-                candidate_index.add(SurfaceObstacle(
-                    "candidate:balloon-box", "annotation-box", "plot",
-                    ObstacleRect(box.x, box.y, box.right, box.bottom)))
                 if any(candidate_index.collisions(ObstacleSegment(start, end),
                                                   classes=obstacle_classes)
                        for start, end in ((base_a, tip), (tip, base_b))):

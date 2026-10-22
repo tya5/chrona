@@ -22,6 +22,31 @@ def rail_candidate() -> dict[str, Any]:
                         connector="leader")
 
 
+def rail_card_candidate() -> dict[str, Any]:
+    return sr.candidate("rail-card", region={"kind": "slot", "source": "annotations"},
+                        search_kind="row-aligned", connector="none")
+
+
+def terminal_list_candidate() -> dict[str, Any]:
+    return sr.candidate("terminal-list", region={"kind": "slot", "source": "annotations"},
+                        search_kind="row-aligned", connector="none")
+
+
+def border_candidates() -> list[dict[str, Any]]:
+    """Keep leader appearance coverage, followed by the declared safe list rungs."""
+    return [rail_candidate(), rail_card_candidate(), terminal_list_candidate()]
+
+
+def place_rail_beside_timeline(parts: dict[str, dict[str, Any]]) -> None:
+    """Put the annotation slot beside the review surface for a short, routable leader control."""
+    root = parts["layout"]["root"]
+    review = next(item for item in root["children"] if item["id"] == "review")
+    rail = next(item for item in root["children"] if item["id"] == "annotations")
+    root["children"].remove(rail)
+    rail["place"] = {"inline": "stretch", "block": "stretch", "safety": "strict"}
+    review["children"].append(rail)
+
+
 def with_border(parts: dict[str, dict[str, Any]], border: Mapping[str, Any] | None, *, inset: Mapping[str, float] | None = None,
                 outline: str = "rectangle", radius: float = 0, ink_roles: Iterable[str] = SIDES,
                 extra: Mapping[str, Any] | None = None, kind_ink: bool = False) -> None:
@@ -45,17 +70,23 @@ def with_border(parts: dict[str, dict[str, Any]], border: Mapping[str, Any] | No
 
 
 def render_notes(tmp_path: Any, border: Mapping[str, Any] | None, *, name: str = "r", words: int = 3, rail: int = RAIL,
-                 candidates: list[Any] | None = None, texts: Iterable[str] = (), configure: Any = None, **kwargs: Any) -> Any:
+                 candidates: list[Any] | None = None, texts: Iterable[str] = (), configure: Any = None,
+                 source: dict[str, Any] | None = None, targets: Iterable[str] = TARGETS,
+                 beside_timeline: bool = False,
+                 **kwargs: Any) -> Any:
     """Three notes in the rail through a Theme that declares `border`."""
     directory = tmp_path / name
     directory.mkdir()
     parts = sr.bundle()
     sr.with_note_rail(parts, rail)
+    if beside_timeline:
+        place_rail_beside_timeline(parts)
     with_border(parts, border, **kwargs)
     if configure is not None:
         configure(parts)
-    source = sr.chain_project()
-    ids = sr.add_notes(source, parts["view"], TARGETS, candidates or [rail_candidate()], words=words)
+    source = sr.chain_project() if source is None else source
+    ids = sr.add_notes(source, parts["view"], targets,
+                       candidates if candidates is not None else border_candidates(), words=words)
     for note_id, text in zip(ids, texts, strict=False):
         source["annotations"][note_id]["text"] = text
     return sr.render(directory, source, presentation=parts)

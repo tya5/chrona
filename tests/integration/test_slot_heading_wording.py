@@ -32,7 +32,7 @@ def test_wording_reference_reads_the_table_entry_for_each_locale(tmp_path):
         base._with_heading_role(parts, colour="textMuted")
         sr.find_node(parts["layout"], "annotations")["heading"] = heading
         source = sr.chain_project()
-        sr.add_notes(source, parts["view"], base.TARGETS, [base._rail_candidate()], words=3)
+        sr.add_notes(source, parts["view"], base.TARGETS, base._rail_candidates(), words=3)
         return sr.render(directory, source, presentation=parts, viewport=(1600, 900), locale="ja-JP",
                          font_metrics_path=_font_descriptor(directory))
 

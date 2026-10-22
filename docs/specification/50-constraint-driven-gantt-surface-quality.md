@@ -1368,6 +1368,11 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+Group-header natural demand and final row allocation consume the same
+per-group fit plan, including the full-name fallback in Specification 07
+(#1906). Reserve its measured header block before mark/port/route completion;
+Scene cannot repair a shortened or suppressed group identity after placement.
+
 **Independent header-row strip (#1367).** A drawable Theme
 `group-header-strip` role emits one `groupHeaderStrip` Rect per completed
 group header, with purpose/visual role `group-header-strip` and identity
@@ -1439,7 +1444,10 @@ remain unchanged. A start tab requires the absolute inset to cover its
 `tabInlineSize + tabGap`; an end tab requires inset plus its reservation not
 to exceed the header width. Incompatible declarations fail with
 `E_LAYOUT_GROUP_TAB_SIZE` at `/body/roles/groupHeader/labelInset`, reporting
-the actual inset and required reservation. Negative ratios fail there with
+the actual inset and required reservation. Validate tab reservation and inset
+compatibility against the candidate header extent before deriving full-name
+source minima; a source-width failure must not mask an invalid declaration.
+Preflight and final composition use the same predicate. Negative ratios fail there with
 `E_THEME_TOKEN_TYPE`. Vertical tags refuse this horizontal property there with
 `E_THEME_ROLE_PROPERTY_UNSUPPORTED` and retain `tabGap`.
 

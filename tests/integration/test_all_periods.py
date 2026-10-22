@@ -124,6 +124,34 @@ def test_generic_notes_close_named_preset_required_capabilities_for_png(tmp_path
     source["annotations"] = {"risk": {"kind": "risk", "text": "Synthetic risk", "anchor": {"object": "a"}}}
     project = tmp_path / "project.yaml"
     project.write_text(yaml.safe_dump(source), encoding="utf-8")
-    result = render_draft(DraftRenderRequest(project=project, target_kind="png", preset=preset))
+    # Keep this a capability test for a fully styled annotation box in each
+    # preset. The shared legacy rail ladder now needs an explicit terminal
+    # candidate, so declare a safe nearby box for this synthetic View input.
+    root = Path(__file__).resolve().parents[2]
+    view = yaml.safe_load((root / "src/chrona/resources/presets/bundles/design-default/view.yaml")
+                          .read_text(encoding="utf-8"))
+    view["body"]["annotations"] = [{
+        "id": "risk-note", "purpose": "note", "projectAnnotation": "risk",
+        "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "end"},
+        "candidates": [{
+            "id": "rail-box", "region": {"kind": "slot", "source": "annotations"},
+            "search": {"kind": "row-aligned"},
+            "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
+                                        "leader-route", "annotation-box", "port", "rule"]},
+            "connector": {"kind": "none"},
+        }, {
+            "id": "terminal-list", "region": {"kind": "slot", "source": "annotations"},
+            "search": {"kind": "row-aligned"},
+            "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
+                                            "leader-route", "annotation-box", "port", "rule"]},
+            "connector": {"kind": "none"},
+        }],
+    }]
+    view_path = tmp_path / f"{preset}-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    result = render_draft(DraftRenderRequest(project=project, target_kind="png", preset=preset, view=view_path,
+                                             viewport="2400x1400"))
     assert result.artifact.content.startswith(b"\x89PNG")
-    assert any(item.scene_id == "annotation-text:risk-note" for item in result.rendered.surface.primitives)
+    ids = {item.scene_id for item in result.rendered.surface.primitives}
+    assert "annotation-box:risk-note" in ids
+    assert "annotation-text:risk-note" in ids

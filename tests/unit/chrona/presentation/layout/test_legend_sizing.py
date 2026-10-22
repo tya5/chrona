@@ -134,11 +134,11 @@ def test_critical_edge_legend_line_uses_canonical_scene_semantic_and_theme_sourc
 # --- what the content can shrink to ------------------------------------------------------------------------
 
 
-def test_an_ellipsizing_block_legend_can_shrink_to_a_swatch_a_gap_and_one_ellipsis():
+def test_a_wrapping_block_legend_needs_its_widest_indivisible_label_unit():
     measured = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test")),
                         LegendArrangement(overflow="ellipsize-with-source"))
 
-    assert _close(measured.min_inline, SWATCH + GAP + ADVANCE)
+    assert _close(measured.min_inline, SWATCH + GAP + len("integration") * ADVANCE)
     assert measured.min_inline < measured.preferred_inline
 
 
@@ -149,12 +149,12 @@ def test_a_legend_that_may_not_shrink_never_measures_below_its_content():
     assert measured.min_inline == measured.preferred_inline
 
 
-def test_a_wrapping_inline_legend_needs_only_its_widest_entry():
+def test_a_wrapping_inline_legend_needs_the_widest_indivisible_label_unit():
     arrangement = LegendArrangement(direction="inline", overflow="ellipsize-with-source",
                                     item_min_inline_size=Decimal(80))
     measured = _measure((SurfaceLegendEntry("a", "Plan"), SurfaceLegendEntry("b", "Assembly, integration and test"), SurfaceLegendEntry("c", "Act")), arrangement)
 
-    assert _close(measured.min_inline, _entry("Assembly, integration and test"))
+    assert _close(measured.min_inline, SWATCH + GAP + len("integration") * ADVANCE)
     assert measured.preferred_inline > measured.min_inline
 
 

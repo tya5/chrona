@@ -463,39 +463,57 @@ def empty_group_slots(review_rows: tuple[Any, ...], group_order: tuple[str, ...]
 
 
 def empty_group_header_blocks(*, slots: tuple[tuple[int, str], ...], row_placements: tuple[RowPlacement, ...],
-                              timeline_bounds: tuple[float, float, float, float], group_header_size: float
+                              timeline_bounds: tuple[float, float, float, float], group_header_size: float,
+                              group_header_sizes: Mapping[str, float] | None = None,
                               ) -> tuple[tuple[int, str, float], ...]:
     """Block origin of every row-less group header: just above the group that follows it, else after the last row."""
     result = []
     for position, (index, group_id) in enumerate(slots):
-        ordinal = len([other for other, _ in slots[:position] if other == index])
-        count = len([other for other, _ in slots if other == index])
         if index < len(row_placements):
-            block = row_placements[index].bounds[1] - group_header_size * (count - ordinal + 1)
+            later = geometry_sum((group_header_sizes or {}).get(other, group_header_size)
+                                 for at, other in slots[position:] if at == index)
+            row_group = row_placements[index].group_id
+            starts_group = (index == 0 or row_placements[index - 1].group_id != row_group)
+            if starts_group and row_group:
+                later += (group_header_sizes or {}).get(row_group, group_header_size)
+            block = row_placements[index].bounds[1] - later
         else:
             end = (row_placements[-1].bounds[1] + row_placements[-1].bounds[3]) if row_placements else timeline_bounds[1]
-            block = end + group_header_size * ordinal
+            earlier = geometry_sum((group_header_sizes or {}).get(other, group_header_size)
+                                   for at, other in slots[:position] if at == index)
+            block = end + earlier
         result.append((index, group_id, block))
     return tuple(result)
 
 
 def row_block_slack(*, review_rows: tuple[Any, ...], timeline_block_size: float, group_header_size: float,
-                    required_block_sizes: tuple[float, ...], empty_groups: int = 0) -> float:
+                    required_block_sizes: tuple[float, ...], empty_groups: int = 0,
+                    group_header_sizes: Mapping[str, float] | None = None,
+                    empty_group_ids: tuple[str, ...] = ()) -> float:
     """The timeline block left once every row requirement and group header is closed (negative: rows overflow)."""
-    return (timeline_block_size - group_header_size * (len(_group_starts(review_rows)) + empty_groups)
+    headers = geometry_sum((group_header_sizes or {}).get(review_rows[index].group_id, group_header_size)
+                           for index in _group_starts(review_rows))
+    headers += (geometry_sum((group_header_sizes or {}).get(group_id, group_header_size) for group_id in empty_group_ids)
+                if empty_group_ids else group_header_size * empty_groups)
+    return (timeline_block_size - headers
             - geometry_sum(required_block_sizes))
 
 
 def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, float, float, float],
                group_header_size: float, required_block_sizes: tuple[float, ...],
-               distribution: str, empty_groups: tuple[tuple[int, str], ...] = ()) -> tuple[RowPlacement, ...]:
+               distribution: str, empty_groups: tuple[tuple[int, str], ...] = (),
+               group_header_sizes: Mapping[str, float] | None = None) -> tuple[RowPlacement, ...]:
     """Allocate completed row requirements and only then distribute surplus."""
     if len(required_block_sizes) != len(review_rows) or any(size <= 0 for size in required_block_sizes):
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/layoutManifest/timeline")
     if distribution not in {"pack", "fill"}:
         raise LayoutError("E_LAYOUT_ROW_DISTRIBUTION", "/layoutManifest/reviewSurface/rowDistribution")
     group_starts = _group_starts(review_rows)
-    available = timeline_bounds[3] - group_header_size * (len(group_starts) + len(empty_groups))
+    header_total = geometry_sum((group_header_sizes or {}).get(review_rows[index].group_id, group_header_size)
+                                for index in group_starts)
+    header_total += geometry_sum((group_header_sizes or {}).get(group_id, group_header_size)
+                                 for _, group_id in empty_groups)
+    available = timeline_bounds[3] - header_total
     required = geometry_sum(required_block_sizes)
     # Requirements remain P1 geometry.  A requested timeline is a minimum
     # allocation, not a refusal boundary: surplus can be distributed only when
@@ -505,9 +523,10 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
     cursor = timeline_bounds[1]
     placements: list[RowPlacement] = []
     for index, row in enumerate(review_rows):
-        cursor += group_header_size * len([other for other, _ in empty_groups if other == index])
+        cursor += geometry_sum((group_header_sizes or {}).get(group_id, group_header_size)
+                               for at, group_id in empty_groups if at == index)
         if index in group_starts:
-            cursor += group_header_size
+            cursor += (group_header_sizes or {}).get(row.group_id, group_header_size)
         height = required_block_sizes[index] + surplus
         placements.append(RowPlacement(row.row_id, row.group_id,
                                        (timeline_bounds[0], cursor, timeline_bounds[2], height)))

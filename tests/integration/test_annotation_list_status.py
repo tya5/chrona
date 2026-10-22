@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+from dataclasses import replace
 import hashlib
 from pathlib import Path
 from xml.etree import ElementTree
@@ -13,10 +14,10 @@ from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# Scene provenance includes the wheel-owned vocabulary. The approved axis
-# window removes the trailing quarter/month tier and shifts completed content;
-# these hashes characterize that current Scene and its actual SVG output.
-NO_SUPPRESSION_SCENE_SHA256 = "d268810a75e9fa501154ad7066426a4ffb18af808d9e4bc247796f1dc1f6f314"
+# Completed source closure prunes the unused annotations slot. Twelve note
+# primitives consequently resolve their slot identity to timeline; all their
+# paint/geometry and the characterized SVG bytes remain unchanged.
+NO_SUPPRESSION_SCENE_SHA256 = "4f7ce9489cf9c52a250a94fc56fad4eee66d27e70fea64113e47b862935504c7"
 NO_SUPPRESSION_SVG_SHA256 = "044f9be48cbe2cd79dc5b58434e519b21957a84462893a8ac494257cb898e388"
 
 
@@ -68,6 +69,27 @@ def _svg_text(rendered, scene_id):
     return " ".join(" ".join(element.itertext()).split())
 
 
+def _suppress_second_index_per_trial(monkeypatch):
+    """Inject the same failure into each fresh source trial, not only the first."""
+    real_place_label = surface_annotations.place_label
+    real_place_annotations = surface_annotations.place_annotations
+    index_calls = 0
+
+    def suppress_second_index(*args, **kwargs):
+        nonlocal index_calls
+        index_calls += 1
+        return None if index_calls == 2 else real_place_label(*args, **kwargs)
+
+    def place_annotations(context):
+        nonlocal index_calls
+        index_calls = 0
+        # Internal suppression/reflow remains part of this single trial.
+        return real_place_annotations(context)
+
+    monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
+    monkeypatch.setattr(surface_annotations, "place_annotations", place_annotations)
+
+
 def test_unsuppressed_scene_and_svg_match_the_characterized_bytes(tmp_path):
     source, parts = _fixture()
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
@@ -88,17 +110,7 @@ def test_one_index_only_suppression_keeps_the_other_three_indexes_and_svg_status
     source, parts = _fixture()
     sr.with_note_rail(parts, width=300)
     baseline = _render_at(tmp_path / "before", source, parts)
-    real_place_label = surface_annotations.place_label
-    index_calls = 0
-
-    def suppress_second_index(*args, **kwargs):
-        nonlocal index_calls
-        index_calls += 1
-        if index_calls == 2:
-            return None
-        return real_place_label(*args, **kwargs)
-
-    monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
+    _suppress_second_index_per_trial(monkeypatch)
     rendered = _render_at(tmp_path / "after", source, parts)
 
     assert "W_LAYOUT_NOTE_INDEX_SUPPRESSED:note-1" in rendered.scene.diagnostics
@@ -106,9 +118,14 @@ def test_one_index_only_suppression_keeps_the_other_three_indexes_and_svg_status
     baseline_ids = _by_id(baseline)
     assert "annotation-text:note-1" in ids and "annotation-box:note-1" in ids
     assert "annotation-leader:note-1" in ids and "note-index:note-1" not in ids
-    assert ids["annotation-text:note-1"] == baseline_ids["annotation-text:note-1"]
-    assert ids["annotation-box:note-1"] == baseline_ids["annotation-box:note-1"]
-    assert ids["annotation-leader:note-1"] == baseline_ids["annotation-leader:note-1"]
+    for prefix in ("annotation-text", "annotation-box", "annotation-leader"):
+        key = f"{prefix}:note-1"
+        # The status activates the declared annotations source. Only its slot
+        # association changes; the accepted plot callout is byte-for-byte the
+        # same primitive in every other field.
+        assert baseline_ids[key].slot_id == "timeline"
+        assert ids[key].slot_id == "annotations"
+        assert replace(ids[key], slot_id="timeline") == baseline_ids[key]
     status = ids["annotation-status:note-1"]
     assert status.text == "2. index not shown on plot"
     assert status.slot_id == "annotations"
@@ -127,17 +144,7 @@ def test_index_status_reflows_the_ordered_rail_entries_inside_the_declared_slot(
     source, parts = _rail_fixture()
     assert not any(value.get("type") == "annotationContainer"
                    for value in parts["theme"]["body"]["values"].values())
-    real_place_label = surface_annotations.place_label
-    index_calls = 0
-
-    def suppress_second_index(*args, **kwargs):
-        nonlocal index_calls
-        index_calls += 1
-        if index_calls == 2:
-            return None
-        return real_place_label(*args, **kwargs)
-
-    monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
+    _suppress_second_index_per_trial(monkeypatch)
     rendered = _render_at(tmp_path / "after", source, parts)
     ids = _by_id(rendered)
     slot = next(item for item in rendered.surface.slots if item.source == "annotations")
@@ -169,17 +176,6 @@ def test_index_and_whole_callout_suppression_keep_four_ordered_list_entries(tmp_
     whole_callout.pop("candidates")
     whole_callout["placement"] = {"side": "end", "alignment": "center"}
 
-    real_place_label = surface_annotations.place_label
-    index_calls = 0
-
-    def suppress_second_index(*args, **kwargs):
-        nonlocal index_calls
-        index_calls += 1
-        # place_label's only direct use in this module is the note-index search.
-        if index_calls == 2:
-            return None
-        return real_place_label(*args, **kwargs)
-
     real_project_box = surface_annotations.project_annotation_box
 
     def suppress_note_two(annotation, *args, **kwargs):
@@ -187,7 +183,7 @@ def test_index_and_whole_callout_suppression_keep_four_ordered_list_entries(tmp_
             return None
         return real_project_box(annotation, *args, **kwargs)
 
-    monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
+    _suppress_second_index_per_trial(monkeypatch)
     monkeypatch.setattr(surface_annotations, "project_annotation_box", suppress_note_two)
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
 
@@ -248,16 +244,6 @@ def test_insufficient_rail_retains_status_and_summary_with_explicit_overflow(tmp
     whole_callout["placement"] = {"side": "end", "alignment": "center"}
     baseline = _render_at(tmp_path / "before", source, parts)
 
-    real_place_label = surface_annotations.place_label
-    index_calls = 0
-
-    def suppress_second_index(*args, **kwargs):
-        nonlocal index_calls
-        index_calls += 1
-        if index_calls == 2:
-            return None
-        return real_place_label(*args, **kwargs)
-
     real_project_box = surface_annotations.project_annotation_box
 
     def suppress_note_two(annotation, *args, **kwargs):
@@ -265,7 +251,7 @@ def test_insufficient_rail_retains_status_and_summary_with_explicit_overflow(tmp
             return None
         return real_project_box(annotation, *args, **kwargs)
 
-    monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
+    _suppress_second_index_per_trial(monkeypatch)
     monkeypatch.setattr(surface_annotations, "project_annotation_box", suppress_note_two)
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
     ids = _by_id(rendered)

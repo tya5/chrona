@@ -6,7 +6,6 @@ input: a corpus edit cannot change what these tests prove.
 """
 from __future__ import annotations
 
-import json
 from datetime import date
 
 import pytest
@@ -62,28 +61,36 @@ def test_a_roomy_sidebar_gives_the_legend_exactly_its_widest_entry_and_nothing_i
     assert not any(item.startswith("W_LAYOUT_TEXT_ELLIPSIZED") for item in rendered.scene.diagnostics)
 
 
-def test_a_narrow_sidebar_bounds_the_legend_and_every_ellipsis_names_its_text_and_widths(tmp_path):
-    (tmp_path / "roomy").mkdir()
+def test_a_narrow_sidebar_wraps_legend_labels_without_losing_source_text(tmp_path):
     (tmp_path / "narrow").mkdir()
-    natural = _legend(_render(tmp_path / "roomy", 600))[1]
     narrow = _render(tmp_path / "narrow", 120)
     slot, labels = _legend(narrow)
 
-    assert slot.bounds[2] == pytest.approx(120.0)
-    shortened = {key for key, node in labels.items() if node.text.endswith("…")}
-    assert shortened == {LONGEST, "legend:scale:series:launch-and-range"}
-    warnings = {item.placement_id: item for item in _ellipsis_warnings(narrow)}
-    assert set(warnings) == shortened
-    for key, warning in warnings.items():
+    # The outer sidebar remains fixed at 120; the legend box encloses its
+    # indivisible hyphenated names and reports the resulting track shortage.
+    assert slot.bounds[2] > 120.0
+    expected = {
+        "legend:scale:series:assembly-integration-and-test": "assembly-integration-and-test",
+        "legend:scale:series:ground": "ground",
+        "legend:scale:series:launch-and-range": "launch-and-range",
+    }
+    assert set(labels) == set(expected)
+    for key, source in expected.items():
+        assert source in labels[key].text.replace("\n", " ")
+    assert not any(node.text.endswith("…") for node in labels.values())
+    assert not _ellipsis_warnings(narrow)
+    # The two long hyphenated names are indivisible under the shared line breaker;
+    # Layout retains their complete text and names the actual inline shortage.
+    overflow = {item.placement_id: item for item in narrow.surface.fit_warnings
+                if item.code == "W_LAYOUT_VISIBLE_OVERFLOW" and item.failure_kind == "legend-text"}
+    assert set(overflow) == {LONGEST, "legend:scale:series:launch-and-range"}
+    for key, warning in overflow.items():
         assert warning.source_ref == key.removeprefix("legend:")
-        assert warning.required_inline == pytest.approx(natural[key].bounds[2])
-        assert warning.available_inline == pytest.approx(slot.bounds[0] + slot.bounds[2] - labels[key].bounds[0])
         assert warning.required_inline > warning.available_inline
-        diagnostic = next(item for item in narrow.scene.diagnostics
-                          if item.startswith("W_LAYOUT_TEXT_ELLIPSIZED:") and f'"placementId":"{key}"' in item)
-        assert json.loads(diagnostic.split(":", 1)[1])["failureKind"] == "legend-text"
-    # The label that fits is neither shortened nor reported.
-    assert not labels["legend:scale:series:ground"].text.endswith("…")
+    track_warning = next(item for item in narrow.surface.fit_warnings
+                         if item.code == "W_LAYOUT_VISIBLE_OVERFLOW" and item.failure_kind == "layout-track")
+    assert track_warning.required_inline > 120
+    assert not any(item.startswith("W_SCENE_TEXT_SLOT_ESCAPE") for item in narrow.scene.diagnostics)
 
 
 def test_a_legend_that_does_not_shrink_grows_past_its_container_and_is_not_ellipsized(tmp_path):
