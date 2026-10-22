@@ -440,6 +440,15 @@ bounds remain a point. This intentionally replaces the previous interpretation
 that treated a finite `minmax` maximum as a non-shrinkable fixed target (#1906).
 The bound-freezing allocator below is unchanged; source ceilings still cannot
 erase an authored minimum or enlarge an authored maximum.
+If a content-derived intrinsic minimum exceeds a finite maximum, the upper
+bound still wins for the track; apply the content's declared overflow inside
+that bounded allocation instead of moving the overflow to its parent. An
+explicit non-intrinsic minimum above the maximum is
+`E_LAYOUT_CONSTRAINT_CONTRADICTORY`. Independent source budgets and mandatory
+group-name feasibility remain authoritative errors: this content-overflow
+rule cannot erase their measured minimum or waive a source ceiling. Flow
+also clamps a valid interval's preferred size within its bounds; a preferred
+size above the maximum is not by itself an infeasible minimum.
 
 A flexible track's (`fr` or `fill`) used size is resolved by CSS Grid's own iterative
 "find the size of an `fr`" procedure (#487, ADR-0032), not a single-pass formula: a
