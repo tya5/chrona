@@ -31,6 +31,7 @@ def project(tmp_path):
 
 
 def test_viewport_parsing_and_its_failures():
+    assert parse_viewport(None) is None
     assert parse_viewport("1600xauto") == (1600, None)
     assert parse_viewport("800X600") == (800, 600)
     for value, message in [("900", "viewport must be WIDTHxHEIGHT"), ("wide x tall", "viewport must be WIDTHxHEIGHT"),
@@ -77,6 +78,24 @@ def test_draft_request_forwards_forecast_to_common_closure(monkeypatch, project,
         render_draft(DraftRenderRequest(project=project, target_kind="svg", forecast=forecast))
 
     assert seen["forecast"] is expected
+
+
+@pytest.mark.parametrize(("viewport", "expected"), [(None, None), ("1200x700", (1200, 700))])
+def test_draft_request_preserves_viewport_omission_or_explicit_value(
+        monkeypatch, project, viewport, expected):
+    import chrona.usecases.draft_render as owner
+
+    seen = {}
+
+    def capture(**kwargs):
+        seen.update(kwargs)
+        raise RuntimeError("stop after closure admission")
+
+    monkeypatch.setattr(owner, "resolve_preset_argument", lambda _value: (pathlib.Path("preset.yaml"), None))
+    monkeypatch.setattr(owner, "resolve_draft_render", capture)
+    with pytest.raises(RuntimeError, match="stop after closure admission"):
+        render_draft(DraftRenderRequest(project=project, target_kind="svg", viewport=viewport))
+    assert seen["viewport"] == expected
 
 
 def test_forecast_snapshot_is_not_reported_as_undrawn():

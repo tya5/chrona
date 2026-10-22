@@ -56,6 +56,9 @@ def _render(tmp_path: Path, project: dict, *, field: str, domain: list[str], slo
     project = {**project, "extensions": [{"packageId": "acme-risk", "resource": pin(PACKAGE, "profile-package", "acme-risk.yaml", "acme-risk")}]}
     preset = yaml.safe_load(default_preset_resource().read_bytes())
     parts = {key: yaml.safe_load(default_preset_root().joinpath(d["path"]).read_bytes()) for key, d in preset["body"]["resources"].items()}
+    # This fixture exercises typed field-to-colour projection, not print-claim
+    # validation; leave claim enforcement to its dedicated policy tests.
+    parts["colorScheme"]["body"]["suitability"]["print"] = "not-claimed"
     parts["view"]["body"]["colorEncoding"] = {"scale": "risk", "target": "planned", "source": {"field": field}, "domain": domain}
     parts["theme"]["body"]["colorScales"] = {"risk": {"slots": {value: f"risk-{value}" for value in domain}}}
     parts["colorScheme"]["body"]["categories"].update({f"risk-{value}": slots[value] for value in domain})

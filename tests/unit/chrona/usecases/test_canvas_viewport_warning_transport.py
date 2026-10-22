@@ -18,7 +18,7 @@ def _contributor(slot_id, *, inline_start=0, inline_end=0, block_start=0, block_
     )
 
 
-def _warning(*, surface_id="table-timeline", block_size=90):
+def _warning(*, surface_id="table-timeline", block_size=90, page_size=None):
     return SimpleNamespace(
         code="W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT",
         source_ref="/body/environment/viewport",
@@ -29,6 +29,7 @@ def _warning(*, surface_id="table-timeline", block_size=90):
         contributors=(_contributor("timeline", inline_start=2, inline_end=2),
                       _contributor("detail-panel", block_end=10)),
         contributor_count=2,
+        page_size=page_size,
     )
 
 
@@ -47,6 +48,7 @@ def test_canvas_warning_has_json_safe_facts_stable_surface_identity_and_readable
     assert record.payload["surfaceId"] == "table-timeline"
     assert record.payload["sourceRef"] == "/body/environment/viewport"
     assert record.payload["declared"] == {"inlineSize": 100.0, "blockSize": None}
+    assert "pageSize" not in record.payload
     assert record.payload["actual"] == {
         "inlineStart": -2.0, "blockStart": 0.0, "inlineSize": 104.0, "blockSize": 90.0,
     }
@@ -68,6 +70,16 @@ def test_canvas_warning_has_json_safe_facts_stable_surface_identity_and_readable
     assert "actual origin -2,0 size 104x90" in message
     assert "timeline (inline-start 2, inline-end 2)" in message
     assert "detail-panel (block-end 10)" in message
+
+
+def test_page_default_and_effective_explicit_override_are_both_reported_without_conflation():
+    record, = _collect(_warning(page_size="a4-landscape"))
+
+    assert record.payload["pageSize"] == "a4-landscape"
+    assert record.payload["declared"] == {"inlineSize": 100.0, "blockSize": None}
+    message = warning_message(describe_warning(record.payload))
+    assert "configured page default a4-landscape" in message
+    assert "declared 100xauto" in message
 
 
 def test_canvas_warning_identity_uses_surface_and_source_not_extent_and_preserves_multiplicity():

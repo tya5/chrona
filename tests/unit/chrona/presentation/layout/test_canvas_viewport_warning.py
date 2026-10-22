@@ -42,6 +42,25 @@ def test_overflow_reports_native_slot_union_and_preserves_actual_rect():
     assert title.overrun.block_start == title.overrun.block_end == D(0)
 
 
+def test_overflow_carries_configured_page_default_separately_from_effective_viewport():
+    declared = DeclaredViewport(D(640), None)
+    warning = canvas_viewport_warning(
+        surface_id="timeline", declared=declared, actual=rect(0, 0, 650, 90),
+        contributors=(("body", rect(0, 0, 650, 90)),), page_size="a4-landscape")
+
+    assert warning is not None
+    assert warning.page_size == "a4-landscape"
+    assert warning.declared == declared
+    assert warning.declared != DeclaredViewport(D(1123), D(794))
+
+
+def test_unknown_configured_page_size_is_rejected():
+    with pytest.raises(ValueError, match="unknown configured page size"):
+        canvas_viewport_warning(
+            surface_id="timeline", declared=DeclaredViewport(D(100), None),
+            actual=rect(0, 0, 101, 10), contributors=(), page_size="custom")
+
+
 def test_fitting_canvas_returns_none_and_checks_all_four_edges():
     declared = DeclaredViewport(D(100), D(80))
     assert canvas_viewport_warning(

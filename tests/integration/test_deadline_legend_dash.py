@@ -4,6 +4,7 @@ from xml.etree import ElementTree
 
 from tests.support import synthetic_review as sr
 from tests.integration.test_deadline_mark import MIXED, _parts, _source
+from chrona.presentation.model.color_separability import delta_e_2000
 
 
 def _render(tmp_path, *, dash, shape="rule-pair"):
@@ -113,5 +114,7 @@ def test_equal_completed_dash_keeps_pair_in_all_vision_checks(tmp_path):
     rendered = _render(tmp_path, dash=False)
     warnings = _pair_warnings(rendered)
     assert {item.payload["vision"] for item in warnings} == {
-        "normal", "protanopia", "deuteranopia", "tritanopia"}
-    assert len(warnings) == 4
+        "normal", "protanopia", "deuteranopia", "tritanopia", "grayscale"}
+    assert len(warnings) == 5
+    grayscale = next(item.payload for item in warnings if item.payload["vision"] == "grayscale")
+    assert grayscale["deltaE"] == delta_e_2000("#2F81F7", "#2F81F7", vision="grayscale")

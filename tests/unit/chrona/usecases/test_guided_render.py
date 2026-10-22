@@ -19,6 +19,22 @@ def _publish(directory: Path, files: Mapping[str, bytes]) -> None:
         path.write_bytes(payload)
 
 
+@pytest.mark.parametrize(("viewport", "expected"), [(None, None), ("900x600", (900, 600))])
+def test_workspace_request_preserves_viewport_omission_or_explicit_value(monkeypatch, tmp_path, viewport, expected):
+    import chrona.usecases.guided_render as owner
+
+    seen = {}
+
+    def capture(**kwargs):
+        seen.update(kwargs)
+        raise RuntimeError("stop after closure admission")
+
+    monkeypatch.setattr(owner, "resolve_guided_draft_render", capture)
+    with pytest.raises(RuntimeError, match="stop after closure admission"):
+        render_workspace(WorkspaceRenderRequest(tmp_path / "workspace.yaml", "svg", viewport=viewport))
+    assert seen["viewport"] == expected
+
+
 @pytest.mark.parametrize("preset", ["chrona-default-draft", "target-b"])
 def test_render_workspace_renders_copied_builtin_preset(preset: str, tmp_path: Path):
     created = create_workspace(

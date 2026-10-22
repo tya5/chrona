@@ -423,16 +423,27 @@ A View selects a temporal window independently from scheduling semantics. v0.1 a
 `{mode: explicit, start: Date, end: Date}`, `{mode: selected-planned, marginDays: N}`,
 or `{mode: selected-comparison, marginDays: N}`. Explicit windows are `[start, end)`
 with both bounds and `start < end`; derived windows use selected minimum start and
-maximum exclusive end. For `selected-planned`, pad each side by
-`max(marginDays, ceil(elapsedDays / 10), 1)` Date days, where `elapsedDays` is
-the selected maximum exclusive end minus the minimum start (zero for same-date
-points). This general rule strictly contains selected marks and preserves larger
-authored margins; it does not change Core schedules or depend on fonts, viewport
-size or axis units. `selected-comparison` retains its authored non-negative margin.
+maximum exclusive end. Derive that half-open envelope (#1855) from span exclusive ends and each point's Date
+plus one Date day, so a zero-padding point window remains positive and contains
+the point. An authored `marginDays: N` is exactly N Date days on each side,
+including zero; it is not a lower bound beneath a hidden percentage margin.
+When omitted, `selected-planned` uses `max(ceil(elapsedDays / 10), 1)`, where
+`elapsedDays` is the positive intrinsic envelope's duration; selected-comparison
+uses zero. The effective View includes Layout Profile window defaults under
+section9.2: explicit View design members win, otherwise the profile's declared
+padding applies. Neither axis units, fonts nor viewport size add temporal
+padding. Explicit/relative windows and Core schedules are unchanged. Migration:
+previous explicit margins were silently enlarged by the percentage floor;
+honouring them and covering point dates may intentionally change derived axes.
 If padded bounds cannot be represented in the Date domain, diagnose
 `E_REVIEW_WINDOW` with the selected dates and object identifiers rather than
 wrapping or silently clamping. An empty eligible set is a diagnostic,
 never a current-date default.
+
+Derived-window projection also retains its unpadded selected temporal envelope
+as a typed fact, using the same spans, point-day coverage and comparison dates
+that determined the window. Layout consumes this fact for padding-only axis
+bucket eligibility (Spec39); it does not reselect Project facts or alter padding.
 
 Before timeline geometry or visibility-index preparation, Layout validates the
 completed projection's positive Date window. A still-degenerate or invalid
@@ -914,6 +925,40 @@ The built-in `column.finishDelta` header names the displayed delta's reference:
 wording-key identity until that reference is known. Literal headers, other
 wording references and explicit wording overrides retain their authorship.
 The comparison calculation and working/calendar-day units are unchanged.
+
+### Snapshot finish-delta table fact (#1855)
+
+A table source `{comparisonFacet: snapshotFinishDelta}` exposes the selected
+primary plan's finish minus the supplied Snapshot counterpart's planned finish,
+matched by object identity. Positive values mean the current plan finishes
+later. Reuse the comparison's resolved working/calendar-day basis and current
+calendar, as for Snapshot forecast comparisons. It is independent of Actual
+availability, `--forecast`, forecast estimation and the baseline-mark selection.
+It neither replaces ordinary `finishDelta` (Actual/current plan or forecast
+delta) nor changes variance roles or temporal geometry. This explicit fact can
+coexist with the ordinary delta in the same table.
+
+Expose the fact in the shared comparison/table-source vocabulary and View's
+comparison facet vocabulary, without a View version bump. The frozen
+`common-v0.1.tableColumnSource` has both View and Style consumers and remains
+unchanged: a registered `common-v0.2.tableColumnSource` extends it with the
+Snapshot source, using the shared `vocabulary-v0.2.snapshotComparisonFacet`.
+Live View and Style adopt that new source grammar together; historical schemas
+retain their prior references. It belongs to primary
+items only; a missing counterpart or finish has no numeric value and follows
+the column's declared missing-value treatment. Do not fabricate zero, an
+estimated asterisk or the forecast `new` marker. Without a supplied Snapshot,
+the default `priority: optional` omits the comparison-dependent column under
+section10's source-availability rule, not a scan for blank cells. Explicit
+`preferred` or `required` retains the column with its missing-value treatment,
+as for other comparison sources (Spec24). A supplied Snapshot with unmatched objects
+keeps the column and its missing-value treatment.
+
+An authored `column.finishDelta` header reference resolves to
+`column.finishDeltaBaseline` for this source. Literal headers and explicit
+wording overrides remain authoritative. View projection owns the new fact;
+the content/table layer formats it and Layout measures completed text. Scene
+and adapters neither compare plans nor infer a Snapshot from displayed labels.
 
 Every selected primary temporal item needs a complete, visible forecast delta.
 Table cells use measured full comparison text; plot deltas are independent

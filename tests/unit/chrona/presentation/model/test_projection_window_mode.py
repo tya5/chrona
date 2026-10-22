@@ -43,10 +43,12 @@ def test_projection_retains_declared_window_mode_even_when_date_windows_match():
         (date(2025, 12, 31), date(2026, 1, 11)),
     }
 
-    # Mode is the only changed projection fact for these equal-window inputs.
+    # Derived windows carry their selected envelope; bounded authoring windows do not.
     planned = projections["selected-planned"]
-    for projection in projections.values():
-        assert replace(projection, window_mode=WindowMode.SELECTED_PLANNED) == planned
+    assert planned.unpadded_window == (date(2026, 1, 1), date(2026, 1, 10))
+    assert projections["selected-comparison"].unpadded_window == planned.unpadded_window
+    assert projections["explicit"].unpadded_window is None
+    assert replace(projections["selected-comparison"], window_mode=WindowMode.SELECTED_PLANNED).window == planned.window
 
 
 def test_legacy_projection_construction_and_replace_keep_typed_window_mode():

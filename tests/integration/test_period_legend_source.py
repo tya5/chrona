@@ -16,9 +16,11 @@ STARTER_CATALOG = ROOT / "src/chrona/resources/icons/chrona-theme-starter-v2026-
 
 
 def _render(directory, entries=None, *, treatment="fill", wording=False, slot=True,
-            preset="executive-light", pattern=False, catalogs=(), variant=None):
+            preset="executive-light", pattern=False, catalogs=(), variant=None, claim_print=True):
     directory.mkdir()
     parts = sr.bundle(preset)
+    if not claim_print:
+        parts["scheme"]["body"]["suitability"]["print"] = "not-claimed"
     theme = parts["theme"]["body"]
     theme["colorBindings"].pop("period-band.fill", None)
     theme["colorBindings"].pop("period-band.stroke", None)
@@ -146,7 +148,7 @@ def test_period_entries_emit_no_legend_primitives_when_layout_has_no_legend_slot
 
 def test_patterned_sourced_swatch_keeps_pattern_ink_and_clips_to_the_reserved_area(tmp_path):
     rendered = _render(tmp_path / "render", preset="technical-print", pattern=True,
-                       catalogs=(STARTER_CATALOG,))
+                       catalogs=(STARTER_CATALOG,), claim_print=False)
     host = next(item for item in rendered.surface.primitives
                 if item.scene_id == "legend-period-swatch:launch")
 
@@ -161,7 +163,8 @@ def test_patterned_variant_sourced_swatch_matches_chart_pattern_payload(tmp_path
         tmp_path / "render",
         entries=[{"role": "period-band:release", "label": "Launch", "sourceRef": "launch"},
                  {"role": "period-band", "label": "Handoff", "sourceRef": "handoff"}],
-        preset="technical-print", pattern=True, catalogs=(STARTER_CATALOG,), variant="release")
+        preset="technical-print", pattern=True, catalogs=(STARTER_CATALOG,), variant="release",
+        claim_print=False)
     chart_band = next(item for item in rendered.surface.primitives if item.scene_id == "period-band:launch")
     legend_swatch = next(item for item in rendered.surface.primitives
                          if item.scene_id == "legend-period-swatch:launch")

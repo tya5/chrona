@@ -253,7 +253,7 @@ draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, 
 - `--icon-catalog`: explicit local icon catalog YAML path; repeatable
 - `--font-metrics`: declared-metrics-v3 YAML descriptor; paths resolve beside it
 - `--system-fonts`: require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)
-- `--viewport`: Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)
+- `--viewport`: explicit Draft viewport WIDTHxHEIGHT or WIDTHxauto; omit to use the Layout Profile page size, or 1600xauto when none is declared
 - `--progress`: report render phases and routing counts on stderr (automatic for terminal stderr)
 - `--relations`: override dependency-line visibility on top of the selected preset
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
@@ -303,7 +303,7 @@ draw a slide from a guided authoring workspace (a draft)
 
 - `workspace`: guided authoring workspace YAML path
 - `--forecast`: derive the explicit forecast from the workspace Actual input
-- `--viewport`: Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)
+- `--viewport`: explicit Draft viewport WIDTHxHEIGHT or WIDTHxauto; omit to use the Layout Profile page size, or 1600xauto when none is declared
 - `--locale`: render locale: en-US or ja-JP (default: en-US)
 - `--store-config`: Store config for declared extension packages (default: discover project-local .chrona/store.yaml)
 - `--format`: output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)

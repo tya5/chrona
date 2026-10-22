@@ -132,7 +132,8 @@ def _compose(value: SurfaceRenderPlanInput, plan: PreparedSurfaceRenderPlan):
         capabilities=dict(value.capabilities), icon_assets=value.icon_assets,
         paint_capabilities=value.paint_capabilities,
         visual_requests=value.visual_requests, capacity_short_sources=plan.capacity_short_sources,
-        declared_viewport=plan.declared_viewport, auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
+        declared_viewport=plan.declared_viewport, page_size=plan.page_size,
+        auto_block_limit=plan.profile.distances.get("/reviewSurface/maxBlockSize"),
         progress=value.progress, previous_route_hints=value.previous_route_hints))
     if value.view.surface == "dependency-network":
         return compose_dependency_network_surface(request)
