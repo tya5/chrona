@@ -105,37 +105,67 @@ def _flatten(commands: tuple[PathCommand, ...], *, close: bool) -> tuple[tuple[t
     return tuple(segments)
 
 
+_SLIT_FRACTION = 0.1  # a gap between painted slices up to this share of the viewport still carries the axis port
+
+
+def _axis_extent(rows: tuple[tuple[float, float, float, float, float], ...],
+                 level: float) -> tuple[float, float] | None:
+    """Min and max painted coordinate where `level` crosses the (u, v, u, v, half) segments."""
+    low = high = None
+    for u1, v1, u2, v2, half in rows:
+        if v1 != v2 and min(v1, v2) <= level <= max(v1, v2):
+            u = u1 + (level - v1) * (u2 - u1) / (v2 - v1)
+            low = u - half if low is None else min(low, u - half)
+            high = u + half if high is None else max(high, u + half)
+    return None if low is None else (low, high)
+
+
+def _axis_ports(rows: tuple[tuple[float, float, float, float, float], ...], level: float,
+                tolerance: float) -> tuple[float, float] | None:
+    """Painted extent along the axis `level`; a slit between slices uses the rows bounding it (#1924)."""
+    found = _axis_extent(rows, level)
+    if found is not None:
+        return found
+    below = [v for row in rows for v in (row[1], row[3]) if v < level]
+    above = [v for row in rows for v in (row[1], row[3]) if v > level]
+    if not below or not above or min(above) - max(below) > tolerance:
+        return None
+    edges = [e for e in (_axis_extent(rows, max(below)), _axis_extent(rows, min(above))) if e is not None]
+    if not edges:
+        return None
+    return min(e[0] for e in edges), max(e[1] for e in edges)
+
+
 def painted_cardinal_ports(mark: MarkPlacement) -> dict[str, tuple[float, float]]:
     """Outermost painted points on the viewport's cardinal axes of a compound point glyph.
 
     Only a point mark that carries completed painted glyph parts qualifies; a
     built-in diamond or ordinary point has no painted parts and keeps its
     viewport tips. Stroke parts extend the fill edge by half their width.
-    A side whose axis never meets paint is omitted so the caller falls back.
+    When an axis falls in a thin slit between painted slices, the extents of
+    the slices bounding the slit are used (#1924). A side whose axis never
+    meets paint is omitted so the caller falls back.
     """
     if mark.mark_shape != "point":
         return {}
     left, top, right, bottom = _viewport_extent(mark)
     center_x, center_y = (left + right) / 2, (top + bottom) / 2
-    best: dict[str, float] = {}
+    horizontal: list[tuple[float, float, float, float, float]] = []
+    vertical: list[tuple[float, float, float, float, float]] = []
     for part in mark.symbol_parts:
         if part.paint_mode not in {"fill", "stroke"}:
             continue
         half = float(part.stroke_width or 0.0) / 2 if part.paint_mode == "stroke" else 0.0
         for (x1, y1), (x2, y2) in _flatten(part.commands, close=part.paint_mode == "fill"):
-            if y1 != y2 and min(y1, y2) <= center_y <= max(y1, y2):
-                x = x1 + (center_y - y1) * (x2 - x1) / (y2 - y1)
-                best["end"] = max(best.get("end", float("-inf")), x + half)
-                best["start"] = min(best.get("start", float("inf")), x - half)
-            if x1 != x2 and min(x1, x2) <= center_x <= max(x1, x2):
-                y = y1 + (center_x - x1) * (y2 - y1) / (x2 - x1)
-                best["below"] = max(best.get("below", float("-inf")), y + half)
-                best["above"] = min(best.get("above", float("inf")), y - half)
+            horizontal.append((x1, y1, x2, y2, half))
+            vertical.append((y1, x1, y2, x2, half))
     result = {}
-    if "end" in best:
-        result["end"], result["start"] = (best["end"], center_y), (best["start"], center_y)
-    if "below" in best:
-        result["below"], result["above"] = (center_x, best["below"]), (center_x, best["above"])
+    across = _axis_ports(tuple(horizontal), center_y, _SLIT_FRACTION * (bottom - top))
+    if across is not None:
+        result["end"], result["start"] = (across[1], center_y), (across[0], center_y)
+    down = _axis_ports(tuple(vertical), center_x, _SLIT_FRACTION * (right - left))
+    if down is not None:
+        result["below"], result["above"] = (center_x, down[1]), (center_x, down[0])
     return result
 
 
