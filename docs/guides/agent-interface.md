@@ -140,6 +140,8 @@ The following table is checked directly against the server registry.
 | `validate_workspace` | Validate a guided workspace and its pinned resources | no |
 | `workspace_revision` | Read the current guided workspace revision | no |
 | `render_workspace` | Render a guided workspace | no |
+| `create_project` | Create a Project file | yes |
+| `apply_project_command` | Apply a Project command | yes |
 <!-- /chrona:agent-tool-table -->
 
 Every result carries a `status`: `ok`, `rejected` (the plan is refused: read each diagnostic's `code` and
@@ -212,12 +214,36 @@ edit. To drop a task, call `create_workspace` with a new `directory` and the pro
 without it (it never overwrites), and keep working in the new workspace. Until then
 the old workspace is unchanged and still renders.
 
+### Editing a full `project.yaml` without a shell
+
+A guided workspace holds fixed-date tasks only. For gates, `Nwd` durations, constraints and deadlines edit the Project
+file itself (the one `validate_project`, `schedule_project` and `render_draft` read), with writes enabled:
+
+1. `create_project {file, project}` writes a new Project (`file` must not exist; `project` is the complete
+   `timeline/v0.7` mapping) and returns `projectRevision`. For a file that already exists, `validate_project` returns
+   its `projectRevision`.
+2. `apply_project_command {project, command}` takes an inline command with `version: chrona/project-command/v0.1`,
+   `commandId`, `type`, `target: {kind: "project", path: "<file name only>"}`, `baseRevision` (the revision from step 1
+   or the last `projectResult.resultRevision`) and `payload`. This release has `setObject {id, object}` (add or replace
+   one object; any schedule mode) and `removeObject {id}` (refused while a relation, `parent` or `attachesTo` names it).
+
+```json
+{"project":"plan/project.yaml","command":{"version":"chrona/project-command/v0.1","commandId":"add-gate-1","type":"setObject","target":{"kind":"project","path":"project.yaml"},"baseRevision":"sha256:...","payload":{"id":"go-live","object":{"type":"gate","schedule":{"mode":"scheduled-point","constraints":{"at":{"min":"2026-11-10"}}}}}}}
+```
+
+The candidate is checked with the Project schema and the Core rules before anything is written, and a rejection names
+each finding at its command pointer (`/payload/object/schedule/amount`) with nothing written. A dependency cycle or a
+date that contradicts a dependency is not refused here: run `schedule_project` and read the dates. Stale
+`baseRevision`, retry (`replayed`, `revisionIsCurrent`) and `commandId` reuse behave as for `apply_authoring_command`.
+The file is rewritten as canonical YAML, so comments in it are not kept.
+
 ### Limits
 
 - Read paths name existing files inside the server workspace: no `..`, absolute
   paths, escaping symlinks or inputs over2 MiB. Only `create_workspace` accepts a
   new directory, under an existing real parent; it never overwrites a destination.
-- The three writing tools require `--allow-write`. Initialization copies a local
+- The writing tools (`apply_command`, `apply_authoring_command`, `create_workspace`, `create_project`,
+  `apply_project_command`) require `--allow-write`. Initialization copies a local
   bundle; authoring edits use durable CAS/replay; Store commands support Actual
   intake, snapshot capture, `revertActualCommand` and `redoActualCommand` through
   the same locked transaction as the CLI. No tool writes a rendered picture.

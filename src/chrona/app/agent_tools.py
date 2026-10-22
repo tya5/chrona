@@ -4,8 +4,9 @@ Four read-only tools front the use cases an agent needs to plan and draw a sched
 ``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``; two read-only tools read a
 Store, ``render_review`` and ``compare_baseline`` (#812); two tools front the revision-bound Store commands,
 ``check_command`` (read-only) and ``apply_command`` (writes, only when the caller passes ``allow_write``; #813).
-``apply_authoring_command`` edits a guided workspace through the shared durable transaction port.
-Tool set ``chrona/agent-tools/v0.8``, Spec 66. A tool is a use case
+``apply_authoring_command`` edits a guided workspace through the shared durable transaction port, and
+``create_project`` / ``apply_project_command`` write and edit a raw ``project.yaml`` through the same port (#1892).
+Tool set ``chrona/agent-tools/v0.9``, Spec 66. A tool is a use case
 with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
@@ -35,7 +36,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.operational.authoring_commands import read_authoring_workspace, transact_authoring_command
-from chrona.operational.workspace_initialization import publish_workspace_directory
+from chrona.operational.workspace_initialization import publish_new_file, publish_workspace_directory
 from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
 )
@@ -43,6 +44,9 @@ from chrona.operational.store_reads import DraftExtensionPackageReader, compare_
 from chrona.resources import schema_document, validator_for_schema
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.usecases.authoring_workspace import create_workspace, validate_workspace
+from chrona.usecases.project_commands import (
+    apply_project_command, parse_project_command, prepare_new_project, project_revision,
+)
 from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft, warning_payloads
@@ -54,7 +58,7 @@ from chrona.usecases.input_violations import explain_input_errors
 from chrona.usecases.resource_checks import document_kind, read_document, unknown_kind, validate_resource_mapping
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.8"
+TOOL_SET_VERSION = "chrona/agent-tools/v0.9"
 COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot", "revertActualCommand", "redoActualCommand"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
@@ -234,6 +238,35 @@ def _workspace_command_schema() -> dict[str, Any]:
     }, ["workspace", "command"])
 
 
+_PROJECT_FILE_PROPERTY = {
+    "type": "string", "minLength": 1, "maxLength": 512, "pattern": "\\.ya?ml$",
+    "description": "A '/'-separated path relative to the workspace root ending .yaml or .yml. The file must not exist; "
+                   "its parent directory must.",
+}
+
+
+def _project_command_schema() -> dict[str, Any]:
+    return _input_schema({
+        "project": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to the existing Project YAML "
+                    "(version: timeline/v0.7) the command edits."},
+        "command": {"description": "Inline request with version: chrona/project-command/v0.1, or a contained command-file "
+                                    "path. For project: plans/project.yaml the inline target is {kind: project, path: "
+                                    "project.yaml}; target.path is only the Project's file name, not its outer path.",
+                    "oneOf": [copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
+                              copy.deepcopy(schema_document("project-command-v0.1.schema.yaml"))]},
+    }, ["project", "command"])
+
+
+def _project_create_schema() -> dict[str, Any]:
+    return _input_schema({
+        "file": copy.deepcopy(_PROJECT_FILE_PROPERTY),
+        "project": {"type": "object", "required": ["version", "project"],
+                    "description": "A complete Project: {version: timeline/v0.7, project: {id, title?, calendar?}, calendars?, "
+                                   "objects?, relations?, ...} exactly as a project.yaml holds it, dates as 'YYYY-MM-DD' strings. "
+                                   "It is validated like validate_project (without the cycle check) before anything is written."},
+    }, ["file", "project"])
+
+
 def _draft_options() -> dict[str, Any]:
     return {"viewport": {"type": "string", "pattern": "^[1-9][0-9]{2,4}x([1-9][0-9]{2,4}|auto)$"},
             "locale": {"enum": ["en-US", "ja-JP"], "default": "en-US"},
@@ -373,6 +406,7 @@ _KIND_TOOLS = {
     "authoring-workspace": "; use validate_workspace for a guided workspace",
     "command-request": "; use check_command for a Command Request",
     "authoring-command": "; use apply_authoring_command for an Authoring Command",
+    "project-command": "; use apply_project_command for a Project Command",
 }
 
 
@@ -390,7 +424,7 @@ def _validate_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     outcome = validate_project_file(path)
     if not outcome.ok:
         return call.rejected(rejection_report(outcome.diagnostics))
-    return ToolResult(call.ok(projectIdentity=call.carried["projectIdentity"]))
+    return ToolResult(call.ok(projectIdentity=call.carried["projectIdentity"], projectRevision=project_revision(document)))
 
 
 def _placement(placement: Mapping[str, Any]) -> dict[str, str]:
@@ -665,15 +699,30 @@ def _without_pointer(detail: object) -> str | None:
     return _DETAIL_POINTER.sub("", detail, count=1) if isinstance(detail, str) else None
 
 
-def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
-    workspace = call.scope.resolve_path(arguments["workspace"], "/workspace")
+_COMMAND_POINTERS = {
+    "E_AUTHORING_BASE_REVISION": "/baseRevision",
+    "E_AUTHORING_COMMAND_ID_REUSE": "/commandId",
+    "E_AUTHORING_TARGET_MISMATCH": "/target/path",
+}
+
+
+def _file_command_tool(
+    call: _Call, arguments: dict[str, Any], *, target: str, result_key: str, component: str,
+    parse: Callable[[Path], dict[str, Any]], apply: Callable[..., dict[str, Any]], transact: Callable[..., Any],
+) -> ToolResult:
+    """Run one revision-bound command against the file ``arguments[target]`` and report its result under ``result_key``.
+
+    A rejected command returns its typed rows with the command pointer each one leads with; an exception is a ``failed``
+    result with the argument it concerns as ``sourceRef``.
+    """
+    file = call.scope.resolve_path(arguments[target], f"/{target}")
     supplied = arguments["command"]
     command_path = call.scope.resolve_path(supplied, "/command") if isinstance(supplied, str) else None
     source = "/command"
     try:
-        command = parse_authoring_command(command_path) if command_path is not None else copy.deepcopy(supplied)
-        source = "/workspace"
-        result = call.scope.scrub_value(apply_authoring_command(workspace, command, transact=transact_authoring_command))
+        command = parse(command_path) if command_path is not None else copy.deepcopy(supplied)
+        source = f"/{target}"
+        result = call.scope.scrub_value(apply(file, command, transact=transact))
     except Exception as error:
         failed = call.failure(error)
         failed.structured["status"] = "failed"
@@ -682,18 +731,45 @@ def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
                 row["sourceRef"] = source
         return failed
     if result["status"] == "accepted":
-        return ToolResult(call.ok(authoringResult=result))
-    call.carried["authoringResult"] = result
-    pointers = {
-        "E_AUTHORING_BASE_REVISION": "/baseRevision",
-        "E_AUTHORING_COMMAND_ID_REUSE": "/commandId",
-        "E_AUTHORING_TARGET_MISMATCH": "/target/path",
-    }
+        return ToolResult(call.ok(**{result_key: result}))
+    call.carried[result_key] = result
     rows = [diagnostic_record(
-        item["code"], _without_pointer(item.get("detail")) or item.get("message") or item["code"], "authoring",
-        _detail_pointer(item.get("detail")) or pointers.get(item["code"], "/"),
+        item["code"], _without_pointer(item.get("detail")) or item.get("message") or item["code"], component,
+        _detail_pointer(item.get("detail")) or _COMMAND_POINTERS.get(item["code"], "/"),
     ) for item in result["diagnostics"]]
     return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
+
+
+def _authoring_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    return _file_command_tool(
+        call, arguments, target="workspace", result_key="authoringResult", component="authoring",
+        parse=parse_authoring_command, apply=apply_authoring_command, transact=transact_authoring_command)
+
+
+def _apply_project_tool(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    return _file_command_tool(
+        call, arguments, target="project", result_key="projectResult", component="project",
+        parse=parse_project_command, apply=apply_project_command, transact=transact_authoring_command)
+
+
+def _create_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    try:
+        destination = call.scope.resolve_destination(arguments["file"], "/file")
+    except StableFailure as error:
+        if error.code == "E_AUTHORING_WORKSPACE_EXISTS":
+            raise StableFailure("E_PROJECT_EXISTS", "a file already exists at this path; create_project never overwrites, "
+                                "so choose a new file name or edit the existing Project with apply_project_command",
+                                error.component, error.source_ref, error.exit_code) from None
+        raise
+    prepared = prepare_new_project(arguments["project"])
+    if isinstance(prepared, tuple):
+        return call.rejected(rejection_report(prepared))
+    try:
+        publish_new_file(destination, prepared.payload)
+    except FileExistsError as error:
+        raise StableFailure("E_PROJECT_EXISTS", "a file appeared at this path; create_project never overwrites",
+                            "project", "/file", 2) from error
+    return ToolResult(call.ok(project=destination.relative_to(call.scope.root).as_posix(), projectRevision=prepared.revision))
 
 
 def _create_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
@@ -724,9 +800,12 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "objects on it. This tool computes no dates, so a fixed date that contradicts its dependencies is found "
         "only by schedule_project: run it to read dates. Like chrona validate, it checks a Theme, Color Scheme, Layout "
         "Profile, View, Style, Actual Set, Summary Profile or Review Detail Profile file by its kind (status ok then "
-        "carries 'resource'); another kind is rejected naming the kind and the tool to use.",
+        "carries 'resource'); another kind is rejected naming the kind and the tool to use. "
+        "For a Project, 'projectRevision' is the baseRevision for apply_project_command (projectIdentity is the file's byte hash, "
+        "a different value).",
         _input_schema({"project": _WORKSPACE_PATH_PROPERTY}, ["project"]),
-        _output_schema({"projectIdentity": {"$ref": "#/$defs/sha256"}, "resource": {"type": "string"}}),
+        _output_schema({"projectIdentity": {"$ref": "#/$defs/sha256"}, "projectRevision": {"$ref": "#/$defs/sha256"},
+                        "resource": {"type": "string"}}),
         _validate_project,
     ),
     ToolSpec(
@@ -923,6 +1002,39 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "Returns artifact identity/length, availability and typed warnings; a rejected plan is a result, not a tool error.",
         _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY), **_draft_options()}, ["workspace"]),
         _draft_output_schema(), _render_workspace,
+    ),
+    ToolSpec(
+        "create_project", "Create a Project file",
+        "Create a new Project YAML file from a complete Project mapping {version: timeline/v0.7, project:{id,...}, objects?, "
+        "relations?, calendars?, ...}: the file the skill, validate_project, schedule_project and render_draft read. Requires "
+        "--allow-write. 'file' is a new workspace path ending .yaml or .yml (its parent must exist; an existing file is "
+        "never overwritten, E_PROJECT_EXISTS). The Project is validated before it is written; a rejection lists each "
+        "finding with its pointer and nothing is written. Returns project (the path) and projectRevision, the "
+        "baseRevision of the first apply_project_command. Dates are computed by schedule_project, never by you.",
+        _project_create_schema(),
+        _output_schema({"project": {"type": "string"}, "projectRevision": {"$ref": "#/$defs/sha256"}}),
+        _create_project, mutating=True,
+    ),
+    ToolSpec(
+        "apply_project_command", "Apply a Project command",
+        "Edit a Project YAML file in the workspace with an inline request, version: chrona/project-command/v0.1 (or a "
+        "contained command file): {version, commandId, type, target:{kind: project, path:<file name>}, baseRevision, "
+        "payload}. Types: setObject {id, object} adds or replaces objects.<id> with a complete Project object "
+        "({type, title?, schedule, calendar?, parent?, attachesTo?, deadline?, fields?}; every schedule mode, including "
+        "scheduled-point, 'Nwd' amounts and constraints, is accepted); removeObject {id} deletes one that no relation, "
+        "parent or attachesTo still names. Get baseRevision from create_project, validate_project (projectRevision) or "
+        "the last projectResult.resultRevision. The candidate is validated by the Project schema and Core rules before "
+        "anything is written; a rejection lists each finding with its command pointer (/payload/object/...) and writes "
+        "nothing. A dependency cycle or a date that contradicts a dependency is not refused here: run schedule_project. "
+        "A stale baseRevision is rejected without writing. The same commandId and request replays the first result "
+        "(replayed true, revisionIsCurrent); reusing the id for another request says the first command was applied. "
+        "The file is rewritten as canonical YAML (comments are not kept). Requires --allow-write; no approval step. "
+        "Returns projectResult, with status ok when accepted or rejected with typed diagnostics.",
+        _project_command_schema(),
+        _output_schema({"projectResult": {"type": "object",
+                                          "description": "The project-command-result/v0.1: status, commandId, projectRevision "
+                                                         "(before), resultRevision (after), diagnostics."}}),
+        _apply_project_tool, mutating=True,
     ),
 )
 _BY_NAME = {spec.name: spec for spec in _TOOLS}

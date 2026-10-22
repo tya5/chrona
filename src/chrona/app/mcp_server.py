@@ -48,7 +48,7 @@ _BASE_INSTRUCTIONS = (
     "validate_project (structure and dependency cycles, no dates), schedule_project (computed dates), "
     "list_presets, render_draft (PNG preview or SVG); create_workspace, validate_workspace, "
     "workspace_revision, apply_authoring_command and render_workspace (guided authoring; carry returned "
-    "revisions into edits); render_review and compare_baseline (pinned Store evidence); check_command and "
+    "revisions into edits); create_project and apply_project_command (write and edit project.yaml); render_review and compare_baseline (pinned Store evidence); check_command and "
     "apply_command (Store commands). Tool descriptions give payloads. Paths are relative to the workspace root. "
     "Read result status: ok, rejected (input refused; read diagnostic code and sourceRef), or failed "
     "(call could not run); do not rely only on isError. "

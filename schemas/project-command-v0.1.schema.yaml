@@ -1,0 +1,45 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/project-command-v0.1"
+title: "Chrona Project command v0.1"
+description: "One optimistic-concurrency command for a raw Project file (project.yaml)."
+type: object
+required: [version, commandId, type, target, baseRevision, payload]
+additionalProperties: false
+properties:
+  version: {description: "This project-command contract version.", const: chrona/project-command/v0.1}
+  commandId: {description: "Stable identifier for this command; resending the same id with the same request replays the first result.", type: string, minLength: 1}
+  type: {description: "Operation to apply to the Project: setObject upserts one object by id, removeObject deletes one.", enum: [setObject, removeObject]}
+  target:
+    type: object
+    description: "Project file selected by the command."
+    required: [kind, path]
+    additionalProperties: false
+    properties:
+      kind: {description: "The only command target resource kind.", const: project}
+      path: {description: "Project file name: one name, no path separator or control character.", $ref: "urn:chrona:common-v0.1#/$defs/fileName"}
+  baseRevision: {description: "Project revision (SHA-256 of the parsed Project) required for optimistic concurrency; validate_project, create_project and a previous result return it.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+  payload: {description: "Operation-specific command content.", type: object}
+allOf:
+  - description: "setObject carries the object id and one complete Project object (type, schedule and the optional members of the Project schema); the candidate Project is validated before anything is written."
+    examples: [{}]
+    if: {properties: {type: {const: setObject}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, object]
+          additionalProperties: false
+          properties:
+            id: {description: "Object identifier: the key under objects. An existing id is replaced, a new id is appended.", type: string, minLength: 1}
+            object: {description: "The complete Project object that replaces or adds objects.<id> (see the Project schema: type, title?, schedule, calendar?, parent?, attachesTo?, deadline?, fields?).", type: object}
+  - description: "removeObject carries only the object id; an object that a relation, a parent or attachesTo still names is refused."
+    examples: [{}]
+    if: {properties: {type: {const: removeObject}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the object to remove.", type: string, minLength: 1}
