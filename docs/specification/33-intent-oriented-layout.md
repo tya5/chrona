@@ -429,6 +429,18 @@ Each node declares `inlineSize` and `blockSize`. A size is one of:
 variants require intrinsic measurements. `fill` participates in equal distribution of
 remaining space after fixed, intrinsic, bounded, gap and padding requirements.
 
+A `minmax` is an interval, not a fixed-size request at its maximum. When its
+resolved maximum is finite and has no explicit fractional weight, it
+participates as a bounded unit-weight track: it may shrink toward its minimum
+when space is scarce, and never grows beyond its maximum. Apply the same rule
+on both axes and in every container's shared track arithmetic. An explicit
+`fr` maximum retains that declared weight. A standalone `fixed` size remains
+fixed, `fitContent` retains its intrinsic rule, and equal minimum/maximum
+bounds remain a point. This intentionally replaces the previous interpretation
+that treated a finite `minmax` maximum as a non-shrinkable fixed target (#1906).
+The bound-freezing allocator below is unchanged; source ceilings still cannot
+erase an authored minimum or enlarge an authored maximum.
+
 A flexible track's (`fr` or `fill`) used size is resolved by CSS Grid's own iterative
 "find the size of an `fr`" procedure (#487, ADR-0032), not a single-pass formula: a
 flexible track's `minmax` minimum is a floor its share must clear, never an amount its
