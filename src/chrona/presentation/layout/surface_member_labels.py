@@ -9,7 +9,7 @@ from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_FALLBACK, as_of_label_typography_role
 from chrona.presentation.layout.labels import (
-    LabelCandidateGeometry, LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
+    LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
@@ -23,6 +23,9 @@ from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.chip_geometry import ChipGeometryError
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, complete_label_chip_placement
 from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
+from chrona.presentation.layout.surface_member_label_measurement import (
+    prepare_member_label_candidate,
+)
 from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
@@ -108,14 +111,6 @@ def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str 
         if candidate not in result:
             result.append(candidate)
     return tuple(result)
-
-
-DEFAULT_MEMBER_END_GAP_EM = 2.0
-
-
-def _member_reach(font_size: float, member_names: Mapping[str, Any]) -> float:
-    """Reach bound of a member name: declared em (default 2) times the label font size."""
-    return float(member_names.get("maxEndGapEm", DEFAULT_MEMBER_END_GAP_EM)) * font_size
 
 
 def _own_marks(host: MarkPlacement, marks: Mapping[str, MarkPlacement]) -> tuple[MarkPlacement, ...]:
@@ -512,49 +507,6 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                               for mark in own_marks) if own_marks else None)
         lane_measure = measured_lane.get(label_request.placement_id)
 
-        def prepare(role: str, measured_lane_label: Any):
-            measured = measure_label_footprint(
-                label_request.placement_id, label_request.content, role,
-                label_request.semantic_id, request, wrap=label_request.wrap,
-                available_inline=timeline_rect.width * 0.4, lane_measure=measured_lane_label,
-                chip_measurement_override=(context.as_of_chip_measurement
-                    if label_request.semantic_id == "asOfLabel" else None))
-            size, padding, chip_measure = measured.size, measured.chip_padding, measured.chip_measurement
-            font_size = float(measured.treatment.font_size)
-            provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
-                content=label_request.content, inline=0, baseline_block=font_size,
-                typography_role=role, theme_tokens=request.theme_tokens,
-                font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id,
-                lane_row_id=label_request.lane_row_id, lane_member_id=label_request.lane_member_id,
-                lane_source_kind=label_request.lane_source_kind, lines=measured.lines,
-                estimated_delta=label_request.estimated_delta)
-            bounds = label_request.bounds or timeline_rect
-            if label_request.bounds is not None and measured.chip is not None:
-                if chip_measure is None:
-                    bounds = LabelRect(bounds.x - padding[0], bounds.y - padding[1],
-                        bounds.width + 2 * padding[0], bounds.height + 2 * padding[1])
-                else:
-                    safe = chip_measure.geometry.text_bounds
-                    bounds = LabelRect(bounds.x - measured.text_insets[0], bounds.y - measured.text_insets[1],
-                        bounds.width + size[0] - float(safe.inline_size),
-                        bounds.height + size[1] - float(safe.block_size))
-            slot_bounds = LabelRect(*bounds_from_rect(slot.bounds)) if slot is not None else bounds
-            reach = _member_reach(font_size, layout_manifest.member_names)
-            association = (MemberNameAssociation(LabelRect(*bounds_from_rect(host.bounds)),
-                measured.leading + measured.text_insets[0], measured.text_insets[1],
-                float(provisional.bounds.inline_size), float(provisional.bounds.block_size), reach)
-                if associated_member else None)
-            final_association = (replace(association, also_marks=tuple(
-                LabelRect(*bounds_from_rect(mark.bounds)) for mark in own_marks[1:]))
-                if association is not None and len(own_marks) > 1 else None)
-            geometry = LabelCandidateGeometry(size=size, gap=measured.gap,
-                text_inline_inset=measured.leading + measured.text_insets[0], maximum_end_gap=reach,
-                association=association, final_association=final_association,
-                maximum_stagger=size[1] + measured.gap if label_request.lane_row_id is not None else None,
-                bounds=bounds)
-            return measured, provisional, geometry, slot_bounds
-
         styles = (resolve_label_candidate_styles(label_request.style_occurrence_key, label_request.candidates,
                     style_index, request.theme_tokens)
                   if label_request.style_occurrence_key is not None and style_index is not None else {})
@@ -562,12 +514,25 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         if any(intent is not None for intent in styles.values()):
             lane_candidates = dict(getattr(lane_measure, "candidate_measurements", ()))
             for side, intent in styles.items():
-                prepared[side] = prepare(intent.role if intent is not None else label_request.typography_role,
-                                         lane_candidates.get(side, lane_measure))
+                prepared[side] = prepare_member_label_candidate(
+                    label_request,
+                    role=intent.role if intent is not None else label_request.typography_role,
+                    measured_lane_label=lane_candidates.get(side, lane_measure),
+                    request=request, timeline_rect=timeline_rect, slot=slot, host=host,
+                    associated_member=associated_member, own_marks=own_marks,
+                    member_names=layout_manifest.member_names,
+                    as_of_chip_measurement=context.as_of_chip_measurement)
         selected = (next(iter(prepared.values())) if prepared else
-                    prepare(label_request.typography_role, lane_measure))
-        measurement, provisional, geometry, slot_bounds = selected
-        candidate_geometries = {side: value[2] for side, value in prepared.items()} if prepared else None
+                    prepare_member_label_candidate(
+                        label_request, role=label_request.typography_role,
+                        measured_lane_label=lane_measure, request=request,
+                        timeline_rect=timeline_rect, slot=slot, host=host,
+                        associated_member=associated_member, own_marks=own_marks,
+                        member_names=layout_manifest.member_names,
+                        as_of_chip_measurement=context.as_of_chip_measurement))
+        measurement, provisional, geometry, slot_bounds = (
+            selected.measurement, selected.provisional, selected.geometry, selected.slot_bounds)
+        candidate_geometries = {side: value.geometry for side, value in prepared.items()} if prepared else None
         label_size, label_gap, placement_bounds = geometry.size, geometry.gap, geometry.bounds
         reach, association, final_association = geometry.maximum_end_gap, geometry.association, geometry.final_association
         anchor_with_delta, delta_extra = label_request.anchor, 0.0
@@ -643,7 +608,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 if label_request.candidates else None)
         if candidate is not None and prepared:
             selected = prepared[candidate.side]
-        measurement, provisional, geometry, slot_bounds = selected
+        measurement, provisional, geometry, slot_bounds = (
+            selected.measurement, selected.provisional, selected.geometry, selected.slot_bounds)
         association, final_association = geometry.association, geometry.final_association
         if delta_extra and association is not None:
             association = replace(association, maximum_distance=association.maximum_distance + delta_extra)
