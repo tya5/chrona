@@ -95,7 +95,8 @@ def _assert_chip_pair(rendered, label_purpose: str, role: str, kind: str):
     chips = [item for item in rendered.surface.primitives
              if item.scene_id == chip_id or item.scene_id.startswith(chip_id + ":part")]
     assert chips
-    assert chips[0].scene_id == chip_id
+    expected_chip_ids = ((chip_id + ":part0", chip_id + ":part1") if catalog else (chip_id,))
+    assert tuple(item.scene_id for item in chips) == expected_chip_ids
     assert chips[0].kind == "Symbol" and chips[0].symbol is not None
     assert chips[0].purpose == "label-chip"
     assert chips[0].visual_role == role
@@ -110,7 +111,6 @@ def _assert_chip_pair(rendered, label_purpose: str, role: str, kind: str):
         assert chips[0].lane_member_id == label.lane_member_id
     if catalog:
         assert len(chips) == 2
-        assert chips[1].scene_id == chip_id + ":part1"
         assert all(item.symbol is not None for item in chips)
         assert all(item.paint.fill is not None and item.paint.stroke is None for item in chips)
     else:

@@ -65,13 +65,13 @@ def _auto_setup(tmp_path):
 
 def _render(setup, layout_path, monkeypatch):
     calls = []
-    original = surface_member_labels.place_member_name
+    original = surface_member_labels.start_member_name_search
 
-    def spy(*args, **kwargs):
+    def spy(anchor, size, candidates, **kwargs):
         calls.append((kwargs["maximum_end_gap"], kwargs["full_band"]))
-        return original(*args, **kwargs)
+        return original(anchor, size, candidates, **kwargs)
 
-    monkeypatch.setattr(surface_member_labels, "place_member_name", spy)
+    monkeypatch.setattr(surface_member_labels, "start_member_name_search", spy)
     draft = resolve_draft_render(layout_path=layout_path, **setup)
     rendered = render_review(RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,

@@ -1,4 +1,4 @@
-"""Close measured member-name groups before emitting their final primitives."""
+"""Owns measured member-name group allocation and the bounded exchange; reads candidate cursors and completed obstacles."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace

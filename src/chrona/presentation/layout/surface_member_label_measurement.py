@@ -1,4 +1,4 @@
-"""Prepare measured member-label candidates for Layout placement."""
+"""Owns measured member-label candidates and text projection; reads the closed request, Theme treatments and Layout slot geometry."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace

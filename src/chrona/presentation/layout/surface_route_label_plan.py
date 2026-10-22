@@ -1,4 +1,4 @@
-"""Complete routes and post-route labels against already placed member content."""
+"""Coordinates one route composition and relation-label completion; reads completed member content and the single route plan."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace

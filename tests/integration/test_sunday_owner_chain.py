@@ -8,7 +8,7 @@ import yaml
 
 from chrona.core.relation_identity import relation_identities
 from chrona.presentation.layout import route_search, routing
-from chrona.presentation.layout import surface_route_label_plan, surface_routes
+from chrona.presentation.layout import surface_composer, surface_routes
 from chrona.resources import builtin_preset_source_root, safe_load
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support.sunday_owner_chain import (
@@ -40,15 +40,15 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
                 != objects[relation["to"]["object"]]["fields"]["owner"])
 
     counters = {"expansions": 0, "search_generators": 0,
-                "selections": 0, "label_trials": 0}
+                "selections": 0, "route_plans": 0}
     search_limits: list[int | None] = []
     original_candidates = route_search.orthogonal_route_candidates
     original_select = surface_routes.select_relation_route
-    original_trial = surface_route_label_plan._run_trial
+    original_plan = surface_composer.compose_routes_and_member_labels
 
     def observe_candidates(*args, **kwargs):
         counters["search_generators"] += 1
-        search_limits.append(kwargs.get("limit", 4096))
+        search_limits.append(kwargs.get("limit"))
         callback = kwargs.get("on_expansion")
 
         def count_expansion():
@@ -63,13 +63,13 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
         counters["selections"] += 1
         return original_select(*args, **kwargs)
 
-    def observe_trial(*args, **kwargs):
-        counters["label_trials"] += 1
-        return original_trial(*args, **kwargs)
+    def observe_route_plan(*args, **kwargs):
+        counters["route_plans"] += 1
+        return original_plan(*args, **kwargs)
 
     monkeypatch.setattr(route_search, "orthogonal_route_candidates", observe_candidates)
     monkeypatch.setattr(surface_routes, "select_relation_route", observe_selection)
-    monkeypatch.setattr(surface_route_label_plan, "_run_trial", observe_trial)
+    monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", observe_route_plan)
 
     project_path = tmp_path / "project.yaml"
     project_path.write_text(yaml.safe_dump(source, sort_keys=False), encoding="utf-8")
@@ -95,7 +95,7 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
     rendered = render_draft(request).rendered
     wall_seconds, cpu_seconds = perf_counter() - wall_start, process_time() - cpu_start
 
-    assert counters["label_trials"] <= 2
+    assert counters["route_plans"] == 1
     assert all(limit is not None for limit in search_limits)
     assert counters["expansions"] <= routing.RELATION_SEARCH_EXPANSIONS * counters["selections"]
 
