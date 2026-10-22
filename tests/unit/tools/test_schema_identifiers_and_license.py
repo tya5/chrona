@@ -79,7 +79,7 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("preset-library-v0.2.schema.yaml", "slug"): 1,
     ("profile-v0.3.schema.yaml", "non-empty-string"): 1,
     ("project-command-result-v0.1.schema.yaml", "non-empty-string"): 1,
-    ("project-command-v0.1.schema.yaml", "non-empty-string"): 7,
+    ("project-command-v0.1.schema.yaml", "non-empty-string"): 10,
     ("project-v0.7.schema.yaml", "non-empty-string"): 3,
     ("project-v0.7.schema.yaml", "unconstrained-string"): 1,
     ("render-context-v0.17.schema.yaml", "non-empty-string"): 2,

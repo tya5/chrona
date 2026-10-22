@@ -270,8 +270,18 @@ message says so and names the revision. Additive; no result version change.
   `E_PROJECT_CALENDAR_MISSING` for an unknown id and `E_PROJECT_CALENDAR_REFERENCED` while `project.calendar`, an
   object's `calendar` or a relation's `lag.calendar` names it. `setEntity {id, entity}` upserts `entities.<id>`;
   `setFieldRole {role, binding}` sets `fieldRoles.<role>` (`role` is a `projectFieldRole`, `binding` an object field
-  name). Removing an entity or a field role, annotations and project meta are later items; the `type` enum grows
-  without a version change.
+  name). #1892 row 1 item 3 completes the members the skill teaches: `setAnnotation {id, annotation}` upserts
+  `annotations.<id>` and refuses an `anchor.object` that names no object (`E_PROJECT_OBJECT_MISSING` at
+  `/payload/annotation/anchor/object`); `removeAnnotation {id}` (`E_PROJECT_ANNOTATION_MISSING`); `removeEntity {id}`
+  (`E_PROJECT_ENTITY_MISSING`, and `E_PROJECT_ENTITY_REFERENCED` while an object's or another entity's `fields` value
+  is, or lists, that id); `removeFieldRole {role}` (`E_PROJECT_FIELD_ROLE_MISSING`; roles are bound by Views and
+  profiles outside the Project file, so nothing inside it can still name a role and an unbound role reads as absent,
+  Spec 06 §6.2); `setProjectMeta {title?, calendar?}` replaces the given `project` header members, `null` removes
+  one, the Project `id` cannot change and a `calendar` must exist (Core reference rule). `removeObject` now also
+  refuses an object that an annotation anchors on. Members deliberately without a command (`version`, `periods`,
+  `scenarios`, `extensions`) are listed with the reason in `tests/unit/chrona/app/test_project_command_coverage.py`,
+  which fails when a Project schema member is neither covered nor listed. The `type` enum grows without a version
+  change.
 - The transaction is the one of Spec51 §4.2 (`transact_authoring_command`): the lock, the compare-and-set on
   `baseRevision` (`E_AUTHORING_BASE_REVISION` with `expectedRevision`), the replay ledger (same `commandId` and request
   returns the first result with `replayed: true` and `revisionIsCurrent`; the same id for another request is
@@ -287,7 +297,7 @@ message says so and names the revision. Additive; no result version change.
 - Both tools are mutating (`readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`) and fail
   `E_MCP_WRITE_DISABLED` before opening any file without `--allow-write`. Command and result versions are new
   documents (`schemas/project-command-v0.1.schema.yaml`, `schemas/project-command-result-v0.1.schema.yaml`); no
-  existing schema changes (item 2 widens the `type` enum and `payload` conditions of the new command document in place). Reverting an edit is a later item (an `inverse` command in the result); until then it is
+  existing schema changes (items 2 and 3 widen the `type` enum and `payload` conditions of the new command document in place). Reverting an edit is a later item (an `inverse` command in the result); until then it is
   the opposite command at the new revision.
 
 Only initialization accepts a nonexistent destination directory. Its explicit
