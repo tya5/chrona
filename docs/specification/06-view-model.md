@@ -278,14 +278,16 @@ the owner-to-header offsets and remeasuring normal flow, rather than a
 table-source minimum or a new retry loop.
 
 `visibility.labels.omitZeroDelta: true` (#1936; default `false`) omits only
-the exact numeric zero finish-delta component from a member label before
+the exact numeric zero delta component from a member label before
 measurement. A title/path component remains; a delta-only label then has no
 text request. This includes an estimated zero's display suffix, but does
 not change its numeric fact, on-track semantics, or the independent table
 consumer. Missing values are not zero; nonzero deltas and their forecast
-markers retain their existing display. Required attached-point names and
-date content remain required; only their declared zero-delta component is
-omitted. Table zero display is specified in Specification 24.
+markers retain their existing display. Ordinary members consume their
+selected finish delta; attached points consume their selected at-delta.
+Required attached-point names and date content remain required; only their
+zero-delta component is omitted. Table zero display is specified in
+Specification 24.
 
 ### 6.0 Hierarchy name preservation (#1701)
 
