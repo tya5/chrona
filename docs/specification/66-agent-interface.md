@@ -260,8 +260,18 @@ message says so and names the revision. Additive; no result version change.
   appended; every schedule mode, `Nwd` amounts, `constraints`, `deadline`, `parent`, `attachesTo` and `fields` are
   the Project schema's); `removeObject {id}` deletes an object and is refused with `E_PROJECT_OBJECT_MISSING` for
   an unknown id and `E_PROJECT_OBJECT_REFERENCED` while a relation endpoint, a `parent` or an `attachesTo` names it.
-  Further member commands (relations, calendars, entities, field roles, annotations, project meta) extend the `type`
-  enum without a version change.
+  #1892 row 1 item 2 adds the other structural members, each upserting by its key:
+  `setRelation {relation}` appends a complete dependency relation, or replaces the relation that declares the same
+  `id` (a relation without an `id` is appended unless an identical one exists); both endpoints must name existing
+  objects whose schedule has that endpoint, otherwise the Core `E_REFERENCE`/`E_ENDPOINT_MODE_MISMATCH` row is
+  reported at `/payload/relation/from/object` (or `to`). `removeRelation {id}` deletes the relation(s) declaring that
+  `id` (`E_PROJECT_RELATION_MISSING` otherwise, also for a relation that declares none).
+  `setCalendar {id, calendar}` upserts `calendars.<id>`; `removeCalendar {id}` is refused with
+  `E_PROJECT_CALENDAR_MISSING` for an unknown id and `E_PROJECT_CALENDAR_REFERENCED` while `project.calendar`, an
+  object's `calendar` or a relation's `lag.calendar` names it. `setEntity {id, entity}` upserts `entities.<id>`;
+  `setFieldRole {role, binding}` sets `fieldRoles.<role>` (`role` is a `projectFieldRole`, `binding` an object field
+  name). Removing an entity or a field role, annotations and project meta are later items; the `type` enum grows
+  without a version change.
 - The transaction is the one of Spec51 §4.2 (`transact_authoring_command`): the lock, the compare-and-set on
   `baseRevision` (`E_AUTHORING_BASE_REVISION` with `expectedRevision`), the replay ledger (same `commandId` and request
   returns the first result with `replayed: true` and `revisionIsCurrent`; the same id for another request is
@@ -271,13 +281,13 @@ message says so and names the revision. Additive; no result version change.
 - Validation before write is the Project schema plus the Core rules, i.e. what `validate_project` reports except the
   dependency-cycle check; a cycle and a date that contradicts a dependency are `schedule_project` results, not write
   errors (owner default 6). A finding inside the command's own object is reported at its command pointer
-  (`/payload/object/schedule/amount`); any other finding keeps its Project pointer in the message under `/payload`.
+  (`/payload/object/schedule/amount`, `/payload/relation/...`, `/payload/calendar/...`, `/payload/entity/...`, `/payload/binding`); any other finding keeps its Project pointer in the message under `/payload`.
   Nothing is written for a rejection. The file is rewritten as canonical YAML: comments, flow style and key
   quoting of the original are not kept.
 - Both tools are mutating (`readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`) and fail
   `E_MCP_WRITE_DISABLED` before opening any file without `--allow-write`. Command and result versions are new
   documents (`schemas/project-command-v0.1.schema.yaml`, `schemas/project-command-result-v0.1.schema.yaml`); no
-  existing schema changes. Reverting an edit is a later item (an `inverse` command in the result); until then it is
+  existing schema changes (item 2 widens the `type` enum and `payload` conditions of the new command document in place). Reverting an edit is a later item (an `inverse` command in the result); until then it is
   the opposite command at the new revision.
 
 Only initialization accepts a nonexistent destination directory. Its explicit

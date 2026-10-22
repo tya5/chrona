@@ -109,7 +109,7 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
 | `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; writes no output file. |
 | `create_project` | Library entry (no CLI equivalent) | Creates a new `project.yaml` from a complete Project; requires `--allow-write`. |
-| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` with `setObject`/`removeObject` at a `baseRevision`; requires `--allow-write`. |
+| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` (objects, relations, calendars, entities, field roles) at a `baseRevision`; requires `--allow-write`. |
 
 Edit standalone `project.yaml` directly, or over MCP with `apply_project_command` (`validate_project` returns its `projectRevision`); use `apply_command` for Stores. For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
 
