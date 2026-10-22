@@ -44,3 +44,20 @@ def write_explicit_context(example: Path, slide_id: str, relative: str) -> Path:
             slide["context"] = relative
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return path
+
+
+def stage_theme_bases(example: Path, address: str, revision_directory: Path) -> None:
+    """Copy the base chain of the derived Theme at ``address`` into a test store revision.
+
+    A derived Theme's base is resolved in the same store and revision at its declared sibling
+    path, so a test that rebuilds a slide's resources in its own store must stage the base too.
+    """
+    from chrona.presentation.model.theme_inheritance import is_derived_theme, theme_base_reference
+
+    value = yaml.safe_load((example / address).read_text(encoding="utf-8"))
+    while is_derived_theme(value):
+        address = theme_base_reference({"address": address, "store": {}, "revision": {}}, value)["address"]
+        target = revision_directory / address
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((example / address).read_bytes())
+        value = yaml.safe_load(target.read_text(encoding="utf-8"))

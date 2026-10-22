@@ -7,3 +7,10 @@
 #
 # Delete an entry when its defect is fixed; delete this file with the last entry.
 # Measured at 6c2dafa. Defects are tracked in #85.
+
+test_every_declared_slot_produces_a_primitive:
+  # Slide 02's table-less target (no tableColumns, rows.mode automatic) must still declare the
+  # `table` slot, because the table-timeline surface rejects a Layout without it
+  # (E_PRESENTATION_PRIMITIVE_MISSING), and Spec 24 (#1683) then collapses it empty. The gate and
+  # the surface contract disagree; remove this pin when one of them is reconciled.
+  halcyon-1/programme-board: [table]

@@ -17,7 +17,7 @@ from chrona.presentation.model.closure import ClosureError
 from chrona.core.ports import SnapshotReadError
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshot_paths import snapshot_directory
-from tests.support.deck_contexts import context_document
+from tests.support.deck_contexts import context_document, stage_theme_bases
 
 
 def _write(root, token, address, value):
@@ -233,6 +233,8 @@ def _real_ingress_with_package_stores(tmp_path, primary_extensions, snapshot_ext
         original = body[key]
         value = yaml.safe_load((example_root / original["address"]).read_text(encoding="utf-8"))
         references[key] = write_local("primary", original["address"], value, kind)
+        if kind == "theme":
+            stage_theme_bases(example_root, original["address"], snapshot_directory(tmp_path, "primary"))
     snapshot_ref = write_local("primary", "snapshot-ref.yaml", {
         "version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "snapshot",
         "body": {"project": historic_ref}}, "snapshot-ref")
@@ -364,6 +366,8 @@ def test_snapshot_stale_special_profile_versions_keep_version_diagnostic_after_i
         ref = _write(tmp_path, token, original["address"], value)
         ref["kind"] = kind
         refs[key] = ref
+        if kind == "theme":
+            stage_theme_bases(example_root, original["address"], snapshot_directory(tmp_path, token))
     for key, original in context["body"]["inputs"].items():
         if key != "detailProfile" or context_key == "detailProfile":
             resource_path = example_root / original["address"]

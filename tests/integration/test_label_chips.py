@@ -31,7 +31,8 @@ def _primitives(scene: dict) -> dict[str, dict]:
 
 
 def test_committed_as_of_label_is_a_bare_word_in_a_filled_chip():
-    scene = json.loads((ROOT / "examples/halcyon-1/generated/02-programme-board.scene.json").read_text(encoding="utf-8"))
+    # Slide 02's target labels the marker with its date; 11 keeps the bare "Today" wording.
+    scene = json.loads((ROOT / "examples/halcyon-1/generated/11-overlay-briefing.scene.json").read_text(encoding="utf-8"))
     primitives = _primitives(scene)
     label, chip = primitives["as-of-label"], primitives["chip:as-of-label"]
     assert label["text"] == "Today"
