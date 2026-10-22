@@ -260,9 +260,7 @@ def close_surface_rows(request: SurfaceLayoutRequest, inline: SurfaceInlineGeome
             for row in raw_rows:
                 if row.group_id:
                     spans[row.group_id] = spans.get(row.group_id, 0.0) + row.bounds[3]
-            newly_unfit = frozenset(item.group_id for item in plan.groups
-                                    if item.uses_vertical_tag
-                                    and spans.get(item.group_id, 0.0) < item.vertical_required_block)
+            newly_unfit = plan.vertical_tags_missing_full_fit(spans)
             if not newly_unfit:
                 break
             plan = plan.demote(newly_unfit)
@@ -428,6 +426,9 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             source_inline_prefix=source_prefix,
             vertical_tag_plan=group_tags,
             source_inline_demand=source_inline_demand,
+            vertical_tag_block_inset=(float(2 * group_tab.gap)
+                                      if group_tags and group_tab is not None and group_tab.target == "tag"
+                                      else 0.0),
             marked_runs=dict(request.surface_content.group_header_runs))
     role_geometries = resolve_mark_geometries(request.theme_tokens)
     mark_block_size = float(metric_values["timeline.mark.blockSize"])

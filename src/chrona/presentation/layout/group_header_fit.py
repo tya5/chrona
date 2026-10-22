@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from typing import Any
+from typing import Any, Mapping
 
 from chrona.presentation.layout.group_header_runs import GroupHeaderRunSegment, wrap_group_header_runs
 from chrona.presentation.layout.text import _wrap_units, measure_text_width, metric_for_role, wrap_text
@@ -112,6 +112,7 @@ class GroupHeaderFitPlan:
     source_inline_prefix: Decimal = Decimal(0)
     vertical_tag_plan: bool = True
     source_inline_demand: bool = True
+    vertical_tag_block_inset: float = 0.0
 
     def group(self, group_id: str) -> GroupHeaderFit | None:
         return next((item for item in self.groups if item.group_id == group_id), None)
@@ -156,6 +157,14 @@ class GroupHeaderFitPlan:
             if item.group_id in group_ids and item.uses_vertical_tag else item
             for item in self.groups))
 
+    def vertical_tags_missing_full_fit(self, group_spans: Mapping[str, float]) -> frozenset[str]:
+        """Return preferred tags whose actual inset cell cannot carry the full measured label."""
+        return frozenset(
+            item.group_id for item in self.groups
+            if item.uses_vertical_tag
+            and max(0.0, group_spans.get(item.group_id, 0.0) - self.vertical_tag_block_inset)
+            < item.vertical_required_block)
+
     @property
     def header_sizes(self) -> tuple[tuple[str, float], ...]:
         return tuple((item.group_id, item.horizontal_block_size)
@@ -168,6 +177,7 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
                                   source_inline_prefix: Decimal = Decimal(0),
                                   vertical_tag_plan: bool = True,
                                   source_inline_demand: bool = True,
+                                  vertical_tag_block_inset: float = 0.0,
                                   marked_runs: dict[str, tuple[tuple[str, str | None], ...]] | None = None,
                                   ) -> GroupHeaderFitPlan:
     """Measure every full name once for vertical preference and wrapped horizontal fallback."""
@@ -228,6 +238,6 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
             line_baseline_offsets))
     return GroupHeaderFitPlan(tuple(groups), header_inline_start, header_inline_size,
                               minimum_header_block_size, source_inline_prefix,
-                              vertical_tag_plan, source_inline_demand)
+                              vertical_tag_plan, source_inline_demand, vertical_tag_block_inset)
 
 

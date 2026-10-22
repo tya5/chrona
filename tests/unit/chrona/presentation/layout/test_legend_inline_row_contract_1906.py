@@ -32,5 +32,3 @@ def test_inline_legend_without_item_minimum_does_not_gain_an_undeclared_row_wrap
     assert [entry.block_offset for entry in no_declared_minimum.entries] == [Decimal(0), Decimal(0)]
     assert declared_minimum.entries[0].block_offset == Decimal(0)
     assert declared_minimum.entries[1].block_offset > Decimal(0)
-
-

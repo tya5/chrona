@@ -1,6 +1,9 @@
 """A non-fitting vertical group tag keeps the complete identity in a reserved header (#1906)."""
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
+
+from chrona.presentation.layout.group_header_fit import GroupHeaderFitPlan
 from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
 
@@ -77,3 +80,62 @@ def test_bounded_one_line_header_keeps_ordinary_autoheight_baseline(tmp_path):
     assert bounded_header.text_layout.lines == ordinary_header.text_layout.lines
     assert bounded.surface.canvas_bounds[3] == ordinary.surface.canvas_bounds[3]
     assert bounded_header.bounds == ordinary_header.bounds
+
+
+def test_vertical_name_fitting_raw_group_span_falls_back_after_tab_gap(tmp_path, monkeypatch):
+    source = sr.bunched_project(groups=1, per_group=1)
+    source["entities"]["team-0"]["title"] = "Ana"
+    parts = sr.bundle("control-room-dark")
+    tt.with_vertical_groups(parts, size=25)
+    body = parts["theme"]["body"]
+    body["values"]["tag-gap"] = {"type": "number", "value": 3}
+    body["values"]["tag-opacity"] = {"type": "number", "value": 1}
+    body["roles"]["group-tab"] = {
+        "backgroundTreatment": "fill", "backgroundPaintOrder": 20, "opacity": "tag-opacity",
+        "tabGap": "tag-gap", "tabTarget": "tag",
+    }
+    body["colorBindings"]["group-tab.fill"] = "warning"
+
+    measured = []
+    original = GroupHeaderFitPlan.vertical_tags_missing_full_fit
+
+    def capture(plan, spans):
+        measured.append((plan, dict(spans)))
+        return original(plan, spans)
+
+    monkeypatch.setattr(GroupHeaderFitPlan, "vertical_tags_missing_full_fit", capture)
+    rendered = sr.render(tmp_path, source, presentation=parts, viewport=(1600, 900))
+
+    plan, spans = next((plan, spans) for plan, spans in measured
+                       if plan.group("team-0") is not None and plan.group("team-0").uses_vertical_tag)
+    fit = plan.group("team-0")
+    assert fit is not None
+    # The label fits the un-inset row-group span, but not the declared tab cell after its 3px end gaps.
+    assert spans["team-0"] >= fit.vertical_required_block
+    assert spans["team-0"] - plan.vertical_tag_block_inset < fit.vertical_required_block
+
+    primitives = {item.scene_id: item for item in rendered.surface.primitives}
+    fallback = primitives["group-header:team-0"]
+    assert fallback.text == "Ana" and "…" not in fallback.text
+    svg_root = ET.fromstring(rendered.artifact.content)
+    svg_header = next(node for node in svg_root.iter()
+                      if node.attrib.get("data-scene-id") == "group-header:team-0")
+    assert "".join(svg_header.itertext()) == "Ana"
+    group = next(item for item in rendered.surface.groups if item.group_id == "team-0")
+    header = group.header_bounds
+    content = group.content_bounds
+    table = next(slot for slot in rendered.surface.slots if slot.slot_id == "table")
+    assert header[0] >= table.bounds[0]
+    assert header[0] + header[2] <= table.bounds[0] + table.bounds[2]
+    assert header[0] + header[2] <= content[0]
+
+    # The tab remains in its row cell; neither it nor the plotted mark occupies the reserved header.
+    tab = primitives["group-tab:team-0"]
+    mark = next(item for item in rendered.surface.primitives if item.scene_id.startswith("planned:"))
+
+    def overlaps(left, right):
+        return (left[0] < right[0] + right[2] and right[0] < left[0] + left[2]
+                and left[1] < right[1] + right[3] and right[1] < left[1] + left[3])
+
+    assert not overlaps(header, tab.bounds)
+    assert not overlaps(header, mark.bounds)

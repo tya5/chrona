@@ -472,7 +472,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     discovered_callout_suppressions = set(suppressed_callout_ids)
     annotation_slot = by_source.get("annotations")
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
-    rail_records: list[TextPlacement] = []
+    rail_records: list[Rect] = []
 
     def add_diagnostic(value: str, annotation: Any,
                        extra_subjects: tuple[DiagnosticSubject, ...] = ()) -> None:
@@ -490,7 +490,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 connector_kind: str = "leader") -> tuple[AnnotationBox, ...]:
         """Enumerate free rail boxes at or below the preceding completed list entry."""
         previous_bottom = max(
-            (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
+            (float(item.block + item.block_size) for item in rail_records),
             default=rail.y)
         height = text_size[1]
         candidates = annotation_rail_candidates(
@@ -508,7 +508,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         assert annotation_slot is not None
         rail = LabelRect(*_bounds(annotation_slot.bounds))
         previous_bottom = max(
-            (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
+            (float(item.block + item.block_size) for item in rail_records),
             default=rail.y)
         candidates = ordered_rail_candidates(
             annotation, resolved, anchor_y=anchor_y, text_size=text_size,
@@ -549,7 +549,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         placed = replace(placed, paint_order=ANNOTATION_PAINT_ORDER + 1)
         text.append(placed)
         register_rect(placed.placement_id, "text", "annotations", placed.bounds)
-        rail_records.append(placed)
+        rail_records.append(placed.bounds)
         if overflow:
             visible_label_overflows.append((placed, rail))
         return placed, overflow
@@ -1327,6 +1327,11 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if viewer_fit.mode != "raw":
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            if annotation_slot is not None and status_in_list:
+                # The list cursor owns the complete occupied card, not only a
+                # numbered body line. Marker-free cards and kind/title/header
+                # extents must keep later list entries below the full record.
+                rail_records.append(annotation_bounds)
             if tail_tip is not None:
                 # A numbered index is placed later in this same annotation
                 # pass. Keep the two visible balloon-tail edges in the shared
@@ -1394,8 +1399,6 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if annotation.content and placed_annotation.overflow != "suppressed":
                 narrative_receipts.append(NarrativeReceipt("annotation", annotation_id, placed_annotation.placement_id))
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
-            if annotation_slot is not None and annotation.number is not None and status_in_list:
-                rail_records.append(placed_annotation)
             if box_overflow:
                 visible_label_overflows.append((placed_annotation, overflow_viewport, overflow_required))
             if annotation_visuals:
