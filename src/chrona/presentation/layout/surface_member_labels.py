@@ -24,7 +24,7 @@ from chrona.presentation.layout.chip_geometry import ChipGeometryError
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, complete_label_chip_placement
 from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
 from chrona.presentation.layout.surface_member_label_measurement import (
-    prepare_member_label_candidate,
+    prepare_member_label_candidate, project_prepared_member_text,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding, forecast_delta_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
@@ -39,7 +39,6 @@ from chrona.presentation.layout.surface_geometry import (
 from chrona.presentation.layout.surface_lanes import lane_owner
 from chrona.presentation.layout.key_row_lanes import key_row_label_ladder
 from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
-from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 from chrona.presentation.model.projection import (WindowMode, active_placement, finish_delta_text,
@@ -674,15 +673,10 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         if final_association is not None and candidate.final_rung:
             # Only a name placed on the final own-mark rung is hosted by the own mark nearest its Text.
             hosting_mark = own_marks[final_association.nearest_mark_index(chip_box)]
-        placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
-            content=provisional.content, inline=candidate.bounds.x + leading,
-            baseline_block=candidate.bounds.y + float(font_size), typography_role=provisional.typography_role,
-            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-            collision_region=provisional.collision_region, collision_domain=provisional.collision_domain,
-            semantic_id=provisional.semantic_id, lane_row_id=provisional.lane_row_id,
-            lane_member_id=provisional.lane_member_id, lane_source_kind=provisional.lane_source_kind,
-            overflow="visible-overflow" if visible_overflow else "fit", lines=lines,
-            estimated_delta=label_request.estimated_delta),
+        placed_text = replace(project_prepared_member_text(selected,
+            inline=candidate.bounds.x + leading,
+            baseline_block=candidate.bounds.y + float(font_size),
+            overflow="visible-overflow" if visible_overflow else "fit"),
             fallback_ladder=ladder, selected_rung=candidate.side,
             host_placement_id=(hosting_mark.placement_id if hosting_mark is not None and
                 (associated_member or candidate.side == "inside") else None),

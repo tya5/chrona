@@ -22,7 +22,7 @@ from chrona.presentation.layout.surface_quality import (
     SurfaceLayoutRequest,
     TextPlacement,
 )
-from chrona.presentation.layout.text import place_text
+from chrona.presentation.layout.text import measured_text_bounds, place_text
 
 
 DEFAULT_MEMBER_END_GAP_EM = 2.0
@@ -36,6 +36,29 @@ class PreparedMemberLabelCandidate:
     provisional: TextPlacement
     geometry: LabelCandidateGeometry
     slot_bounds: LabelRect
+
+
+def project_prepared_member_text(
+    prepared: PreparedMemberLabelCandidate,
+    *,
+    inline: float,
+    baseline_block: float,
+    overflow: str,
+) -> TextPlacement:
+    """Translate the measured run without consulting fonts a second time.
+
+    Use the text owner's baseline-pivot arithmetic rather than adding an
+    origin to a rounded rectangle. Allocation may change the selected pose;
+    the measured typography, runs and font identity remain immutable.
+    """
+    provisional = prepared.provisional
+    return replace(provisional,
+        bounds=measured_text_bounds(
+            inline=inline, baseline_block=baseline_block,
+            width=float(provisional.bounds.inline_size),
+            height=float(provisional.bounds.block_size),
+            font_size=float(prepared.measurement.treatment.font_size), rotation=0),
+        baseline=(inline, baseline_block), overflow=overflow)
 
 
 def _member_reach(font_size: float, member_names: Mapping[str, Any]) -> float:

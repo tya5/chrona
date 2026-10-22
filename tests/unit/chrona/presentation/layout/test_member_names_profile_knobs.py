@@ -11,7 +11,8 @@ from chrona.presentation.layout.labels import LabelRequest, LabelRect, Collision
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.profile import LayoutBase, resolve_layout_profile
 from chrona.presentation.layout.model import Measurement
-from chrona.presentation.layout.surface_member_labels import _member_full_band, _member_reach
+from chrona.presentation.layout.surface_member_labels import _member_full_band
+from chrona.presentation.layout.surface_member_label_measurement import _member_reach
 
 
 ROOT = Path(__file__).parents[5]
