@@ -822,11 +822,11 @@ body:
   annotationKinds:
     risk:
       label: RISK
-      title: '{label} · {subjectId}'
+      title: '{label} · {subject}'
       color: negative
       colorAlso: [header, leader]
     note:
       label: NOTE
-      title: '{label} · {subjectId}'
+      title: '{label} · {subject}'
       color: accent
       colorAlso: [header, leader]
