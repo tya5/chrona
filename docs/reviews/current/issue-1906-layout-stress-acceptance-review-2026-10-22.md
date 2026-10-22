@@ -4,7 +4,7 @@
 
 **Not release-accepted. PR #1914 remains draft/HOLD; keep issue1906 open.**
 Table dispositions mean final acceptance is not yet proven, not that the focused controls failed.
-Implementation: [477373fc0](https://github.com/tya5/chrona/commit/477373fc0).
+Implementation: [f610eeaf7](https://github.com/tya5/chrona/commit/f610eeaf7).
 [Current design/architecture/implementation record](https://github.com/tya5/chrona/issues/1906#issuecomment-6332734477).
 Normative authority: [Spec33](../../specification/33-intent-oriented-layout.md), with Specs06/07/24/44/50 and ADR0032.
 Public design119a885f8 preceded the corrective core implementation.
@@ -31,8 +31,10 @@ Reviewer [6340416247](https://github.com/tya5/chrona/pull/1914#issuecomment-6340
 
 ## Programme-level criteria (optional)
 
-Focused local groups passed:311 source/legend/port tests;160 adjacent legend/annotation tests;31 joint count/source tests;28 card/tilt integration tests;37 source/precision/planner tests. These groups overlap and are not additive. Import direction and module reachability pass; the float accumulation guard passes, retaining Decimal source demand and explicit completed-float geometry domains. A delegated broad layout run was stopped after2520 passes; it is not a completed suite or release evidence.
+CI [39786575213](https://github.com/tya5/chrona/actions/runs/39786575213) at b19c0bf4d failed all three pytest shards (36 failures); preview, conformance, MCP-floor and newest-Python passed. Derived-ready failed on those pytest prerequisites. Corrections address actual source-demand matching, caption double-subtraction, ordered decimal rail intervals and Theme error pointers; instrumentation now asserts phase order and fresh state per joint trial, not per complete render. The obsolete note Scene hash changed only12 slot associations after unused-source pruning; SVG bytes were unchanged. No corpus golden was authored.
 
-Four materializers ran with write=False, allowing only E_MATERIALIZER_MISMATCH after writing temporary evidence: HALCYON sunday/titlecard and roadmap-sunday/roadmap-titlecard. Actual Scene/SVG and PNG inspection confirms card presentation and occupied footer geometry described above; output mismatches are expected source changes, not golden updates. The exact-main three-OS full suite remains CI-owned.
+The focused batch covering all failing nodes and adjacent controls passed138 tests; final finite-state/phase controls passed26. Additional legend controls passed39 (overlap). Reproduce the final controls with `.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_source_use.py tests/unit/chrona/presentation/layout/test_surface_source_closure.py tests/integration/test_surface_phase_wiring.py`. Finite-state tests exclude derived advances/footprints/diagnostic deltas while retaining face, glyph and partition identity; exact witness comparisons remain strict. Import direction, module reachability, float accumulation and literal-review guards pass. These are not the full suite or release evidence.
+
+Four materializers ran with write=False, allowing only E_MATERIALIZER_MISMATCH after writing temporary evidence: HALCYON sunday/titlecard and roadmap-sunday/roadmap-titlecard. Compared with official b19 artifact12428819425, HALCYON Titlecard is byte-identical; Roadmap Titlecard18 primitives differ only in last-digit float serialization. Sundays11/9 primitives change only legend inline placement after the caption correction. No primitives, text or routes were added/removed; all legend items remain contained, Scene/SVG text agrees, and card/footer counts and occupied extents match the literal table. The exact-main three-OS full suite remains CI-owned.
 
 Required next: new official artifact and per-slide delta ledger (HALCYON02/21–25 and five roadmap designs first), reviewer/owner comparison, controlled idle timing or an explicit approved alternative, current ready-main reconciliation/landing queue, and successful three-OS release on the exact main commit containing this review. Old green CI39773281648 and historical assets are preliminary evidence only.
