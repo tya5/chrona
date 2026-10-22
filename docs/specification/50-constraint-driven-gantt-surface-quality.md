@@ -582,6 +582,12 @@ the completed names without a diagnostic. Existing strict unsafe/stub and
 required-label failure rules remain authoritative. Ordinary finish-delta and
 optional relation names follow routes; their suppression is not member-name
 suppression. Required stub titles complete against the already placed content.
+Only when all otherwise-admissible ingress choices for a required visible
+relation endpoint are blocked by completed member-name groups, a blocking
+group yields to its next clear declared candidate within existing accounting,
+or is omitted with the existing member-name suppression diagnostic, rather
+than making a previously materializable render fail; all other required
+content, completed routes and head/stroke/host clearance remain authoritative.
 
 The as-of line alone does not obstruct member names (#1754); keep their normal
 halo/chip treatment. Deadline rules, the as-of label/chip and other completed
