@@ -148,8 +148,9 @@ normal result, so read `status`, not only the tool's error flag. A call whose ar
 also `rejected`, not a protocol error: `E_MCP_INPUT_INVALID` with the JSON pointer of the violating node in `sourceRef`
 and the expected shape in `message`. `validate_project` checks a Theme, Scheme, Layout Profile, View, Style, Actual Set
 or profile file by its `kind`, as `chrona validate` does. The server also serves the agent skill's text as
-two resources, `chrona://guide/authoring` and `chrona://guide/diagnostics`, so a client without skill support gets
-the same guidance.
+resources, `chrona://guide/authoring`, `chrona://guide/diagnostics` and `chrona://guide/references/<page>`, so a client
+without skill support gets the same guidance. The diagnostics resource explains every code an MCP tool emits, with what
+it means and what to change.
 
 Schedule `analysis.totalFloat[id]` is `{value, unit, calendar}`, not an integer:
 `calendar-days` uses a null calendar; `working-days` names the object's
