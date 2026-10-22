@@ -5,10 +5,14 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
-from chrona.presentation.layout.group_header_runs import place_group_header_runs
+from chrona.presentation.layout.group_header_runs import (
+    place_group_header_runs, place_wrapped_group_header_runs,
+)
+from chrona.presentation.layout.group_header_fit import (
+    GroupHeaderFitPlan, header_text_room, resolve_group_labels,
+)
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
-from chrona.presentation.layout.window_row_admission import geometry_folded_points
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
                                              metric_for_role, place_text)
 from chrona.presentation.layout.vertical_text import place_vertical_label_fit
@@ -128,6 +132,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                                review_rows: tuple[Any, ...], groups: tuple[GroupPlacement, ...],
                                body_size: float,
                                tag_column: tuple[float, float] | None = None,
+                               group_header_fit_plan: GroupHeaderFitPlan | None = None,
                                text_end_limit: Decimal | None = None) -> SurfaceGroupPresentation:
     """Place declared group labels inside completed group-header bounds.
 
@@ -135,20 +140,9 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     ``text`` or ``table`` band extent, #1629): the label then gives way before that end, as it does beside a tab,
     instead of running past the band it is drawn on.
     """
-    labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
-              for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
-    for folded in geometry_folded_points(request.projection, request.row_admission):
-        # A group whose points were all folded has no ordinary row to name it (#1660).
-        labels.setdefault(folded.group_id, next((item.group_label for item in folded.all_items if item.group_label),
-                                                folded.group_id))
-    # A View-declared header template replaces the title text only (#583).
-    declared_headers = dict(request.surface_content.group_headers)
-    admission = request.row_admission
-    if admission is not None and admission.omit_outside:
-        admission.require_match(request.projection, admission.visibility_index)
-        declared_headers = {group_id: label for group_id, label in declared_headers.items()
-                            if group_id in admission.admitted_group_ids}
-    labels.update(declared_headers)
+    labels = dict(resolve_group_labels(
+        projection=request.projection, row_admission=request.row_admission, review_rows=review_rows,
+        declared_headers=request.surface_content.group_headers))
     marked = dict(request.surface_content.group_header_runs)
     if tag_column is not None:
         for prop in ("labelInset", "labelInsetEnd"):
@@ -165,6 +159,27 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
         align = request.theme_tokens.optional_choice("groupHeader", "align", ("start", "center", "end")) or "start"
         for group in groups:
             if group.group_id and group.group_id in labels:
+                fit = group_header_fit_plan.group(group.group_id) if group_header_fit_plan is not None else None
+                if fit is not None and not fit.uses_vertical_tag:
+                    if group.header_bounds is None:
+                        raise LayoutError("E_LAYOUT_GROUP_HEADER_SPACE", f"/groups/{group.group_id}/header")
+                    treatment = request.theme_tokens.text_treatment("groupHeader")
+                    line_block = float(treatment.font_size * treatment.line_height)
+                    baseline = (float(group.header_bounds.block)
+                                + (float(group.header_bounds.block_size)
+                                   - line_block * len(fit.horizontal_lines)) / 2
+                                + float(treatment.font_size))
+                    text.append(place_text(
+                        placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
+                        content=fit.label, lines=fit.horizontal_lines,
+                        inline=float(group.header_bounds.inline), baseline_block=baseline,
+                        typography_role="groupHeader", theme_tokens=request.theme_tokens,
+                        font_metrics=request.font_metrics, collision_region=f"group:{group.group_id}",
+                        collision_domain=CollisionDomain("group-header", group.group_id),
+                        source_content=fit.label, semantic_id="groupHeader",
+                        available_inline_start=float(group.header_bounds.inline),
+                        available_inline_size=float(group.header_bounds.inline_size)))
+                    continue
                 cell = (group_tag_bounds(tab, tag_column, group.content_bounds)
                         if tab is not None and tab.target == "tag" else
                         Rect(Decimal(str(tag_column[0])), group.content_bounds.block,
@@ -225,31 +240,50 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     for group in groups:
         if group.header_bounds is not None:
             start, size = group.header_bounds.inline, group.header_bounds.inline_size
-            if label_inset_ratio is not None:
-                start += label_inset
-                size = max(Decimal(0), size - label_inset)
             if tab is not None:
                 # The text never lies on the tab (#882): it starts after a start tab and gives an end tab its room.
                 check_group_tab_inline(tab, group.header_bounds)
-                if label_inset_ratio is None:
-                    size -= tab.reserved
-                    start += tab.reserved if tab.position == "start" else Decimal(0)
-                elif tab.position == "start":
+                if label_inset_ratio is not None and tab.position == "start":
                     if label_inset < tab.reserved:
                         raise LayoutError(
                             "E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
                             detail=f"actual offset={label_inset}; required reservation={tab.reserved}")
-                else:
+                elif label_inset_ratio is not None:
                     if label_inset + tab.reserved > group.header_bounds.inline_size:
                         raise LayoutError(
                             "E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
                             detail=(f"actual offset={label_inset}; required reservation={tab.reserved}; "
                                     f"available={group.header_bounds.inline_size}"))
-                    size = max(Decimal(0), size - tab.reserved)
             bounded = tab is not None or text_end_limit is not None
-            if text_end_limit is not None:
-                size = max(Decimal(0), min(size, text_end_limit - start))
+            if bounded:
+                room = header_text_room(
+                    header_start=group.header_bounds.inline,
+                    header_end=group.header_bounds.inline + group.header_bounds.inline_size,
+                    label_inset=label_inset, label_inset_end=trailing_inset,
+                    label_inset_declared=label_inset_ratio is not None,
+                    tab_reserved=(tab.reserved if tab is not None else Decimal(0)),
+                    tab_position=tab.position if tab is not None else None,
+                    text_end_limit=text_end_limit)
+                start, size = room.inline_start, room.inline_size
+            elif label_inset_ratio is not None:
+                start += label_inset
+                size = max(Decimal(0), size - label_inset)
             if group.group_id in marked:
+                fit = (group_header_fit_plan.group(group.group_id)
+                       if group_header_fit_plan is not None and not group_header_fit_plan.vertical_tag_plan
+                       else None)
+                if fit is not None and len(fit.horizontal_lines) > 1 and fit.horizontal_run_lines is not None:
+                    line_blocks = fit.horizontal_line_blocks
+                    total_block = sum(line_blocks)
+                    top_block = (float(group.header_bounds.block)
+                                 + (float(group.header_bounds.block_size) - total_block) / 2)
+                    placed = place_wrapped_group_header_runs(
+                        group_id=group.group_id, lines=fit.horizontal_run_lines, start=start, size=size,
+                        top_block=top_block, line_blocks=line_blocks,
+                        theme_tokens=request.theme_tokens, font_metrics=request.font_metrics)
+                    text.extend(placed)
+                    retain_header_band_geometry(group, start, placed)
+                    continue
                 # Role-marked runs share the header's baseline, each measured with its own role (#1192).
                 placed, run_warnings = place_group_header_runs(
                     group_id=group.group_id, runs=marked[group.group_id], start=start, size=size, bounded=bounded,
@@ -261,6 +295,27 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                 retain_header_band_geometry(group, start, placed)
                 continue
             content, disposition = labels[group.group_id], "fit"
+            fit = (group_header_fit_plan.group(group.group_id)
+                   if group_header_fit_plan is not None and not group_header_fit_plan.vertical_tag_plan
+                   else None)
+            if fit is not None:
+                treatment = request.theme_tokens.text_treatment("groupHeader")
+                total_block = sum(fit.horizontal_line_blocks)
+                baseline = (float(group.header_bounds.block)
+                            + (float(group.header_bounds.block_size) - total_block) / 2
+                            + float(treatment.font_size))
+                placed = place_text(
+                    placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
+                    content=fit.label, lines=fit.horizontal_lines, inline=float(start),
+                    baseline_block=baseline, typography_role="groupHeader",
+                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                    collision_region=f"group:{group.group_id}",
+                    collision_domain=CollisionDomain("group-header", group.group_id),
+                    source_content=fit.label, semantic_id="groupHeader",
+                    available_inline_start=float(start), available_inline_size=float(size))
+                text.append(placed)
+                retain_header_band_geometry(group, start, [placed])
+                continue
             if bounded:
                 # A header without a tab or a table-bounded band keeps today's unbounded text. Beside a tab the text is bounded by the room the
                 # tab leaves and is shortened with its source kept, never silently (#882, as the legend of #497).

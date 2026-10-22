@@ -2,7 +2,7 @@ version: chrona/layout-profile/v0.10
 id: sunday
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
-requiredThemeTokens: [key-caption-gap, key-panel-block, legend-gap, spacing.frame, spacing.gutter, spacing.l, spacing.m, spacing.none, spacing.s, title-panel-width]
+requiredThemeTokens: [key-caption-gap, legend-gap, spacing.frame, spacing.gutter, spacing.l, spacing.m, spacing.none, spacing.s, title-panel-width]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: text, groupHeaderStrip: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unroutable: relax}
 # The design half of the View (#1341, Spec 06 §9.2). Project-independent: a View connects a project by
@@ -11,6 +11,7 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # below. The heading reads the count figure `group-count`, which the View declares.
 viewDefaults:
   heading:
+    text: {wrap: allow}
     kicker: The plan,
     title: '{project}'
     subtitle:
@@ -47,6 +48,11 @@ viewDefaults:
           search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 16}
           obstacles: *obstacles
           connector: {kind: tail}
+        - id: list
+          region: {kind: slot, source: annotations}
+          search: {kind: row-aligned}
+          obstacles: *obstacles
+          connector: {kind: none}
   axis:
     tiers:
       - {unit: quarter, every: 1, role: band, typographyRole: axisQuarter}
@@ -95,7 +101,7 @@ root:
     - id: head
       kind: row
       inlineSize: fill
-      blockSize: {fixed: {token: key-panel-block}}
+      blockSize: content
       gap: {token: spacing.gutter}
       padding: {token: spacing.none}
       alignItems: stretch
@@ -114,7 +120,7 @@ root:
             - id: title
               kind: slot
               source: heading.title
-              inlineSize: content
+              inlineSize: {minmax: {min: content, max: {fr: 1}}}
               blockSize: content
               place: {inline: start, block: center, safety: safe}
               priority: required
@@ -146,8 +152,8 @@ root:
                   overflow: visible-overflow
         - id: key-panel
           kind: column
-          inlineSize: fill
-          blockSize: fill
+          inlineSize: {minmax: {min: content, max: {fr: 1}}}
+          blockSize: content
           gap: {token: spacing.none}
           padding: {token: spacing.s}
           alignItems: stretch
@@ -159,7 +165,7 @@ root:
               source: legend
               heading: {text: THE KEY, align: start, block: start-column, gap: {token: key-caption-gap}}
               inlineSize: fill
-              blockSize: fill
+              blockSize: content
               place: {inline: start, block: center, safety: safe}
               priority: preferred
               overflow: ellipsize-with-source
@@ -209,3 +215,11 @@ root:
               place: {inline: stretch, block: stretch, safety: strict}
               priority: required
               overflow: visible-overflow
+    - id: annotations
+      kind: slot
+      source: annotations
+      inlineSize: fill
+      blockSize: content
+      place: {inline: stretch, block: start, safety: safe}
+      priority: required
+      overflow: visible-overflow

@@ -56,11 +56,12 @@ def _right(node):
 
 
 @pytest.mark.parametrize("owner", [LONG_LATIN, LONG_CJK], ids=["latin", "cjk"])
-def test_long_header_label_ellipsises_inside_its_band(tmp_path, monkeypatch, capsys, owner):
+def test_long_header_label_wraps_complete_name_inside_its_band(tmp_path, monkeypatch, capsys, owner):
     found = _primitives(_scene(tmp_path, monkeypatch, capsys, [owner, "Ken"]), {})
     text, band = found[f"group-header:{owner}"], found[f"group-header-band:{owner}"]
     assert _right(text) <= _right(band) + 1e-6
-    assert "…" in text["text"] and owner not in text["text"]
+    assert owner.upper() in text["text"]
+    assert len(text["textLayout"]["lines"]) > 1
 
 
 @pytest.mark.parametrize("owner", ["Ken", SHORT_CJK], ids=["latin", "cjk"])

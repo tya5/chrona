@@ -47,12 +47,15 @@ def test_view_encoding_keeps_entity_title_while_design_wording_transforms(tmp_pa
 
     labels = _labels(rendered)
     data = next(label for label in labels if label.source_ref == "scale:owners:a")
-    assert data.text == name
+    # Layout may break display lines; joining only those line breaks verifies
+    # the encoded entity title remains literal and complete.
+    assert data.text.replace("\n", " ") == name
     expected = {"lowercase": "authored plan", "uppercase": "AUTHORED PLAN",
                 "capitalize": "Authored Plan", "small-caps": "AUTHORED PLAN"}[transform]
     assert expected in {label.text for label in labels}
     if transform == "lowercase":
-        assert {"ahead", "on track", "behind"} <= {label.text for label in labels}
+        assert {"ahead", "on track", "behind"} <= {
+            label.text.replace("\n", " ") for label in labels}
     _assert_svg_label(rendered, data)
 
 

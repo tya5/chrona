@@ -69,6 +69,11 @@ body:
         - rule
       connector:
         kind: leader
+    - id: list
+      region: {kind: slot, source: annotations}
+      search: {kind: row-aligned}
+      obstacles: {classes: *id001}
+      connector: {kind: none}
   - id: tvac-note
     purpose: note
     anchor:
@@ -88,6 +93,11 @@ body:
         classes: *id001
       connector:
         kind: leader
+    - id: list
+      region: {kind: slot, source: annotations}
+      search: {kind: row-aligned}
+      obstacles: {classes: *id001}
+      connector: {kind: none}
   axis:
     tiers:
     - unit: month

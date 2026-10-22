@@ -90,7 +90,7 @@ def test_trailing_inset_extends_actual_drawn_run_end_without_moving_text(tmp_pat
             assert float(svg_text.attrib["x"]) == pytest.approx(before.baseline[0])
 
 
-def test_ellipsized_text_end_is_padded_then_clamped_without_changing_caption(tmp_path, monkeypatch):
+def test_wrapped_full_text_end_is_padded_then_clamped_without_changing_caption(tmp_path, monkeypatch):
     import chrona.presentation.layout.surface_composer as composer
 
     original = composer.compose_group_presentation
@@ -114,10 +114,11 @@ def test_ellipsized_text_end_is_padded_then_clamped_without_changing_caption(tmp
     assert len(previous_text) == len(actual_text) == 1
     previous_layout = next(item for item in captured[0].text if item.placement_id == "group-header:team-0")
     actual_layout = next(item for item in captured[1].text if item.placement_id == "group-header:team-0")
-    assert actual_layout.overflow == previous_layout.overflow == "ellipsized"
+    assert actual_layout.overflow == previous_layout.overflow == "fit"
     assert actual_text[0].text == previous_text[0].text
-    assert actual_text[0].bounds == previous_text[0].bounds
-    assert actual_text[0].baseline == previous_text[0].baseline
+    assert "…" not in actual_text[0].text
+    assert "…" not in previous_text[0].text
+    assert len(actual_text[0].text_layout.lines) >= len(previous_text[0].text_layout.lines)
     table = next(slot.bounds for slot in extended.surface.slots if slot.slot_id == "table")
     band = _band(extended, "team-0")
     text_end = actual_layout.bounds.inline + actual_layout.bounds.inline_size

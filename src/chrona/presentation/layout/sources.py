@@ -16,7 +16,7 @@ from chrona.presentation.layout.text import (TextSegment, completed_fallback_fac
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
 from chrona.presentation.layout.table_measurement import BoundedTableMeasurement, measure_bounded_table
 from chrona.presentation.layout.summary_flow import MeasuredSummary, measure_summary
-from chrona.presentation.model.surface_content import AxisTier, SummaryContent, TableContent
+from chrona.presentation.model.surface_content import AxisTier, SurfaceLegendEntry, SummaryContent, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.layout.surface_quality import TextRunPlacement
 
@@ -55,6 +55,35 @@ class MeasuredTextRun:
     lines: tuple[str, ...] = ()
     overflow: str = "fit"
     fallback_runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
+
+
+@dataclass(frozen=True)
+class MeasuredLegendEntry:
+    """One legend label completed at its allocated inline width."""
+
+    lines: tuple[str, ...]
+    inline_offset: Decimal
+    block_offset: Decimal
+    label_inline_size: Decimal
+    label_block_size: Decimal
+    label_available_inline: Decimal
+    row_block: Decimal
+    overflow: str = "fit"
+    source_text: str = ""
+    painted_lines: tuple[str, ...] = ()
+    segment_lines: tuple[tuple[TextSegment, ...], ...] = ()
+    segment_runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
+
+
+@dataclass(frozen=True)
+class MeasuredLegend:
+    """Shared per-entry label lines and row geometry for measurement and placement."""
+
+    entries: tuple[MeasuredLegendEntry, ...]
+    block_size: Decimal
+    entry_witnesses: tuple[SurfaceLegendEntry, ...] = ()
+    available_inline: Decimal = Decimal(0)
+    slot_inline_size: Decimal = Decimal(0)
 
 
 @dataclass(frozen=True)
@@ -111,6 +140,7 @@ class MeasuredSources:
     block_stacks: Mapping[str, MeasuredTextStack] = field(default_factory=dict)
     summary_flows: Mapping[str, MeasuredSummary] = field(default_factory=dict)
     bounded_tables: Mapping[str, BoundedTableMeasurement] = field(default_factory=dict)
+    legend_layout: MeasuredLegend | None = None
 
 
 REQUIRED_METRICS = (
@@ -423,6 +453,12 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             preferred_block = metric["timeline.axis.blockSize"]
         else:
             preferred_inline, preferred_block = text_inline, text_block
+        if source == "table" and value.min_inline is not None:
+            # Some table minima are intrinsic column floors; a separately owned
+            # required source floor (for example a complete group-name fallback)
+            # is mandatory even when it exceeds the table's natural column width.
+            minimum_inline = max(minimum_inline, value.min_inline)
+            preferred_inline = max(preferred_inline, minimum_inline)
         if source != "table" and not (source == "observations" and value.table is not None and value.table.columns):
             minimum_inline = min(preferred_inline, text_inline)
             if value.min_inline is not None:

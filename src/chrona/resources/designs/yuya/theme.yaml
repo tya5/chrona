@@ -469,7 +469,7 @@ body:
       backgroundPaintOrder: 10
     group-header-band:
       backgroundTreatment: fill
-      backgroundPaintOrder: 13
+      backgroundPaintOrder: 9
       opacity: opacity.group-header-band
     row-rule:
       strokeWidth: row-rule.width

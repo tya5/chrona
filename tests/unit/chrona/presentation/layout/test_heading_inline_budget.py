@@ -3,8 +3,9 @@ from decimal import Decimal as D
 import pytest
 
 from chrona.presentation.layout.engine import (
-    LayoutSizingContext, measure_natural_normal_flow_block, resolve_content_block_extent,
+    LayoutSizingContext, SourceInlineBudget, measure_natural_normal_flow_block, resolve_content_block_extent,
     resolve_source_inline_budgets, solve_layout,
+    validate_source_inline_budgets,
 )
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import SourceInput, measure_sources
@@ -128,6 +129,32 @@ def test_heading_authored_minimum_above_budget_uses_text_diagnostic():
     _, context, _ = closure(resolved, source, measurements)
     with pytest.raises(LayoutError, match="E_LAYOUT_TEXT_OVERFLOW"):
         solve_layout(resolved, viewport_inline=1000, viewport_block=5000, measurements=measurements, sizing=context)
+
+
+def test_heading_final_sibling_allocation_may_narrow_but_not_exceed_probe():
+    probed = SourceInlineBudget("copy", "/root/children/0", D(656), D(656), "heading")
+    final = SourceInlineBudget("copy", probed.path, D(328), D(328), "heading")
+    validate_source_inline_budgets({"copy": probed}, {"copy": final})
+
+    wider_available = SourceInlineBudget("copy", probed.path, D(657), D(657), "heading")
+    with pytest.raises(LayoutError, match="E_LAYOUT_TEXT_OVERFLOW") as caught:
+        validate_source_inline_budgets({"copy": probed}, {"copy": wider_available})
+    assert caught.value.path == probed.path
+    assert caught.value.node_id == "copy"
+
+    wider_ceiling = SourceInlineBudget("copy", probed.path, D(656), D(657), "heading")
+    with pytest.raises(LayoutError, match="E_LAYOUT_TEXT_OVERFLOW"):
+        validate_source_inline_budgets({"copy": probed}, {"copy": wider_ceiling})
+
+
+def test_heading_budget_identity_cannot_change_during_final_allocation():
+    probed = SourceInlineBudget("copy", "/root/children/0", D(656), D(656), "heading")
+    wrong_path = SourceInlineBudget("copy", "/root/children/1", D(328), D(328), "heading")
+    with pytest.raises(LayoutError, match="E_LAYOUT_TEXT_OVERFLOW"):
+        validate_source_inline_budgets({"copy": probed}, {"copy": wrong_path})
+    wrong_kind = SourceInlineBudget("copy", probed.path, D(328), D(328), "table")
+    with pytest.raises(LayoutError, match="E_LAYOUT_TEXT_OVERFLOW"):
+        validate_source_inline_budgets({"copy": probed}, {"copy": wrong_kind})
 
 
 @pytest.mark.parametrize("root", [heading(), slot()])

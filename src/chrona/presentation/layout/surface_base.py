@@ -10,6 +10,10 @@ from typing import Any
 
 from chrona.presentation.layout.group_tags import (
     group_tag_column_size, vertical_group_tags)
+from chrona.presentation.layout.group_header_fit import (
+    GroupHeaderFitPlan, header_text_room, prepare_group_header_fit_plan,
+    resolve_group_labels,
+)
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
@@ -25,6 +29,7 @@ from chrona.presentation.layout.presentation import (
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
 from chrona.presentation.layout.surface_lanes import place_lane_mark_tracks
+from chrona.presentation.layout.surface_groups import resolve_group_tab
 from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries, resolve_mark_band
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.mark_role_geometry import (
@@ -81,6 +86,7 @@ class SurfaceInlineGeometry:
     mark_band_allocation: MarkBandAllocation | None
     group_header_size: float
     group_tag_inline_size: float
+    group_header_fit_plan: GroupHeaderFitPlan | None
     row_requirements: tuple[float, ...]
     row_padding: float
     text_line_block: float
@@ -165,6 +171,7 @@ class SurfaceBaseGeometry:
     as_of_foot_fallback: bool = False
     mark_band_allocation: MarkBandAllocation | None = None
     as_of_chip_measurement: MeasuredLabelChip | None = None
+    group_header_fit_plan: GroupHeaderFitPlan | None = None
 
     def text_slot(self, item: Any) -> str:
         """Resolve a text host against the prepared base slot identities."""
@@ -173,6 +180,98 @@ class SurfaceBaseGeometry:
         if item.collision_domain.slot == "group-header":
             return self.table.slot_id
         raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
+
+
+@dataclass(frozen=True)
+class ClosedSurfaceRows:
+    """One shared pre-route closure of group headers, row fill and the optional foot reserve."""
+
+    fit_plan: GroupHeaderFitPlan | None
+    group_header_sizes: Mapping[str, float] | None
+    empty_slots: tuple[tuple[int, str], ...]
+    foot_reserve: float
+    foot_fallback: bool
+    row_bounds: tuple[float, float, float, float]
+    raw_rows: tuple[Any, ...]
+    as_of_chip_measurement: MeasuredLabelChip | None
+
+
+def close_surface_rows(request: SurfaceLayoutRequest, inline: SurfaceInlineGeometry,
+                       row_viewport: Rect) -> ClosedSurfaceRows:
+    """Close candidate-specific per-group headers before natural demand or any route is produced."""
+    projection, content = inline.projection, request.surface_content
+    review_rows, requirements = inline.review_rows, inline.row_requirements
+    layout_manifest = inline.layout_manifest
+    row_content_bounds = bounds_from_rect(row_viewport)
+    group_header_size = inline.group_header_size
+    group_order = geometry_group_order(projection, request.row_admission)
+    plan = inline.group_header_fit_plan
+    if plan is not None:
+        if not plan.vertical_tag_plan:
+            if plan.source_inline_demand:
+                plan.require_horizontal_room()
+            else:
+                owner_id = request.group_header_inline_owner
+                owner = next((item for item in layout_manifest.decisions if item.node_id == owner_id), None)
+                if owner_id is None or owner is None:
+                    raise LayoutError(
+                        "E_LAYOUT_MEASUREMENT_REQUIRED", "/layout/groupHeaderBand",
+                        detail="a shared outer inline owner is required for this full-span group header")
+                plan.require_owner_horizontal_room(
+                    owner_node_id=owner_id, available_owner_inline=owner.bounds.inline_size)
+        row_groups = {row.group_id for row in review_rows if row.group_id}
+        plan = plan.demote(frozenset(group_id for group_id in group_order if group_id not in row_groups))
+    group_header_sizes = dict(plan.header_sizes) if plan is not None else None
+    empty_slots = (empty_group_slots(review_rows, group_order)
+                   if (group_header_size or group_header_sizes) else ())
+    chip_measurement = request.as_of_chip_measurement
+    if chip_measurement is None:
+        chip_measurement = measure_as_of_chip(
+            content, window=projection.window, theme_tokens=request.theme_tokens,
+            font_metrics=request.font_metrics, visual_requests=request.visual_requests,
+            icon_assets=request.icon_assets, scene_precision=request.scene_precision)
+    start, end = projection.window
+    wanted_foot = 0.0
+    if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
+            and start <= content.as_of < end):
+        wanted_foot = (below_plot_reserve(request.theme_tokens, chip_measurement=chip_measurement)
+                       if chip_measurement is not None else below_plot_reserve(request.theme_tokens))
+
+    def allocate() -> tuple[float, bool, tuple[float, float, float, float], tuple[Any, ...]]:
+        empty_ids = tuple(group_id for _, group_id in empty_slots)
+        slack = row_block_slack(
+            review_rows=review_rows, timeline_block_size=row_content_bounds[3],
+            group_header_size=group_header_size, required_block_sizes=requirements,
+            empty_groups=len(empty_slots), group_header_sizes=group_header_sizes,
+            empty_group_ids=empty_ids)
+        reserve = wanted_foot if wanted_foot and slack >= wanted_foot else 0.0
+        fallback = bool(wanted_foot and reserve == 0.0)
+        bounds = (*row_content_bounds[:3], row_content_bounds[3] - reserve)
+        rows = place_rows(
+            review_rows=review_rows, timeline_bounds=bounds, group_header_size=group_header_size,
+            required_block_sizes=requirements, distribution=layout_manifest.row_distribution,
+            empty_groups=empty_slots, group_header_sizes=group_header_sizes)
+        return reserve, fallback, bounds, rows
+
+    foot_reserve, foot_fallback, row_bounds, raw_rows = allocate()
+    if plan is not None:
+        while True:
+            spans: dict[str, float] = {}
+            for row in raw_rows:
+                if row.group_id:
+                    spans[row.group_id] = spans.get(row.group_id, 0.0) + row.bounds[3]
+            newly_unfit = frozenset(item.group_id for item in plan.groups
+                                    if item.uses_vertical_tag
+                                    and spans.get(item.group_id, 0.0) < item.vertical_required_block)
+            if not newly_unfit:
+                break
+            plan = plan.demote(newly_unfit)
+            group_header_sizes = dict(plan.header_sizes)
+            empty_slots = empty_group_slots(review_rows, group_order)
+            foot_reserve, foot_fallback, row_bounds, raw_rows = allocate()
+    return ClosedSurfaceRows(
+        plan, MappingProxyType(group_header_sizes) if group_header_sizes is not None else None,
+        empty_slots, foot_reserve, foot_fallback, row_bounds, raw_rows, chip_measurement)
 
 
 def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: ScalePlacement,
@@ -280,6 +379,56 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     # A vertical group label replaces the header row: no row is reserved for it (#585).
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
                          if request.surface_content.group_presentation == "header" and not group_tags else 0.0)
+    group_header_fit_plan = None
+    group_tag_inline_size = group_tag_column_size(request.theme_tokens) if group_tags else 0.0
+    group_tab = resolve_group_tab(request.theme_tokens)
+    header_band_extent = layout_manifest.background_extents.get("groupHeaderBand")
+    bounded_horizontal = (not group_tags and request.surface_content.group_presentation == "header"
+                          and (header_band_extent in {"text", "table"}
+                               or (group_tab is not None and group_tab.target == "header")))
+    if group_tags or bounded_horizontal:
+        labels = resolve_group_labels(
+            projection=projection, row_admission=request.row_admission, review_rows=review_row_values,
+            declared_headers=request.surface_content.group_headers)
+        source_prefix = Decimal(str(group_tag_inline_size))
+        source_inline_demand = True
+        if group_tags:
+            inline_start = float(table.bounds.inline) + group_tag_inline_size
+            inline_end = float(table.bounds.inline + table.bounds.inline_size)
+        else:
+            table_start = table.bounds.inline
+            table_end = table.bounds.inline + table.bounds.inline_size
+            header_end = timeline.bounds.inline + timeline.bounds.inline_size
+            treatment = request.theme_tokens.text_treatment("groupHeader")
+            leading_ratio = request.theme_tokens.optional_number("groupHeader", "labelInset")
+            trailing_ratio = request.theme_tokens.optional_number("groupHeader", "labelInsetEnd")
+            leading_inset = (leading_ratio * treatment.font_size if leading_ratio is not None else Decimal(0))
+            trailing_inset = (trailing_ratio * treatment.font_size if trailing_ratio is not None else Decimal(0))
+            end_limit = (table_end if header_band_extent in {"text", "table"} else None)
+            room = header_text_room(
+                header_start=table_start, header_end=header_end,
+                label_inset=leading_inset, label_inset_end=trailing_inset,
+                label_inset_declared=leading_ratio is not None,
+                tab_reserved=(group_tab.reserved if group_tab is not None and group_tab.target == "header"
+                              else Decimal(0)),
+                tab_position=(group_tab.position if group_tab is not None and group_tab.target == "header"
+                             else None),
+                text_end_limit=end_limit)
+            inline_start = float(room.inline_start)
+            inline_end = inline_start + float(room.inline_size)
+            source_inline_demand = end_limit is not None
+            if source_inline_demand:
+                room_end = room.inline_start + room.inline_size
+                source_prefix = max(Decimal(0), room.inline_start - table_start) + max(
+                    Decimal(0), table_end - min(table_end, room_end))
+        group_header_fit_plan = prepare_group_header_fit_plan(
+            labels=labels, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+            header_inline_start=inline_start, header_inline_size=inline_end - inline_start,
+            minimum_header_block_size=float(metric_values["timeline.groupHeader.blockSize"]),
+            source_inline_prefix=source_prefix,
+            vertical_tag_plan=group_tags,
+            source_inline_demand=source_inline_demand,
+            marked_runs=dict(request.surface_content.group_header_runs))
     role_geometries = resolve_mark_geometries(request.theme_tokens)
     mark_block_size = float(metric_values["timeline.mark.blockSize"])
     mark_band_allocation = (request.fixed_lane_preflight.mark_band_allocation
@@ -369,7 +518,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
         decisions, slots, by_source, table, timeline, review_row_values, timeline_bounds,
         frozenset(slot.slot_id for slot in slots), scale, role_geometries, mark_block_size,
         mark_band_allocation, group_header_size,
-        group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+        group_tag_inline_size, group_header_fit_plan,
         tuple(requirements), row_padding, text_line_block, natural_block,
         MappingProxyType(occurrence_frames),
     )
@@ -383,7 +532,6 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     inline = inline if inline is not None else prepare_surface_inline(request, allocation=allocation)
     request = inline.request
     projection = inline.projection
-    start, end = projection.window
     layout_manifest = inline.layout_manifest
     measured_sources = inline.measured_sources
     metric_values = inline.metric_values
@@ -399,39 +547,20 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     mark_band_allocation = inline.mark_band_allocation
     group_header_size = inline.group_header_size
     group_tag_inline_size = inline.group_tag_inline_size
+    group_header_fit_plan = inline.group_header_fit_plan
+    row_padding, text_line_block = inline.row_padding, inline.text_line_block
     # Full slots remain ownership/allocation evidence. Only shared row capacity
     # and plot geometry consume the completed native content viewport.
     row_viewport = row_viewport if row_viewport is not None else timeline.bounds
-    row_content_bounds = bounds_from_rect(row_viewport)
-    row_padding, text_line_block = inline.row_padding, inline.text_line_block
-    requirements = inline.row_requirements
     lane_subtracks = request.fixed_lane_preflight.subtracks if projection.lane_membership is not None else None
-    empty_slots = empty_group_slots(
-        review_row_values, geometry_group_order(projection, request.row_admission)) if group_header_size else ()
-    foot_reserve = 0.0
-    foot_fallback = False
-    content = request.surface_content
-    as_of_chip_measurement = request.as_of_chip_measurement
-    if as_of_chip_measurement is None:
-        as_of_chip_measurement = measure_as_of_chip(content, window=projection.window,
-            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-            visual_requests=request.visual_requests, icon_assets=request.icon_assets,
-            scene_precision=request.scene_precision)
-    if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
-            and start <= content.as_of < end):
-        wanted = (below_plot_reserve(request.theme_tokens, chip_measurement=as_of_chip_measurement)
-                  if as_of_chip_measurement is not None else below_plot_reserve(request.theme_tokens))
-        slack = row_block_slack(review_rows=review_row_values, timeline_block_size=row_content_bounds[3],
-                                group_header_size=group_header_size, required_block_sizes=requirements,
-                                empty_groups=len(empty_slots))
-        if slack >= wanted:
-            foot_reserve = wanted
-        else:
-            foot_fallback = True
-    row_bounds = (*row_content_bounds[:3], row_content_bounds[3] - foot_reserve)
-    raw_rows = place_rows(review_rows=review_row_values, timeline_bounds=row_bounds,
-                          group_header_size=group_header_size, required_block_sizes=requirements,
-                          distribution=layout_manifest.row_distribution, empty_groups=empty_slots)
+    closed = close_surface_rows(request, inline, row_viewport)
+    group_header_fit_plan = closed.fit_plan
+    group_header_sizes = (dict(closed.group_header_sizes)
+                          if closed.group_header_sizes is not None else None)
+    empty_slots = closed.empty_slots
+    foot_reserve, foot_fallback = closed.foot_reserve, closed.foot_fallback
+    row_bounds, raw_rows = closed.row_bounds, closed.raw_rows
+    as_of_chip_measurement = closed.as_of_chip_measurement
     rows = tuple(
         RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "",
                      rect_from_bounds(placement.bounds), depth=int(getattr(item, "depth", 0)))
@@ -440,12 +569,22 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     table_bounds = bounds_from_rect(table.bounds)
     groups: list[GroupPlacement] = []
     empty_blocks = empty_group_header_blocks(slots=empty_slots, row_placements=raw_rows,
-                                             timeline_bounds=row_bounds, group_header_size=group_header_size)
+                                             timeline_bounds=row_bounds, group_header_size=group_header_size,
+                                             group_header_sizes=group_header_sizes)
 
     def empty_group(block: float, group_id: str) -> GroupPlacement:
+        header_size = (group_header_sizes or {}).get(group_id, group_header_size)
+        header_inline = (group_header_fit_plan.header_inline_start
+                         if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
+                         else table_bounds[0])
+        header_inline_size = (group_header_fit_plan.header_inline_size
+                              if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
+                              else timeline_bounds[0] + timeline_bounds[2] - header_inline)
         header = Rect(Decimal(str(table_bounds[0])), Decimal(str(block)),
                       Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
-                      Decimal(str(group_header_size)))
+                      Decimal(str(header_size)))
+        if group_header_fit_plan is not None:
+            header = Rect(Decimal(str(header_inline)), header.block, Decimal(str(header_inline_size)), header.block_size)
         return GroupPlacement(group_id, Rect(Decimal(str(timeline_bounds[0])), header.block,
                                              Decimal(str(timeline_bounds[2])), header.block_size), header)
 
@@ -461,12 +600,18 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
         else:
             header = None
             content = row.bounds
-            if row.group_id and group_header_size:
-                header = Rect(Decimal(str(table_bounds[0])), row.bounds.block - Decimal(str(group_header_size)),
-                              Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
-                              Decimal(str(group_header_size)))
+            row_header_size = (group_header_sizes or {}).get(row.group_id, group_header_size)
+            if row.group_id and row_header_size:
+                header_inline = (group_header_fit_plan.header_inline_start
+                                 if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
+                                 else table_bounds[0])
+                header_inline_size = (group_header_fit_plan.header_inline_size
+                                      if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
+                                      else timeline_bounds[0] + timeline_bounds[2] - header_inline)
+                header = Rect(Decimal(str(header_inline)), row.bounds.block - Decimal(str(row_header_size)),
+                              Decimal(str(header_inline_size)), Decimal(str(row_header_size)))
                 content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,
-                               row.bounds.block_size + Decimal(str(group_header_size)))
+                               row.bounds.block_size + Decimal(str(row_header_size)))
             groups.append(GroupPlacement(row.group_id, content, header))
     groups.extend(empty_group(block, group_id) for at, group_id, block in empty_blocks if at >= len(rows))
     groups = tuple(groups)
@@ -487,6 +632,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
         plot_rect(row_viewport, (row.bounds for row in rows)),
         group_tag_inline_size=group_tag_inline_size,
+        group_header_fit_plan=group_header_fit_plan,
         as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
         mark_band_allocation=mark_band_allocation,
         as_of_chip_measurement=as_of_chip_measurement,

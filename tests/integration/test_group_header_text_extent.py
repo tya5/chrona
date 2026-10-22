@@ -164,7 +164,7 @@ def test_text_band_includes_tab_reservation_and_leading_inset(tmp_path, tab, ins
         _assert_svg_bounds(rendered, f"group-header-band:{group_id}")
 
 
-def test_text_band_clamps_long_header_at_table_edge(tmp_path):
+def test_text_band_wraps_complete_header_at_table_edge(tmp_path):
     rendered = _render(tmp_path, _parts(), source=_source(long_group="team-0"))
     items = _by_id(rendered)
     band = items["group-header-band:team-0"]
@@ -174,7 +174,8 @@ def test_text_band_clamps_long_header_at_table_edge(tmp_path):
     assert band.bounds[0] + band.bounds[2] <= table[0] + table[2] + 1e-6
     assert band.bounds[0] + band.bounds[2] == pytest.approx(text.bounds[0] + text.bounds[2])
     assert text.bounds[0] + text.bounds[2] <= band.bounds[0] + band.bounds[2] + 1e-6  # the label gives way (#1629)
-    assert text.text.endswith("\u2026") and text.text != "A deliberately long group header that reaches the table edge"
+    assert text.text == "A deliberately long group header that reaches the table edge"
+    assert len(text.text_layout.lines) > 1
     _assert_svg_bounds(rendered, "group-header-band:team-0")
 
 
@@ -205,7 +206,7 @@ def test_all_suppressed_runs_keep_only_declared_leading_interval(tmp_path, monke
         assert band.bounds[2] == pytest.approx(inset * font_size)
 
 
-def test_text_extent_changes_only_header_inline_extent_when_folded_rows_grow(tmp_path):
+def test_text_extent_closes_full_wrapped_header_before_folded_rows_grow(tmp_path):
     source = _source()
     source["objects"].update({
         f"point-{index}": sr.point(f"point-{index}", date(2026, 2, 2 + index), owner="team-0")
@@ -231,9 +232,9 @@ def test_text_extent_changes_only_header_inline_extent_when_folded_rows_grow(tmp
     assert band.bounds[3] > 20 * 1.6
     assert band.bounds[0] == pytest.approx(old_band.bounds[0])
     assert band.bounds[1] == pytest.approx(old_band.bounds[1])
-    assert band.bounds[3] == pytest.approx(old_band.bounds[3])
-    assert text.bounds == old_text.bounds
-    assert text.baseline == old_text.baseline
+    assert text.text == old_text.text
+    assert len(text.text_layout.lines) >= len(old_text.text_layout.lines)
+    assert text.bounds[1] >= band.bounds[1]
     _assert_svg_bounds(rendered, "group-header-band:team-0")
 
 
@@ -280,5 +281,11 @@ def test_vertical_tag_cell_and_non_text_extent_keep_their_existing_bytes(tmp_pat
     no_band_legacy["theme"]["body"]["roles"]["group-header-band"]["backgroundTreatment"] = "none"
     text_mode = _render(tmp_path, no_band_text, name="no-band-text")
     legacy_mode = _render(tmp_path, no_band_legacy, name="no-band-legacy")
-    assert text_mode.artifact.content == legacy_mode.artifact.content
-    assert text_mode.surface.primitives == legacy_mode.surface.primitives
+    text_header = next(item for item in text_mode.surface.primitives
+                       if item.scene_id == "group-header:team-0")
+    legacy_header = next(item for item in legacy_mode.surface.primitives
+                          if item.scene_id == "group-header:team-0")
+    assert text_header.text == legacy_header.text
+    assert len(text_header.text_layout.lines) >= len(legacy_header.text_layout.lines)
+    assert not any(item.scene_id == "group-header-band:team-0"
+                   for item in text_mode.surface.primitives)

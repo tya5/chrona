@@ -14,7 +14,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, TextPlacement
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.text import _cjk, _wrap_units, ellipsize_text, measure_text_width, metric_for_role, place_text
 
 DEFAULT_ROLE = "groupHeader"
 
@@ -49,6 +49,94 @@ class _Run:
     gap: float
     width: float
     state: str = "fit"
+
+
+@dataclass(frozen=True)
+class GroupHeaderRunSegment:
+    """One source-ordered, role-preserving piece in a wrapped group-header line."""
+
+    text: str
+    role: str
+    gap: float
+    width: float
+    block_size: float
+    font_size: float
+
+
+def wrap_group_header_runs(*, runs: tuple[tuple[str, str | None], ...], available_inline: float,
+                           theme_tokens: Any, font_metrics: Any
+                           ) -> tuple[tuple[GroupHeaderRunSegment, ...], ...]:
+    """Wrap resolved header runs without changing their roles, order or measured spaces."""
+    resolved = _resolve_runs(runs, theme_tokens, font_metrics)
+    tokens: list[GroupHeaderRunSegment] = []
+    previous_shape: dict[str, Any] | None = None
+    for run in resolved:
+        shape = run.shape
+        treatment = theme_tokens.text_treatment(run.role)
+        block_size = shape["font_size"] * float(treatment.line_height)
+        units = _wrap_units(run.source)
+        for index, unit in enumerate(units):
+            if index == 0:
+                gap = run.gap
+            else:
+                previous_unit = units[index - 1]
+                separator = " " if not (_cjk(unit[0]) or _cjk(previous_unit[-1])) else ""
+                gap = _painted(separator, shape) + _trailing_spacing(shape)
+            if index == 0 and previous_shape is not None and run.gap == 0:
+                # Adjacent template runs still have the same role-aware character spacing as one painted line.
+                gap = _trailing_spacing(previous_shape)
+            tokens.append(GroupHeaderRunSegment(
+                unit, run.role, gap, measure_text_width(unit, **shape), block_size, shape["font_size"]))
+        previous_shape = shape
+
+    lines: list[list[GroupHeaderRunSegment]] = []
+    line: list[GroupHeaderRunSegment] = []
+    line_width = 0.0
+    for token in tokens:
+        proposed = line_width + token.gap + token.width
+        if line and available_inline > 0 and proposed > available_inline:
+            lines.append(line)
+            line = [replace(token, gap=0.0)]
+            line_width = token.width
+            continue
+        if not line and token.gap:
+            token = replace(token, gap=0.0)
+        line.append(token)
+        line_width += token.gap + token.width
+    if line:
+        lines.append(line)
+    return tuple(tuple(items) for items in lines) or ((),)
+
+
+def place_wrapped_group_header_runs(*, group_id: str,
+                                    lines: tuple[tuple[GroupHeaderRunSegment, ...], ...],
+                                    start: Decimal, size: Decimal, top_block: float,
+                                    line_blocks: tuple[float, ...], theme_tokens: Any, font_metrics: Any
+                                    ) -> tuple[TextPlacement, ...]:
+    """Place premeasured wrapped segments on shared per-line baselines in source order."""
+    placements: list[TextPlacement] = []
+    prefix = run_placement_prefix(group_id)
+    line_offset = 0.0
+    for line_index, line in enumerate(lines):
+        cursor = float(start)
+        line_block = line_blocks[line_index] if line_index < len(line_blocks) else 0.0
+        top_inset = min(((segment.block_size - segment.font_size) / 2 for segment in line), default=0.0)
+        for segment in line:
+            cursor += segment.gap
+            baseline = (top_block + line_offset + (segment.block_size - segment.font_size) / 2
+                        - top_inset + segment.font_size)
+            placement_id = f"{prefix}{len(placements)}"
+            placements.append(place_text(
+                placement_id=placement_id, source_ref=group_id, content=segment.text,
+                inline=cursor, baseline_block=baseline, typography_role=segment.role,
+                theme_tokens=theme_tokens, font_metrics=font_metrics,
+                collision_region=f"group:{group_id}",
+                collision_domain=CollisionDomain("group-header", group_id),
+                source_content=segment.text, available_inline_start=float(start),
+                available_inline_size=float(size)))
+            cursor += segment.width
+        line_offset += line_block
+    return tuple(placements)
 
 
 def _shape(theme_tokens: Any, role: str, font_metrics: Any) -> dict[str, Any]:

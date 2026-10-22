@@ -242,12 +242,13 @@ def inline_content_slot(slot: SlotPlacement, reserved: Decimal) -> SlotPlacement
 
 
 def inline_full_slot(original: SlotPlacement, completed: SlotPlacement, reserved: Decimal) -> SlotPlacement:
-    """The completed slot with its caption column restored before what its entries completed to."""
+    """Restore a caption column while enclosing any completed inline growth of its content."""
     if not reserved:
         return completed
     bounds = completed.bounds
     return replace(completed, bounds=Rect(original.bounds.inline, bounds.block,
-                                          original.bounds.inline_size, bounds.block_size))
+                                          max(original.bounds.inline_size,
+                                              reserved + bounds.inline_size), bounds.block_size))
 
 
 def content_slot(slot: SlotPlacement, reserved: Decimal) -> SlotPlacement:

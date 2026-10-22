@@ -14,6 +14,7 @@ relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side, search: best, unr
 # Snapshot or an Actual Set.
 viewDefaults:
   heading:
+    text: {wrap: allow}
     kicker: The plan
     title: "{project}"
     subtitle:
@@ -46,6 +47,11 @@ viewDefaults:
           search: {kind: row-aligned}
           obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
           connector: {kind: leader}
+        - id: list
+          region: {kind: slot, source: annotations}
+          search: {kind: row-aligned}
+          obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+          connector: {kind: none}
   axis:
     tiers:
       - {unit: quarter, every: 1, role: band, typographyRole: axisQuarter}

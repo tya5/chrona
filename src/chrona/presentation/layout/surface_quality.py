@@ -733,6 +733,8 @@ class SurfaceLayoutRequest:
     row_admission: Any | None = None
     scene_precision: int = 3
     page_size: str | None = None
+    # Smallest common native-flow owner of the table+timeline header span, resolved by SourceSizingSession.
+    group_header_inline_owner: str | None = None
 
 
 @dataclass(frozen=True)

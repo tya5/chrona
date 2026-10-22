@@ -177,7 +177,7 @@ def test_a_marked_template_on_a_vertical_group_tag_is_refused(tmp_path):
         "E_LAYOUT_GROUP_HEADER_RUNS_VERTICAL", "/body/grouping/header")
 
 
-def test_beside_a_tab_the_last_run_gives_way_first_with_its_source_kept(tmp_path):
+def test_beside_a_tab_role_marked_full_name_wraps_without_losing_run_roles(tmp_path):
     wide = _render(tmp_path, _parts(tab=20), "wide")
     runs = _runs(wide, "team-0")
     natural_right = runs[-1].baseline[0] + runs[-1].bounds[2]
@@ -188,14 +188,15 @@ def test_beside_a_tab_the_last_run_gives_way_first_with_its_source_kept(tmp_path
     rendered = _render(tmp_path, _parts(tab=tab), "narrow")
     narrow = _runs(rendered, "team-0")
 
-    assert [run.text for run in narrow[:2]] == [run.text for run in runs[:2]]
-    assert narrow[2].text.endswith("…") and len(narrow[2].text) < len(runs[2].text)
-    assert narrow[2].baseline[0] + narrow[2].bounds[2] <= inline_end + 1e-6
-    warnings = [item for item in rendered.warning_records if "group-header:team-0#run2" in str(item)]
-    assert warnings
+    assert " ".join(run.text for run in narrow) == "01 Team 0 SPACECRAFT BUS"
+    assert [run.visual_role for run in narrow] == [
+        "group-ordinal", "text", "text", "group-gloss", "group-gloss"]
+    assert len({run.baseline[1] for run in narrow}) > 1
+    assert all(run.baseline[0] + run.bounds[2] <= inline_end + 1e-6 for run in narrow)
+    assert not any(run.text.endswith("…") for run in narrow)
 
 
-def test_a_run_that_cannot_keep_an_ellipsis_is_dropped_and_the_one_before_gives_way(tmp_path):
+def test_tight_tab_keeps_complete_role_marked_name_in_wrapped_lines(tmp_path):
     wide = _render(tmp_path, _parts(tab=20), "wide")
     runs = _runs(wide, "team-0")
     header = next(item for item in wide.surface.groups if item.group_id == "team-0").header_bounds
@@ -205,10 +206,62 @@ def test_a_run_that_cannot_keep_an_ellipsis_is_dropped_and_the_one_before_gives_
     rendered = _render(tmp_path, _parts(tab=tab), "tight")
     surviving = _runs(rendered, "team-0")
 
-    assert [run.text for run in surviving][:1] == [runs[0].text]
+    assert " ".join(run.text for run in surviving) == "01 Team 0 SPACECRAFT BUS"
     assert all(run.text_layout is not None for run in surviving)
-    assert not any(run.scene_id.endswith("#run2") for run in rendered.surface.primitives)
-    assert surviving[1].text.endswith("…")
+    assert len({run.baseline[1] for run in surviving}) > 1
+    assert all(not run.text.endswith("…") for run in surviving)
+
+
+def test_wrapped_marked_runs_share_baseline_and_reserve_mixed_role_ink(tmp_path):
+    template = "{ordinal|small} {title|large} {secondary|small}"
+    source = _source()
+    source["entities"]["team-0"]["title"] = "X"
+    wide_parts = _parts(template, tab=20)
+    body = wide_parts["theme"]["body"]
+    _role(body, "small", size=10)
+    _role(body, "large", size=30)
+    wide_dir = tmp_path / "mixed-wide"
+    wide_dir.mkdir()
+    wide = sr.render(wide_dir, source, presentation=wide_parts)
+    wide_runs = _runs(wide, "team-0")
+    header = next(item for item in wide.surface.groups if item.group_id == "team-0").header_bounds
+    inline_end = header[0] + header[2]
+    first_gap = wide_runs[1].baseline[0] - (wide_runs[0].baseline[0] + wide_runs[0].bounds[2])
+    first_line_width = wide_runs[0].bounds[2] + first_gap + wide_runs[1].bounds[2]
+    tab = 20 + (inline_end - wide_runs[0].baseline[0]) - first_line_width - 1
+
+    narrow_parts = _parts(template, tab=tab)
+    body = narrow_parts["theme"]["body"]
+    _role(body, "small", size=10)
+    _role(body, "large", size=30)
+    narrow_dir = tmp_path / "mixed-narrow"
+    narrow_dir.mkdir()
+    narrow = sr.render(narrow_dir, source, presentation=narrow_parts)
+    runs = _runs(narrow, "team-0")
+
+    assert [run.text for run in runs[:2]] == [wide_runs[0].text, wide_runs[1].text]
+    assert "".join(run.text for run in runs[2:]).replace(" ", "") == wide_runs[2].text.replace(" ", "")
+    assert runs[0].baseline[1] == pytest.approx(runs[1].baseline[1])
+    assert runs[2].baseline[1] > runs[1].baseline[1]
+    assert runs[2].bounds[1] >= max(run.bounds[1] + run.bounds[3] for run in runs[:2])
+
+
+def test_bounded_unmarked_header_wraps_full_label_instead_of_ellipsizing(tmp_path):
+    source = _source()
+    label = "Ground segment systems integration review"
+    source["entities"][GROUPS[0]]["title"] = label
+    parts = _parts("{title}", secondary=False, group_roles=False, tab=1300)
+
+    rendered = sr.render(tmp_path, source, presentation=parts)
+
+    header = next(item for item in rendered.surface.primitives
+                  if item.scene_id == f"group-header:{GROUPS[0]}")
+    assert " ".join(header.text.split()) == label
+    assert len(header.text_layout.lines) > 1
+    assert "…" not in header.text
+    group = next(item for item in rendered.surface.groups if item.group_id == GROUPS[0])
+    assert header.bounds[0] >= group.header_bounds[0]
+    assert header.bounds[0] + header.bounds[2] <= group.header_bounds[0] + group.header_bounds[2]
 
 
 def test_the_contrast_gate_judges_each_run_over_the_header_band(tmp_path):
