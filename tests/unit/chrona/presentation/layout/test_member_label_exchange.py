@@ -7,6 +7,9 @@ from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, 
 from chrona.presentation.layout.surface_member_labels import place_member_labels
 from chrona.presentation.layout.surface_quality import MarkPlacement, VisualRequest
 from chrona.presentation.model.closure import IconAsset
+from chrona.presentation.model.semantic_registry import inside_member_label_semantic
+from chrona.presentation.model.style_rules import OccurrenceStyleIndex, OccurrenceStyleIntent, StyleOccurrenceKey
+from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.layout.test_member_label_required_phase import _placement_context
 
 
@@ -214,3 +217,106 @@ def test_later_request_does_not_cascade_by_moving_an_already_exchanged_name():
     assert obstacles.has(f"label-footprint:{first.placement_id}")
     assert obstacles.has(f"label-footprint:{second.placement_id}")
     assert not obstacles.has(f"label-footprint:{last.placement_id}")
+
+
+def test_exchange_selects_prepared_inside_role_and_replaces_complete_group():
+    first_id = "member-label:first"
+    first_host = MarkPlacement("planned:first:first", "planned:first:first",
+        Rect(Decimal(20), Decimal(40), Decimal(60), Decimal(10)), (20, 45), (80, 45),
+        slot_id="timeline", semantic_id="planned", mark_shape="span")
+    second_host = _mark("planned:second:second", 140)
+    context = replace(_placement_context(), marks=(first_host, second_host))
+    context.layout_manifest.member_names = {"search": "full-band"}
+
+    values = {
+        "family": {"type": "fontFamily", "value": "sans"},
+        "weight": {"type": "fontWeight", "value": 400},
+        "line": {"type": "number", "value": 1.2},
+        "spacing": {"type": "number", "value": 0},
+        "transform": {"type": "textTransform", "value": "none"},
+        "numeric": {"type": "numericSpacing", "value": "proportional"},
+        "ink": {"type": "color", "value": "#202020"},
+        "large-size": {"type": "number", "value": 10},
+        "small-size": {"type": "number", "value": 6},
+        "icon-scale": {"type": "number", "value": 0.8},
+        "icon-gap": {"type": "number", "value": 0.1},
+        "chip-padding": {"type": "number", "value": 0.1},
+    }
+    role_bindings = {}
+    for role, size in (("member-end", "large-size"), ("member-inside", "small-size")):
+        role_bindings[role] = {
+            "fontFamily": "family", "fontWeight": "weight", "fontSize": size,
+            "lineHeight": "line", "letterSpacing": "spacing", "textTransform": "transform",
+            "numericSpacing": "numeric", "fill": "ink", "iconScale": "icon-scale",
+            "iconGap": "icon-gap", "backgroundTreatment": "fill", "chipPadding": "chip-padding",
+        }
+    role_bindings["text"] = dict(role_bindings["member-end"])
+    role_bindings["member-label-chip"] = {
+        "fill": "ink", "backgroundTreatment": "fill", "chipPadding": "chip-padding",
+    }
+    context.request.theme_tokens = ThemeTokenView({
+        "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+        "body": {"values": values, "roles": role_bindings},
+    })
+    key = StyleOccurrenceKey("first", "primary", "memberLabel", "row", "first")
+    inside_key = replace(key, semantic_id=inside_member_label_semantic("primary"))
+    context.request.surface_content = replace(context.request.surface_content, style_intents=OccurrenceStyleIndex((
+        OccurrenceStyleIntent(key, "member-end", None, ("rule:end",), ("rule:end",), ()),
+        OccurrenceStyleIntent(inside_key, "member-inside", None,
+                              ("rule:inside",), ("rule:inside",), ()),
+    )))
+    icon_request = VisualRequest("text", (("placementId", first_id),), "icon:test",
+        side="leading", source_ref="/test/visuals/0")
+    context.request.visual_requests = (icon_request,)
+    context.request.icon_assets = {"icon:test": IconAsset(
+        "test-icon", "svg", "sha256:test-icon", (10, 10), "Test icon", b"<svg/>")}
+
+    first = replace(_request(first_id, "planned:first:first", "AAAA", 20, ("end", "inside")),
+        anchor=LabelRect(20, 40, 60, 10), style_occurrence_key=key)
+    second = _request("member-label:second", "planned:second:second", "BBBB", 140, ("start",))
+
+    baseline_context = replace(context, marks=(first_host,))
+    baseline_obstacles = SurfaceObstacleIndex()
+    baseline_obstacles.add(SurfaceObstacle(first_host.placement_id, "mark", "timeline",
+        ObstacleRect(20, 40, 80, 50)))
+    baseline = place_member_labels(baseline_context, (replace(first, candidates=("inside",)),), baseline_obstacles)
+    end_context = replace(context, marks=(first_host,))
+    end_obstacles = SurfaceObstacleIndex()
+    end_obstacles.add(SurfaceObstacle(first_host.placement_id, "mark", "timeline",
+        ObstacleRect(20, 40, 80, 50)))
+    end_only = place_member_labels(end_context, (replace(first, candidates=("end",)),), end_obstacles)
+    obstacles = SurfaceObstacleIndex()
+    for mark in (first_host, second_host):
+        x, y, width, height = (float(mark.bounds.inline), float(mark.bounds.block),
+                               float(mark.bounds.inline_size), float(mark.bounds.block_size))
+        obstacles.add(SurfaceObstacle(mark.placement_id, "mark", "timeline",
+            ObstacleRect(x, y, x + width, y + height)))
+
+    batch = place_member_labels(context, (first, second), obstacles)
+
+    moved, = (item for item in batch.text if item.placement_id == first_id)
+    expected, = baseline.text
+    original, = end_only.text
+    assert original.selected_rung == "end" and original.theme_role == "member-end"
+    assert original.bounds.inline_size > expected.bounds.inline_size
+    assert moved.selected_rung == "inside"
+    assert moved.theme_role == "member-inside"
+    assert moved.font_size == expected.font_size == 6
+    assert moved.host_placement_id == first_host.placement_id
+    assert moved.style_occurrence_key == inside_key
+    assert all(item.overflow != "suppressed" for item in batch.text)
+    assert moved.bounds == expected.bounds and moved.baseline == expected.baseline
+    assert moved.bounds.inline_size < 4 * 10
+    moved_chip, = (item for item in batch.shapes if item.source_ref == first_id)
+    expected_chip, = (item for item in baseline.shapes if item.source_ref == first_id)
+    original_chip, = (item for item in end_only.shapes if item.source_ref == first_id)
+    assert moved_chip.bounds == expected_chip.bounds
+    assert moved_chip.bounds != original_chip.bounds
+    moved_icon, = (item for item in batch.icons if item.host_placement_id == first_id)
+    expected_icon, = (item for item in baseline.icons if item.host_placement_id == first_id)
+    original_icon, = (item for item in end_only.icons if item.host_placement_id == first_id)
+    assert moved_icon.bounds == expected_icon.bounds
+    assert moved_icon.bounds != original_icon.bounds
+    assert sum(item.source_ref == first_id for item in batch.shapes) == 1
+    assert obstacles.get(f"label-footprint:{first_id}").geometry == (
+        baseline_obstacles.get(f"label-footprint:{first_id}").geometry)

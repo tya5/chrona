@@ -135,3 +135,23 @@ def test_final_own_mark_neighbor_retains_its_canonical_blocker_evidence():
     obstruction, = candidate.placement.canonical_obstructions
     assert obstruction.occupied
     assert obstruction.blocker_placement_ids == ("blocker",)
+
+
+def test_repair_probe_after_a_clear_selection_consumes_only_the_unsearched_suffix():
+    anchor = LabelRect(500, 500, 10, 10)
+    association = MemberNameAssociation(anchor, 0, 0, 100, 20, 400)
+    wall = SurfaceObstacle("wall", "mark", "timeline", ObstacleRect(0, 0, 1000, 1000))
+    cursor = start_member_name_search(anchor, (100, 20), ("end",),
+        bounds=LabelRect(0, 0, 1000, 1000), obstacles=_index(), gap=0,
+        maximum_end_gap=400, association=association)
+    accepted = cursor.next_clear()
+    assert accepted is not None
+    assert accepted.placement.bounds == LabelRect(510, 495, 100, 20)
+    assert cursor.neighborhood_evaluated_count == 0
+
+    assert cursor.next_clear(_index(wall)) is None
+    assert cursor.neighborhood_evaluated_count == 512
+    assert cursor.evaluated_count == 513
+    assert cursor.next_clear(_index()) is None
+    assert cursor.evaluated_count == 513
+    assert cursor.evaluated_candidates[0] is accepted
