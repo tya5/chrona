@@ -69,7 +69,7 @@ def _render_and_compare(tmp_path, source, monkeypatch, *, entry=None, unroutable
     assert len(route_calls) == 1
     assert route_calls[0].progress_pass == "route-content-baseline"
     assert route_calls[0].obstacles is completed.obstacles
-    names = tuple(item for item in captured["context"].base_text if item.semantic_id == "memberLabel")
+    names = tuple(item for item in completed.pre_route_members.text if item.semantic_id == "memberLabel")
     assert names
     name_ids = frozenset(identifier for item in names
         for identifier in (item.placement_id, f"label-footprint:{item.placement_id}"))
@@ -116,7 +116,8 @@ def test_member_names_remain_hard_under_declared_suppress_policy(
             assert all(not _segment_hits_box(start, end, tuple(name.text_layout.bounds)) for name in names), (
                 route.scene_id, start, end,
                 tuple((name.scene_id, tuple(name.text_layout.bounds)) for name in names))
-    assert len(names) >= sum(item.semantic_id == "memberLabel" for item in context.base_text)
+    assert len(names) >= sum(item.semantic_id == "memberLabel"
+                             for item in completed.pre_route_members.text)
 
 
 def test_clear_member_names_and_dependency_routes_complete_together(tmp_path, monkeypatch):
@@ -127,7 +128,7 @@ def test_clear_member_names_and_dependency_routes_complete_together(tmp_path, mo
     # the former long end-side names were not an unobstructed control.
     rendered, context, completed = _render_and_compare(
         tmp_path, source, monkeypatch, label_sides=["above", "suppress"])
-    names = tuple(item for item in context.base_text if item.semantic_id == "memberLabel")
+    names = tuple(item for item in completed.pre_route_members.text if item.semantic_id == "memberLabel")
     assert names and all(item.overflow == "fit" for item in names), [
         (item.placement_id, item.content, item.overflow) for item in names]
     assert completed.routes.relations and all(not route.suppressed for route in completed.routes.relations)

@@ -7,6 +7,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.layout import surface_composer, surface_route_label_plan
+from chrona.presentation.layout.surface_member_labels import MemberLabelAllocationSession
 from tests.support.draft_packages import stage_project_package_store
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -19,18 +20,31 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
     route_results = []
     plan_facts: dict[str, object] = {}
 
-    place_pre = surface_composer.place_member_labels
+    prepare_pre = surface_composer.prepare_member_labels
+    finish_pre = MemberLabelAllocationSession.finish
+    prepared_sessions = []
+    intrinsic_ids: set[str] = set()
 
     def pre_labels(context, requests, obstacles):
         names = tuple(item.placement_id for item in requests if item.semantic_id == "memberLabel")
         pre_member_ids.extend(names)
+        intrinsic_ids.update(item.placement_id for item in context.intrinsic_endpoint_footprints)
         phases.append("member-names")
-        result = place_pre(context, requests, obstacles)
+        result = prepare_pre(context, requests, obstacles)
+        prepared_sessions.append(result)
         assert {f"label-footprint:{name}" for name in names} <= {
-            item.placement_id for item in obstacles.all()}
+            item.placement_id for item in result.obstacles.all()}
+        assert intrinsic_ids.isdisjoint({item.placement_id for item in result.obstacles.all()})
         return result
 
-    monkeypatch.setattr(surface_composer, "place_member_labels", pre_labels)
+    monkeypatch.setattr(surface_composer, "prepare_member_labels", pre_labels)
+
+    def finish_labels(session):
+        if prepared_sessions and session is prepared_sessions[0]:
+            phases.append("final-projection")
+        return finish_pre(session)
+
+    monkeypatch.setattr(MemberLabelAllocationSession, "finish", finish_labels)
     route_owner = surface_route_label_plan.compose_surface_routes
     relation_label_owner = surface_route_label_plan.place_relation_labels
     member_label_owner = surface_route_label_plan.place_member_labels
@@ -38,9 +52,16 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
     def routes(context):
         identity = id(context.obstacles)
         route_inputs[identity] = {item.placement_id for item in context.obstacles.all()}
-        phases.append("routes")
+        assert prepared_sessions
+        assert {item.placement_id for item in prepared_sessions[0].text
+                if item.semantic_id == "memberLabel"} == set(pre_member_ids)
+        assert {item.placement_id for item in context.text
+                if item.semantic_id == "memberLabel"} == set(pre_member_ids)
+        assert intrinsic_ids.isdisjoint(route_inputs[identity])
+        phases.append("routes-start")
         result = route_owner(context)
         route_results.append(result)
+        phases.append("routes-closed")
         return result
 
     def relation_labels(context, batch, *, terminal):
@@ -78,9 +99,11 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
 
     assert pre_member_ids and len(pre_member_ids) == len(set(pre_member_ids))
     assert not plan_facts["post_member_names"]
-    assert phases[0] == "member-names" and phases[1] == "routes"
-    assert phases.count("routes") == 1
-    assert phases == ["member-names", "routes", "terminal-labels", "post-route-labels",
+    assert phases[0] == "member-names" and phases[1:4] == [
+        "routes-start", "routes-closed", "final-projection"]
+    assert phases.count("routes-start") == 1
+    assert phases == ["member-names", "routes-start", "routes-closed", "final-projection",
+                      "terminal-labels", "post-route-labels",
                       "ordinary-relation-labels"]
     assert plan_facts["selected_index_id"] in route_inputs
     assert plan_facts["pre_index_ids"] <= route_inputs[plan_facts["selected_index_id"]]

@@ -399,13 +399,47 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
                     if relation["id"] == "bustest-integration")
     route_id = (f'relation:{identity}:review-lane:["generated","bus","pdr"]:'
                 'bus-test:review-lane:["generated","ait","integration"]:integration')
+    fragment_ids = (f"{route_id}:stub-source", f"{route_id}:stub-target")
+    halo_ids = tuple(f"{fragment_id}:halo" for fragment_id in fragment_ids)
     assert lane_labels and all(label.strip() and not label.startswith("Lane ") for label in lane_labels)
-    assert [item["id"] for item in primitives
-            if item["id"].startswith("relation:") and item.get("sourceRef") == identity] == [route_id]
+    by_id = {item["id"]: item for item in primitives}
+    receipts = [json.loads(item.partition(":")[2]) for item in scene["diagnostics"]
+                if item.startswith("I_LAYOUT_RELATION_RESOLUTION:")
+                and json.loads(item.partition(":")[2]).get("relationId") == route_id]
+    stub_receipts = [receipt for receipt in receipts if receipt.get("stage") == "stub"]
+    labels = []
+    if stub_receipts:
+        assert len(stub_receipts) == 1
+        assert stub_receipts[0].get("fragmentIds") == list(fragment_ids)
+        assert all(by_id[fragment_id].get("purpose") == "dependency"
+                   and by_id[fragment_id].get("kind") == "Path"
+                   and by_id[fragment_id].get("sourceRef") == identity for fragment_id in fragment_ids)
+        assert all(by_id[halo_id].get("purpose") == "dependency-halo"
+                   and by_id[halo_id].get("kind") == "Path"
+                   and by_id[halo_id].get("sourceRef") == identity
+                   and by_id[halo_id].get("paint", {}).get("opacity") == 1.0
+                   and by_id[halo_id].get("paint", {}).get("strokeWidth", 0) >
+                   by_id[fragment_id].get("paint", {}).get("strokeWidth", 0)
+                   for halo_id, fragment_id in zip(halo_ids, fragment_ids))
+        label_ids = tuple(f"relation-label:{fragment_id.removeprefix('relation:')}"
+                          for fragment_id in fragment_ids)
+        labels = [by_id[label_id] for label_id in label_ids]
+        assert all(item.get("purpose") == "relation-label" and item.get("kind") == "Text"
+                   and item.get("text") for item in labels)
+    else:
+        assert not receipts
+        route = by_id.get(route_id)
+        assert route is not None and route.get("purpose") == "dependency"
+        assert route.get("kind") == "Path" and route.get("sourceRef") == identity
     svg_path = ROOT / f"examples/halcyon-1/generated/{slide}.svg"
-    svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
+    svg_root = ET.fromstring(svg_path.read_text(encoding="utf-8"))
+    svg_ids = {value for element in svg_root.iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
-    assert route_id in svg_ids
+    svg_text = "".join(svg_root.itertext())
+    assert all(label in svg_text for label in lane_labels)
+    assert (set(fragment_ids) | set(halo_ids) | {item["id"] for item in labels}
+            if stub_receipts else {route_id}) <= svg_ids
+    assert all(item["text"] in svg_text for item in labels)
 
 
 def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
