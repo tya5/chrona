@@ -9,7 +9,10 @@ import sys
 import pytest
 from PIL import Image
 
-from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.layout.relation_terminals import (
+    complete_centred_terminals, marker_geometry, marker_ink_bounds, project_marker_outline,
+)
+from chrona.presentation.layout.path_geometry import path_extrema
 from chrona.presentation.model.projection import ReviewItem
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
@@ -17,6 +20,73 @@ from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest
 
 TOKEN = {"headLength": 12, "headWidth": 10, "attachmentOffset": 1}
+
+
+@pytest.mark.parametrize("side,direction", (("start", -1), ("start", 1),
+                                             ("end", -1), ("end", 1)))
+@pytest.mark.parametrize("shape,length,width,stroke,expected_miter", (
+    ("open-triangle", 8, 6, 2, True),  # apex miter is below the 4R limit
+    ("open-triangle", 10, 4, 2, False),  # apex miter exceeds 4R and bevels
+))
+def test_marker_ink_bounds_include_only_miter_extents_allowed_by_limit(
+        side, direction, shape, length, width, stroke, expected_miter):
+    marker = marker_geometry({"shape": shape, "headLength": length, "headWidth": width},
+                             stroke_width=stroke)
+    points = (((0, 0), (20 * direction, 0)) if side == "start"
+              else ((-20 * direction, 0), (0, 0)))
+    projected = project_marker_outline(marker, side=side, points=points,
+                                       path_commands=(), stroke_width=stroke)
+    extrema = path_extrema(projected)
+    radius = stroke / 2
+    path_bounds = (min(point[0] for point in extrema) - radius,
+                   min(point[1] for point in extrema) - radius,
+                   max(point[0] for point in extrema) + radius,
+                   max(point[1] for point in extrema) + radius)
+    ink_bounds = marker_ink_bounds(marker, side=side, points=points,
+                                   path_commands=(), stroke_width=stroke)
+    assert ink_bounds[0] <= path_bounds[0] and ink_bounds[1] <= path_bounds[1]
+    assert ink_bounds[2] >= path_bounds[2] and ink_bounds[3] >= path_bounds[3]
+    if expected_miter:
+        assert ink_bounds[1] < path_bounds[1] or ink_bounds[3] > path_bounds[3]
+    else:
+        assert ink_bounds[0] == pytest.approx(path_bounds[0])
+        assert ink_bounds[2] == pytest.approx(path_bounds[2])
+
+
+@pytest.mark.parametrize("side,direction", (("start", -1), ("start", 1),
+                                             ("end", -1), ("end", 1)))
+def test_marker_ink_bounds_respect_legacy_stroke_unit_scaling(side, direction):
+    # An explicit attachment offset selects legacy strokeWidth marker units.
+    marker = marker_geometry({"shape": "open-triangle", "headLength": 8,
+                              "headWidth": 6, "attachmentOffset": 1})
+    points = (((0, 0), (20 * direction, 0)) if side == "start"
+              else ((-20 * direction, 0), (0, 0)))
+    projected = project_marker_outline(marker, side=side, points=points,
+                                       path_commands=(), stroke_width=2)
+    extrema = path_extrema(projected)
+    bounds = marker_ink_bounds(marker, side=side, points=points,
+                               path_commands=(), stroke_width=2)
+    assert bounds[0] <= min(point[0] for point in extrema) - 1
+    assert bounds[1] <= min(point[1] for point in extrema) - 1
+    assert bounds[2] >= max(point[0] for point in extrema) + 1
+    assert bounds[3] >= max(point[1] for point in extrema) + 1
+
+
+@pytest.mark.parametrize("shape,radius", (("circle", 0), ("open-circle", 0.5)))
+def test_quadratic_circle_smooth_joins_add_no_miter_extension(shape, radius):
+    marker = marker_geometry({"shape": shape, "headLength": 5,
+                              "headWidth": 5, "attachmentOffset": 0})
+    points = ((0, 0), (20, 0))
+    completed, completed_marker, _ = complete_centred_terminals(points, marker, None, 1)
+    projected = project_marker_outline(completed_marker, side="start", points=completed,
+                                       path_commands=(), stroke_width=1)
+    extrema = path_extrema(projected)
+    expected = (min(point[0] for point in extrema) - radius,
+                min(point[1] for point in extrema) - radius,
+                max(point[0] for point in extrema) + radius,
+                max(point[1] for point in extrema) + radius)
+    assert marker_ink_bounds(completed_marker, side="start", points=completed,
+                             path_commands=(), stroke_width=1) == pytest.approx(expected)
 
 
 def _outline(shape):
@@ -184,14 +254,26 @@ def test_every_shape_renders_in_svg_and_png_and_the_adapter_draws_exactly_the_la
 
 
 @pytest.mark.parametrize("shape", NEW_SHAPES)
-def test_the_legend_key_draws_the_same_terminal_as_the_relation(shape):
+def test_the_legend_key_draws_the_same_terminal_as_the_relation(shape, monkeypatch):
+    from dataclasses import replace
+    import tests.unit.chrona.presentation.scene.test_v05_builder as builder
     from tests.unit.chrona.presentation.scene.test_v05_builder import _legend_surface, _theme
+
+    original_projection = builder.ReviewProjection
+
+    def extent_projection(items, *_args, **_kwargs):
+        projected = tuple(items)
+        value = original_projection(projected, (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+        return replace(value, window=(min(item.planned["start"] for item in projected),
+                                     max(item.planned["end"] for item in projected)))
+
+    monkeypatch.setattr(builder, "ReviewProjection", extent_projection)
     theme = _theme()
     theme["body"]["values"]["dependency-marker"] = {"type": "marker", "value": {"shape": shape, **TOKEN}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
     items = (
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
-        ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),
+        ReviewItem("b", "B", "span", {"start": date(2026, 1, 10), "end": date(2026, 1, 11)}, None, None, ()),
     )
     relation = {"id": "a-to-b", "from": {"object": "a", "endpoint": "end"},
                 "to": {"object": "b", "endpoint": "start"}}

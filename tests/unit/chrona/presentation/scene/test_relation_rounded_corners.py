@@ -31,9 +31,10 @@ def _item(oid, start, end, track="stacked"):
                       source_kind="primary", track=track)
 
 
-def _surface(items, rows, relation, radius, entry="any"):
+def _surface(items, rows, relation, radius, entry="any", window=None):
     from dataclasses import replace
-    projection = ReviewProjection(tuple(items), (min(i.planned["start"] for i in items), max(i.planned["end"] for i in items)),
+    projection_window = window or (min(i.planned["start"] for i in items), max(i.planned["end"] for i in items))
+    projection = ReviewProjection(tuple(items), projection_window,
                                   (), (), tuple(rows))
     metrics = {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
@@ -63,8 +64,8 @@ B = _item("b", D(2026, 2, 12), D(2026, 2, 20))
 DEP = {"id": "dep", "from": {"object": "a", "endpoint": "end"}, "to": {"object": "b", "endpoint": "start"}}
 
 
-def _drawn(radius, items=(A, B), relation=DEP, entry="any"):
-    surface = _surface(items, _rows(*((i,) for i in items)), relation, radius, entry)
+def _drawn(radius, items=(A, B), relation=DEP, entry="any", window=None):
+    surface = _surface(items, _rows(*((i,) for i in items)), relation, radius, entry, window)
     return surface, _path(surface)
 
 

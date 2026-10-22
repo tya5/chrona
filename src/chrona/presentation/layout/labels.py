@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 from heapq import heappop, heappush
 from math import ceil, floor, isfinite
 from math import hypot
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable, Iterator, Literal
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
 from chrona.presentation.layout.obstacles import (
@@ -248,6 +248,570 @@ def _candidate_geometries(
 
 
 @dataclass(frozen=True)
+class MemberNameCandidateProvenance:
+    """Typed origin of a recorded member-name pose."""
+
+    kind: Literal["canonical", "full-band", "neighborhood", "visible-fallback"]
+    side: str
+    domain: Literal["normal", "final"]
+
+
+@dataclass(frozen=True)
+class MemberNameCandidate:
+    """One hard-admissible candidate yielded by a member-name search."""
+
+    placement: LabelPlacement
+    provenance: MemberNameCandidateProvenance
+    blocker_placement_ids: tuple[str, ...] = ()
+    occupied: bool = False
+    is_fallback: bool = False
+
+
+@dataclass
+class _MemberNameSearchLedger:
+    neighborhood_spend: dict[tuple[str, str], int]
+    actual_evaluations: int = 0
+
+    def __init__(self) -> None:
+        self.neighborhood_spend = {}
+        self.actual_evaluations = 0
+
+    def charge(self, domain: tuple[str, str], *, limit: int = 512) -> bool:
+        spent = self.neighborhood_spend.get(domain, 0)
+        if spent >= limit:
+            return False
+        self.neighborhood_spend[domain] = spent + 1
+        return True
+
+    def spent(self, domain: tuple[str, str]) -> int:
+        return self.neighborhood_spend.get(domain, 0)
+
+
+class MemberNameSearchCursor:
+    """Resumable, request-local traversal of a member name's existing domain.
+
+    Candidate geometry and event positions are derived once from the obstacle
+    snapshot supplied at construction. Each yielded candidate is rechecked
+    against the probe inventory passed to ``next_candidate``; this lets a
+    caller test the unconsumed suffix after a local placement exchange without
+    changing the request's search domain or resetting its accounting.
+    """
+
+    def __init__(self, anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
+                 bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex = (),
+                 gap: float = 0.0, maximum_end_gap: float = 0.0,
+                 text_inline_inset: float = 0.0, inside_host_obstacle_id: str | None = None,
+                 classes: tuple[str, ...] | None = None, full_band: bool = False,
+                 association: MemberNameAssociation | None = None,
+                 maximum_stagger: float | None = None, overflow: str = "suppress",
+                 visible_fallback_side: str | None = None,
+                 candidate_geometries: Mapping[str, LabelCandidateGeometry] | None = None,
+                 own_mark_right: float | None = None,
+                 final_association: MemberNameAssociation | None = None,
+                 _budget_domain: str = "normal",
+                 _ledger: _MemberNameSearchLedger | None = None) -> None:
+        self.anchor = anchor
+        self.size = size
+        self.sides = tuple(candidates)
+        self.bounds = bounds
+        self._obstacles = (obstacles.copy() if isinstance(obstacles, SurfaceObstacleIndex)
+                           else tuple(obstacles))
+        self.gap = gap
+        self.maximum_end_gap = maximum_end_gap
+        self.text_inline_inset = text_inline_inset
+        self.inside_host_obstacle_id = inside_host_obstacle_id
+        self.classes = classes
+        self.full_band = full_band
+        self.association = association
+        self.maximum_stagger = maximum_stagger
+        self.overflow = overflow
+        self.visible_fallback_side = visible_fallback_side
+        self.own_mark_right = own_mark_right
+        self.final_association = final_association
+        self._budget_domain = _budget_domain
+        self._ledger = _ledger if _ledger is not None else _MemberNameSearchLedger()
+        if ((own_mark_right is not None
+             and (isinstance(own_mark_right, bool) or not isfinite(own_mark_right)))
+                or _budget_domain not in {"normal", "final"}
+                or overflow not in {"suppress", "visible-overflow", "diagnose"}
+                or (visible_fallback_side is not None
+                    and (overflow != "visible-overflow" or visible_fallback_side not in self.sides))):
+            raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name request",
+                               sides=self.sides, own_mark_right=own_mark_right, overflow=overflow,
+                               visible_fallback_side=visible_fallback_side)
+        self.geometries = _candidate_geometries(
+            self.sides, candidate_geometries, owner="member-name candidate geometries")
+        if (len(self.sides) > 16 or len(set(self.sides)) != len(self.sides)
+                or any(side not in _LABEL_SIDES for side in self.sides)
+                or any(isinstance(value, bool) or not isfinite(value) or value < 0
+                       for value in (gap, maximum_end_gap, text_inline_inset))
+                or (maximum_stagger is not None
+                    and (isinstance(maximum_stagger, bool) or not isfinite(maximum_stagger)
+                         or maximum_stagger < 0))):
+            raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name ladder",
+                               sides=self.sides, gap=gap, maximum_end_gap=maximum_end_gap,
+                               text_inline_inset=text_inline_inset, maximum_stagger=maximum_stagger)
+        self._history: list[MemberNameCandidate] = []
+        self._canonical_obstructions: list[LabelSlotObstruction] = []
+        self._normal_iterator = self._normal_candidates()
+        self._normal_exhausted = False
+        self._fallback_iterator: Iterator[tuple[str, LabelRect, bool]] | None = None
+        self._fallback_done = False
+
+    @property
+    def evaluated_candidates(self) -> tuple[MemberNameCandidate, ...]:
+        return tuple(self._history)
+
+    @property
+    def evaluated_normal_candidates(self) -> tuple[MemberNameCandidate, ...]:
+        return tuple(item for item in self._history if not item.is_fallback)
+
+    @property
+    def evaluated_count(self) -> int:
+        return len(self._history)
+
+    @property
+    def neighborhood_evaluated_count(self) -> int:
+        count = 0
+        for spent in self._ledger.neighborhood_spend.values():
+            count += spent
+        return count
+
+    @property
+    def neighborhood_domain_spend(self) -> Mapping[tuple[str, str], int]:
+        """Read-only copy of the existing per-domain 512-candidate ledger."""
+        return dict(self._ledger.neighborhood_spend)
+
+    @property
+    def total_actual_evaluations(self) -> int:
+        return self._ledger.actual_evaluations
+
+    def next_candidate(self, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex | None = None
+                       ) -> MemberNameCandidate | None:
+        """Yield the next normal candidate, whether clear or occupied."""
+        try:
+            side, rect, search_count, provenance, canonical = next(self._normal_iterator)
+        except StopIteration:
+            self._normal_exhausted = True
+            return None
+        probe = self._obstacles if obstacles is None else obstacles
+        self._ledger.actual_evaluations += 1
+        occupied, blocker_ids = self._collision_details(rect, side, probe)
+        result = MemberNameCandidate(
+            LabelPlacement(side, rect, search_count=search_count,
+                           final_rung=provenance.domain == "final",
+                           canonical_obstructions=tuple(self._canonical_obstructions)),
+            provenance, blocker_ids, occupied, False)
+        self._history.append(result)
+        if canonical and occupied:
+            self._canonical_obstructions.append(
+                LabelSlotObstruction(side, blocker_ids, occupied=True))
+        return result
+
+    def next_clear(self, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex | None = None
+                   ) -> MemberNameCandidate | None:
+        """Continue the normal domain until its next clear candidate."""
+        while (candidate := self.next_candidate(obstacles)) is not None:
+            if not candidate.occupied:
+                return candidate
+        return None
+
+    def revalidate(self, evidence: MemberNameCandidate,
+                   obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex
+                   ) -> MemberNameCandidate | None:
+        """Recheck one recorded pose against a changed inventory, without new poses.
+
+        Neighborhood rechecks charge the original side/rung's 512-candidate
+        ledger. Canonical and full-band poses are uncapped, as in their initial
+        domains. Rechecks increment actual work but never enter ordered history.
+        """
+        if (not isinstance(evidence, MemberNameCandidate) or evidence.is_fallback
+                or evidence.provenance.kind == "visible-fallback"
+                or not any(candidate is evidence for candidate in self._history)):
+            return None
+        provenance = evidence.provenance
+        domain = (provenance.domain, provenance.side)
+        if provenance.kind == "neighborhood" and not self._ledger.charge(domain):
+            return None
+        self._ledger.actual_evaluations += 1
+        occupied, blocker_ids = self._collision_details(
+            evidence.placement.bounds, provenance.side, obstacles)
+        return MemberNameCandidate(evidence.placement, provenance, blocker_ids,
+                                   occupied, False)
+
+    def next_fallback(self, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex | None = None
+                       ) -> MemberNameCandidate | None:
+        """Yield the declared visible-overflow rung only after normal exhaustion."""
+        if (not self._normal_exhausted or self.overflow != "visible-overflow"
+                or self._fallback_done):
+            return None
+        if self._fallback_iterator is None:
+            self._fallback_iterator = self._fallback_candidates()
+        for side, rect, final_rung in self._fallback_iterator:
+            geometry = self.geometries.get(side) if self.geometries is not None else None
+            association = geometry.association if geometry is not None else self.association
+            final_association = (geometry.final_association if geometry is not None
+                                 else self.final_association)
+            if final_rung:
+                association = final_association
+            if association is not None and not association.allows(rect):
+                continue
+            probe = self._obstacles if obstacles is None else obstacles
+            self._ledger.actual_evaluations += 1
+            occupied, blocker_ids = self._collision_details(rect, side, probe)
+            result = MemberNameCandidate(
+                LabelPlacement(side, rect, True, final_rung=final_rung),
+                MemberNameCandidateProvenance("visible-fallback", side,
+                                              "final" if final_rung else "normal"),
+                blocker_ids, occupied, True)
+            self._history.append(result)
+            return result
+        self._fallback_done = True
+        return None
+
+    def _fallback_candidates(self) -> Iterator[tuple[str, LabelRect, bool]]:
+        sides = ((self.visible_fallback_side,) if self.visible_fallback_side is not None
+                 else self.sides)
+        for side in sides:
+            geometry = self.geometries.get(side) if self.geometries is not None else None
+            final_association = (geometry.final_association if geometry is not None
+                                 else self.final_association)
+            extended = (side == "end" and self.own_mark_right is not None
+                        and self.own_mark_right > self.anchor.right
+                        and final_association is not None)
+            if extended:
+                anchor = LabelRect(self.anchor.x, self.anchor.y,
+                                  self.own_mark_right - self.anchor.x, self.anchor.height)
+                size = geometry.size if geometry is not None else self.size
+                gap = geometry.gap if geometry is not None else self.gap
+                try:
+                    yield side, _visible_candidate(anchor, size, side, gap), True
+                except ValueError as exc:
+                    if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
+                        raise
+            size = geometry.size if geometry is not None else self.size
+            gap = geometry.gap if geometry is not None else self.gap
+            try:
+                yield side, _visible_candidate(self.anchor, size, side, gap), False
+            except ValueError as exc:
+                if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
+                    raise
+
+    def _collision_details(self, rect: LabelRect, side: str,
+                           obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex
+                           ) -> tuple[bool, tuple[str, ...]]:
+        geometry = ObstacleRect(rect.x, rect.y, rect.right, rect.bottom)
+        if isinstance(obstacles, SurfaceObstacleIndex):
+            hits = obstacles.collisions(geometry,
+                                        host_id=self.inside_host_obstacle_id if side == "inside" else None,
+                                        classes=self.classes)
+            return bool(hits), tuple(sorted(item.placement_id for item in hits))
+        hits = tuple(item for item in obstacles
+                     if not (side == "inside" and isinstance(item, LabelObstacle)
+                             and item.placement_id == self.inside_host_obstacle_id)
+                     and _intersects(rect, item.bounds if isinstance(item, LabelObstacle) else item))
+        return bool(hits), tuple(sorted({item.placement_id for item in hits
+                                        if isinstance(item, LabelObstacle)}))
+
+    def _normal_candidates(self) -> Iterator[tuple[str, LabelRect, int,
+                                                     MemberNameCandidateProvenance, bool]]:
+        # Each domain is generated once; suspension preserves its remaining
+        # contact events and accounting for a later local exchange probe.
+        yield from _iter_member_name_candidates(self)
+
+
+def start_member_name_search(anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
+                             bounds: LabelRect,
+                             obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex = (),
+                             **options: Any) -> MemberNameSearchCursor:
+    """Create a resumable cursor over the normal member-name candidate domain."""
+    return MemberNameSearchCursor(anchor, size, candidates, bounds=bounds,
+                                  obstacles=obstacles, **options)
+
+
+def _iter_member_name_candidates(cursor: MemberNameSearchCursor
+                                ) -> Iterator[tuple[str, LabelRect, int,
+                                                    MemberNameCandidateProvenance, bool]]:
+    """Construct the finite declared ladder in its historical order."""
+    sides = cursor.sides
+    if not sides:
+        return
+    if (len(sides) > 16 or len(set(sides)) != len(sides)
+            or any(side not in _LABEL_SIDES for side in sides)
+            or any(isinstance(value, bool) or not isfinite(value) or value < 0
+                   for value in (cursor.gap, cursor.maximum_end_gap, cursor.text_inline_inset))
+            or (cursor.maximum_stagger is not None and
+                (isinstance(cursor.maximum_stagger, bool) or not isfinite(cursor.maximum_stagger)
+                 or cursor.maximum_stagger < 0))):
+        raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name ladder",
+                           sides=sides, gap=cursor.gap, maximum_end_gap=cursor.maximum_end_gap,
+                           text_inline_inset=cursor.text_inline_inset,
+                           maximum_stagger=cursor.maximum_stagger)
+
+    initial = cursor._obstacles
+    for side in sides:
+        # place_label owns canonical slot explanations per selected side; a
+        # failed earlier side is retained in search history, not copied into
+        # a later side's final Placement metadata.
+        cursor._canonical_obstructions = []
+        geometry = cursor.geometries.get(side) if cursor.geometries is not None else None
+        side_size = geometry.size if geometry is not None else cursor.size
+        side_gap = geometry.gap if geometry is not None else cursor.gap
+        side_end_gap = (geometry.maximum_end_gap if geometry is not None
+                        and geometry.maximum_end_gap is not None else cursor.maximum_end_gap)
+        inset = geometry.text_inline_inset if geometry is not None else cursor.text_inline_inset
+        association = geometry.association if geometry is not None else cursor.association
+        stagger = geometry.maximum_stagger if geometry is not None else cursor.maximum_stagger
+        side_bounds = geometry.bounds if geometry is not None and geometry.bounds is not None else cursor.bounds
+        max_side_gap = side_end_gap - inset if side == "end" else None
+        if side == "end" and max_side_gap < side_gap:
+            cursor._canonical_obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
+            continue
+        if not cursor.full_band or side not in {"end", "start"}:
+            if cursor.full_band and stagger is not None and side in {"above", "below"}:
+                preferred = _candidate(cursor.anchor, side_size, side, side_gap)
+                top = max(side_bounds.y, preferred.y - stagger)
+                bottom = min(side_bounds.bottom, preferred.bottom + stagger)
+                if bottom - top < side_size[1]:
+                    cursor._canonical_obstructions.append(
+                        LabelSlotObstruction(side, outside_bounds=True))
+                    continue
+                side_bounds = LabelRect(side_bounds.x, top, side_bounds.width, bottom - top)
+            try:
+                preferred = _candidate(cursor.anchor, side_size, side, side_gap)
+            except ValueError as exc:
+                if str(exc).split(":", 1)[0] == "E_PRESENTATION_LABEL_UNPLACEABLE":
+                    cursor._canonical_obstructions.append(
+                        LabelSlotObstruction(side, policy_rejected=True))
+                    continue
+                raise
+            if _member_candidate_allowed(preferred, side, side_bounds, cursor.anchor,
+                                         side_end_gap, inset, association):
+                yield (side, preferred, 0,
+                       MemberNameCandidateProvenance("canonical", side, cursor._budget_domain), True)
+            else:
+                outside = (preferred.x < side_bounds.x or preferred.y < side_bounds.y
+                           or preferred.right > side_bounds.right
+                           or preferred.bottom > side_bounds.bottom)
+                cursor._canonical_obstructions.append(
+                    LabelSlotObstruction(side, outside_bounds=outside,
+                                         policy_rejected=not outside))
+            if side != "inside":
+                yield from _member_neighborhood(cursor, side, side_size, side_gap, side_bounds,
+                                                side_end_gap, inset, association, initial)
+            continue
+
+        preferred = _candidate(cursor.anchor, side_size, side, side_gap)
+        event_y = {preferred.y, side_bounds.y, side_bounds.bottom - preferred.height}
+        if isinstance(initial, SurfaceObstacleIndex):
+            relevant = []
+            for obstacle in initial.select(classes=cursor.classes):
+                left, top, right, bottom = obstacle_envelope(obstacle.geometry)
+                clearance = obstacle.clearance
+                if (preferred.x <= right + clearance and left - clearance <= preferred.right
+                        and side_bounds.y - preferred.height - clearance <= bottom
+                        and top <= side_bounds.bottom + clearance):
+                    relevant.append(obstacle)
+            for obstacle in relevant:
+                _, top, _, bottom = obstacle_envelope(obstacle.geometry)
+                event_y.update((top - preferred.height - obstacle.clearance,
+                                bottom + obstacle.clearance))
+        else:
+            for obstacle in initial:
+                rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
+                event_y.update((rect.y - preferred.height, rect.bottom))
+        ordered = sorted(event_y, key=lambda y: (abs(y - preferred.y), y))
+        for y in ordered:
+            if stagger is not None and abs(y - preferred.y) > stagger + 1e-9:
+                continue
+            rect = LabelRect(preferred.x, y, preferred.width, preferred.height)
+            if not _member_candidate_allowed(rect, side, side_bounds, cursor.anchor,
+                                             side_end_gap, inset, association):
+                continue
+            yield (side, rect, len(event_y),
+                   MemberNameCandidateProvenance("full-band", side, cursor._budget_domain), False)
+
+    # The own-mark extension is a final normal rung, before visible overflow.
+    if ("end" in sides and cursor.own_mark_right is not None
+            and cursor.own_mark_right > cursor.anchor.right):
+        end_geometry = cursor.geometries.get("end") if cursor.geometries is not None else None
+        final_association = (end_geometry.final_association if end_geometry is not None
+                             else cursor.final_association)
+        if final_association is not None:
+            extended = LabelRect(cursor.anchor.x, cursor.anchor.y,
+                                 cursor.own_mark_right - cursor.anchor.x, cursor.anchor.height)
+            final_geometry = (replace(end_geometry, association=final_association,
+                                      final_association=None)
+                              if end_geometry is not None else None)
+            final_geometries = ({**cursor.geometries, "end": final_geometry}
+                                if cursor.geometries is not None and final_geometry is not None
+                                else None)
+            final_cursor = MemberNameSearchCursor(
+                extended, end_geometry.size if end_geometry is not None else cursor.size,
+                ("end",), bounds=cursor.bounds, obstacles=initial,
+                gap=end_geometry.gap if end_geometry is not None else cursor.gap,
+                maximum_end_gap=(end_geometry.maximum_end_gap
+                                 if end_geometry is not None and end_geometry.maximum_end_gap is not None
+                                 else cursor.maximum_end_gap),
+                text_inline_inset=(end_geometry.text_inline_inset if end_geometry is not None
+                                   else cursor.text_inline_inset),
+                inside_host_obstacle_id=cursor.inside_host_obstacle_id,
+                classes=cursor.classes, full_band=cursor.full_band,
+                association=final_association, maximum_stagger=cursor.maximum_stagger,
+                candidate_geometries=final_geometries, _budget_domain="final",
+                _ledger=cursor._ledger)
+            for side, rect, count, provenance, canonical in final_cursor._normal_iterator:
+                cursor._canonical_obstructions = list(final_cursor._canonical_obstructions)
+                yield side, rect, count, provenance, canonical
+                # Collision evaluation belongs to the outer cursor. Carry its
+                # canonical obstruction back before resuming the final domain.
+                final_cursor._canonical_obstructions = list(cursor._canonical_obstructions)
+
+
+def _member_candidate_allowed(rect: LabelRect, side: str, bounds: LabelRect,
+                              anchor: LabelRect, maximum_end_gap: float, inset: float,
+                              association: MemberNameAssociation | None) -> bool:
+    return (rect.x >= bounds.x and rect.y >= bounds.y and rect.right <= bounds.right
+            and rect.bottom <= bounds.bottom
+            and not (side == "end" and rect.x + inset - anchor.right > maximum_end_gap)
+            and (association is None or association.allows(rect)))
+
+
+@dataclass(frozen=True)
+class _ContactCandidateSide:
+    rank: int
+    side: str
+    base: LabelRect
+    bounds: LabelRect
+    association: MemberNameAssociation | None
+    side_gap: float
+    maximum_side_gap: float | None
+
+
+def _iter_contact_candidates(
+        sides: Iterable[_ContactCandidateSide],
+        envelopes: Iterable[tuple[float, float, float, float]],
+        *,
+        admissible: Callable[[LabelRect, MemberNameAssociation | None, LabelRect], bool],
+        ledger: _MemberNameSearchLedger,
+        budget_key: tuple[str, str],
+        limit: int = 512,
+) -> Iterator[tuple[str, LabelRect, int]]:
+    """Shared finite contact-grid and lazy heap used by both label APIs."""
+    lattice = 8.0
+    envelope_values = tuple(envelopes)
+    nearby: list[tuple[float, int, float, float, str, LabelRect,
+                       tuple[float, ...], int, LabelRect, MemberNameAssociation | None]] = []
+    for item in sides:
+        side, base, side_bounds = item.side, item.base, item.bounds
+        tangent_bound = base.width if side in {"above", "below"} else base.height
+        tangent_min, tangent_max = -tangent_bound, tangent_bound
+        outward_bound = base.height if side in {"above", "below"} else base.width
+        if item.association is not None:
+            left, top, right, bottom = item.association.position_envelope()
+            left, top = max(side_bounds.x, left), max(side_bounds.y, top)
+            right = min(side_bounds.right - base.width, right)
+            bottom = min(side_bounds.bottom - base.height, bottom)
+            if side in {"above", "below"}:
+                tangent_min, tangent_max = left - base.x, right - base.x
+                outward_bound = base.y - top if side == "above" else bottom - base.y
+            else:
+                tangent_min, tangent_max = top - base.y, bottom - base.y
+                outward_bound = base.x - left if side == "start" else right - base.x
+            if tangent_min > tangent_max or outward_bound < 0:
+                continue
+        tangent_offsets = {step * lattice for step in range(ceil(tangent_min / lattice),
+                                                            floor(tangent_max / lattice) + 1)}
+        tangent_offsets.update((tangent_min, tangent_max))
+        outward_offsets = {step * lattice for step in range(ceil(outward_bound / lattice) + 1)
+                           if step * lattice <= outward_bound}
+        outward_offsets.add(outward_bound)
+        if side in {"above", "below"}:
+            tangent_offsets.update((side_bounds.x - base.x, side_bounds.right - base.right))
+            outward_offsets.update((base.y - side_bounds.y, base.bottom - side_bounds.bottom)
+                                   if side == "above" else
+                                   (side_bounds.y - base.y, side_bounds.bottom - base.bottom))
+        else:
+            tangent_offsets.update((side_bounds.y - base.y, side_bounds.bottom - base.bottom))
+            outward_offsets.update((base.x - side_bounds.x, base.right - side_bounds.right)
+                                   if side == "start" else
+                                   (side_bounds.x - base.x, side_bounds.right - base.right))
+        for left, top, right, bottom in envelope_values:
+            if side in {"above", "below"}:
+                tangent_offsets.update((left - base.right, right - base.x))
+                outward_offsets.update((base.bottom - top, base.y - bottom)
+                                       if side == "above" else (bottom - base.y, top - base.bottom))
+            else:
+                tangent_offsets.update((top - base.bottom, bottom - base.y))
+                outward_offsets.update((base.right - left, base.x - right)
+                                       if side == "start" else (right - base.x, left - base.right))
+        tangent_offsets = {value for value in tangent_offsets
+                           if isfinite(value) and tangent_min <= value <= tangent_max}
+        outward_offsets = {value for value in outward_offsets
+                           if isfinite(value) and 0 <= value <= outward_bound}
+        tangents = tuple(sorted(tangent_offsets, key=lambda value: (abs(value), value)))
+        for outward in sorted(outward_offsets):
+            if (item.maximum_side_gap is not None and side in {"start", "end"}
+                    and item.side_gap + outward > item.maximum_side_gap):
+                continue
+            heappush(nearby, (abs(tangents[0]) + outward, item.rank, outward,
+                              tangents[0], side, base, tangents, 0, side_bounds,
+                              item.association))
+    while nearby and ledger.spent(budget_key) < limit:
+        _, rank, outward, tangent, side, base, tangents, tangent_index, side_bounds, association = heappop(nearby)
+        if outward != 0 or tangent != 0:
+            candidate = (LabelRect(base.x + tangent, base.y - outward, base.width, base.height)
+                         if side == "above" else
+                         LabelRect(base.x + tangent, base.y + outward, base.width, base.height)
+                         if side == "below" else
+                         LabelRect(base.x - outward, base.y + tangent, base.width, base.height)
+                         if side == "start" else
+                         LabelRect(base.x + outward, base.y + tangent, base.width, base.height))
+            if admissible(candidate, association, side_bounds):
+                if ledger.charge(budget_key, limit=limit):
+                    yield side, candidate, ledger.spent(budget_key)
+        next_index = tangent_index + 1
+        if next_index < len(tangents):
+            next_tangent = tangents[next_index]
+            heappush(nearby, (abs(next_tangent) + outward, rank, outward, next_tangent,
+                              side, base, tangents, next_index, side_bounds, association))
+
+
+def _member_neighborhood(cursor: MemberNameSearchCursor, side: str,
+                         size: tuple[float, float], gap: float, bounds: LabelRect,
+                         maximum_end_gap: float, inset: float,
+                         association: MemberNameAssociation | None,
+                         initial: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex,
+                         *, anchor: LabelRect | None = None, final_rung: bool = False
+                         ) -> Iterator[tuple[str, LabelRect, int,
+                                             MemberNameCandidateProvenance, bool]]:
+    """Use the shared contact grid for one declared member-name side."""
+    anchor = anchor or cursor.anchor
+    base = _candidate(anchor, size, side, gap)
+    if isinstance(initial, SurfaceObstacleIndex):
+        envelopes = []
+        for obstacle in initial.select(classes=cursor.classes):
+            left, top, right, bottom = obstacle_envelope(obstacle.geometry)
+            envelopes.append((left - obstacle.clearance, top - obstacle.clearance,
+                              right + obstacle.clearance, bottom + obstacle.clearance))
+    else:
+        envelopes = []
+        for item in initial:
+            rect = item.bounds if isinstance(item, LabelObstacle) else item
+            envelopes.append((rect.x, rect.y, rect.right, rect.bottom))
+    budget_key = (cursor._budget_domain, side)
+    max_gap = maximum_end_gap - inset if side == "end" else None
+    side_input = _ContactCandidateSide(0, side, base, bounds, association, gap, max_gap)
+    for candidate_side, rect, count in _iter_contact_candidates(
+            (side_input,), envelopes,
+            admissible=lambda value, assoc, candidate_bounds: _member_candidate_allowed(
+                value, side, candidate_bounds, anchor, maximum_end_gap, inset, assoc),
+            ledger=cursor._ledger, budget_key=budget_key, limit=512):
+        yield (candidate_side, rect, count,
+               MemberNameCandidateProvenance("neighborhood", side, cursor._budget_domain), False)
+
+
+@dataclass(frozen=True)
 class LabelRequest:
     """One semantic plot-text request awaiting deterministic Layout placement."""
 
@@ -378,6 +942,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         return not collision_details(candidate, side)[0]
 
     obstructions: list[LabelSlotObstruction] = []
+    remembered_overflow: tuple[str, LabelRect] | None = None
     for side in sides:
         geometry = geometries.get(side) if geometries is not None else None
         side_size = geometry.size if geometry is not None else size
@@ -408,115 +973,48 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             return LabelPlacement(side, candidate, canonical_obstructions=tuple(obstructions))
         obstructions.append(LabelSlotObstruction(side, blocker_ids, occupied=True))
     if search_side_neighborhood:
-        lattice = 8.0
-        position_bounds = None
-        nearby: list[tuple[float, int, float, float, str, LabelRect, tuple[float, ...], int, LabelRect]] = []
-        association_by_side: dict[str, MemberNameAssociation | None] = {}
+        side_inputs: list[_ContactCandidateSide] = []
         for rank, side in enumerate(sides):
             geometry = geometries.get(side) if geometries is not None else None
             side_size = geometry.size if geometry is not None else size
             side_gap = geometry.gap if geometry is not None else gap
             side_bounds = geometry.bounds if geometry is not None and geometry.bounds is not None else bounds
             side_association = geometry.association if geometry is not None else search_association
-            association_by_side[side] = side_association
             side_maximum_gap = (geometry.maximum_end_gap - geometry.text_inline_inset
                                 if geometry is not None and geometry.maximum_end_gap is not None
                                 and side == "end" else maximum_side_gap)
             if side == "inside":
                 continue
             base = _candidate(anchor, side_size, side, side_gap)
-            tangent_bound = side_size[0] if side in {"above", "below"} else side_size[1]
-            tangent_min, tangent_max = -tangent_bound, tangent_bound
-            outward_bound = side_size[1] if side in {"above", "below"} else side_size[0]
-            position_bounds = (side_association.position_envelope()
-                               if side_association is not None else None)
-            if position_bounds is not None:
-                left = max(side_bounds.x, position_bounds[0])
-                top = max(side_bounds.y, position_bounds[1])
-                right = min(side_bounds.right - base.width, position_bounds[2])
-                bottom = min(side_bounds.bottom - base.height, position_bounds[3])
-                if side in {"above", "below"}:
-                    tangent_min, tangent_max = left - base.x, right - base.x
-                    outward_bound = base.y - top if side == "above" else bottom - base.y
-                else:
-                    tangent_min, tangent_max = top - base.y, bottom - base.y
-                    outward_bound = base.x - left if side == "start" else right - base.x
-                if tangent_min > tangent_max or outward_bound < 0:
-                    continue
-            tangent_offsets = {step * lattice for step in range(ceil(tangent_min / lattice),
-                                                                floor(tangent_max / lattice) + 1)}
-            tangent_offsets.update((tangent_min, tangent_max))
-            outward_offsets = {step * lattice for step in range(ceil(outward_bound / lattice) + 1)
-                               if step * lattice <= outward_bound}
-            outward_offsets.add(outward_bound)
-
-            if side in {"above", "below"}:
-                tangent_offsets.update((side_bounds.x - base.x, side_bounds.right - base.right))
-                outward_offsets.update((base.y - side_bounds.y, base.bottom - side_bounds.bottom)
-                    if side == "above" else (side_bounds.y - base.y, side_bounds.bottom - base.bottom))
-            else:
-                tangent_offsets.update((side_bounds.y - base.y, side_bounds.bottom - base.bottom))
-                outward_offsets.update((base.x - side_bounds.x, base.right - side_bounds.right)
-                    if side == "start" else (side_bounds.x - base.x, side_bounds.right - base.right))
-
-            if index is not None:
-                event_obstacles = tuple(item for item in index.select(classes=classes)
-                    if item.placement_id != rule_host_obstacle_id)
-                envelopes = []
-                for obstacle in event_obstacles:
-                    left, top, right, bottom = obstacle_envelope(obstacle.geometry)
-                    envelopes.append((left - obstacle.clearance, top - obstacle.clearance,
-                                      right + obstacle.clearance, bottom + obstacle.clearance))
-            else:
-                envelopes = []
-                for obstacle in blocked:
-                    rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
-                    envelopes.append((rect.x, rect.y, rect.right, rect.bottom))
-
-            # Include exact translations at which the candidate rectangle
-            # touches an obstacle envelope, plus both footprint-boundary
-            # offsets. The canonical collision query remains the authority.
-            for left, top, right, bottom in envelopes:
-                if side in {"above", "below"}:
-                    tangent_offsets.update((left - base.right, right - base.x))
-                    outward_offsets.update((base.bottom - top, base.y - bottom)
-                        if side == "above" else (bottom - base.y, top - base.bottom))
-                else:
-                    tangent_offsets.update((top - base.bottom, bottom - base.y))
-                    outward_offsets.update((base.right - left, base.x - right)
-                        if side == "start" else (right - base.x, left - base.right))
-            tangent_offsets = {value for value in tangent_offsets
-                               if isfinite(value) and tangent_min <= value <= tangent_max}
-            outward_offsets = {value for value in outward_offsets
-                               if isfinite(value) and 0 <= value <= outward_bound}
-            tangents = tuple(sorted(tangent_offsets, key=lambda value: (abs(value), value)))
-            for outward in sorted(outward_offsets):
-                if (side_maximum_gap is not None and side in {"end", "start"}
-                        and side_gap + outward > side_maximum_gap):
-                    continue
-                heappush(nearby, (abs(tangents[0]) + outward, rank, outward,
-                                  tangents[0], side, base, tangents, 0, side_bounds))
-        count = 0
-        while nearby and count < 512:
-            _, rank, outward, tangent, side, base, tangents, tangent_index, side_bounds = heappop(nearby)
-            if outward != 0 or tangent != 0:
-                candidate = (LabelRect(base.x + tangent, base.y - outward, base.width, base.height)
-                             if side == "above" else
-                             LabelRect(base.x + tangent, base.y + outward, base.width, base.height)
-                             if side == "below" else
-                             LabelRect(base.x - outward, base.y + tangent, base.width, base.height)
-                             if side == "start" else
-                             LabelRect(base.x + outward, base.y + tangent, base.width, base.height))
-                if admissible(candidate, association_by_side[side], side_bounds):
-                    count += 1
-                    if clear(candidate, side):
-                        return LabelPlacement(side, candidate, search_count=count,
-                                              canonical_obstructions=tuple(obstructions))
-            next_index = tangent_index + 1
-            if next_index < len(tangents):
-                next_tangent = tangents[next_index]
-                heappush(nearby, (abs(next_tangent) + outward, rank, outward,
-                                  next_tangent, side, base, tangents, next_index, side_bounds))
+            side_inputs.append(_ContactCandidateSide(rank, side, base, side_bounds,
+                                                      side_association, side_gap,
+                                                      side_maximum_gap))
+        if index is not None:
+            event_obstacles = tuple(item for item in index.select(classes=classes)
+                                    if item.placement_id != rule_host_obstacle_id)
+            envelopes = []
+            for obstacle in event_obstacles:
+                left, top, right, bottom = obstacle_envelope(obstacle.geometry)
+                envelopes.append((left - obstacle.clearance, top - obstacle.clearance,
+                                  right + obstacle.clearance, bottom + obstacle.clearance))
+        else:
+            envelopes = []
+            for obstacle in blocked:
+                rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
+                envelopes.append((rect.x, rect.y, rect.right, rect.bottom))
+        contact_ledger = _MemberNameSearchLedger()
+        for side, candidate, count in _iter_contact_candidates(
+                side_inputs, envelopes, admissible=admissible, ledger=contact_ledger,
+                budget_key=("place-label", "shared"), limit=512):
+            if clear(candidate, side):
+                return LabelPlacement(side, candidate, search_count=count,
+                                      canonical_obstructions=tuple(obstructions))
+            # Reuse this hard-filter-safe candidate only if normal and
+            # canonical visible placement fail; never start another search.
+            if (remembered_overflow is None and overflow == "visible-overflow"
+                    and candidate_filter is not None
+                    and (visible_fallback_side is None or side == visible_fallback_side)):
+                remembered_overflow = (side, candidate)
     if overflow == "visible-overflow":
         # Ordinary requests retain their first ranked side. A separately
         # declared terminal side is used only after all ranked candidates fail.
@@ -537,6 +1035,10 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             except ValueError as exc:
                 if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
                     raise
+        if remembered_overflow is not None:
+            side, candidate = remembered_overflow
+            return LabelPlacement(side, candidate, True, count,
+                                  canonical_obstructions=tuple(obstructions))
         raise _label_error("E_PRESENTATION_LABEL_UNPLACEABLE", "visible fallback candidates",
                            sides=(visible_fallback_side,) if visible_fallback_side is not None else sides,
                            size=size, anchor=anchor, bounds=bounds)
@@ -544,159 +1046,6 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         raise _label_error("E_PRESENTATION_LABEL_UNPLACEABLE", "required label candidates",
                            sides=sides, size=size, anchor=anchor, bounds=bounds,
                            gap=gap, overflow=overflow)
-    return None
-
-
-def _place_member_name_ladder(
-    anchor: LabelRect,
-    size: tuple[float, float],
-    candidates: Iterable[str],
-    *,
-    bounds: LabelRect,
-    obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex = (),
-    gap: float,
-    maximum_end_gap: float,
-    text_inline_inset: float = 0.0,
-    inside_host_obstacle_id: str | None = None,
-    classes: tuple[str, ...] | None = None,
-    full_band: bool = False,
-    association: MemberNameAssociation | None = None,
-    maximum_stagger: float | None = None,
-    overflow: str = "suppress",
-    visible_fallback_side: str | None = None,
-    candidate_geometries: Mapping[str, LabelCandidateGeometry] | None = None,
-) -> LabelPlacement | None:
-    """Try declared member-name sides in order, bounding end gap to completed text.
-
-    ``association`` checks the completed Text, not its decorative footprint,
-    against the exact host mark. Full-band lane contacts may move by at most
-    one measured stagger step; a failed contact proceeds to the declared side.
-    """
-    sides = tuple(candidates)
-    if not sides:
-        return None
-    if (len(sides) > 16 or len(set(sides)) != len(sides)
-            or any(side not in {"above", "below", "start", "end", "inside"} for side in sides)
-            or any(isinstance(value, bool) or not isfinite(value) or value < 0
-                   for value in (gap, maximum_end_gap, text_inline_inset))
-            or (maximum_stagger is not None and
-                (isinstance(maximum_stagger, bool) or not isfinite(maximum_stagger)
-                 or maximum_stagger < 0))
-            or overflow not in {"suppress", "visible-overflow", "diagnose"}
-            or (visible_fallback_side is not None and
-                (overflow != "visible-overflow" or visible_fallback_side not in sides))):
-        raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name ladder",
-                           sides=sides, gap=gap, maximum_end_gap=maximum_end_gap,
-                           text_inline_inset=text_inline_inset, maximum_stagger=maximum_stagger,
-                           overflow=overflow, visible_fallback_side=visible_fallback_side)
-    geometries = _candidate_geometries(sides, candidate_geometries,
-                                       owner="member-name candidate geometries")
-    available_obstacles = (obstacles if isinstance(obstacles, SurfaceObstacleIndex)
-                           else tuple(obstacles))
-    for side in sides:
-        geometry = geometries.get(side) if geometries is not None else None
-        side_size = geometry.size if geometry is not None else size
-        side_gap = geometry.gap if geometry is not None else gap
-        side_end_gap = (geometry.maximum_end_gap
-                        if geometry is not None and geometry.maximum_end_gap is not None
-                        else maximum_end_gap)
-        side_text_inset = geometry.text_inline_inset if geometry is not None else text_inline_inset
-        side_association = geometry.association if geometry is not None else association
-        side_stagger = geometry.maximum_stagger if geometry is not None else maximum_stagger
-        side_bounds = geometry.bounds if geometry is not None and geometry.bounds is not None else bounds
-        maximum_side_gap = (side_end_gap - side_text_inset) if side == "end" else None
-        if side == "end" and maximum_side_gap < side_gap:
-            continue
-        if not full_band or side not in {"end", "start"}:
-            if full_band and side_stagger is not None and side in {"above", "below"}:
-                preferred = _candidate(anchor, side_size, side, side_gap)
-                top = max(side_bounds.y, preferred.y - side_stagger)
-                bottom = min(side_bounds.bottom, preferred.bottom + side_stagger)
-                if bottom - top < side_size[1]:
-                    continue
-                side_bounds = LabelRect(side_bounds.x, top, side_bounds.width, bottom - top)
-            # Association governs member-name reach; fill lanes additionally
-            # retain their single measured block-stagger constraint.
-            placed = place_label(
-                anchor, side_size, (side,), bounds=side_bounds, obstacles=available_obstacles, gap=side_gap,
-                inside_host_obstacle_id=inside_host_obstacle_id,
-                required=False, overflow="suppress", classes=classes,
-                search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
-                search_association=side_association,
-            )
-            if placed is not None:
-                return placed
-            continue
-
-        # At a fixed inline position, the legal block positions form components
-        # separated by obstacle-contact intervals. Their nearest points to the
-        # preferred anchor position are the row edges and obstacle contacts.
-        # Rectangles (and the vertical envelope of selected route segments)
-        # provide finite contact events. Every event is then checked by the
-        # canonical collision predicate; no sampling lattice or cutoff is used.
-        preferred = _candidate(anchor, side_size, side, side_gap)
-        candidates = {preferred.y, side_bounds.y, side_bounds.bottom - preferred.height}
-        if isinstance(available_obstacles, SurfaceObstacleIndex):
-            relevant = []
-            for obstacle in available_obstacles.select(classes=classes):
-                left, top, right, bottom = obstacle_envelope(obstacle.geometry)
-                clearance = obstacle.clearance
-                if (preferred.x <= right + clearance and left - clearance <= preferred.right
-                        and side_bounds.y - preferred.height - clearance <= bottom
-                        and top <= side_bounds.bottom + clearance):
-                    relevant.append(obstacle)
-            obstacle_values = tuple(relevant)
-            local_obstacles = SurfaceObstacleIndex()
-            local_obstacles.extend(obstacle_values)
-            for obstacle in obstacle_values:
-                _, top, _, bottom = obstacle_envelope(obstacle.geometry)
-                clearance = obstacle.clearance
-                candidates.add(top - preferred.height - clearance)
-                candidates.add(bottom + clearance)
-        else:
-            for obstacle in available_obstacles:
-                rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
-                candidates.add(rect.y - preferred.height)
-                candidates.add(rect.bottom)
-
-        legal_positions = []
-        for y in candidates:
-            if side_stagger is not None and abs(y - preferred.y) > side_stagger + 1e-9:
-                continue
-            candidate = LabelRect(preferred.x, y, preferred.width, preferred.height)
-            if (candidate.x < side_bounds.x or candidate.right > side_bounds.right
-                    or candidate.y < side_bounds.y or candidate.bottom > side_bounds.bottom):
-                continue
-            if side == "end" and candidate.x + side_text_inset - anchor.right > side_end_gap:
-                continue
-            if side_association is not None and not side_association.allows(candidate):
-                continue
-            if isinstance(available_obstacles, SurfaceObstacleIndex):
-                collides = bool(local_obstacles.collisions(
-                    ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom),
-                    host_id=inside_host_obstacle_id if side == "inside" else None,
-                    classes=classes,
-                ))
-            else:
-                collides = any(_intersects(candidate, item.bounds if isinstance(item, LabelObstacle) else item)
-                               for item in available_obstacles)
-            if not collides:
-                legal_positions.append(candidate)
-        if legal_positions:
-            selected = min(legal_positions, key=lambda rect: (abs(rect.y - preferred.y), rect.y))
-            return LabelPlacement(side, selected, search_count=len(candidates))
-    if overflow == "visible-overflow":
-        # Preserve the declared visible fallback without waiving the own-mark
-        # association. It may overlap an obstacle or leave its nominal bounds.
-        fallback_sides = (visible_fallback_side,) if visible_fallback_side is not None else sides
-        for side in fallback_sides:
-            geometry = geometries.get(side) if geometries is not None else None
-            side_size = geometry.size if geometry is not None else size
-            side_gap = geometry.gap if geometry is not None else gap
-            side_association = geometry.association if geometry is not None else association
-            candidate = _visible_candidate(anchor, side_size, side, side_gap)
-            if side_association is None or side_association.allows(candidate):
-                return LabelPlacement(side, candidate, True)
     return None
 
 
@@ -731,63 +1080,13 @@ def place_member_name(
         raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name request",
                            sides=sides, own_mark_right=own_mark_right, overflow=overflow,
                            visible_fallback_side=visible_fallback_side)
-    geometries = _candidate_geometries(sides, candidate_geometries,
-                                       owner="member-name candidate geometries")
-    if geometries is not None:
-        placed = _place_member_name_ladder(anchor, size, sides, overflow="suppress",
-                                            candidate_geometries=geometries, **options)
-        if placed is not None or not sides:
-            return placed
-        end_geometry = geometries.get("end")
-        end_association = (end_geometry.final_association if end_geometry is not None
-                           else None)
-        if (end_geometry is not None and own_mark_right is not None
-                and own_mark_right > anchor.right and end_association is not None):
-            extended = LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height)
-            final_geometry = replace(end_geometry, association=end_association)
-            final = _place_member_name_ladder(
-                extended, end_geometry.size, ("end",), overflow="suppress",
-                candidate_geometries={"end": final_geometry}, **options)
-            if final is not None:
-                return replace(final, final_rung=True)
-        if overflow == "suppress":
-            return None
-        fallback_side = visible_fallback_side or sides[0]
-        fallback_geometry = geometries[fallback_side]
-        if (fallback_side == "end" and own_mark_right is not None
-                and own_mark_right > anchor.right and end_association is not None):
-            extended = LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height)
-            final_geometry = replace(end_geometry, association=end_association)
-            final = _place_member_name_ladder(
-                extended, end_geometry.size, ("end",), overflow=overflow,
-                visible_fallback_side="end", candidate_geometries={"end": final_geometry}, **options)
-            if final is not None:
-                return replace(final, final_rung=True)
-        return _place_member_name_ladder(
-            anchor, fallback_geometry.size, sides, overflow=overflow,
-            visible_fallback_side=visible_fallback_side,
-            candidate_geometries=geometries, **options)
-    placed = _place_member_name_ladder(anchor, size, sides, overflow="suppress", **options)
-    if placed is not None or not sides:
-        return placed
-    if ("end" in sides and own_mark_right is not None and own_mark_right > anchor.right
-            and final_association is not None):
-        extended = LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height)
-        options_final = {**options, "association": final_association}
-        final = _place_member_name_ladder(extended, size, ("end",), overflow="suppress", **options_final)
-        if final is not None:
-            return replace(final, final_rung=True)
-    if overflow == "suppress":
-        return None
-    if ((visible_fallback_side or sides[0]) == "end" and own_mark_right is not None
-            and own_mark_right > anchor.right and final_association is not None):
-        # The visible fallback is an end candidate: measure it from the last own mark too, so the
-        # overflowing name does not cover the item's own actual mark.
-        extended = LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height)
-        options_final = {**options, "association": final_association}
-        final = _place_member_name_ladder(extended, size, ("end",), overflow=overflow,
-                                          visible_fallback_side="end", **options_final)
-        if final is not None:
-            return replace(final, final_rung=True)
-    return _place_member_name_ladder(anchor, size, sides, overflow=overflow,
-                                     visible_fallback_side=visible_fallback_side, **options)
+    cursor = start_member_name_search(
+        anchor, size, sides, own_mark_right=own_mark_right,
+        final_association=final_association, overflow=overflow,
+        visible_fallback_side=visible_fallback_side,
+        candidate_geometries=candidate_geometries, **options)
+    candidate = cursor.next_clear()
+    if candidate is not None:
+        return candidate.placement
+    fallback = cursor.next_fallback()
+    return fallback.placement if fallback is not None else None

@@ -24,7 +24,7 @@ from chrona.presentation.model.closure import ClosureError, resolve_draft_render
 from chrona.presentation.model.info_diagnostics import (
     RelationHintReceipt, RelationHintSummary,
     PaintOmission, ScaleValuesFolded, SuppressedPlotLabels, DeadlineCaptionsDropped, RelationRoutingSummary, RelationSearchBudgetHit,
-    RelationResolutionInfo, RelationResolutionSummary,
+    RelationResolutionInfo, RelationResolutionSummary, CriticalRelationTemporalExcursion,
     RelationPolicySupersession, UnboundFieldRole, FieldGroupingSummariesOmitted, BaselineObjectsRemoved, FontGlyphFallback,
     ForecastInfo,
 )
@@ -300,6 +300,10 @@ def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
             payloads.append({"code": info.code, "severity": "info", **info.payload(),
                 "message": f"Search budget reached for {info.relation_id} in {info.pass_name}; "
                            "not proof that no safe route exists"})
+        elif isinstance(info, CriticalRelationTemporalExcursion):
+            payloads.append({"code": info.code, "severity": "info", **info.payload(),
+                "message": f"Protected relation {info.relation_id} leaves its temporal inline hull "
+                           "under the declared finite-domain safety exception"})
         elif isinstance(info, RelationRoutingSummary):
             payloads.append({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
                 "relationInstances": info.relation_instances, "shapeSettled": info.shape_settled,

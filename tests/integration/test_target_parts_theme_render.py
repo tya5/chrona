@@ -45,7 +45,7 @@ def test_a_theme_gate_glyph_and_pattern_from_the_catalogue_reach_the_scene_and_t
     scene = json.loads(scene_path.read_bytes())
     primitives = [item for surface in scene["surfaces"] for item in surface["primitives"]]
     catalogue = json.loads(CATALOGUE.read_bytes())["body"]
-    lantern_parts = [item for item in primitives if item.get("kind") == "Symbol" and ":evb-arrival:part:" in item.get("id", "")]
+    lantern_parts = [item for item in primitives if item.get("kind") == "Symbol" and ":evb-arrival:part" in item.get("id", "")]
     assert len(lantern_parts) == len(catalogue["glyphs"]["lantern"]["parts"]) == 6
     assert all(item["symbol"]["outline"] and item["paint"] for item in lantern_parts)
     stripes = next(item for item in primitives if item.get("visualRole") == "axis-band-decoration2" and item.get("pattern"))["pattern"]

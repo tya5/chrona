@@ -348,19 +348,20 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
                      "message": f"{len(per_id)} plot labels on table-timeline were left out because they do not fit"}]
 
 
-def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_487():
-    # Direct evidence of the #487 attribution above: the same draft request that
-    # used to suppress `member-label:ga:ga` (and report
-    # `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1`) now fits
-    # it, because the corrected table minimum is narrower than the old
-    # widest-row-label basis for this view under the CSS-Grid flex allocation
-    # (ADR-0032). Bounded contact search also retains the relation labels;
-    # their old incidental suppression count is not a placement contract.
+def test_controller_executive_draft_places_member_names_before_routes():
+    # The old repair path left Performance unlabeled when its first route
+    # occupied the only rung. Content-first placement gives the route search
+    # the completed name footprint to preserve.
     rendered = render_review(_draft_request())
-    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in rendered.scene.diagnostics)
+    suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                    for item in rendered.scene.diagnostics
+                    if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
+    assert not suppressions
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics)
     labels = {item.scene_id for item in rendered.surface.primitives}
+    member_sources = {item.source_ref for item in rendered.surface.primitives if item.purpose == "member-label"}
+    assert {"ga", "performance"} <= member_sources
     project = yaml.safe_load((_root() / "tests/fixtures/controller-z/project.yaml").read_bytes())
     identities = {relation["id"]: identity
                   for relation, identity in zip(project["relations"], relation_identities(project["relations"]))}
@@ -369,7 +370,6 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
         f"relation-label:{identities['bringup-to-performance']}:silicon-bringup:silicon-bringup:performance:performance",
     } <= labels
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
-
 
 def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     root = _root()
@@ -413,8 +413,7 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
                                            summary_path=example / "profiles/summary.yaml"))
     assert_member_only_count(halcyon)
     ordinary = render_review(_draft_request())
-    assert not any(item.code == "I_LAYOUT_PLOT_LABELS_SUPPRESSED" for item in ordinary.info_diagnostics)
-    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
+    assert_member_only_count(ordinary)
 
 
 @pytest.mark.corpus  # PR-path twin: tests/integration/test_visual_treatment_synthetic.py (#657)

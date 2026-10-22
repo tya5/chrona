@@ -73,7 +73,7 @@ from chrona.presentation.layout.surface_geometry import (
 )
 
 if TYPE_CHECKING:
-    from chrona.presentation.layout.surface_route_label_plan import RouteLabelOptions, RouteLabelPlan
+    from chrona.presentation.layout.surface_route_label_plan import RouteLabelPlan
 
 
 ANNOTATION_PAINT_ORDER = 400
@@ -212,7 +212,7 @@ class SurfaceAnnotationContext:
 
 
 @dataclass(frozen=True)
-class SurfaceAnnotationOptionContext:
+class SurfaceAnnotationPlanContext:
     """Shared completed inputs for evaluating each route/label option."""
     request: SurfaceLayoutRequest
     projection: Any
@@ -245,6 +245,24 @@ class SurfaceAnnotationBatch:
     suppressed_callout_ids: frozenset[str]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     narrative_receipts: tuple[NarrativeReceipt, ...] = ()
+
+
+def _register_balloon_tail_edges(surface_obstacles: SurfaceObstacleIndex, annotation_id: str,
+                                path_commands: tuple[PathCommand, ...], tail_tip: tuple[float, float]) -> None:
+    """Register the two already-completed tail edges for later placements."""
+    outline_points = tuple(point for command in path_commands for point in command.points)
+    tip_positions = tuple(index for index, point in enumerate(outline_points) if point == tail_tip)
+    if len(tip_positions) != 1:
+        raise AssertionError("completed balloon outline must contain its tail tip exactly once")
+    tip_index = tip_positions[0]
+    if tip_index == 0 or tip_index + 1 == len(outline_points):
+        raise AssertionError("completed balloon tail tip must have two adjacent outline edges")
+    tail_edges = ((outline_points[tip_index - 1], tail_tip), (tail_tip, outline_points[tip_index + 1]))
+    for edge_index, (start, end) in enumerate(tail_edges):
+        if start != end:
+            surface_obstacles.add(SurfaceObstacle(
+                f"annotation-box:{annotation_id}:tail:{edge_index}", "annotation-box", "annotations",
+                ObstacleSegment(start, end)))
 
 
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
@@ -300,36 +318,29 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
     return batch
 
 
-def complete_route_label_options(options: "RouteLabelOptions", context: SurfaceAnnotationOptionContext
-                                 ) -> tuple["RouteLabelPlan", SurfaceAnnotationBatch]:
-    """Complete annotations against each option's private route inventory, then select once."""
-    from chrona.presentation.layout.surface_route_label_plan import select_completed_route_label_plan
+def complete_route_annotations(plan: "RouteLabelPlan", context: SurfaceAnnotationPlanContext
+                               ) -> SurfaceAnnotationBatch:
+    """Complete annotations once against the actual route/name obstacle inventory."""
+    index = plan.obstacles
 
-    def complete(plan: "RouteLabelPlan") -> SurfaceAnnotationBatch:
-        index = plan.obstacles
+    def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
+        inline, block, inline_size, block_size = _bounds(bounds)
+        if inline_size > 0 and block_size > 0:
+            index.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
+                ObstacleRect(inline, block, inline + inline_size, block + block_size)))
 
-        def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
-            inline, block, inline_size, block_size = _bounds(bounds)
-            if inline_size > 0 and block_size > 0:
-                index.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
-                    ObstacleRect(inline, block, inline + inline_size, block + block_size)))
+    def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
+        index.add(SurfaceObstacle(placement_id, "port", region_id,
+            ObstacleRect(point[0] - 0.01, point[1] - 0.01,
+                         point[0] + 0.01, point[1] + 0.01)))
 
-        def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
-            index.add(SurfaceObstacle(placement_id, "port", region_id,
-                ObstacleRect(point[0] - 0.01, point[1] - 0.01,
-                             point[0] + 0.01, point[1] + 0.01)))
-
-        routes = plan.routes
-        return place_annotations(SurfaceAnnotationContext(
-            context.request, context.projection, context.layout_manifest, context.contract,
-            context.review_rows, context.rows, context.by_source, context.scale,
-            context.start, context.end, context.timeline, context.timeline_bounds, context.mark_by_id,
-            routes.comparison_clusters, routes.instance_rows, context.metric_for, index,
-            register_rect, register_port))
-
-    first = complete(options.first)
-    retry = complete(options.retry) if options.retry is not None else None
-    return select_completed_route_label_plan(options, first, retry)
+    routes = plan.routes
+    return place_annotations(SurfaceAnnotationContext(
+        context.request, context.projection, context.layout_manifest, context.contract,
+        context.review_rows, context.rows, context.by_source, context.scale,
+        context.start, context.end, context.timeline, context.timeline_bounds, context.mark_by_id,
+        routes.comparison_clusters, routes.instance_rows, context.metric_for, index,
+        register_rect, register_port))
 
 
 def _place_annotations_once(context: SurfaceAnnotationContext,
@@ -1097,8 +1108,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 resolved, LabelPlacement("rail", fallback_bounds, True), True)
                         elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
                             # #449 never refuses: complete the first declared
-                            # candidate's own region at its nearest lattice
-                            # position, visibly overflowing any obstacle.
+                            # candidate visibly after its explicit search ends.
+                            # A tail keeps its declared integrated topology.
                             region_bounds = LabelRect(*_bounds(timeline.bounds))
                             anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                              anchor_bounds.y + anchor_bounds.height / 2)
@@ -1129,6 +1140,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     add_diagnostic(
                                         f"W_LAYOUT_ANNOTATION_COVERS_MARK:{annotation_id}:{owner}",
                                         annotation, extra_subjects=covered_subjects)
+                            if first_candidate.connector.kind == "tail":
+                                # Preserve the declared integrated tail topology while
+                                # honoring the completed least-covering box decision.
+                                tail_tip = nearest_box_port(
+                                    anchor_bounds,
+                                    (forced.x + forced.width / 2, forced.y + forced.height / 2))
+                                tail_topology = "direct-tail"
                             # The space the declared candidate had: its own region on the
                             # anchor's side of the as-of rule, minus its declared obstacles.
                             side_region = region_bounds
@@ -1269,6 +1287,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if viewer_fit.mode != "raw":
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            if tail_tip is not None:
+                # A numbered index is placed later in this same annotation
+                # pass. Keep the two visible balloon-tail edges in the shared
+                # obstacle inventory so that index placement cannot land on
+                # the accepted tail after the tail's own search has finished.
+                _register_balloon_tail_edges(surface_obstacles, annotation_id,
+                                             shapes[-1].path_commands, tail_tip)
             if annotation_slot is not None and status_in_list:
                 rail_boxes.append(bounds)
             # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.

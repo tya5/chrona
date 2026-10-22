@@ -5,7 +5,9 @@ from types import SimpleNamespace
 
 from chrona.presentation.layout.labels import CollisionDomain, LabelRect, LabelRequest
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
+)
 from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, SurfaceMemberLabelRequests, build_member_label_requests,
     place_member_labels,
@@ -26,20 +28,21 @@ def _request(placement_id, semantic_id="memberLabel", *, required=False, rule_ho
         required_before_routes=required)
 
 
-def test_routing_phases_keep_required_rule_and_nonmember_labels_before_routes():
+def test_member_names_and_required_labels_precede_routes_for_both_policies():
     optional_name = _request("optional")
     required_name = _request("required", required=True)
-    rule_label = _request("rule-label", rule_host="as-of")
+    rule_label = _request("rule-label", "asOfLabel", rule_host="as-of")
     nonmember = _request("as-of-label", "asOfLabel")
     delta = _request("delta", "finishDelta")
     later = _request("later", "relationLabel")
 
-    before, after = SurfaceMemberLabelRequests(
+    requests = SurfaceMemberLabelRequests(
         (optional_name, required_name, rule_label, nonmember, delta), (later,)
-    ).routing_phases(first_fit=True)
-
-    assert before == (required_name, rule_label, nonmember)
-    assert after == (optional_name, delta, later)
+    )
+    assert requests.routing_phases(first_fit=True) == (
+        (rule_label, optional_name, required_name), (nonmember, delta, later))
+    assert requests.routing_phases(first_fit=False) == (
+        (rule_label, optional_name, required_name), (nonmember, delta, later))
     assert not _request("default").required_before_routes
 
 
@@ -58,8 +61,8 @@ def test_forecast_delta_is_required_separate_from_optional_name_and_before_route
     context = _forecast_context()
     requests = build_member_label_requests(context)
     before, after = requests.routing_phases(first_fit=True)
-    assert len(before) == 1 and len(after) == 1
-    delta, name = before[0], after[0]
+    assert len(before) == 2 and not after
+    delta, name = before
     assert delta.content == "+2d*" and delta.semantic_id == "forecastVarianceBehind"
     assert delta.overflow == "diagnose" and delta.required_before_routes
     assert name.content == "Review gate" and name.overflow == "suppress"
@@ -98,17 +101,20 @@ def test_required_intent_is_closed_even_if_request_arrives_in_post_route_partiti
     diagnosed = replace(_request("diagnosed"), overflow="diagnose")
     optional = _request("optional")
     before, after = SurfaceMemberLabelRequests((), (explicit, diagnosed, optional)).routing_phases(first_fit=True)
-    assert before == (explicit, diagnosed)
-    assert after == (optional,)
+    assert before == (explicit, diagnosed, optional)
+    assert not after
 
 
-def test_best_keeps_the_existing_pre_route_lane_names_and_deltas():
+def test_ordinary_finish_delta_stays_post_route_unless_required():
     name = _request("lane-name")
     delta = _request("lane-delta", "finishDelta")
-    later = _request("post-route")
+    later = _request("post-route", "relationLabel")
     requests = SurfaceMemberLabelRequests((name, delta), (later,))
-    assert requests.routing_phases(first_fit=False) == ((name, delta), (later,))
-    assert requests.routing_phases(first_fit=True) == ((), (name, delta, later))
+    assert requests.routing_phases(first_fit=False) == ((name,), (delta, later))
+    assert requests.routing_phases(first_fit=True) == ((name,), (delta, later))
+    required_delta = replace(delta, required_before_routes=True)
+    requests = SurfaceMemberLabelRequests((name, required_delta), (later,))
+    assert requests.routing_phases(first_fit=True) == ((required_delta, name), (later,))
 
 
 class _Metric:
@@ -160,23 +166,82 @@ def _placement_context(*, slot_width=200):
         (0, 0, 200, 100), None)
 
 
-def test_reserve_only_member_name_crosses_asof_rule_and_registers_full_footprint():
+def test_member_name_avoids_intrinsic_endpoint_ink_without_reserving_a_route():
     context = _placement_context()
     request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
         ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
         "suppress", semantic_id="memberLabel")
+    original = place_member_labels(context, (request,), SurfaceObstacleIndex()).text[0]
+    bounds = original.bounds
+    footprint = SurfaceObstacle("intrinsic-endpoint:a:end", "mark", "timeline",
+        ObstacleRect(float(bounds.inline), float(bounds.block),
+                     float(bounds.inline + bounds.inline_size),
+                     float(bounds.block + bounds.block_size)))
+    context = replace(context, intrinsic_endpoint_footprints=(footprint,))
     index = SurfaceObstacleIndex()
-    index.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((105, 0), (105, 100))))
 
-    batch = place_member_labels(context, (request,), index, reserve_only=True)
+    batch = place_member_labels(context, (request,), index)
 
-    assert len(batch.text) == 1 and batch.text[0].selected_rung == "end"
-    assert index.has("member-label:a")
-    footprint = next(item for item in index.all() if item.placement_id == "label-footprint:member-label:a")
-    assert footprint.obstacle_class == "label-visual"
-    assert footprint.geometry.left < footprint.geometry.right
-    assert [item.placement_id for item in index.collisions(footprint.geometry, classes=("rule",))] == ["as-of"]
-    assert not batch.diagnostics
+    placed, = batch.text
+    assert placed.overflow != "suppressed" and placed.bounds != original.bounds
+    ink = next(item.geometry for item in index.all()
+               if item.placement_id == f"label-footprint:{request.placement_id}")
+    assert not obstacles_intersect(ink, footprint.geometry)
+    assert not index.has(footprint.placement_id)
+
+
+@pytest.mark.parametrize("semantic_id", ("finishDelta", "forecastVarianceBehind"))
+def test_pre_route_delta_avoids_intrinsic_endpoint_ink_and_keeps_clear_end(semantic_id):
+    context = _placement_context()
+    request = replace(_request(f"delta:{semantic_id}", semantic_id),
+        content="+2d*" if semantic_id.startswith("forecast") else "+2d",
+        overflow="diagnose" if semantic_id.startswith("forecast") else "visible-overflow",
+        required_before_routes=True)
+
+    clear = place_member_labels(context, (request,), SurfaceObstacleIndex())
+    assert clear.text[0].selected_rung == "end"
+    assert not any(item.startswith("I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:")
+                   for item in clear.diagnostics)
+
+    clear_bounds = clear.text[0].bounds
+    footprint = SurfaceObstacle("intrinsic-endpoint:delta:end", "mark", "timeline",
+        ObstacleRect(float(clear_bounds.inline), float(clear_bounds.block),
+                     float(clear_bounds.inline + clear_bounds.inline_size),
+                     float(clear_bounds.block + clear_bounds.block_size)))
+    context = replace(context, intrinsic_endpoint_footprints=(footprint,))
+    obstacles = SurfaceObstacleIndex()
+
+    placed = place_member_labels(context, (request,), obstacles)
+
+    assert placed.text[0].bounds != clear_bounds
+    assert placed.text[0].overflow != "suppressed"
+    if semantic_id.startswith("forecast"):
+        assert placed.text[0].required
+    fallback, = (item for item in placed.diagnostics
+                 if item.startswith("I_LAYOUT_FINISH_DELTA_ANCHOR_FALLBACK:"))
+    assert '"blockerPlacementIds":["intrinsic-endpoint:delta:end"]' in fallback
+    placed_ink, = (item.geometry for item in obstacles.all()
+                   if item.placement_id == f"label-footprint:{request.placement_id}")
+    assert not obstacles_intersect(placed_ink, footprint.geometry)
+    assert not obstacles.has(footprint.placement_id)
+
+
+def test_other_label_queries_share_intrinsic_inventory_without_publishing_it():
+    context = _placement_context()
+    request = _request("relation-label", "relationLabel")
+    clear = place_member_labels(context, (request,), SurfaceObstacleIndex())
+    bounds = clear.text[0].bounds
+    footprint = SurfaceObstacle("intrinsic-endpoint:other:end", "mark", "timeline",
+        ObstacleRect(float(bounds.inline), float(bounds.block),
+                     float(bounds.inline + bounds.inline_size),
+                     float(bounds.block + bounds.block_size)))
+    context = replace(context, intrinsic_endpoint_footprints=(footprint,))
+    obstacles = SurfaceObstacleIndex()
+
+    placed = place_member_labels(context, (request,), obstacles)
+
+    assert placed.text[0].bounds != bounds
+    assert not obstacles.has(footprint.placement_id)
 
 
 def test_generic_required_text_translates_diagnose_into_bounded_refusal_not_suppression():
@@ -205,9 +270,9 @@ def test_final_ordinary_member_label_crosses_asof_rule():
     assert [item.placement_id for item in index.collisions(footprint.geometry, classes=("rule",))] == ["as-of"]
 
 
-@pytest.mark.parametrize("required,reserve_only", ((False, False), (True, False), (False, True)))
+@pytest.mark.parametrize("required", (False, True))
 @pytest.mark.parametrize("route_blocks_end", (False, True))
-def test_moving_only_asof_line_preserves_completed_member_label(required, reserve_only, route_blocks_end):
+def test_moving_only_asof_line_preserves_completed_member_label(required, route_blocks_end):
     context = _placement_context()
     request = replace(LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
         ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
@@ -222,19 +287,17 @@ def test_moving_only_asof_line_preserves_completed_member_label(required, reserv
     )
     baseline_index = SurfaceObstacleIndex()
     baseline_index.extend(fixed)
-    baseline = place_member_labels(context, (request,), baseline_index, reserve_only=reserve_only)
+    baseline = place_member_labels(context, (request,), baseline_index)
     assert len(baseline.text) == 1
-    # A route-free reservation deliberately ignores completed routes; final
-    # labels retain them as hard obstacles. Neither mode may depend on as-of.
-    assert baseline.text[0].selected_rung == ("start" if route_blocks_end and not reserve_only else "end")
+    assert baseline.text[0].selected_rung == ("start" if route_blocks_end else "end")
     crossed = set()
     for position in (20, 60, 95, 105, 145, 190):
         line = SurfaceObstacle("as-of", "rule", "timeline",
                                ObstacleSegment((position, 0), (position, 100)))
         index = SurfaceObstacleIndex()
         index.extend((*fixed, line))
-        actual = place_member_labels(context, (request,), index, reserve_only=reserve_only)
-        assert actual == baseline  # Text, geometry, decisions, diagnostics and reservation facts.
+        actual = place_member_labels(context, (request,), index)
+        assert actual == baseline  # Text, geometry, decisions and diagnostics.
         assert line in index.all()  # The exception never removes the shared route/annotation obstacle.
         assert tuple(item for item in index.all() if item.placement_id != "as-of") == baseline_index.all()
         footprint = next(item for item in index.all() if item.placement_id == "label-footprint:member-label:a")
@@ -273,46 +336,3 @@ def test_required_member_name_also_crosses_asof_rule():
 
     assert len(batch.text) == 1 and batch.text[0].selected_rung == "end"
     assert index.has("as-of")
-
-
-def test_reserve_only_does_not_register_unavailable_or_out_of_slot_candidates():
-    request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
-        ("end",), "text", "plot-label", CollisionDomain("timeline", "overlay"),
-        "visible-overflow", bounds=LabelRect(0, 0, 200, 100), semantic_id="memberLabel")
-    # The measured candidate fits the placement bounds but escapes the actual viewport slot.
-    index = SurfaceObstacleIndex()
-    batch = place_member_labels(_placement_context(slot_width=90), (request,), index, reserve_only=True)
-    assert not batch.text
-    assert not index.all()
-    assert not batch.diagnostics
-
-    both_sides = replace(request, candidates=("end", "start"))
-    index = SurfaceObstacleIndex()
-    batch = place_member_labels(_placement_context(slot_width=90), (both_sides,), index, reserve_only=True)
-    assert len(batch.text) == 1 and batch.text[0].selected_rung == "start"
-
-    blocked = SurfaceObstacleIndex()
-    blocked.add(SurfaceObstacle("deadlineMark:critical:segment:0", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
-    only_end = replace(request, candidates=("end",), bounds=None, overflow="visible-overflow")
-    batch = place_member_labels(_placement_context(), (only_end,), blocked, reserve_only=True)
-    assert not batch.text
-    assert not any(item.placement_id.startswith("label-footprint:") for item in blocked.all())
-    assert not batch.diagnostics
-
-
-def test_unavailable_optional_associated_reservation_does_not_apply_final_visible_overflow_failure():
-    context = _placement_context()
-    host = MarkPlacement("planned:a", "a", Rect(Decimal(80), Decimal(40), Decimal(10), Decimal(10)),
-                         (80, 45), (90, 45), semantic_id="planned")
-    context = replace(context, marks=(host,))
-    request = LabelRequest("member-label:a", "a", "Owner", LabelRect(80, 40, 10, 10),
-        ("end", "start"), "text", "plot-label", CollisionDomain("timeline", "overlay"),
-        "visible-overflow", semantic_id="memberLabel", inside_host_obstacle_id="planned:a")
-    index = SurfaceObstacleIndex()
-    index.add(SurfaceObstacle("deadlineMark:critical:segment:0", "rule", "timeline", ObstacleRect(0, 0, 200, 100)))
-    before = index.all()
-
-    batch = place_member_labels(context, (request,), index, reserve_only=True)
-
-    assert not batch.text and not batch.diagnostics
-    assert index.all() == before

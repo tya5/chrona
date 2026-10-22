@@ -1,17 +1,18 @@
-"""Real point-target witness for on-demand route/name coordination."""
+"""Real point-target witness for content-first route/name coordination."""
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
 from chrona.presentation.layout.labels import LabelRect, LabelRequest
+from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
+from chrona.presentation.layout.surface_member_labels import place_member_labels
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import CollisionDomain
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.surface_pipeline import compose_review_surface
 from chrona.presentation.layout import surface_composer
 from chrona.presentation.layout import surface_route_label_plan as plan
-from tests.unit.chrona.presentation.layout.test_surface_route_label_plan import _empty_annotations
 from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import PROJECT as PROJECT_BASE, _view
 from tests.unit.chrona.presentation.scene.test_relation_entry_acceptance import _theme_with_route_fixture_geometry
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
@@ -19,7 +20,7 @@ from tests.unit.chrona.presentation.scene.test_v05_builder import (
 )
 
 
-def test_route_repair_for_span_to_point_preserves_the_at_arrival_and_optional_name(monkeypatch):
+def test_content_first_names_are_hard_route_obstacles_for_safe_at_arrival(monkeypatch):
     objects = {"a": PROJECT_BASE["objects"]["a"],
         "c": {"title": "Second source", "fields": {"owner": "x"}},
         "b": {**PROJECT_BASE["objects"]["b"], "type": "milestone"},
@@ -86,33 +87,44 @@ def test_route_repair_for_span_to_point_preserves_the_at_arrival_and_optional_na
         LabelRect(ax, ay, aw, ah), ("below", "above"), "text", "plot-label",
         CollisionDomain("timeline", "overlay"), "suppress",
         bounds=LabelRect(ax - 70, y, 140, height), semantic_id="memberLabel")
-    context = replace(context, post_route_requests=(name, second_name))
+    pre_route_index = context.clean_obstacles.copy()
+    completed_content = place_member_labels(context.member_labels, (name, second_name), pre_route_index)
+    assert [item.overflow for item in completed_content.text] == ["fit", "fit"]
+    required_ids = frozenset(identifier for item in completed_content.text
+        for identifier in (item.placement_id, f"label-footprint:{item.placement_id}"))
+    original_routes_for = context.routes_for
+    route_contexts = []
 
-    options = plan.compose_routes_and_member_labels(context)
+    def routes_for(index, texts):
+        route_context = replace(original_routes_for(index, texts),
+            required_label_obstacle_ids=required_ids)
+        route_contexts.append(route_context)
+        return route_context
 
-    assert options.retry is not None
-    # In this fixture the below rung intersects more incoming route instances;
-    # the candidate ranking must reserve the lower-disruption above rung.
-    proposals = options.first.members.route_blocked_candidates
-    assert [item.text.placement_id for item in proposals] == [
-        "member-label:neutral-b", "member-label:neutral-b"]
-    assert [item.text.selected_rung for item in proposals] == ["above", "below"]
-    admitted = plan._admissible_reservations(options.first, proposals)
-    assert len(admitted) == 1 and admitted[0].text.selected_rung == "above"
-    assert [item.overflow for item in options.retry.members.text] == ["fit", "fit"]
-    selected, _ = plan.select_completed_route_label_plan(options, _empty_annotations(), _empty_annotations())
-    assert [item.overflow for item in selected.members.text] == ["fit", "fit"]
-    assert {item.content for item in selected.members.text} == {
+    context = replace(context, post_route_requests=(),
+        base_text=(*context.base_text, *completed_content.text),
+        clean_obstacles=pre_route_index, routes_for=routes_for, pre_route_members=None)
+    completed = plan.compose_routes_and_member_labels(context)
+
+    assert [item.overflow for item in completed_content.text] == ["fit", "fit"]
+    assert {item.content for item in completed_content.text} == {
         "A neutral milestone", "Neutral source plan"}
-    routes = selected.routes.relations
+    assert route_contexts and route_contexts[0].required_label_obstacle_ids == required_ids
+    assert all(completed.obstacles.has(identifier) for identifier in required_ids)
+    assert route_contexts[0].obstacles is completed.obstacles
+    assert not context.clean_obstacles.select(classes=("dependency-route",))
+    routes = completed.routes.relations
     assert len(routes) == 3 and not any(item.suppressed for item in routes)
-    route = routes[0]
-    old_route = options.first.routes.relations[0]
-    assert route.points != old_route.points
-    assert route.points[0] == old_route.points[0]
-    assert route.points[-1] == old_route.points[-1]
-    # An `at` endpoint enters at the left vertex, not from the point's right.
+    # An `at` endpoint enters at the left vertex. Positive-length travel along
+    # its closed face is forbidden; the final segment only touches the vertex.
     for route in routes:
         assert route.points[-1] == (x, mark_y + mark_height / 2)
         assert route.points[-1][0] < x + mark_width
-        assert route.points[-2][0] == route.points[-1][0]
+        assert route.points[-2][1] == route.points[-1][1]
+        assert route.points[-2][0] < route.points[-1][0]
+    for text in completed_content.text:
+        box = ObstacleRect(float(text.bounds.inline), float(text.bounds.block),
+            float(text.bounds.inline + text.bounds.inline_size),
+            float(text.bounds.block + text.bounds.block_size))
+        assert not completed.obstacles.collisions(box, classes=("dependency-route",),
+            regions=("timeline",))

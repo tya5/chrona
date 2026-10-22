@@ -187,7 +187,7 @@ def test_relation_scene_paths_keep_their_resolved_fixed_endpoints():
     _assert_exact_residual_diagnostics(paths, diagnostics)
 
 
-def test_mirrored_span_end_approach_keeps_shared_endpoint_and_avoids_reuse():
+def test_mirrored_span_end_diagnoses_unavoidable_outward_corridor_sharing():
     source = _item("f", D(2026, 2, 15), D(2026, 2, 20))
     node = _item("g", D(2026, 2, 1), D(2026, 2, 10))
     successor = _item("l", D(2026, 2, 10), D(2026, 2, 16))
@@ -206,9 +206,18 @@ def test_mirrored_span_end_approach_keeps_shared_endpoint_and_avoids_reuse():
 
     assert arrival.to_instance_id == departure.from_instance_id == "g:g"
     assert arrival.points[-1] == departure.points[0] == pytest.approx((node_right, node_middle))
-    assert _overlap((arrival.points[-2], arrival.points[-1]),
-                    (departure.points[0], departure.points[1])) == 0.0
-    _assert_exact_residual_diagnostics(paths, diagnostics)
+    # Both relations name the same span-end port. A vertical alternative would
+    # travel along its closed end face, so only the outward horizontal corridor
+    # is safe; the existing node-approach contract must diagnose its reuse.
+    assert arrival.points[-2][1] == departure.points[1][1] == node_middle
+    assert arrival.points[-2][0] > node_right and departure.points[1][0] > node_right
+    overlap = _overlap((arrival.points[-2], arrival.points[-1]),
+                       (departure.points[0], departure.points[1]))
+    assert overlap == pytest.approx(min(arrival.points[-2][0] - node_right,
+                                       departure.points[1][0] - node_right))
+    assert overlap > 0
+    assert _assert_exact_residual_diagnostics(paths, diagnostics) == {
+        ("g:g", tuple(sorted((arrival.scene_id, departure.scene_id))))}
 
 
 def test_multiple_arrivals_then_departure_restore_public_order_and_diagnose_all_residuals():

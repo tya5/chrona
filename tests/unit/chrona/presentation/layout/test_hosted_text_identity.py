@@ -8,8 +8,8 @@ from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.surface_lanes import complete_hosted_text_identity
 from chrona.presentation.layout.surface_quality import (
     LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, TextPlacement, SurfacePlacement,
-    completed_symbol_primitive_ids,
 )
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 
 
 def _mark_and_number():
@@ -38,8 +38,8 @@ def test_single_part_host_identity_remains_byte_stable():
 def test_glyph_host_resolves_to_first_painted_emitted_part():
     mark, number = _mark_and_number()
     completed = complete_hosted_text_identity(
-        (number,), (mark,), (_emission("planned:gate:part:0", "planned:gate:part:1"),))
-    assert completed[0].host_placement_id == "planned:gate:part:0"
+        (number,), (mark,), (_emission("planned:gate:part0", "planned:gate:part1"),))
+    assert completed[0].host_placement_id == "planned:gate:part0"
     assert completed[0].paint_order > mark.paint_order
 
 

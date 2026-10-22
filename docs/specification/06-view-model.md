@@ -1023,6 +1023,18 @@ For a plot `tail` candidate, the same View intent may complete as a direct
 integrated balloon tail or a strict routed connection to a short balloon tip.
 Layout records the topology; View does not declare path coordinates. See
 [the C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+If all fitting candidates exhaust and the normal visible-overflow policy applies,
+the first declared plot tail still completes as an integrated balloon tail,
+not a detached rectangle or an undeclared leader. Layout considers four boxes
+outside the anchor, using the existing half-box lattice step (minimum one
+geometry unit) as the gap. It selects by fewest collisions with completed text
+and annotation boxes, then least plot overflow, fewest other obstacle collisions,
+Manhattan anchor distance, block distance, inline distance, block coordinate and
+inline coordinate. This preserves earlier narrative before preferring proximity.
+The tip is the nearest anchor-boundary port; completed tail edges
+enter the shared obstacle inventory. The box and its text retain explicit
+visible-overflow diagnostics: this connection is not a fitted or clear tail.
+This total geometry completion adds no route-search pass or budget exemption.
 
 ### 9.2 The View as the connector, and the design it takes from the Layout profile (#1341)
 

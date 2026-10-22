@@ -147,6 +147,36 @@ def segment_length_inside_rect(segment: ObstacleSegment, rect: ObstacleRect) -> 
     return max(0.0, high - low) * hypot(x2 - x1, y2 - y1)
 
 
+def segment_closed_rect_contact_interval(
+        segment: ObstacleSegment, rect: ObstacleRect) -> tuple[float, float] | None:
+    """Return the closed-rectangle intersection interval along a segment.
+
+    Unlike ``segment_length_inside_rect``, this includes boundary travel and
+    isolated point contact. Callers can distinguish a positive-length edge
+    run from a single endpoint touch without changing general obstacle policy.
+    """
+    x1, y1 = segment.start
+    x2, y2 = segment.end
+    if (x1, y1) == (x2, y2):
+        if rect.left <= x1 <= rect.right and rect.top <= y1 <= rect.bottom:
+            return (0.0, 0.0)
+        return None
+    low, high = 0.0, 1.0
+    for value, delta, start, end in ((x1, x2 - x1, rect.left, rect.right),
+                                     (y1, y2 - y1, rect.top, rect.bottom)):
+        if delta == 0:
+            if not start <= value <= end:
+                return None
+            continue
+        first, last = sorted(((start - value) / delta, (end - value) / delta))
+        low, high = max(low, first), min(high, last)
+        if high < low:
+            return None
+    if high < 0 or low > 1:
+        return None
+    return max(0.0, low), min(1.0, high)
+
+
 def segment_overlap_length(first: tuple[tuple[float, float], tuple[float, float]],
                            second: tuple[tuple[float, float], tuple[float, float]]) -> float:
     """Shared orthogonal collinear length, excluding crossings and point contacts."""

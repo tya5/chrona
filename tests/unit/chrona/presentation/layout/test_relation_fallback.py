@@ -3,7 +3,9 @@ from dataclasses import replace
 
 import pytest
 
-from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.ports import (
+    ConnectorEgress, outward_corridor_ends, split_route_at_physical_corridors,
+)
 from chrona.presentation.layout.relation_fallback import (
     complete_fixed_connector, fixed_connector_candidates, paired_stub_geometry,
 )
@@ -24,12 +26,21 @@ def test_finite_orthogonal_candidates_preserve_semantic_endpoints_and_outward_co
         assert all(a[0] == b[0] or a[1] == b[1] for a, b in zip(path, path[1:]))
 
 
+def test_shared_outward_leads_keep_endpoint_corridors_and_match_fixed_fallback():
+    pair = (replace(PAIR[0], exposed_port=(4., 0.)),
+            replace(PAIR[1], exposed_port=(95., 20.)))
+    leads = outward_corridor_ends(pair, source_run=16., target_run=12.)
+    assert leads == ((20., 0.), (83., 20.))
+    paths = fixed_connector_candidates(pair, source_run=16., target_run=12.)
+    assert paths[0] == ((0., 0.), (4., 0.), (20., 0.), (83., 0.), (83., 20.), (95., 20.), (100., 20.))
+
+
 def test_preparation_rejection_tries_next_fixed_candidate_without_graph_search():
     tried = []
     def prepare(path, source, target):
         tried.append(path)
         return None if len(tried) == 1 else path
-    result = complete_fixed_connector((PAIR,), source_run=6., target_run=9.,
+    result = complete_fixed_connector((PAIR,), lead_runs=lambda _source, _target: (6., 9.),
         prepare=prepare, accept=lambda points: not route_self_overlaps(points))
     assert result is not None and result.points == tried[-1] and len(tried) == 2
 
@@ -39,9 +50,50 @@ def test_uncompletable_host_egress_returns_none_for_paired_stub_completion():
     def reject(path, source, target):
         calls.append(path)
         return None
-    assert complete_fixed_connector((PAIR,), source_run=6., target_run=9.,
+    assert complete_fixed_connector((PAIR,), lead_runs=lambda _source, _target: (6., 9.),
         prepare=reject, accept=lambda points: True) is None
     assert 1 <= len(calls) <= 6
+
+
+def test_fixed_recovery_uses_shared_residual_leads_not_a_second_full_terminal_reserve():
+    from chrona.presentation.layout.relation_endpoint_geometry import endpoint_lead_run
+    from chrona.presentation.layout.relation_terminals import marker_geometry
+
+    marker = marker_geometry({"shape": "circle", "headLength": 5, "headWidth": 5})
+    pair = (replace(PAIR[0], exposed_port=(4., 0.)), PAIR[1])
+    observed = []
+    def leads(source, target):
+        result = (endpoint_lead_run(source.exposed_port, source.semantic_port, 1, marker),
+                  endpoint_lead_run(target.exposed_port, target.semantic_port, 1, marker))
+        observed.append(result)
+        return result
+
+    completed = complete_fixed_connector((pair,), lead_runs=leads,
+        prepare=lambda path, _source, _target: path, accept=lambda _path: True)
+
+    assert observed == [(0., 3.5)]
+    assert completed is not None
+    assert completed.points[1] == (4., 0.)  # the completed host corridor already exceeds 3.5
+    assert completed.points[-2] == (96.5, 20.)
+
+
+def test_paired_stub_runs_use_shared_asymmetric_endpoint_leads_and_host_residual():
+    from chrona.presentation.layout.relation_endpoint_geometry import endpoint_lead_run
+    from chrona.presentation.layout.relation_terminals import marker_geometry
+
+    source_marker = marker_geometry({"shape": "circle", "headLength": 5, "headWidth": 5})
+    target_marker = marker_geometry({"shape": "open-triangle", "headLength": 3, "headWidth": 2},
+                                    stroke_width=2)
+    pair = (replace(PAIR[0], exposed_port=(4., 0.)),
+            replace(PAIR[1], exposed_port=(95., 20.)))
+    source_run = endpoint_lead_run(pair[0].exposed_port, pair[0].semantic_port, 1., source_marker)
+    target_run = endpoint_lead_run(pair[1].exposed_port, pair[1].semantic_port, 2., target_marker)
+
+    assert source_run == 0.  # the host corridor already exceeds the centered half-head + stroke lead
+    assert target_run > source_run  # an asymmetric non-centered painted terminal has its own lead
+    paired = paired_stub_geometry(pair, source_run=source_run, target_run=target_run)
+    assert paired.source == ((0., 0.), (4., 0.))
+    assert paired.target == ((95. - target_run, 20.), (100., 20.))
 
 
 @pytest.mark.parametrize("run", (-1., float("nan"), float("inf"), True, "1"))
@@ -64,11 +116,36 @@ def test_paired_stubs_retain_two_independent_semantic_endpoints():
 
 
 def test_paired_stubs_retain_exposed_comparison_corridors():
-    pair = (replace(PAIR[0], exposed_port=(4., 0.)),
-            replace(PAIR[1], exposed_port=(95., 20.)))
+    pair = (replace(PAIR[0], exposed_port=(4., 0.), corridor_host_ids=("source-host",)),
+            replace(PAIR[1], exposed_port=(95., 20.), corridor_host_ids=("target-host",)))
     paired = paired_stub_geometry(pair, source_run=16., target_run=12.)
-    assert paired.source == ((0., 0.), (4., 0.), (20., 0.))
-    assert paired.target == ((83., 20.), (95., 20.), (100., 20.))
+    assert paired.source == ((0., 0.), (20., 0.))
+    assert paired.target == ((83., 20.), (100., 20.))
+    assert split_route_at_physical_corridors(paired.source, pair[0], None) == (
+        ((0., 0.), (4., 0.), ("source-host",)), ((4., 0.), (20., 0.), ()))
+    assert split_route_at_physical_corridors(paired.target, None, pair[1]) == (
+        ((83., 20.), (95., 20.), ()), ((95., 20.), (100., 20.), ("target-host",)))
+
+
+def test_paired_stub_reduces_one_ulp_straight_boundary_without_moving_the_port():
+    from math import nextafter
+
+    coordinate = 824.2823529411764
+    pair = (replace(PAIR[0], semantic_port=(coordinate, 194.4),
+                    exposed_port=(nextafter(coordinate, float("inf")), 194.4)), PAIR[1])
+    paired = paired_stub_geometry(pair, source_run=7., target_run=12.)
+    assert paired.source == (pair[0].semantic_port, (pair[0].exposed_port[0] + 7., 194.4))
+    assert paired.source[0] != pair[0].exposed_port
+    assert paired.source[1][0] - paired.source[0][0] >= 7.
+
+
+def test_paired_stub_keeps_real_short_corner_and_reversal_segments():
+    corner = (replace(PAIR[0], side="above", exposed_port=(0.25, 0.)), PAIR[1])
+    reversal = (replace(PAIR[0], exposed_port=(-0.25, 0.)), PAIR[1])
+    assert paired_stub_geometry(corner, source_run=7., target_run=12.).source == (
+        (0., 0.), (0.25, 0.), (0.25, -7.))
+    assert paired_stub_geometry(reversal, source_run=7., target_run=12.).source == (
+        (0., 0.), (-0.25, 0.), (6.75, 0.))
 
 
 def test_degenerate_stub_is_not_a_drawn_relation():

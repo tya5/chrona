@@ -21,8 +21,9 @@ def _primitive(identifier, kind="Text", *, bounds=None, slot="slot", order=0, ho
     return value
 
 
-def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF", version="chrona/scene/v0.6"):
-    return {"version": version, "kind": "scene", "surfaces": [{"id": "review", "slots": [
+def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF", version="chrona/scene/v0.6",
+           diagnostics=()):
+    return {"version": version, "kind": "scene", "diagnostics": list(diagnostics), "surfaces": [{"id": "review", "slots": [
         {"id": "slot", "bounds": _bounds(), "overflow": overflow},
     ], "canvasPaint": {"fill": canvas_paint, "opacity": 1}, "primitives": list(primitives)}]}
 
@@ -343,6 +344,87 @@ def test_two_paths_for_one_relation_are_an_error_and_one_path_each_is_not_1031()
     assert dict(finding.measured_facts) == {"relation": "a", "paths": 2}
 
 
+def _stub_pair_paths(source_ref="logical-relation"):
+    source = _relation_path("relation:fragment-A", source_ref)
+    source.update(points=[[0, 0], [5, 0]], markerStart={}, markerEnd=None)
+    target = _relation_path("relation:fragment-B", source_ref)
+    target.update(points=[[10, 0], [15, 0]], markerStart=None, markerEnd={})
+    return source, target
+
+
+def _stub_receipt(*, surface="review", occurrence="relation:occurrence",
+                  fragment_ids=("relation:fragment-A", "relation:fragment-B"),
+                  stage="stub", critical=False):
+    return "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps({
+        "surfaceId": surface, "relationId": occurrence, "stage": stage,
+        "critical": critical, "fragmentIds": list(fragment_ids)}, separators=(",", ":"))
+
+
+def test_only_explicit_valid_stub_fragment_pair_is_not_a_duplicate():
+    paths = _stub_pair_paths()
+    findings = evaluate_scene_perceptibility(_scene(*paths,
+        diagnostics=(_stub_receipt(),)))
+    assert not any(item.code == "E_SCENE_RELATION_PATH_DUPLICATE" for item in findings)
+
+
+def test_explicit_stub_pair_does_not_depend_on_painted_terminals():
+    source, target = _stub_pair_paths()
+    source.pop("markerStart")
+    source.pop("markerEnd")
+    target.pop("markerStart")
+    target.pop("markerEnd")
+    findings = evaluate_scene_perceptibility(_scene(source, target, diagnostics=(_stub_receipt(),)))
+    assert not any(item.code == "E_SCENE_RELATION_PATH_DUPLICATE" for item in findings)
+
+
+@pytest.mark.parametrize("invalid", [
+    "missing", "malformed", "duplicate", "wrong-surface", "wrong-stage", "mismatched-ids",
+    "third-path", "graph-reference", "explicit-null-refs", "wrong-stage-conflict", "overlapping-pair",
+    "malformed-overlapping-pair",
+])
+def test_invalid_stub_evidence_never_suppresses_relation_duplicate(invalid):
+    source, target = _stub_pair_paths()
+    receipt = _stub_receipt()
+    extra_paths = ()
+    if invalid == "missing":
+        receipts = ()
+    elif invalid == "malformed":
+        payload = json.loads(receipt.split(":", 1)[1])
+        payload["extra"] = True
+        receipts = ("I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload),)
+    elif invalid == "duplicate":
+        receipts = (receipt, receipt)
+    elif invalid == "wrong-surface":
+        receipts = (_stub_receipt(surface="other"),)
+    elif invalid == "wrong-stage":
+        receipts = (_stub_receipt(stage="marks"),)
+    elif invalid == "mismatched-ids":
+        receipts = (_stub_receipt(fragment_ids=("not-source", "not-target")),)
+    elif invalid == "third-path":
+        extra_paths = (_relation_path("relation:occurrence:extra", "logical-relation"),)
+        receipts = (receipt,)
+    elif invalid == "graph-reference":
+        source["fromInstanceId"] = "from-node"
+        source["toInstanceId"] = "to-node"
+        receipts = (receipt,)
+    elif invalid == "explicit-null-refs":
+        source["fromInstanceId"] = None
+        source["toInstanceId"] = None
+        receipts = (receipt,)
+    elif invalid == "wrong-stage-conflict":
+        receipts = (receipt, _stub_receipt(stage="marks"))
+    elif invalid == "overlapping-pair":
+        receipts = (receipt, _stub_receipt(fragment_ids=("relation:fragment-A", "relation:fragment-C")))
+    elif invalid == "malformed-overlapping-pair":
+        receipts = (receipt, _stub_receipt(occurrence="another-occurrence", fragment_ids=(
+            "relation:fragment-A", "relation:fragment-B", "relation:fragment-C")))
+    else:
+        raise AssertionError(invalid)
+    findings = evaluate_scene_perceptibility(_scene(source, target, *extra_paths, diagnostics=receipts))
+    finding, = [item for item in findings if item.code == "E_SCENE_RELATION_PATH_DUPLICATE"]
+    assert finding.severity == "error"
+
+
 def test_the_legend_dependency_swatch_is_not_a_relation_path_1031():
     swatch = _relation_path("legend-swatch:dependency", "dependency")
     assert "E_SCENE_RELATION_PATH_DUPLICATE" not in _codes(_scene(swatch, _relation_path("relation:dependency", "dependency")))
@@ -372,6 +454,173 @@ def test_relation_mark_crossings_include_own_foreign_and_diagonal_paths(points):
     findings = [f for f in evaluate_scene_perceptibility(_scene(path, own, foreign))
                 if f.code == "E_SCENE_RELATION_THROUGH_MARK"]
     assert {f.primitive_ids[1] for f in findings} == {"planned:a", "planned:c"}
+
+
+def _recovered_crossing_scene(stage="marks"):
+    relation_id = "relation:r:source:target"
+    relation = _primitive(relation_id, "Path", slot="slot", order=9,
+                          paint={"stroke": "#000000", "strokeWidth": 1, "opacity": 1})
+    relation.update(sourceKind="relation", sourceRef="r", points=[[5, 5], [15, 5]],
+                    fromInstanceId="source", toInstanceId="target")
+    halo = _primitive(f"{relation_id}:halo", "Path", slot="slot", order=8,
+                      paint={"stroke": "#FFFFFF", "strokeWidth": 3, "opacity": 1})
+    halo.update(sourceKind="decoration", sourceRef="r", purpose="dependency-halo",
+                visualRole="dependency-halo", points=[[5, 5], [15, 5]])
+    source = _primitive("planned:source", "Rect", bounds=_bounds(0, 2, 5, 6), slot="slot")
+    target = _primitive("planned:target", "Rect", bounds=_bounds(15, 2, 5, 6), slot="slot")
+    crossing = _primitive("planned:foreign", "Rect", bounds=_bounds(9, 2, 2, 6), slot="slot")
+    document = _scene(relation, halo, source, target, crossing)
+    document["surfaces"][0]["slots"][0]["bounds"] = _bounds(0, 0, 30, 20)
+    document["diagnostics"] = ["I_LAYOUT_RELATION_RESOLUTION:" + json.dumps({
+        "surfaceId": "review", "relationId": relation_id,
+        "stage": stage, "critical": False,
+    }, separators=(",", ":"))]
+    return document
+
+
+@pytest.mark.parametrize("stage", ["marks", "overlap"])
+def test_matching_declared_mark_or_overlap_recovery_is_informational(stage):
+    findings = [item for item in evaluate_scene_perceptibility(_recovered_crossing_scene(stage))
+                if item.code in {"E_SCENE_RELATION_THROUGH_MARK",
+                                 "I_SCENE_RELATION_RECOVERED_THROUGH_MARK"}]
+    assert len(findings) == 1
+    finding, = findings
+    assert (finding.code, finding.severity, finding.disposition) == (
+        "I_SCENE_RELATION_RECOVERED_THROUGH_MARK", "info", "declared-recovery")
+    assert finding.primitive_ids == ("relation:r:source:target", "planned:foreign")
+    assert dict(finding.measured_facts) == {"relation": "r", "inside": 1.0, "stage": stage}
+
+
+def _composite_endpoint_scene(*, source_suffixes=("0", "1"), target_suffixes=("0", "1"),
+                              source_bounds=None, target_bounds=None):
+    document = _recovered_crossing_scene()
+    primitives = document["surfaces"][0]["primitives"]
+    source = next(item for item in primitives if item.get("id") == "planned:source")
+    target = next(item for item in primitives if item.get("id") == "planned:target")
+    primitives.remove(source)
+    primitives.remove(target)
+    for base, suffixes, bounds in (
+        ("planned:source", source_suffixes, source_bounds or source["bounds"]),
+        ("planned:target", target_suffixes, target_bounds or target["bounds"]),
+    ):
+        for index, suffix in enumerate(suffixes):
+            part = _primitive(f"{base}:part{suffix}", "Symbol", bounds=dict(bounds), order=10 + index)
+            part.update(sourceKind="object", sourceRef=base.removeprefix("planned:"), purpose="planned",
+                        visualRole="planned", paint={"fill": "#000000", "opacity": 1})
+            primitives.append(part)
+    return document
+
+
+def test_native_compact_composite_endpoint_ids_authorize_only_nonendpoint_recovery_crossings():
+    findings = [item for item in evaluate_scene_perceptibility(_composite_endpoint_scene())
+                if item.code in {"E_SCENE_RELATION_THROUGH_MARK",
+                                 "I_SCENE_RELATION_RECOVERED_THROUGH_MARK"}]
+    assert len(findings) == 1
+    assert (findings[0].code, findings[0].primitive_ids) == (
+        "I_SCENE_RELATION_RECOVERED_THROUGH_MARK",
+        ("relation:r:source:target", "planned:foreign"))
+
+
+@pytest.mark.parametrize("stage", ["marks", "overlap"])
+def test_composite_endpoint_crossing_is_not_excused_by_a_valid_recovery_receipt(stage):
+    document = _composite_endpoint_scene(source_bounds=_bounds(0, 2, 8, 6))
+    document["diagnostics"][0] = document["diagnostics"][0].replace('"marks"', json.dumps(stage))
+    findings = evaluate_scene_perceptibility(document)
+    endpoint_findings = [item for item in findings
+                         if item.primitive_ids[1:] in {
+                             ("planned:source:part0",), ("planned:source:part1",)}]
+    assert len(endpoint_findings) == 2
+    assert all(item.code == "E_SCENE_RELATION_THROUGH_MARK" for item in endpoint_findings)
+
+
+@pytest.mark.parametrize("variant", ["alternate", "mixed", "gap", "base-collision", "bounds"])
+def test_unresolved_composite_endpoint_identity_cannot_authorize_a_recovered_crossing(variant):
+    document = _composite_endpoint_scene()
+    primitives = document["surfaces"][0]["primitives"]
+    source_parts = [item for item in primitives if str(item.get("id", "")).startswith("planned:source:part")]
+    if variant == "alternate":
+        for part in source_parts:
+            part["id"] = part["id"].replace(":part", ":part:")
+    elif variant == "mixed":
+        source_parts[1]["id"] = source_parts[1]["id"].replace(":part", ":part:")
+    elif variant == "gap":
+        source_parts[1]["id"] = "planned:source:part2"
+    elif variant == "base-collision":
+        primitives.append(_primitive("planned:source", "Rect", bounds=_bounds(0, 2, 5, 6)))
+    else:
+        source_parts[1]["bounds"]["inlineSize"] += 1
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "E_SCENE_RELATION_THROUGH_MARK"]
+    assert findings
+    assert any(item.primitive_ids[1] == "planned:foreign" for item in findings)
+
+
+@pytest.mark.parametrize("invalidator", [
+    "missing-halo", "wrong-halo-id", "wrong-path", "wrong-source", "wrong-paint-clip",
+    "wrong-stroke-clip", "wrong-ground", "not-wider", "wrong-order", "missing-receipt",
+    "dashed-halo", "halo-marker-start", "halo-marker-end", "halo-graph-endpoints",
+    "wrong-surface", "duplicate-receipt", "malformed-receipt", "malformed-stage", "endpoint-crossing",
+    "missing-endpoint", "label-visuals", "text", "stub",
+])
+def test_incomplete_or_inapplicable_recovery_evidence_keeps_crossing_as_error(invalidator):
+    document = _recovered_crossing_scene()
+    surface = document["surfaces"][0]
+    relation, halo = surface["primitives"][:2]
+    if invalidator == "missing-halo":
+        surface["primitives"].remove(halo)
+    elif invalidator == "wrong-halo-id":
+        halo["id"] = "relation:other:halo"
+    elif invalidator == "wrong-path":
+        halo["points"] = [[5, 5], [14, 5]]
+    elif invalidator == "wrong-source":
+        halo["sourceRef"] = "other"
+    elif invalidator == "wrong-paint-clip":
+        halo["paintClip"] = {"bounds": _bounds(0, 0, 10, 10)}
+    elif invalidator == "wrong-stroke-clip":
+        halo["strokeClip"] = {"bounds": _bounds(0, 0, 10, 10)}
+    elif invalidator == "wrong-ground":
+        halo["paint"]["stroke"] = "#EEEEEE"
+    elif invalidator == "not-wider":
+        halo["paint"]["strokeWidth"] = 1
+    elif invalidator == "wrong-order":
+        halo["paintOrder"] = 7
+    elif invalidator == "dashed-halo":
+        halo["paint"]["dash"] = [2, 1]
+    elif invalidator == "halo-marker-start":
+        halo["markerStart"] = "arrow"
+    elif invalidator == "halo-marker-end":
+        halo["markerEnd"] = "arrow"
+    elif invalidator == "halo-graph-endpoints":
+        halo["fromInstanceId"] = "source"
+        halo["toInstanceId"] = "target"
+    elif invalidator == "missing-receipt":
+        document["diagnostics"] = []
+    elif invalidator == "wrong-surface":
+        document["diagnostics"][0] = document["diagnostics"][0].replace('"review"', '"elsewhere"')
+    elif invalidator == "duplicate-receipt":
+        document["diagnostics"].append(document["diagnostics"][0])
+    elif invalidator == "malformed-receipt":
+        payload = json.loads(document["diagnostics"][0].split(":", 1)[1])
+        payload["critical"] = "false"
+        document["diagnostics"][0] = "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload)
+    elif invalidator == "malformed-stage":
+        payload = json.loads(document["diagnostics"][0].split(":", 1)[1])
+        payload["stage"] = ["marks"]
+        document["diagnostics"][0] = "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload)
+    elif invalidator == "endpoint-crossing":
+        surface["primitives"][2]["bounds"] = _bounds(9, 2, 2, 6)
+        surface["primitives"].pop(4)
+    elif invalidator == "missing-endpoint":
+        relation.pop("fromInstanceId")
+        relation.pop("toInstanceId")
+    else:
+        payload = json.loads(document["diagnostics"][0].split(":", 1)[1])
+        payload["stage"] = invalidator
+        document["diagnostics"][0] = "I_LAYOUT_RELATION_RESOLUTION:" + json.dumps(payload)
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "E_SCENE_RELATION_THROUGH_MARK"]
+    assert len(findings) == 1
+    assert findings[0].primitive_ids[0] == relation["id"]
 
 
 def test_boundary_contact_ghost_and_legend_swatch_are_not_primary_crossings():

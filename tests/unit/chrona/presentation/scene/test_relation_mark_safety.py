@@ -68,8 +68,8 @@ def test_route_uses_open_side_when_foreign_bar_closes_above_or_below(
         measured_sources=measurements, capabilities={"svg": True})
     surface = compose_review_surface(value)
     scene_relations = [item for item in surface.primitives
-                       if item.scene_id.startswith("relation:")
-                       and not item.scene_id.startswith("relation-label")]
+                       if item.kind.value == "Path" and item.purpose == "dependency"
+                       and item.source_kind == "relation"]
     assert len(scene_relations) == 1
     points = scene_relations[0].points
     marks = {item.scene_id: item for item in surface.primitives

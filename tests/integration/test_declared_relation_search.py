@@ -4,7 +4,6 @@ import json
 import pytest
 
 from chrona.presentation.layout import surface_route_label_plan as label_plan
-from chrona.presentation.layout import surface_lane_route_plan as lane_plan
 from chrona.presentation.layout import surface_routes
 from chrona.presentation.model.info_diagnostics import RelationRoutingSummary, RelationSearchBudgetHit
 from chrona.usecases.draft_render import warning_payloads
@@ -21,43 +20,54 @@ def test_declared_policy_controls_real_pass_order_and_info_projection(tmp_path, 
     if policy is not None:
         routing["search"] = policy
     calls = []
+    composed = []
+    active_pass = [None]
     original_routes = surface_routes.compose_surface_routes
     def observe(context):
         calls.append((context.progress_pass, tuple(item.semantic_id for item in context.text)))
-        return original_routes(context)
-    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe)
+        active_pass[0] = context.progress_pass
+        result = original_routes(context)
+        composed.append((context.progress_pass, result))
+        return result
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe)
     results = []
     original_select = surface_routes.select_relation_route
     def select(*args, **kwargs):
         result = original_select(*args, **kwargs)
-        results.append(result)
+        results.append((active_pass[0], kwargs.get("relation_scene_id"), result))
         return result
     monkeypatch.setattr(surface_routes, "select_relation_route", select)
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=3), presentation=parts)
     infos = [item for item in rendered.info_diagnostics if isinstance(item, RelationRoutingSummary)]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == "I_LAYOUT_RELATION_ROUTING"]
+    passes = [name.split(":", 1)[0] for name, _ in calls]
+    assert passes == ["route-content-baseline"]
     if policy == "best":
         assert infos == payloads == []
-        passes = [name.split(":", 1)[0] for name, _ in calls]
-        lane_passes = [name for name in passes if name.startswith("lane-")]
-        assert lane_passes == sorted(lane_passes, key=("lane-rehearsal", "lane-reference",
-                                                       "lane-reservation-rehearsal").index)
-        baseline_index = passes.index("route-label-baseline")
-        assert passes[:baseline_index] == lane_passes
-        assert passes[baseline_index:] in (["route-label-baseline"],
-                                          ["route-label-baseline", "route-label-recovery"])
+        assert len(composed) == len(calls) == 1
         return
-    passes = [name.split(":", 1)[0] for name, _ in calls]
-    assert passes[0] == "route-label-baseline"
-    assert passes in (["route-label-baseline"],
-                      ["route-label-baseline", "route-label-recovery"])
-    assert not ({"memberLabel", "finishDelta"} & set(calls[0][1]))
-    assert len(infos) == len(payloads) == len(calls)
-    assert sum(info.relation_instances for info in infos) == len(results)
-    assert sum(info.shape_settled for info in infos) == sum(
-        item.settled_by_shape and not item.search_used for item in results)
-    assert sum(info.fallback_search for info in infos) == sum(item.search_used for item in results)
+    assert len(composed) == len(calls) == 1
+    assert "memberLabel" in calls[0][1]
+    assert len(infos) == len(payloads) == len(composed) == len(calls)
+    emitted_infos = []
+    for pass_name, batch in composed:
+        summary, = [item for item in batch.routing_info if isinstance(item, RelationRoutingSummary)]
+        emitted_infos.append(summary)
+        selected = [(relation_id, item) for name, relation_id, item in results if name == pass_name]
+        grouped = {}
+        for relation_id, item in selected:
+            grouped.setdefault(relation_id, []).append(item)
+        assert summary.relation_instances == len(grouped)
+        assert summary.relation_instances == sum(not item.suppressed for item in batch.relations)
+        assert summary.fallback_search == sum(any(item.search_used for item in attempts)
+                                              for attempts in grouped.values())
+        shape_settled = 0
+        for attempts in grouped.values():
+            final = next((item for item in attempts if item.selected_pair is not None), attempts[-1])
+            shape_settled += int(final.selected_pair is not None and final.settled_by_shape
+                                 and not any(item.search_used for item in attempts))
+        assert summary.shape_settled == shape_settled
+    assert infos == emitted_infos
     assert all(payload["severity"] == "info" for payload in payloads)
     assert [payload["shapeSettled"] for payload in payloads] == [info.shape_settled for info in infos]
     scene_info = [item for item in rendered.scene.diagnostics if item.startswith("I_LAYOUT_RELATION_ROUTING:")]
@@ -84,29 +94,23 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
                                            "search": policy, "searchBudget": 1}
     # Negative control: force the actual fallback iterator rather than a shape.
     monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: iter(()))
-    monkeypatch.setattr(routing, "supplemental_relation_channel_candidates", lambda *args, **kwargs: iter(()))
     original_routes = surface_routes.compose_surface_routes
     seen = []
+    compose_passes = []
     def observe(context):
+        compose_passes.append(context.progress_pass)
         result = original_routes(context)
         seen.extend(item for item in result.routing_info if isinstance(item, RelationSearchBudgetHit))
         return result
-    monkeypatch.setattr(lane_plan, "compose_surface_routes", observe)
     monkeypatch.setattr(label_plan, "compose_surface_routes", observe)
     rendered = sr.render(tmp_path, sr.chain_project(groups=1, per_group=3), presentation=parts)
     facts = [item for item in rendered.info_diagnostics if isinstance(item, RelationSearchBudgetHit)]
     assert facts == seen and facts
     assert all(item.budget == item.expansions == 1 for item in facts)
     passes = {item.pass_name.split(":", 1)[0] for item in facts}
-    if policy == "first-fit":
-        assert "route-label-baseline" in passes
-        assert passes <= {"route-label-baseline", "route-label-recovery"}
-        assert not any(name.startswith("lane-") for name in passes)
-    else:
-        assert {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal",
-                "route-label-baseline"} <= passes
-        assert passes <= {"lane-rehearsal", "lane-reference", "lane-reservation-rehearsal",
-                          "route-label-baseline", "route-label-recovery"}
+    assert passes <= set(compose_passes)
+    assert compose_passes == ["route-content-baseline"]
+    assert passes == {"route-content-baseline"}
     assert [item for item in rendered.scene.diagnostics
             if item.startswith("I_LAYOUT_RELATION_SEARCH_BUDGET:")] == [item.scene_diagnostic() for item in facts]
     payloads = [item for item in warning_payloads(rendered) if item["code"] == facts[0].code]

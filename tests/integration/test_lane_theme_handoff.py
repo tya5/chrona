@@ -1,11 +1,8 @@
 """Two-Theme lane membership and icon handoff regression for #467 B3."""
 from pathlib import Path
-from dataclasses import replace
 
 import yaml
 
-from chrona.presentation.layout import surface_member_labels
-from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -69,7 +66,7 @@ def _theme_variant(source: Path, destination: Path, *, family: str, size: int,
     return destination
 
 
-def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_path, monkeypatch):
+def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_path):
     root = _root()
     example = root / "tests/fixtures/controller-z"
     view = yaml.safe_load((example / "views/icons.yaml").read_text(encoding="utf-8"))
@@ -150,7 +147,8 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
         renderer=V05SvgRenderer(), draft_auto_block=start_draft.auto_block,
     ))
 
-    # Exercise a displaced lane name and its bounded own-mark association.
+    # A long title in a filled row naturally displaces one member name; the
+    # completed Scene must retain its bounded association with the exact mark.
     fill_layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
     fill_layout["reviewSurface"]["rowDistribution"] = "fill"
     fill_layout_path = tmp_path / "fill-lane-layout.yaml"
@@ -172,28 +170,7 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
         asset_root=fill_draft.asset_root, scheduler=ReferenceScheduler(),
         renderer=V05SvgRenderer(), draft_auto_block=fill_draft.auto_block,
     )
-    original_member_placement = surface_member_labels.place_member_name
-    forced = False
-
-    def displaced_member_placement(*args, **kwargs):
-        nonlocal forced
-        result = original_member_placement(*args, **kwargs)
-        if result is not None and not forced:
-            bounds = kwargs["bounds"]
-            up_room = result.bounds.y - bounds.y
-            down_room = bounds.bottom - result.bounds.bottom
-            displacement = min(60.0, max(up_room, down_room))
-            if displacement > 0:
-                delta = displacement if down_room >= up_room else -displacement
-                result = replace(result, bounds=LabelRect(
-                    result.bounds.x, result.bounds.y + delta,
-                    result.bounds.width, result.bounds.height))
-                forced = True
-        return result
-
-    monkeypatch.setattr(surface_member_labels, "place_member_name", displaced_member_placement)
     fill_output = render_review(fill_request)
-    assert forced
 
     first_closure, first = outputs[0]
     second_closure, second = outputs[1]
@@ -214,6 +191,14 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
     assert "start" in _assert_member_label_associations(start_output.surface.primitives)
     fill_primitives = fill_output.surface.primitives
     _assert_member_label_associations(fill_primitives)
+    firmware_marks = {item.scene_id: item for item in fill_primitives
+                      if item.source_ref == "firmware" and item.purpose in {"planned", "actual"}}
+    firmware_labels = [item for item in fill_primitives
+                       if item.source_ref == "firmware" and item.purpose == "member-label"]
+    assert any(abs((label.text_layout.bounds[1] + label.text_layout.bounds[3] / 2)
+                   - (firmware_marks[label.host_placement_id].bounds[1]
+                      + firmware_marks[label.host_placement_id].bounds[3] / 2)) > 0.01
+               for label in firmware_labels)
     assert not any(item.purpose == "member-label-leader" for item in fill_primitives)
     label_ids = {identifier for identifier in first_primitives if identifier.startswith("member-label:")}
     other_label_ids = {identifier for identifier in second_primitives if identifier.startswith("member-label:")}

@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 
 import pytest
 
+from chrona.presentation.model.info_diagnostics import RelationResolutionInfo
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
@@ -60,8 +61,17 @@ def test_dependency_can_enter_span_endpoint_covered_by_its_hosted_point(tmp_path
                   "from": {"object": "earlier", "endpoint": "end"},
                   "to": {"object": "host", "endpoint": "start"}}]
     rendered = _render(tmp_path, objects, relations=relations)
-    route = next(item for item in rendered.surface.primitives
-                 if item.purpose == "dependency" and item.source_ref == "relation:id:enter-host")
+    # The legal completion is paired stubs: select the target fragment rather
+    # than assuming the source fragment's terminal enters the target glyph.
+    fragments = [item for item in rendered.surface.primitives
+                 if item.purpose == "dependency" and item.source_ref == "relation:id:enter-host"]
+    receipt, = [item for item in rendered.info_diagnostics
+                if isinstance(item, RelationResolutionInfo)
+                and item.fragment_ids is not None
+                and set(item.fragment_ids) == {fragment.scene_id for fragment in fragments}]
+    assert receipt.stage.value == "stub"
+    assert len(receipt.fragment_ids) == len(fragments) == 2
+    route, = [item for item in fragments if item.marker_end is not None]
     gate = _mark(rendered, "planned", "gate")
     x, y = route.points[-1]
     left, top, width, height = gate.bounds

@@ -31,7 +31,6 @@ def test_compacted_rows_keep_every_relation_with_truthful_omission_proof(tmp_pat
         return result
 
     monkeypatch.setattr("chrona.presentation.layout.surface_route_label_plan.compose_surface_routes", capture)
-    monkeypatch.setattr("chrona.presentation.layout.surface_lane_route_plan.compose_surface_routes", capture)
     monkeypatch.setattr(surface_routes, "select_relation_route",
                         lambda *a, **k: pytest.fail("omitted endpoints must not enter route search"))
     rendered = sr.render(tmp_path, source, presentation=_parts(lanes=lanes))

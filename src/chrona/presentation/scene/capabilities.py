@@ -228,16 +228,21 @@ class RolePropertyContract:
     properties: frozenset[str]
     scene_kinds: frozenset[str] = frozenset()
     property_owners: tuple[tuple[str, str], ...] = ()
+    scene_paint_owners: tuple[tuple[str, str], ...] = ()
 
     def owner_of(self, property_name: str) -> str | None:
         return dict(self.property_owners).get(property_name)
+
+    def scene_paint_owner_of(self, property_name: str) -> str | None:
+        return dict(self.scene_paint_owners).get(property_name)
 
 
 def _role_contracts() -> dict[str, RolePropertyContract]:
     roles: dict[str, RolePropertyContract] = {}
 
     def register(names: str, consumer: str, properties: frozenset[str],
-                 *, scene_kinds: frozenset[str] = frozenset()) -> None:
+                 *, scene_kinds: frozenset[str] = frozenset(),
+                 scene_paint_owners: tuple[tuple[str, str], ...] = ()) -> None:
         # Contour strokes need a role width or completed glyph-part widths.
         # A fill-only Symbol or a texture's internal strokes are not box borders.
         if scene_kinds & {"Rect", "Symbol"} and (
@@ -249,6 +254,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
             roles[name] = RolePropertyContract(
                 consumer, properties, scene_kinds,
                 tuple((property_name, _property_owner(property_name)) for property_name in sorted(properties)),
+                scene_paint_owners,
             )
 
     register("text", "Layout text and Scene Text/Icon",
@@ -328,6 +334,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              frozenset(("stroke", "strokeWidth", "opacity")), scene_kinds=frozenset(("Path",)))
     register("dependency-critical network-edge critical-edge axis-rule axis-cell-separator as-of",
              "Layout relation and Scene Path", _PATH_PAINT, scene_kinds=frozenset(("Path",)))
+    register("dependency-halo", "Layout-completed dependency halo width", frozenset(("strokeWidth",)),
+             scene_kinds=frozenset(("Path",)),
+             scene_paint_owners=(("stroke", "Scene derived dependency halo stroke from background.fill"),))
     register("dependency", "Scene Path and Layout legend swatch marker", _PATH_PAINT | frozenset(("marker",)),
              scene_kinds=frozenset(("Path",)))
     register("annotation-callout-leader annotation-note-leader", "Layout annotation leader and Scene Path", _PATH_PAINT,
@@ -338,7 +347,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("deadline-mark", "Layout deadline mark geometry and Scene Path", _PATH_PAINT | frozenset(("markReach", "markPaintOrder", "outlineWidth")),
              scene_kinds=frozenset(("Path",)))
     register("deadline-mark-outline", "Layout deadline outline ground and Scene Rect", frozenset(),
-             scene_kinds=frozenset(("Rect",)))
+             scene_kinds=frozenset(("Rect",)),
+             scene_paint_owners=(("fill", "Scene derived deadline outline fill from background.fill"),))
     register("relationSourceTerminal relationTargetTerminal", "Layout relation terminal geometry",
              frozenset(("marker",)))
     register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",
@@ -492,6 +502,15 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
         return "Detail Profile legend fixed-square Rect"
     return None
 
+
+def scene_role_property_consumer(role: str, property_name: str) -> str | None:
+    """Return the owner of completed Scene paint, falling back to Theme consumers."""
+    contract = theme_role_contract(role)
+    if contract is not None:
+        owner = contract.scene_paint_owner_of(property_name)
+        if owner is not None:
+            return owner
+    return theme_role_property_consumer(role, property_name)
 
 def unsupported_role_property_detail(pointer: str) -> str | None:
     """The sentence for ``E_THEME_ROLE_PROPERTY_UNSUPPORTED`` at ``/body/roles/<role>/<property>``.

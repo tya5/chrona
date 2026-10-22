@@ -213,6 +213,9 @@ def _theme():
     # These are opt-in treatment roles, not generic semantic text/shape roles.
     roles.pop("canvas-overlay", None)
     roles.pop("canvas-overlay-gradient", None)
+    # Use the declared recovery default (3x line width), not an invalid halo
+    # whose generic one-pixel width equals the dependency line's width.
+    roles["dependency-halo"].pop("strokeWidth")
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {
         "values": {"ink": {"type": "color", "value": "#102030"},
                    "body": {"type": "fontFamily", "value": "Test Sans"},

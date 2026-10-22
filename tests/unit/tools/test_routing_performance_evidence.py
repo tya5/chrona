@@ -29,13 +29,14 @@ def test_unchanged_routes_have_zero_delta():
 
 def test_resolution_counts_ignore_halos_and_count_paired_stubs_once():
     value = scene(('normal', [(0, 0), (3, 0)]),
-                  ('r:stub-source', [(0, 0), (1, 0)]), ('r:stub-target', [(2, 0), (3, 0)]))
+                  ('relation:opaque-a', [(0, 0), (1, 0)]), ('relation:opaque-b', [(2, 0), (3, 0)]))
     value['surfaces'][0]['id'] = 'surface'
     value['surfaces'][0]['primitives'].append({
         'id': 'normal:halo', 'kind': 'Path', 'sourceKind': 'decoration', 'points': [(0, 0), (3, 0)]})
     value['diagnostics'] = [
         'I_LAYOUT_RELATION_RESOLUTION:' + json.dumps({
-            'surfaceId': 'surface', 'relationId': 'r', 'stage': 'stub', 'critical': True}),
+            'surfaceId': 'surface', 'relationId': 'r', 'stage': 'stub', 'critical': True,
+            'fragmentIds': ['relation:opaque-a', 'relation:opaque-b']}),
         'I_LAYOUT_RELATION_RESOLUTION_SUMMARY:' + json.dumps({
             'surfaceId': 'surface', 'count': 1, 'stages': {'stub': 1}})]
     result, = evidence.resolution_counts(value)
@@ -52,6 +53,18 @@ def test_resolution_summary_cannot_inflate_the_completed_count():
     value['diagnostics'] = ['I_LAYOUT_RELATION_RESOLUTION_SUMMARY:' + json.dumps({
         'surfaceId': 'surface', 'count': 1, 'stages': {'overlap': 1}})]
     with pytest.raises(ValueError, match='summary disagrees'):
+        evidence.resolution_counts(value)
+
+
+def test_stub_receipts_without_explicit_fragment_ids_are_rejected():
+    value = scene(('r:stub-source', [(0, 0), (1, 0)]), ('r:stub-target', [(2, 0), (3, 0)]))
+    value['surfaces'][0]['id'] = 'surface'
+    value['diagnostics'] = [
+        'I_LAYOUT_RELATION_RESOLUTION:' + json.dumps({
+            'surfaceId': 'surface', 'relationId': 'r', 'stage': 'stub', 'critical': True}),
+        'I_LAYOUT_RELATION_RESOLUTION_SUMMARY:' + json.dumps({
+            'surfaceId': 'surface', 'count': 1, 'stages': {'stub': 1}})]
+    with pytest.raises(ValueError, match='explicit fragment identity'):
         evidence.resolution_counts(value)
 
 

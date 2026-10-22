@@ -1,9 +1,9 @@
 """Neutral-ID, mixed-language fixture derived from public trial geometry (#1627).
 
 Synthetic identities prevent project-name branching; the iOS label is generic,
-while other labels preserve measured mixed-language geometry. The exact-parent
-render had 21 member labels and right-edge point arrivals; the candidate renders
-all 22 labels and reaches each point from its left port.
+while other labels preserve measured mixed-language geometry. The fixture keeps
+the full relation inventory and checks permitted point-terminal approaches;
+member names precede routes and remain hard content through recovery.
 """
 from __future__ import annotations
 
@@ -12,7 +12,11 @@ from pathlib import Path
 
 import yaml
 
+import chrona.presentation.layout.surface_composer as surface_composer
+from chrona.presentation.layout.obstacles import ObstacleSegment, obstacles_intersect
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.core.relation_identity import relation_identities
+from chrona.presentation.layout.surface_routes import prepare_normal_relation_routes
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 
 
@@ -109,7 +113,17 @@ def _project() -> dict:
     }
 
 
-def test_neutral_identity_render_keeps_all_names_and_uses_left_ports_for_point_arrivals(tmp_path: Path):
+def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_member_names(
+        tmp_path: Path, monkeypatch):
+    captured = []
+    compose = surface_composer.compose_routes_and_member_labels
+
+    def capture_options(context):
+        options = compose(context)
+        captured.append((context, options))
+        return options
+
+    monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", capture_options)
     project_path = tmp_path / "neutral-point-route.yaml"
     project_path.write_text(yaml.safe_dump(_project(), sort_keys=False, allow_unicode=True), encoding="utf-8")
     result = render_draft(DraftRenderRequest(project=project_path, target_kind="png", preset="editorial",
@@ -119,15 +133,82 @@ def test_neutral_identity_render_keeps_all_names_and_uses_left_ports_for_point_a
     primitives = scene["surfaces"][0]["primitives"]
     labels = [item for item in primitives if item.get("purpose") == "member-label"]
     expected_members = {identity for identity, kind, *_ in _OBJECTS if kind != "group"}
-    assert len(labels) == len(expected_members) == 22
+    suppressed = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                  for item in result.rendered.scene.diagnostics
+                  if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
+    assert not suppressed
     assert {item["sourceRef"] for item in labels} == expected_members
-    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+    assert len(labels) == len(expected_members)
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")
                    for item in result.rendered.scene.diagnostics)
 
-    routes = [item for item in primitives
-              if item.get("kind") == "Path" and item.get("purpose") == "dependency"
-              and item.get("toInstanceId") is not None]
-    assert len({item["sourceRef"] for item in routes}) == len(_EDGES) == 31
+    # Actual member-label footprints are present before NORMAL routing, and
+    # completed routes must avoid those measured footprints.
+    assert len(captured) == 1
+    context, options = captured[0]
+    # Keep both halves of paired recovery: source_ref identifies the original
+    # relation, but its two visible fragments are separate Layout placements.
+    actual_routes = [item for item in options.routes.relations
+                     if not item.suppressed and len(item.points) >= 2]
+    label_footprints = tuple(item for item in options.obstacles.all()
+                             if item.placement_id.startswith("label-footprint:member-label:"))
+    assert label_footprints
+    route_context = context.routes_for(options.obstacles, context.base_text)
+    declared_identities = relation_identities(_project()["relations"])
+    declared_identity_set = set(declared_identities)
+    scene_routes = [item for item in primitives
+                    if item.get("kind") == "Path" and item.get("purpose") == "dependency"
+                    and item.get("sourceRef") in declared_identity_set]
+    scene_routes_by_id = {item["id"]: item for item in scene_routes}
+    for route in actual_routes:
+        scene_route = scene_routes_by_id[route.relation_id]
+        stroke_width = float(scene_route["paint"]["strokeWidth"])
+        assert stroke_width > 0
+        collisions = tuple(footprint.placement_id for footprint in label_footprints
+            if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance)
+                   for segment in (ObstacleSegment(start, end, stroke_width)
+                                   for start, end in zip(route.points, route.points[1:]))))
+        stage = tuple(item.stage.value for item in options.routes.resolution_info
+                      if getattr(item, "relation_id", None) == route.relation_id)
+        details = tuple((item.placement_id, item.region_id, item.geometry, item.clearance,
+                         item.placement_id in route_context.required_label_obstacle_ids)
+                        for item in label_footprints if item.placement_id in collisions)
+        assert not collisions, (route.relation_id, route.source_ref, stage, details)
+
+    routes = scene_routes
+    route_groups = {}
+    for item in routes:
+        route_groups.setdefault(item["sourceRef"], []).append(item)
+    assert set(route_groups) == declared_identity_set
+    stub_edge_indices = (23, 25)  # edge-23 now correctly recovers after the normal temporal-hull rejection.
+    stub_identities = {declared_identities[index] for index in stub_edge_indices}
+    assert all(len(group) == 1 and group[0].get("toInstanceId") is not None
+               for source_ref, group in route_groups.items() if source_ref not in stub_identities)
+    titles = {identity: title for identity, kind, title, *_ in _OBJECTS if kind != "group"}
+    for index in stub_edge_indices:
+        source, _, target, _, _ = _EDGES[index]
+        relation_identity = declared_identities[index]
+        paired = route_groups[relation_identity]
+        assert len(paired) == 2
+        layout_fragments = [item for item in actual_routes if item.source_ref == relation_identity]
+        assert {item["id"] for item in paired} == {item.relation_id for item in layout_fragments}
+        assert {item.fragment_endpoint for item in layout_fragments} == {"source", "target"}
+        assert all(item.get("fromInstanceId") is None and item.get("toInstanceId") is None for item in paired)
+        assert all(item.get("fanIn") is None for item in paired)
+        assert sum(item.get("markerStart") is not None for item in paired) == 1
+        assert sum(item.get("markerEnd") is not None for item in paired) == 1
+        assert all(item.terminal_label for item in layout_fragments)
+        assert {item.label_content for item in layout_fragments} == {
+            f"-> {titles[target]}", f"{titles[source]} ->",
+        }
+        fragment_labels = [item for item in options.relation_labels.text
+                           if item.source_ref == relation_identity]
+        assert {item.content for item in fragment_labels} == {
+            f"-> {titles[target]}", f"{titles[source]} ->",
+        }
+        assert any(relation_identity in getattr(item, "relation_id", "")
+                   and getattr(item, "stage", None).value == "stub"
+                   for item in options.routes.resolution_info)
     point_targets = {target for _, _, target, endpoint, _ in _EDGES if endpoint == "at"}
     marks = {item["id"]: item for item in primitives
              if item.get("purpose") == "planned" and item.get("sourceRef") in point_targets}
@@ -135,10 +216,36 @@ def test_neutral_identity_render_keeps_all_names_and_uses_left_ports_for_point_a
     # do not recover relation indices by parsing opaque source/instance IDs.
     arrivals = [item for item in routes if f"planned:{item.get('toInstanceId')}" in marks]
     assert len(arrivals) == sum(endpoint == "at" for _, _, _, endpoint, _ in _EDGES) == 5
+    prepared = prepare_normal_relation_routes(route_context)
+    prepared_by_identity = {entry.relation.relation_id: (entry.relation, entry.occurrences)
+                            for entry in prepared.entries}
+    bad_ports = []
+    equal_time_right_arrivals = []
     for route in arrivals:
         mark = marks[f"planned:{route['toInstanceId']}"]["bounds"]
         endpoint = route["points"][-1]
-        assert endpoint[0] == mark["inline"]
-        assert mark["block"] <= endpoint[1] <= mark["block"] + mark["blockSize"]
         before = route["points"][-2]
-        assert endpoint[0] - before[0] >= 0
+        left, top = mark["inline"], mark["block"]
+        right, bottom = left + mark["inlineSize"], top + mark["blockSize"]
+        left_entry = endpoint[0] == left and top <= endpoint[1] <= bottom and before[0] <= left
+        top_entry = endpoint[1] == top and left <= endpoint[0] <= right and before[1] <= top
+        bottom_entry = endpoint[1] == bottom and left <= endpoint[0] <= right and before[1] >= bottom
+        right_entry = endpoint[0] == right and top <= endpoint[1] <= bottom and before[0] >= right
+        right_equal_time = False
+        if right_entry:
+            relation, occurrences = prepared_by_identity[route["sourceRef"]]
+            occurrence = next(item for item in occurrences if item.target_id == route["toInstanceId"])
+            right_equal_time = (
+                relation.source_endpoint in {"end", "finish"}
+                and relation.target_endpoint in {"at", "start"}
+                and occurrence.source_nominal[0] == occurrence.target_nominal[0]
+            )
+            if right_equal_time:
+                equal_time_right_arrivals.append(route["sourceRef"])
+        if not (left_entry or top_entry or bottom_entry or right_equal_time):
+            bad_ports.append((route["sourceRef"], marks[f"planned:{route['toInstanceId']}"]["sourceRef"],
+                              endpoint, before, (left, top, right, bottom)))
+    assert not bad_ports, "\n".join(map(str, bad_ports))
+    equal_time_witness = declared_identities[
+        _EDGES.index(("item-19", "end", "item-21", "at", "0d"))]
+    assert equal_time_right_arrivals == [equal_time_witness]

@@ -26,7 +26,7 @@ def simplify_relation_route(
     if (not isfinite(start_minimum) or not isfinite(end_minimum)
             or start_minimum < 0 or end_minimum < 0):
         raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID:terminal-run minimum must be finite and nonnegative")
-    current = _collapse_collinear(tuple(points))
+    current = collapse_collinear_route(tuple(points))
     while True:
         replacement = _collapse_one_jog(current, clears, start_minimum, end_minimum)
         if replacement is None:
@@ -54,7 +54,7 @@ def _collapse_one_jog(points: Route, clears: Callable[[Route], bool],
             _shift_pair(points, index + 1, index + 2, jog_axis, b[jog_axis]),
         )
         for shifted in options:
-            candidate = _collapse_collinear(shifted)
+            candidate = collapse_collinear_route(shifted)
             if len(candidate) >= len(points):
                 continue
             if candidate[0] != points[0] or candidate[-1] != points[-1]:
@@ -81,7 +81,8 @@ def _shift_pair(points: Route, first: int, second: int, axis: int, value: float)
     return tuple(moved)
 
 
-def _collapse_collinear(points: Route) -> Route:
+def collapse_collinear_route(points: Route) -> Route:
+    """Remove redundant straight vertices without moving endpoints or bends."""
     result: list[Point] = []
     for point in points:
         if result and point == result[-1]:

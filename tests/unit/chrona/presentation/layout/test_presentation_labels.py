@@ -163,11 +163,96 @@ def test_visible_fallback_still_obeys_hard_candidate_filter_in_declared_order():
     assert result.visible_overflow
 
 
-def test_visible_fallback_with_no_filter_legal_candidate_is_unplaceable():
+def test_visible_fallback_remembers_first_filtered_neighbor_after_full_search():
+    anchor = LabelRect(50, 50, 10, 10)
+    bounds = LabelRect(0, 0, 100, 100)
+    canonical = {
+        LabelRect(52.5, 45, 5, 5), LabelRect(52.5, 60, 5, 5),
+        LabelRect(45, 52.5, 5, 5), LabelRect(60, 52.5, 5, 5),
+    }
+    hard_filter = lambda candidate: candidate not in canonical
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("mark:all", "mark", "timeline", ObstacleRect(0, 0, 100, 100)))
+
+    result = place_label(anchor, (5, 5), ("above", "below", "start", "end"), bounds=bounds,
+        obstacles=obstacles, classes=("mark",), candidate_filter=hard_filter,
+        search_side_neighborhood=True)
+
+    assert result.visible_overflow and 0 < result.search_count <= 512
+    assert result.bounds not in canonical and hard_filter(result.bounds)
+    assert obstacles.collisions(ObstacleRect(result.bounds.x, result.bounds.y,
+        result.bounds.right, result.bounds.bottom), classes=("mark",))
+    assert all(item.policy_rejected for item in result.canonical_obstructions)
+
+
+def test_later_clear_neighborhood_candidate_beats_remembered_overflow():
+    anchor = LabelRect(50, 50, 10, 10)
+    bounds = LabelRect(0, 0, 100, 100)
+    canonical = {
+        LabelRect(52.5, 45, 5, 5), LabelRect(52.5, 60, 5, 5),
+        LabelRect(45, 52.5, 5, 5), LabelRect(60, 52.5, 5, 5),
+    }
+    hard_filter = lambda candidate: candidate not in canonical
+    args = (anchor, (5, 5), ("above", "below", "start", "end"))
+    kwargs = dict(bounds=bounds, candidate_filter=hard_filter, search_side_neighborhood=True)
+    first_clear = place_label(*args, **kwargs, overflow="suppress", required=False)
+    assert first_clear is not None and not first_clear.visible_overflow
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("mark:first", "mark", "timeline", ObstacleRect(
+        first_clear.bounds.x, first_clear.bounds.y,
+        first_clear.bounds.right, first_clear.bounds.bottom)))
+
+    result = place_label(*args, **kwargs, obstacles=obstacles, classes=("mark",))
+
+    assert not result.visible_overflow
+    assert result.bounds != first_clear.bounds
+    assert not obstacles.collisions(ObstacleRect(result.bounds.x, result.bounds.y,
+        result.bounds.right, result.bounds.bottom), classes=("mark",))
+
+
+def test_canonical_visible_fallback_precedes_remembered_neighbor():
+    anchor = LabelRect(50, 50, 10, 10)
+    bounds = LabelRect(0, 0, 100, 100)
+    canonical = {
+        LabelRect(53, 46, 4, 4), LabelRect(53, 60, 4, 4),
+        LabelRect(46, 53, 4, 4), LabelRect(60, 53, 4, 4),
+    }
+    canonical_visible = LabelRect(53, 46, 4, 4)
+    neighbor_filter = lambda candidate: candidate not in canonical
+    neighbor = place_label(anchor, (4, 4), ("above", "below"), bounds=bounds,
+        candidate_filter=neighbor_filter, overflow="suppress", required=False,
+        search_side_neighborhood=True)
+    assert neighbor is not None and neighbor_filter(neighbor.bounds)
+
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("mark:all", "mark", "timeline", ObstacleRect(0, 0, 100, 100)))
+    hard_filter = lambda candidate: candidate == canonical_visible or neighbor_filter(candidate)
+
+    result = place_label(anchor, (4, 4), ("above", "below"), bounds=bounds,
+        obstacles=obstacles, classes=("mark",), candidate_filter=hard_filter,
+        search_side_neighborhood=True)
+
+    assert result.visible_overflow and result.bounds == canonical_visible
+    assert result.side == "above" and result.search_count == 0
+
+
+def test_remembered_neighbor_never_borrows_another_declared_fallback_side():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("mark:all", "mark", "timeline", ObstacleRect(0, 0, 100, 100)))
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
+        place_label(LabelRect(50, 50, 10, 10), (5, 5), ("above", "below"),
+            bounds=LabelRect(0, 0, 100, 100), obstacles=obstacles, classes=("mark",),
+            candidate_filter=lambda candidate: candidate.y > 50 and candidate.y != 61,
+            search_side_neighborhood=True, visible_fallback_side="above")
+
+
+@pytest.mark.parametrize("search_side_neighborhood", (False, True))
+def test_visible_fallback_with_no_filter_legal_candidate_is_unplaceable(search_side_neighborhood):
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
         place_label(LabelRect(10, 10, 5, 5), (4, 4), ("above", "below"),
             bounds=LabelRect(0, 0, 30, 30), overflow="visible-overflow",
-            candidate_filter=lambda _candidate: False)
+            candidate_filter=lambda _candidate: False,
+            search_side_neighborhood=search_side_neighborhood)
 
 
 def test_member_name_end_candidate_is_capped_and_uses_start_before_suppression():

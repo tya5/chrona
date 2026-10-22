@@ -25,6 +25,9 @@ Scene is a derived artifact. It is not the source of truth for dates, dependenci
 Unroutable dependency recovery (#1427) is completed in Layout, not Scene.
 Scene projects staged relation facts, paired connector/text
 placements and halo paths without measuring, routing or counting fragments.
+The existing resolution diagnostic carries Layout's explicit ordered fragment
+IDs for a paired STUB. Observers join those completed IDs to primitives; they
+do not infer fragment identity from names or fabricate graph endpoints.
 Recovered lines and their Theme-ground halos paint below text; the halo is a
 decoration under the completed contrast policy. Spec50 §3.3 owns resolution.
 
@@ -274,6 +277,15 @@ For a composite Symbol, the existing `<placement>:partN` sibling identities may
 recover their exact endpoint placement only when every sibling has the same
 source, purpose and completed bounds. Reject conflicting siblings or a colliding
 unsuffixed primitive; never merge by source alone or infer a union of bounds.
+Native, folded and lane glyph emission and completed-endpoint observation share
+one neutral component-identity utility. Explicitly painted components use the
+canonical `:partN` grammar; an unsplit implicit-paint primitive retains its base
+identity. Resolution requires unique, contiguous indices starting at zero and
+the same strict sibling evidence as previous-Scene host decoding. The former
+lane-only `:part:N` spelling is replaced, including dependent host-placement
+references; no compatibility identity is retained. This changes component IDs,
+not geometry, paint, temporal endpoints or routing policy. Old alternate IDs
+cannot authorize a recovered-crossing observation.
 For a schema-validated fan-in non-owner, decode the shared end-terminal evidence
 from its exact `terminalOwnerId` relation on the same surface/target port. The
 absent local paint is not evidence of an unconfigured terminal. Preserve the

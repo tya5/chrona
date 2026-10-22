@@ -5,7 +5,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import DependencyNetworkLayout
-from chrona.presentation.layout.surface_quality import completed_symbol_primitive_ids
+from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 from chrona.presentation.layout.surface_completion import SurfaceLayoutComposition
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
@@ -962,9 +962,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
                 primitives.extend(emitted)
                 record_style_fill(planned_mark, tuple(item.scene_id for item in emitted))
                 folded_id = f"planned:{instance_id}"
-                record_project_primitives(tuple(
-                    f"{folded_id}:part{index}" if part.paint_mode is not None else folded_id
-                    for index, part in enumerate(planned_mark.symbol_parts)), item)
+                record_project_primitives(
+                    completed_symbol_primitive_ids(folded_id, planned_mark.symbol_parts), item)
             actual_mark = mark_placements.get(f"actual:{instance_id}")
             if actual_mark is not None:
                 binding, style_projection = _placement_style_projection(actual_mark, semantic_binding("actual"))
@@ -979,9 +978,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
                 primitives.extend(emitted)
                 record_style_fill(actual_mark, tuple(item.scene_id for item in emitted))
                 folded_id = f"actual:{instance_id}"
-                record_project_primitives(tuple(
-                    f"{folded_id}:part{index}" if part.paint_mode is not None else folded_id
-                    for index, part in enumerate(actual_mark.symbol_parts)), item)
+                record_project_primitives(
+                    completed_symbol_primitive_ids(folded_id, actual_mark.symbol_parts), item)
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
         if label_id in layout_text:
             semantic_id = (inside_member_label_semantic(folded.item.source_kind)
@@ -1122,9 +1120,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput,
         elif placed.placement_id.startswith("chip:"):
             chip_binding = semantic_binding(placed.semantic_id)
             if placed.symbol_parts:
-                ids = lane_scene_ids("shape", placed.placement_id) or tuple(
-                    placed.placement_id if index == 0 else f"{placed.placement_id}:part{index}"
-                    for index in range(len(placed.symbol_parts)))
+                ids = lane_scene_ids("shape", placed.placement_id) or completed_symbol_primitive_ids(
+                    placed.placement_id, placed.symbol_parts)
                 emitted = _symbol_primitives(placed.placement_id, placed.source_ref, "review",
                     chip_binding.purpose, chip_binding.scene_role, bounds, placed.symbol_parts,
                     primitive_ids=ids, slot_id=placed.slot_id, paint_order=placed.paint_order,

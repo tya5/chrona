@@ -9,7 +9,11 @@ import pytest
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.model.theme_inheritance import resolve_draft_theme
 from chrona.presentation.model.theme_role_consumers import unread_roles
-from chrona.presentation.scene.capabilities import theme_role_contract, theme_role_property_consumer
+from chrona.presentation.scene.capabilities import (
+    scene_role_property_consumer,
+    theme_role_contract,
+    theme_role_property_consumer,
+)
 from chrona.resources import safe_load
 from tests.support.context_references import reference_path
 from tests.support.deck_contexts import slide_context
@@ -114,6 +118,46 @@ def test_capable_roles_include_layout_annotation_and_bounded_open_producers():
     assert theme_role_property_consumer("annotation-arrow-box", "annotationContainer")
 
 
+def test_dependency_halo_theme_role_admits_only_path_width():
+    theme = _theme()
+    theme["body"]["roles"]["dependency-halo"] = {"strokeWidth": 2}
+
+    resolved = _resolve(theme)
+    assert resolved["body"]["roles"]["dependency-halo"]["strokeWidth"] == 2
+    assert theme_role_property_consumer("dependency-halo", "strokeWidth")
+    assert theme_role_property_consumer("dependency-halo", "fill") is None
+    assert theme_role_property_consumer("dependency-halo", "stroke") is None
+
+    for property_name in ("fill", "stroke"):
+        invalid = _theme()
+        invalid["body"]["roles"]["dependency-halo"] = {property_name: "unused-token"}
+        with pytest.raises(ColorSchemeError) as error:
+            _resolve(invalid)
+        assert error.value.diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED"
+        assert error.value.source_ref == f"/body/roles/dependency-halo/{property_name}"
+
+
+def test_scene_completed_paint_owners_are_separate_from_theme_admission():
+    halo = theme_role_contract("dependency-halo")
+    outline = theme_role_contract("deadline-mark-outline")
+
+    assert halo is not None
+    assert halo.scene_kinds == frozenset(("Path",))
+    assert halo.properties == frozenset(("strokeWidth",))
+    assert scene_role_property_consumer("dependency-halo", "stroke") == (
+        "Scene derived dependency halo stroke from background.fill")
+    assert theme_role_property_consumer("dependency-halo", "stroke") is None
+
+    assert outline is not None
+    assert outline.scene_kinds == frozenset(("Rect",))
+    assert scene_role_property_consumer("deadline-mark-outline", "fill") == (
+        "Scene derived deadline outline fill from background.fill")
+    assert theme_role_property_consumer("deadline-mark-outline", "fill") is None
+    assert scene_role_property_consumer("dependency-halo", "fill") is None
+    assert scene_role_property_consumer("dependency-halo", "strokeWidth") == (
+        theme_role_property_consumer("dependency-halo", "strokeWidth"))
+
+
 @pytest.mark.parametrize("role", [
     "annotation-callout-box", "annotation-highlight-box",
     "annotation-note-box", "annotation-arrow-box",
@@ -175,7 +219,7 @@ def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():
                     assert primitive["kind"] in contract.scene_kinds, (path, primitive["visualRole"], primitive["kind"])
                 for property_name in ("fill", "stroke"):
                     if primitive["paint"].get(property_name) is not None:
-                        assert theme_role_property_consumer(primitive["visualRole"], property_name), (
+                        assert scene_role_property_consumer(primitive["visualRole"], property_name), (
                             path, primitive["visualRole"], property_name)
 
 

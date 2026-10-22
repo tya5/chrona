@@ -52,11 +52,27 @@ def same_port_arrivals(first: NodeApproach, second: NodeApproach) -> bool:
             and segment_overlap_length(first.segment, second.segment) > 1e-9)
 
 
+def register_node_approaches(
+    node_segments: dict[str, list[NodeApproach]], relation: RelationPlacement,
+) -> None:
+    """Register the real completed endpoint segments of one relation placement."""
+    if relation.suppressed or len(relation.points) < 2:
+        return
+    if relation.from_instance_id is not None:
+        node_segments.setdefault(relation.from_instance_id, []).append(
+            NodeApproach(relation.relation_id, (relation.points[0], relation.points[1])))
+    if relation.to_instance_id is not None:
+        node_segments.setdefault(relation.to_instance_id, []).append(
+            NodeApproach(relation.relation_id, (relation.points[-2], relation.points[-1]),
+                         relation.target_port_id, relation.semantic_id, terminal_style(relation.marker_end)))
+
+
 def complete_fan_in(relations: tuple[RelationPlacement, ...]) -> tuple[RelationPlacement, ...]:
     """Preserve declared order and all routes; emit each shared head once."""
     groups: list[list[RelationPlacement]] = []
     for relation in relations:
-        if relation.suppressed or relation.to_instance_id is None or len(relation.points) < 2:
+        if (relation.suppressed or relation.fragment_endpoint is not None
+                or relation.to_instance_id is None or len(relation.points) < 2):
             continue
         candidate = _arrival(relation)
         group = next((items for items in groups

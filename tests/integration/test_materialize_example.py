@@ -218,14 +218,14 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
         assert f'data-scene-id="annotation-text:{identifier}"' in artifact
     for identifier in ("architecture-callout", "performance-note", "bringup-risk"):
         assert f'data-scene-id="annotation-leader:{identifier}"' in artifact
-    # Completed stroke envelopes provide safe corridors for both arrows.
-    # The one-pass default retains an infeasible callout as a truthful summary.
-    assert 'data-scene-id="annotation-summary:firmware-slip"' in artifact
-    assert 'data-scene-id="annotation-box:firmware-slip"' not in artifact
+    # Completed route and tail envelopes now leave this callout a safe place;
+    # verify the actual adapter output, not a stale suppression expectation.
+    for prefix in ("annotation-box", "annotation-text", "annotation-leader", "note-index"):
+        assert f'data-scene-id="{prefix}:firmware-slip"' in artifact
+    assert 'data-scene-id="annotation-summary:firmware-slip"' not in artifact
     assert 'data-scene-id="annotation-summary:bringup-risk"' not in artifact
-    assert "callout not shown on plot" in artifact
     scene_text = (tmp_path / "annotations/review.scene.json").read_text(encoding="utf-8")
-    assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene_text
+    assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" not in scene_text
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5

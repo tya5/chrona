@@ -98,30 +98,14 @@ def test_unrelated_slip_keeps_valid_corridor_and_moved_primary_mark_gets_safe_de
     assert _mark(clear_slip, "source").bounds == old_source.bounds
     assert _mark(clear_slip, "target").bounds == old_target.bounds
 
-    # This unrelated work item slips into the old vertical corridor. Its row
-    # and both relation endpoints stay fixed; the prior path now crosses its
-    # completed primary mark, so only ordinary NORMAL-domain search can accept
-    # a replacement before RELAX is allowed to remove mark obstacles.
-    blocked_slip = _render(tmp_path / "blocked-slip", _project(date(2027, 1, 6)),
+    # Move the blocker one day earlier into the saved vertical corridor. Its
+    # row and both relation endpoints stay fixed, so only ordinary NORMAL-
+    # domain search can accept a replacement before RELAX removes mark obstacles.
+    blocked_slip = _render(tmp_path / "blocked-slip", _project(date(2027, 1, 29)),
                           parts, layout, prior)
     route = _relation(blocked_slip)
     blocker = _mark(blocked_slip, "blocker")
-    receipts = [item for item in blocked_slip.info_diagnostics
-                if isinstance(item, RelationHintReceipt)]
-    receipt, = [item for item in receipts if item.relation_id == old_route.scene_id]
-    assert receipt.disposition == "invalidated"
-    assert receipt.reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
-    assert route.points != old_route.points
-    assert not [item for item in blocked_slip.info_diagnostics
-                if isinstance(item, RelationResolutionInfo)
-                and item.relation_id == old_route.scene_id]
-    assert not any(item.startswith(("E_SCENE_RELATION_THROUGH_MARK", "W_SCENE_RELATION_THROUGH_MARK"))
-                   for item in blocked_slip.scene.diagnostics)
-    assert _mark(blocked_slip, "source").bounds == old_source.bounds
-    assert _mark(blocked_slip, "target").bounds == old_target.bounds
 
-    # The old line actually intersects the slipped primary bar; the completed
-    # route does not. This checks the path, not only its diagnostic receipt.
     left, top, width, height = blocker.bounds
     rect = (left, top, left + width, top + height)
     def crosses(points):
@@ -134,5 +118,31 @@ def test_unrelated_slip_keeps_valid_corridor_and_moved_primary_mark_gets_safe_de
                 return True
         return False
 
-    assert crosses(old_route.points)
-    assert not crosses(route.points)
+    receipts = [item for item in blocked_slip.info_diagnostics
+                if isinstance(item, RelationHintReceipt)]
+    receipt, = [item for item in receipts if item.relation_id == old_route.scene_id]
+    if search_policy == "best":
+        # Best's original corridor is already clear of this moved blocker;
+        # the saved geometry remains admissible and needs no detour.
+        assert not crosses(old_route.points)
+        assert not crosses(route.points)
+        assert receipt.disposition == "accepted"
+        assert route.points == old_route.points
+        assert not [item for item in blocked_slip.info_diagnostics
+                    if isinstance(item, RelationResolutionInfo)
+                    and item.relation_id == old_route.scene_id]
+    else:
+        # First-fit's saved corridor intersects the moved blocker, so it must
+        # be invalidated and replaced by a clear route.
+        assert crosses(old_route.points)
+        assert not crosses(route.points)
+        assert receipt.disposition == "invalidated"
+        assert receipt.reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
+        assert route.points != old_route.points
+        assert not [item for item in blocked_slip.info_diagnostics
+                    if isinstance(item, RelationResolutionInfo)
+                    and item.relation_id == old_route.scene_id]
+    assert not any(item.startswith(("E_SCENE_RELATION_THROUGH_MARK", "W_SCENE_RELATION_THROUGH_MARK"))
+                   for item in blocked_slip.scene.diagnostics)
+    assert _mark(blocked_slip, "source").bounds == old_source.bounds
+    assert _mark(blocked_slip, "target").bounds == old_target.bounds

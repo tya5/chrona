@@ -1,19 +1,24 @@
 """#1300: actual Scene/SVG revision evidence from project-independent fixtures."""
 from datetime import date, timedelta
 from dataclasses import replace
+from decimal import Decimal
 import xml.etree.ElementTree as ET
 import yaml
 import pytest
 
 from chrona.presentation.layout import surface_composer
-from chrona.presentation.model.info_diagnostics import RelationHintReceipt
+from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.ports import connector_egress_candidates
+from chrona.presentation.model.info_diagnostics import RelationHintReceipt, RelationResolutionInfo
+from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.resources import builtin_preset_source_root, safe_load
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 from tests.support import synthetic_review as sr
 
 
-def _render(directory, *, shift=0, append=False, previous_scene=None, delta_unit=None):
+def _render(directory, *, shift=0, append=False, previous_scene=None, delta_unit=None,
+            source_actual_finish=None, target_actual_start=None):
     directory.mkdir()
     move = timedelta(days=shift)
     source = sr.with_calendar(sr.project({
@@ -22,15 +27,19 @@ def _render(directory, *, shift=0, append=False, previous_scene=None, delta_unit
     }, [{"id": "source-target", "type": "dependency", "lag": "0d",
          "from": {"object": "source", "endpoint": "end"},
          "to": {"object": "target", "endpoint": "start"}}]))
+    actual_source_finish = (source_actual_finish + move if source_actual_finish is not None
+                            else date(2027, 1, 17) + move)
+    actual_target_start = (target_actual_start + move if target_actual_start is not None
+                           else date(2027, 2, 1) + move)
     if append:
         source["objects"]["unrelated"] = sr.span("unrelated", date(2027, 1, 20), 5)
     actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "actuals", "body": {
         "asOf": (date(2027, 2, 20) + move).isoformat(), "observations": [
             {"id": "source-done", "sequence": 1, "projectObjectId": "source", "actual": {
                 "start": (date(2027, 1, 4) + move).isoformat(),
-                "finish": (date(2027, 1, 17) + move).isoformat(), "progress": 1}},
+                "finish": actual_source_finish.isoformat(), "progress": 1}},
             {"id": "target-done", "sequence": 1, "projectObjectId": "target", "actual": {
-                "start": (date(2027, 2, 1) + move).isoformat(),
+                "start": actual_target_start.isoformat(),
                 "finish": (date(2027, 2, 9) + move).isoformat(), "progress": 1}},
         ]}}
     project_path, actual_path = directory / "project.yaml", directory / "actual.yaml"
@@ -83,6 +92,48 @@ def _anchor_sides(rendered):
 
 def _suppressed_relations(rendered):
     return {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_SUPPRESSED:")}
+
+
+def _crosses_mark(route, mark):
+    left, top, width, height = mark.bounds
+    right, bottom = left + width, top + height
+    for (x1, y1), (x2, y2) in zip(route.points, route.points[1:]):
+        if y1 == y2 and top < y1 < bottom and max(min(x1, x2), left) < min(max(x1, x2), right):
+            return True
+        if x1 == x2 and left < x1 < right and max(min(y1, y2), top) < min(max(y1, y2), bottom):
+            return True
+    return False
+
+
+def _assert_connected_actual_endpoint_corridor(rendered):
+    route, = _relation_routes(rendered).values()
+    primitives = {item.scene_id: item for item in rendered.surface.primitives}
+    planned, actual = primitives["planned:source:source"], primitives["actual:source:source"]
+
+    def placement(item):
+        inline, block, inline_size, block_size = item.bounds
+        bounds = Rect(*(Decimal(str(value)) for value in
+                        (inline, block, inline_size, block_size)))
+        center = (inline, block + block_size / 2)
+        return MarkPlacement(item.scene_id, item.source_ref, bounds, center,
+                             (inline + inline_size, center[1]),
+                             semantic_id=item.purpose, mark_shape="span")
+
+    planned_mark, actual_mark = placement(planned), placement(actual)
+    candidate, = [item for item in connector_egress_candidates(
+        planned_mark, "end", route.points[-1], (actual_mark,)) if item.side == "end"]
+    assert candidate.host_ids == ("actual:source:source", "planned:source:source")
+    assert candidate.semantic_port == planned_mark.end_port
+    assert candidate.exposed_port == pytest.approx((
+        float(actual_mark.bounds.inline + actual_mark.bounds.inline_size),
+        planned_mark.end_port[1],
+    ))
+    # Layout's first visible segment is the terminal-tangent continuation of
+    # this exact named corridor, and the next vertex is its recorded boundary.
+    assert route.points[0][1] == candidate.semantic_port[1]
+    assert candidate.semantic_port[0] <= route.points[0][0] <= candidate.exposed_port[0]
+    assert route.points[1] == candidate.exposed_port
+    assert _crosses_mark(route, actual)
 
 
 def _render_explicit_suppress_case(directory, monkeypatch, *, shift=0, append=False):
@@ -140,11 +191,20 @@ def test_explicit_calendar_day_comparison_retains_the_original_delta_text(tmp_pa
 
 @pytest.mark.parametrize("change", ["shift", "append"])
 def test_previous_scene_keeps_revalidated_routes_and_delta_sides(tmp_path, change):
-    baseline = _render(tmp_path / "baseline")
+    # This seed must itself be a normal-stage route. The default extended
+    # source finish overlaps the planned source endpoint and intentionally
+    # starts in overlap recovery, which cannot be an accepted hint seed.
+    source_finish = date(2027, 1, 13)
+    target_actual_start = date(2027, 2, 5)
+    baseline = _render(tmp_path / "baseline", source_actual_finish=source_finish,
+                       target_actual_start=target_actual_start)
+    assert not [item for item in baseline.info_diagnostics if isinstance(item, RelationResolutionInfo)]
     previous = tmp_path / "previous.scene.json"
     previous.write_bytes(serialize_scene(baseline.scene))
     kwargs = {"shift": 7} if change == "shift" else {"append": True}
-    revised = _render(tmp_path / "revised", previous_scene=previous, **kwargs)
+    revised = _render(tmp_path / "revised", previous_scene=previous,
+                       source_actual_finish=source_finish, target_actual_start=target_actual_start,
+                       **kwargs)
 
     before_routes = _relation_routes(baseline)
     after_routes = _relation_routes(revised)
@@ -192,6 +252,28 @@ def test_previous_scene_keeps_revalidated_routes_and_delta_sides(tmp_path, chang
 
     assert _anchor_sides(baseline) == _anchor_sides(revised)
     assert _suppressed_relations(baseline) == _suppressed_relations(revised)
+    assert not [item for item in revised.info_diagnostics if isinstance(item, RelationResolutionInfo)]
+
+
+@pytest.mark.parametrize(("change", "disposition"), [("shift", "accepted"), ("append", "invalidated")])
+def test_previous_scene_revalidates_connected_actual_endpoint_corridor(tmp_path, change, disposition):
+    # The actual source mark overlaps the planned endpoint. The route leaves
+    # through their named connected comparison-host corridor in NORMAL.
+    baseline = _render(tmp_path / "baseline")
+    route, = _relation_routes(baseline).values()
+    _assert_connected_actual_endpoint_corridor(baseline)
+    assert not [item for item in baseline.info_diagnostics if isinstance(item, RelationResolutionInfo)]
+
+    previous = tmp_path / "previous.scene.json"
+    previous.write_bytes(serialize_scene(baseline.scene))
+    kwargs = {"shift": 7} if change == "shift" else {"append": True}
+    revised = _render(tmp_path / "revised", previous_scene=previous, **kwargs)
+    receipt, = [item for item in revised.info_diagnostics
+                if isinstance(item, RelationHintReceipt) and item.relation_id == route.scene_id]
+    assert receipt.disposition == disposition
+    assert receipt.reason == ("revalidated" if disposition == "accepted" else "E_LAYOUT_ROUTE_THROUGH_MARK")
+    _assert_connected_actual_endpoint_corridor(revised)
+    assert not [item for item in revised.info_diagnostics if isinstance(item, RelationResolutionInfo)]
 
 
 def test_explicit_suppression_identity_survives_uniform_shift_and_unrelated_append(tmp_path, monkeypatch):

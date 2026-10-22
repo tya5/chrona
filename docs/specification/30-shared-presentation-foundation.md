@@ -164,6 +164,16 @@ the algorithm need not solve every geometrically feasible diagram. Expand legacy
 preferred sides into explicit candidates, use only one old/new search policy, and
 version candidate generation, limits, and tie breaks.
 
+One final member-name placement/emission permits the bounded, atomic two-name
+candidate exchange specified in Spec 50 before routing. This is internal Layout
+allocation, not a second surface pass or joint route/name allocator. Complete
+unchanged normal allocation first, then repair failed names in reverse admission
+order; normal admission is never reordered. Reuse measured candidate geometry
+and existing search accounting, charging revalidation to its original domain;
+publish each final text/visual
+group once. A failed exchange preserves prior choices and the declared failure
+policy, without implying global geometric infeasibility.
+
 ## 4. Application to candidate features
 
 - A week axis implements the existing axis contract with closed calendar, locale, and density rules.
@@ -303,11 +313,14 @@ row-aligned surface preserves these as output metadata even though it does not a
 stack Y offset. The independent-lane surface uses the same stack index to derive its
 Scene Y and emits the same metadata. Adapters never reconstruct a stack from bounds.
 
-Rect rounding and minimum visual width are resolved in Scene. The temporal start
-remains fixed; a span narrower than `theme.bar.minWidth` extends only its visual Rect to
-the right and its ports/hit bounds use that completed Rect. `theme.bar.radius` is
-clamped to half the smaller completed Rect dimension during semantic validation and
-stored as `cornerRadius`; it is not an SVG-only recovery.
+Layout completes Rect rounding and minimum visual width before routing; Scene
+and adapters carry that completed geometry. Ordinary closed spans retain their
+1px visual minimum, extending rightward without changing Project/Schedule dates.
+Their start/end ports and hit bounds use the same completed Rect boundaries,
+including its canonical right edge when the minimum exceeds the scaled duration.
+An open or in-progress span retains its exact duration width; an end-tick remains
+a separate glyph. Layout clamps the selected radius to half the smaller completed
+Rect dimension and stores `cornerRadius`; this is not an SVG-only recovery.
 
 Primitive-purpose style mapping consumes the complete selected stroke token. Missing
 Actual, variance status, annotations, summaries, notes, groups, points, and fallback

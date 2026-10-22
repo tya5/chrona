@@ -42,8 +42,8 @@ def _assert_phases(stderr):
     text = stderr.decode()
     assert "chrona: schedule" in text
     assert "chrona: layout" in text
-    assert "chrona: routing [route-label-baseline] 0/1" in text
-    assert "chrona: routing [route-label-baseline] 1/1" in text
+    assert "chrona: routing [route-content-baseline] 0/1" in text
+    assert "chrona: routing [route-content-baseline] 1/1" in text
     assert "chrona: output" in text
 
 

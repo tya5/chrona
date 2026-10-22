@@ -297,7 +297,7 @@ def test_catalog_chip_projects_each_nine_slice_part_and_preserves_part_order(tmp
         assert path
         _assert_svg_matches_outline(path, item.symbol.outline)
     assert [item.scene_id for item in chip_parts] == [
-        "chip:as-of-label", "chip:as-of-label:part1", "chip:as-of-label:part2"]
+        "chip:as-of-label:part0", "chip:as-of-label:part1", "chip:as-of-label:part2"]
     svg_order = [svg.index(f'data-scene-id="{item.scene_id}"') for item in chip_parts]
     assert svg_order == sorted(svg_order)
     assert all(item.paint.fill and item.paint.stroke is None for item in chip_parts)

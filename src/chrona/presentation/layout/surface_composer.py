@@ -10,10 +10,12 @@ from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner
 from chrona.presentation.layout.surface_marks import (MARK_PAINT_ORDER_BASE, compose_surface_marks)
 from chrona.presentation.layout.surface_visuals import (place_mark_visuals, place_text_visuals)
 from chrona.presentation.layout.surface_member_labels import (
-    SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests, place_member_labels,
+    SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests,
+    prepare_member_labels,
 )
-from chrona.presentation.layout.surface_routes import SurfaceRoutesContext
-from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
+from chrona.presentation.layout.surface_routes import (
+    SurfaceRoutesContext, intrinsic_relation_endpoint_footprints,
+)
 from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
 )
@@ -30,7 +32,7 @@ from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
 from chrona.presentation.layout.surface_annotations import (
-    SurfaceAnnotationOptionContext, complete_route_label_options,
+    SurfaceAnnotationPlanContext, complete_route_annotations,
 )
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_heading import place_surface_headings
@@ -49,7 +51,7 @@ from chrona.presentation.layout.surface_periods import compose_period_bands, per
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.label_visual_measurement import absent_label_visual_sources
 from chrona.presentation.layout.text import metric_for_role
-from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
+from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, SurfaceObstacle,
 )
@@ -228,6 +230,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     # routes and annotations. Background bands deliberately do not enter it.
     surface_obstacles = seed_surface_obstacles(marks=marks, text=text, shapes=shapes,
                                               theme_tokens=request.theme_tokens)
+    route_context = SurfaceRoutesContext(
+        request, projection, review_rows, tuple(rows), tuple(groups), tuple(marks),
+        timeline_bounds, layout_manifest, metric_values, tuple(text), surface_obstacles,
+        _bounds(base.plot), temporal_endpoints=mark_batch.temporal_endpoints)
+    member_label_context = replace(member_label_context,
+        intrinsic_endpoint_footprints=intrinsic_relation_endpoint_footprints(route_context))
 
     timeline_rect = LabelRect(*timeline_bounds)
 
@@ -243,35 +251,21 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         lane_label_suppressions.extend(batch.lane_label_suppressions)
         handled_candidate_visuals.update(batch.handled_visual_sources)
 
-    def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
-        accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
-
     first_fit = layout_manifest.relation_search == "first-fit"
     pre_route, post_route = member_label_requests.routing_phases(first_fit=first_fit)
-    lane_routing_info = ()
-    if not first_fit:
-        lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
-            member_label_context, pre_route, tuple(text), surface_obstacles,
-            lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-                tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-                temporal_endpoints=mark_batch.temporal_endpoints)))
-        surface_obstacles.extend(lane_route_plan.reservations)
-        lane_routing_info = lane_route_plan.routing_info
-    place_label_phase(pre_route)
-    required_label_obstacle_ids = frozenset(
-        obstacle_id for label in pre_route
-        for obstacle_id in (label.placement_id, f"label-footprint:{label.placement_id}"))
+    pre_route_session = prepare_member_labels(member_label_context, pre_route, surface_obstacles)
+    surface_obstacles = pre_route_session.obstacles
+    required_label_obstacle_ids = pre_route_session.required_obstacle_ids
 
-    route_label_options = compose_routes_and_member_labels(RouteLabelPlanContext(
+    route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
         member_label_context, post_route, tuple(text), surface_obstacles,
-        lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index, _bounds(base.plot),
-            temporal_endpoints=mark_batch.temporal_endpoints,
-            required_label_obstacle_ids=required_label_obstacle_ids)))
+        lambda index, texts: replace(route_context, text=texts, obstacles=index,
+            required_label_obstacle_ids=required_label_obstacle_ids,
+            member_name_yield=pre_route_session.yield_for_endpoint),
+        pre_route_session))
 
     # Resolve fixed side content and final slots once, before annotation
-    # evaluation. Its batches are held until the selected route/label option is
-    # committed below, preserving the established primitive emission order.
+    # evaluation, preserving the established primitive emission order.
     side_content_warnings: list[FitWarning] = list(group_batch.warnings)
     side_content_warnings.extend(headings.warnings)
     side_content_warnings.extend(table_batch.warnings)
@@ -305,21 +299,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                             "timeline-axis": axis_slot}
     if annotation_slot is not None:
         annotation_by_source["annotations"] = content_slot(annotation_slot, headings.reserved("annotations"))
-    route_label_plan, annotation_batch = complete_route_label_options(route_label_options,
-        SurfaceAnnotationOptionContext(request, projection, layout_manifest, contract, review_rows, rows,
+    annotation_batch = complete_route_annotations(route_label_plan,
+        SurfaceAnnotationPlanContext(request, projection, layout_manifest, contract, review_rows, rows,
             annotation_by_source, scale, start, end, timeline_content, timeline_bounds, mark_by_id, metric_for))
 
-    # Commit only the selected route/label plan. Each candidate's annotations
-    # were evaluated against its own private completed obstacle inventory.
+    # All phases use the same actual completed content and route inventory.
     surface_obstacles = route_label_plan.obstacles
-    routes_batch = replace(route_label_plan.routes,
-        routing_info=(*lane_routing_info, *route_label_plan.routes.routing_info))
+    routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
     instance_anchors = dict(routes_batch.instance_anchors)
     instance_rows = dict(routes_batch.instance_rows)
     comparison_clusters = dict(routes_batch.comparison_clusters)
     diagnostics.extend(routes_batch.diagnostics)
+    accept_member_label_batch(route_label_plan.pre_route_members)
     accept_member_label_batch(route_label_plan.members)
     relation_labels = route_label_plan.relation_labels
     text.extend(relation_labels.text)

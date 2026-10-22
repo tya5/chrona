@@ -25,14 +25,14 @@ def _emissions(*shapes):
 
 
 def test_catalog_chip_emits_one_typed_facet_per_symbol_part_with_whole_chip_footprint():
-    parts = (object(), object(), object())
+    parts = tuple(SimpleNamespace(paint_mode="fill") for _ in range(3))
     visible = _rect("8", "18", "34", "16")
     emission, = _emissions(_chip(parts=parts, collision_bounds=visible))
 
     assert (emission.placement_type, emission.placement_id, emission.row_id,
             emission.member_id) == ("shape", "chip:label:member", "row:1", "member:1")
     assert tuple((facet.primitive_id, facet.part_index) for facet in emission.facets) == (
-        ("chip:label:member", 0),
+        ("chip:label:member:part0", 0),
         ("chip:label:member:part1", 1),
         ("chip:label:member:part2", 2),
     )

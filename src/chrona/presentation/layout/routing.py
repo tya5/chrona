@@ -9,12 +9,13 @@ from math import hypot, isfinite
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacleIndex
-from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.ports import ConnectorEgress, outward_corridor_ends
 from chrona.presentation.layout.route_search import RelationExpansionBudget, RouteSearchFailure
 from chrona.presentation.layout.route_quality_bounds import rectangular_detour_lower_bound
+from chrona.presentation.layout.route_reduction import collapse_collinear_route
 from chrona.presentation.layout.relation_shapes import (
-    RelationShapeChannels, first_fit_port_pairs, relation_shape_candidates, shape_channels,
-    supplemental_relation_channel_candidates,
+    RelationShapeChannels, first_fit_port_pairs, outward_relation_shape_candidates,
+    relation_channel_candidates, relation_shape_candidates, shape_channels,
 )
 
 
@@ -447,6 +448,8 @@ def select_relation_route(
     accept: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
     prepare: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
                       tuple[tuple[float, float], ...] | None] | None = None,
+    prepare_protected: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
+                                tuple[tuple[float, float], ...] | None] | None = None,
     rank: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress], tuple] | None = None,
     search_policy: str = "best",
     channels: RelationShapeChannels | None = None,
@@ -455,8 +458,15 @@ def select_relation_route(
     protected: bool = False,
     endpoint_preserving_prepare: bool = False,
     protected_quality_barriers: Callable[[ConnectorEgress, ConnectorEgress], tuple[ObstacleRect, ...]] | None = None,
-    label_repair_obstacle_ids: frozenset[str] = frozenset(),
-    route_stroke_width: float = 0.0,
+    outward_runs: tuple[float, float] | None = None,
+    endpoint_lead_runs: Callable[[ConnectorEgress, ConnectorEgress], tuple[float, float]] | None = None,
+    recovery_channels: RelationShapeChannels | None = None,
+    recovery_lead_runs: Callable[[ConnectorEgress, ConnectorEgress], tuple[float, float]] | None = None,
+    recovery_stroke_width: float = 0.0,
+    primary_egress_blockers: Callable[[ConnectorEgress, ConnectorEgress], tuple[str, ...]] | None = None,
+    preferred_quality: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
+                                RouteAttemptEvidence | None] | None = None,
+    preferred_port_pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...] = (),
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
@@ -468,6 +478,9 @@ def select_relation_route(
     A search failure is
     distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
+    Preferred-only pairs require the caller's exact canonical normal-route
+    revalidation, including its existing quality reference. That callback is
+    never used for ordinary search or to authorize a relaxed-domain hint.
     Explicit first-fit sorts admitted ports and tries finite shapes before
     that pair's cheap search, ignoring rank after full acceptance. Only if
     that whole phase fails, the original ranked best phase rescues the relation
@@ -479,26 +492,38 @@ def select_relation_route(
                                    max_bends=max_bends, max_detour_ratio=max_detour_ratio)
     if search_policy not in {"best", "first-fit"}:
         raise _route_attempt_error("search policy", search_policy=search_policy)
-    repair_active = (search_policy == "first-fit" and bool(label_repair_obstacle_ids)
-                     and any(obstacles.has(identifier) for identifier in label_repair_obstacle_ids))
-    if repair_active and (isinstance(route_stroke_width, bool)
-            or not isinstance(route_stroke_width, (int, float))
-            or not isfinite(route_stroke_width) or route_stroke_width < 0):
-        raise _route_attempt_error("route stroke width", route_stroke_width=route_stroke_width)
+    if outward_runs is not None and (len(outward_runs) != 2 or any(
+            isinstance(value, bool) or not isinstance(value, (int, float))
+            or not isfinite(value) or value < 0 for value in outward_runs)):
+        raise _route_attempt_error("outward endpoint runs", outward_runs=outward_runs)
+    if endpoint_lead_runs is not None and not callable(endpoint_lead_runs):
+        raise _route_attempt_error("endpoint lead runs", endpoint_lead_runs=endpoint_lead_runs)
+    if prepare_protected is not None and not callable(prepare_protected):
+        raise _route_attempt_error("protected route preparation", prepare_protected=prepare_protected)
+    if ((recovery_channels is None) != (recovery_lead_runs is None)
+            or (recovery_lead_runs is not None and not callable(recovery_lead_runs))):
+        raise _route_attempt_error("recovery channel inputs")
+    if (isinstance(recovery_stroke_width, bool)
+            or not isinstance(recovery_stroke_width, (int, float))
+            or not isfinite(recovery_stroke_width) or recovery_stroke_width < 0):
+        raise _route_attempt_error("recovery stroke width", recovery_stroke_width=recovery_stroke_width)
     phases = (("best", port_pairs),)
     if search_policy == "first-fit":
         phases = (("first-fit", first_fit_port_pairs(port_pairs)), ("best", port_pairs))
-        if channels is None:
-            channels = shape_channels(obstacles, bounds=bounds, classes=classes, regions=regions,
-                                      grid_offset=ROUTE_GRID_OFFSET)
+    if channels is None and (search_policy == "first-fit" or outward_runs is not None
+                             or recovery_channels is not None):
+        channels = shape_channels(obstacles, bounds=bounds, classes=classes, regions=regions,
+                                  grid_offset=ROUTE_GRID_OFFSET)
     attempts: list[RouteAttemptEvidence] = []
     best = None
     chosen = None
     chosen_points = ()
     chosen_attempt = -1
+    chosen_outward = False
     search_used = False
     hint_rejection = None
     budget = RelationExpansionBudget(search_budget) if search_budget is not None else None
+    channel_attempted_pairs = set()
 
     def result(pair, points, evidence, *, shaped=False, hinted=False):
         return RelationRouteSelection(pair, tuple(points), tuple(evidence),
@@ -507,24 +532,33 @@ def select_relation_route(
             settled_by_hint=hinted, hint_rejection=hint_rejection)
 
     def pair_domain(source, target):
-        blockers = tuple(sorted({item.placement_id for egress in (source, target)
+        blockers = {item.placement_id for egress in (source, target)
             if egress.corridor for item in obstacles.egress_collisions(
                 ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
-                classes=classes, regions=regions)}))
+                classes=classes, regions=regions)}
+        if primary_egress_blockers is not None:
+            blockers.update(primary_egress_blockers(source, target))
         port_ids = tuple(port_id
             for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
             for port_id in (f"port:{host_id or relation_scene_id}:{side}",) if obstacles.has(port_id))
-        return blockers, port_ids
+        return tuple(sorted(blockers)), port_ids
+
+    def outward_candidates(source, target):
+        return outward_relation_shape_candidates((source, target),
+            source_run=outward_runs[0], target_run=outward_runs[1],
+            bounds=bounds, channels=channels)
 
     for pair, middle in preferred_routes:
         blockers, port_ids = pair_domain(*pair)
-        if pair not in port_pairs or blockers:
+        extra_pair = pair not in port_pairs and pair in preferred_port_pairs and preferred_quality is not None
+        if (pair not in port_pairs and not extra_pair) or blockers:
             hint_rejection = "egress-collision" if blockers else "unadmitted-port-pair"
         else:
             measured, points = _select_pair_candidate(*pair, obstacles=obstacles, bounds=bounds,
                 port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
                 max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-                limit=0, candidate_paths=(middle,))
+                limit=0, candidate_paths=(middle,), alternate_quality=preferred_quality,
+                require_alternate_quality=extra_pair)
             if measured.outcome == "accepted":
                 return result(pair, points, (measured,), hinted=True)
             hint_rejection = measured.search_failure or measured.outcome
@@ -540,45 +574,179 @@ def select_relation_route(
                                                      blocker_ids=blockers))
                 continue
             pair_limit = quota + int(pair_index < remainder)
+            measured = None
+            points = ()
+            settled_outward = False
+            pair_channel_winner = None
+            pair_channel_points = ()
+            pair_channel_score = None
             if phase == "first-fit":
                 shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                                    bounds=bounds, channels=channels)
-                if repair_active:
-                    shapes = _chain(shapes, supplemental_relation_channel_candidates(
-                        source.exposed_port, target.exposed_port, bounds=bounds, channels=channels,
-                        obstacles=obstacles, route_stroke_width=float(route_stroke_width),
-                        grid_offset=ROUTE_GRID_OFFSET, classes=classes, regions=regions))
+                if outward_runs is not None:
+                    shapes = _chain(shapes, outward_candidates(source, target))
                 shaped, shaped_points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
                     port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
                     max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
                     limit=pair_limit, candidate_paths=shapes)
                 if shaped.outcome == "accepted":
                     return result((source, target), shaped_points, (*attempts, shaped), shaped=True)
-            if pair_limit == 0:
-                attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
-                                                     search_failure="E_PRESENTATION_ROUTE_LIMIT"))
-                continue
-            search_used = True
-            measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
-                port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
-                max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
-                limit=pair_limit, exact_bound=phase == "best",
-                **({"budget": budget} if budget is not None else {}))
-            attempts.append(measured)
+            # The aligned exposed-port route is a cheap, completed proposal.
+            # Preserve its pre-channel priority and leave the bounded recovery
+            # allowance available when it is not accepted.
+            if phase == "best" and endpoint_lead_runs is not None and (
+                    source.exposed_port[0] == target.exposed_port[0]
+                    or source.exposed_port[1] == target.exposed_port[1]):
+                aligned, aligned_points = _select_pair_candidate(source, target, obstacles=obstacles,
+                    bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
+                    max_bends=max_bends, max_detour_ratio=max_detour_ratio,
+                    prepare=prepare, accept=accept, limit=0,
+                    candidate_paths=((source.exposed_port, target.exposed_port),))
+                if aligned.outcome == "accepted":
+                    measured, points, settled_outward = aligned, aligned_points, True
+                    attempts.append(aligned)
+            if (recovery_channels is not None and pair_limit > 0
+                    and measured is None
+                    and (source, target) not in channel_attempted_pairs):
+                channel_attempted_pairs.add((source, target))
+                if phase == "best":
+                    # Best historically searched before finite shapes. Recovery
+                    # retains the canonical cheap grammar, then adds bounded
+                    # channel work before the graph without changing NORMAL.
+                    cheap = relation_shape_candidates(source.exposed_port, target.exposed_port,
+                                                      bounds=bounds, channels=channels)
+                    shaped, shaped_points = _select_pair_candidate(source, target,
+                        obstacles=obstacles, bounds=bounds, port_ids=port_ids, classes=classes,
+                        regions=regions, max_bends=max_bends, max_detour_ratio=max_detour_ratio,
+                        prepare=prepare, accept=accept, limit=0, candidate_paths=cheap)
+                    if shaped.outcome == "accepted":
+                        pair_channel_winner, pair_channel_points = shaped, shaped_points
+                        pair_channel_score = ((rank(tuple(shaped_points), source, target)
+                            if rank is not None else (shaped.bends, shaped.length)))
+                runs = recovery_lead_runs(source, target)
+                if (len(runs) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                        or not isfinite(value) or value < 0 for value in runs)):
+                    raise _route_attempt_error("recovery endpoint lead runs", endpoint_lead_runs=runs)
+                lead_start, lead_end = outward_corridor_ends((source, target),
+                    source_run=runs[0], target_run=runs[1])
+                channel_expansions = [0]
+                def charge_channel_state():
+                    if channel_expansions[0] >= pair_limit:
+                        raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT",
+                            detail="The port pair expansion quota was reached during recovery channel completion.")
+                    if budget is not None:
+                        budget.charge()
+                    channel_expansions[0] += 1
+                if pair_limit > 0:
+                    side_direction = {"end": (0, 1), "start": (0, -1),
+                                      "above": (1, -1), "below": (1, 1)}
+                    source_axis, source_sign = side_direction[source.side]
+                    target_axis, target_outward_sign = side_direction[target.side]
+                    channel_middle = relation_channel_candidates(lead_start, lead_end,
+                        bounds=bounds, channels=recovery_channels, obstacles=obstacles,
+                        port_ids=port_ids, classes=classes, regions=regions,
+                        max_bends=max_bends, initial_axis=source_axis, initial_sign=source_sign,
+                        terminal_axis=target_axis, terminal_sign=-target_outward_sign,
+                        max_detour_ratio=max_detour_ratio,
+                        direct_length=(abs(source.semantic_port[0] - target.semantic_port[0])
+                                       + abs(source.semantic_port[1] - target.semantic_port[1])),
+                        source_prefix_length=(abs(source.semantic_port[0] - source.exposed_port[0])
+                                              + abs(source.semantic_port[1] - source.exposed_port[1]) + runs[0]),
+                        target_suffix_length=(runs[1]
+                                              + abs(target.semantic_port[0] - target.exposed_port[0])
+                                              + abs(target.semantic_port[1] - target.exposed_port[1])),
+                        stroke_width=recovery_stroke_width,
+                        expansion_limit=pair_limit, on_expansion=charge_channel_state)
+                    def full_channel_routes():
+                        for middle in channel_middle:
+                            yield collapse_collinear_route((source.exposed_port, *middle, target.exposed_port))
+                    channel_result, channel_points = _select_pair_candidate(source, target,
+                        obstacles=obstacles, bounds=bounds, port_ids=port_ids, classes=classes,
+                        regions=regions, max_bends=max_bends, max_detour_ratio=max_detour_ratio,
+                        prepare=prepare, accept=accept, limit=pair_limit,
+                        candidate_paths=full_channel_routes())
+                else:
+                    channel_result, channel_points = (RouteAttemptEvidence(source.side, target.side,
+                        "no-route-found", search_failure="E_PRESENTATION_ROUTE_LIMIT"), ())
+                search_used |= channel_expansions[0] > 0
+                if channel_result.outcome == "accepted":
+                    if phase == "first-fit":
+                        return result((source, target), channel_points, (*attempts, channel_result), shaped=True)
+                    score = (rank(tuple(channel_points), source, target) if rank is not None
+                             else (channel_result.bends, channel_result.length))
+                    if pair_channel_winner is None or score < pair_channel_score:
+                        if pair_channel_winner is not None:
+                            attempts.append(replace(pair_channel_winner, outcome="eligible-not-selected"))
+                        pair_channel_winner, pair_channel_points, pair_channel_score = (
+                            channel_result, channel_points, score)
+                    else:
+                        attempts.append(replace(channel_result, outcome="eligible-not-selected"))
+                else:
+                    attempts.append(channel_result)
+                pair_limit -= channel_expansions[0]
+            if measured is None:
+                if pair_limit <= 0 or (budget is not None and budget.hit):
+                    if pair_channel_winner is not None:
+                        measured, points = pair_channel_winner, pair_channel_points
+                        settled_outward = True
+                        attempts.append(measured)
+                    else:
+                        attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                             search_failure="E_PRESENTATION_ROUTE_LIMIT"))
+                        continue
+                else:
+                    search_used = True
+                    measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
+                        port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
+                        max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+                        limit=pair_limit, exact_bound=phase == "best",
+                        lead_runs=(endpoint_lead_runs(source, target) if endpoint_lead_runs is not None else None),
+                        **({"budget": budget} if budget is not None else {}))
+                    if pair_channel_winner is not None and measured.outcome == "accepted":
+                        graph_score = (rank(tuple(points), source, target) if rank is not None
+                                       else (measured.bends, measured.length))
+                        if graph_score < pair_channel_score:
+                            attempts.append(replace(pair_channel_winner, outcome="eligible-not-selected"))
+                            attempts.append(measured)
+                        else:
+                            attempts.append(replace(measured, outcome="eligible-not-selected"))
+                            measured, points = pair_channel_winner, pair_channel_points
+                            settled_outward = True
+                            attempts.append(measured)
+                    elif pair_channel_winner is not None and measured.outcome != "accepted":
+                        attempts.append(measured)
+                        measured, points = pair_channel_winner, pair_channel_points
+                        settled_outward = True
+                        attempts.append(measured)
+                    else:
+                        attempts.append(measured)
+            if phase == "best" and measured.outcome != "accepted" and outward_runs is not None:
+                # These are normal finite proposals, not relaxed connectors or
+                # prior hints. Preserve an accepted graph choice; otherwise
+                # close the missing outward-corridor proposal before relaxing.
+                shaped, shaped_points = _select_pair_candidate(source, target,
+                    obstacles=obstacles, bounds=bounds, port_ids=port_ids,
+                    classes=classes, regions=regions, max_bends=max_bends,
+                    max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+                    limit=0, candidate_paths=outward_candidates(source, target))
+                attempts.append(shaped)
+                if shaped.outcome == "accepted":
+                    measured, points, settled_outward = shaped, shaped_points, True
             if measured.outcome == "accepted":
                 if rank is None or phase == "first-fit":
-                    return result((source, target), points, attempts)
+                    return result((source, target), points, attempts, shaped=settled_outward)
                 score = rank(tuple(points), source, target)
                 if best is None or score < best:
                     if chosen_attempt >= 0:
                         attempts[chosen_attempt] = replace(attempts[chosen_attempt], outcome="eligible-not-selected")
                     best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
+                    chosen_outward = settled_outward
                 else:
                     attempts[-1] = replace(measured, outcome="eligible-not-selected")
             if budget is not None and budget.hit:
                 break
     if chosen is not None or not protected:
-        return result(chosen, chosen_points, attempts)
+        return result(chosen, chosen_points, attempts, shaped=chosen_outward)
 
     # Exhaust only the declared finite domain; reuse all completed validators.
     protected_expansions = 0
@@ -591,9 +759,22 @@ def select_relation_route(
         from chrona.presentation.layout.route_search import orthogonal_route_candidates
         nonlocal protected_search_used
         protected_search_used = True
-        yield from orthogonal_route_candidates(source.exposed_port, target.exposed_port,
-            obstacles, bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
-            limit=None, on_expansion=charge_protected)
+        if endpoint_lead_runs is None:
+            start, end = source.exposed_port, target.exposed_port
+            assemble = lambda path: path
+        else:
+            runs = endpoint_lead_runs(source, target)
+            if (len(runs) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not isfinite(value) or value < 0 for value in runs)):
+                raise _route_attempt_error("endpoint lead runs", endpoint_lead_runs=runs)
+            start, end = outward_corridor_ends(
+                (source, target), source_run=runs[0], target_run=runs[1])
+            def assemble(path):
+                return collapse_collinear_route((source.exposed_port, *path, target.exposed_port))
+        for path in orthogonal_route_candidates(start, end, obstacles,
+                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions,
+                limit=None, on_expansion=charge_protected):
+            yield assemble(path)
 
     fallback = None
     protected_start = len(attempts)
@@ -611,8 +792,9 @@ def select_relation_route(
         shapes = relation_shape_candidates(source.exposed_port, target.exposed_port,
                                            bounds=bounds, channels=protected_channels)
         candidates = _chain(shapes, protected_candidates(source, target, port_ids))
+        protected_prepare = prepare_protected or prepare
         quality_impossible = False
-        if prepare is None or endpoint_preserving_prepare:
+        if protected_prepare is None or endpoint_preserving_prepare:
             quality_impossible = max_bends < int(source.semantic_port[0] != target.semantic_port[0]
                                                  and source.semantic_port[1] != target.semantic_port[1])
             if protected_quality_barriers is not None:
@@ -622,7 +804,7 @@ def select_relation_route(
                 quality_impossible |= direct > 0 and lower > direct * max_detour_ratio
         measured, points = _select_pair_candidate(source, target, obstacles=obstacles, bounds=bounds,
             port_ids=port_ids, classes=classes, regions=regions, max_bends=max_bends,
-            max_detour_ratio=max_detour_ratio, prepare=prepare, accept=accept,
+            max_detour_ratio=max_detour_ratio, prepare=protected_prepare, accept=accept,
             limit=None, candidate_paths=candidates, stop_on_safe=quality_impossible)
         attempts.append(measured)
         if measured.outcome == "accepted":
@@ -660,7 +842,9 @@ def select_relation_route(
 
 def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, classes, regions,
                            max_bends, max_detour_ratio, prepare, accept, limit, candidate_paths=None,
-                           budget=None, exact_bound=True, stop_on_safe=False):
+                           budget=None, exact_bound=True, stop_on_safe=False, alternate_quality=None,
+                           lead_runs=None,
+                           require_alternate_quality=False):
     """Search alternatives for one pair; only completed, safe paths reach quality selection."""
     from chrona.presentation.layout.route_search import orthogonal_route_candidates
 
@@ -668,18 +852,36 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
     failure = "E_CONNECTOR_UNROUTABLE"
     disposition = "finite-domain-exhausted" if limit is None else "bounded-candidates-exhausted"
     try:
-        candidates = (orthogonal_route_candidates(source.exposed_port, target.exposed_port, obstacles,
+        if lead_runs is None:
+            start, end = source.exposed_port, target.exposed_port
+            assemble = lambda path: path
+        else:
+            if (len(lead_runs) != 2 or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not isfinite(value) or value < 0 for value in lead_runs)):
+                raise _route_attempt_error("endpoint lead runs", endpoint_lead_runs=lead_runs)
+            start, end = outward_corridor_ends((source, target), source_run=lead_runs[0], target_run=lead_runs[1])
+            def assemble(path):
+                return collapse_collinear_route((source.exposed_port, *path, target.exposed_port))
+        candidates = (orthogonal_route_candidates(start, end, obstacles,
             bounds=bounds, port_ids=port_ids, classes=classes, regions=regions, limit=limit,
             **({"budget": budget} if budget is not None else {}),
             **({"exact_bound": False} if not exact_bound else {}))
             if candidate_paths is None else candidate_paths)
-        for middle in candidates:
+        for proposal in candidates:
+            middle = assemble(proposal) if candidate_paths is None else proposal
             # Both generators and explicit prior proposals obey the same domain.
             if (any(not (bounds[0] <= x <= bounds[2] and bounds[1] <= y <= bounds[3]) for x, y in middle)
                     or any(a[0] != b[0] and a[1] != b[1] for a, b in zip(middle, middle[1:]))):
                 failure = "E_CONNECTOR_UNROUTABLE"
                 continue
             if candidate_paths is not None and any(obstacles.collisions(ObstacleSegment(a, b),
+                    port_ids=port_ids, classes=classes, regions=regions)
+                    for a, b in zip(middle, middle[1:])):
+                failure = "E_LAYOUT_ROUTE_THROUGH_MARK"
+                continue
+            # The graph validates its own middle path. Fixed lead segments are
+            # outside that query and receive no host/text exemption here.
+            if lead_runs is not None and any(obstacles.collisions(ObstacleSegment(a, b),
                     port_ids=port_ids, classes=classes, regions=regions)
                     for a, b in zip(middle, middle[1:])):
                 failure = "E_LAYOUT_ROUTE_THROUGH_MARK"
@@ -707,6 +909,12 @@ def _select_pair_candidate(source, target, *, obstacles, bounds, port_ids, class
                 continue
             measured = route_quality_attempt(source.side, target.side, completed,
                 max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+            if alternate_quality is not None and (require_alternate_quality or measured.outcome == "quality-rejected"):
+                alternate = alternate_quality(completed, source, target)
+                if require_alternate_quality and alternate is None:
+                    failure = "E_CONNECTOR_UNROUTABLE"
+                    continue
+                measured = alternate or measured
             if measured.outcome == "accepted":
                 return measured, completed
             if stop_on_safe:

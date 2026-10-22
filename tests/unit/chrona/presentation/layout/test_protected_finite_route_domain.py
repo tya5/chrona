@@ -3,16 +3,21 @@ import json
 
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.relation_shapes import RelationShapeChannels
 from chrona.presentation.layout.routing import select_relation_route
 
 
-def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_policy="first-fit", rank=None):
+def _select(*, pairs=None, obstacles=None, protected=True, accept=None, search_policy="first-fit", rank=None,
+            bounds=(-2., -2., 12., 12.), channels=None, endpoint_lead_runs=None,
+            max_bends=0, search_budget=1, prepare=None, prepare_protected=None):
     pairs = pairs or ((ConnectorEgress("end", (0., 0.), (0., 0.), ()),
                        ConnectorEgress("start", (10., 10.), (10., 10.), ())),)
     return select_relation_route(pairs, obstacles=obstacles or SurfaceObstacleIndex(),
-        bounds=(-2., -2., 12., 12.), source_host_id=None, target_host_id=None,
-        relation_scene_id="critical", max_bends=0, max_detour_ratio=2.,
-        search_policy=search_policy, search_budget=1, protected=protected, accept=accept, rank=rank)
+        bounds=bounds, channels=channels, endpoint_lead_runs=endpoint_lead_runs,
+        source_host_id=None, target_host_id=None,
+        relation_scene_id="critical", max_bends=max_bends, max_detour_ratio=2.,
+        search_policy=search_policy, search_budget=search_budget, protected=protected, accept=accept, rank=rank,
+        prepare=prepare, prepare_protected=prepare_protected)
 
 
 def test_safe_quality_fallback_outlives_ordinary_budget_and_keeps_measurements():
@@ -57,6 +62,69 @@ def test_completed_safety_rejection_is_never_waived_by_quality_fallback():
     selected = _select(accept=lambda path: False)
     assert selected.selected_pair is None
     assert selected.critical_evidence.exhausted
+
+
+def test_protected_preparation_is_separate_from_ordinary_acceptance():
+    ordinary_calls, protected_calls = [], []
+
+    def reject_ordinary(points, *_):
+        ordinary_calls.append(points)
+        return None
+
+    def accept_protected(points, *_):
+        protected_calls.append(points)
+        return points
+
+    pairs = ((ConnectorEgress("end", (0., 0.), (0., 0.), ()),
+              ConnectorEgress("start", (10., 0.), (10., 0.), ())),)
+    selected = _select(pairs=pairs, prepare=reject_ordinary, prepare_protected=accept_protected,
+                       max_bends=0, search_budget=1)
+    assert selected.selected_pair is not None
+    assert selected.critical_evidence is not None
+    assert selected.critical_evidence.quality_fallback is None
+    assert selected.critical_evidence.attempts
+    assert ordinary_calls
+    assert protected_calls
+
+
+def test_nonprotected_route_never_invokes_protected_preparation():
+    protected_calls = []
+    selected = _select(protected=False, prepare=lambda points, *_: points,
+                       prepare_protected=lambda points, *_: protected_calls.append(points) or points,
+                       max_bends=1, search_budget=1)
+    assert selected.selected_pair is not None
+    assert not protected_calls
+
+
+def test_protected_temporal_exception_does_not_waive_completed_safety():
+    selected = _select(prepare=lambda points, *_: None,
+        prepare_protected=lambda points, *_: points,
+        accept=lambda _points: False, max_bends=0, search_budget=1)
+    assert selected.selected_pair is None
+    assert selected.critical_evidence is not None
+    assert selected.critical_evidence.exhausted
+    assert selected.critical_evidence.quality_fallback is None
+
+
+def test_protected_quality_bound_is_not_proved_through_non_endpoint_preserving_hook(monkeypatch):
+    import chrona.presentation.layout.routing as routing
+
+    stop_values = []
+    original = routing._select_pair_candidate
+
+    def observe(*args, **kwargs):
+        if "stop_on_safe" in kwargs:
+            stop_values.append(kwargs["stop_on_safe"])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(routing, "_select_pair_candidate", observe)
+    _select(prepare=lambda points, *_: points,
+            prepare_protected=lambda points, *_: points[:-1] + ((points[-1][0] + 1., points[-1][1]),),
+            max_bends=0, search_budget=1)
+
+    # A transformed protected endpoint invalidates the untransformed geometric
+    # lower-bound proof, so candidate enumeration must not stop on that proof.
+    assert stop_values and not any(stop_values)
 
 
 def test_protected_best_compares_eligible_pairs_with_existing_rank():
@@ -149,3 +217,70 @@ def test_detour_proof_does_not_claim_a_safe_path_when_full_validation_rejects(mo
     assert result.selected_pair is None
     assert result.critical_evidence.exhausted
     assert result.critical_evidence.quality_fallback is None
+
+
+def test_protected_graph_searches_between_minimum_lead_tips(monkeypatch):
+    from chrona.presentation.layout import route_search
+
+    source = ConnectorEgress("end", (0., 0.), (2., 0.), ("source-host",))
+    target = ConnectorEgress("start", (20., 10.), (18., 10.), ("target-host",))
+    pairs = ((source, target),)
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("source-host", "mark", "timeline", ObstacleRect(-10., -10., -9., -9.)))
+    obstacles.add(SurfaceObstacle("target-host", "mark", "timeline", ObstacleRect(30., 30., 31., 31.)))
+    graph_queries = []
+
+    def candidates(start, end, obstacles, **kwargs):
+        if kwargs["limit"] is None:
+            graph_queries.append((start, end))
+            assert (start, end) == ((5., 0.), (15., 10.))
+            yield ((5., 0.), (5., 10.), (15., 10.))
+
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", candidates)
+    channels = RelationShapeChannels((0., 10., 20.), (0., 10., 20.))
+    prepared, accepted = [], []
+    def prepare(points, *_):
+        prepared.append(points)
+        return points
+    def accept(points):
+        accepted.append(points)
+        return (5., 0.) in points and points[0] == (0., 0.) and points[-1] == (20., 10.)
+    selected = _select(pairs=pairs, obstacles=obstacles, protected=True, search_policy="best", search_budget=1,
+        bounds=(0., 0., 20., 20.), channels=channels,
+        endpoint_lead_runs=lambda left, right: (3., 3.),
+        max_bends=4,
+        prepare=prepare, accept=accept)
+
+    assert graph_queries == [((5., 0.), (15., 10.))]
+    assert selected.selected_pair == pairs[0], (selected.attempts, prepared, accepted)
+    assert selected.points == ((0., 0.), (2., 0.), (5., 0.), (5., 10.), (18., 10.), (20., 10.))
+    assert selected.critical_evidence is not None
+
+
+def test_short_straight_protected_shape_precedes_overlapping_lead_query(monkeypatch):
+    from chrona.presentation.layout import route_search
+
+    source = ConnectorEgress("end", (0., 0.), (0., 0.), ())
+    target = ConnectorEgress("start", (10., 0.), (10., 0.), ())
+    pairs = ((source, target),)
+    graph_queries = []
+
+    def candidates(start, end, obstacles, **kwargs):
+        if kwargs["limit"] is None:
+            graph_queries.append((start, end))
+            return iter(())
+        return iter(())
+
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", candidates)
+    channels = RelationShapeChannels((0., 10.), (0., 10.))
+    selected = _select(pairs=pairs, protected=True, search_policy="best", search_budget=1,
+        bounds=(0., 0., 10., 10.), channels=channels,
+        endpoint_lead_runs=lambda left, right: (6., 6.),
+        max_bends=0,
+        prepare=lambda points, *_: points,
+        accept=lambda points: points[0] == (0., 0.) and points[-1] == (10., 0.)
+            and all(point[1] == 0. for point in points))
+
+    assert selected.selected_pair == pairs[0]
+    assert selected.points == ((0., 0.), (10., 0.))
+    assert graph_queries == []

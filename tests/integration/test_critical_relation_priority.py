@@ -36,7 +36,8 @@ def test_scheduler_critical_relations_route_first_but_emit_in_declaration_order(
                               fact.critical, fact.semantic_id)
                              for index, fact in result))
         declared_ids.update((fact.relation_id, index) for index, fact in result)
-        expected_attempts.extend(f"relation:{fact.relation_id}:" for _, fact in result)
+        if not expected_attempts:
+            expected_attempts.extend(f"relation:{fact.relation_id}:" for _, fact in result)
         return result
 
     def observed_select(*args, **kwargs):
