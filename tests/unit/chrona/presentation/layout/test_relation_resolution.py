@@ -6,7 +6,7 @@ from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, 
 from chrona.presentation.layout.ports import ConnectorEgress
 from chrona.presentation.layout.relation_resolution import (
     RelationResolutionStage as Stage, RelationRouteAttemptOutcome,
-    relaxed_domain, search_relation_resolution,
+    relaxed_domain, search_relation_resolution, yielding_edge_domain,
 )
 from chrona.presentation.layout.relation_shapes import shape_channels
 from chrona.presentation.layout.routing import select_relation_route
@@ -51,10 +51,49 @@ def test_endpoint_host_is_preserved_and_exhaustion_requests_terminal_completion(
     index.add(SurfaceObstacle("host", "mark", "timeline", ObstacleRect(-1., -1., 101., 101.)))
     result = _resolve(Mode.RELAX, index, hosts=frozenset({"host"}))
     assert result.accepted is None
-    assert len(result.attempts) == 4
+    assert tuple(item.stage for item in result.attempts) == (
+        Stage.NORMAL, Stage.LABEL_VISUALS, Stage.TEXT, Stage.MARKS, Stage.EDGE)
     assert result.terminal_fallback is Stage.OVERLAP
     final = relaxed_domain(index, Stage.MARKS, frozenset({"host"}))
     assert final.obstacles.has("host") and final.required_primary_mark_ids == frozenset({"host"})
+    assert not final.mark_edge_contact
+
+
+def test_edge_is_the_last_search_stage_and_lifts_only_the_host_contact_rule():
+    index = SurfaceObstacle("host", "mark", "timeline", ObstacleRect(-1., -1., 101., 101.))
+    other = SurfaceObstacle("other", "mark", "timeline", ObstacleRect(-1., -1., 101., 101.))
+    inventory = SurfaceObstacleIndex()
+    inventory.add(index)
+    inventory.add(other)
+    domain = relaxed_domain(inventory, Stage.EDGE, frozenset({"host"}))
+    # `marks` relaxation is kept (non-host marks gone, host kept) and the edge exception is
+    # the only addition: it is a flag on the domain, never a weaker obstacle inventory.
+    assert domain.stage is Stage.EDGE and domain.mark_edge_contact
+    assert domain.obstacles.has("host") and not domain.obstacles.has("other")
+    assert domain.required_primary_mark_ids == frozenset({"host"})
+    for earlier in (Stage.NORMAL, Stage.LABEL_VISUALS, Stage.TEXT, Stage.MARKS):
+        assert not relaxed_domain(inventory, earlier, frozenset({"host"})).mark_edge_contact
+
+
+def test_edge_keeps_required_names_hard_and_a_yielding_domain_drops_only_the_named_groups():
+    index = SurfaceObstacleIndex()
+    for identity, obstacle_class in (("member-label:a", "text"), ("label-footprint:member-label:a", "label-visual"),
+                                     ("member-label:b", "text"), ("label-footprint:member-label:b", "label-visual"),
+                                     ("relation-label:r", "text"), ("planned:other", "mark")):
+        index.add(SurfaceObstacle(identity, obstacle_class, "timeline", ObstacleRect(0., 0., 10., 10.)))
+    required = frozenset({"member-label:a", "label-footprint:member-label:a",
+                          "member-label:b", "label-footprint:member-label:b"})
+    edge = relaxed_domain(index, Stage.EDGE, frozenset(), required)
+    assert all(edge.obstacles.has(identity) for identity in required) and not edge.yielding_ids
+    group = frozenset({"member-label:a", "label-footprint:member-label:a"})
+    yielding = yielding_edge_domain(index, group)
+    assert yielding.stage is Stage.EDGE and yielding.mark_edge_contact and yielding.yielding_ids == group
+    # the yielding search is the former route-first inventory: only the named groups leave it, and no
+    # label, text or mark relaxation is added to them
+    assert not yielding.obstacles.has("member-label:a") and not yielding.obstacles.has("label-footprint:member-label:a")
+    for kept in ("member-label:b", "label-footprint:member-label:b", "relation-label:r", "planned:other"):
+        assert yielding.obstacles.has(kept)
+    assert yielding.required_primary_mark_ids is None
 
 
 def test_suppress_executes_only_normal_attempt():
@@ -71,7 +110,7 @@ def test_direct_modes_do_not_search(mode, stage):
     assert not result.attempts and result.terminal_fallback is stage
 
 
-@pytest.mark.parametrize("stage", (Stage.LABEL_VISUALS, Stage.TEXT, Stage.MARKS))
+@pytest.mark.parametrize("stage", (Stage.LABEL_VISUALS, Stage.TEXT, Stage.MARKS, Stage.EDGE))
 def test_staged_relaxation_preserves_only_explicit_required_label_obstacles(stage):
     index = SurfaceObstacleIndex()
     for identity, obstacle_class in (
@@ -111,7 +150,7 @@ def test_normal_success_never_retries():
 
 def test_each_real_search_stage_has_a_fresh_expansion_ceiling():
     result = _resolve(Mode.RELAX, SurfaceObstacleIndex(), reject=True, budget=1)
-    assert len(result.attempts) == 4 and result.accepted is None
+    assert len(result.attempts) == 5 and result.accepted is None
     assert all(item.selection.budget_hit and item.selection.search_expansions == 1
                for item in result.attempts)
 

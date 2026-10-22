@@ -109,13 +109,14 @@ def test_default_and_explicit_raw_chip_output_are_byte_identical(tmp_path):
     explicit_raw = _render(tmp_path, "explicit-raw", viewer_fit="raw")
     assert raw.artifact.content == explicit_raw.artifact.content
     # The approved axis-window rule excludes padding-only endpoint buckets;
-    # this pins the resulting axis-only Scene/SVG difference.
-    assert sha256(raw.artifact.content).hexdigest() == "9a2b162e29e15e808b10c9bb7b98c83ff576d1064e1189c802aa5cdb35cc141c"
+    # this pins the resulting axis-only Scene/SVG difference. Since #1908 the declared label gap
+    # moves the "Alpha" chip 8 px up: it abutted the "Beta" chip (0.1 px) in the previous pin.
+    assert sha256(raw.artifact.content).hexdigest() == "47d138dc2b38255dada0f9d7a42411a9ee7f17e8a0fd84d24bc45a0d54f195d7"
     vocabulary = builtin_semantic_vocabulary()
     assert [resource for resource in raw.scene.provenance.resources if resource[0] == "semantic-vocabulary"] == [
         ("semantic-vocabulary", vocabulary.id, "v0.1", vocabulary.content_identity),
     ]
-    assert sha256(serialize_scene(raw.scene)).hexdigest() == "b1bddd4c27476c5580fd15510b8f6af30c7e74f7f5c0e3b5cfa8cfd894d6172c"
+    assert sha256(serialize_scene(raw.scene)).hexdigest() == "028f46d1fb75f5c0382edfa075c0b553f243b82f754271cd8a76f15be9c4e390"
     labels = [item for item in raw.surface.primitives if item.kind == "Text" and item.purpose == "member-label"]
     assert labels and any(len(item.text_layout.lines) > 1 for item in labels)
     assert "<tspan" in raw.artifact.content.decode("utf-8")

@@ -193,7 +193,11 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_memb
     for item in routes:
         route_groups.setdefault(item["sourceRef"], []).append(item)
     assert set(route_groups) == declared_identity_set
-    stub_edge_indices = (23, 25)  # edge-23 now correctly recovers after the normal temporal-hull rejection.
+    # edge-23 recovers after the normal temporal-hull rejection; since #1908 a connected recovery
+    # (mark-edge contact) precedes a paired stub, so only a relation with no connected route stubs.
+    stub_edge_indices = tuple(index for index in (23, 25)
+                              if len(route_groups[declared_identities[index]]) == 2)
+    assert stub_edge_indices == ()  # both formerly stubbed relations now draw one connected route
     stub_identities = {declared_identities[index] for index in stub_edge_indices}
     assert all(len(group) == 1 and group[0].get("toInstanceId") is not None
                for source_ref, group in route_groups.items() if source_ref not in stub_identities)

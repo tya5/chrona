@@ -114,6 +114,7 @@ def test_ordinary_relation_labels_keep_pre_route_names_after_route_completion(mo
         obstacles = index
         text = (pre_name,)
         required_obstacle_ids = frozenset({"pre-route-name"})
+        yieldable_obstacle_ids = frozenset({"pre-route-name"})
 
         def adopt_obstacles(self, current):
             self.obstacles = current

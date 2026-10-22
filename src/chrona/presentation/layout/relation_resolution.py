@@ -14,6 +14,8 @@ class RelationObstacleDomain:
     stage: RelationResolutionStage
     obstacles: SurfaceObstacleIndex
     required_primary_mark_ids: frozenset[str] | None = None
+    mark_edge_contact: bool = False
+    yielding_ids: frozenset[str] = frozenset()
 
     @classmethod
     def normal(cls, obstacles: SurfaceObstacleIndex) -> "RelationObstacleDomain":
@@ -28,8 +30,8 @@ def relaxed_domain(obstacles: SurfaceObstacleIndex, stage: RelationResolutionSta
         raise ValueError("search domain requires a typed resolution stage")
     if stage is RelationResolutionStage.NORMAL:
         return RelationObstacleDomain.normal(obstacles)
-    if stage not in {RelationResolutionStage.LABEL_VISUALS,
-                     RelationResolutionStage.TEXT, RelationResolutionStage.MARKS}:
+    if stage not in {RelationResolutionStage.LABEL_VISUALS, RelationResolutionStage.TEXT,
+                     RelationResolutionStage.MARKS, RelationResolutionStage.EDGE}:
         raise ValueError("a terminal fallback is not a search domain")
     filtered = SurfaceObstacleIndex()
     for item in obstacles.all():
@@ -40,14 +42,29 @@ def relaxed_domain(obstacles: SurfaceObstacleIndex, stage: RelationResolutionSta
             continue
         if item.obstacle_class == "text" and (
                 item.placement_id.startswith("relation-label:")
-                or stage in {RelationResolutionStage.TEXT, RelationResolutionStage.MARKS}):
+                or stage in {RelationResolutionStage.TEXT, RelationResolutionStage.MARKS,
+                             RelationResolutionStage.EDGE}):
             continue
-        if (stage is RelationResolutionStage.MARKS and item.obstacle_class == "mark"
+        if (stage in {RelationResolutionStage.MARKS, RelationResolutionStage.EDGE} and item.obstacle_class == "mark"
                 and item.placement_id not in endpoint_host_ids):
             continue
         filtered.add(item)
+    edge = stage is RelationResolutionStage.EDGE
     return RelationObstacleDomain(stage, filtered,
-        endpoint_host_ids if stage is RelationResolutionStage.MARKS else None)
+        endpoint_host_ids if stage in {RelationResolutionStage.MARKS, RelationResolutionStage.EDGE} else None,
+        mark_edge_contact=edge)
+
+
+def yielding_edge_domain(obstacles: SurfaceObstacleIndex, yielding_ids: frozenset[str]
+                         ) -> RelationObstacleDomain:
+    """The NORMAL inventory with the named member-name groups removed and host-edge contact allowed.
+
+    No label, text or mark relaxation is added: it is the former route-first search, in which names
+    followed routes. The caller must move or omit each group the resulting route touches, or discard it.
+    """
+    kept = SurfaceObstacleIndex()
+    kept.extend(item for item in obstacles.all() if item.placement_id not in yielding_ids)
+    return RelationObstacleDomain(RelationResolutionStage.EDGE, kept, None, True, yielding_ids)
 
 
 @dataclass(frozen=True)
@@ -117,7 +134,8 @@ def search_relation_resolution(mode: RelationUnroutableMode, *,
         return RelationSearchResolution((), RelationResolutionStage.STUB)
     stages = ((RelationResolutionStage.NORMAL,) if mode is RelationUnroutableMode.SUPPRESS
               else (RelationResolutionStage.NORMAL, RelationResolutionStage.LABEL_VISUALS,
-                    RelationResolutionStage.TEXT, RelationResolutionStage.MARKS))
+                    RelationResolutionStage.TEXT, RelationResolutionStage.MARKS,
+                    RelationResolutionStage.EDGE))
     attempts = []
     for stage in stages:
         selected = attempt(relaxed_domain(obstacles, stage, endpoint_host_ids,

@@ -104,6 +104,9 @@ def test_completed_search_domains_reach_real_scene_and_svg(
     for resolution in resolutions:
         expected = (
             (RelationResolutionStage.NORMAL, RelationResolutionStage.LABEL_VISUALS,
+             RelationResolutionStage.TEXT, RelationResolutionStage.MARKS, RelationResolutionStage.EDGE)
+            if mode == "relax" and not max_bends else
+            (RelationResolutionStage.NORMAL, RelationResolutionStage.LABEL_VISUALS,
              RelationResolutionStage.TEXT, RelationResolutionStage.MARKS)
             if mode == "relax" else () if mode in {"overlap", "stub"} else (RelationResolutionStage.NORMAL,))
         assert tuple(item.stage for item in resolution.attempts) == expected
