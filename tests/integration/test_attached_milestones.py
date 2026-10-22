@@ -62,7 +62,9 @@ def _render(tmp_path: Path, monkeypatch, points: str | None = None, *,
     render_argv += ["--output", str(svg), "--emit-scene", str(scene)]
     monkeypatch.setattr(sys, "argv", render_argv)
     main()
-    return json.loads(scene.read_text(encoding="utf-8"))["surfaces"][0], svg.read_text(encoding="utf-8")
+    document = json.loads(scene.read_text(encoding="utf-8"))
+    surface = {**document["surfaces"][0], "sceneDiagnostics": document["diagnostics"]}
+    return surface, svg.read_text(encoding="utf-8")
 
 
 def _row_of(surface: dict, object_id: str) -> str:
@@ -96,21 +98,46 @@ def test_own_row_restores_a_row_per_point(tmp_path, monkeypatch):
         assert any(row_id.endswith(gate) for row_id in rows)
 
 
-def test_attached_gates_share_host_lane_and_keep_facts_in_svg(tmp_path, monkeypatch):
+def test_attached_gates_share_host_lane_and_reports_exact_last_resort_omission(tmp_path, monkeypatch):
     surface, svg = _render(tmp_path, monkeypatch, lanes=True, with_delta=True)
     host = next(item for item in surface["primitives"]
                 if item["sourceRef"] == "campaign" and item["id"].startswith("planned:"))
     visible_text = "".join(ElementTree.fromstring(svg).itertext())
+    # Reviewer authority 6331738000 permits only a diagnosed final member-name
+    # omission when needed to materialize the otherwise-valid preset render.
+    range_name_id = 'member-label:review-lane:["generated","launch","campaign"]:range-safety'
+    range_suppression = [item for item in surface["sceneDiagnostics"]
+                         if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")]
+    assert range_suppression == [f"W_LAYOUT_LABEL_SUPPRESSED:{range_name_id}"]
     for object_id, (title, at) in GATES.items():
         mark = next(item for item in surface["primitives"]
                     if item["sourceRef"] == object_id and item["id"].startswith("planned:"))
         assert mark["laneRowId"] == host["laneRowId"]
-        label = next(item for item in surface["primitives"]
-                     if item["sourceRef"] == object_id and item["id"].startswith("member-label:"))
         day, month = at[8:], {"09": "Sep", "10": "Oct"}[at[5:7]]
         expected = f"{title} · {day} {month}"
-        assert label["text"].startswith(expected)
-        assert expected in visible_text
+        labels = [item for item in surface["primitives"]
+                  if item["sourceRef"] == object_id and item["id"].startswith("member-label:")]
+        if object_id == "range-safety":
+            assert labels == []
+            assert expected not in visible_text
+        else:
+            assert len(labels) == 1 and labels[0]["text"].startswith(expected)
+            assert expected in visible_text
+
+    # The approved last-resort omission applies only to the blocked attached
+    # member name. Its relation still has both real stub fragments and both
+    # required endpoint titles visibly represented in the SVG.
+    campaign_frr_paths = [item for item in surface["primitives"]
+                          if item.get("sourceRef") == "relation:id:campaign-frr"
+                          and item.get("purpose") == "dependency"]
+    campaign_frr_labels = [item for item in surface["primitives"]
+                           if item.get("sourceRef") == "relation:id:campaign-frr"
+                           and item.get("purpose") == "relation-label"]
+    assert len(campaign_frr_paths) == 2
+    assert {item["text"] for item in campaign_frr_labels} == {
+        "-> Flight readiness review", "Launch campaign ->",
+    }
+    assert all(item["text"] in visible_text for item in campaign_frr_labels)
     assert "+1d" in next(item["text"] for item in surface["primitives"]
                           if item["sourceRef"] == "campaign-readiness"
                           and item["id"].startswith("member-label:"))

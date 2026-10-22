@@ -155,13 +155,82 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert all(item["deltaE"] < MINIMUM_CATEGORY_DELTA_E and item["severity"] == "warning" for item in collisions)
 
 
+def _approved_visible_stub_title_overflows(scene: dict, svg: str) -> set[str]:
+    """Allow only visible, text-clear titles joined to an explicit paired-STUB receipt."""
+    surface = scene["surfaces"][0]
+    overflow_rows = [item for item in surface.get("fitWarnings", ())
+                     if item.get("code") == "W_LAYOUT_LABEL_OVERFLOW"]
+    if not overflow_rows:
+        return set()
+    receipts = []
+    for diagnostic in scene["diagnostics"]:
+        if not diagnostic.startswith("I_LAYOUT_RELATION_RESOLUTION:"):
+            continue
+        receipt = json.loads(diagnostic.partition(":")[2])
+        if receipt.get("stage") == "stub":
+            receipts.append(receipt)
+
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    svg_root = ET.fromstring(svg)
+    svg_text = "".join(svg_root.itertext())
+    svg_ids = {value for element in svg_root.iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    allowed = set()
+    for warning in overflow_rows:
+        placement_id = warning.get("placementId")
+        matches = []
+        for receipt in receipts:
+            fragment_ids = receipt.get("fragmentIds")
+            if (not isinstance(fragment_ids, list) or len(fragment_ids) != 2
+                    or len(set(fragment_ids)) != 2):
+                continue
+            label_ids = {f"relation-label:{fragment.removeprefix('relation:')}"
+                         for fragment in fragment_ids}
+            primitive = primitives.get(placement_id)
+            if (placement_id in label_ids and primitive is not None
+                    and primitive.get("sourceRef") == warning.get("sourceRef")
+                    and all(primitives.get(identity, {}).get("sourceRef") == warning.get("sourceRef")
+                            for identity in label_ids)):
+                matches.append((receipt, label_ids))
+        assert len(matches) == 1, warning
+        receipt, label_ids = matches[0]
+        assert warning.get("behaviour") == "visible-overflow"
+        assert warning.get("failureKind") == "label-collision"
+        pair = [primitives.get(identity) for identity in label_ids]
+        assert all(item is not None and item.get("purpose") == "relation-label"
+                   and item.get("kind") == "Text" and item.get("text") for item in pair)
+        assert all(item["id"] in svg_ids and item["text"] in svg_text for item in pair)
+        # Required terminal labels may overflow route/mark ink, but never other
+        # completed text; this is the hard filter used by Layout placement.
+        for label in pair:
+            box = label["bounds"]
+            for other in primitives.values():
+                if other["id"] == label["id"] or other.get("kind") != "Text":
+                    continue
+                bounds = other["bounds"]
+                intersects = (
+                    box["inline"] < bounds["inline"] + bounds["inlineSize"]
+                    and bounds["inline"] < box["inline"] + box["inlineSize"]
+                    and box["block"] < bounds["block"] + bounds["blockSize"]
+                    and bounds["block"] < box["block"] + box["blockSize"]
+                )
+                assert not intersects, (label["id"], other["id"])
+        allowed.update(label_ids)
+    assert {item["placementId"] for item in overflow_rows} <= allowed
+    return allowed
+
+
 def _assert_automatic_default_keeps_plot_names_and_row_guides(
         scene: dict, svg: str, *, expected_axis_warnings: tuple[str, ...] = ()) -> None:
     surface = scene["surfaces"][0]
     allowed_layout_warnings = {"W_LAYOUT_ACTUAL_INCOMPLETE", "W_LAYOUT_LABEL_SUPPRESSED"}
+    allowed_stub_overflows = _approved_visible_stub_title_overflows(scene, svg)
     assert not [item for item in scene["diagnostics"]
                 if item.startswith("W_LAYOUT_")
                 and item.split(":", 1)[0] not in allowed_layout_warnings
+                and not (item.startswith("W_LAYOUT_LABEL_OVERFLOW:")
+                         and json.loads(item.partition(":")[2]).get("placementId")
+                         in allowed_stub_overflows)
                 and item not in expected_axis_warnings]
     assert tuple(item for item in scene["diagnostics"] if item.startswith(
         ("W_LAYOUT_AXIS_LABEL_THINNED:", "W_LAYOUT_AXIS_DENSITY:"))) == expected_axis_warnings
