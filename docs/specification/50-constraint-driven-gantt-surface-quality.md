@@ -573,8 +573,20 @@ shorter invalid ink, a connected-route claim, suppressed required titles or
 new budgets/quality limits. Paired stubs retain their separate visible-fragment
 and required-title contract.
 
+**Member-name label gap (#1908).** Placed member-name groups keep the declared label
+gap from one another. The gap is the placed group's measured label gap (a quarter of
+its font size, at least one pixel, unless the lane measure declares one), and it is
+measured between complete groups: the text, chip and icon footprint of one name against
+the same footprint of another. A candidate that touches or lies within the gap of
+another placed name group is not clear and the ladder continues; it applies in normal
+admission, the local exchange, the connected-route yield (under Declared unroutable
+resolution) and any name placed after a yield. It is
+a constraint between names only: it adds no clearance for routes, relation labels, marks
+or other content, and it creates no new candidate side or pose.
+
 Completed name text and label-visual footprints are hard content in every
-normal and recovery domain. Carry their explicit obstacle identities through
+normal and recovery domain, except for the member-name yield for a connected route (under
+Declared unroutable resolution). Carry their explicit obstacle identities through
 relaxation; a general Text `required` flag is not their identity. Route around
 them, or use the existing truthfully diagnosed recovery policy. A formerly
 NORMAL route may become diagnosed recovery; it must not disappear or cross
@@ -718,7 +730,8 @@ recovery, halo or stage diagnostics. A legacy View visible-overflow value does
 not override explicit Layout suppress; its supersession is diagnosed.
 Under `relax`, normal routing is attempted first. On failure, rerun the declared
 `search` policy with successively relaxed obstacle classes: (1) label visuals
-and relation labels, (2) all text, (3) non-endpoint-host marks. Each stage includes
+and relation labels, (2) all text, (3) non-endpoint-host marks, (4) endpoint-host
+mark-edge contact (`edge`, defined under Primary-mark safety). Each stage includes
 the preceding relaxation and preserves endpoint-host egress. Filter both search
 and completed-route validators consistently; a post-search primary-mark guard
 must not reintroduce an intentionally relaxed obstacle. Successful normal routes
@@ -730,6 +743,36 @@ Member names are completed once before routing and remain hard in every
 recovery domain; there is no speculative or second surface pass. Explicit `overlap`
 and `stub` still intentionally select their fixed completion policies; final
 member-name revalidation does not exempt their ink.
+
+**Connected route before paired stub (#1908).** A paired stub is the last resort,
+used only when no connected route exists. Under `relax` the order is: the NORMAL
+search, the four stages above, the fixed overlap shape, the single member-name-yielding
+`edge` search below, and only then paired stubs. A connected route found by
+any of them, including one that follows a mark edge with the `edge` diagnostic, wins
+over a paired stub; no render refusal is introduced. A stub count per slide may not
+grow by this contract: a relation that had a connected route before it must not be
+stubbed unless every step above, with its name-yield step, found none.
+
+*Member-name yield for a connected route.* If the fixed overlap shape also finds no
+route, Layout performs one further `edge` search for that relation. Its inventory is the
+NORMAL inventory (the former route-first search, in which names followed routes) without the
+ordinary member-name groups (`memberLabel`, not attached/key-row or other required labels),
+with edge contact; it adds no label, text or mark relaxation, and every other hard
+obstacle and validator, the stage's fresh budget and the declared quality limits are
+unchanged. If it selects a route, the groups whose text/footprint the completed stroke and
+terminals touch yield, through the same atomic Layout owner as the required-endpoint
+exception: each takes its next clear declared candidate against the current inventory and
+the route ink; a group with none may take an earlier declared candidate that exactly one
+other ordinary name group solely blocks, and that group then takes its next clear candidate
+or is omitted with the existing `W_LAYOUT_LABEL_SUPPRESSED` diagnostic; a group with
+neither is omitted the same way. That displacement exists only for this connected-route
+yield: the required-endpoint (stub) exception above never displaces another name. The route
+is accepted only after the moved inventory clears its ink; if the yield is refused the
+route is discarded. There is no recursion beyond that one exchange, no new candidate side
+or pose, no extra quota, no reorder of unaffected names and no replay of composition. Names
+affected are visible only through their completed position or the existing suppression
+diagnostic. If no route is selected, or the yield is refused, the relation proceeds to
+paired stubs.
 
 If all relax searches fail, attempt the preferred fixed overlap shape, then
 paired terminal stubs when full-route endpoint egress cannot be completed.
@@ -1303,6 +1346,31 @@ order. Endpoint-host crossings, normal routes, and absent, ambiguous, malformed
 or mismatched recovery evidence remain errors. A receipt alone never exempts
 geometry; missing endpoint-instance identity cannot authorize a crossing.
 Observation does not infer a policy or repair paint.
+
+**Mark-edge contact recovery (#1908).** The closed-bound rule above is hard in the
+NORMAL domain and in the `label-visuals`, `text` and `marks` stages. It is lifted
+in exactly one diagnosed recovery stage, `edge`, which follows `marks` and precedes
+the fixed `overlap` completion. Exact exception: in `edge`, a completed centreline
+(and each changed style segment and corner arc, and each mandatory semantic-to-exposed
+egress corridor) may touch or travel along the closed boundary of a primary mark that is an
+obstacle in the stage, including a positive-length run along an edge, provided it has zero
+length inside that mark's open interior, measured on the full unshrunk bounds. This is the
+pre-#1849 contact rule restated, not a blanket permission:
+
+- it applies to the primary marks that remain obstacles in the stage (the endpoint-host
+  marks in the `edge` ladder stage; every primary mark in the yielding search, which
+  relaxes none) and adds no permission to enter the open interior of any of them, nor
+  through other marks beyond what `marks` already relaxes, with the `marks` halo and receipt;
+- it does not apply to NORMAL, to `label-visuals`, `text` or `marks`, to paired stubs or to
+  the unsafe direct fallback, and it does not change physical-host corridor authorization;
+- it waives no terminal/head/stroke fit, hard member-name, required-label, label-visual
+  or completed-route ink check, plot containment, self-overlap, `maxBends` or
+  `maxDetourRatio`, port admission or budget;
+- a route it completes carries the typed `I_LAYOUT_RELATION_RESOLUTION` receipt with
+  `stage: "edge"` and the recovery halo (it is a non-normal recovery); Scene observation
+  treats `edge` like `marks` for halo-backed crossings of non-endpoint marks, and an
+  endpoint-host interior crossing remains `E_SCENE_RELATION_THROUGH_MARK`.
+
 The inset interior rectangles used for conservative rectangular-detour quality
 lower-bound certificates remain unchanged. They are not the contact envelope
 for actual candidate, repair, reduction or final drawn-path safety checks.
