@@ -245,8 +245,12 @@ file itself (the one `validate_project`, `schedule_project` and `render_draft` r
    objects), `removeRelation {id}`, `setCalendar {id, calendar}`, `removeCalendar {id}` (refused while the Project
    default, an object or a lag uses it), `setEntity {id, entity}`, `removeEntity {id}` (refused while an object or entity `fields` value names it),
    `setFieldRole {role, binding}`, `removeFieldRole {role}`, `setAnnotation {id, annotation}` (the anchor must be an
-   existing object), `removeAnnotation {id}` and `setProjectMeta {title?, calendar?}` (edits the project header; `null`
-   removes the member; the Project id cannot change).
+   existing object), `removeAnnotation {id}`, `setProjectMeta {title?, calendar?}` (edits the project header; `null`
+   removes the member; the Project id cannot change), `setExtension {packageId, extension}` and
+   `removeExtension {packageId}` (refused while an object `type` names a profile of the package), `setPeriod {id, period}`,
+   `removePeriod {id}`, `setScenario {id, scenario}` (an overlay that removes a missing object or relation is refused at its
+   pointer) and `removeScenario {id}`. Every member except `version` can be written; `removeObject` and
+   `removeRelation` are also refused while a period or scenario names the object or relation.
 
 ```json
 {"project":"plan/project.yaml","command":{"version":"chrona/project-command/v0.1","commandId":"add-gate-1","type":"setObject","target":{"kind":"project","path":"project.yaml"},"baseRevision":"sha256:...","payload":{"id":"go-live","object":{"type":"gate","schedule":{"mode":"scheduled-point","constraints":{"at":{"min":"2026-11-10"}}}}}}}
