@@ -469,10 +469,9 @@ def empty_group_header_blocks(*, slots: tuple[tuple[int, str], ...], row_placeme
     """Block origin of every row-less group header: just above the group that follows it, else after the last row."""
     result = []
     for position, (index, group_id) in enumerate(slots):
-        ordinal = len([other for other, _ in slots[:position] if other == index])
         if index < len(row_placements):
-            later = sum((group_header_sizes or {}).get(other, group_header_size)
-                        for at, other in slots[position:] if at == index)
+            later = geometry_sum((group_header_sizes or {}).get(other, group_header_size)
+                                 for at, other in slots[position:] if at == index)
             row_group = row_placements[index].group_id
             starts_group = (index == 0 or row_placements[index - 1].group_id != row_group)
             if starts_group and row_group:
@@ -480,8 +479,8 @@ def empty_group_header_blocks(*, slots: tuple[tuple[int, str], ...], row_placeme
             block = row_placements[index].bounds[1] - later
         else:
             end = (row_placements[-1].bounds[1] + row_placements[-1].bounds[3]) if row_placements else timeline_bounds[1]
-            earlier = sum((group_header_sizes or {}).get(other, group_header_size)
-                          for at, other in slots[:position] if at == index)
+            earlier = geometry_sum((group_header_sizes or {}).get(other, group_header_size)
+                                   for at, other in slots[:position] if at == index)
             block = end + earlier
         result.append((index, group_id, block))
     return tuple(result)
@@ -492,9 +491,9 @@ def row_block_slack(*, review_rows: tuple[Any, ...], timeline_block_size: float,
                     group_header_sizes: Mapping[str, float] | None = None,
                     empty_group_ids: tuple[str, ...] = ()) -> float:
     """The timeline block left once every row requirement and group header is closed (negative: rows overflow)."""
-    headers = sum((group_header_sizes or {}).get(review_rows[index].group_id, group_header_size)
-                  for index in _group_starts(review_rows))
-    headers += (sum((group_header_sizes or {}).get(group_id, group_header_size) for group_id in empty_group_ids)
+    headers = geometry_sum((group_header_sizes or {}).get(review_rows[index].group_id, group_header_size)
+                           for index in _group_starts(review_rows))
+    headers += (geometry_sum((group_header_sizes or {}).get(group_id, group_header_size) for group_id in empty_group_ids)
                 if empty_group_ids else group_header_size * empty_groups)
     return (timeline_block_size - headers
             - geometry_sum(required_block_sizes))
@@ -510,10 +509,10 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
     if distribution not in {"pack", "fill"}:
         raise LayoutError("E_LAYOUT_ROW_DISTRIBUTION", "/layoutManifest/reviewSurface/rowDistribution")
     group_starts = _group_starts(review_rows)
-    header_total = sum((group_header_sizes or {}).get(review_rows[index].group_id, group_header_size)
-                       for index in group_starts)
-    header_total += sum((group_header_sizes or {}).get(group_id, group_header_size)
-                        for _, group_id in empty_groups)
+    header_total = geometry_sum((group_header_sizes or {}).get(review_rows[index].group_id, group_header_size)
+                                for index in group_starts)
+    header_total += geometry_sum((group_header_sizes or {}).get(group_id, group_header_size)
+                                 for _, group_id in empty_groups)
     available = timeline_bounds[3] - header_total
     required = geometry_sum(required_block_sizes)
     # Requirements remain P1 geometry.  A requested timeline is a minimum
@@ -524,8 +523,8 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
     cursor = timeline_bounds[1]
     placements: list[RowPlacement] = []
     for index, row in enumerate(review_rows):
-        cursor += sum((group_header_sizes or {}).get(group_id, group_header_size)
-                      for at, group_id in empty_groups if at == index)
+        cursor += geometry_sum((group_header_sizes or {}).get(group_id, group_header_size)
+                               for at, group_id in empty_groups if at == index)
         if index in group_starts:
             cursor += (group_header_sizes or {}).get(row.group_id, group_header_size)
         height = required_block_sizes[index] + surplus

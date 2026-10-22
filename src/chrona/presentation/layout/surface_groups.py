@@ -11,7 +11,7 @@ from chrona.presentation.layout.group_header_runs import (
 from chrona.presentation.layout.group_header_fit import (
     GroupHeaderFitPlan, header_text_room, resolve_group_labels,
 )
-from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
 from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
                                              metric_for_role, place_text)
@@ -274,7 +274,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                        else None)
                 if fit is not None and len(fit.horizontal_lines) > 1 and fit.horizontal_run_lines is not None:
                     line_blocks = fit.horizontal_line_blocks
-                    total_block = sum(line_blocks)
+                    total_block = geometry_sum(line_blocks)
                     top_block = (float(group.header_bounds.block)
                                  + (float(group.header_bounds.block_size) - total_block) / 2)
                     placed = place_wrapped_group_header_runs(
@@ -301,7 +301,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                    else None)
             if fit is not None:
                 treatment = request.theme_tokens.text_treatment("groupHeader")
-                total_block = sum(fit.horizontal_line_blocks)
+                total_block = geometry_sum(fit.horizontal_line_blocks)
                 baseline = (float(group.header_bounds.block)
                             + (float(group.header_bounds.block_size) - total_block) / 2
                             + float(treatment.font_size))

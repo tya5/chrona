@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any, Mapping
 
 from chrona.presentation.layout.group_header_runs import GroupHeaderRunSegment, wrap_group_header_runs
+from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.text import _wrap_units, measure_text_width, metric_for_role, wrap_text
 from chrona.presentation.layout.vertical_text import vertical_label_required_block
 from chrona.presentation.layout.window_row_admission import geometry_folded_points
@@ -193,7 +194,8 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
             run_lines = wrap_group_header_runs(runs=marked_runs[group_id], available_inline=header_inline_size,
                                                theme_tokens=theme_tokens, font_metrics=font_metrics)
             lines = tuple("".join(segment.text for segment in line) for line in run_lines)
-            widest = max((sum(segment.gap + segment.width for segment in line) for line in run_lines), default=0.0)
+            widest = max((geometry_sum(segment.gap + segment.width for segment in line)
+                          for line in run_lines), default=0.0)
             minimum_unit = max((segment.width for line in run_lines for segment in line), default=0.0)
             # Text ink bounds begin at baseline - font_size and extend by
             # block_size. Close each mixed-role line around those actual
@@ -206,7 +208,7 @@ def prepare_group_header_fit_plan(*, labels: tuple[tuple[str, str], ...], theme_
                 baseline + max((segment.block_size - segment.font_size for segment in line), default=0.0)
                 for baseline, line in zip(line_baseline_offsets, run_lines, strict=True))
             horizontal_block_size = (minimum_header_block_size if len(run_lines) <= 1 else
-                                     max(minimum_header_block_size, sum(line_blocks)))
+                                     max(minimum_header_block_size, geometry_sum(line_blocks)))
             horizontal_fits = header_inline_size > 0 and all(
                 segment.width <= header_inline_size for line in run_lines for segment in line)
         else:

@@ -198,7 +198,7 @@ def _complete_surface_natural_geometry(prefix: _SurfaceNaturalPrefix) -> Surface
         # demoted, so those fallback sizes are counted in full.
         baseline_header_block = (0.0 if inline.group_header_fit_plan.vertical_tag_plan
                                  else inline.group_header_size)
-        fallback_header_block = sum(
+        fallback_header_block = geometry_sum(
             max(0.0, size - baseline_header_block)
             for size in (closed_rows.group_header_sizes or {}).values())
         if closed_rows.fit_plan is not inline.group_header_fit_plan or fallback_header_block:
