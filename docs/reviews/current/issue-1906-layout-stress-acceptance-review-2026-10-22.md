@@ -2,45 +2,85 @@
 
 # Issue 1906 — layout stress acceptance review
 
-**Not release-accepted; keep issue1906 open.** Reviewer [6352487967](https://github.com/tya5/chrona/pull/1914#issuecomment-6352487967) compared the final artifact with pre1914, accepted all four designs' restored leaders/cards and Sunday height, and lifted HOLD. Hosted serial timing is approved and does not block the PR, but remains required in this review before closure.
-Table dispositions mean final acceptance is not yet proven, not that the focused controls failed.
-Implementation: [1551440a0](https://github.com/tya5/chrona/commit/1551440a0), including source-demand correction f610eeaf7 and ready main e3ec09e9f. Test-contract correction [64cb96090](https://github.com/tya5/chrona/commit/64cb96090) changes no product code or rendered output.
-[Current design/architecture/implementation record](https://github.com/tya5/chrona/issues/1906#issuecomment-6332734477).
-Normative authority: [Spec33](../../specification/33-intent-oriented-layout.md), with Specs06/07/24/44/50 and ADR0032.
-Public design119a885f8 preceded the corrective core implementation.
+**Not release-accepted; keep issue1906 open.** Functional evidence below does not
+replace final-head CI and the three-OS run on the exact review-containing main.
+PR [1914](https://github.com/tya5/chrona/pull/1914), head1275ccda3, is in
+[CI39865857613](https://github.com/tya5/chrona/actions/runs/39865857613).
+The live-progress residual is published at
+[e075a1e5a](https://github.com/tya5/chrona/commit/e075a1e5a), after its
+pre-code specification [d28b3ba37](https://github.com/tya5/chrona/commit/d28b3ba37);
+its PR/release gate remains pending.
 
-Reviewer [6342882803](https://github.com/tya5/chrona/pull/1914#issuecomment-6342882803) accepted the restored full cards and occupied-only Sunday height. The remaining HOLD requires the owner-approved mandatory rail leaders. Theme card measurement, ordered suffix capacity and completed source-use reflow remain shared Layout responsibilities; Scene/adapters remain passive. No project data/date/text edits or manually authored derived outputs. The explicit rail crossing amendment is confined to row4; plot/tail and body clearance are unchanged.
+Authority: [current work record](https://github.com/tya5/chrona/issues/1906#issuecomment-6332734477),
+[progress correction](https://github.com/tya5/chrona/issues/1906#issuecomment-6352889826),
+[Spec33](../../specification/33-intent-oriented-layout.md), Specs06/07/24/44/50,
+and ADR0032. Layout owns measurement, placements, routing and typed crossing
+evidence; Scene/adapters remain projection. Progress is ephemeral observation,
+never an artifact input. No project data/date/text or bot-owned outputs were edited.
+Reviewer [6352487967](https://github.com/tya5/chrona/pull/1914#issuecomment-6352487967)
+accepted the restored cards/leaders and Sunday height and lifted HOLD.
 
 ## Literal issue acceptance
 
 ### Issue #1906
 
 - Source: [Issue #1906](https://github.com/tya5/chrona/issues/1906)
-- Observed: 2026-10-22
+- Observed: 2026-10-23
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-|1|at any viewport every drawn swatch has a non-empty label and both lie inside the legend box; when they do not fit, the legend wraps or grows, and a diagnostic names the real cause.|not met|Shared measured legend closure; source trials refilter the full inventory and size only completed entries. Both actual Sunday contexts draw the realized keys. Final official snapshot review pending. [Focused controls](../../../tests/unit/chrona/presentation/layout/test_legend_measurement_closure.py).|—|
-|2|no text of one header slot intersects another slot; a title that does not fit wraps, or the header row grows.|not met|Bounded heading and source-sizing controls pass. Recheck actual header/legend intersections in the new official snapshot; prior artifact is not final evidence. [Focused controls](../../../tests/unit/chrona/presentation/layout/test_heading_inline_budget.py).|—|
-|3|every note box lies inside its slot and frame, or the overflow is diagnosed with the note named.|not met|Four rail-first designs preserve a full Theme card before explicit list exhaustion. Actual HALCYON/roadmap Titlecard retain3/2 cards and0 lists; unequal-height, exact decimal shared-edge, tilt and icon controls pass. Final snapshot containment review pending. [Focused controls](../../../tests/integration/test_annotation_card_fallthrough_1906.py).|—|
-|4|notes in a side panel stack in the vertical order of their anchors (ties by View order); every rail note card retains its declared leader to its target. Use a clear route where available; otherwise draw the declared hairline across, with a diagnostic naming what it crosses. Plot callout bodies and tails retain strict mark clearance. Design note first (spec change).|not met|[Owner amendment](https://github.com/tya5/chrona/pull/1914#issuecomment-6351461724) supersedes the original absolute rail no-crossing rule. Spec33/44 published in493449e66 before code. Anchor/View order, full-body fitting and strict plot/tail clearance remain; named crossing diagnostics and restored four-design leaders require final artifact review. [Focused controls](../../../tests/integration/test_annotation_card_fallthrough_1906.py).|—|
-|5|with an explicit viewport width, wrappable text wraps before the page widens; the page widens only for content that cannot wrap, and says which.|not met|Explicit viewport/wrapping and strict authored-cap contracts retained. Four actual materializations remain1600px wide; existing width/legend/source controls pass. Final stress replay review pending. [Focused controls](../../../tests/integration/test_group_header_source_demand_1906.py).|—|
-|6|every placed callout has a tail touching its anchor and covers no other object's mark; when no such spot exists, the note goes to the panel/list the design declares. Design note first: the fallback target.|not met|Declared terminal lists remain explicit; plot-first notes reserve no unconditional footer. Actual HALCYON Sunday is900px with3 callouts and no footer. Roadmap Sunday is925px with a real17.55px list ending897px plus28px authored bottom padding; not an empty95px reservation. Owner comparison pending. [Focused controls](../../../tests/integration/test_annotation_plot_overflow.py).|—|
-|7|every drawn group shows its name somewhere readable; a group label is never reduced to zero characters (fall back to a horizontal header or a key).|not met|Prior frozen/current-A4 full-name evidence is linked from the living record and assets-1906; no new group policy was introduced. Final candidate group-name/painted-text review remains required, including roadmap marked-run headers. [Focused controls](../../../tests/integration/test_group_header_identity_1906.py).|—|
-|8|note-leader placement reuses one obstacle index per surface instead of rebuilding it per candidate, and `--progress` reports that phase. (Profile-first; record before/after.)|not met|Shared surface index/query overlay and annotation-leaders phase retained; quiet/progress byte identity and joint count/source accepted-progress tests pass. Controlled serial/idle before/after target-b A timing remains outstanding; prior loaded measurements are not valid timing evidence. [Focused controls](../../../tests/integration/test_placed_note_count_closure.py).|—|
+|1|at any viewport every drawn swatch has a non-empty label and both lie inside the legend box; when they do not fit, the legend wraps or grows, and a diagnostic names the real cause.|met|Measured legend closure and narrow/wrap controls; official50 audit:266 nonempty labels and572 contained legend primitives. Current SundayC2/C4 retain5 keys at requested1024/900 widths. [Controls](../../../tests/unit/chrona/presentation/layout/test_legend_measurement_closure.py).|—|
+|2|no text of one header slot intersects another slot; a title that does not fit wraps, or the header row grows.|met|Current SundayB actual SVG has4 full title lines,325.148px wide inside328px allocation;22.852px clearance to kicker/subtitle and38px to the next section. [Controls](../../../tests/unit/chrona/presentation/layout/test_heading_inline_budget.py).|—|
+|3|every note box lies inside its slot and frame, or the overflow is diagnosed with the note named.|met|YuyaB en/ja: all3 full cards contained in annotations slot and board frame; final English card ends exactly at slot bottom684. Official51 box hulls are canvas-contained; declared text overflow remains named, not hidden. [Controls](../../../tests/integration/test_annotation_card_fallthrough_1906.py).|—|
+|4|notes in a side panel stack in the vertical order of their anchors (ties by View order); every rail note card retains its declared leader to its target. Use a clear route where available; otherwise draw the declared hairline across, with a diagnostic naming what it crosses. Plot callout bodies and tails retain strict mark clearance. Design note first (spec change).|met|[Owner amendment](https://github.com/tya5/chrona/pull/1914#issuecomment-6351461724); Spec33/44 correction493449e66 preceded code1551440a0. All4 HAL rail designs retain3 cards/3 leaders/0 lists; exact painted crossings are named, including tilt extension, without false own-card crossings. Anchor/View ties and strict plot/body/tail controls pass. [Controls](../../../tests/integration/test_annotation_card_fallthrough_1906.py).|—|
+|5|with an explicit viewport width, wrappable text wraps before the page widens; the page widens only for content that cannot wrap, and says which.|met|Current TitlecardB en/ja1600px; C2 en/ja1024px; C4 en/ja900px; MarqueeC4 900px. Current TitlecardA4 en/ja1123px with all117 Scene texts matching SVG. Height may grow with an explicit overrun warning. Frozen old A4 declarations lack the required list fallback and need migration; they are not current-design evidence. [Controls](../../../tests/integration/test_group_header_source_demand_1906.py).|—|
+|6|every placed callout has a tail touching its anchor and covers no other object's mark; when no such spot exists, the note goes to the panel/list the design declares. Design note first: the fallback target.|met|Current SundayA/E/C4 actual SVG+Scene:4/3/2 integrated balloons; all9 tips touch their mapped source mark at painted stroke width, with zero unrelated-mark tail-edge hits. B emits0 balloons and3 declared list rows. HAL Sunday remains900px; roadmap925 reflects an actual list, not empty reservation. [Tail geometry controls](../../../tests/unit/chrona/presentation/layout/test_annotation_search.py), [exhaustion controls](../../../tests/integration/test_annotation_plot_overflow.py).|—|
+|7|every drawn group shows its name somewhere readable; a group label is never reduced to zero characters (fall back to a horizontal header or a key).|met|235 official group headers nonempty. Current YuyaB SVG shows full owner names, including Maximiliana Konstantinopoulou-Oyelaran; D retains all en/ja names and horizontal fallback for Unassigned. Twelve preexisting Sunday ellipses are not empty labels. [Controls](../../../tests/integration/test_group_header_identity_1906.py).|—|
+|8|note-leader placement reuses one obstacle index per surface instead of rebuilding it per candidate, and `--progress` reports that phase. (Profile-first; record before/after.)|met|Provisional bodies use read-only query overlays on each surface trial's shared index, not whole-index copies per candidate. Hosted before/after profile below. e075a1e5a forwards uncounted work starts through nested buffers; actual target-bA stderr shows annotation-leaders start while render remains live.12 model/12 CLI controls plus35 adjacent closure/wiring tests pass; accepted counts stay buffered and quiet/progress SVG/stdout identity holds. [Controls](../../../tests/unit/chrona/presentation/model/test_render_progress.py), [actual CLI](../../../tests/integration/test_render_progress_cli.py).|—|
 
 ## Programme-level criteria (optional)
 
-CI [39786575213](https://github.com/tya5/chrona/actions/runs/39786575213) at b19c0bf4d failed all three pytest shards (36 failures); preview, conformance, MCP-floor and newest-Python passed. Derived-ready failed on those pytest prerequisites. Corrections address actual source-demand matching, caption double-subtraction, ordered decimal rail intervals and Theme error pointers; instrumentation now asserts phase order and fresh state per joint trial, not per complete render. The obsolete note Scene hash changed only12 slot associations after unused-source pruning; SVG bytes were unchanged. No corpus golden was authored.
+Exact-head official [artifact12463429020](https://github.com/tya5/chrona/actions/runs/39865857613/artifacts/12463429020)
+at1275ccda3 has100/100 before and100/100 after SVG/Scene files byte-identical to
+reviewed e5cc artifact12463482648 and2ec artifact12461966278.
+Artifact digest: `sha256:8ae7e61521052eeb7b5d556c9e449b19af09cb37b3572a7e68171467c0faa1f1`.
+The PR's50-slide ledger records primitives10675→10665 (+3/−13/~1514),
+545 logical dependencies/574 paths/29 paired stubs unchanged,629 rows unchanged,
+and367 member names unchanged. Scene/SVG text agrees;122 intentional blank table
+cells remain. Logical annotation slot metadata alone is not physical containment
+proof; actual boxes/frames and named overflow were checked.
 
-The focused batch covering all failing nodes and adjacent controls passed138 tests; final finite-state/phase controls passed26. Additional legend controls passed39 (overlap). Reproduce the final controls with `.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_source_use.py tests/unit/chrona/presentation/layout/test_surface_source_closure.py tests/integration/test_surface_phase_wiring.py`. Finite-state tests exclude derived advances/footprints/diagnostic deltas while retaining face, glyph and partition identity; exact witness comparisons remain strict. Import direction, module reachability, float accumulation and literal-review guards pass. These are not the full suite or release evidence.
+Targeted replays use unchanged public [trial17 inputs](https://github.com/tya5/chrona/tree/cbc183f6b/trial-17),
+current product1275ccda3 (or source-identical64cb960), with input/source hashes in
+batch receipts. Seven Sunday/Yuya cases, two current SundayA/E cases and nine
+width cases were checked; the two frozen A4 failures were separately rerun with
+only the original A4 size applied to current resources. No corpus data was
+changed to obtain success. ControllerZ's two declaration-only fallback migrations
+were explicitly authorized by reviewer6335461637.
 
-Four materializers ran with write=False, allowing only E_MATERIALIZER_MISMATCH after writing temporary evidence: HALCYON sunday/titlecard and roadmap-sunday/roadmap-titlecard. Compared with official b19 artifact12428819425, HALCYON Titlecard is byte-identical; Roadmap Titlecard18 primitives differ only in last-digit float serialization. Sundays11/9 primitives change only legend inline placement after the caption correction. No primitives, text or routes were added/removed; all legend items remain contained, Scene/SVG text agrees, and card/footer counts and occupied extents match the literal table. The exact-main three-OS full suite remains CI-owned.
+Hosted [run39864595102](https://github.com/tya5/chrona/actions/runs/39864595102)
+and [artifact12464740027](https://github.com/tya5/chrona/actions/runs/39864595102/artifacts/12464740027):
+one serial cProfile pair, identical A-en inputs/Python3.13.16 and common dependency
+versions, before820688585 → aftere5cc70efb. Wall301.91→472.57s; CPU301.72→472.50s.
+**This pair is slower (+56.5% wall), not a speedup claim.** Annotation completion
+runs1→2 times, candidate trials1797→1910, orthogonal routing calls502→556 and
+index collision calls5.63M→8.94M. The second completion is consistent with source
+closure; these observations do not establish the cause of the entire delta.
+Profiling overhead and fixed before/after order prevent a general causal estimate.
+The benchmark branch is verification-only and must never merge.
 
-Official artifact [12461966278](https://github.com/tya5/chrona/actions/runs/39859932981/artifacts/12461966278) at2ec874517 contains the reviewed50-slide output. Its100 SVG/Scene files are byte-identical to the independently audited4fca snapshot: full annotation bodies retained, all266 legend labels nonempty,572 legend primitives contained,235 group headers nonempty. The12 Sunday ellipses predate this change. The complete per-slide ledger is in PR1914: primitives10675→10665, dependencies545 logical/574 paths/29 stub pairs and367 member names unchanged. Independent review found no concrete regression in the rail note-card scope. The separately reproduced highlight/leader contract gap [1935](https://github.com/tya5/chrona/issues/1935) is explicitly parked after RC by reviewer6352467739, not silently declared fixed here.
+That same artifact exposed467s of CLI silence because accepted-trial counts were
+buffered. d28b3ba37/e075a1e5a distinguish immediate attempted-work observations
+from accepted completion counts; no timers, routing budgets or geometry changes.
+Independent review found no defect in this boundary. This does not claim a
+periodic heartbeat during one declaration's search.
 
-CI [39859932981](https://github.com/tya5/chrona/actions/runs/39859932981) passed shards2/3, conformance, MCP-floor, newest-Python and derived preview. Shard1 had exactly one failure (5150 passed): `test_annotation_slot_presence::test_blocked_leader_candidates_retain_note_in_safe_terminal_list` still expected routing exhaustion alone to discard a mandatory leader. 64cb96090 retains the list test by forcing genuine body-placement exhaustion; route-only exhaustion is covered by the mandatory-leader controls. The focused slot/card/CLI/topology/design batch passes50. Derived-ready failed only its pytest prerequisite. No product rollback, golden edit or clearance waiver was applied.
+Previous CI39859932981 failed only the obsolete list-on-routing-failure test;
+64cb96090 instead forces genuine card-body exhaustion (50 focused passes).
+No rollback, golden edit or clearance waiver was used.
+Separate highlight/leader contract issue [1935](https://github.com/tya5/chrona/issues/1935)
+is explicitly reviewer-parked after RC, outside this issue.
 
-Required next: green final-head CI, hosted serial before/after profile (one isolated runner, matching input/dependencies), ready-main/landing-queue checks, and successful three-OS release on the exact main commit containing the completed literal review. Old green CI39773281648 and historical assets are not final release evidence.
-
-Mandatory-leader correction: focused final topology/card/design controls pass32 tests, including named mark crossings, safe endpoint contact versus interior traversal, exact tilted-paper extension and its registration in the shared obstacle index, full body preservation and explicit list exhaustion. The broader annotation/port batch passes313 other tests; its sole failure read a concurrently replaced topology test, subsequently rerun in the final32. Float accumulation controls and inward imports pass. Preliminary write-disabled HALCYON target-b comparison against b19 adds exactly the two missing rail leaders, with no other primitive change and exact Scene/SVG text parity. Other approved-design comparisons and final CI remain outstanding; these results do not establish release acceptance.
+Before closure: green final implementation CI, progress-follow-up publication/CI,
+successful exact review-containing-main three-OS pytest/conformance/wheel-smoke
+and newest-Python materializer evidence. Snapshot identity is not a release gate.
