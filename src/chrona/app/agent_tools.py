@@ -36,6 +36,10 @@ from typing import Any, Callable, Mapping, Sequence
 
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.operational.authoring_commands import read_authoring_workspace, transact_authoring_command
+from chrona.operational.store_provisioning import (
+    REJECTED_CODES, RESOURCE_KINDS, StoreProvisioningError, batch_diagnostics, create_local_store, document_bytes,
+    publish_store_resource, read_source, select_store,
+)
 from chrona.operational.workspace_initialization import publish_new_file, publish_workspace_directory
 from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
@@ -63,6 +67,7 @@ TOOL_SET_VERSION = "chrona/agent-tools/v0.9"
 COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot", "revertActualCommand", "redoActualCommand"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
+DEFAULT_STORE_IDENTITY = "workspace"
 WRITE_DISABLED = "E_MCP_WRITE_DISABLED"
 MAX_DIAGNOSTICS = 50
 MAX_INLINE_SVG_BYTES = 1024 * 1024
@@ -788,6 +793,77 @@ def _save_baseline(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     return ToolResult(call.ok(**fields))
 
 
+def _provisioning_failure(error: StoreProvisioningError) -> StableFailure:
+    return StableFailure(error.code, error.detail, "store", error.pointer, 1 if error.code in REJECTED_CODES else 2)
+
+
+def _create_store(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    try:
+        created = create_local_store(call.scope.root, arguments.get("identity", DEFAULT_STORE_IDENTITY))
+    except StoreProvisioningError as error:
+        raise _provisioning_failure(error) from None
+    fields: dict[str, Any] = {"storeConfig": created.config.relative_to(call.scope.root).as_posix(), "store": created.identity}
+    if created.replayed:
+        fields["replayed"] = True
+    return ToolResult(call.ok(**fields))
+
+
+def _resource_source(call: _Call, arguments: dict[str, Any], kind: str) -> tuple[dict[str, Any], bytes, Any]:
+    """The resource document, the bytes it is stored as and, for a Project file, the file the checks read."""
+    if ("path" in arguments) == ("document" in arguments):
+        raise StableFailure(INPUT_INVALID, "publish_resource: give exactly one of 'path' (a workspace file) and 'document' "
+                            "(the resource inline)", "mcp", "/", 1)
+    if "path" in arguments:
+        source = call.scope.resolve_path(arguments["path"], "/path")
+        document, payload = read_source(source)
+    else:
+        source, document, payload = None, copy.deepcopy(arguments["document"]), None
+    if not isinstance(document, dict):
+        raise StableFailure("E_STORE_RESOURCE_INVALID", f"the {kind} must be a YAML mapping", "store",
+                            "/path" if source else "/document", 1)
+    found = document_kind(document) or "project"
+    if found != kind:
+        raise StableFailure("E_STORE_RESOURCE_INVALID", f"the document is a {found}, not a {kind}; set 'kind' to match", "store",
+                            "/kind", 1)
+    return document, payload, source
+
+
+def _check_resource(kind: str, document: dict[str, Any], payload: bytes | None, source: Path | None) -> tuple[bytes, Any]:
+    """The bytes to store and the id, or the diagnostics that refuse the resource."""
+    if kind == "project":
+        if source is not None:
+            found = validate_project_file(source).diagnostics
+        else:
+            prepared = prepare_new_project(document)
+            found, payload = (prepared, None) if isinstance(prepared, tuple) else ((), prepared.payload)
+        return (payload, found)
+    if kind == "actual-set":
+        return (payload or b"", validate_resource_mapping(kind, document))
+    return (payload if payload is not None else document_bytes(document),
+            batch_diagnostics(document))
+
+
+def _publish_resource(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    kind = arguments["kind"]
+    document, payload, source = _resource_source(call, arguments, kind)
+    payload, found = _check_resource(kind, document, payload, source)
+    if found:
+        return call.rejected(rejection_report(found))
+    resource_id = document["project"].get("id") if kind == "project" else document.get("id")
+    config_path = call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig")
+    reader = _open_contained_store(call, config_path)
+    try:
+        identity, root = select_store(reader.roots, arguments.get("store"))
+        published = publish_store_resource(root, identity, kind, str(resource_id), document, payload)
+    except StoreProvisioningError as error:
+        raise _provisioning_failure(error) from None
+    fields: dict[str, Any] = {"reference": published.reference,
+                              "storeConfig": config_path.relative_to(call.scope.root).as_posix()}
+    if published.replayed:
+        fields["replayed"] = True
+    return ToolResult(call.ok(**fields))
+
+
 def _create_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     destination = call.scope.resolve_destination(arguments["directory"], "/directory")
     created = create_workspace(destination, arguments["project"], arguments.get("preset", DEFAULT_PRESET_ID),
@@ -1081,6 +1157,45 @@ _TOOLS: tuple[ToolSpec, ...] = (
         _output_schema({"baseline": {"type": "string"}, "contentIdentity": {"$ref": "#/$defs/sha256"},
                         "replayed": {"const": True}}),
         _save_baseline, mutating=True,
+    ),
+    ToolSpec(
+        "create_store", "Create a workspace Store",
+        "Create the workspace's local Store for the Store route (apply_command: captureSnapshot, revertActualCommand, "
+        "applyActualIntakeBatch): the configuration .chrona/store.yaml (one local Store, integrity required) and its empty root "
+        ".chrona/store, both inside the workspace. Requires --allow-write. 'identity' names the Store (default "
+        f"{DEFAULT_STORE_IDENTITY}). Calling it again with the same identity is a replay (replayed true); a different "
+        "configuration already there is E_STORE_CONFIG_EXISTS and is never rewritten. Next: publish_resource.",
+        _input_schema({"identity": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                                    "default": DEFAULT_STORE_IDENTITY, "description": "The Store identity."}}),
+        _output_schema({"storeConfig": {"type": "string"}, "store": {"type": "string"}, "replayed": {"const": True}}),
+        _create_store, mutating=True,
+    ),
+    ToolSpec(
+        "publish_resource", "Publish a resource into the Store",
+        "Seed the Store (create_store) with one immutable resource and return its reference, which is the 'target' (and "
+        "'payload.project' / 'payload.batch') of an apply_command or check_command request. Requires --allow-write. 'kind' "
+        "project: a Project that validates (path or inline); the revision is its content, so changed bytes are a new revision "
+        "and the same bytes a replay; captureSnapshot takes it as target with baseRevision = reference.revision.token. 'kind' "
+        "actual-set: {version: chrona/actual-set/v0.3, kind: actual-set, id, body: {observations: []}}; it is published once, "
+        "and afterwards changes only by command (a different document under its id is E_STORE_RESOURCE_EXISTS; read the "
+        "current reference from the last command's automationResult.resultTarget). 'kind' actual-intake-batch: {version: "
+        "chrona/actual-intake-batch/v0.2, kind, id, body: {source: {system, contentIdentity}, records: [{externalKey, "
+        "projectObjectId, actual: {start?, finish?}}]}}. Give exactly one of 'path' (a workspace file) or 'document' "
+        "(inline; the only way over MCP to write an Actual Set or batch). 'storeConfig' defaults to "
+        f"{DEFAULT_STORE_CONFIG}; 'store' names the Store when the configuration declares several. Returns 'reference' and "
+        "'storeConfig'.",
+        _input_schema({
+            "kind": {"enum": list(RESOURCE_KINDS), "description": "The resource kind to publish."},
+            "path": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to the resource YAML."},
+            "document": {"type": "object", "description": "The resource inline, as the YAML file would hold it (dates as "
+                                                        "'YYYY-MM-DD' strings)."},
+            "storeConfig": copy.deepcopy(_STORE_CONFIG_PROPERTY),
+            "store": {"type": "string", "minLength": 1, "description": "The Store identity, when the configuration has several."},
+        }, ["kind"]),
+        _output_schema({"reference": {"type": "object", "description": "The revision-store-resource-ref/v0.2 of the stored "
+                                      "resource: id, kind, store, address, revision.token, contentIdentity."},
+                        "storeConfig": {"type": "string"}, "replayed": {"const": True}}),
+        _publish_resource, mutating=True,
     ),
 )
 _BY_NAME = {spec.name: spec for spec in _TOOLS}
