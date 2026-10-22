@@ -224,8 +224,11 @@ file itself (the one `validate_project`, `schedule_project` and `render_draft` r
    its `projectRevision`.
 2. `apply_project_command {project, command}` takes an inline command with `version: chrona/project-command/v0.1`,
    `commandId`, `type`, `target: {kind: "project", path: "<file name only>"}`, `baseRevision` (the revision from step 1
-   or the last `projectResult.resultRevision`) and `payload`. This release has `setObject {id, object}` (add or replace
-   one object; any schedule mode) and `removeObject {id}` (refused while a relation, `parent` or `attachesTo` names it).
+   or the last `projectResult.resultRevision`) and `payload`. Types: `setObject {id, object}` (add or replace
+   one object; any schedule mode), `removeObject {id}` (refused while a relation, `parent` or `attachesTo` names it),
+   `setRelation {relation}` (add a dependency, or replace the one with the same `id`; both endpoints must be existing
+   objects), `removeRelation {id}`, `setCalendar {id, calendar}`, `removeCalendar {id}` (refused while the Project
+   default, an object or a lag uses it), `setEntity {id, entity}` and `setFieldRole {role, binding}`.
 
 ```json
 {"project":"plan/project.yaml","command":{"version":"chrona/project-command/v0.1","commandId":"add-gate-1","type":"setObject","target":{"kind":"project","path":"project.yaml"},"baseRevision":"sha256:...","payload":{"id":"go-live","object":{"type":"gate","schedule":{"mode":"scheduled-point","constraints":{"at":{"min":"2026-11-10"}}}}}}}

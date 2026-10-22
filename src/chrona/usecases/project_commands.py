@@ -112,17 +112,69 @@ def verify_project_receipt(
 
 # --- the commands --------------------------------------------------------------------------------------------
 
+_MAPPING_MEMBERS = {
+    "setObject": ("objects", "object"), "setCalendar": ("calendars", "calendar"),
+    "setEntity": ("entities", "entity"), "setFieldRole": ("fieldRoles", "binding"),
+}
+"""Command type -> (Project member it upserts into, payload key that holds the value)."""
+
+
+def _key(command: dict[str, Any]) -> str:
+    """The key a mapping-member command writes: the field role for ``setFieldRole``, the ``id`` otherwise."""
+    return command["payload"]["role" if command["type"] == "setFieldRole" else "id"]
+
+
 def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, list[str]] | None:
     """Edit ``candidate`` in place; return ``(code, details)`` when the command itself is refused."""
     payload, command_type = command["payload"], command["type"]
-    objects = candidate.get("objects")
-    if command_type == "setObject":
-        if objects is None:
-            objects = candidate["objects"] = {}
-        if not isinstance(objects, dict):
-            return "E_PROJECT_COMMAND", ["/payload/id: the Project's objects member is not a mapping; fix the file first"]
-        objects[payload["id"]] = deepcopy(payload["object"])
+    if command_type in _MAPPING_MEMBERS:
+        member, value_key = _MAPPING_MEMBERS[command_type]
+        table = candidate.get(member)
+        if table is None:
+            table = candidate[member] = {}
+        if not isinstance(table, dict):
+            return "E_PROJECT_COMMAND", [f"/payload: the Project's {member} member is not a mapping; fix the file first"]
+        table[_key(command)] = deepcopy(payload[value_key])
         return None
+    if command_type == "setRelation":
+        relations = candidate.get("relations")
+        if relations is None:
+            relations = candidate["relations"] = []
+        if not isinstance(relations, list):
+            return "E_PROJECT_COMMAND", ["/payload: the Project's relations member is not a list; fix the file first"]
+        relation = deepcopy(payload["relation"])
+        index = _relation_index(relations, relation)
+        if index is None:
+            relations.append(relation)
+        else:
+            relations[index] = relation
+        return None
+    if command_type == "removeRelation":
+        relations, relation_id = candidate.get("relations"), payload["id"]
+        if not isinstance(relations, list) or _relation_index(relations, {"id": relation_id}) is None:
+            known = ", ".join(str(item["id"]) for item in (relations if isinstance(relations, list) else ())
+                              if isinstance(item, dict) and isinstance(item.get("id"), str))
+            return "E_PROJECT_RELATION_MISSING", [
+                f"/payload/id: the Project has no relation with id {relation_id!r}"
+                + (f"; its relation ids are {known[:200]}" if known else "; only a relation that declares an id can be removed")]
+        relations[:] = [item for item in relations if not (isinstance(item, dict) and item.get("id") == relation_id)]
+        if not relations:
+            del candidate["relations"]
+        return None
+    if command_type == "removeCalendar":
+        calendars, calendar_id = candidate.get("calendars"), payload["id"]
+        if not isinstance(calendars, dict) or calendar_id not in calendars:
+            known = ", ".join(sorted(map(str, calendars))[:10]) if isinstance(calendars, dict) else ""
+            return "E_PROJECT_CALENDAR_MISSING", [
+                f"/payload/id: the Project has no calendar {calendar_id!r}" + (f"; its calendars include {known}" if known else "")]
+        users = _calendar_users(candidate, calendar_id)
+        if users:
+            return "E_PROJECT_CALENDAR_REFERENCED", [
+                f"/payload/id: calendar {calendar_id!r} is still used by {'; '.join(users[:MAX_ROWS])}; "
+                "point those at another calendar first"]
+        del calendars[calendar_id]
+        return None
+    objects = candidate.get("objects")
     if command_type == "removeObject":
         object_id = payload["id"]
         if not isinstance(objects, dict) or object_id not in objects:
@@ -137,6 +189,38 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> tuple[str, lis
         del objects[object_id]
         return None
     return "E_PROJECT_COMMAND", [f"/type: unsupported command type {command_type!r}"]
+
+
+def _relation_index(relations: list[Any], relation: Mapping[str, Any]) -> int | None:
+    """Index of the relation a set command replaces: the first with the same declared ``id``, or, for a relation
+    without an id, an identical one (so resending it does not duplicate the edge)."""
+    declared = relation.get("id")
+    for index, item in enumerate(relations):
+        if not isinstance(item, dict):
+            continue
+        if isinstance(declared, str) and declared:
+            if item.get("id") == declared:
+                return index
+        elif item == relation:
+            return index
+    return None
+
+
+def _calendar_users(project: Mapping[str, Any], calendar_id: str) -> list[str]:
+    """What still names a calendar: the Project default, an object's ``calendar`` and a relation's ``lag.calendar``."""
+    found: list[str] = []
+    meta = project.get("project")
+    if isinstance(meta, dict) and meta.get("calendar") == calendar_id:
+        found.append("the Project default calendar (project.calendar)")
+    for object_id, item in (project.get("objects") or {}).items():
+        if isinstance(item, dict) and item.get("calendar") == calendar_id:
+            found.append(f"object {object_id!r} (calendar)")
+    relations = project.get("relations")
+    for index, relation in enumerate(relations if isinstance(relations, list) else ()):
+        lag = relation.get("lag") if isinstance(relation, dict) else None
+        if isinstance(lag, dict) and lag.get("calendar") == calendar_id:
+            found.append(f"relation {index} (lag.calendar)")
+    return found
 
 
 def _referrers(project: Mapping[str, Any], object_id: str) -> list[str]:
@@ -169,15 +253,27 @@ def validate_project_candidate(project: dict[str, Any], base_dir: Path | None = 
     return list(validate_project(project, extension_diagnostics=extensions))
 
 
+def _own_location(candidate: Mapping[str, Any], command: dict[str, Any]) -> tuple[str, str] | None:
+    """``(Project pointer, command pointer)`` of the value a set command wrote, so a finding inside it leads with the payload."""
+    command_type = command["type"]
+    if command_type == "setRelation":
+        relations = candidate.get("relations")
+        index = _relation_index(relations, command["payload"]["relation"]) if isinstance(relations, list) else None
+        return (f"/relations/{index}", "/payload/relation") if index is not None else None
+    if command_type in _MAPPING_MEMBERS:
+        member, value_key = _MAPPING_MEMBERS[command_type]
+        return f"/{member}/{_key(command)}", f"/payload/{value_key}"
+    return None
+
+
 def _candidate_diagnostics(candidate: dict[str, Any], command: dict[str, Any], base_dir: Path) -> list[tuple[str, str, str]]:
-    """``(code, command pointer, message)`` for each finding; a finding outside the command's own object keeps its Project pointer."""
-    object_id = command["payload"].get("id")
-    own = f"/objects/{object_id}"
+    """``(code, command pointer, message)`` for each finding; a finding outside the command's own value keeps its Project pointer."""
+    location = _own_location(candidate, command)
     rows: list[tuple[str, str, str]] = []
     for item in validate_project_candidate(candidate, base_dir):
         path = item.path or "/"
-        if command["type"] == "setObject" and (path == own or path.startswith(own + "/")):
-            rows.append((item.id, "/payload/object" + path[len(own):], item.message))
+        if location is not None and (path == location[0] or path.startswith(location[0] + "/")):
+            rows.append((item.id, location[1] + path[len(location[0]):], item.message))
         else:
             rows.append((item.id, "/payload", f"Project {path}: {item.message}"))
     return rows

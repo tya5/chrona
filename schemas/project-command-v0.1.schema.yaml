@@ -8,7 +8,7 @@ additionalProperties: false
 properties:
   version: {description: "This project-command contract version.", const: chrona/project-command/v0.1}
   commandId: {description: "Stable identifier for this command; resending the same id with the same request replays the first result.", type: string, minLength: 1}
-  type: {description: "Operation to apply to the Project: setObject upserts one object by id, removeObject deletes one.", enum: [setObject, removeObject]}
+  type: {description: "Operation to apply to the Project: setObject, setRelation, setCalendar, setEntity and setFieldRole upsert one member; removeObject, removeRelation and removeCalendar delete one.", enum: [setObject, removeObject, setRelation, removeRelation, setCalendar, removeCalendar, setEntity, setFieldRole]}
   target:
     type: object
     description: "Project file selected by the command."
@@ -43,3 +43,72 @@ allOf:
           additionalProperties: false
           properties:
             id: {description: "Identifier of the object to remove.", type: string, minLength: 1}
+  - description: "setRelation carries one complete dependency relation; a relation that declares an id replaces the relation with that id, any other is appended (an identical one is not duplicated). Both endpoints must name existing objects."
+    examples: [{}]
+    if: {properties: {type: {const: setRelation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [relation]
+          additionalProperties: false
+          properties:
+            relation: {description: "The complete Project relation: {type: dependency, from:{object,endpoint}, to:{object,endpoint}, id?, lag?}.", type: object}
+  - description: "removeRelation carries the id of a relation that declares one."
+    examples: [{}]
+    if: {properties: {type: {const: removeRelation}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Declared id of the relation to remove.", type: string, minLength: 1}
+  - description: "setCalendar carries the calendar id and one complete Project calendar (working_days, exceptions?, title?, fiscalStartMonth?)."
+    examples: [{}]
+    if: {properties: {type: {const: setCalendar}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, calendar]
+          additionalProperties: false
+          properties:
+            id: {description: "Calendar identifier: the key under calendars. An existing id is replaced.", type: string, minLength: 1}
+            calendar: {description: "The complete Project calendar that replaces or adds calendars.<id>.", type: object}
+  - description: "removeCalendar carries only the calendar id; a calendar that project.calendar, an object or a relation lag still names is refused."
+    examples: [{}]
+    if: {properties: {type: {const: removeCalendar}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id]
+          additionalProperties: false
+          properties:
+            id: {description: "Identifier of the calendar to remove.", type: string, minLength: 1}
+  - description: "setEntity carries the entity id and one complete Project entity (type, title?, fields?)."
+    examples: [{}]
+    if: {properties: {type: {const: setEntity}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [id, entity]
+          additionalProperties: false
+          properties:
+            id: {description: "Entity identifier: the key under entities. An existing id is replaced.", type: string, minLength: 1}
+            entity: {description: "The complete Project entity that replaces or adds entities.<id>.", type: object}
+  - description: "setFieldRole binds a closed semantic role to an object field name in fieldRoles; an existing binding is replaced."
+    examples: [{}]
+    if: {properties: {type: {const: setFieldRole}}}
+    then:
+      properties:
+        payload:
+          type: object
+          required: [role, binding]
+          additionalProperties: false
+          properties:
+            role: {description: "The semantic role: responsible or phase.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/projectFieldRole"}
+            binding: {description: "Object field name bound to the role.", type: string, minLength: 1, pattern: '\S'}
