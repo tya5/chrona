@@ -640,20 +640,26 @@ successful opposite-side placement emits
 reason `other-side-of-as-of`, including when the first candidate fits. If the
 pass fails, retain the existing fallback and diagnostics.
 
-When every declared `nearest-free` candidate has failed, the terminal visible
-placement of an annotation box (#1869) MUST NOT cover a mark of an object other
-than the annotation's anchor while any lattice position within the first
-declared candidate's `maxPositions` budget (fine, then coarse) avoids one. Positions are
-ranked by whether they cover another object's mark at all (one that does not
-always wins), then the text and label visuals met (a note box never hides a
-name), the number of other objects' marks covered, the other declared obstacles
-met, the area of those marks covered, then nearest first. When every position covers another object's mark, the least-covering
-one is used and Layout emits `W_LAYOUT_ANNOTATION_COVERS_MARK:<annotation-id>:<object-id>`
-once per covered object, naming that object. The `W_LAYOUT_LABEL_OVERFLOW` of
-such a box reports the box size as the size required and, as the size
-available, the largest free rectangle of the candidate's region (on the
-anchor's side of an in-window as-of rule, and connected to the anchor when the
-candidate has a connector), not the region itself.
+**Safe annotation exhaustion (#1906).** A placed plot callout MUST have its
+declared connector touching the resolved anchor, and its body, tail and any
+routed connector MUST clear other objects' marks. Exhaustion does not permit
+a detached balloon, a least-covering box over another object's mark, or an
+unvalidated direct leader. Evaluate the existing ordered candidates without
+changing their individual search budgets. A final declared candidate with
+`region: {kind: slot, source: annotations}`, `search: {kind: row-aligned}`
+and `connector: {kind: none}` is an explicit terminal list destination.
+Try its normal fit first; when its allocated slot is insufficient, complete
+the whole note as a naturally stacked list record and report the existing
+source-linked visible-overflow diagnostic naming that note. Preserve the
+body of unnumbered notes too, without inventing an ordinal. This list entry
+is not a detached plot callout and has no fabricated connector. Its slot
+must actually exist. If safe candidates exhaust without an explicit suppress
+outcome or such a declared terminal destination, fail with
+`E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED` at the annotation's placement policy,
+naming the annotation and required declaration; a missing declared slot is
+a resource/layout configuration error. Never infer a panel from a project
+name or silently fabricate a slot. First-party placement policies and their
+Layout slots migrate together with this rule.
 
 ### 8.2 Annotation connector topology after the shared inventory
 
@@ -665,9 +671,9 @@ obstacle inventory. A failed pair MUST NOT leave provisional obstacles behind.
 
 Strict connectors avoid all declared obstacles. A rail leader MAY use an
 explicit, bounded bridged-orthogonal topology after strict search. A bridge
-MAY cross only a prior leader or semantic dependency stroke, transversely and
+MAY cross only a semantic dependency stroke, transversely and
 away from junctions/endpoints. It MUST NOT cross a mark, text, annotation box,
-port other than a named endpoint, or rule barrier. Layout completes a visible
+another annotation leader, port other than a named endpoint, or rule barrier. Layout completes a visible
 gap in the later annotation connector at each crossing; the crossed stroke
 remains continuous. The connector remains a single source-linked placement,
 and Scene/adapters MUST NOT decide the crossing or gap. A tail connector MUST
@@ -681,10 +687,11 @@ completed geometry. See the
 [#466 C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
 The local search corridor, route quality, crossing count,
 and exhaustion are bounded and recorded in the placement decision. If all
-declared candidates fail, an explicit suppress outcome or the visible
-fallback policy applies; fallback MUST NOT be reported as a collision-free
-fit. The later candidate grammar will specify the public spelling of these
-policies. The local corridor is based on the source mark and selected box
+declared candidates fail, the safe annotation-exhaustion rule above applies;
+fallback MUST NOT be reported as a collision-free fit. A candidate's declared
+connector kind, not its arbitrary candidate ID, decides whether a leader is
+required and whether rail topology is applicable. `connector: none` performs
+no leader search and emits no leader. The local corridor is based on the source mark and selected box
 attachment point, not the full box extent; see the
 [#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
 
@@ -919,21 +926,25 @@ plot index, box, or leader is fabricated. These statuses are Layout-derived,
 not View/Project facts or adapter decisions. Layout measures and places the
 final list entries after resolving plot visibility; it may not renumber them
 or repair a completed Scene in an adapter. When suppression adds a summary or
-status, entries may reflow in View order within the declared slot; Layout
+status, entries reflow in completed anchor vertical order within the declared
+slot, with original View order breaking ties (#1906); Layout
 must recomplete affected boxes and required leaders against the obstacle
 inventory, never move text alone or revive a suppressed plot callout.
 Reflow may additionally suppress an index or callout that no longer fits,
 but never restores either once suppressed in that composition. Repeat only
 when the suppressed identity set strictly grows; this bounds visibility
 transitions by the finite annotation/index inventory and prevents stale status.
-In the no-suppression case, the
-existing Scene and adapter output remain byte-identical. This preserves
-intentional callout suppression while preventing a silent numbering gap.
+Numbering and content remain View-owned even when physical panel placement
+changes. Physical annotation placement visits completed anchors top to bottom
+(ties by original View ordinal), preserving each annotation's declared
+candidate order. Layout resolves anchors before this pass and retains source
+ordinals for identity, numbering, diagnostics and deterministic Theme treatment.
+This preserves intentional callout suppression while preventing a silent numbering gap.
 Without that slot, Layout does not fabricate a list or change the existing
 plot-only annotation behavior. List overflow must remain explicitly diagnosed,
 never silently omit an entry.
 If a new status or summary has no non-overlapping position in the declared
-slot, place it after preceding rail records in View order and mark its text
+slot, place it after preceding rail records in anchor order and mark its text
 as `visible-overflow`, with the existing label-overflow diagnostic. Do not
 clamp multiple required records onto the same fallback position or silently
 grow the canvas. The author controls sufficient slot capacity.
@@ -1077,13 +1088,28 @@ and never influences geometry, routing order, budgets or artifacts. Progress
 sink I/O failure detaches that sink without rejecting rendering. Core has no
 terminal or observer dependency; use cases report phases around existing work.
 
-For each Layout routing pass, report `0/N` then `k/N` in existing routing order,
+For each Layout relation-routing pass, report `0/N` then `k/N` in existing routing order,
 where N counts selected semantic relation declarations, not physical row/facet
 instances, and k advances after all instances of a declaration complete or are
 omitted. Separately name rehearsal passes; do not present their repeated work
 as a monotonic final-route count. Zero selected relations performs no search.
 Quiet/progress artifact and byte-characterization tests isolate this side
 channel from the independently declared default-height policy migration.
+
+Annotation connector completion reports its own named `routing` pass,
+`annotation-leaders`, before starting candidate search and after completing
+each annotation; its total counts annotation declarations, not semantic
+relations, connector trials or physical fragments (#1906). Reflows name
+their attempts separately rather than pretending repeated work is monotonic.
+The same best-effort observer contract applies; no observer may change
+placement or suppress a note. Annotation searches query the shared surface
+obstacle inventory. A provisional balloon body uses an ephemeral read-only
+query overlay, not a rebuilt index containing every surface obstacle for
+each candidate. Its exact body geometry participates in collision, port,
+visibility and memo identity; rejected overlays never mutate accepted ink.
+This does not change budgets, candidate ordering or clearance predicates.
+Measure leader routing separately from index construction: the latter is
+not assumed to explain a slow render without profile evidence.
 
 ### 13.1 Content-coherent table-timeline allocation (#468)
 
