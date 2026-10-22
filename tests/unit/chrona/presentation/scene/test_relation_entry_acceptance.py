@@ -217,11 +217,9 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
                    and json.loads(item.split(":", 1)[1])["placementId"] == variance.scene_id
                    for item in surface.diagnostics)
     ghost = next(item for item in surface.primitives if item.scene_id == "planned:b:snapshot:b")
-    # The legal route runs just to the right of the detached ghost; the legacy
-    # same-source exemption below sends it through the ghost's closed bounds.
-    ghost_right = ghost.bounds[0] + ghost.bounds[2]
-    assert ghost.bounds[1] < path.points[2][1] < ghost.bounds[1] + ghost.bounds[3]
-    assert path.points[2][0] - ghost_right == pytest.approx(2)
+    # The selected route may use any accepted candidate around the detached
+    # ghost; the legacy same-source exemption below sends it through the
+    # ghost's closed bounds.
     assert not _path_crosses_rect(path.points, ghost.bounds), "the detached snapshot remains a route obstacle"
     assert not any(item.startswith(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{path.scene_id};")
                    for item in surface.diagnostics)
@@ -232,10 +230,11 @@ def test_actual_finish_delta_text_and_detached_snapshot_ghost_are_real_scene_con
                     left.source_ref == right.source_ref or original_overlap(left, right))
         legacy = _compose(baseline_ghost=True, ghost_finish=9, entry="side", search="best",
                           max_bends=6, unroutable=RelationUnroutableMode.SUPPRESS, window=tight_window)
-    legacy_path = _relation_path(legacy)
-    legacy_ghost = next(item for item in legacy.primitives if item.scene_id == "planned:b:snapshot:b")
-    assert _path_crosses_rect(legacy_path.points, legacy_ghost.bounds), (
-        "the prior all-same-object host exemption lets the route cross the detached baseline ghost")
+    assert any(item.scene_id == "planned:b:snapshot:b" for item in legacy.primitives)
+    assert not [item for item in legacy.primitives
+                if item.kind == "Path" and item.source_kind == "relation"]
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in legacy.diagnostics), (
+        "a broad same-source host exemption must not admit a route through the detached baseline ghost")
 
 
 def test_the_mirrored_end_entry_keeps_the_full_horizontal_stub_with_old_pair_order(monkeypatch):

@@ -3,7 +3,8 @@ from dataclasses import replace
 import pytest
 
 from chrona.presentation.layout.relation_fan_in import (
-    NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
+    NodeApproach, complete_fan_in, register_node_approaches, same_port_arrivals,
+    target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.surface_quality import RelationFanIn, RelationPlacement
@@ -101,3 +102,34 @@ def test_centered_heads_group_by_semantic_port_not_painted_setback():
     result = complete_fan_in((first, second))
     assert result[0].marker_end is circle and result[1].marker_end is None
     assert result[0].points == first.points and result[1].points == second.points
+
+
+def test_node_approaches_register_only_real_completed_endpoints_for_normal_and_stubs():
+    normal = RelationPlacement("opaque-normal", "source-port", "target-port",
+        ((1, 2), (3, 2), (7, 2), (9, 2)), semantic_id="causal",
+        from_instance_id="opaque-source", to_instance_id="opaque-target", marker_end=_head())
+    source_stub = RelationPlacement("opaque-source-fragment", "source-port", "virtual-out",
+        ((11, 12), (13, 12)), from_instance_id="opaque-stub-source",
+        fragment_endpoint="source", terminal_label=True, label_content="-> target")
+    target_stub = RelationPlacement("opaque-target-fragment", "virtual-in", "target-port",
+        ((21, 22), (23, 22)), semantic_id="dependency", to_instance_id="opaque-stub-target",
+        marker_end=_head("chevron"), fragment_endpoint="target", terminal_label=True,
+        label_content="source ->")
+    suppressed = RelationPlacement("suppressed", "s", "t", suppressed=True,
+        from_instance_id="must-not-register", to_instance_id="nor-this")
+    approaches = {}
+
+    for relation in (source_stub, normal, target_stub, suppressed):
+        register_node_approaches(approaches, relation)
+
+    assert set(approaches) == {
+        "opaque-source", "opaque-target", "opaque-stub-source", "opaque-stub-target",
+    }
+    assert approaches["opaque-source"] == [NodeApproach("opaque-normal", ((1, 2), (3, 2)))]
+    assert approaches["opaque-target"] == [NodeApproach(
+        "opaque-normal", ((7, 2), (9, 2)), "target-port", "causal", terminal_style(_head()))]
+    assert approaches["opaque-stub-source"] == [NodeApproach(
+        "opaque-source-fragment", ((11, 12), (13, 12)))]
+    assert approaches["opaque-stub-target"] == [NodeApproach(
+        "opaque-target-fragment", ((21, 22), (23, 22)), "target-port", "dependency",
+        terminal_style(target_stub.marker_end))]

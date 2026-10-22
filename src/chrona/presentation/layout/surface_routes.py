@@ -49,7 +49,8 @@ from chrona.presentation.layout.routing import (
 )
 from chrona.presentation.layout.route_reduction import simplify_relation_route, terminal_runs_preserved
 from chrona.presentation.layout.relation_fan_in import (
-    NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
+    NodeApproach, complete_fan_in, register_node_approaches, same_port_arrivals,
+    target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_routing_order import dependency_routing_order
 from chrona.presentation.layout.relation_fallback import complete_fixed_connector, paired_stub_geometry
@@ -1268,6 +1269,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 for fragment in fragments:
                     declared_order[fragment.relation_id] = declared_index
                     relations.append(fragment)
+                    register_node_approaches(node_segments, fragment)
                     _register_route_paint(obstacles, fragment.relation_id, fragment.points,
                         dependency_stroke, route_owner_id=scene_id)
                 resolution_infos.append(RelationResolutionInfo("table-timeline", scene_id,
@@ -1417,9 +1419,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if domain.stage is not RelationResolutionStage.NORMAL:
                 resolution_infos.append(RelationResolutionInfo("table-timeline", scene_id,
                     domain.stage, relation.critical))
-            node_segments.setdefault(source_id, []).append(NodeApproach(scene_id, (points[0], points[1])))
-            node_segments.setdefault(target_id, []).append(NodeApproach(scene_id, (points[-2], points[-1]),
-                target_port_id, relation.semantic_id, terminal_style(completed_end)))
+            register_node_approaches(node_segments, placed)
             if (context.layout_manifest.relation_entry == "side" and target_mark is not None
                     and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2
                     and not side_entry_satisfied):

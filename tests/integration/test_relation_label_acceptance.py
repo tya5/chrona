@@ -46,15 +46,28 @@ def test_controller_baseline_ghosts_retains_label_on_required_shared_comparison_
     label = next(node for node in svg.iter(SVG_NS + "text")
                  if node.attrib.get("data-scene-id", "").startswith(
                      f"relation-label:{outgoing_id}:"))
-    assert label.text == "start->start"
+    assert label.text == "-> Performance Characterization"
+    target_label = next(node for node in svg.iter(SVG_NS + "text")
+                        if node.attrib.get("data-scene-id", "").startswith(
+                            f"relation-label:{outgoing_id}:")
+                        and node.attrib.get("data-scene-id", "").endswith(":stub-target"))
+    assert target_label.text == "Silicon Bring-up ->"
+    resolution, = [item for item in rendered.info_diagnostics
+                   if getattr(item, "relation_id", "").startswith(f"relation:{outgoing_id}:")]
+    assert resolution.stage.value == "stub"
+    assert resolution.fragment_ids and all(fragment in {
+        node.attrib.get("data-scene-id") for node in svg.iter()
+    } for fragment in resolution.fragment_ids)
     assert not any(item.startswith(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:{outgoing_id}:")
                    for item in rendered.scene.diagnostics)
 
     primitives = rendered.scene.surfaces[0].primitives
     incoming = next(item for item in primitives
-                    if item.scene_id.startswith(f"relation:{incoming_id}:"))
+                    if item.scene_id.startswith(f"relation:{incoming_id}:")
+                    and item.scene_id.endswith(":stub-target"))
     outgoing = next(item for item in primitives
-                    if item.scene_id.startswith(f"relation:{outgoing_id}:"))
+                    if item.scene_id.startswith(f"relation:{outgoing_id}:")
+                    and item.scene_id.endswith(":stub-source"))
     assert ":silicon-bringup:silicon-bringup" in incoming.scene_id
     assert outgoing.scene_id.startswith(
         f"relation:{outgoing_id}:silicon-bringup:silicon-bringup:")

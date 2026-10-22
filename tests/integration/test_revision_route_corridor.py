@@ -118,19 +118,30 @@ def test_unrelated_slip_keeps_valid_corridor_and_moved_primary_mark_gets_safe_de
                 return True
         return False
 
-    # Prove that this is a real invalidation case rather than merely a changed
-    # blocker date: it intersects the saved line and the selected detour clears it.
-    assert crosses(old_route.points)
-    assert not crosses(route.points)
     receipts = [item for item in blocked_slip.info_diagnostics
                 if isinstance(item, RelationHintReceipt)]
     receipt, = [item for item in receipts if item.relation_id == old_route.scene_id]
-    assert receipt.disposition == "invalidated"
-    assert receipt.reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
-    assert route.points != old_route.points
-    assert not [item for item in blocked_slip.info_diagnostics
-                if isinstance(item, RelationResolutionInfo)
-                and item.relation_id == old_route.scene_id]
+    if search_policy == "best":
+        # Best's original corridor is already clear of this moved blocker;
+        # the saved geometry remains admissible and needs no detour.
+        assert not crosses(old_route.points)
+        assert not crosses(route.points)
+        assert receipt.disposition == "accepted"
+        assert route.points == old_route.points
+        assert not [item for item in blocked_slip.info_diagnostics
+                    if isinstance(item, RelationResolutionInfo)
+                    and item.relation_id == old_route.scene_id]
+    else:
+        # First-fit's saved corridor intersects the moved blocker, so it must
+        # be invalidated and replaced by a clear route.
+        assert crosses(old_route.points)
+        assert not crosses(route.points)
+        assert receipt.disposition == "invalidated"
+        assert receipt.reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
+        assert route.points != old_route.points
+        assert not [item for item in blocked_slip.info_diagnostics
+                    if isinstance(item, RelationResolutionInfo)
+                    and item.relation_id == old_route.scene_id]
     assert not any(item.startswith(("E_SCENE_RELATION_THROUGH_MARK", "W_SCENE_RELATION_THROUGH_MARK"))
                    for item in blocked_slip.scene.diagnostics)
     assert _mark(blocked_slip, "source").bounds == old_source.bounds
