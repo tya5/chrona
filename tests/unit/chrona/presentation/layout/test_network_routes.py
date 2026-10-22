@@ -7,7 +7,7 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.network_routes import complete_network_routes
 from chrona.presentation.layout.relation_terminals import project_marker_outline
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
-from chrona.presentation.model.render_progress import RenderProgress
+from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent, RenderWorkPhaseEvent
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.scene.test_v05_builder import _theme as _scene_theme
@@ -210,7 +210,9 @@ def test_progress_counts_complete_only_after_each_network_edge_finishes():
                             })
 
     assert len(routes) == 2 and not warnings
-    assert [(event.completed, event.total, event.pass_name) for event in events] == [
+    assert events[0] == RenderWorkPhaseEvent("routing", "network")
+    assert all(isinstance(event, RenderProgressEvent) for event in events[1:])
+    assert [(event.completed, event.total, event.pass_name) for event in events[1:]] == [
         (0, 2, "network"), (1, 2, "network"), (2, 2, "network"),
     ]
 
