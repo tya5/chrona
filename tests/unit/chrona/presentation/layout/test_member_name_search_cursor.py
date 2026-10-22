@@ -1,6 +1,9 @@
+import pytest
+
 from chrona.presentation.layout.labels import (
     LabelRect,
     LabelObstacle,
+    MemberNameAssociation,
     start_member_name_search,
 )
 from chrona.presentation.layout.obstacles import (
@@ -97,3 +100,38 @@ def test_start_neighborhood_does_not_inherit_end_reach_limit():
     assert candidate.placement.side == "start"
     assert candidate.placement.bounds.x == 10
     assert candidate.placement.search_count == 11
+
+
+@pytest.mark.parametrize("sides", [("end",), ("end", "start")])
+def test_exhausted_side_domains_cannot_restart_with_a_clear_probe(sides):
+    anchor = LabelRect(500, 500, 10, 10)
+    association = MemberNameAssociation(anchor, 0, 0, 100, 20, 400)
+    wall = SurfaceObstacle("wall", "mark", "timeline", ObstacleRect(0, 0, 1000, 1000))
+    cursor = start_member_name_search(anchor, (100, 20), sides,
+        bounds=LabelRect(0, 0, 1000, 1000), obstacles=_index(wall), gap=0,
+        maximum_end_gap=400, association=association)
+
+    assert cursor.next_clear() is None
+    assert cursor.neighborhood_evaluated_count == 512 * len(sides)
+    evaluated = cursor.evaluated_count
+    assert cursor.next_clear(_index()) is None
+    assert cursor.neighborhood_evaluated_count == 512 * len(sides)
+    assert cursor.evaluated_count == evaluated
+
+
+def test_final_own_mark_neighbor_retains_its_canonical_blocker_evidence():
+    anchor = LabelRect(10, 40, 10, 10)
+    association = MemberNameAssociation(anchor, 0, 0, 10, 10, 20,
+        also_marks=(LabelRect(70, 40, 10, 10),))
+    blocker = SurfaceObstacle("blocker", "text", "timeline", ObstacleRect(80, 40, 90, 50))
+    cursor = start_member_name_search(anchor, (10, 10), ("end",),
+        bounds=LabelRect(80, 0, 100, 100), obstacles=_index(blocker), gap=0,
+        maximum_end_gap=20, association=association, final_association=association,
+        own_mark_right=80)
+
+    candidate = cursor.next_clear()
+    assert candidate is not None and candidate.placement.final_rung
+    assert candidate.placement.bounds == LabelRect(80, 30, 10, 10)
+    obstruction, = candidate.placement.canonical_obstructions
+    assert obstruction.occupied
+    assert obstruction.blocker_placement_ids == ("blocker",)

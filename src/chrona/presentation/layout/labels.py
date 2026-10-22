@@ -588,6 +588,9 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
                 cursor._neighborhood_counts = dict(final_cursor._neighborhood_counts)
                 cursor._canonical_obstructions = list(final_cursor._canonical_obstructions)
                 yield side, rect, count, True, canonical
+                # Collision evaluation belongs to the outer cursor. Carry its
+                # canonical obstruction back before resuming the final domain.
+                final_cursor._canonical_obstructions = list(cursor._canonical_obstructions)
 
 
 def _member_candidate_allowed(rect: LabelRect, side: str, bounds: LabelRect,
