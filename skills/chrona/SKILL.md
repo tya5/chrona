@@ -110,8 +110,10 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `create_project` | Library entry (no CLI equivalent) | Creates a new `project.yaml` from a complete Project; requires `--allow-write`. |
 | `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` (objects, relations, calendars, entities, field roles, annotations, project meta) at a `baseRevision`; the accepted result's `inverse` reverts it; requires `--allow-write`. |
 | `save_baseline` | Library entry (no CLI equivalent) | Copies `project.yaml` to `baselines/<name>.yaml` (step 1); pass it as `render_draft` `snapshot`; requires `--allow-write`. |
+| `create_store` | Library entry (no CLI equivalent) | Creates `.chrona/store.yaml` and its root for the Store route; requires `--allow-write`. |
+| `publish_resource` | Library entry (no CLI equivalent) | Seeds the Store with a Project, Actual Set or intake batch (file or inline) and returns the `reference` `apply_command` takes as `target`; requires `--allow-write`. |
 
-Edit standalone `project.yaml` directly, or over MCP with `apply_project_command` (`validate_project` returns its `projectRevision`); use `apply_command` for Stores. For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
+Edit standalone `project.yaml` directly, or over MCP with `apply_project_command` (`validate_project` returns its `projectRevision`); for Stores `create_store`, `publish_resource`, then `apply_command`. For guided MCP-only editing and revision handling, read [guided workspaces](references/guided-workspaces.md).
 
 ## The model in five lines
 
@@ -194,7 +196,5 @@ states it with a last clause, `deadline 2027-06-30`.
 
 ## Install, refresh, and where the rules live
 
-This skill ships with chrona. `chrona skill copy DIR` writes into an empty or absent directory,
-such as `.claude/skills/chrona`; `E_SKILL_OUTPUT_EXISTS` refuses a nonempty destination.
-After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one.
-Rules: Spec 05 (Project), Spec 04 (scheduling), and Specs 06, 07 and 33 (View, Theme, Layout).
+This skill ships with chrona. `chrona skill copy DIR` writes into an empty or absent directory, such as `.claude/skills/chrona`; `E_SKILL_OUTPUT_EXISTS` refuses a nonempty destination.
+After upgrading, copy into a new directory, compare with `diff -r`, and replace the old one. Rules: Spec 05 (Project), Spec 04 (scheduling), and Specs 06, 07 and 33 (View, Theme, Layout).

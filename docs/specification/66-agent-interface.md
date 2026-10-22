@@ -20,9 +20,10 @@ A tool is a use case with a typed envelope. The tool set adds no behavior: for t
 the diagnostic code and the bytes the command of the same name returns, and a disagreement is a defect in one of
 the two. The tool core imports use cases, the shared Store address guard and the shared Store functions
 (`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too),
-the shared authoring transaction, and the opaque exclusive workspace initializer only.
+the shared authoring transaction, the opaque exclusive workspace initializer and the Store provisioning functions
+(`chrona.operational.store_provisioning`) only.
 It imports no transport SDK and prints nothing. `apply_command`,
-`apply_authoring_command`, `create_workspace`, `create_project`, `apply_project_command` and `save_baseline` write only behind the write gate (sections2.1/2.3/2.5).
+`apply_authoring_command`, `create_workspace`, `create_project`, `apply_project_command`, `save_baseline`, `create_store` and `publish_resource` write only behind the write gate (sections2.1/2.3/2.5/2.6).
 
 ## 2. Tool set `chrona/agent-tools/v0.9`
 
@@ -37,7 +38,7 @@ authoring-command object through the same validated mutation use case.
 `v0.8` (#902 item4) also permits inline Store command objects. Existing paths,
 command/resource versions, result envelopes and transaction guards are unchanged.
 `v0.9` (#1892 row 1) adds `create_project` and `apply_project_command` for a raw `project.yaml` (section 2.5) and the
-optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged. #1892 row 2 adds `save_baseline` under `v0.9` (section 2.5).
+optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged. #1892 row 2 adds `save_baseline` (section 2.5), `create_store` and `publish_resource` (section 2.6) under `v0.9`.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -57,6 +58,8 @@ optional `projectRevision` of a validated Project; existing inputs and outputs a
 | `create_project` | library entry | `usecases.project_commands.prepare_new_project` and `operational.workspace_initialization.publish_new_file` |
 | `apply_project_command` | library entry | `usecases.project_commands` over the authoring transaction of Spec51 §4.2 |
 | `save_baseline` | library entry | `usecases.project_baselines` and `operational.workspace_initialization.publish_new_file` |
+| `create_store` | library entry | `operational.store_provisioning.create_local_store` |
+| `publish_resource` | library entry | `operational.store_provisioning.publish_store_resource` over the Store configuration of section 2.1 |
 
 The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
 (section 2.2); the two command tools are section 2.1.
@@ -323,11 +326,43 @@ message says so and names the revision. Additive; no result version change.
   hash). The path is the `snapshot` argument of `render_draft`, which then draws the baseline ghosts and deltas against the
   edited plan. A name that holds other content is `E_BASELINE_FILE_EXISTS`; the same bytes again return the same result with
   `replayed: true`; `baselines` being a symlink or not a directory is `E_BASELINE_DIRECTORY`. A copy is never edited or
-  removed by any tool. The Store route (`captureSnapshot`) is a separate mechanism whose bootstrap is item 6.
+  removed by any tool. The Store route (`captureSnapshot`) is a separate mechanism, bootstrapped by section 2.6.
 
 Only initialization accepts a nonexistent destination directory. Its explicit
 destination guard retains the syntax/containment/device rules of section4;
 the existing-file guard is unchanged for every read and command-file input.
+
+### 2.6 The Store bootstrap tools (#1892 row 2, Store route)
+
+The Store route (section 2.1) reads references out of a Store; until #1892 only a test helper could write the first ones.
+The layout is the one ADR-0027 and `LocalSnapshotReader` fix: a resource is the file
+`<root>/revision-<percent-encoded token>/<address>` and its reference is `{id, kind, store, address, revision.token,
+contentIdentity}` (`revision-store-resource-ref/v0.2`); an Actual Set also has the adapter-private tip
+`actual-tips/<id>.json`, which no command creates. These two tools provision that, once, inside the workspace, behind the
+write gate. They never edit a stored file.
+
+- `create_store {identity?}` writes `.chrona/store.yaml` (`chrona/store-config/v0.1`: one `local` Store, `identity` default
+  `workspace`, `root: store`, `integrity: required`) by the exclusive publication of `create_project`, and creates the root
+  `.chrona/store`. The same call again returns `replayed: true`; a configuration there with other content is
+  `E_STORE_CONFIG_EXISTS` (never rewritten); `.chrona` or the root being a symlink or not a directory is
+  `E_STORE_DIRECTORY`. Returns `storeConfig` and `store`.
+- `publish_resource {kind, path | document, storeConfig?, store?}` publishes one resource of `kind` `project`, `actual-set` or
+  `actual-intake-batch` (exactly one of `path`, a workspace file, and `document`, the resource inline; neither or both is
+  `E_MCP_INPUT_INVALID` at `/`) into the Store the configuration (default `.chrona/store.yaml`, containment as section 2.1)
+  declares, or the one named by `store` (`E_STORE_SELECTION` when it is absent or ambiguous). The document is validated
+  first: a Project like `validate_project`, an Actual Set against its schema and contract, a batch against
+  `actual-intake-batch/v0.2`; findings are a `rejected` result with the node's pointer, and a document of another kind is
+  `E_STORE_RESOURCE_INVALID` at `/kind`. A Project and a batch are stored at `projects/<id>.yaml` and `batches/<id>.yaml`
+  under the content-addressed token `<kind>:<first 16 hex of the byte hash>`, so the same bytes are the same revision
+  (`replayed: true`) and changed bytes a new one; the stored bytes are the file's, or the inline document dumped as
+  `create_project` writes it. An Actual Set is stored at `actuals/<id>.yaml` through `LocalActualStore`, which creates its
+  tip (counter 1, token `actual:1:<digest>`); published again with the same content it is a replay, with other content
+  `E_STORE_RESOURCE_EXISTS`, because from then on it changes only by command. A resource id that is not one safe Store
+  segment is `E_STORE_RESOURCE_INVALID`. Returns the `reference` and `storeConfig`; `reference` is the `target` (and the
+  `payload.project` / `payload.batch`) of the commands of section 2.1, with `baseRevision` the token.
+
+The end-to-end route over `call_tool` alone is `create_store`, `publish_resource` (project, actual-set, batch),
+`captureSnapshot`, `applyActualIntakeBatch` and `revertActualCommand` (`tests/unit/chrona/app/test_agent_store_bootstrap.py`).
 
 ## 3. Result
 
@@ -447,7 +482,7 @@ rasterizer of the `render` extra.
 ## 7. The MCP binding
 
 `chrona mcp [--workspace DIR] [--allow-write] [--list-tools]` serves the tool set over MCP on standard input and output;
-it is the only transport. `--allow-write` enables mutating tools (sections2.1/2.3/2.4); without it the server is read-only
+it is the only transport. `--allow-write` enables mutating tools (sections2.1/2.3/2.4/2.5/2.6); without it the server is read-only
 and the registry is unchanged. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
 `chrona[mcp]`, `mcp>=2.0,<3`); `chrona mcp --list-tools` prints the registry and needs no SDK.
 
