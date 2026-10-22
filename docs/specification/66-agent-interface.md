@@ -218,6 +218,19 @@ application carries neither. `E_AUTHORING_COMMAND_ID_REUSE` states that the firs
 `authoringResult` row has `firstApplied: true`, `appliedRevision` and `revisionIsCurrent`, and the MCP diagnostic
 message says so and names the revision. Additive; no result version change.
 
+Revert and baseline on the guided-workspace route (#1921, #1892 row 2). An accepted `authoringResult` of every type
+except `materializePresentationPreset` (`reversible: false`) carries an optional `inverse`: a complete
+`authoring-command/v0.1` request bound to `resultRevision` (`commandId` is the original plus `-inverse`, same
+`target`) that restores exactly what the command changed, so for a canonical workspace the bytes before the edit
+return. A retained result keeps its `inverse` on replay, and a retained inverse that does not validate or is not on the
+result revision is `E_AUTHORING_REPLAY_UNAVAILABLE`. The command enum gains `removeWorkspaceTask {taskId}`,
+`removeWorkspaceActual {taskId}` and `removePresentationOverride {}`, and the two set commands accept an optional `index`
+for a new entry, so the inverse of an addition is the matching removal and the inverse of a removal restores the
+position. A task that an Actual names is not removed. `save_baseline` accepts a guided `workspace.yaml`: it writes the
+inline Project, normalized to an ordinary `timeline/v0.7` Project, to `baselines/<name>.yaml` beside it with the same
+replay and `E_BASELINE_FILE_EXISTS` rules, and `render_workspace` takes `snapshot` (that path). Additive
+(`authoring-command-result/v0.1` optional member, `authoring-command/v0.1` enum and optional members); no version bump.
+
 ### 2.4 Workspace lifecycle (#1725)
 
 - `create_workspace {directory, project, preset?}` initializes the Spec51

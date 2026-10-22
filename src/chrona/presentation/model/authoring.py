@@ -180,7 +180,11 @@ def _complete_anchor(annotation: dict[str, Any]) -> dict[str, Any]:
 
 
 def _project_document(workspace: AuthoringWorkspaceContract) -> dict[str, Any]:
-    project = workspace.project
+    return workspace_project_document(workspace.project)
+
+
+def workspace_project_document(project: Mapping[str, Any]) -> dict[str, Any]:
+    """The ordinary ``timeline/v0.7`` Project a workspace's compact ``body.project`` normalizes to."""
     return {
         "version": "timeline/v0.7",
         "project": {"id": project["id"], **({"title": project["title"]} if "title" in project else {})},

@@ -34,6 +34,8 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
+import yaml
+
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.operational.authoring_commands import read_authoring_workspace, transact_authoring_command
 from chrona.operational.store_provisioning import (
@@ -45,10 +47,12 @@ from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
 )
 from chrona.operational.store_reads import DraftExtensionPackageReader, compare_store_baseline, load_reference, snapshot_reader_for
-from chrona.resources import schema_document, validator_for_schema
+from chrona.resources import safe_load, schema_document, validator_for_schema
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.usecases.authoring_workspace import create_workspace, validate_workspace
-from chrona.usecases.project_baselines import BASELINE_NAME_PATTERN, BaselineConflict, save_project_baseline
+from chrona.usecases.project_baselines import (
+    BASELINE_NAME_PATTERN, BaselineConflict, save_project_baseline, save_workspace_baseline, workspace_baseline_payload,
+)
 from chrona.usecases.project_commands import (
     apply_project_command, parse_project_command, prepare_new_project, project_revision,
 )
@@ -515,7 +519,7 @@ def _render_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     request = WorkspaceRenderRequest(
         workspace=call.scope.resolve_path(arguments["workspace"], "/workspace"),
         target_kind=arguments.get("format", "svg"), viewport=_tool_viewport(arguments),
-        locale=arguments.get("locale", "en-US"),
+        locale=arguments.get("locale", "en-US"), snapshot=_optional_path(call, arguments, "snapshot"),
     )
     return _draft_artifacts(call, arguments, lambda kind: render_workspace(replace(request, target_kind=kind)))
 
@@ -778,13 +782,28 @@ def _create_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     return ToolResult(call.ok(project=destination.relative_to(call.scope.root).as_posix(), projectRevision=prepared.revision))
 
 
+def _workspace_document(path: Path) -> dict[str, Any] | None:
+    """The guided workspace at ``path``, or ``None`` when the file is not one (it is then a Project file)."""
+    try:
+        document = safe_load(path.read_bytes())
+    except (OSError, ValueError, yaml.YAMLError):
+        return None
+    return document if isinstance(document, dict) and document.get("kind") == "authoring-workspace" else None
+
+
 def _save_baseline(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     path = call.scope.resolve_path(arguments["project"], "/project")
-    outcome = validate_project_file(path)
-    if not outcome.ok:
-        return call.rejected(rejection_report(outcome.diagnostics))
+    workspace = _workspace_document(path)
+    if workspace is None:
+        outcome = validate_project_file(path)
+        if not outcome.ok:
+            return call.rejected(rejection_report(outcome.diagnostics))
+    else:
+        validate_workspace(path, read_workspace=read_authoring_workspace)
     try:
-        saved = save_project_baseline(path, arguments["name"], publish=publish_new_file)
+        saved = (save_project_baseline(path, arguments["name"], publish=publish_new_file) if workspace is None else
+                 save_workspace_baseline(path, arguments["name"], workspace_baseline_payload(workspace),
+                                         publish=publish_new_file))
     except BaselineConflict as error:
         raise StableFailure(error.code, error.detail, "project", "/name", 2) from None
     fields: dict[str, Any] = {"baseline": saved.path.relative_to(call.scope.root).as_posix(), "contentIdentity": saved.identity}
@@ -1044,11 +1063,13 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "to a guided workspace. For workspace: guided/workspace.yaml, use target "
         "{kind: authoring-workspace, path: workspace.yaml}; target.path is only the selected workspace's "
         "file name, not its outer path. A request has version, commandId, type, target, baseRevision and payload. "
-        "Types/payloads: setWorkspaceTask {task:{id,title,planned:{start,finish}}}; "
-        "setWorkspaceActual {actual:{taskId,actual:{start,finish},progress?}}; "
+        "Types/payloads: setWorkspaceTask {task:{id,title,planned:{start,finish}},index?}; removeWorkspaceTask {taskId}; "
+        "setWorkspaceActual {actual:{taskId,actual:{start,finish},progress?},index?}; removeWorkspaceActual {taskId}; "
         "selectPresentationPreset {preset:{id,version,path}}; setPresentationOverride {overrides:{view?,theme?}}; "
-        "materializePresentationPreset {directory?}. Get baseRevision from create_workspace/workspace_revision "
-        "or the last authoringResult.resultRevision. Inverse edits revert source changes at a new revision. "
+        "removePresentationOverride {}; materializePresentationPreset {directory?}. Get baseRevision from "
+        "create_workspace/workspace_revision or the last authoringResult.resultRevision. An accepted authoringResult "
+        "carries 'inverse', a complete command bound to resultRevision: send it to restore the exact bytes, an added "
+        "task included (materialize has none: reversible false). "
         "All paths stay inside the server workspace. Requires --allow-write; no approval step. "
         "A stale baseRevision is rejected without writing. A durable receipt returns the first accepted "
         "result for the same commandId and request with replayed true and revisionIsCurrent; reusing that ID with "
@@ -1056,7 +1077,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "Returns authoringResult, with status ok when accepted or rejected with typed diagnostics.",
         _workspace_command_schema(),
         _output_schema({"authoringResult": {"type": "object",
-                                           "description": "The authoring-command-result/v0.1 emitted by the CLI."}}),
+                                           "description": "The authoring-command-result/v0.1 emitted by the CLI, "
+                                                          "with inverse on an accepted edit."}}),
         _authoring_tool, mutating=True,
     ),
     ToolSpec(
@@ -1091,8 +1113,12 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "Render workspace {workspace:<relative YAML path>,viewport?,locale?,format?,inline?} without writing. "
         "Uses the same pinned preset resolution, Theme expressions and rendering as render-workspace, not raw Project "
         "render_draft. format is svg/png; inline image/svg/none controls the preview, default image. "
+        "snapshot (optional) is a baseline Project, as save_baseline writes it for this workspace. "
         "Returns artifact identity/length, availability and typed warnings; a rejected plan is a result, not a tool error.",
-        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY), **_draft_options()}, ["workspace"]),
+        _input_schema({"workspace": copy.deepcopy(_WORKSPACE_PATH_PROPERTY),
+                       "snapshot": {**_WORKSPACE_PATH_PROPERTY, "description": "Optional baseline Project YAML, e.g. the "
+                                    "baselines/<name>.yaml that save_baseline wrote beside the workspace."},
+                       **_draft_options()}, ["workspace"]),
         _draft_output_schema(), _render_workspace,
     ),
     ToolSpec(
@@ -1145,7 +1171,9 @@ _TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec(
         "save_baseline", "Save a baseline copy of a Project",
         "Save the Project YAML file's current bytes as the baseline 'baselines/<name>.yaml' in the Project's own directory: "
-        "the file-route baseline, the same as cp project.yaml baseline.yaml, with no Store. Requires --allow-write. The Project "
+        "the file-route baseline, the same as cp project.yaml baseline.yaml, with no Store. 'project' may also be a guided "
+        "workspace.yaml: its inline Project is written as an ordinary Project to baselines/<name>.yaml beside it, and "
+        "render_workspace takes that path as 'snapshot'. Requires --allow-write. The Project "
         "must validate; the copy is byte-identical and is never edited. 'name' is 1 to 64 letters, digits, '_' or '-', starting "
         "with a letter or digit. A name that already holds other content is E_BASELINE_FILE_EXISTS (nothing is overwritten; "
         "use a new name); the same content again returns the same result with replayed true. Returns 'baseline' (the workspace "

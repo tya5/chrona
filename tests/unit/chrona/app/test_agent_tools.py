@@ -152,7 +152,7 @@ def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
         "apply_authoring_command": {"workspace", "command"},
         "create_workspace": {"directory", "project", "preset"},
         "validate_workspace": {"workspace"}, "workspace_revision": {"workspace"},
-        "render_workspace": {"workspace", "viewport", "locale", "format", "inline"},
+        "render_workspace": {"workspace", "snapshot", "viewport", "locale", "format", "inline"},
         "create_project": {"file", "project"}, "apply_project_command": {"project", "command"},
         "save_baseline": {"project", "name"}, "create_store": {"identity"},
         "publish_resource": {"kind", "path", "document", "storeConfig", "store"},

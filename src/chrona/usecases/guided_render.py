@@ -26,6 +26,7 @@ class WorkspaceRenderRequest:
     visual_profile: str | None = None
     typesetter: TypesetterIdentity | None = None
     forecast: bool = False
+    snapshot: Path | None = None
     progress: RenderProgress | None = field(default=None, compare=False, repr=False)
     package_reader: SnapshotReader | None = field(default=None, compare=False, repr=False)
 
@@ -46,6 +47,7 @@ def render_workspace(request: WorkspaceRenderRequest) -> WorkspaceRenderResult:
         workspace_path=Path(request.workspace), viewport=parse_viewport(request.viewport),
         locale=request.locale, target_kind=request.target_kind, visual_profile=request.visual_profile,
         typesetter=request.typesetter, forecast=request.forecast, package_reader=request.package_reader,
+        snapshot_project_path=Path(request.snapshot) if request.snapshot is not None else None,
     )
     provenance = draft.closure.guided_provenance
     if provenance is None:

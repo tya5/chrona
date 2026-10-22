@@ -15,6 +15,18 @@ properties:
   reversible: {description: "Whether the accepted operation is reversible.", type: boolean}
   replayed: {description: "True only when this accepted result is the retained first result of an earlier application of the same commandId and request; nothing was written by this call. Absent for a fresh application.", const: true}
   revisionIsCurrent: {description: "Present on a replay: whether resultRevision is still the workspace's current revision (false when later commands changed it).", type: boolean}
+  inverse:
+    description: "On an accepted result of every type except materializePresentationPreset: the authoring-command/v0.1 request (version, commandId, type, target, baseRevision = resultRevision, payload) that restores exactly what this command changed. Apply it with apply_authoring_command to revert the edit; it is refused with E_AUTHORING_BASE_REVISION once the workspace has moved on."
+    type: object
+    required: [version, commandId, type, target, baseRevision, payload]
+    additionalProperties: false
+    properties:
+      version: {description: "The authoring-command contract version.", const: chrona/authoring-command/v0.1}
+      commandId: {description: "The command identity of the inverse: the original commandId with -inverse appended (use your own to retry after a different edit).", type: string, minLength: 1}
+      type: {description: "The inverse operation: a command type of authoring-command/v0.1.", type: string, minLength: 1}
+      target: {description: "The workspace the inverse applies to (the original target).", type: object}
+      baseRevision: {description: "The revision the inverse requires: this result's resultRevision.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+      payload: {description: "Operation-specific inverse content; an inverse of a removal carries the position index.", type: object}
   diagnostics:
     description: "Diagnostics emitted by the authoring command boundary."
     type: array
