@@ -153,7 +153,8 @@ _FIT_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_MARK_OVERFLOW": "a mark does not fit its space",
     "W_LAYOUT_LABEL_OVERFLOW": "a label does not fit its space",
     "W_LAYOUT_GROUP_HEADER_OVERFLOW": "a group header does not fit its space",
-    "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT": "the completed canvas exceeds the declared viewport",
+    "W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT": "the completed canvas exceeds the declared viewport, which is only a minimum; "
+        "to fit a fixed slide or page show fewer rows or use a denser design (docs/guides/fixed-size-output.md)",
 }
 _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_SUPPRESSED_PRIMITIVE_EMITTED": "a drawing element that layout left out was emitted anyway",
