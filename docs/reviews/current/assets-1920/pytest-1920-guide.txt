@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.7, pytest-9.1.1, pluggy-1.6.0 -- /private/tmp/claude-501/venv1682/bin/python
+rootdir: /private/tmp/claude-501/rv1928
+configfile: pyproject.toml
+plugins: cov-7.1.0, xdist-3.8.0, split-0.11.0, timeout-2.4.0, asyncio-1.4.0, httpx-0.36.2, anyio-4.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/unit/tools/test_agent_interface_guide.py::test_guide_tool_table_matches_the_live_server_registry PASSED [100%]
+
+============================== 1 passed in 0.96s ===============================

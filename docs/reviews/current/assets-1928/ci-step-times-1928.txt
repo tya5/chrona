@@ -1,0 +1,31 @@
+$ gh run view 39856595689 -R tya5/chrona --json jobs,headSha,event,conclusion   # job derived-preview, pull_request run of PR #1931
+event=pull_request headSha=3db25ee79f3842aeed0fe0c8ec225fa7128b141e conclusion=success
+job derived-preview 2026-10-22T21:21:47Z -> 2026-10-22T21:25:29Z
+step "Reject derived edits (source-only, timed as its own step)" 2026-10-22T21:22:09Z -> 2026-10-22T21:22:13Z success
+step "Materialize one PR snapshot" 2026-10-22T21:22:13Z -> 2026-10-22T21:25:25Z success
+
+$ git show e89b25d8d -- .github/workflows/conformance.yml   # the whole change (PR #1931)
+diff --git a/.github/workflows/conformance.yml b/.github/workflows/conformance.yml
+index 78390bcfa..1c2d2a2c4 100644
+--- a/.github/workflows/conformance.yml
++++ b/.github/workflows/conformance.yml
+@@ -81,13 +81,15 @@ jobs:
+           cache: pip
+           cache-dependency-path: pyproject.toml
+       - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+-      - name: Reject derived edits and materialize one PR snapshot
++      - name: Reject derived edits (source-only, timed as its own step)
+         env:
+           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+-        run: |
+-          python -m tools.derived_workflow source-only "$BASE_SHA" "$HEAD_SHA"
+-          python -m tools.derived_workflow snapshot "$BASE_SHA" derived-snapshot.tar.gz
++        run: python -m tools.derived_workflow source-only "$BASE_SHA" "$HEAD_SHA"
++      - name: Materialize one PR snapshot
++        env:
++          BASE_SHA: ${{ github.event.pull_request.base.sha }}
++        run: python -m tools.derived_workflow snapshot "$BASE_SHA" derived-snapshot.tar.gz
+       - uses: actions/upload-artifact@v4
+         with:
+           name: derived-snapshot-${{ github.event.pull_request.head.sha }}
