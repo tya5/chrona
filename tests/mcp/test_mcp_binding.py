@@ -161,11 +161,22 @@ def test_the_guides_are_the_packaged_skill_text(workspace):
         return listed, authoring, diagnostics
 
     listed, authoring, diagnostics = run(workspace, scenario)
-    assert [resource.uri for resource in listed.resources] == ["chrona://guide/authoring", "chrona://guide/diagnostics"]
+    uris = [resource.uri for resource in listed.resources]
+    assert uris[:2] == ["chrona://guide/authoring", "chrona://guide/diagnostics"]
     skill = skill_resource()
+    pages = sorted(page.name.removesuffix(".md") for page in skill.joinpath("references").iterdir()
+                   if page.name.endswith(".md") and page.name != "diagnostics.md")
+    assert uris[2:] == [f"chrona://guide/references/{name}" for name in pages]
     body = skill.joinpath("SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].lstrip("\n")
-    assert authoring.contents[0].text == body and not authoring.contents[0].text.startswith("---")
-    assert diagnostics.contents[0].text == skill.joinpath("references", "diagnostics.md").read_text(encoding="utf-8")
+    assert authoring.contents[0].text.startswith(body.split("](references/", 1)[0][:200]) and not authoring.contents[0].text.startswith("---")
+    # No served page keeps a relative link to a page it cannot open.
+    assert "](references/" not in authoring.contents[0].text and "chrona://guide/references/guided-workspaces" in authoring.contents[0].text
+    written = skill.joinpath("references", "diagnostics.md").read_text(encoding="utf-8")
+    assert diagnostics.contents[0].text.startswith(written.rstrip("\n"))
+    # Codes beyond the plan table are explained in the same resource (#1892 row 4).
+    for code in ("E_MCP_INPUT_INVALID", "E_MCP_WRITE_DISABLED", "E_AUTHORING_BASE_REVISION", "E_AUTHORING_COMMAND_ID_REUSE",
+                 "E_AUTOMATION_TARGET_CLOSURE", "E_BASELINE_REFERENCE"):
+        assert f"| `{code}` |" in diagnostics.contents[0].text
     assert all(item.mime_type == "text/markdown" for item in (authoring.contents[0], diagnostics.contents[0]))
 
 
