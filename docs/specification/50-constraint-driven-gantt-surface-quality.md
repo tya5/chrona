@@ -157,7 +157,8 @@ inside it, bounded by the reach from that edge and within reach of at least
 one own mark; a visible-overflow fallback on `end` is measured from the same
 edge. Only a name placed by the final rung or this fallback names the own mark
 nearest its Text as `hostPlacementId` (the requested host on a tie). A name that
-has a legal candidate on the ladder keeps its position and host. Layout rejects a farther candidate before trying the
+has a legal candidate on the ladder keeps its position and host, except for the
+atomic one-earlier-name exchange below. Layout rejects a farther candidate before trying the
 next declared side. Default `auto` tries end then start; authored side/fallback
 order remains authoritative. A suppressible request with no legal candidate
 records its source-keyed suppression and aggregate count. After legal
@@ -517,6 +518,27 @@ not a speculative reservation or rehearsal. The former `best` lane-corridor
 planner rehearsed name placement and routed first to make names yield; retire
 that planner as well, rather than retain another route-priority path.
 
+If an ordinary member name exhausts its normal ladder, Layout may complete one
+local name/name exchange before its declared terminal outcome. Reuse its
+already-generated candidate evidence in the existing order. An exchange candidate
+must satisfy bounds and own-mark association and be blocked solely by the complete
+group of exactly one earlier ordinary member name. Group ownership is explicit
+Layout evidence for its text and all visual/footprint obstacles, not an ID-prefix
+or source/paint guess. Marks, intrinsic endpoint ink, rules, required labels and
+every other name remain hard.
+
+Hold that candidate and continue the earlier name's remaining declared candidates
+on its own host and row, with all other names fixed. Commit both normally clear
+groups atomically, or preserve the prior choice and the later name's existing
+suppression/fallback. Ordinary excludes attached/key-row and other required names.
+There is no recursive exchange, global reorder, new candidate side or joint
+route/name search. Keep geometry prepared once per existing role/side; side changes
+carry the complete measured text, chip, icon, style and host result. Emit each
+accepted final group once, with no abandoned obstacles or duplicate primitives.
+Charge all candidate evaluations to the existing per-request accounting; never
+restart a capped search or mint an extra quota. A remaining bounded/greedy miss is
+diagnosed, not claimed as global infeasibility. Routes see only the closed result.
+
 Before this actual placement, Layout completes the intrinsic mandatory
 terminal-lead footprint of each exposed temporal span port used by a relation.
 That finite stroke/terminal ink belongs to the mark's endpoint, not a selected
@@ -562,7 +584,9 @@ text/visuals remain obstacles. Keep the line for annotation/connector policy.
 The former route-first optional-name repair transaction, provisional boxes and
 all-or-nothing route-stage comparison are retired. Complete annotations once
 against the same actual inventory, with no extra whole-surface routing pass,
-joint allocator, candidate, quality-limit relaxation or search-budget increase.
+joint route/name allocator, new candidate side, quality-limit relaxation or
+search-budget increase. The local member-name exchange above is the sole
+exception to retaining an earlier legal greedy name choice.
 Count only actual suppressed member names; suppression of an otherwise
 placeable name caused solely by route-priority is not successful placement.
 

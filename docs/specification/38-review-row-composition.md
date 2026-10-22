@@ -387,6 +387,12 @@ absolute block displacement, smaller block coordinate, and stable identity;
 no lattice cap or remote full-row label position is permitted. `pack` lanes
 and non-lane labels retain their established bounded side-neighborhood search.
 
+Before routing, Spec 50's one-earlier-name exchange may replace two ordinary
+member-name candidate choices atomically within their existing host/row and
+candidate domains. It cannot cascade, reorder membership/subtracks, relocate a
+required label, or weaken intrinsic endpoint ink, association or collision rules.
+Scene and lane handoff receive only the final complete text/visual groups.
+
 Each spatially suppressed name has a typed Layout fact with lane/member, final row extent,
 remaining row capacity and reason `capacity` or `obstruction`, checked against
 its suppressed `TextPlacement` and aggregate count. “Cannot grow” means `fill`

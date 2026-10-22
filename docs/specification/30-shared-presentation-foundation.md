@@ -164,6 +164,13 @@ the algorithm need not solve every geometrically feasible diagram. Expand legacy
 preferred sides into explicit candidates, use only one old/new search policy, and
 version candidate generation, limits, and tie breaks.
 
+One final member-name placement/emission permits the bounded, atomic two-name
+candidate exchange specified in Spec 50 before routing. This is internal Layout
+allocation, not a second surface pass or joint route/name allocator. Reuse measured
+candidate geometry and existing search accounting; publish each final text/visual
+group once. A failed exchange preserves prior choices and the declared failure
+policy, without implying global geometric infeasibility.
+
 ## 4. Application to candidate features
 
 - A week axis implements the existing axis contract with closed calendar, locale, and density rules.
