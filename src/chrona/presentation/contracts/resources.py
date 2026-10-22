@@ -488,6 +488,8 @@ class ViewInput:
     slot_heading_text: FrozenDict | None = None
     annotation_bindings: tuple[FrozenDict, ...] = ()
     annotation_placement: FrozenDict | None = None
+    annotation_placement_sources: tuple[str, ...] = field(
+        default=(), kw_only=True, compare=False, hash=False, repr=False)
     figure_formats: FrozenDict = field(default_factory=FrozenDict)
     profile_bindings: tuple[ViewProfileBinding, ...] = ()
     wording: FrozenDict | None = None
@@ -1190,10 +1192,11 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                 "visibility.labels placement both requires a tableColumns entry "
                 f"with source {name_source!r} to match its selected name source",
             )
+    annotations, annotation_placement_sources = _view_annotations(body)
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        _view_annotations(body), ViewRows(
+        annotations, ViewRows(
             ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
             (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), rows["laneTable"].get("count", False),
@@ -1225,6 +1228,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None),
         annotation_bindings=tuple(body.get("annotationBindings", ())),
         annotation_placement=body.get("annotationPlacement"),
+        annotation_placement_sources=annotation_placement_sources,
         figure_formats=_view_figure_formats(body.get("figureFormats", {}), figures),
         profile_bindings=profile_bindings,
         wording=freeze(body["wording"]) if "wording" in body else None,
@@ -1278,14 +1282,24 @@ def annotation_placement_for(policies: Mapping[str, Any] | None, purpose: str,
     return policy
 
 
-def _view_annotations(body: FrozenDict) -> tuple[FrozenDict, ...]:
+def _view_annotations(body: FrozenDict) -> tuple[tuple[FrozenDict, ...], tuple[str, ...]]:
     """Close explicit policy inheritance after schema acceptance, without mutation."""
     annotations = body.get("annotations", ())
     policies = body.get("annotationPlacement")
-    return tuple(annotation if "placement" in annotation or "candidates" in annotation
-                 else freeze({**annotation, **annotation_placement_for(
-                     policies, str(annotation["purpose"]), f"/body/annotations/{index}")})
-                 for index, annotation in enumerate(annotations))
+    resolved, sources = [], []
+    for index, annotation in enumerate(annotations):
+        occurrence = f"/body/annotations/{index}"
+        if "placement" in annotation or "candidates" in annotation:
+            field_name = "candidates" if "candidates" in annotation else "placement"
+            resolved.append(annotation)
+            sources.append(f"{occurrence}/{field_name}")
+        else:
+            purpose = str(annotation["purpose"])
+            policy_ref = f"/body/annotationPlacement/{purpose.replace('~', '~0').replace('/', '~1')}"
+            policy = annotation_placement_for(policies, purpose, policy_ref)
+            resolved.append(freeze({**annotation, **policy}))
+            sources.append(policy_ref)
+    return tuple(resolved), tuple(sources)
 
 
 def _view_period_label(raw: Any, path: str) -> ViewPeriodLabel | None:

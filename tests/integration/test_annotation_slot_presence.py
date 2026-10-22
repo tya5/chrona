@@ -6,6 +6,9 @@ from math import isclose
 
 import pytest
 
+from chrona.presentation.layout import surface_composer
+from chrona.presentation.layout.surface_quality import NarrativeReceipt
+from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 
@@ -35,6 +38,29 @@ def _parts(*, annotation_rail: bool = False, side_legend: bool = False):
 def _rail_candidate():
     return sr.candidate("rail", region={"kind": "slot", "source": "annotations"},
                         connector="leader", search_kind="row-aligned")
+
+
+def _terminal_list_candidate(candidate_id="memo-list"):
+    return sr.candidate(candidate_id, region={"kind": "slot", "source": "annotations"},
+                        connector="none", search_kind="row-aligned")
+
+
+def _literal_note(parts, *, text, candidate):
+    body = parts["view"]["body"]
+    body["visibility"]["annotations"] = {"mode": "presentation", "marker": "none"}
+    body["annotations"] = [{
+        "id": "literal-note", "purpose": "note", "text": text,
+        "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "body"},
+        "candidates": [candidate],
+    }]
+
+
+def _remove_slot(node, slot_id):
+    if "children" not in node:
+        return
+    node["children"] = [item for item in node["children"] if item.get("id") != slot_id]
+    for item in node["children"]:
+        _remove_slot(item, slot_id)
 
 
 def _render(tmp_path, source, parts, *, detail=None):
@@ -88,6 +114,98 @@ def test_literal_view_note_keeps_the_rail_without_a_project_note(tmp_path):
     assert "annotations" not in source
     assert _slot(rendered, "annotations") is not None
     assert any(item.scene_id == "annotation-text:literal-note" for item in rendered.surface.primitives)
+
+
+def test_unnumbered_terminal_list_keeps_body_once_without_fabricated_leader(tmp_path, monkeypatch):
+    source = _project()
+    parts = _parts(annotation_rail=True)
+    text = "An unnumbered note keeps this complete sentence."
+    _literal_note(parts, text=text, candidate=_terminal_list_candidate("not-a-rail-id"))
+    captured = []
+    original = surface_composer.complete_route_annotations
+
+    def capture(plan, context):
+        result = original(plan, context)
+        captured.append(result)
+        return result
+
+    monkeypatch.setattr(surface_composer, "complete_route_annotations", capture)
+    rendered = _render(tmp_path, source, parts)
+
+    list_text = [item for item in rendered.surface.primitives
+                 if item.scene_id == "annotation-list:literal-note"]
+    assert len(list_text) == 1 and list_text[0].text == text
+    assert not any(item.scene_id.startswith("annotation-leader:literal-note")
+                   for item in rendered.surface.primitives)
+    assert captured[-1].narrative_receipts == (
+        NarrativeReceipt("annotation", "literal-note", "annotation-list:literal-note", "summary"),)
+
+
+def test_nonfitting_terminal_list_emits_named_overflow_and_retains_full_body(tmp_path):
+    source = _project()
+    parts = _parts(annotation_rail=True)
+    long_text = "The complete unnumbered note remains present even when the declared list slot is far too small."
+    _literal_note(parts, text=long_text, candidate=_terminal_list_candidate("end-of-list"))
+    parts["theme"]["body"]["values"]["note-rail-width"]["value"] = 24
+
+    rendered = _render(tmp_path, source, parts)
+
+    list_text = [item for item in rendered.surface.primitives
+                 if item.scene_id == "annotation-list:literal-note"]
+    assert len(list_text) == 1 and list_text[0].text == long_text
+    overflow = [item for item in rendered.surface.fit_warnings
+                if item.placement_id == "annotation-list:literal-note"]
+    assert len(overflow) == 1 and overflow[0].behaviour == "visible-overflow"
+
+
+@pytest.mark.parametrize("automatic", [False, True], ids=["explicit", "automatic-policy"])
+def test_terminal_list_without_declared_slot_fails_at_placement_source(tmp_path, automatic):
+    source = _project()
+    parts = _parts()
+    _remove_slot(parts["layout"]["root"], "annotations")
+    terminal = _terminal_list_candidate("not-a-rail-id")
+    if automatic:
+        source["annotations"] = {"note-a": {
+            "kind": "note", "text": "An auto-expanded note.", "anchor": {"object": "a"}}}
+        body = parts["view"]["body"]
+        body["visibility"]["annotations"] = {"mode": "presentation", "marker": "numbered"}
+        body.pop("annotations", None)
+        body["annotationBindings"] = [{
+            "kind": "note", "temporalKind": "span", "purpose": "note",
+            "facet": "planned", "endpoint": "body"}]
+        parts["layout"].setdefault("viewDefaults", {})["annotationPlacement"] = {
+            "note": {"candidates": [terminal]}}
+        expected_source = "/body/annotationPlacement/note"
+    else:
+        _literal_note(parts, text="An explicit note.", candidate=terminal)
+        expected_source = "/body/annotations/0/candidates"
+
+    with pytest.raises(RenderFailed) as raised:
+        _render(tmp_path, source, parts)
+
+    assert raised.value.code == "E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED"
+    assert raised.value.source_ref == expected_source
+
+
+def test_blocked_leader_candidates_retain_note_in_safe_terminal_list(tmp_path, monkeypatch):
+    from chrona.presentation.layout import surface_annotations
+
+    source = _project()
+    parts = _parts(annotation_rail=True)
+    body = parts["view"]["body"]
+    text = "The note remains in the explicitly declared list."
+    _literal_note(parts, text=text, candidate=sr.candidate(
+        "blocked-leader", region={"kind": "slot", "source": "annotations"},
+        connector="leader", search_kind="row-aligned"))
+    body["annotations"][0]["candidates"].append(_terminal_list_candidate("final-list"))
+
+    monkeypatch.setattr(surface_annotations, "route_annotation_candidate", lambda *_args, **_kwargs: None)
+    rendered = _render(tmp_path, source, parts)
+    primitives = rendered.surface.primitives
+
+    assert any(item.scene_id == "annotation-list:literal-note" and item.text == text
+               for item in primitives)
+    assert not any(item.scene_id == "annotation-leader:literal-note" for item in primitives)
 
 
 def test_project_note_filtered_out_of_resolved_view_releases_the_rail(tmp_path):

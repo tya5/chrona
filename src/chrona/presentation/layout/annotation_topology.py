@@ -13,8 +13,9 @@ from chrona.presentation.layout.routing import relation_route_quality, route_ort
 from chrona.presentation.layout.surface_quality import PathCommand
 
 
-HARD_CLASSES = ("mark", "text", "label-visual", "annotation-box", "port", "rule")
+HARD_CLASSES = ("mark", "text", "label-visual", "annotation-box", "leader-route", "port", "rule")
 BRIDGE_CLASSES = ("dependency-route", "leader-route")
+CROSSABLE_CLASSES = ("dependency-route",)
 
 
 def _compact_path(raw: tuple[tuple[float, float], ...]) -> tuple[tuple[float, float], ...]:
@@ -332,7 +333,7 @@ def _crossings(points: tuple[tuple[float, float], ...], index: SurfaceObstacleIn
     result: list[tuple[int, float, str, tuple[float, float], float]] = []
     for segment_index, (start, end) in enumerate(zip(points, points[1:])):
         candidate = ObstacleSegment(start, end)
-        for obstacle in index.collisions(candidate, classes=BRIDGE_CLASSES):
+        for obstacle in index.collisions(candidate, classes=CROSSABLE_CLASSES):
             other = obstacle.geometry
             if not isinstance(other, ObstacleSegment):
                 return None

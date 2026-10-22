@@ -17,7 +17,11 @@ from chrona.presentation.layout.annotations import (
     resolve_annotation_anchor,
     route_annotation_leader,
 )
-from chrona.presentation.layout.surface_annotations import _anchor_failure, annotation_anchor_bounds
+from chrona.presentation.layout.surface_annotations import (
+    _anchor_failure,
+    _prepare_annotation_anchors,
+    annotation_anchor_bounds,
+)
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import (
@@ -110,10 +114,16 @@ def test_anchor_source_pointer_is_runtime_only_metadata():
     intent = _annotation()
     other = replace(intent, anchor_source_ref="/body/annotations/8/anchor")
     pointer = next(item for item in fields(AnnotationIntent) if item.name == "anchor_source_ref")
+    placement = replace(intent, placement_source_ref="/body/annotationPlacement/note")
+    placement_pointer = next(item for item in fields(AnnotationIntent) if item.name == "placement_source_ref")
     assert intent.anchor_source_ref == "/"
     assert intent == other
+    assert intent == placement
     assert "anchor_source_ref" not in repr(intent)
+    assert "placement_source_ref" not in repr(intent)
     assert pointer.kw_only and pointer.compare is False and pointer.hash is False and pointer.repr is False
+    assert placement_pointer.kw_only and placement_pointer.compare is False
+    assert placement_pointer.hash is False and placement_pointer.repr is False
 
 
 def test_post_resolution_anchor_geometry_failure_keeps_the_declared_view_pointer():
@@ -128,6 +138,55 @@ def test_post_resolution_anchor_geometry_failure_keeps_the_declared_view_pointer
     assert "endpoint='body'" in missing.value.detail
     assert "no resolved endpoint date" in missing.value.detail
 
+
+def test_prepared_annotations_sort_by_physical_anchor_y_then_view_order():
+    items = (
+        SimpleNamespace(item_id="a", object_id="a", source_type="span", planned={
+            "start": date(2026, 1, 1), "end": date(2026, 1, 10)}, actual={
+            "start": date(2026, 1, 2), "finish": date(2026, 1, 9)}),
+        SimpleNamespace(item_id="b", object_id="b", source_type="span", planned={
+            "start": date(2026, 1, 1), "end": date(2026, 1, 10)}, actual={}),
+    )
+    anchors = (
+        ("a", "planned", "start"),  # physically lowest; declared first
+        ("a", "actual", "start"),  # y=40, tied with the next actual endpoint
+        ("b", "planned", "body"),  # mixed body anchor at y=30
+        ("a", "actual", "finish"),
+    )
+    annotations = tuple(SimpleNamespace(
+        annotation_id=f"note-{index}",
+        anchor={"kind": "object", "id": object_id, "facet": facet,
+                "endpoint": endpoint, "rowId": "row", "itemId": object_id},
+        anchor_source_ref=f"/body/annotations/{index}/anchor")
+        for index, (object_id, facet, endpoint) in enumerate(anchors))
+    review_row = SimpleNamespace(row_id="row", items=items)
+    row = SimpleNamespace(row_id="row", bounds=SimpleNamespace(
+        block=0, block_size=100))
+    hosts = {
+        "planned:row:a": SimpleNamespace(
+            placement_id="planned:row:a",
+            bounds=SimpleNamespace(inline=0, block=75, inline_size=10, block_size=10),
+            start_port=(1, 80), end_port=(9, 85)),
+        "actual:row:a": SimpleNamespace(
+            placement_id="actual:row:a",
+            bounds=SimpleNamespace(inline=0, block=35, inline_size=10, block_size=10),
+            start_port=(1, 40), end_port=(9, 40)),
+        "planned:row:b": SimpleNamespace(
+            placement_id="planned:row:b",
+            bounds=SimpleNamespace(inline=0, block=25, inline_size=10, block_size=10),
+            start_port=(1, 25), end_port=(9, 35)),
+    }
+    prepared = _prepare_annotation_anchors(
+        annotations, projection=SimpleNamespace(items=items, rows=(object(),), folded_points=()),
+        review_rows=(review_row,), rows=(row,),
+        scale=SimpleNamespace(origin=0, domain_start=date(2026, 1, 1), unit_ratio=1),
+        mark_by_id=hosts)
+
+    assert [item.annotation.annotation_id for item in prepared] == [
+        "note-2", "note-1", "note-3", "note-0"]
+    assert [item.anchor_y for item in prepared] == [30, 40, 40, 80]
+    # Physical ordering does not alter the existing synthetic candidate geometry.
+    assert [item.anchor_bounds.y for item in prepared] == [35, 35, 35, 35]
 
 def test_post_resolution_anchor_detail_bounds_operands_but_preserves_full_pointer():
     long_id = "annotation-\n" + ("a" * 180)

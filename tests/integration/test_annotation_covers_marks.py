@@ -1,8 +1,11 @@
-"""A note box never covers a mark of another object; a terminal fallback names what it covers (#1869)."""
+"""An exhausted unsafe note-box search requires an explicit safe fallback (#1869)."""
 from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from chrona.usecases.render_review import RenderFailed
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
 
@@ -42,16 +45,8 @@ def test_note_box_with_a_free_placement_covers_no_other_object(tmp_path):
     assert not any(item.code == "W_LAYOUT_LABEL_OVERFLOW" for item in rendered.surface.fit_warnings)
 
 
-def test_terminal_fallback_names_every_covered_object_and_reports_the_space_it_had(tmp_path):
-    rendered = _render(tmp_path, max_positions=1)
+def test_exhausted_unsafe_box_requires_an_explicit_safe_fallback(tmp_path):
+    with pytest.raises(RenderFailed) as failure:
+        _render(tmp_path, max_positions=1)
 
-    covered = _covered_objects(rendered) - {ANCHOR}
-    assert covered
-    named = {item.rsplit(":", 1)[-1] for item in rendered.scene.diagnostics
-             if item.startswith("W_LAYOUT_ANNOTATION_COVERS_MARK:view-n0:")}
-    assert named == covered
-    overflow = next(item for item in rendered.surface.fit_warnings if item.code == "W_LAYOUT_LABEL_OVERFLOW")
-    box = next(item for item in rendered.surface.primitives if item.scene_id == "annotation-box:view-n0")
-    # Required is the failed candidate's box, available the free space it had: a failure never reads "has" >= "needs".
-    assert (overflow.required_inline, overflow.required_block) == (box.bounds[2], box.bounds[3])
-    assert overflow.available_inline < overflow.required_inline or overflow.available_block < overflow.required_block
+    assert failure.value.code == "E_LAYOUT_ANNOTATION_FALLBACK_REQUIRED"

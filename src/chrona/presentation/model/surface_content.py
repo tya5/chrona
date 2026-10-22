@@ -186,9 +186,10 @@ class AnnotationIntent:
     # Presentation-composed kind text; Layout measures these strings without figure substitution.
     kind_header_lines: tuple[str, ...] | None = None
     kind_heading_text: str | None = None
-    # Canonical declared View/Project anchor pointer for Layout failures only; never enters
+    # Canonical declared View/Project pointers for Layout failures only; never enter
     # placement equality, hashing, repr or Scene output.
     anchor_source_ref: str = field(default="/", kw_only=True, compare=False, hash=False, repr=False)
+    placement_source_ref: str = field(default="/", kw_only=True, compare=False, hash=False, repr=False)
 
 
 @dataclass(frozen=True)

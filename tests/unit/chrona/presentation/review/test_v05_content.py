@@ -456,6 +456,7 @@ def test_view_annotation_ladder_normalizes_to_typed_candidates() -> None:
     value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY)
     assert value.annotations[0].fallback_ladder == ("rail",)
     assert value.annotations[0].anchor_source_ref == "/body/annotations/0/anchor"
+    assert value.annotations[0].placement_source_ref == "/body/annotations/0/placement"
     assert value.annotations[0].candidates[0].region.kind == "slot"
     assert value.annotations[0].candidates[0].search.kind == "row-aligned"
     assert value.annotations[0].candidates[0].connector.kind == "leader"

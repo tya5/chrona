@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from chrona.presentation.contracts.resources import (
@@ -15,6 +15,7 @@ from chrona.presentation.model.projection import ReviewProjection
 class ExpandedAnnotation:
     value: FrozenDict
     anchor_source_ref: str
+    placement_source_ref: str = field(default="/", kw_only=True, compare=False, hash=False, repr=False)
 
 
 class AnnotationExpansionError(ContractError):
@@ -54,8 +55,12 @@ def undrawn_project_annotations(project_notes: Mapping[str, Any], projection: Re
 def expand_annotations(view: ViewInput, project_notes: Mapping[str, Any],
                        projection: ReviewProjection) -> tuple[ExpandedAnnotation, ...]:
     """Keep explicit intent, then select each unclaimed Project note at most once."""
-    explicit = tuple(ExpandedAnnotation(value, f"/body/annotations/{index}/anchor")
-                     for index, value in enumerate(view.annotations))
+    explicit = tuple(ExpandedAnnotation(
+        value, f"/body/annotations/{index}/anchor",
+        placement_source_ref=(view.annotation_placement_sources[index]
+                              if index < len(view.annotation_placement_sources)
+                              else f"/body/annotations/{index}/placement"))
+        for index, value in enumerate(view.annotations))
     if not view.annotation_bindings and view.annotation_placement is None:
         return explicit
 
@@ -100,7 +105,8 @@ def expand_annotations(view: ViewInput, project_notes: Mapping[str, Any],
                             "anchor": {"kind": "object", "id": object_id,
                                        "facet": binding["facet"], "endpoint": binding["endpoint"]},
                             "projectAnnotation": key, **policy})
-            annotation = ExpandedAnnotation(value, source_ref)
+            annotation = ExpandedAnnotation(value, source_ref,
+                                            placement_source_ref=f"/body/annotationPlacement/{_pointer(purpose)}")
             add_identity(annotation)
             final.append(annotation)
             consumed.add(str(key))

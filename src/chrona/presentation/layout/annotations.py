@@ -281,7 +281,8 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
 def annotation_rail_candidates(annotation: AnnotationIntent, resolved: AnnotationAnchor, *,
                                anchor_y: float, text_size: tuple[float, float], rail: LabelRect,
                                obstacles: Iterable[LabelRect] | SurfaceObstacleIndex,
-                               allow_inline_overflow: bool = False) -> tuple[AnnotationBox, ...]:
+                               allow_inline_overflow: bool = False,
+                               connector_kind: str = "leader") -> tuple[AnnotationBox, ...]:
     """Enumerate finite full-frame rail positions before connector commitment.
 
     Only visible-overflow completion may allow natural inline overhang. It
@@ -304,5 +305,6 @@ def annotation_rail_candidates(annotation: AnnotationIntent, resolved: Annotatio
                         box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom
                         for item in occupied))
         if rail.y <= box.y and box.bottom <= rail.bottom and not collides:
-            candidates.append(AnnotationBox(resolved, LabelPlacement("rail", box, width > rail.width), True))
+            candidates.append(AnnotationBox(
+                resolved, LabelPlacement("rail", box, width > rail.width), connector_kind == "leader"))
     return tuple(candidates)

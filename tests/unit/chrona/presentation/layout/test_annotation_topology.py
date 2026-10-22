@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from itertools import islice
 
+import pytest
+
 from chrona.presentation.layout.annotation_topology import (
     _sparse_elbows, local_route_bounds, route_annotation_candidate,
     strict_route_candidates, visible_segments,
@@ -128,6 +130,20 @@ def test_bridge_never_exempts_text_or_rule() -> None:
                                        max_detour_ratio=1.5, allow_bridge=True)
     assert trial is None or not any(index.collisions(ObstacleSegment(a, b), classes=("text", "rule"))
                                     for a, b in visible_segments(trial))
+
+
+@pytest.mark.parametrize("obstacle_class", ["leader-route", "rule"])
+def test_next_leader_cannot_cross_completed_leader_or_bar(obstacle_class: str) -> None:
+    index = SurfaceObstacleIndex()
+    segment = ((5, 0), (5, 10)) if obstacle_class == "leader-route" else ((0, 5), (10, 5))
+    index.add(SurfaceObstacle("already-completed", obstacle_class, "annotations",
+                              ObstacleSegment(*segment)))
+
+    trial = route_annotation_candidate(
+        (0, 5), (10, 5), index, bounds=(0, 0, 10, 10), max_bends=0,
+        max_detour_ratio=1, dense=False)
+
+    assert trial is None
 
 
 def test_local_corridor_excludes_slide_perimeter() -> None:

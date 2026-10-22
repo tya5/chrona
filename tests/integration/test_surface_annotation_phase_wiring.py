@@ -1,5 +1,6 @@
 """Names precede routes; annotations extend their one completed inventory (#1841)."""
 from collections import Counter
+from dataclasses import replace
 from datetime import date
 
 import pytest
@@ -7,6 +8,7 @@ import pytest
 from chrona.presentation.layout import surface_annotations, surface_composer, surface_route_label_plan
 from chrona.presentation.layout.surface_member_labels import MemberLabelAllocationSession
 from chrona.presentation.layout.obstacles import ObstacleRect, obstacles_intersect
+from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
 from tests.support import synthetic_review as sr
 
 
@@ -117,3 +119,28 @@ def test_annotation_module_owns_its_paint_order_and_anchor_helpers():
     assert surface_annotations.ANNOTATION_PAINT_ORDER == 400
     assert not hasattr(surface_composer, "ANNOTATION_PAINT_ORDER")
     assert callable(surface_annotations.comparison_marks) and callable(surface_annotations.annotation_anchor_bounds)
+
+
+def test_annotation_leader_progress_counts_declarations_without_changing_artifact(tmp_path, monkeypatch):
+    events = []
+    progress = RenderProgress(events.append)
+    original = surface_composer.complete_route_annotations
+
+    def complete(plan, context):
+        return original(plan, replace(context, request=replace(context.request, progress=progress)))
+
+    monkeypatch.setattr(surface_composer, "complete_route_annotations", complete)
+    observed_dir = tmp_path / "observed"
+    observed_dir.mkdir()
+    rendered = render_wiring_fixture(observed_dir)
+    monkeypatch.setattr(surface_composer, "complete_route_annotations", original)
+    plain_dir = tmp_path / "plain"
+    plain_dir.mkdir()
+    plain = render_wiring_fixture(plain_dir)
+    expected = [event for pass_name in ("annotation-leaders", "annotation-leaders-reflow-1")
+                for event in (RenderProgressEvent("routing", 0, 1, pass_name),
+                              RenderProgressEvent("routing", 1, 1, pass_name))]
+    assert [event for event in events if isinstance(event, RenderProgressEvent)
+            and event.pass_name and event.pass_name.startswith("annotation-leaders")] == expected
+    assert rendered.artifact.content == plain.artifact.content
+    assert rendered.surface.primitives == plain.surface.primitives
