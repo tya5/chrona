@@ -31,7 +31,12 @@ ACTUAL = {
         {"id": "gate", "sequence": 1, "projectObjectId": "gate", "actual": {"at": "2026-02-13"}},
     ]},
 }
-ACTUAL_COLORS = {"ahead": "#4B5563", "track": "#269D79", "behind": "#B91C1C", "gate": "#269D79"}
+# A finished Actual draws no progress fill (#1869): "open" is observed open, so the Progress key has a fill to key.
+ACTUAL_WITH_OPEN = {**ACTUAL, "body": {**ACTUAL["body"], "observations": [
+    *ACTUAL["body"]["observations"],
+    {"id": "open", "sequence": 1, "projectObjectId": "open", "actual": {"start": "2026-02-02", "progress": 0.5}}]}}
+ACTUAL_COLORS = {"ahead": "#4B5563", "track": "#269D79", "behind": "#B91C1C", "gate": "#269D79",
+                 "open": "#B91C1C"}
 PROGRESS_COLOR = "#8D530F"
 
 
@@ -113,7 +118,9 @@ def _svg_fills(rendered):
 
 def test_executive_light_actual_and_progress_keys_match_distinct_completed_paints_and_svg(tmp_path):
     parts = _parts(progress=True)
-    rendered = _render(tmp_path, _source(), actual=ACTUAL, parts=parts)
+    source = _source()
+    source["objects"]["open"] = sr.span("open", date(2026, 2, 2), 5)
+    rendered = _render(tmp_path, source, actual=ACTUAL_WITH_OPEN, parts=parts)
     actual_marks = tuple(item for item in rendered.surface.primitives if item.purpose == "actual")
     actual_keys = _swatches(rendered, "actual")
     progress_marks = tuple(item for item in rendered.surface.primitives if item.purpose == "progress-fill")
@@ -122,7 +129,7 @@ def test_executive_light_actual_and_progress_keys_match_distinct_completed_paint
     # Span ink still coalesces; an equal-painted point has its own semantic key.
     marks_by_ink = {_paint_ink(item.paint): item.paint for item in actual_marks}
     keys_by_ink = {_paint_ink(item.paint): item.paint for item in actual_keys}
-    assert len(actual_marks) == 4 and len(marks_by_ink) == 3
+    assert len(actual_marks) == 5 and len(marks_by_ink) == 3
     assert set(keys_by_ink) == set(marks_by_ink)
     assert len(actual_keys) == 4
     assert {item.source_ref: item.paint.fill for item in actual_marks} == ACTUAL_COLORS
@@ -360,12 +367,15 @@ def test_equal_red_actual_span_and_point_keep_distinct_keys_and_same_ink_progres
     bindings["progress-fill.stroke"] = "category:legend-cream"
     source = sr.project({
         "span": sr.span("span", date(2026, 2, 2), 10),
+        "open": sr.span("open", date(2026, 2, 2), 10),
         "point": sr.point("point", date(2026, 2, 13)),
     })
     actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "same-red-actual",
               "body": {"asOf": "2026-02-20", "observations": [
                   {"id": "span-observed", "sequence": 1, "projectObjectId": "span",
-                   "actual": {"start": "2026-02-02", "finish": "2026-02-12", "progress": 0.4}},
+                   "actual": {"start": "2026-02-02", "finish": "2026-02-12"}},
+                  {"id": "open-observed", "sequence": 1, "projectObjectId": "open",
+                   "actual": {"start": "2026-02-02", "progress": 0.4}},
                   {"id": "point-observed", "sequence": 1, "projectObjectId": "point",
                    "actual": {"at": "2026-02-13"}},
               ]}}
@@ -398,9 +408,9 @@ def test_progress_key_compares_its_host_not_an_unrelated_equal_paint_actual(tmp_
         "other": sr.span("other", date(2026, 2, 2), 10),
     })
     actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "typed-progress-host",
-              "body": {"asOf": "2026-02-20", "observations": [
+              "body": {"asOf": "2026-02-10", "observations": [
                   {"id": "host-observed", "sequence": 1, "projectObjectId": "host",
-                   "actual": {"start": "2026-02-02", "finish": "2026-02-07", "progress": 0.4}},
+                   "actual": {"start": "2026-02-02", "progress": 0.4}},
                   {"id": "other-observed", "sequence": 1, "projectObjectId": "other",
                    "actual": {"start": "2026-02-02", "finish": "2026-02-16"}},
               ]}}

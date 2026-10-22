@@ -44,6 +44,19 @@ def _render(tmp_path):
     return sr.render(tmp_path, project, presentation=parts, actual=actual)
 
 
+def _assert_fill_measures_planned_span(primitives, fills, progress_of):
+    """#1869: an open Actual's fill is progress x the planned span from the observed start, clipped to the Actual."""
+    actual = {item.source_ref: item for item in primitives if item.purpose == "actual"}
+    planned = {item.source_ref: item for item in primitives if item.purpose == "planned"}
+    for ref, fill in fills.items():
+        expected = min(actual[ref].bounds[2], progress_of[ref] * planned[ref].bounds[2])
+        assert fill.bounds[2] == pytest.approx(expected, rel=0.02, abs=0.5), ref
+    # before-*: the plan is longer than the elapsed span, so both fractions are clipped to the Actual mark.
+    assert fills["before-10"].bounds[2] == pytest.approx(fills["before-06"].bounds[2])
+    # late-*: the plan is shorter, so the fractions of the planned span differ.
+    assert fills["late-10"].bounds[2] > fills["late-06"].bounds[2] > 0
+
+
 def test_open_actuals_draw_with_declared_progress_and_known_delta_but_without_fake_finish(tmp_path):
     rendered = _render(tmp_path)
     primitives = rendered.surface.primitives
@@ -52,8 +65,8 @@ def test_open_actuals_draw_with_declared_progress_and_known_delta_but_without_fa
     assert all(item.bounds[2] > 0 for item in actual_marks.values())
     progress = {item.source_ref: item for item in primitives if item.purpose == "progress-fill"}
     assert set(progress) == {"before-06", "before-10", "late-06", "late-10"}
-    assert progress["before-10"].bounds[2] > progress["before-06"].bounds[2] > 0
-    assert progress["late-10"].bounds[2] > progress["late-06"].bounds[2] > 0
+    _assert_fill_measures_planned_span(
+        primitives, progress, {"before-06": 0.6, "before-10": 1.0, "late-06": 0.6, "late-10": 1.0})
     cells = {item.source_ref: item.text for item in primitives
              if item.purpose == "table-cell" and item.table_column_id == "Delta"}
     assert {key: cells[key] for key in ("before-00", "before-06", "before-10")} == {
@@ -93,8 +106,9 @@ def test_shared_design_defaults_fill_open_actual_fraction_and_authored_view_wins
     assert set(fills) == {"before-06", "before-10", "late-06", "late-10"}
     assert fills["before-06"].scene_id.startswith("progress-fill:actual:")
     assert fills["late-06"].scene_id.startswith("progress-fill:actual:")
-    assert fills["before-10"].bounds[2] > fills["before-06"].bounds[2] > 0
-    assert fills["late-10"].bounds[2] > fills["late-06"].bounds[2] > 0
+    _assert_fill_measures_planned_span(
+        rendered.surface.primitives, fills,
+        {"before-06": 0.6, "before-10": 1.0, "late-06": 0.3, "late-10": 1.0})
 
     # An authored source remains authoritative over the design's actual default.
     parts["view"]["body"]["progressFill"] = {"source": "planned"}

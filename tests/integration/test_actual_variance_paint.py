@@ -30,6 +30,13 @@ ACTUAL = {
     },
 }
 
+# A finished Actual draws no progress fill (#1869), so the overlay is exercised on open Actuals: only "behind" is late
+# at the as-of date (its plan ended 2026-02-09), the other two are open and not yet late.
+OPEN_ACTUAL = {
+    **ACTUAL, "body": {"asOf": "2026-02-10", "observations": [
+        {**item, "actual": {key: value for key, value in item["actual"].items() if key != "finish"}}
+        for item in ACTUAL["body"]["observations"]]}}
+
 COLORS = {
     "actual-ahead": "textMuted",
     "actual-on-track": "positive",
@@ -192,7 +199,7 @@ def test_progress_overlay_keeps_its_paint_and_reports_changed_host_contrast(tmp_
         directory.mkdir()
         parts = _parts(bind_variance=bind_variance)
         parts["view"]["body"]["progressFill"] = {"source": "actual"}
-        return sr.render(directory, _source(), presentation=parts, actual=ACTUAL,
+        return sr.render(directory, _source(), presentation=parts, actual=OPEN_ACTUAL,
                          viewport=(1800, 1000))
 
     baseline = render_progress(tmp_path / "baseline", bind_variance=False)
@@ -204,6 +211,6 @@ def test_progress_overlay_keeps_its_paint_and_reports_changed_host_contrast(tmp_
     assert baseline_progress and selected_progress == baseline_progress
     assert not baseline.contrast_warnings
     assert {identity for warning in selected.contrast_warnings for identity in warning.primitive_ids} == {
-        "progress-fill:actual:ahead:ahead", "progress-fill:actual:behind:behind",
+        "progress-fill:actual:behind:behind",
     }
     assert all(warning.code == "W_SCENE_MARK_CONTRAST" for warning in selected.contrast_warnings)
