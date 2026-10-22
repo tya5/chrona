@@ -91,7 +91,7 @@ def test_authoring_inline_and_path_forms_produce_the_same_revision_over_stdio(tm
         first_result = first.structured_content["authoringResult"]
         second_result = second.structured_content["authoringResult"]
         assert first_result["status"] == "accepted"
-        assert second_result == first_result
+        assert second_result == first_result | {"replayed": True, "revisionIsCurrent": True}
         assert (root / "workspace.yaml").read_bytes() != yaml.safe_dump(original, sort_keys=False).encode()
         revisions.append(first_result["resultRevision"])
     assert revisions[0] == revisions[1]

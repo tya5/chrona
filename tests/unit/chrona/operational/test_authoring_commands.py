@@ -169,8 +169,25 @@ def test_exact_command_retry_replays_original_result_after_later_write(tmp_path)
     assert _apply(path, later)["status"] == "accepted"
 
     before_retry = path.read_bytes()
-    assert _apply(path, first) == accepted
+    retried = _apply(path, first)
+    assert retried == accepted | {"replayed": True, "revisionIsCurrent": False}
+    assert "replayed" not in accepted
     assert path.read_bytes() == before_retry
+
+    # The first command's latest-revision resend is not byte-equal (new base), so it is an id reuse that says the
+    # first command was applied and whether its revision is current (#1892 row 3).
+    resend = deepcopy(first) | {"baseRevision": content_identity(read_authoring_workspace(path))}
+    reuse = _apply(path, resend)
+    row = reuse["diagnostics"][0]
+    assert reuse["status"] == "rejected" and row["code"] == "E_AUTHORING_COMMAND_ID_REUSE"
+    assert row["firstApplied"] is True and row["appliedRevision"] == accepted["resultRevision"]
+    assert row["revisionIsCurrent"] is False and "was applied" in row["detail"]
+    assert path.read_bytes() == before_retry
+
+    current_resend = deepcopy(later) | {"baseRevision": content_identity(read_authoring_workspace(path))}
+    current_resend["payload"]["task"]["title"] = "Later again"
+    latest = _apply(path, current_resend)["diagnostics"][0]
+    assert latest["firstApplied"] is True and latest["revisionIsCurrent"] is True
 
 
 def test_reused_command_id_with_changed_target_is_id_reuse_before_target_rejection(tmp_path):
@@ -199,7 +216,7 @@ def test_noop_command_commits_and_replays_receipt_without_rewriting_workspace(tm
     assert result["resultRevision"] == result["workspaceRevision"]
     after_first = path.read_bytes()
     assert _transaction_marker(path).exists() is False
-    assert _apply(path, command) == result
+    assert _apply(path, command) == result | {"replayed": True, "revisionIsCurrent": True}
     assert path.read_bytes() == after_first
 
 
@@ -224,7 +241,7 @@ def test_noop_bundle_recovery_verifies_resource_outputs_before_replay(tmp_path, 
     marker = _transaction_marker(path)
     assert marker.is_file() and (tmp_path / "presentation/view.yaml").read_bytes() == b"view"
     assert transact_authoring_command(path, request, prepare=prepare, reject=reject,
-                                      verify_receipt=verify) == result
+                                      verify_receipt=verify) == result | {"replayed": True, "revisionIsCurrent": True}
     assert not marker.exists()
     assert path.read_bytes() == workspace_bytes
 
@@ -240,7 +257,7 @@ def test_verified_commit_replays_when_cleanup_waits_but_blocks_new_commands(tmp_
     accepted = _apply(path, command)
     assert accepted["status"] == "accepted"
     assert _transaction_marker(path).is_file()
-    assert _apply(path, command) == accepted
+    assert _apply(path, command) == accepted | {"replayed": True, "revisionIsCurrent": True}
 
     new_command = deepcopy(command) | {"commandId": "new-command"}
     blocked = _apply(path, new_command)

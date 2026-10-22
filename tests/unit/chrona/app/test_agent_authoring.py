@@ -218,7 +218,9 @@ def test_agent_authoring_tool_cli_parity_replay_stale_and_id_reuse(tmp_path, mon
     after_first = _tree(tool_root)
     replay = call_tool(WorkspaceScope(tool_root), "apply_authoring_command",
                        {"workspace": "workspace.yaml", "command": "command.yaml"}, allow_write=True)
-    assert replay.structured["authoringResult"] == tool_result.structured["authoringResult"]
+    first_result = tool_result.structured["authoringResult"]
+    assert "replayed" not in first_result and "revisionIsCurrent" not in first_result
+    assert replay.structured["authoringResult"] == first_result | {"replayed": True, "revisionIsCurrent": True}
     assert _tree(tool_root) == after_first
 
     # Same command identity with altered canonical request is refusal, and does not overwrite the receipt.
@@ -231,6 +233,10 @@ def test_agent_authoring_tool_cli_parity_replay_stale_and_id_reuse(tmp_path, mon
     assert conflict.structured["status"] == "rejected" and not conflict.is_error
     assert conflict.structured["authoringResult"]["diagnostics"][0]["code"] == "E_AUTHORING_COMMAND_ID_REUSE"
     assert conflict.structured["diagnostics"][0]["sourceRef"] == "/commandId"
+    reuse_row = conflict.structured["authoringResult"]["diagnostics"][0]
+    assert reuse_row["firstApplied"] is True and reuse_row["revisionIsCurrent"] is True
+    assert reuse_row["appliedRevision"] == first_result["resultRevision"]
+    assert "was applied" in conflict.structured["diagnostics"][0]["message"]
     assert _tree(tool_root) == before_conflict
 
     # A fresh command based on old bytes is stale; it must not modify the accepted workspace.

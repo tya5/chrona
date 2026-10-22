@@ -13,6 +13,8 @@ properties:
   workspaceRevision: {description: "The validated workspace revision observed before writing.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   resultRevision: {description: "The revision after an accepted write, or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], $ref: "urn:chrona:common-v0.1#/$defs/sha256IdentityOrNull"}
   reversible: {description: "Whether the accepted operation is reversible.", type: boolean}
+  replayed: {description: "True only when this accepted result is the retained first result of an earlier application of the same commandId and request; nothing was written by this call. Absent for a fresh application.", const: true}
+  revisionIsCurrent: {description: "Present on a replay: whether resultRevision is still the workspace's current revision (false when later commands changed it).", type: boolean}
   diagnostics:
     description: "Diagnostics emitted by the authoring command boundary."
     type: array
@@ -25,6 +27,9 @@ properties:
         code: {description: "Stable diagnostic identifier.", type: string, minLength: 1}
         detail: {description: "Actionable diagnostic explanation.", type: string, minLength: 1}
         expectedRevision: {description: "Workspace revision required by the command writer.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+        firstApplied: {description: "On E_AUTHORING_COMMAND_ID_REUSE: true, the earlier command with this commandId was applied.", const: true}
+        appliedRevision: {description: "On E_AUTHORING_COMMAND_ID_REUSE: the result revision of the earlier command that used this commandId.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+        revisionIsCurrent: {description: "On E_AUTHORING_COMMAND_ID_REUSE: whether appliedRevision is still the workspace's current revision.", type: boolean}
         receivedRevision: {description: "Revision supplied by the rejected command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
 allOf:
   - description: "Accepted results carry a result revision and no diagnostics."
