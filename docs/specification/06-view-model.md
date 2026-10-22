@@ -267,6 +267,13 @@ leading ancestor segments whose title equals its displayed header text (section 
 way for want of room (Specification 07, #1726) is not displayed: Layout then sets the path column
 cells of that group's rows with the full path, covered ancestor included; groups whose tags are
 drawn keep the covered path. Keep the leaf.
+This path preservation alone does not prove that a field/entity group name
+is visible: those names need not be containment ancestors. Every displayed
+group-header identity retains its full resolved label through Layout's
+measured horizontal-header fallback when its preferred vertical tag cannot
+show that label in full (Specification 07, #1906). A diagnostic or source-only
+string is not a visible name. Hidden/omitted headers remain intentionally
+absent; this rule does not invent groups, members or selection.
 Explicit hierarchy depth, folding, selection and stable occurrence identities
 retain their existing meanings. Depth-limited selection is not overridden to
 invent missing rows. Selected points below a finite hierarchy cutoff remain

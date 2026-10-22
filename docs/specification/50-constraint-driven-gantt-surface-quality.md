@@ -1368,6 +1368,11 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+Group-header natural demand and final row allocation consume the same
+per-group fit plan, including the full-name fallback in Specification 07
+(#1906). Reserve its measured header block before mark/port/route completion;
+Scene cannot repair a shortened or suppressed group identity after placement.
+
 **Independent header-row strip (#1367).** A drawable Theme
 `group-header-strip` role emits one `groupHeaderStrip` Rect per completed
 group header, with purpose/visual role `group-header-strip` and identity

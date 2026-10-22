@@ -911,6 +911,33 @@ This document does not define:
 
 ## 9. Boundary to Scene and Rendering
 
+### Full group identity before row closure (#1906)
+
+Vertical group text is a preferred treatment, not permission to lose the
+resolved group name. Before final rows and routes, Layout measures each
+admitted group's complete label using the same vertical segmentation and
+metrics as placement. If it cannot fit its candidate row span in full,
+reserve a horizontal full-name header for that group, with measured wrapped
+lines and sufficient block demand. A partial tag, a diagnostic or a path
+that does not contain a field/entity value is not the full-name alternative.
+Fit groups retain their preferred tags; hidden headers remain hidden.
+
+Carry this choice as a typed Layout fit plan through source measurement,
+natural demand, row allocation and group composition, not as extra text
+added after rows close. Reallocate header demand before routing; if reduced
+fill surplus makes another preferred tag infeasible, demote that group too.
+Each group changes from preferred to fallback at most once in a candidate,
+so this closure is bounded by the admitted group inventory, not a new quota.
+The full-name header wraps before requesting width growth; an indivisible
+unit or a hard height cap yields a group-named shortage, never an empty name.
+
+Do not mutate Theme writing mode, invent a second typography role, or
+reinterpret a `group-tab` whose `tabTarget` is `tag`. Its declared plate
+remains confined to its tag cell; the horizontal name occupies the separately
+reserved header, never the plate or another lane. The existing marked-run
+refusal on a vertical `groupHeader` remains. Layout hands completed text and
+plate geometry to Scene; adapters perform no fallback or measurement.
+
 **Moving-cone contrast ground (#1754).** Optional
 `contrastPolicy.asOfConeGround` is a boolean, default `false`, independent of
 class severity and exceptions. By default, classified MARK contrast observes
