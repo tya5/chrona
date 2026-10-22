@@ -144,36 +144,49 @@ def test_neutral_identity_render_keeps_routes_and_left_point_ports_with_all_memb
 
     # Actual member-label footprints are present before NORMAL routing, and
     # completed routes must avoid those measured footprints.
-    assert len(captured) == 1
-    context, options = captured[0]
-    # Keep both halves of paired recovery: source_ref identifies the original
-    # relation, but its two visible fragments are separate Layout placements.
-    actual_routes = [item for item in options.routes.relations
-                     if not item.suppressed and len(item.points) >= 2]
-    label_footprints = tuple(item for item in options.obstacles.all()
-                             if item.placement_id.startswith("label-footprint:member-label:"))
-    assert label_footprints
-    route_context = context.routes_for(options.obstacles, context.base_text)
+    trial_requests = [context.member_labels.request for context, _ in captured]
+    trial_ids = [id(request) for request in trial_requests]
+    assert trial_ids and len(trial_ids) == len(set(trial_ids))
+    # Every trial routes against the completed member-name inventory; the
+    # final captured trial is the one returned to Scene and the adapter.
     declared_identities = relation_identities(_project()["relations"])
     declared_identity_set = set(declared_identities)
     scene_routes = [item for item in primitives
                     if item.get("kind") == "Path" and item.get("purpose") == "dependency"
                     and item.get("sourceRef") in declared_identity_set]
     scene_routes_by_id = {item["id"]: item for item in scene_routes}
-    for route in actual_routes:
-        scene_route = scene_routes_by_id[route.relation_id]
-        stroke_width = float(scene_route["paint"]["strokeWidth"])
-        assert stroke_width > 0
-        collisions = tuple(footprint.placement_id for footprint in label_footprints
-            if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance)
-                   for segment in (ObstacleSegment(start, end, stroke_width)
-                                   for start, end in zip(route.points, route.points[1:]))))
-        stage = tuple(item.stage.value for item in options.routes.resolution_info
-                      if getattr(item, "relation_id", None) == route.relation_id)
-        details = tuple((item.placement_id, item.region_id, item.geometry, item.clearance,
-                         item.placement_id in route_context.required_label_obstacle_ids)
-                        for item in label_footprints if item.placement_id in collisions)
-        assert not collisions, (route.relation_id, route.source_ref, stage, details)
+    for context, options in captured:
+        labels = {item.placement_id for item in context.pre_route_members.text
+                  if item.semantic_id == "memberLabel"}
+        footprints = {item.placement_id.removeprefix("label-footprint:")
+                      for item in options.obstacles.all()
+                      if item.placement_id.startswith("label-footprint:member-label:")}
+        assert labels and labels <= footprints
+        actual_routes = [item for item in options.routes.relations
+                         if not item.suppressed and len(item.points) >= 2]
+        label_footprints = tuple(item for item in options.obstacles.all()
+                                 if item.placement_id.startswith("label-footprint:member-label:"))
+        assert label_footprints
+        route_context = context.routes_for(options.obstacles, context.base_text)
+        for route in actual_routes:
+            scene_route = scene_routes_by_id[route.relation_id]
+            stroke_width = float(scene_route["paint"]["strokeWidth"])
+            assert stroke_width > 0
+            collisions = tuple(footprint.placement_id for footprint in label_footprints
+                if any(obstacles_intersect(segment, footprint.geometry, footprint.clearance)
+                       for segment in (ObstacleSegment(start, end, stroke_width)
+                                       for start, end in zip(route.points, route.points[1:]))))
+            stage = tuple(item.stage.value for item in options.routes.resolution_info
+                          if getattr(item, "relation_id", None) == route.relation_id)
+            details = tuple((item.placement_id, item.region_id, item.geometry, item.clearance,
+                             item.placement_id in route_context.required_label_obstacle_ids)
+                            for item in label_footprints if item.placement_id in collisions)
+            assert not collisions, (route.relation_id, route.source_ref, stage, details)
+
+    context, options = captured[-1]
+    actual_routes = [item for item in options.routes.relations
+                     if not item.suppressed and len(item.points) >= 2]
+    route_context = context.routes_for(options.obstacles, context.base_text)
 
     routes = scene_routes
     route_groups = {}

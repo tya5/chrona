@@ -15,18 +15,24 @@ from chrona.presentation.layout.source_use import (
 from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.sources import MeasuredLegend, MeasuredLegendEntry
+from chrona.presentation.layout.sources import SourceInput
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 
 
-def _use(content="A", block=10):
+def _use(content="A", block=10, *, lines=None, available_inline=None,
+         consumer_inline=20, geometry_witness=()):
     text = TextPlacement(
         "annotation-text:1", "annotation-1", content,
         Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(10)), "annotation",
-        lines=(content,), font_family="Test Sans", font_size=10,
+        lines=lines if lines is not None else (content,), font_family="Test Sans", font_size=10,
         line_height=1, font_asset_identity="font:test",
     )
     consumer = SourceConsumer("annotation-1", "list", Decimal(20), Decimal(block),
-                              (SourceTextUse.from_placement(text),))
+                              (SourceTextUse.from_placement(text, available_inline=available_inline),),
+                              geometry_witness=geometry_witness)
+    consumer = SourceConsumer(consumer.consumer_id, consumer.disposition, Decimal(consumer_inline),
+                              consumer.block_size, consumer.text, consumer.treatment,
+                              consumer.geometry_witness)
     return CompletedSourceUse(annotations=(consumer,))
 
 
@@ -40,11 +46,25 @@ def _value():
     return SimpleNamespace(profile={"root": {"id": "original"}}, progress=None)
 
 
+def _prepared_plan(source_use=None, *, entries=None, annotation_input=None):
+    entries = source_use.legend_entries if entries is None and source_use is not None else (entries or ())
+    if annotation_input is None:
+        annotation_input = (source_use.annotation_input() if source_use is not None
+                            else SourceInput(content_present=False))
+    measured = SimpleNamespace(
+        inputs={"annotations": annotation_input},
+        legend_layout=source_use.legend_layout if source_use is not None else None)
+    return SimpleNamespace(source_use=source_use, activated=False, measured=measured,
+                           measured_legend_entries=entries,
+                           content=SimpleNamespace(legend_entries=entries), preparation=None)
+
+
 def test_source_demand_converges_only_after_preparation_uses_exact_observed_demand(monkeypatch):
     calls = []
 
     def prepare(value, *, source_use=None, activate_annotations=False):
-        plan = SimpleNamespace(source_use=source_use, activated=activate_annotations)
+        plan = _prepared_plan(source_use)
+        plan = SimpleNamespace(**{**vars(plan), "activated": activate_annotations})
         calls.append((value.profile, source_use, activate_annotations, plan))
         return plan
 
@@ -67,7 +87,7 @@ def test_source_demand_converges_only_after_preparation_uses_exact_observed_dema
 def test_same_finite_content_with_drifting_block_demand_is_unstable(monkeypatch):
     monkeypatch.setattr(closure, "prepare_surface_render_plan",
                         lambda value, *, source_use=None, activate_annotations=False:
-                        SimpleNamespace(source_use=source_use, activated=activate_annotations))
+                        _prepared_plan(source_use))
     sequence = iter((_use(block=10), _use(block=16)))
 
     with pytest.raises(LayoutError) as caught:
@@ -75,6 +95,51 @@ def test_same_finite_content_with_drifting_block_demand_is_unstable(monkeypatch)
             lambda value, plan: _Composition(next(sequence)))
 
     assert caught.value.diagnostic_id == "E_LAYOUT_SOURCE_CONTENT_UNSTABLE"
+
+
+@pytest.mark.parametrize("first,second", (
+    (_use(consumer_inline=20), _use(consumer_inline=24)),
+    (_use(geometry_witness=("insets", Decimal(2), Decimal(3))),
+     _use(geometry_witness=("insets", Decimal(4), Decimal(3)))),
+))
+def test_numeric_witness_drift_with_same_finite_state_is_unstable(monkeypatch, first, second):
+    assert first.finite_state() == second.finite_state()
+    assert first != second
+    monkeypatch.setattr(closure, "prepare_surface_render_plan",
+                        lambda value, *, source_use=None, activate_annotations=False:
+                        (_prepared_plan(source_use) if first.annotations[0].geometry_witness == ()
+                         else SimpleNamespace(source_use=source_use, activated=activate_annotations)))
+    sequence = iter((first, second))
+
+    with pytest.raises(LayoutError) as caught:
+        closure.complete_source_render_plan(_value(),
+            lambda value, plan: _Composition(next(sequence)))
+
+    assert caught.value.diagnostic_id == "E_LAYOUT_SOURCE_CONTENT_UNSTABLE"
+
+
+def test_allocation_only_drift_accepts_current_prepared_measurement(monkeypatch):
+    first = _use(available_inline=Decimal("191.31"))
+    final = _use(available_inline=Decimal("174.664"))
+    assert first.finite_state() == final.finite_state()
+    calls = []
+
+    def prepare(value, *, source_use=None, activate_annotations=False):
+        # Allocation may differ from the prior observation while the actual
+        # measured source input remains exactly equal.
+        plan = _prepared_plan(source_use)
+        calls.append((source_use, plan))
+        return plan
+
+    monkeypatch.setattr(closure, "prepare_surface_render_plan", prepare)
+    observed = iter((first, final))
+    plan, composition = closure.complete_source_render_plan(
+        _value(), lambda value, candidate: _Composition(next(observed)))
+
+    assert len(calls) == 2
+    assert plan.measured.inputs["annotations"] == final.annotation_input()
+    assert plan.measured.inputs["annotations"] == composition.source_use.annotation_input()
+    assert composition.source_use == final
 
 
 def test_repeated_finite_state_cycle_a_b_a_is_unstable(monkeypatch):
@@ -89,6 +154,22 @@ def test_repeated_finite_state_cycle_a_b_a_is_unstable(monkeypatch):
 
     assert caught.value.diagnostic_id == "E_LAYOUT_SOURCE_CONTENT_UNSTABLE"
     assert "repeats" in str(caught.value).lower()
+
+
+def test_changed_line_partition_is_a_new_finite_state_and_can_converge(monkeypatch):
+    monkeypatch.setattr(closure, "prepare_surface_render_plan",
+                        lambda value, *, source_use=None, activate_annotations=False:
+                        SimpleNamespace(source_use=source_use, activated=activate_annotations))
+    initial_partition = _use("AB", lines=("AB",))
+    completed_partition = _use("AB", lines=("A", "B"))
+    assert initial_partition.finite_state() != completed_partition.finite_state()
+    sequence = iter((initial_partition, completed_partition, completed_partition))
+
+    plan, composition = closure.complete_source_render_plan(
+        _value(), lambda value, plan: _Composition(next(sequence)))
+
+    assert composition.source_use == completed_partition
+    assert plan.source_use == completed_partition
 
 
 def test_source_destination_activation_retries_only_after_actual_activation(monkeypatch):

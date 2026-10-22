@@ -1,4 +1,4 @@
-"""Close completed source demand inside one count trial, using fresh geometry."""
+"""Owns completed source-demand trials; reads prepared plans and typed producer witnesses."""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -13,19 +13,23 @@ if TYPE_CHECKING:
 
 
 def _already_closed(plan: PreparedSurfaceRenderPlan, observed: CompletedSourceUse) -> bool:
-    """Avoid replay when the initial source facts already prove exact demand.
+    """Match the producer's demand to the inputs actually measured by this plan.
 
     In particular, ordinary surfaces with no annotations or legend need no
     second composition. Equality of page size or entry count is not proof.
-    Nonempty annotation consumers require their explicit completed witness.
+    Allocations may change while intrinsic demand remains identical. The final
+    composition retains those current allocation witnesses; stale allocations
+    from the preceding observation are not inputs to the current measurement.
     """
     measured = getattr(plan, "measured", None)
     if measured is None:
         return False
     annotation_input = measured.inputs.get("annotations")
-    return (not observed.annotations and annotation_input is not None
-            and not annotation_input.content_present
-            and plan.content.legend_entries == observed.legend_entries
+    entries = getattr(plan, "measured_legend_entries", None)
+    if entries is None:
+        entries = plan.content.legend_entries
+    return (annotation_input == observed.annotation_input()
+            and entries == observed.legend_entries
             and measured.legend_layout == observed.legend_layout)
 
 
@@ -67,8 +71,10 @@ def complete_source_render_plan(value: SurfaceRenderPlanInput, compose: Callable
             continue
         observed = getattr(composition, "source_use", None)
         # Dependency-network has no late legend/annotation source consumers.
-        if (observed is None or (not activate_annotations and observed == demand)
-                or (demand is None and not activate_annotations and _already_closed(plan, observed))):
+        measured = getattr(plan, "measured", None)
+        matched = (observed is not None and not activate_annotations and
+                   (_already_closed(plan, observed) if measured is not None else observed == demand))
+        if observed is None or matched:
             if progress is not None:
                 for event in events:
                     progress.emit(event)

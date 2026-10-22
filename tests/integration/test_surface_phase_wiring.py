@@ -14,11 +14,22 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 
 def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    phases: list[str] = []
-    pre_member_ids: list[str] = []
+    phases_by_trial: dict[int, list[str]] = {}
+    trial_requests = {}
+    pre_member_ids: dict[int, list[str]] = {}
+    session_trials = {}
     route_inputs: dict[int, set[str]] = {}
     route_results = []
-    plan_facts: dict[str, object] = {}
+    plan_facts: dict[int, dict[str, object]] = {}
+
+    def trial_id(context):
+        request = getattr(context, "request", None)
+        if request is None:
+            request = context.member_labels.request
+        identity = id(request)
+        trial_requests[identity] = request
+        phases_by_trial.setdefault(identity, [])
+        return identity
 
     prepare_pre = surface_composer.prepare_member_labels
     finish_pre = MemberLabelAllocationSession.finish
@@ -27,11 +38,13 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
 
     def pre_labels(context, requests, obstacles):
         names = tuple(item.placement_id for item in requests if item.semantic_id == "memberLabel")
-        pre_member_ids.extend(names)
+        identity = trial_id(context)
+        pre_member_ids.setdefault(identity, []).extend(names)
         intrinsic_ids.update(item.placement_id for item in context.intrinsic_endpoint_footprints)
-        phases.append("member-names")
+        phases_by_trial[identity].append("member-names")
         result = prepare_pre(context, requests, obstacles)
         prepared_sessions.append(result)
+        session_trials[id(result)] = identity
         assert {f"label-footprint:{name}" for name in names} <= {
             item.placement_id for item in result.obstacles.all()}
         assert intrinsic_ids.isdisjoint({item.placement_id for item in result.obstacles.all()})
@@ -40,8 +53,8 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
     monkeypatch.setattr(surface_composer, "prepare_member_labels", pre_labels)
 
     def finish_labels(session):
-        if prepared_sessions and session is prepared_sessions[0]:
-            phases.append("final-projection")
+        if id(session) in session_trials:
+            phases_by_trial[session_trials[id(session)]].append("final-projection")
         return finish_pre(session)
 
     monkeypatch.setattr(MemberLabelAllocationSession, "finish", finish_labels)
@@ -53,24 +66,29 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
         identity = id(context.obstacles)
         route_inputs[identity] = {item.placement_id for item in context.obstacles.all()}
         assert prepared_sessions
-        assert {item.placement_id for item in prepared_sessions[0].text
-                if item.semantic_id == "memberLabel"} == set(pre_member_ids)
+        trial = trial_id(context)
+        prepared = next(item for item in reversed(prepared_sessions)
+                        if session_trials[id(item)] == trial)
+        names = set(pre_member_ids[trial])
+        assert {item.placement_id for item in prepared.text
+                if item.semantic_id == "memberLabel"} == names
         assert {item.placement_id for item in context.text
-                if item.semantic_id == "memberLabel"} == set(pre_member_ids)
+                if item.semantic_id == "memberLabel"} == names
         assert intrinsic_ids.isdisjoint(route_inputs[identity])
-        phases.append("routes-start")
+        phases_by_trial[trial].append("routes-start")
         result = route_owner(context)
         route_results.append(result)
-        phases.append("routes-closed")
+        phases_by_trial[trial].append("routes-closed")
         return result
 
     def relation_labels(context, batch, *, terminal):
-        phases.append("terminal-labels" if terminal else "ordinary-relation-labels")
+        phases_by_trial[trial_id(context)].append(
+            "terminal-labels" if terminal else "ordinary-relation-labels")
         return relation_label_owner(context, batch, terminal=terminal)
 
     def post_labels(context, requests, obstacles):
         assert not any(item.semantic_id == "memberLabel" for item in requests)
-        phases.append("post-route-labels")
+        phases_by_trial[trial_id(context)].append("post-route-labels")
         return member_label_owner(context, requests, obstacles)
 
     monkeypatch.setattr(surface_route_label_plan, "compose_surface_routes", routes)
@@ -79,11 +97,13 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
     original_plan = surface_composer.compose_routes_and_member_labels
 
     def plan_spy(context):
-        plan_facts["post_member_names"] = tuple(item.placement_id for item in context.post_route_requests
-                                                if item.semantic_id == "memberLabel")
-        plan_facts["pre_index_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
+        trial = trial_id(context)
+        facts = plan_facts.setdefault(trial, {})
+        facts["post_member_names"] = tuple(item.placement_id for item in context.post_route_requests
+                                            if item.semantic_id == "memberLabel")
+        facts["pre_index_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
         result = original_plan(context)
-        plan_facts["selected_index_id"] = id(result.obstacles)
+        facts["selected_index_id"] = id(result.obstacles)
         return result
 
     monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
@@ -97,16 +117,17 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
                                       "--output", str(tmp_path / "out.svg")])
     main()
 
-    assert pre_member_ids and len(pre_member_ids) == len(set(pre_member_ids))
-    assert not plan_facts["post_member_names"]
-    assert phases[0] == "member-names" and phases[1:4] == [
-        "routes-start", "routes-closed", "final-projection"]
-    assert phases.count("routes-start") == 1
-    assert phases == ["member-names", "routes-start", "routes-closed", "final-projection",
-                      "terminal-labels", "post-route-labels",
-                      "ordinary-relation-labels"]
-    assert plan_facts["selected_index_id"] in route_inputs
-    assert plan_facts["pre_index_ids"] <= route_inputs[plan_facts["selected_index_id"]]
-    assert {f"label-footprint:{name}" for name in pre_member_ids} <= route_inputs[
-        plan_facts["selected_index_id"]]
-    assert len(route_results) == 1
+    assert phases_by_trial and len(phases_by_trial) == len(trial_requests)
+    expected_phases = ["member-names", "routes-start", "routes-closed", "final-projection",
+                       "terminal-labels", "post-route-labels", "ordinary-relation-labels"]
+    for trial, phases in phases_by_trial.items():
+        names = pre_member_ids[trial]
+        assert names and len(names) == len(set(names))
+        assert phases == expected_phases
+        facts = plan_facts[trial]
+        assert not facts["post_member_names"]
+        assert facts["selected_index_id"] in route_inputs
+        assert facts["pre_index_ids"] <= route_inputs[facts["selected_index_id"]]
+        assert {f"label-footprint:{name}" for name in names} <= route_inputs[
+            facts["selected_index_id"]]
+    assert len(route_results) == len(phases_by_trial)

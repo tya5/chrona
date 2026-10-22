@@ -209,15 +209,14 @@ def filtered_realized_entries(request, marks, shapes, relations, text):
 
 
 def recompose_realized_legend(request, legend, marks, shapes, relations, text,
-                              metric_values, metric_for, warnings, *, entries=None):
+                              metric_values, metric_for, warnings):
+    entries = filtered_realized_entries(request, marks, shapes, relations, text)
     if legend is None:
-        return None
-    if entries is None:
-        entries = filtered_realized_entries(request, marks, shapes, relations, text)
+        return None, entries
     completed = place_legend(SurfaceLegendContext(
         replace(request, surface_content=replace(request.surface_content, legend_entries=entries)),
         legend.allocated_slot, metric_values, metric_for))
     warnings.extend(completed.warnings)
     diagnostics, provenance = completed_legend_diagnostics(
         request, entries, completed.marks, completed.shapes, completed.relations, completed.text)
-    return replace(completed, diagnostics=diagnostics, diagnostic_provenance=provenance)
+    return replace(completed, diagnostics=diagnostics, diagnostic_provenance=provenance), entries

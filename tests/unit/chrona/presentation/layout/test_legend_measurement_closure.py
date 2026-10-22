@@ -12,6 +12,7 @@ from chrona.presentation.layout.surface_legend import (
     wrapped_legend_line_block,
 )
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
+from chrona.presentation.layout.slot_heading import inline_content_slot, inline_full_slot
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.layout.test_legend_sizing import _Metrics
@@ -249,3 +250,39 @@ def test_final_filtered_grid_recloses_to_the_realized_entry_count():
     assert [text.source_ref for text in batch.text] == [entry.source_identity for entry in final]
     assert [text.source_content for text in batch.text] == [entry.label for entry in final]
     assert [" ".join(text.content.splitlines()) for text in batch.text] == [entry.label for entry in final]
+
+
+@pytest.mark.parametrize("content_width", [Decimal("690.402"), Decimal("650")])
+def test_caption_narrowed_slot_remeasures_content_width_without_subtracting_caption_twice(content_width):
+    entries = (SurfaceLegendEntry("unknown-a", "Baseline"), SurfaceLegendEntry("unknown-b", "Depends on"))
+    tokens, metrics = ThemeTokenView(theme()), _Metrics()
+    caption_inline = Decimal("123.598")
+    full_width = Decimal("814")
+    original = SlotPlacement("legend", "legend", Rect(Decimal("10"), Decimal("20"), full_width, Decimal(100)),
+                             direction="inline", overflow="ellipsize-with-source")
+    content_slot = inline_content_slot(original, caption_inline)
+    source = legend_source_input(entries, tokens=tokens, mark_block_size=8, font_metrics=metrics,
+                                 arrangement=LegendArrangement(direction="inline",
+                                                               overflow="ellipsize-with-source"))
+    measured = measure_sources({"legend": source}, theme(), font_metrics=metrics)
+    prior_layout = complete_legend_layout(
+        entries, available_inline=content_slot.bounds.inline_size, item_min_inline=None, gap=source.run_gap,
+        tokens=tokens, mark_block_size=8, font_metrics=metrics, caption_inline=caption_inline)
+    measured = replace(measured, legend_layout=prior_layout)
+    request = SurfaceLayoutRequest(surface_content=SimpleNamespace(legend_entries=entries), theme_tokens=tokens,
+                                   font_metrics=metrics, measured_sources=measured)
+
+    batch = place_legend(SurfaceLegendContext(
+        request, replace(content_slot, bounds=replace(content_slot.bounds, inline_size=content_width)),
+        {"timeline.mark.blockSize": 8}, lambda _: metrics))
+
+    assert batch.measured_layout is not None
+    assert batch.measured_layout.available_inline == content_width
+    assert batch.measured_layout.slot_inline_size == content_width + caption_inline
+    assert batch.allocated_slot.bounds.inline_size == content_width
+    restored = inline_full_slot(original, batch.slot, caption_inline)
+    assert restored.bounds.inline == original.bounds.inline
+    assert restored.bounds.inline_size == max(full_width, caption_inline + batch.slot.bounds.inline_size)
+    assert [text.source_content for text in batch.text] == [entry.label for entry in entries]
+    if content_width == content_slot.bounds.inline_size:
+        assert batch.measured_layout.entries == prior_layout.entries

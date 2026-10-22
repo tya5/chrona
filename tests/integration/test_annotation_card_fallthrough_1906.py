@@ -238,7 +238,7 @@ def test_card_source_witness_keeps_visual_identity_and_text_allocation(tmp_path,
     card = next(item for batch in captured for item in batch.source_consumers if item.disposition == "card")
     assert len(card.text) >= 1
     assert all(item.available_inline is not None for item in card.text)
-    visual_witness = card.treatment[7][-1]
+    visual_witness = card.treatment[3][-1]
     assert len(visual_witness) == 1
     assert visual_witness[0][:3] == ("/body/visuals/0", "material:10k-outline-rounded", "leading")
     assert visual_witness[0][3] and visual_witness[0][4]

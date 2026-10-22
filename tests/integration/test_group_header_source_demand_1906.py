@@ -4,8 +4,9 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from chrona.presentation.layout import surface_render_plan
+from chrona.presentation.layout import surface_render_plan, surface_source_closure
 from chrona.presentation.layout.group_header_fit import GroupHeaderInlineDemand, GroupHeaderOwnerInlineDemand
+from chrona.usecases import render_review as render_review_module
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
@@ -38,14 +39,23 @@ def test_new_group_floor_is_present_on_retried_candidate_before_pre_route_geomet
     tt.with_vertical_groups(parts, size=22)
     floor = Decimal(500)
     original = surface_render_plan.prepare_surface_natural_candidate
-    observed = []
+    original_prepare = surface_source_closure.prepare_surface_render_plan
+    plans = []
+
+    def prepare_plan(value, **kwargs):
+        plan_state = {"observed": [], "demand_raised": False}
+        plans.append(plan_state)
+        return original_prepare(value, **kwargs)
 
     def require_once(request):
         table_measurement = request.measured_sources.measurements["table"]
         table_input = request.measured_sources.inputs["table"]
         table = next(item for item in request.layout_manifest.decisions if item.node_id == "table")
+        plan_state = plans[-1]
+        observed = plan_state["observed"]
         observed.append((table_measurement.min_inline, table_input.min_inline, table.bounds.inline_size))
-        if len(observed) == demand_at:
+        if len(observed) == demand_at and not plan_state["demand_raised"]:
+            plan_state["demand_raised"] = True
             raise GroupHeaderInlineDemand(
                 group_id="identity-40", label="UNBREAKABLE-ID", minimum_source_inline=floor,
                 available_source_inline=Decimal(300))
@@ -54,14 +64,21 @@ def test_new_group_floor_is_present_on_retried_candidate_before_pre_route_geomet
             assert table_input.min_inline >= floor
         return original(request)
 
+    monkeypatch.setattr(surface_source_closure, "prepare_surface_render_plan", prepare_plan)
+    monkeypatch.setattr(render_review_module, "prepare_surface_render_plan", prepare_plan)
     monkeypatch.setattr(surface_render_plan, "prepare_surface_natural_candidate", require_once)
 
     rendered = sr.render(tmp_path, project, presentation=parts, viewport=(1600, 900))
 
-    assert len(observed) > demand_at
-    assert observed[0][0] < floor
-    assert observed[0][2] < floor
-    assert observed[demand_at][0] >= floor
+    assert plans
+    assert all(plan["demand_raised"] for plan in plans)
+    for plan in plans:
+        observed = plan["observed"]
+        assert len(observed) > demand_at
+        assert observed[0][0] < floor
+        assert observed[0][2] < floor
+        assert all(measurement >= floor and source_input >= floor
+                   for measurement, source_input, _ in observed[demand_at:])
     table = next(slot for slot in rendered.surface.slots if slot.slot_id == "table")
     assert Decimal(str(table.bounds[2])) >= floor
 
@@ -135,24 +152,39 @@ def test_shared_group_header_owner_floor_grows_root_before_retry(tmp_path, monke
     parts = sr.bundle("control-room-dark")
     tt.with_vertical_groups(parts, size=22)
     original = surface_render_plan.prepare_surface_natural_candidate
-    observed = []
+    original_prepare = surface_source_closure.prepare_surface_render_plan
+    plans = []
+
+    def prepare_plan(value, **kwargs):
+        plan_state = {"observed": [], "demand_raised": False}
+        plans.append(plan_state)
+        return original_prepare(value, **kwargs)
 
     def require_owner_once(request):
         owner = next(item for item in request.layout_manifest.decisions if item.node_id == "review")
+        plan_state = plans[-1]
+        observed = plan_state["observed"]
         observed.append(owner.bounds.inline_size)
-        if len(observed) == 1:
+        if not plan_state["demand_raised"]:
+            plan_state["demand_raised"] = True
             available = owner.bounds.inline_size
             raise GroupHeaderOwnerInlineDemand(
                 group_id="team-0", label="Synthetic full group name", owner_node_id="review",
                 minimum_owner_inline=available + Decimal(500), available_owner_inline=available)
         return original(request)
 
+    monkeypatch.setattr(surface_source_closure, "prepare_surface_render_plan", prepare_plan)
+    monkeypatch.setattr(render_review_module, "prepare_surface_render_plan", prepare_plan)
     monkeypatch.setattr(surface_render_plan, "prepare_surface_natural_candidate", require_owner_once)
 
     rendered = sr.render(tmp_path, project, presentation=parts, viewport=(1600, 900))
 
-    assert len(observed) > 1
-    assert observed[1] >= observed[0] + 500
+    assert plans
+    assert all(plan["demand_raised"] for plan in plans)
+    for plan in plans:
+        observed = plan["observed"]
+        assert len(observed) > 1
+        assert observed[1] >= observed[0] + 500
     review = next(slot for slot in rendered.surface.slots if slot.slot_id == "review-surface")
     assert Decimal(str(review.bounds[2])) >= observed[1]
     warning = next(item for item in rendered.surface.fit_warnings

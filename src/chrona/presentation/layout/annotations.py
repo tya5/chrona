@@ -283,23 +283,26 @@ def annotation_rail_candidates(annotation: AnnotationIntent, resolved: Annotatio
                                anchor_y: float, text_size: tuple[float, float], rail: LabelRect,
                                obstacles: Iterable[LabelRect] | SurfaceObstacleIndex,
                                allow_inline_overflow: bool = False,
-                               connector_kind: str = "leader") -> tuple[AnnotationBox, ...]:
+                               connector_kind: str = "leader",
+                               block_bounds: tuple[Decimal, Decimal] | None = None) -> tuple[AnnotationBox, ...]:
     """Enumerate finite full-frame rail positions before connector commitment.
 
     Only visible-overflow completion may allow natural inline overhang. It
     still checks the whole frame against the shared obstacle inventory.
     """
     width, height = text_size
-    if (width > rail.width and not allow_inline_overflow) or height > rail.height:
+    if width > rail.width and not allow_inline_overflow:
         return ()
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     occupied = () if index is not None else tuple(obstacles)
     # Complete rail arithmetic in the layout's decimal domain. Binary float
     # subtraction at a shared edge can otherwise invent an overlap (for
     # example 217.55 + 623.05 - 126.35 becomes 714.2499999999999).
-    rail_top = Decimal(str(rail.y))
-    rail_bottom = rail_top + Decimal(str(rail.height))
+    rail_top, rail_bottom = (block_bounds if block_bounds is not None else
+                             (Decimal(str(rail.y)), Decimal(str(rail.y)) + Decimal(str(rail.height))))
     frame_height = Decimal(str(height))
+    if frame_height > rail_bottom - rail_top:
+        return ()
     aligned = min(max(Decimal(str(anchor_y)) - frame_height / 2, rail_top),
                   rail_bottom - frame_height)
     positions = [aligned]

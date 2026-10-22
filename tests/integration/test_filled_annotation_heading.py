@@ -148,9 +148,9 @@ def test_kind_title_stays_single_line_when_note_is_content_sized_or_wrap_forbidd
     ("報告 REPORT", "警告 WARNING", True),
 ])
 def test_fitting_heading_keeps_scene_and_svg_bytes(tmp_path, monkeypatch, kind_title, kind_secondary, cjk):
-    from chrona.presentation.layout import surface_annotations
+    from chrona.presentation.layout import annotation_card_measurement
     with monkeypatch.context() as context:
-        context.setattr(surface_annotations, "complete_kind_frame", lambda measure, **kwargs: measure)
+        context.setattr(annotation_card_measurement, "complete_kind_frame", lambda measure, **kwargs: measure)
         before, *_ = _render(tmp_path / "before", title="Short", kind_title=kind_title,
                              kind_secondary=kind_secondary, cjk=cjk)
     after, *_ = _render(tmp_path / "after", title="Short", kind_title=kind_title,

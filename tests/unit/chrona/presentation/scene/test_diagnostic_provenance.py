@@ -244,6 +244,10 @@ def test_annotation_diagnostics_use_only_explicit_resolved_project_anchor(tmp_pa
     body["visibility"].setdefault("fallback", {})["annotations"] = ["end", "suppress"]
     body["annotations"][0].pop("candidates")
     body["annotations"][0]["placement"] = {"side": "end", "alignment": "center"}
+    # Require real overflow under an authored cap. Completed source closure
+    # now reserves the summary's actual shown status text instead of the old
+    # undersized raw annotation body.
+    sr.find_node(parts["layout"], "annotations")["blockSize"] = {"fixed": 1}
     monkeypatch.setattr(surface_annotations, "place_label", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(surface_annotations, "project_annotation_box", lambda *_args, **_kwargs: None)
 

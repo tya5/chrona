@@ -698,10 +698,10 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
     item_min_inline = legend.item_min_inline_size
     if completed_layout is not None and (
             completed_layout.entry_witnesses != entries
-            or abs(completed_layout.slot_inline_size - legend.bounds.inline_size) > GEOMETRY_TOLERANCE):
+            or abs(completed_layout.available_inline - legend.bounds.inline_size) > GEOMETRY_TOLERANCE):
         caption_inline = max(Decimal(0), completed_layout.slot_inline_size - completed_layout.available_inline)
         completed_layout = complete_legend_layout(
-            entries, available_inline=max(Decimal(0), legend.bounds.inline_size - caption_inline),
+            entries, available_inline=legend.bounds.inline_size,
             item_min_inline=item_min_inline, gap=gap, tokens=request.theme_tokens,
             mark_block_size=mark_block_size, font_metrics=metric_for("legend"),
             direction="inline" if direction == "inline" else "stack", columns=legend.columns,

@@ -54,8 +54,11 @@ def test_trailing_inset_extends_actual_drawn_run_end_without_moving_text(tmp_pat
     inset_parts = _with_end_inset(_parts(marked=marked, inset=0.4, extent="text"), 0.5)
     base = _render(tmp_path, base_parts, name="base")
     extended = _render(tmp_path, inset_parts, name="extended")
-    assert len(captured) == 2
-    assert dict(captured[0].header_content_bounds) == dict(captured[1].header_content_bounds)
+    assert len(captured) == 4
+    # Two source-closure compositions per render; the trailing inset changes
+    # only the completed band, not the text-content bounds in either trial.
+    content_bounds = [dict(item.header_content_bounds) for item in captured]
+    assert content_bounds[0] == content_bounds[1] == content_bounds[2] == content_bounds[3]
 
     base_items, new_items = _by_id(base), _by_id(extended)
     assert {key: value for key, value in base_items.items() if key.startswith("group-header:")} == {
@@ -112,8 +115,8 @@ def test_wrapped_full_text_end_is_padded_then_clamped_without_changing_caption(t
     previous_text = _header_text(base, "team-0")
     actual_text = _header_text(extended, "team-0")
     assert len(previous_text) == len(actual_text) == 1
-    previous_layout = next(item for item in captured[0].text if item.placement_id == "group-header:team-0")
-    actual_layout = next(item for item in captured[1].text if item.placement_id == "group-header:team-0")
+    previous_layout = next(item for item in captured[1].text if item.placement_id == "group-header:team-0")
+    actual_layout = next(item for item in captured[3].text if item.placement_id == "group-header:team-0")
     assert actual_layout.overflow == previous_layout.overflow == "fit"
     assert actual_text[0].text == previous_text[0].text
     assert "…" not in actual_text[0].text
@@ -170,7 +173,9 @@ def test_zero_width_nonsuppressed_run_does_not_activate_trailing_inset(tmp_path,
     end_parts = _with_end_inset(_parts(marked=True, inset=0.4, extent="text"), 2.0)
     base = _render(tmp_path, base_parts, name="zero-width-base")
     rendered = _render(tmp_path, end_parts, name="zero-width")
-    assert len(captured) == 2
+    assert len(captured) == 4
+    assert dict(captured[0].header_content_bounds) == dict(captured[1].header_content_bounds)
+    assert dict(captured[2].header_content_bounds) == dict(captured[3].header_content_bounds)
     for group_id in ("team-0", "team-1"):
         band = _band(rendered, group_id)
         before = _band(base, group_id)

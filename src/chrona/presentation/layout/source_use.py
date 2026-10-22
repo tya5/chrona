@@ -1,7 +1,7 @@
 """Typed intrinsic source-use facts emitted by completed Layout producers."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Literal
 
@@ -9,8 +9,22 @@ from chrona.presentation.layout.model import Measurement
 from chrona.presentation.layout.sources import (
     CompletedSourceMeasurement, MeasuredLegend, MeasuredTextRun, SourceInput, SourceTextRun,
 )
-from chrona.presentation.layout.surface_quality import TextPlacement
+from chrona.presentation.layout.surface_quality import TextPlacement, TextRunPlacement
 from chrona.presentation.model.surface_content import SurfaceLegendEntry
+
+
+def _run_finite_state(run: TextRunPlacement) -> tuple[object, ...]:
+    """Keep selected fallback face and text partition, not measured advance."""
+    return (run.text, run.font_size, run.family, run.weight, run.asset_identity)
+
+
+def _legend_entry_finite_state(entry: SurfaceLegendEntry) -> SurfaceLegendEntry:
+    """Normalize only geometry/diagnostic numbers derived from selected legend ink."""
+    key = entry.realized_key
+    if key is not None and key.glyph is not None:
+        key = replace(key, glyph=replace(key.glyph, footprint=(0.0, 0.0)))
+    collisions = tuple(replace(item, delta_e=0.0) for item in entry.scale_collisions)
+    return replace(entry, realized_key=key, scale_collisions=collisions)
 
 
 @dataclass(frozen=True)
@@ -49,10 +63,11 @@ class SourceConsumer:
     block_size: Decimal
     text: tuple[SourceTextUse, ...]
     treatment: tuple[object, ...] = ()
+    geometry_witness: tuple[object, ...] = ()
 
     def finite_state(self) -> tuple[object, ...]:
-        # Block extent is the dependent numeric result, not a new finite
-        # content state. Repeated content with drifting height must fail.
+        # Allocations and completed extents are dependent numeric results,
+        # not new finite states. Keep them in exact dataclass equality only.
         return (self.consumer_id, self.disposition, self.treatment,
                 tuple((item.placement_id, item.measurement.content,
                        item.measurement.typography_role, item.measurement.lines,
@@ -61,8 +76,8 @@ class SourceConsumer:
                        item.measurement.font_asset_identity,
                        item.measurement.letter_spacing, item.measurement.text_transform,
                        item.measurement.numeric_spacing, item.measurement.horizontal_scale,
-                       item.measurement.fallback_runs, item.available_inline) for item in self.text),
-                self.inline_size)
+                       tuple(tuple(_run_finite_state(run) for run in line)
+                             for line in item.measurement.fallback_runs)) for item in self.text))
 
 
 @dataclass(frozen=True)
@@ -75,11 +90,11 @@ class CompletedSourceUse:
 
     def finite_state(self) -> tuple[object, ...]:
         legend = self.legend_layout
-        return (self.legend_entries,
-                ((legend.available_inline, legend.slot_inline_size,
-                  tuple((entry.source_text, entry.lines, entry.painted_lines,
-                         entry.segment_lines, entry.segment_runs,
-                         entry.label_available_inline) for entry in legend.entries))
+        return (tuple(_legend_entry_finite_state(entry) for entry in self.legend_entries),
+                (tuple((entry.source_text, entry.lines, entry.painted_lines,
+                        entry.segment_lines,
+                        tuple(tuple(_run_finite_state(run) for run in line)
+                              for line in entry.segment_runs)) for entry in legend.entries)
                  if legend is not None else None),
                 tuple(item.finite_state() for item in self.annotations))
 
@@ -88,7 +103,11 @@ class CompletedSourceUse:
             return SourceInput(content_present=False)
         width = max(item.inline_size for item in self.annotations)
         height = sum((item.block_size for item in self.annotations), Decimal(0))
-        runs = tuple(text.measurement for item in self.annotations for text in item.text)
+        # A record's fit against an earlier allocation is an outcome, not
+        # intrinsic text demand. Its shown text/lines/font measurements remain
+        # exact; the final composition retains its own overflow diagnostic.
+        runs = tuple(replace(text.measurement, overflow="fit")
+                     for item in self.annotations for text in item.text)
         return SourceInput(
             typography_role="annotation", content_present=True,
             runs=tuple(SourceTextRun(run.content, run.typography_role, run.source_ref)

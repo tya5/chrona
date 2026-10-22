@@ -124,7 +124,10 @@ Memoize the joint finite content state (count trial, entry/consumer identities,
 selected text/treatment and line partitions). A repeated state without matching
 source-demand witnesses is `E_LAYOUT_SOURCE_CONTENT_UNSTABLE`, naming the
 sources and conflicting witnesses; numeric drift within the same content state
-is not acceptance or an unbounded retry. There is no new search quota, phantom
+is not acceptance or an unbounded retry. Allocated inline/block dimensions and
+derived chrome are exact witness payload, not finite-state identity; including
+them in that identity must not turn numeric drift into fresh retry states.
+There is no new search quota, phantom
 key, viewport clamp, source-cap waiver or renderer-side recovery.
 
 The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement

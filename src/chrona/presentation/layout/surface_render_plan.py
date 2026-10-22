@@ -42,7 +42,7 @@ from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.render_progress import RenderProgress
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
-from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
+from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, SurfaceLegendEntry, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.wording_tables import wording_resolver
@@ -89,6 +89,7 @@ class PreparedSurfaceRenderPlan:
     viewport: tuple[float, float]
     declared_viewport: DeclaredViewport
     page_size: str | None = None
+    measured_legend_entries: tuple[SurfaceLegendEntry, ...] | None = None
 
 
 class SurfacePlanFontError(Exception):
@@ -389,7 +390,7 @@ def prepare_surface_render_plan(value: SurfaceRenderPlanInput, *,
     return PreparedSurfaceRenderPlan(manifest, resolved_layout, measured, surface_content,
         surface_preparation, capacity_short_sources,
         (float(viewport["inlineSize"]), float(viewport["blockSize"])), declared_viewport,
-        resolved_layout.profile.get("pageSize"))
+        resolved_layout.profile.get("pageSize"), measured_legend_entries)
 
 
 def admit_detail_content(content: SurfaceContentInput, *, detail: ReviewDetailInput | None,

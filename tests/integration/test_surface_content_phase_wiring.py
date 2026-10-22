@@ -15,11 +15,15 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 
 def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    events: list[str] = []
+    trials: list[list[str]] = []
+    active: dict[str, list[str]] = {}
 
     def spy(name: str, original):
         def wrapper(*args, **kwargs):
-            events.append(name)
+            if name == "routes":
+                active["trial"] = []
+                trials.append(active["trial"])
+            active["trial"].append(name)
             return original(*args, **kwargs)
         return wrapper
 
@@ -30,7 +34,7 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
     def relation_label_spy(context, batch, *, terminal):
         assert isinstance(terminal, bool)
         name = "terminal-labels" if terminal else "ordinary-relation-labels"
-        events.append(name)
+        active["trial"].append(name)
         return relation_label_owner(context, batch, terminal=terminal)
 
     monkeypatch.setattr(surface_route_label_plan, "place_relation_labels", relation_label_spy)
@@ -52,13 +56,12 @@ def test_content_phases_follow_routes_and_relation_labels_in_source_order(tmp_pa
     ])
     main()
 
-    # A name-recovery retry may rehearse one additional route/label trial, but
-    # each trial keeps its Layout-owned label phases before source-content phases.
-    trials = events.count("routes")
-    assert trials in {1, 2}
-    route_phases = ["routes", "terminal-labels", "ordinary-relation-labels"] * trials
-    assert events[:len(route_phases)] == route_phases
-    assert events[len(route_phases):] == ["legend", "footer", "summary", "realized-legend"]
+    # Every source-closure composition gets a fresh complete ordered phase
+    # sequence; no route or source-content phase is replayed within a trial.
+    assert len(trials) in {1, 2}
+    expected = ["routes", "terminal-labels", "ordinary-relation-labels",
+                "legend", "footer", "summary", "realized-legend"]
+    assert trials == [expected] * len(trials)
 
 
 def test_source_content_phases_take_no_obstacle_index() -> None:

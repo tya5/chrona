@@ -563,11 +563,14 @@ def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_al
 
     lane = next(item for item in rendered.surface.rows if '"dense"' in item.row_id)
     timeline = next(item for item in rendered.surface.slots if item.source == "timeline")
-    assert len(completed) == 1
-    preflight = completed[0].inline.request.fixed_lane_preflight
-    assert preflight is not None
-    assert next(item for item in preflight.subtracks.lanes if item.lane_id == lane.row_id).subtrack_count > 1
-    assert timeline.bounds[3] >= float(completed[0].required_timeline_block())
+    assert len(completed) in {1, 2}
+    for trial in completed:
+        preflight = trial.inline.request.fixed_lane_preflight
+        assert preflight is not None
+        assert next(item for item in preflight.subtracks.lanes
+                    if item.lane_id == lane.row_id).subtrack_count > 1
+    # The accepted trial is last; its closed demand must fit the published host.
+    assert timeline.bounds[3] >= float(completed[-1].required_timeline_block())
     assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
         timeline.bounds[1] + timeline.bounds[3]
     )

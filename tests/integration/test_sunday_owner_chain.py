@@ -41,6 +41,8 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
 
     counters = {"expansions": 0, "search_generators": 0,
                 "selections": 0, "route_plans": 0}
+    trial_counters = {}
+    active_trial = [None]
     search_limits: list[int | None] = []
     original_candidates = route_search.orthogonal_route_candidates
     original_select = surface_routes.select_relation_route
@@ -48,11 +50,13 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
 
     def observe_candidates(*args, **kwargs):
         counters["search_generators"] += 1
+        trial_counters[active_trial[0]]["search_generators"] += 1
         search_limits.append(kwargs.get("limit"))
         callback = kwargs.get("on_expansion")
 
         def count_expansion():
             counters["expansions"] += 1
+            trial_counters[active_trial[0]]["expansions"] += 1
             if callback is not None:
                 callback()
 
@@ -61,10 +65,18 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
 
     def observe_selection(*args, **kwargs):
         counters["selections"] += 1
+        trial_counters[active_trial[0]]["selections"] += 1
         return original_select(*args, **kwargs)
 
     def observe_route_plan(*args, **kwargs):
         counters["route_plans"] += 1
+        context = args[0]
+        request_id = id(context.member_labels.request)
+        active_trial[0] = request_id
+        trial_counters.setdefault(request_id, {"request": context.member_labels.request, "expansions": 0,
+                                               "search_generators": 0, "selections": 0,
+                                               "route_plans": 0})
+        trial_counters[request_id]["route_plans"] += 1
         return original_plan(*args, **kwargs)
 
     monkeypatch.setattr(route_search, "orthogonal_route_candidates", observe_candidates)
@@ -95,9 +107,12 @@ def test_sunday_owner_chain_routes_are_visible_with_bounded_search(
     rendered = render_draft(request).rendered
     wall_seconds, cpu_seconds = perf_counter() - wall_start, process_time() - cpu_start
 
-    assert counters["route_plans"] == 1
+    assert trial_counters
+    assert len(trial_counters) == len({id(item["request"]) for item in trial_counters.values()})
+    assert all(item["route_plans"] == 1 for item in trial_counters.values())
     assert all(limit is not None for limit in search_limits)
-    assert counters["expansions"] <= routing.RELATION_SEARCH_EXPANSIONS * counters["selections"]
+    assert all(item["expansions"] <= routing.RELATION_SEARCH_EXPANSIONS * item["selections"]
+               for item in trial_counters.values())
 
     expected_ids = set(relation_identities(relations))
     route_primitives = [primitive for primitive in rendered.surface.primitives

@@ -33,12 +33,31 @@ def _stub_planning(monkeypatch, seed):
     calls = []
     from types import SimpleNamespace
     from chrona.presentation.layout import surface_source_closure
+    from chrona.presentation.layout.sources import SourceInput
+    observed = completed.composition.source_use
+    if observed is None:
+        annotation_input = SourceInput(content_present=False)
+        legend_layout, legend_entries = None, ()
+    else:
+        annotation_input = observed.annotation_input()
+        legend_layout, legend_entries = observed.legend_layout, observed.legend_entries
     def prepare(value, *, source_use=None, activate_annotations=False):
-        calls.append((dict(value.projection.figures)["notes"], source_use, activate_annotations))
+        count = dict(value.projection.figures)["notes"]
+        calls.append((count, source_use, activate_annotations, None))
         if isinstance(value.heading, HeadingTextPrograms):
             value.heading.bind(dict(value.projection.figures), value.view.figure_formats)
-        return SimpleNamespace(source_use=source_use, activate_annotations=activate_annotations,
-                               count=dict(value.projection.figures)["notes"])
+        plan = SimpleNamespace(
+            source_use=source_use, activate_annotations=activate_annotations, count=count,
+            measured=SimpleNamespace(inputs={"annotations": annotation_input},
+                                     legend_layout=legend_layout),
+            measured_legend_entries=legend_entries,
+            content=SimpleNamespace(legend_entries=legend_entries), preparation=None)
+        if observed is not None:
+            assert plan.measured.inputs["annotations"] == observed.annotation_input()
+            assert plan.measured_legend_entries == observed.legend_entries
+            assert plan.measured.legend_layout == observed.legend_layout
+        calls[-1] = (count, source_use, activate_annotations, plan)
+        return plan
     monkeypatch.setattr(surface_source_closure, "prepare_surface_render_plan", prepare)
     return initial, completed, calls
 
@@ -54,9 +73,8 @@ def test_highest_consistent_candidate_wins_without_trying_lower_solutions(seed, 
     initial, completed, calls = _stub_planning(monkeypatch, seed)
     monkeypatch.setattr(closure, "_compose", lambda value, plan: _facts(completed, dict(value.projection.figures)["notes"]))
     result = closure.complete_surface_render_plan(initial)
-    assert [count for count, _, _ in calls] == [3, 3]
-    assert calls[0][1:] == (None, False)
-    assert calls[1][1] is not None and calls[1][2] is False
+    assert [count for count, *_ in calls] == [3]
+    assert calls[0][1:3] == (None, False)
     assert dict(result.projection.figures) == {"notes": 3}
     assert [(t.count, t.outcome) for t in result.trials] == [(3, "accepted")]
 
@@ -67,7 +85,7 @@ def test_no_solution_retains_bounded_mismatch_evidence_and_never_projects(seed, 
         completed, 0 if dict(value.projection.figures)["notes"] == 3 else 3))
     with pytest.raises(closure.CountClosureError) as caught:
         closure.complete_surface_render_plan(initial)
-    assert [count for count, _, _ in calls] == [3, 3, 2, 2, 1, 1, 0, 0]
+    assert [count for count, *_ in calls] == [3, 2, 1, 0]
     assert caught.value.upper == 3 and len(caught.value.trials) == 4
     assert all(t.outcome == "mismatch" for t in caught.value.trials)
     assert "domain=0..3; trials=4" in caught.value.detail
@@ -91,11 +109,9 @@ def test_rejected_trial_reports_attempted_work_early_but_not_candidate_progress(
 
     monkeypatch.setattr(closure, "_compose", compose)
     result = closure.complete_surface_render_plan(initial)
-    assert [count for count, _, _ in calls] == [3, 3, 2, 2]
+    assert [count for count, *_ in calls] == [3, 2]
     assert [trial.outcome for trial in result.trials] == ["mismatch", "accepted"]
     assert observed == [RenderAdvisoryEvent(RoutingCostAdvisory("table-timeline", 2373)),
-                        RenderAdvisoryEvent(RoutingCostAdvisory("table-timeline", 2373)),
-                        RenderAdvisoryEvent(RoutingCostAdvisory("table-timeline", 2372)),
                         RenderAdvisoryEvent(RoutingCostAdvisory("table-timeline", 2372)),
                         RenderProgressEvent("routing")]
 

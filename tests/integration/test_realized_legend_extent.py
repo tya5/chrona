@@ -34,7 +34,7 @@ def test_filtered_candidate_growth_is_released_from_completed_canvas_without_cha
         # placement visibility will remove. Keep the allocation itself fixed.
         inflated = replace(batch, slot=replace(batch.slot, bounds=replace(
             batch.slot.bounds, block_size=batch.slot.bounds.block_size + 10000)))
-        initial_batches.append((inflated, len(request.surface_content.legend_entries)))
+        initial_batches.append((request, inflated, len(request.surface_content.legend_entries)))
         return inflated, tuple(replace(slot, bounds=replace(
             slot.bounds, block_size=slot.bounds.block_size + 10000))
             if slot.source_ref == "legend" else slot for slot in completed_slots)
@@ -42,12 +42,15 @@ def test_filtered_candidate_growth_is_released_from_completed_canvas_without_cha
     monkeypatch.setattr(surface_composer, "reserve_potential_legend", inflated_potential_batch)
     realized = _render(tmp_path / "inflated", _source(), actual=actual, parts=_parts())
 
-    assert len(initial_batches) == 1
-    potential, potential_key_count = initial_batches[0]
-    assert potential.slot.bounds.block_size > potential.allocated_slot.bounds.block_size
+    # Source-demand closure may reject a completed realization and prepare a
+    # fresh joint trial. Each request gets exactly one potential legend pass.
+    trial_ids = [id(request) for request, _, _ in initial_batches]
+    assert trial_ids and len(trial_ids) == len(set(trial_ids))
+    assert all(potential.slot.bounds.block_size > potential.allocated_slot.bounds.block_size
+               for _, potential, _ in initial_batches)
     realized_key_count = len(tuple(item for item in realized.surface.primitives
                                    if item.purpose == "legend-swatch"))
-    assert potential_key_count > realized_key_count
+    assert all(key_count > realized_key_count for _, _, key_count in initial_batches)
     assert realized_key_count == len(tuple(item for item in baseline.surface.primitives
                                            if item.purpose == "legend-swatch"))
 

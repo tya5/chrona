@@ -53,6 +53,7 @@ from chrona.presentation.layout.labels import (
     place_label,
 )
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleSegment,
@@ -518,20 +519,20 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                 reserve_capacity: bool = False) -> tuple[AnnotationBox, ...]:
         """Enumerate free rail boxes at or below the preceding completed list entry."""
         previous_bottom = max(
-            (float(item.block + item.block_size) for item in rail_records),
-            default=rail.y)
-        height = text_size[1]
+            (item.block + item.block_size for item in rail_records),
+            default=annotation_slot.bounds.block)
         suffix = (rail_capacity_below.get(annotation.annotation_id, 0.0)
                   if reserve_capacity else 0.0)
-        candidate_rail = LabelRect(rail.x, rail.y, rail.width, max(0.0, rail.height - suffix))
+        latest_bottom = (annotation_slot.bounds.block + annotation_slot.bounds.block_size
+                         - Decimal(str(suffix)))
         candidates = annotation_rail_candidates(
-            annotation, resolved, anchor_y=max(anchor_y, previous_bottom + height / 2),
-            text_size=text_size, rail=candidate_rail, obstacles=surface_obstacles,
-            allow_inline_overflow=allow_inline_overflow, connector_kind=connector_kind)
-        latest_bottom = rail.bottom - suffix
+            annotation, resolved, anchor_y=anchor_y,
+            text_size=text_size, rail=rail, obstacles=surface_obstacles,
+            allow_inline_overflow=allow_inline_overflow, connector_kind=connector_kind,
+            block_bounds=(previous_bottom, latest_bottom))
         return tuple(candidate for candidate in candidates
-                     if candidate.placement.bounds.y >= previous_bottom
-                     and candidate.placement.bounds.bottom <= latest_bottom + 1e-9)
+                     if candidate.placement.bounds.y >= float(previous_bottom)
+                     and candidate.placement.bounds.bottom <= float(latest_bottom) + 1e-9)
 
     def complete_list_record(*, annotation: Any, resolved: Any, placement_id: str,
                              content: str, lines: tuple[str, ...], text_size: tuple[float, float],
@@ -1238,7 +1239,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                  candidate_sides=(annotation.side,),
                                                  viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=surface_obstacles,
                                                  overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
-            except LayoutError:
+            except (LayoutError, ThemeTokenError):
                 raise
             except ValueError as error:
                 raise LayoutError(str(error), f"/annotations/{index}") from error
@@ -1387,13 +1388,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 source_consumers.append(SourceConsumer(
                     f"annotation-card:{annotation_id}", "card",
                     Decimal(str(frame_width)), Decimal(str(frame_height)), card_text,
-                    (annotation_text_role, size, line_height, content_top, content_right,
-                     content_bottom, content_left, source_treatment_witness(
+                    (annotation_text_role, size, line_height, source_treatment_witness(
                          container=container, box_border=box_border,
                          kind_theme=request.theme_tokens.annotation_kind(annotation.kind),
                          annotation_visuals=annotation_visuals,
                          kind_frame=kind_theme, request=request),
-                     tilt_angle, fill_declared)))
+                     tilt_angle, fill_declared),
+                    (content_top, content_right, content_bottom, content_left)))
             if annotation.content and placed_annotation.overflow != "suppressed":
                 narrative_receipts.append(NarrativeReceipt("annotation", annotation_id, placed_annotation.placement_id))
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
