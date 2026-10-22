@@ -243,6 +243,13 @@ date that contradicts a dependency is not refused here: run `schedule_project` a
 `baseRevision`, retry (`replayed`, `revisionIsCurrent`) and `commandId` reuse behave as for `apply_authoring_command`.
 The file is rewritten as canonical YAML, so comments in it are not kept.
 
+To revert an accepted edit, send the `inverse` of its `projectResult` as the `command` of another `apply_project_command`.
+It is a complete command (`commandId` is the original id plus `-inverse`, `baseRevision` is the result revision) that puts back
+exactly what the edit changed, including the position of a removed key; for a file in canonical form (written by
+`create_project` or an earlier command) the file is byte-identical to the one before the edit. Once another edit has changed
+the file the inverse is refused as stale (`E_AUTHORING_BASE_REVISION`): read `validate_project` and make the opposite
+edit yourself. The inverse's own result carries the inverse of the inverse, which redoes the edit.
+
 ### Limits
 
 - Read paths name existing files inside the server workspace: no `..`, absolute

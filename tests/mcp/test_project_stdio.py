@@ -55,3 +55,27 @@ def test_project_tools_create_edit_replay_and_schedule_over_stdio(tmp_path):
     saved = yaml.safe_load((root / "project.yaml").read_text(encoding="utf-8"))
     assert list(saved["objects"]) == ["design", "go-live"]
     assert json.loads(applied.content[0].text) == applied.structured_content
+
+
+def test_an_accepted_edit_is_reverted_through_mcp_alone_by_its_inverse(tmp_path):
+    """#1892 row 2 item 4: create, edit, remove, then revert both with the returned inverse; no file or shell access."""
+    root = tmp_path / "ws"
+    root.mkdir()
+
+    def scenario(client, init):
+        async def run():
+            call = lambda command: client.call_tool("apply_project_command", {"project": "project.yaml", "command": command})  # noqa: E731
+            created = await client.call_tool("create_project", {"file": "project.yaml", "project": copy.deepcopy(PROJECT)})
+            start = created.structured_content["projectRevision"]
+            added = (await call(_command("c1", "setObject", {"id": "go-live", "object": _gate()}, start))).structured_content["projectResult"]
+            removed = (await call(_command("c2", "removeObject", {"id": "design"}, added["resultRevision"]))).structured_content["projectResult"]
+            undo_remove = (await call(removed["inverse"])).structured_content["projectResult"]
+            undo_add = (await call(added["inverse"])).structured_content["projectResult"]
+            return start, undo_remove, undo_add
+        return run()
+
+    start, undo_remove, undo_add = session(root, scenario, allow_write=True)
+    assert undo_remove["status"] == "accepted"
+    assert undo_add["status"] == "accepted" and undo_add["resultRevision"] == start
+    saved = yaml.safe_load((root / "project.yaml").read_text(encoding="utf-8"))
+    assert saved == PROJECT

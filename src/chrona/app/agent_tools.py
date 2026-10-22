@@ -1036,12 +1036,15 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "nothing. A dependency cycle or a date that contradicts a dependency is not refused here: run schedule_project. "
         "A stale baseRevision is rejected without writing. The same commandId and request replays the first result "
         "(replayed true, revisionIsCurrent); reusing the id for another request says the first command was applied. "
-        "The file is rewritten as canonical YAML (comments are not kept). Requires --allow-write; no approval step. "
+        "The file is rewritten as canonical YAML (comments are not kept). An accepted projectResult carries 'inverse', a "
+        "complete command that reverts the edit: pass it as command (its baseRevision is the result revision; it is stale "
+        "once the file moves on). Set types accept placement hints before/index/memberBefore/order, which inverses use. "
+        "Requires --allow-write; no approval step. "
         "Returns projectResult, with status ok when accepted or rejected with typed diagnostics.",
         _project_command_schema(),
         _output_schema({"projectResult": {"type": "object",
                                           "description": "The project-command-result/v0.1: status, commandId, projectRevision "
-                                                         "(before), resultRevision (after), diagnostics."}}),
+                                                         "(before), resultRevision (after), inverse (the command that reverts an accepted edit), diagnostics."}}),
         _apply_project_tool, mutating=True,
     ),
 )
