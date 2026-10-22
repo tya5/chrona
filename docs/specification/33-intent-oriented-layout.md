@@ -175,6 +175,33 @@ those rows (#1649); a fixed canvas keeps its declared outer dimensions and slot
 constraints, not a stale conservative legend height. Unknown inline allocations
 retain the conservative stack. Row height includes the tallest actual swatch
 as well as the text line box; measurement and placement share the wrapping rule.
+
+**Narrow legend closure (#1906).** A drawn swatch and its label are one
+indivisible entry: allocating the swatch while leaving no readable label is
+not a fit. At a known inline bound, a wrapping legend closes both entry rows
+and each label's lines before final slot allocation. Use the same completed
+lines, swatch reservation and per-row maximum block demand in measurement
+and placement; never re-fit the label against a different remaining width.
+An entry's minimum inline demand includes its actual swatch, label gap and
+one indivisible line-break unit, measured with the existing text rules. Move
+an entry to the next row before exhausting that demand. A label that cannot
+fit even on a fresh row wraps; an indivisible unit or swatch that cannot fit
+requires growth with a source-linked overflow diagnostic. The completed
+legend bounds enclose every drawn entry. A hard parent constraint reports
+the real legend/track shortage rather than emitting an empty label or
+misreporting that geometric shortage as duplicate legend meaning. Existing
+grid declarations, paint, entry order and semantic ambiguity checks remain
+independent of this closure. Declared ellipsis may shorten a label only when
+it retains readable source text; otherwise wrapping/growth applies.
+
+Heading wrapping remains the explicit View intent in Specification 24:
+omitted `heading.text.wrap` still means `forbid`. First-party designs that
+intend bounded title/subtitle wrapping declare `allow` in their existing
+Layout `viewDefaults.heading`; this does not override an authored View
+heading or change the schema's absent-field behavior. Layout completes those
+lines and their header demand before placing neighboring slots. Explicit
+viewport width is a minimum canvas size, not clipping or fit-to-page: wrap
+eligible text first and identify the indivisible content causing any growth.
 A `notes` source with no notes is absent: its slot reserves no block and no gap (#1649).
 The [#427 dispatch amendment](../design/issue-427-legend-swatches-design-amendment-2026-09-26.md)
 qualifies this rule: known mark/line/decoration roles use the closed
