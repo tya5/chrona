@@ -59,3 +59,46 @@ def test_derived_ready_marks_only_the_verified_sha_with_a_commit_status() -> Non
     assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in verify["run"]
     # No other job may write statuses.
     assert "statuses" not in workflow["jobs"]["derived-main"]["permissions"]
+
+
+def test_derived_ready_status_publish_is_retried_once() -> None:
+    workflow = yaml.load(WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+    publish = workflow["jobs"]["derived-ready"]["steps"][1]["run"]
+    assert publish.count("gh api --method POST") == 1  # one definition, called twice
+    assert "publish || {" in publish and publish.rstrip().endswith("publish; }")
+    assert publish.count("publish") == 4  # function, first call, retry, echo message
+
+
+def _run_publish_script(tmp_path, fail_first: int) -> tuple[int, int]:
+    """Execute the real step script under bash with a fake `gh` that fails `fail_first` times."""
+    import shutil
+    import subprocess
+
+    import sys
+
+    import pytest
+
+    bash = shutil.which("bash")
+    if bash is None or sys.platform == "win32":
+        pytest.skip("POSIX bash required")
+    workflow = yaml.load(WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+    script = workflow["jobs"]["derived-ready"]["steps"][1]["run"].replace("sleep 5", "true")
+    counter = tmp_path / "count"
+    counter.write_text("0")
+    (tmp_path / "gh").write_text(
+        '#!/bin/bash\nn=$(($(cat "%s")+1)); echo $n > "%s"\n'
+        'if [ "$n" -le %d ]; then echo "unexpected end of JSON input" >&2; exit 1; fi\n' % (counter, counter, fail_first))
+    (tmp_path / "gh").chmod(0o755)
+    env = {"PATH": f"{tmp_path}:/usr/bin:/bin", "GITHUB_REPOSITORY": "o/r", "EXPECTED_SHA": "a" * 40,
+           "GITHUB_SERVER_URL": "https://github.com", "GITHUB_RUN_ID": "1"}
+    result = subprocess.run([bash, "-e", "-c", script], env=env, capture_output=True, text=True)
+    return result.returncode, int(counter.read_text())
+
+
+def test_status_publish_succeeds_after_one_transient_failure(tmp_path) -> None:
+    assert _run_publish_script(tmp_path, 1) == (0, 2)
+
+
+def test_status_publish_fails_after_second_failure(tmp_path) -> None:
+    code, calls = _run_publish_script(tmp_path, 2)
+    assert code != 0 and calls == 2
