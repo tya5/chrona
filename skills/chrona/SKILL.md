@@ -108,7 +108,7 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `workspace_revision` | `chrona workspace revision` | Reads the current guided workspace revision. |
 | `render_workspace` | `chrona render-workspace` | Renders a guided workspace using its copied preset; `snapshot` takes a baseline; writes no output file. |
 | `create_project` | Library entry (no CLI equivalent) | Creates a new `project.yaml` from a complete Project; requires `--allow-write`. |
-| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` (every Project member except `version`, including extensions) at a `baseRevision`; the accepted result's `inverse` reverts it; requires `--allow-write`. |
+| `apply_project_command` | Library entry (no CLI equivalent) | Edits `project.yaml` (every Project member except `version`; includes `setExtension`/`removeExtension`, `setPeriod`/`removePeriod`, `setScenario`/`removeScenario`) at a `baseRevision`; the accepted result's `inverse` reverts it; requires `--allow-write`. |
 | `save_baseline` | Library entry (no CLI equivalent) | Copies `project.yaml` (or a guided `workspace.yaml`'s Project) to `baselines/<name>.yaml`; pass it as `snapshot`; requires `--allow-write`. |
 | `create_store` | Library entry (no CLI equivalent) | Creates `.chrona/store.yaml` and its root for the Store route; requires `--allow-write`. |
 | `publish_resource` | Library entry (no CLI equivalent) | Seeds the Store with a Project, Actual Set or intake batch (file or inline) and returns the `reference` `apply_command` takes as `target`; requires `--allow-write`. |
