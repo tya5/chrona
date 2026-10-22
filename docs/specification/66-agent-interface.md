@@ -22,7 +22,7 @@ the two. The tool core imports use cases, the shared Store address guard and the
 (`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too),
 the shared authoring transaction, and the opaque exclusive workspace initializer only.
 It imports no transport SDK and prints nothing. `apply_command`,
-`apply_authoring_command`, `create_workspace`, `create_project` and `apply_project_command` write only behind the write gate (sections2.1/2.3/2.5).
+`apply_authoring_command`, `create_workspace`, `create_project`, `apply_project_command` and `save_baseline` write only behind the write gate (sections2.1/2.3/2.5).
 
 ## 2. Tool set `chrona/agent-tools/v0.9`
 
@@ -37,7 +37,7 @@ authoring-command object through the same validated mutation use case.
 `v0.8` (#902 item4) also permits inline Store command objects. Existing paths,
 command/resource versions, result envelopes and transaction guards are unchanged.
 `v0.9` (#1892 row 1) adds `create_project` and `apply_project_command` for a raw `project.yaml` (section 2.5) and the
-optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged.
+optional `projectRevision` of a validated Project; existing inputs and outputs are otherwise unchanged. #1892 row 2 adds `save_baseline` under `v0.9` (section 2.5).
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -56,6 +56,7 @@ optional `projectRevision` of a validated Project; existing inputs and outputs a
 | `render_workspace` | `chrona render-workspace` | shared guided-render use case |
 | `create_project` | library entry | `usecases.project_commands.prepare_new_project` and `operational.workspace_initialization.publish_new_file` |
 | `apply_project_command` | library entry | `usecases.project_commands` over the authoring transaction of Spec51 §4.2 |
+| `save_baseline` | library entry | `usecases.project_baselines` and `operational.workspace_initialization.publish_new_file` |
 
 The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
 (section 2.2); the two command tools are section 2.1.
@@ -314,7 +315,15 @@ message says so and names the revision. Additive; no result version change.
   The inverse of an inverse is the original edit again. After any other edit the revision check refuses a stale inverse
   (`E_AUTHORING_BASE_REVISION`): read `validate_project`, then build the opposite edit. A replay returns the same
   `inverse`; a rejected result has none. `removeCalendar` now also drops an emptied `calendars` member, like the other
-  removals. The file route has no baseline command yet (items 5 and 6).
+  removals.
+- `save_baseline {project, name}` is the file-route baseline (`update-a-plan.md` step 1, `cp project.yaml baseline.yaml`). It
+  validates the Project, then copies its bytes unchanged to `baselines/<name>.yaml` in the Project's own directory
+  (`name` matches `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`; a violation is `E_MCP_INPUT_INVALID` at `/name`) with the exclusive
+  no-overwrite publication of `create_project`. It returns `baseline` (the workspace path) and `contentIdentity` (the byte
+  hash). The path is the `snapshot` argument of `render_draft`, which then draws the baseline ghosts and deltas against the
+  edited plan. A name that holds other content is `E_BASELINE_FILE_EXISTS`; the same bytes again return the same result with
+  `replayed: true`; `baselines` being a symlink or not a directory is `E_BASELINE_DIRECTORY`. A copy is never edited or
+  removed by any tool. The Store route (`captureSnapshot`) is a separate mechanism whose bootstrap is item 6.
 
 Only initialization accepts a nonexistent destination directory. Its explicit
 destination guard retains the syntax/containment/device rules of section4;

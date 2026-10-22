@@ -44,6 +44,7 @@ from chrona.operational.store_reads import DraftExtensionPackageReader, compare_
 from chrona.resources import schema_document, validator_for_schema
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.usecases.authoring_workspace import create_workspace, validate_workspace
+from chrona.usecases.project_baselines import BASELINE_NAME_PATTERN, BaselineConflict, save_project_baseline
 from chrona.usecases.project_commands import (
     apply_project_command, parse_project_command, prepare_new_project, project_revision,
 )
@@ -772,6 +773,21 @@ def _create_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     return ToolResult(call.ok(project=destination.relative_to(call.scope.root).as_posix(), projectRevision=prepared.revision))
 
 
+def _save_baseline(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    path = call.scope.resolve_path(arguments["project"], "/project")
+    outcome = validate_project_file(path)
+    if not outcome.ok:
+        return call.rejected(rejection_report(outcome.diagnostics))
+    try:
+        saved = save_project_baseline(path, arguments["name"], publish=publish_new_file)
+    except BaselineConflict as error:
+        raise StableFailure(error.code, error.detail, "project", "/name", 2) from None
+    fields: dict[str, Any] = {"baseline": saved.path.relative_to(call.scope.root).as_posix(), "contentIdentity": saved.identity}
+    if saved.replayed:
+        fields["replayed"] = True
+    return ToolResult(call.ok(**fields))
+
+
 def _create_workspace(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     destination = call.scope.resolve_destination(arguments["directory"], "/directory")
     created = create_workspace(destination, arguments["project"], arguments.get("preset", DEFAULT_PRESET_ID),
@@ -1046,6 +1062,25 @@ _TOOLS: tuple[ToolSpec, ...] = (
                                           "description": "The project-command-result/v0.1: status, commandId, projectRevision "
                                                          "(before), resultRevision (after), inverse (the command that reverts an accepted edit), diagnostics."}}),
         _apply_project_tool, mutating=True,
+    ),
+    ToolSpec(
+        "save_baseline", "Save a baseline copy of a Project",
+        "Save the Project YAML file's current bytes as the baseline 'baselines/<name>.yaml' in the Project's own directory: "
+        "the file-route baseline, the same as cp project.yaml baseline.yaml, with no Store. Requires --allow-write. The Project "
+        "must validate; the copy is byte-identical and is never edited. 'name' is 1 to 64 letters, digits, '_' or '-', starting "
+        "with a letter or digit. A name that already holds other content is E_BASELINE_FILE_EXISTS (nothing is overwritten; "
+        "use a new name); the same content again returns the same result with replayed true. Returns 'baseline' (the workspace "
+        "path) and its contentIdentity. Pass that path as 'snapshot' to render_draft (after later apply_project_command edits) "
+        "to draw the baseline's dashed ghosts and deltas; to undo an edit use the inverse of its projectResult. The Store route "
+        "(captureSnapshot through apply_command) is separate.",
+        _input_schema({
+            "project": _WORKSPACE_PATH_PROPERTY,
+            "name": {"type": "string", "pattern": BASELINE_NAME_PATTERN,
+                     "description": "The baseline name: letters, digits, '_' and '-', 1 to 64 characters, first a letter or digit."},
+        }, ["project", "name"]),
+        _output_schema({"baseline": {"type": "string"}, "contentIdentity": {"$ref": "#/$defs/sha256"},
+                        "replayed": {"const": True}}),
+        _save_baseline, mutating=True,
     ),
 )
 _BY_NAME = {spec.name: spec for spec in _TOOLS}
