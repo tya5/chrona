@@ -534,6 +534,17 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
     return tuple(result)
 
 
+def mark_visible_envelope(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,
+                          theme: Any) -> ObstacleRect:
+    """Return the shared completed ink envelope for one visible mark occurrence."""
+    envelopes = tuple(obstacle_envelope(facet.visible_footprint)
+                      for facet in _mark_facets(item, instance, mark, theme))
+    if not envelopes:
+        raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id)
+    return ObstacleRect(min(value[0] for value in envelopes), min(value[1] for value in envelopes),
+                        max(value[2] for value in envelopes), max(value[3] for value in envelopes))
+
+
 def _with_mark_visuals(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,
                        facets: tuple[LaneMarkFacet, ...], icons: Sequence[IconPlacement],
                        progress: Sequence[Any], theme: Any) -> tuple[LaneMarkFacet, ...]:

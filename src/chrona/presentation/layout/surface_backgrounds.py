@@ -23,7 +23,8 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
                        table_bounds: tuple[float, float, float, float],
                        timeline_bounds: tuple[float, float, float, float],
                        text_bounds: Rect | None = None,
-                       trailing_inset: Decimal = Decimal(0)) -> tuple[Rect, str]:
+                       trailing_inset: Decimal = Decimal(0),
+                       text_owner: str = "table") -> tuple[Rect, str]:
     """Resolve one finite source background extent without exposing coordinates to View."""
     if semantic_id in {"calendarClosed", "calendarException"}:
         if extent != "timeline":
@@ -35,11 +36,17 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
         if text_bounds is None:
             raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents",
                               detail="groupHeaderBand:text requires completed header-content bounds")
-        table_start = Decimal(str(table_inline))
-        table_end = table_start + Decimal(str(table_inline_size))
-        left = min(table_end, max(table_start, text_bounds.inline))
-        right = min(table_end, max(left, text_bounds.inline + text_bounds.inline_size + trailing_inset))
-        return Rect(left, source_bounds.block, right - left, source_bounds.block_size), "table"
+        if text_owner == "timeline":
+            owner_start = Decimal(str(timeline_inline))
+            owner_end = Decimal(str(timeline_inline + timeline_inline_size))
+            owner_slot = "timeline"
+        else:
+            owner_start = Decimal(str(table_inline))
+            owner_end = Decimal(str(table_inline + table_inline_size))
+            owner_slot = "table"
+        left = min(owner_end, max(owner_start, text_bounds.inline))
+        right = min(owner_end, max(left, text_bounds.inline + text_bounds.inline_size + trailing_inset))
+        return Rect(left, source_bounds.block, right - left, source_bounds.block_size), owner_slot
     if extent == "table":
         return Rect(Decimal(str(table_inline)), source_bounds.block,
                     Decimal(str(table_inline_size)), source_bounds.block_size), "table"
@@ -67,7 +74,9 @@ def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement
         extent=base.layout_manifest.background_extents.get(
             extent_semantic or semantic_id, "both" if semantic_id == "groupHeaderStrip" else ""),
         source_bounds=source_bounds, table_bounds=base.table_bounds,
-        timeline_bounds=base.timeline_bounds, text_bounds=text_bounds, trailing_inset=trailing_inset)
+        timeline_bounds=base.timeline_bounds, text_bounds=text_bounds, trailing_inset=trailing_inset,
+        text_owner=("timeline" if getattr(base.request.surface_content, "group_header_placement", "table")
+                    == "timeline" else "table"))
     return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
                           paint_order=paint_order, semantic_id=semantic_id)
 

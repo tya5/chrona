@@ -72,10 +72,13 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     network = getattr(projection, "network", None)
     notes = tuple(text for _, text in content.notes)
+    timeline_group_header = (content.group_presentation == "header"
+                             and content.group_header_placement == "timeline")
     sources = {
         "title": _title_source(project, heading),
         "table": (SourceInput(table_lines, row_count, len(view.table_columns) or 1, table=table)
-                  if lane_mode or view.table_columns or getattr(projection, "group_ids", ())
+                  if lane_mode or view.table_columns or (getattr(projection, "group_ids", ())
+                                                         and not timeline_group_header)
                   else SourceInput(table=table, content_present=False)),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",

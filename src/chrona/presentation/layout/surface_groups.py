@@ -267,7 +267,8 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                     label_inset=label_inset,
                     label_inset_declared=label_inset_ratio is not None,
                     tab_reserved=tab.reserved, tab_position=tab.position)
-            bounded = tab is not None or text_end_limit is not None
+            bounded = (tab is not None or text_end_limit is not None
+                       or getattr(request.surface_content, "group_header_placement", "table") == "timeline")
             if bounded:
                 room = header_text_room(
                     header_start=group.header_bounds.inline,

@@ -184,6 +184,9 @@ class LabelCandidateGeometry:
     maximum_stagger: float | None = None
     final_association: MemberNameAssociation | None = None
     bounds: LabelRect | None = None
+    # Side-only painted anchor; semantic association/reach still use the
+    # request anchor, and inside placement always remains on that host.
+    side_anchor: LabelRect | None = None
 
 
 _LABEL_SIDES = frozenset({"above", "below", "start", "end", "inside"})
@@ -237,7 +240,14 @@ def _candidate_geometries(
                             or not isfinite(value)
                             for value in (geometry.bounds.x, geometry.bounds.y,
                                           geometry.bounds.width, geometry.bounds.height))
-                     or geometry.bounds.width <= 0 or geometry.bounds.height <= 0))):
+                     or geometry.bounds.width <= 0 or geometry.bounds.height <= 0))
+                or (geometry.side_anchor is not None and
+                    (not isinstance(geometry.side_anchor, LabelRect)
+                     or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                            or not isfinite(value)
+                            for value in (geometry.side_anchor.x, geometry.side_anchor.y,
+                                          geometry.side_anchor.width, geometry.side_anchor.height))
+                     or geometry.side_anchor.width <= 0 or geometry.side_anchor.height <= 0))):
             raise _label_error("E_PRESENTATION_LABEL_INPUT", owner,
                                side=side, size=dimensions, gap=geometry.gap,
                                text_inline_inset=geometry.text_inline_inset,
@@ -474,14 +484,16 @@ class MemberNameSearchCursor:
                  else self.sides)
         for side in sides:
             geometry = self.geometries.get(side) if self.geometries is not None else None
+            side_anchor = (geometry.side_anchor if geometry is not None and geometry.side_anchor is not None
+                           and side != "inside" else self.anchor)
             final_association = (geometry.final_association if geometry is not None
                                  else self.final_association)
             extended = (side == "end" and self.own_mark_right is not None
-                        and self.own_mark_right > self.anchor.right
+                        and self.own_mark_right > side_anchor.right
                         and final_association is not None)
             if extended:
-                anchor = LabelRect(self.anchor.x, self.anchor.y,
-                                  self.own_mark_right - self.anchor.x, self.anchor.height)
+                anchor = LabelRect(side_anchor.x, side_anchor.y,
+                                  max(side_anchor.width, self.own_mark_right - side_anchor.x), side_anchor.height)
                 size = geometry.size if geometry is not None else self.size
                 gap = geometry.gap if geometry is not None else self.gap
                 try:
@@ -492,7 +504,7 @@ class MemberNameSearchCursor:
             size = geometry.size if geometry is not None else self.size
             gap = geometry.gap if geometry is not None else self.gap
             try:
-                yield side, _visible_candidate(self.anchor, size, side, gap), False
+                yield side, _visible_candidate(side_anchor, size, side, gap), False
             except ValueError as exc:
                 if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
                     raise
@@ -563,13 +575,15 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
         association = geometry.association if geometry is not None else cursor.association
         stagger = geometry.maximum_stagger if geometry is not None else cursor.maximum_stagger
         side_bounds = geometry.bounds if geometry is not None and geometry.bounds is not None else cursor.bounds
+        side_anchor = (geometry.side_anchor if geometry is not None and geometry.side_anchor is not None
+                       and side != "inside" else cursor.anchor)
         max_side_gap = side_end_gap - inset if side == "end" else None
         if side == "end" and max_side_gap < side_gap:
             cursor._canonical_obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
             continue
         if not cursor.full_band or side not in {"end", "start"}:
             if cursor.full_band and stagger is not None and side in {"above", "below"}:
-                preferred = _candidate(cursor.anchor, side_size, side, side_gap)
+                preferred = _candidate(side_anchor, side_size, side, side_gap)
                 top = max(side_bounds.y, preferred.y - stagger)
                 bottom = min(side_bounds.bottom, preferred.bottom + stagger)
                 if bottom - top < side_size[1]:
@@ -578,7 +592,7 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
                     continue
                 side_bounds = LabelRect(side_bounds.x, top, side_bounds.width, bottom - top)
             try:
-                preferred = _candidate(cursor.anchor, side_size, side, side_gap)
+                preferred = _candidate(side_anchor, side_size, side, side_gap)
             except ValueError as exc:
                 if str(exc).split(":", 1)[0] == "E_PRESENTATION_LABEL_UNPLACEABLE":
                     cursor._canonical_obstructions.append(
@@ -598,10 +612,11 @@ def _iter_member_name_candidates(cursor: MemberNameSearchCursor
                                          policy_rejected=not outside))
             if side != "inside":
                 yield from _member_neighborhood(cursor, side, side_size, side_gap, side_bounds,
-                                                side_end_gap, inset, association, initial)
+                                                side_end_gap, inset, association, initial,
+                                                anchor=side_anchor)
             continue
 
-        preferred = _candidate(cursor.anchor, side_size, side, side_gap)
+        preferred = _candidate(side_anchor, side_size, side, side_gap)
         event_y = {preferred.y, side_bounds.y, side_bounds.bottom - preferred.height}
         if isinstance(initial, SurfaceObstacleIndex):
             relevant = []
@@ -838,6 +853,7 @@ class LabelRequest:
     style_occurrence_key: StyleOccurrenceKey | None = None
     # Typed source fact forwarded to the final TextPlacement, never parsed from content.
     estimated_delta: bool = False
+    painted_anchor: LabelRect | None = None
 
     @property
     def is_required_before_routes(self) -> bool:
@@ -957,7 +973,9 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
             continue
         try:
-            candidate = _candidate(anchor, side_size, side, side_gap)
+            side_anchor = (geometry.side_anchor if geometry is not None and geometry.side_anchor is not None
+                           and side != "inside" else anchor)
+            candidate = _candidate(side_anchor, side_size, side, side_gap)
         except ValueError as exc:
             if str(exc).split(":", 1)[0] == "E_PRESENTATION_LABEL_UNPLACEABLE":
                 obstructions.append(LabelSlotObstruction(side, policy_rejected=True))
@@ -985,7 +1003,9 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                                 and side == "end" else maximum_side_gap)
             if side == "inside":
                 continue
-            base = _candidate(anchor, side_size, side, side_gap)
+            side_anchor = (geometry.side_anchor if geometry is not None and geometry.side_anchor is not None
+                           and side != "inside" else anchor)
+            base = _candidate(side_anchor, side_size, side, side_gap)
             side_inputs.append(_ContactCandidateSide(rank, side, base, side_bounds,
                                                       side_association, side_gap,
                                                       side_maximum_gap))
@@ -1023,7 +1043,9 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             side_size = geometry.size if geometry is not None else size
             side_gap = geometry.gap if geometry is not None else gap
             try:
-                candidate = _visible_candidate(anchor, side_size, side, side_gap)
+                side_anchor = (geometry.side_anchor if geometry is not None and geometry.side_anchor is not None
+                               and side != "inside" else anchor)
+                candidate = _visible_candidate(side_anchor, side_size, side, side_gap)
                 # A visible fallback may leave its declared bounds, but a
                 # caller's hard geometric filter still applies. In particular,
                 # terminal route text may overflow the plot, never other text.

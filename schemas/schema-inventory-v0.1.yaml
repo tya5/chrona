@@ -35,7 +35,9 @@ schemas:
     state: live
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
+      groupHeaderPlacement: "sha256:cc253329be4e30c475da14cd530c7a8c7e40155702a8eddd2a36d7caf2729804"
       tableColumnSource: "sha256:b20139ddf425e9f960345d42a1144faa5238edc6e40a06417f1ef7edd4bd871f"
+      tableColumnPresentation: "sha256:90dfff3284c24ab4d173e88def1c10d5f09eb4bc7c421239a7450963f5b23387"
   - file: common-v0.1.schema.yaml
     kind: schema-part-common
     state: live

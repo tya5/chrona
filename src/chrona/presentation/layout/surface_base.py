@@ -178,8 +178,21 @@ class SurfaceBaseGeometry:
         if item.slot_id in self.slot_ids:
             return item.slot_id
         if item.collision_domain.slot == "group-header":
-            return self.table.slot_id
+            return (self.timeline.slot_id
+                    if getattr(self.request.surface_content, "group_header_placement", "table") == "timeline"
+                    else self.table.slot_id)
         raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
+
+
+def _group_header_inline_bounds(*, table_bounds: tuple[float, float, float, float],
+                                timeline_bounds: tuple[float, float, float, float],
+                                fit_plan: Any, placement: str) -> tuple[float, float]:
+    """Keep candidate-local fit geometry for table headers; timeline headers own plot bounds."""
+    if placement == "timeline":
+        return timeline_bounds[0], timeline_bounds[2]
+    if fit_plan is not None and fit_plan.vertical_tag_plan:
+        return fit_plan.header_inline_start, fit_plan.header_inline_size
+    return table_bounds[0], timeline_bounds[0] + timeline_bounds[2] - table_bounds[0]
 
 
 @dataclass(frozen=True)
@@ -374,6 +387,13 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/temporalCapacity")
     provisional_scale = capacity.prototype_scale((start, end), inline_origin=timeline_bounds[0])
     group_tags = vertical_group_tags(request)
+    timeline_header = (request.surface_content.group_presentation == "header"
+                      and getattr(request.surface_content, "group_header_placement", "table") == "timeline")
+    if timeline_header and group_tags:
+        raise LayoutError(
+            "E_LAYOUT_GROUP_HEADER_PLACEMENT", "/body/grouping/headerPlacement",
+            detail="headerPlacement=timeline requires horizontal groupHeader writingMode",
+        )
     # A vertical group label replaces the header row: no row is reserved for it (#585).
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
                          if request.surface_content.group_presentation == "header" and not group_tags else 0.0)
@@ -382,7 +402,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     group_tab = resolve_group_tab(request.theme_tokens)
     header_band_extent = layout_manifest.background_extents.get("groupHeaderBand")
     bounded_horizontal = (not group_tags and request.surface_content.group_presentation == "header"
-                          and (header_band_extent in {"text", "table"}
+                          and (timeline_header or header_band_extent in {"text", "table"}
                                or (group_tab is not None and group_tab.target == "header")))
     if group_tags or bounded_horizontal:
         labels = resolve_group_labels(
@@ -393,6 +413,13 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
         if group_tags:
             inline_start = float(table.bounds.inline) + group_tag_inline_size
             inline_end = float(table.bounds.inline + table.bounds.inline_size)
+        elif timeline_header:
+            inline_start = float(timeline.bounds.inline)
+            inline_end = float(timeline.bounds.inline + timeline.bounds.inline_size)
+            # Timeline-owned text is bounded by its own source geometry. A
+            # table-only background extent must not become a table width demand.
+            source_prefix = Decimal(0)
+            source_inline_demand = False
         else:
             table_start = table.bounds.inline
             table_end = table.bounds.inline + table.bounds.inline_size
@@ -575,17 +602,12 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
 
     def empty_group(block: float, group_id: str) -> GroupPlacement:
         header_size = (group_header_sizes or {}).get(group_id, group_header_size)
-        header_inline = (group_header_fit_plan.header_inline_start
-                         if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
-                         else table_bounds[0])
-        header_inline_size = (group_header_fit_plan.header_inline_size
-                              if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
-                              else timeline_bounds[0] + timeline_bounds[2] - header_inline)
-        header = Rect(Decimal(str(table_bounds[0])), Decimal(str(block)),
-                      Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
-                      Decimal(str(header_size)))
-        if group_header_fit_plan is not None:
-            header = Rect(Decimal(str(header_inline)), header.block, Decimal(str(header_inline_size)), header.block_size)
+        header_inline, header_inline_size = _group_header_inline_bounds(
+            table_bounds=table_bounds, timeline_bounds=timeline_bounds,
+            fit_plan=group_header_fit_plan,
+            placement=getattr(request.surface_content, "group_header_placement", "table"))
+        header = Rect(Decimal(str(header_inline)), Decimal(str(block)),
+                      Decimal(str(header_inline_size)), Decimal(str(header_size)))
         return GroupPlacement(group_id, Rect(Decimal(str(timeline_bounds[0])), header.block,
                                              Decimal(str(timeline_bounds[2])), header.block_size), header)
 
@@ -603,12 +625,10 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
             content = row.bounds
             row_header_size = (group_header_sizes or {}).get(row.group_id, group_header_size)
             if row.group_id and row_header_size:
-                header_inline = (group_header_fit_plan.header_inline_start
-                                 if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
-                                 else table_bounds[0])
-                header_inline_size = (group_header_fit_plan.header_inline_size
-                                      if group_header_fit_plan is not None and group_header_fit_plan.vertical_tag_plan
-                                      else timeline_bounds[0] + timeline_bounds[2] - header_inline)
+                header_inline, header_inline_size = _group_header_inline_bounds(
+                    table_bounds=table_bounds, timeline_bounds=timeline_bounds,
+                    fit_plan=group_header_fit_plan,
+                    placement=getattr(request.surface_content, "group_header_placement", "table"))
                 header = Rect(Decimal(str(header_inline)), row.bounds.block - Decimal(str(row_header_size)),
                               Decimal(str(header_inline_size)), Decimal(str(row_header_size)))
                 content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,

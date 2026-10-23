@@ -30,7 +30,7 @@ properties:
         description: "Named project-independent column presentation fragments; explicit View properties win."
         type: object
         propertyNames: {$ref: "urn:chrona:common-v0.1#/$defs/identifier"}
-        additionalProperties: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation"}
+        additionalProperties: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation"}
       heading: {$ref: "urn:chrona:common-v0.1#/$defs/viewHeadingWithParts"}
       grouping:
         description: "Group presentation defaults; keys and ordering remain in the View."
@@ -39,6 +39,7 @@ properties:
         properties:
           presentation: {$ref: "urn:chrona:common-v0.1#/$defs/groupPresentation"}
           header: {$ref: "urn:chrona:common-v0.1#/$defs/groupHeaderPresentation"}
+          headerPlacement: {description: "Default View grouping.headerPlacement (#1936).", $ref: "urn:chrona:common-v0.2#/$defs/groupHeaderPlacement"}
           tint: {$ref: "urn:chrona:common-v0.1#/$defs/groupTintPresentation"}
       colorEncoding: {$ref: "urn:chrona:common-v0.1#/$defs/colorEncodingPresentation"}
       visibility: {description: "Default View `visibility` (labels, relations, annotations, links, fallback)."}
@@ -57,6 +58,7 @@ properties:
         additionalProperties: false
         properties:
           baselineMarks: {description: "Default View `comparison.baselineMarks`."}
+          baselineLabels: {description: "Default View `comparison.baselineLabels` (#1936).", enum: [auto, none]}
           missingActualScope: {description: "Default View `comparison.missingActualScope`."}
           deltaUnit: {description: "Default View `comparison.deltaUnit`."}
           facets: {description: "Default View `comparison.facets`."}

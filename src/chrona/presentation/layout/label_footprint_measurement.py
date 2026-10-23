@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Mapping
 from typing import Any
 
 from chrona.presentation.layout.chip_geometry import chip_padding
@@ -11,6 +12,13 @@ from chrona.presentation.layout.surface_visuals import measure_candidate_visuals
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, wrap_text
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import RectangleChipShape
+
+
+def member_label_gap(font_size: float, metric_values: Mapping[str, Any] | None = None) -> float:
+    """One resolved Theme gap for member-label measurement and placement."""
+    if metric_values is not None and "timeline.mark.labelGap" in metric_values:
+        return float(metric_values["timeline.mark.labelGap"])
+    return max(1.0, float(font_size) * 0.25)
 
 
 @dataclass(frozen=True)
@@ -44,6 +52,7 @@ def measure_label_footprint(
     available_inline: float = 1.0,
     lane_measure: Any = None,
     chip_measurement_override: MeasuredLabelChip | None = None,
+    gap: float | None = None,
 ) -> LabelFootprintMeasurement:
     """Apply the label placer’s exact measurement arithmetic without choosing a rung."""
     treatment = request.theme_tokens.text_treatment(typography_role)
@@ -91,7 +100,7 @@ def measure_label_footprint(
                    if chip_measurement is not None else padding)
     return LabelFootprintMeasurement(
         size=size, gap=(lane_measure.gap if lane_measure is not None
-                        else max(1.0, float(font_size) * 0.25)),
+                        else member_label_gap(float(font_size)) if gap is None else gap),
         treatment=treatment, metrics=metrics, visuals=visuals, leading=leading, trailing=trailing,
         text_width=text_width, lines=lines, chip_semantic=chip_semantic, chip=chip,
         chip_padding=padding, chip_measurement=chip_measurement, text_insets=text_insets,

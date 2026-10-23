@@ -16,7 +16,7 @@ from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 from chrona.presentation.model.hierarchy_names import member_name_key
 from chrona.presentation.layout.obstacles import (
-    ROUTE_RESERVE_CLASS, SurfaceObstacle, SurfaceObstacleIndex,
+    ROUTE_RESERVE_CLASS, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
@@ -42,11 +42,27 @@ from chrona.presentation.layout.surface_geometry import (
 )
 from chrona.presentation.layout.surface_lanes import lane_owner
 from chrona.presentation.layout.key_row_lanes import key_row_label_ladder
-from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
+from chrona.presentation.layout.lane_mark_facets import mark_visible_envelope, span_mark_footprint
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 from chrona.presentation.model.projection import (active_placement, finish_delta_text,
-    finish_delta_semantic, is_estimated_finish_delta, signed_delta_text)
+    finish_delta_semantic, is_estimated_finish_delta, omit_zero_finish_delta, signed_delta_text)
+
+
+def _authored_painted_anchor(mark: MarkPlacement | None, item: Any, row_id: str,
+                             request: SurfaceLayoutRequest) -> LabelRect | None:
+    """Return the completed mark-facet ink envelope for an explicitly bound metric."""
+    values = getattr(getattr(request, "measured_sources", None), "metric_values", None)
+    if not isinstance(values, Mapping) or "timeline.mark.labelGap" not in values:
+        return None
+    if mark is None:
+        return None
+    instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
+                                      item.object_id, item.source_kind)
+    left, top, right, bottom = obstacle_envelope(
+        mark_visible_envelope(item, instance, mark, request.theme_tokens))
+    return LabelRect(left, top, right - left, bottom - top)
 
 
 @dataclass(frozen=True)
@@ -356,6 +372,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         return parts
 
     def admit_forecast_delta(item, container_id, placement_id, *, folded=False):
+        if omit_zero_finish_delta(item, request.surface_content.omit_zero_delta):
+            return True
         row_admission = getattr(request, "row_admission", None)
         if row_admission is None or not row_admission.omit_outside:
             return True
@@ -407,7 +425,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 if attached is None and "title" in contract.labels.content:
                     components.append(("title", request.surface_content.member_name(item, review_row.row_id)))
                 if (attached is None and getattr(item, "forecast", None) is None
-                        and "finishDelta" in contract.labels.content and item.finish_delta is not None):
+                        and "finishDelta" in contract.labels.content and item.finish_delta is not None
+                        and not omit_zero_finish_delta(item, request.surface_content.omit_zero_delta)):
                     components.append(("finishDelta", signed_delta_text(item.finish_delta, item)))
                 if not components:
                     continue
@@ -461,6 +480,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     semantic_id="memberLabel", lane_row_id=lane[0] if lane else None,
                     lane_member_id=lane[1] if lane else None,
                     lane_source_kind=item.source_kind if lane else None,
+                    painted_anchor=_authored_painted_anchor(mark, item, review_row.row_id, request),
                     required_before_routes=attached is not None or key_row,
                     style_occurrence_key=style_key(item, review_row.row_id, "memberLabel"),
                 subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
@@ -488,6 +508,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 "visible-overflow", bounds=LabelRect(*bounds_from_rect(group.header_bounds)),
                 inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel",
                 style_occurrence_key=style_key(folded.item, folded.group_id, "memberLabel", folded=True),
+                painted_anchor=_authored_painted_anchor(mark, folded.item, folded.group_id, request),
                 subjects=(DiagnosticSubject.project_object(folded.item.object_id, folded.item.title),)))
     for review_row in context.review_rows:
         for item in review_row.items:
@@ -499,7 +520,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
             instance_id = layout_id if projection.rows else item.object_id
             if not projection.rows and item.source_kind != "combined":
                 continue
-            if (item.finish_delta is None or "finishDelta" in contract.labels.content
+            if (item.finish_delta is None or omit_zero_finish_delta(item, request.surface_content.omit_zero_delta)
+                    or "finishDelta" in contract.labels.content
                     or projection.lane_membership is not None):
                 continue
             occurrence, admission = admission_for(item, review_row.row_id)
@@ -523,6 +545,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     # Like a forecast delta, it is placed before routes (#1702): a dependency leaving the finish edge
                     # must not push it to the bar's start, where it reads as a start slip.
                     required_before_routes=True,
+                    painted_anchor=_authored_painted_anchor(mark, item, review_row.row_id, request),
                     style_occurrence_key=style_key(item, review_row.row_id, finish_delta_semantic(item)),
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
     forecast_requests = []
@@ -530,7 +553,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         for folded in projection.folded_points:
             group = groups.get(folded.group_id)
             for item in folded.all_items:
-                if item.forecast is None or not item.temporal_paint:
+                if (item.forecast is None or not item.temporal_paint
+                        or omit_zero_finish_delta(item, request.surface_content.omit_zero_delta)):
                     continue
                 instance_id = f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
                 placement_id = f"variance:{instance_id}"
@@ -566,7 +590,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
         for row in projection.rows:
             for item in row.items:
-                if getattr(item, "forecast", None) is None or not getattr(item, "temporal_paint", True):
+                if (getattr(item, "forecast", None) is None or not getattr(item, "temporal_paint", True)
+                        or omit_zero_finish_delta(item, request.surface_content.omit_zero_delta)):
                     continue
                 endpoint = active_placement(item).get("end", active_placement(item).get("at"))
                 stable_instance = f"{row.row_id}:{item.item_id or item.object_id}"
@@ -600,6 +625,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                         if projection.lane_membership is not None else None,
                     lane_source_kind=item.source_kind if projection.lane_membership is not None else None,
                     required_before_routes=True,
+                    painted_anchor=_authored_painted_anchor(mark, item, row.row_id, request),
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
     requests = forecast_requests + requests
     pre_route = tuple(item for item in requests if item.rule_host_obstacle_id is not None or
@@ -688,7 +714,9 @@ def _allocate_member_labels(context: SurfaceMemberLabelContext,
                         member_names=layout_manifest.member_names,
                         as_of_chip_measurement=context.as_of_chip_measurement))
         geometry = selected.geometry
-        candidate_geometries = {side: value.geometry for side, value in prepared.items()} if prepared else None
+        candidate_geometries = ({side: value.geometry for side, value in prepared.items()} if prepared else
+                                {side: geometry for side in label_request.candidates}
+                                if label_request.painted_anchor is not None else None)
         label_size, label_gap, placement_bounds = geometry.size, geometry.gap, geometry.bounds
         reach, association, final_association = geometry.maximum_end_gap, geometry.association, geometry.final_association
         anchor_with_delta, delta_extra = label_request.anchor, 0.0
