@@ -111,7 +111,10 @@ def test_a_declared_height_and_an_absent_offset_follow_the_default_rule(tmp_path
 
 def test_a_declared_offset_with_an_absent_height_takes_the_default_height(tmp_path):
     marks = _render(tmp_path, {"planned": (0.8, 0.0), "actual": (None, 0.15)})
-    top, track = _gate_track(tmp_path / "base")
+    # Compare within the same allocation: painted symbol envelopes can change
+    # row placement relative to a separately rendered default Theme.
+    planned = marks["planned-gate"]
+    top, track = planned[1], planned[3] / 0.8
     assert marks["actual-gate"][3] == pytest.approx(0.8 * track)  # the planned symbol's height, the declared offset
     assert marks["actual-gate"][1] == pytest.approx(top + 0.15 * track)
 

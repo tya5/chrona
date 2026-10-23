@@ -160,6 +160,9 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     ``text`` or ``table`` band extent, #1629): the label then gives way before that end, as it does beside a tab,
     instead of running past the band it is drawn on.
     """
+    # Timeline-owned headers fit their completed band, never the table edge.
+    if getattr(request.surface_content, "group_header_placement", "table") == "timeline":
+        text_end_limit = None
     labels = dict(resolve_group_labels(
         projection=request.projection, row_admission=request.row_admission, review_rows=review_rows,
         declared_headers=request.surface_content.group_headers))

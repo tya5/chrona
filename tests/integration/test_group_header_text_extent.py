@@ -94,9 +94,11 @@ def _install_legacy_geometry_replay(monkeypatch):
     import chrona.presentation.layout.surface_composer as composer
 
     def old_bounds(*, semantic_id, extent, source_bounds, table_bounds, timeline_bounds,
-                   text_bounds=None, trailing_inset=Decimal(0)):
+                   text_bounds=None, trailing_inset=Decimal(0), text_owner="table"):
         # Frozen pre-#1283 implementation from the 5a7fff0 baseline: calendar validation and the three
-        # existing whole-Rect extent choices. Keep this independent of the current implementation.
+        # existing whole-Rect extent choices. The replay cases use the default table header owner;
+        # keep that contract explicit and independent of the current implementation.
+        assert text_owner == "table"
         if semantic_id in {"calendarClosed", "calendarException"}:
             if extent != "timeline":
                 raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")

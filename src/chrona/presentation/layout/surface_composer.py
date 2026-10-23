@@ -126,8 +126,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None,
         group_header_fit_plan=base.group_header_fit_plan,
         text_end_limit=(Decimal(str(base.table_bounds[0])) + Decimal(str(base.table_bounds[2]))
-                        if (getattr(request.surface_content, "group_header_placement", "table") != "timeline"
-                            and base.layout_manifest.background_extents.get("groupHeaderBand") in {"text", "table"})
+                        if base.layout_manifest.background_extents.get("groupHeaderBand") in {"text", "table"}
                         else None))
     # A group whose vertical tag gave way keeps its name in the path column (#1726).
     table_batch = compose_table(base, seed=table_seed, tag_suppressed_groups=frozenset(

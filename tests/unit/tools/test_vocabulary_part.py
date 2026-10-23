@@ -501,12 +501,16 @@ def test_value_format_vocabulary_is_the_union_of_its_two_declared_subsets():
 
 @pytest.mark.parametrize(("name", "definition"), [(VIEW, "tableColumnScalarFormat"), (SUMMARY, "summaryMetricFormat")])
 def test_each_value_format_site_accepts_exactly_its_subset(name, definition):
+    # Table formatting is declared in common-v0.1 and reached by View through
+    # the common-v0.2 shared presentation member. Keep both the shared enum
+    # owner and the effective View use site in the invariant.
     sites = _sites(name, definition) if name == SUMMARY else []
     if name == VIEW:
         view = _schema(VIEW)
         sites = [_pointer(path) for path, node in _walk(view)
                  if path[-2:] == ("properties", "format") and isinstance(node, dict)
-                 and node.get("$ref") == "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"]
+                 and node.get("$ref") == "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/format"]
+        assert len(_sites(COMMON, definition)) == 1, "the shared v0.1 owner keeps the scalar vocabulary subset"
     assert len(sites) == 1, sites
     validator = _site_validator(name, sites[0])
     allowed = [*TABLE_FORMATS, "signedNumber"] if name == VIEW else _defs()[definition]["enum"]
@@ -527,7 +531,7 @@ def test_view_table_format_is_the_shared_table_presentation_member():
     view = _schema(VIEW)
     pointer = next(_pointer(path) for path, node in _walk(view)
                    if path[-2:] == ("properties", "format") and isinstance(node, dict)
-                   and node.get("$ref") == "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format")
+                   and node.get("$ref") == "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/format")
     assert pointer.endswith("/tableColumns/items/properties/format")
     twin = dereferenced_schema(VIEW)
     format_schema = twin
