@@ -12,6 +12,8 @@ body:
     label: {wording: legend.missing-actual}
   - role: milestone
     label: {wording: legend.gate}
+  - role: calendar-closed
+    label: {wording: legend.calendar-closed}
   - role: calendar-exception
     label: {wording: legend.holiday}
   - role: period-band
