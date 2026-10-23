@@ -908,14 +908,14 @@ body:
     timeline.relation.cornerRadius: timeline-relation-radius
   annotationKinds:
     risk:
-      label: RISK
+      label: {wording: annotation.risk}
       title: '{subject}'
       color: negative
       stamp: chrona-target-parts:seal-risk
       colorAlso:
       - leader
     note:
-      label: NOTE
+      label: {wording: annotation.note}
       title: '{subject}'
       color: accent
       stamp: chrona-target-parts:seal-note
