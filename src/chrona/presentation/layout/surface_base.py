@@ -54,6 +54,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.layout.key_row_lanes import assign_key_row_lanes
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 
 
 @dataclass(frozen=True)
@@ -292,6 +293,7 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
                               mark_band_allocation: MarkBandAllocation | None = None,
                               mark_visibility_index: ItemMarkVisibilityIndex | None = None,
                               style_intents: Any = None,
+                              paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities(),
                               ) -> tuple[PointMarkFootprint, ...]:
     """Measure visible point-mark horizontal footprints for completed base scale."""
     frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
@@ -327,7 +329,8 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
             anchor = ((item.actual or {}).get("at") if mark.semantic_id == "actual"
                       else active_placement(item).get("at"))
             if isinstance(anchor, date):
-                for facet in _mark_facets(item, instance, mark, theme_tokens):
+                for facet in _mark_facets(item, instance, mark, theme_tokens,
+                                          paint_capabilities=paint_capabilities):
                     left, _, right, _ = obstacle_envelope(facet.visible_footprint)
                     result.append(PointMarkFootprint(anchor, left, right))
 
@@ -475,6 +478,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             mark_band_allocation=mark_band_allocation,
             mark_visibility_index=request.mark_visibility_index,
             style_intents=getattr(request.surface_content, "style_intents", None),
+            paint_capabilities=request.paint_capabilities,
         )
         capacity.require_usable(*point_facet_insets(provisional_scale, point_facets),
                                 provisional=provisional_scale)

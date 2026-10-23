@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date
+from xml.etree import ElementTree
 
 import pytest
 
@@ -71,6 +72,14 @@ def test_unbound_gap_keeps_existing_semantic_anchor_placement(tmp_path):
 def test_authored_gap_uses_completed_point_glyph_footprint(tmp_path):
     rendered, label_gap, stroke_width = _render(tmp_path, chip=True, point=True)
 
-    # The default point glyph is filled (not stroked), so its exact path bounds
-    # are the painted envelope; the configured span stroke does not apply.
-    assert _gap_from_mark_to_full_label(rendered, 0) == pytest.approx(label_gap)
+    # The filled diamond also has the Theme's completed outline part. Its
+    # miter extends stroke_width/sqrt(2) past the diamond's right vertex.
+    marks = [item for item in rendered.surface.primitives
+             if item.purpose == "planned" and item.source_ref == "a"]
+    assert any(item.paint.stroke_width == stroke_width for item in marks)
+    svg = ElementTree.fromstring(rendered.artifact.content)
+    ids = {item.scene_id for item in marks}
+    assert any(node.attrib.get("data-scene-id") in ids
+               and float(node.attrib.get("stroke-width", 0)) == stroke_width
+               for node in svg.iter())
+    assert _gap_from_mark_to_full_label(rendered, 0) - stroke_width / 2**0.5 == pytest.approx(label_gap)

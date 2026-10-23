@@ -338,7 +338,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     if host_plan.relations:
         previous_marks = {mark.placement_id: mark for mark in marks}
         marks = list(complete_hosted_point_geometry(host_plan, tuple(marks)))
-        validate_hosted_point_collisions(host_plan, tuple(marks), request.theme_tokens)
+        validate_hosted_point_collisions(host_plan, tuple(marks), request.theme_tokens,
+                                         paint_capabilities=request.paint_capabilities)
         final_marks = {mark.placement_id: mark for mark in marks}
         moved_records = []
         for record in window_marks:
@@ -431,7 +432,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     instance = LaneProjectionInstance(folded.group_id,
                         item.item_id or item.object_id, item.object_id, item.source_kind)
                     left, _, right, _ = obstacle_envelope(
-                        mark_visible_envelope(item, instance, mark, request.theme_tokens))
+                        mark_visible_envelope(item, instance, mark, request.theme_tokens,
+                                              paint_capabilities=request.paint_capabilities))
                 else:
                     left, right = (float(mark.bounds.inline),
                                    float(mark.bounds.inline) + float(mark.bounds.inline_size))

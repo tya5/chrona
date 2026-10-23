@@ -38,6 +38,7 @@ from chrona.presentation.layout.surface_mark_visibility import (
     ensure_item_mark_visibility_index,
 )
 from chrona.presentation.model.projection import ReviewProjection, active_placement
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.style_rules import OccurrenceStyleIndex
 
 
@@ -56,6 +57,7 @@ def compose_lane_item_footprints(
     progress_fill_source: str | None = None,
     mark_visibility_index: ItemMarkVisibilityIndex | None = None,
     style_intents: OccurrenceStyleIndex | None = None,
+    paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities(),
 ) -> tuple[LaneItemFootprints, ...]:
     """Return all visible mark facets grouped by fixed data-only membership.
 
@@ -142,7 +144,8 @@ def compose_lane_item_footprints(
                 # frame. Its block envelope comes from the original painted
                 # facets, not a guessed final row height or fake geometry.
                 envelopes = tuple(obstacle_envelope(value.visible_footprint)
-                                  for value in _mark_facets(items[instance], instance, mark, theme_tokens))
+                                  for value in _mark_facets(items[instance], instance, mark, theme_tokens,
+                                                            paint_capabilities=paint_capabilities))
                 top = min(value[1] for value in envelopes)
                 bottom = max(value[3] for value in envelopes)
                 plot = Rect(scale.range_start, top, scale.range_end - scale.range_start, bottom - top)
@@ -160,7 +163,8 @@ def compose_lane_item_footprints(
     for instance in closure.instances:
         item = items[instance]
         for mark in marks_by_instance[instance]:
-            facets = _overlay_compound_facets(_mark_facets(item, instance, mark, theme_tokens))
+            facets = _overlay_compound_facets(_mark_facets(
+                item, instance, mark, theme_tokens, paint_capabilities=paint_capabilities))
             visible = _with_mark_visuals(item, instance, mark, facets,
                                          icons.get(mark.placement_id, ()),
                                          progress.get(mark.placement_id, ()), theme_tokens)

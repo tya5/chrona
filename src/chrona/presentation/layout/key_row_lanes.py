@@ -22,7 +22,9 @@ from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, M
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
-from chrona.presentation.model.projection import finish_delta_semantic, finish_delta_text
+from chrona.presentation.model.projection import (
+    finish_delta_semantic, finish_delta_text, omit_zero_finish_delta,
+)
 from chrona.presentation.model.semantic_registry import label_chip_semantic
 
 
@@ -74,7 +76,8 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                     instance = LaneProjectionInstance(row.row_id, item.item_id or item.object_id,
                                                       item.object_id, item.source_kind)
                     left, _, right, _ = obstacle_envelope(
-                        mark_visible_envelope(item, instance, mark, theme))
+                        mark_visible_envelope(item, instance, mark, theme,
+                                              paint_capabilities=request.paint_capabilities))
                 else:
                     left, right = (float(mark.bounds.inline),
                                    float(mark.bounds.inline) + float(mark.bounds.inline_size))
@@ -120,7 +123,9 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                 span = max(span, *(candidate_width + candidate_gap
                                    for candidate_width, candidate_gap in candidate_widths))
         forecast_items = [item for item in point_items if getattr(item, "forecast", None) is not None
-                          and finish_delta_text(item) is not None]
+                          and finish_delta_text(item) is not None
+                          and not omit_zero_finish_delta(
+                              item, getattr(request.surface_content, "omit_zero_delta", False))]
         if forecast_items and getattr(request.presentation_contract.labels, "enabled", True) \
                 and "finishDelta" in request.presentation_contract.labels.content:
             # A forecast delta is a member of the title's label packing (#1681): the point's extent holds the
@@ -137,8 +142,25 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
     base_pitch = float(allocation.outer_extent if allocation is not None else mark_block_size)
     label_block = float(measure_label_footprint("key-row-probe", "M", role, "memberLabel", request).size[1])
     if finish_delta_labelled:
-        label_block = max(label_block, float(measure_label_footprint(
-            "key-row-probe", "+0d", role, "finishDelta", request).size[1]))
+        if not getattr(request.surface_content, "omit_zero_delta", False):
+            # Preserve the pre-1936 default probe exactly, independent of the data present.
+            label_block = max(label_block, float(measure_label_footprint(
+                "key-row-probe", "+0d", role, "finishDelta", request).size[1]))
+        else:
+            visible_forecast_deltas = [
+                (row.row_id, item)
+                for row in review_rows if getattr(row, "key_row", False)
+                if getattr(request.presentation_contract.labels, "enabled", True)
+                for item in row.items
+                if getattr(item, "forecast", None) is not None
+                and finish_delta_text(item) is not None
+                and not omit_zero_finish_delta(item, True)
+            ]
+            if visible_forecast_deltas:
+                label_block = max(label_block, *(float(measure_label_footprint(
+                    f"variance:{row_id}:{item.item_id or item.object_id}",
+                    finish_delta_text(item), role, finish_delta_semantic(item), request).size[1])
+                    for row_id, item in visible_forecast_deltas))
     lane_pitch = label_block if label_block > base_pitch else None
 
     result = []

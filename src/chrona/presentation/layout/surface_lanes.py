@@ -28,6 +28,7 @@ from chrona.presentation.layout.lane_projection import (
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
 from chrona.presentation.model.semantic_mark_facets import mark_placement_facet
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import ScalePlacement
 from chrona.presentation.layout.lane_mark_facets import (
@@ -148,6 +149,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                 temporal_capacity: TemporalInlineCapacity,
                                 mark_visibility_index: ItemMarkVisibilityIndex | None = None,
                                 row_admission: WindowRowAdmission | None = None,
+                                paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities(),
                                 scene_precision: int = 3,
                                 ) -> FixedLanePreflight:
     """Close fixed-lane tracks before final allocation from fixed View rows and Layout inputs."""
@@ -195,6 +197,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         progress_fill_source=surface_content.progress_fill_source,
         mark_visibility_index=mark_visibility_index,
         style_intents=getattr(surface_content, "style_intents", None),
+        paint_capabilities=paint_capabilities,
     )
     provisional_footprints = compose_lane_item_footprints(scale=provisional_scale, **footprint_inputs)
     point_facets = []
@@ -271,7 +274,9 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
 
 def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
                     text: list[Any], shapes: list[ShapePlacement], icons: tuple[IconPlacement, ...],
-                    theme_tokens: Any) -> tuple[LaneEmissionPlacement, ...]:
+                    theme_tokens: Any,
+                    paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities()
+                    ) -> tuple[LaneEmissionPlacement, ...]:
     """Close the typed Layout-to-Scene member inventory after all geometry is final."""
     if projection.lane_membership is None:
         return ()
@@ -308,7 +313,8 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
             raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", mark.placement_id)
         instance = LaneProjectionInstance(mark.lane_row_id, item.item_id or item.object_id,
                                           item.object_id, item.source_kind)
-        facets = _overlay_compound_facets(_mark_facets(item, instance, mark, theme_tokens))
+        facets = _overlay_compound_facets(_mark_facets(
+            item, instance, mark, theme_tokens, paint_capabilities=paint_capabilities))
         facets = _with_mark_visuals(item, instance, mark, facets,
                                     icons_by_host.get(mark.placement_id, ()),
                                     progress_by_host.get(mark.placement_id, ()), theme_tokens)

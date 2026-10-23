@@ -132,6 +132,7 @@ def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> Sur
             mark_visibility_index=request.mark_visibility_index,
             row_admission=request.row_admission,
             temporal_capacity=request.temporal_capacity,
+            paint_capabilities=request.paint_capabilities,
             scene_precision=request.scene_precision,
         )
         return replace(request, fixed_lane_preflight=preflight)

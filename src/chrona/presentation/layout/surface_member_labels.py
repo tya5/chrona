@@ -61,7 +61,8 @@ def _authored_painted_anchor(mark: MarkPlacement | None, item: Any, row_id: str,
     instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
                                       item.object_id, item.source_kind)
     left, top, right, bottom = obstacle_envelope(
-        mark_visible_envelope(item, instance, mark, request.theme_tokens))
+        mark_visible_envelope(item, instance, mark, request.theme_tokens,
+                              paint_capabilities=request.paint_capabilities))
     return LabelRect(left, top, right - left, bottom - top)
 
 
@@ -577,6 +578,14 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 anchor = LabelRect(*bounds_from_rect(mark.bounds))
                 anchor = LabelRect(anchor.x - title_reach, anchor.y,
                                    anchor.width + 2 * title_reach, anchor.height)
+                painted_anchor = _authored_painted_anchor(mark, item, folded.group_id, request)
+                if painted_anchor is not None:
+                    # Preserve the title's existing full inline reservation on
+                    # both sides, but base that composite anchor on completed
+                    # mark ink rather than its smaller semantic bounds.
+                    painted_anchor = LabelRect(
+                        painted_anchor.x - title_reach, painted_anchor.y,
+                        painted_anchor.width + 2 * title_reach, painted_anchor.height)
                 candidates = tuple(side for side in (request.surface_content.label_fallback or
                     ("end", "start", "above", "below")) if side not in {"suppress", "inside"})
                 forecast_requests.append(LabelRequest(
@@ -585,6 +594,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     CollisionDomain("group-header", folded.group_id), "diagnose",
                     bounds=LabelRect(*bounds_from_rect(group.header_bounds)),
                     semantic_id=finish_delta_semantic(item), required_before_routes=True,
+                    painted_anchor=painted_anchor,
                     estimated_delta=is_estimated_finish_delta(item),
                     style_occurrence_key=style_key(item, folded.group_id, finish_delta_semantic(item), folded=True),
                     subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))

@@ -8,9 +8,11 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.point_host_allocation import _translate
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 
 
-def validate_point_host_frames(preflight, marks, icons, shapes, tracks, theme):
+def validate_point_host_frames(preflight, marks, icons, shapes, tracks, theme, *,
+                               paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities()):
     """Use explicit source identities and facet order, never parse placement IDs."""
     allocation, plan = preflight.point_host_allocation, preflight.point_host_plan
     if allocation is None or plan is None:
@@ -38,7 +40,8 @@ def validate_point_host_frames(preflight, marks, icons, shapes, tracks, theme):
             if mark is None:
                 _failure(source_id, "missing final mark")
             facets = _overlay_compound_facets(_mark_facets(
-                occurrence.item, occurrence.instance, mark, theme))
+                occurrence.item, occurrence.instance, mark, theme,
+                paint_capabilities=paint_capabilities))
             actual = _with_mark_visuals(occurrence.item, occurrence.instance, mark, facets,
                 icon_by_host.get(final_id, ()), progress_by_host.get(final_id, ()), theme)
             if len(actual) != len(expected):

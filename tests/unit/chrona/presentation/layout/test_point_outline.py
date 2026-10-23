@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from chrona.presentation.layout.mark_geometry import (
     SymbolPartPlacement,
     complete_point_outline,
@@ -154,6 +156,17 @@ def test_lane_facets_keep_completed_outline_width_not_planned_theme_fallback():
     fill = SymbolPartPlacement(_rect(0, 0, 10, 10), paint_mode="fill")
 
     class RoleWidths(_Tokens):
+        _body = {"roles": {}}
+
+        def optional_color(self, role, property_name="fill"):
+            return {"fill": "#ffffff", "stroke": "#000000"}.get(property_name)
+
+        def dash(self, role):
+            return ()
+
+        def optional_token(self, role, property_name, expected_type):
+            return None
+
         def optional_number(self, role, property_name):
             self.number_queries.append((role, property_name))
             return {"gate": 2.0, "planned": 9.0}.get(role) if property_name == "strokeWidth" else None
@@ -179,9 +192,11 @@ def test_lane_facets_keep_completed_outline_width_not_planned_theme_fallback():
     assert original.ports and len(original.ports) == 2
     assert outline.glyph_part_projection.paint_mode == "stroke"
     assert outline.glyph_part_projection.stroke_width == 2.0
-    # The outline's visible collision envelope is expanded from its 0..10 path
-    # by the completed gate width (10×width), not planned's different width.
+    # Scene paints this role-bound stroke with planned's width. The completed
+    # painted envelope follows the rectangle's actual stroked extents.
     assert (outline.visible_footprint.left, outline.visible_footprint.top,
-            outline.visible_footprint.right, outline.visible_footprint.bottom) == (-20, -20, 30, 30)
+            outline.visible_footprint.right, outline.visible_footprint.bottom) == pytest.approx(
+                (-4.5, -4.5, 14.5, 14.5))
     assert not outline.ports
-    assert theme.number_queries == [("gate", "strokeWidth")]
+    assert ("gate", "strokeWidth") in theme.number_queries
+    assert ("planned", "strokeWidth") in theme.number_queries

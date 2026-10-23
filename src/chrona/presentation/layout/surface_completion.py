@@ -443,10 +443,12 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
             raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows",
                               "completed lane mark band falls outside its row bounds") from error
     lane_emissions = build_lane_emissions(projection, tuple(review_rows), marks, text,
-                                     shapes, completed_icons, request.theme_tokens)
+                                     shapes, completed_icons, request.theme_tokens,
+                                     paint_capabilities=request.paint_capabilities)
     if request.fixed_lane_preflight is not None:
         validate_point_host_frames(request.fixed_lane_preflight, marks, completed_icons,
-                                   shapes, tracks, request.theme_tokens)
+                                   shapes, tracks, request.theme_tokens,
+                                   paint_capabilities=request.paint_capabilities)
     # Abstract mark IDs remain Layout anchors; hosted text needs the actual
     # Scene primitive ID completed by this typed lane-emission closure.
     completed_text = complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)
