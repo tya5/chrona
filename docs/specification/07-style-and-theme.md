@@ -395,6 +395,18 @@ uses this same resolved gap between complete text/chip/icon groups. It is
 not a second independent spacing policy. That name-only admission clearance
 does not expand the obstacles seen by relation routes or unrelated labels.
 
+**Completed mark ink (#1936).** Layout's shared mark facets resolve effective
+paint through the neutral Theme paint model, including a built-in symbol's
+inherited outline when its part has no explicit paint mode. A missing part
+override is not absence of stroke. Preserve explicit part overrides and
+completed clips; bound the visible stroke with the shared path/terminal
+envelope arithmetic and its cap/join treatment, not an arbitrary multiple
+of the stroke width. Scene projects that same paint contract and does not
+repair Layout bounds. Correcting previously understated inherited-outline
+facets may change existing lane allocation even without the new gap token;
+this is a geometry correction, not a new default spacing policy or a reason
+to retain unsafe legacy bounds. Disclose affected public output separately.
+
 ### 5.2 Tokens
 
 For legend `textTransform`, wording and literal data have separate treatment
