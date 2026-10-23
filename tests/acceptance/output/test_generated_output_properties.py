@@ -9,6 +9,7 @@ enforced before every defect behind it is fixed; see ``check`` for the rules.
 from __future__ import annotations
 
 import re
+import json
 from functools import lru_cache
 from math import isclose, isfinite
 from importlib.util import find_spec
@@ -289,6 +290,33 @@ def test_point_rows_never_render_a_span_only_state(slide, context_source, svg_pa
     check(slide, request, offenders, f"point-kind rows labelled 'in progress': {sorted(offenders)}")
 
 
+def _table_has_drawn_group_header(tree, scene):
+    """A header-only table needs both declared ownership and actual SVG text."""
+    drawn = {node.get("data-scene-id") for node in tree.iter(SVG + "text")
+             if node.get("data-purpose") == "group-header" and "".join(node.itertext()).strip()}
+    for surface in scene["surfaces"]:
+        tables = {slot["id"] for slot in surface["slots"] if slot.get("source") == "table"}
+        if any(item.get("purpose") == "group-header" and item.get("slotId") in tables
+               and item.get("id") in drawn for item in surface["primitives"]):
+            return True
+    return False
+
+
+@pytest.mark.parametrize(("slot_id", "text", "expected"), (
+    ("table-track", "Group name", True),
+    ("timeline", "Group name", False),
+    ("table-track", "", False),
+))
+def test_header_only_table_requires_owned_visible_svg_text(slot_id, text, expected):
+    tree = ElementTree.fromstring(
+        f'<svg xmlns="http://www.w3.org/2000/svg"><text data-scene-id="group-header:g" '
+        f'data-purpose="group-header">{text}</text></svg>')
+    scene = {"surfaces": [{"slots": [{"id": "table-track", "source": "table"}],
+                           "primitives": [{"id": "group-header:g", "purpose": "group-header",
+                                           "slotId": slot_id}]}]}
+    assert _table_has_drawn_group_header(tree, scene) is expected
+
+
 def test_every_declared_slot_produces_a_primitive(slide, context_source, svg_path, request):
     """A slot that draws nothing is an authored intent the render silently dropped."""
     tree, _, _ = _load(svg_path, context_source)
@@ -296,4 +324,12 @@ def test_every_declared_slot_produces_a_primitive(slide, context_source, svg_pat
     declared = _declared_slots(_bound(context_source, body, "layout"))
     produced = {node.get("data-purpose") for node in tree.iter()}
     empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)
+    if "table" in empty:
+        manifest = safe_load(context_source.manifest_path.read_bytes())
+        selected = next(item for item in manifest["slides"] if item["id"] == context_source.slide_id)
+        scene_path = selected.get("expectedScene")
+        if scene_path is not None:
+            scene = json.loads((context_source.manifest_path.parent / scene_path).read_bytes())
+            if _table_has_drawn_group_header(tree, scene):
+                empty.remove("table")
     check(slide, request, empty, f"slots declared in the Layout Profile that drew nothing: {empty}")

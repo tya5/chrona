@@ -170,7 +170,7 @@ def test_render_draft_returns_the_artifact_and_does_no_io_of_its_own(project, tm
 @pytest.mark.parametrize("with_relations", [False, True])
 def test_render_progress_preserves_artifact_scene_and_request_identity(project, with_relations):
     from dataclasses import replace
-    from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+    from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent, RenderWorkPhaseEvent
 
     if with_relations:
         project.write_text(PROJECT.replace("relations: []", """relations:
@@ -191,7 +191,10 @@ def test_render_progress_preserves_artifact_scene_and_request_identity(project, 
     assert verbose.rendered.warning_records == quiet.rendered.warning_records
     assert [event for event in events if event.phase != "routing"] == [
         RenderProgressEvent("schedule"), RenderProgressEvent("layout"), RenderProgressEvent("output")]
-    routing = [event for event in events if event.phase == "routing"]
+    starts = [event for event in events if isinstance(event, RenderWorkPhaseEvent)]
+    assert bool(starts) == with_relations
+    assert all(event == RenderWorkPhaseEvent("routing", "route-content-baseline") for event in starts)
+    routing = [event for event in events if isinstance(event, RenderProgressEvent) and event.phase == "routing"]
     assert routing == [RenderProgressEvent("routing", k, int(with_relations), "route-content-baseline")
                        for k in range(int(with_relations) + 1)]
 

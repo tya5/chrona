@@ -154,7 +154,7 @@ def test_network_layout_uses_longest_path_rank_measured_labels_and_stable_order(
 
 
 def test_network_progress_counts_edges_without_changing_completed_geometry():
-    from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+    from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent, RenderWorkPhaseEvent
 
     network = _network(("a", "b", "c"), (("ab", "a", "b"), ("bc", "b", "c")))
     kwargs = dict(title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
@@ -164,7 +164,8 @@ def test_network_progress_counts_edges_without_changing_completed_geometry():
     quiet = compose_dependency_network_layout(network, **kwargs)
     observed = compose_dependency_network_layout(network, progress=RenderProgress(events.append), **kwargs)
     assert observed == quiet
-    assert events == [RenderProgressEvent("routing", k, 2, "network") for k in range(3)]
+    assert events == [RenderWorkPhaseEvent("routing", "network"), *(
+        RenderProgressEvent("routing", k, 2, "network") for k in range(3))]
 
 
 def test_network_layout_advances_ranks_in_block_direction_for_vertical_writing():

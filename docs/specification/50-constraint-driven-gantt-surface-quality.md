@@ -462,9 +462,12 @@ expensive routing even without progress enabled; the same structured diagnostic
 remains in completed Scene and CLI/MCP results, independent of external observer
 failures. This describes work about to be attempted, including a count-closure
 trial that may later be rejected, not accepted geometry. Later passes neither
-replace that first count nor duplicate the warning. Ordinary candidate phase/
-count progress remains buffered until acceptance; no candidate coordinates or
-route choices are exposed. This supersedes the occurrence-pair
+replace that first count nor duplicate the warning. Candidate completion counts
+remain buffered until acceptance. With progress enabled, a distinct uncounted
+routing-pass work observation reaches the observer before actual search, through
+nested source/count trial buffers (#1906). It identifies attempted work, including
+a subsequently rejected trial, never accepted geometry or a final-route count.
+No candidate coordinates or route choices are exposed. This supersedes the occurrence-pair
 threshold of 336 and the requirement to observe before all Layout: completed
 marks are needed for the cheap port-domain preparation, not for route search.
 

@@ -312,7 +312,9 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
 
 def test_catalogue_pattern_crosses_layout_scene_and_svg_without_adapter_lookup():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary))
+        # Use the unchanged wallboard Context for axis-band decoration; slide
+        # 02 now publishes a sidebar, table-less Context.
+        closure, snapshot = _closure(Path(temporary), "overlay-briefing")
         resolved = json.loads(json.dumps(closure.resolved_theme.resolved_input))
         body = resolved["body"]
         body["values"]["fixture-pattern"] = {"type": "pattern", "value": {
@@ -451,7 +453,7 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
         assert row_bottom <= slot_bottom
 
 
-@pytest.mark.parametrize("context_name", ["programme-board", "overlay-briefing", "glyph-gates"])
+@pytest.mark.parametrize("context_name", ["overlay-briefing", "glyph-gates"])
 def test_public_lane_scene_routes_never_cross_required_lane_or_member_labels(context_name):
     """Check actual public Scene geometry, including the previously omitted 11."""
     with tempfile.TemporaryDirectory() as temporary:
@@ -480,7 +482,7 @@ def test_public_lane_scene_routes_never_cross_required_lane_or_member_labels(con
 
 def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
     outputs = []
-    for context_name in ("programme-board", "glyph-gates"):
+    for context_name in ("overlay-briefing", "glyph-gates"):
         with tempfile.TemporaryDirectory() as temporary:
             closure, snapshot = _closure(Path(temporary), context_name)
             value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
@@ -615,7 +617,7 @@ def test_a_presentation_failure_never_reaches_a_report_as_only_its_code(monkeypa
 
 def test_completed_scene_serializes_deterministically_with_typed_table_links():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary))
+        closure, snapshot = _closure(Path(temporary), "mission-brief")
         scene = render_review(_request(closure, snapshot)).scene
     first, second = serialize_scene(scene), serialize_scene(scene)
     assert first == second
@@ -629,7 +631,7 @@ def test_completed_scene_serializes_deterministically_with_typed_table_links():
 
 def test_scene_validation_rejects_a_table_reference_not_owned_by_its_surface():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary))
+        closure, snapshot = _closure(Path(temporary), "mission-brief")
         document = scene_document(render_review(_request(closure, snapshot)).scene)
     cell = next(item for item in document["surfaces"][0]["primitives"] if item["purpose"] == "table-cell")
     cell["tableColumnId"] = "not-a-column"

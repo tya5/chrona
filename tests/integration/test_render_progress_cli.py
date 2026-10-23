@@ -1,5 +1,6 @@
 """Actual CLI terminal feedback is a side channel, not artifact authority."""
 import errno
+import io
 import json
 import os
 import subprocess
@@ -42,6 +43,7 @@ def _assert_phases(stderr):
     text = stderr.decode()
     assert "chrona: schedule" in text
     assert "chrona: layout" in text
+    assert "chrona: routing [route-content-baseline] starting (attempt)" in text
     assert "chrona: routing [route-content-baseline] 0/1" in text
     assert "chrona: routing [route-content-baseline] 1/1" in text
     assert "chrona: output" in text
@@ -111,6 +113,78 @@ def test_render_help_declares_progress_flag():
     assert b"--progress" in result.stdout
     assert b"stderr" in result.stdout
     assert b"--relations" in result.stdout
+
+
+def test_routing_attempt_is_written_before_buffered_acceptance_counts(monkeypatch):
+    from chrona.app import cli
+    from chrona.presentation.model.render_progress import RenderProgressEvent, RenderWorkPhaseEvent
+
+    stream = io.StringIO()
+    monkeypatch.setattr(cli.sys, "stderr", stream)
+    progress = cli._draft_render_progress(True)
+    assert progress is not None
+
+    outer = []
+    parent_candidate = progress.buffered(outer.append)
+    buffered = []
+    candidate = parent_candidate.buffered(buffered.append)
+    declarations = candidate.routing(("relation-a",), pass_name="route-content-baseline")
+
+    # Advancing starts the pass and yields its first item, before any candidate
+    # is accepted. The attempt is visible now; the buffered 0/N count is not.
+    assert next(declarations) == "relation-a"
+    assert stream.getvalue() == "chrona: routing [route-content-baseline] starting (attempt)\n"
+    assert "0/1" not in stream.getvalue()
+    assert len(buffered) == 1
+    assert buffered[0] == RenderProgressEvent("routing", 0, 1, "route-content-baseline")
+
+    # Completing candidate work only records buffered counts. Accepting this
+    # candidate moves them into the enclosing buffer, but still does not make
+    # them visible until that enclosing source candidate is accepted.
+    with pytest.raises(StopIteration):
+        next(declarations)
+    assert len(buffered) == 2
+    assert buffered[1] == RenderProgressEvent("routing", 1, 1, "route-content-baseline")
+    assert not any(isinstance(event, RenderWorkPhaseEvent) for event in buffered)
+    assert "0/1" not in stream.getvalue()
+
+    for event in buffered:
+        parent_candidate.emit(event)
+    assert outer == buffered
+    assert "0/1" not in stream.getvalue()
+
+    for event in outer:
+        progress.emit(event)
+    assert stream.getvalue().splitlines() == [
+        "chrona: routing [route-content-baseline] starting (attempt)",
+        "chrona: routing [route-content-baseline] 0/1",
+        "chrona: routing [route-content-baseline] 1/1",
+    ]
+
+
+def test_quiet_and_broken_stream_do_not_break_work_phase_reporting(monkeypatch):
+    from chrona.app import cli
+
+    quiet = io.StringIO()
+    monkeypatch.setattr(cli.sys, "stderr", quiet)
+    progress = cli._draft_render_progress(False)
+    assert progress is not None
+    tuple(progress.routing(("relation-a",), pass_name="route-content-baseline"))
+    assert quiet.getvalue() == ""
+
+    class BrokenStream:
+        def write(self, _text):
+            raise OSError("closed stderr")
+
+        def flush(self):
+            raise OSError("closed stderr")
+
+    monkeypatch.setattr(cli.sys, "stderr", BrokenStream())
+    progress = cli._draft_render_progress(True)
+    assert progress is not None
+    # A failed feedback sink detaches itself; it does not fail rendering or
+    # subsequent completion events.
+    tuple(progress.routing(("relation-a",), pass_name="route-content-baseline"))
 
 
 def test_relation_override_omits_primitives_without_suppression_or_route_search(project, tmp_path):

@@ -17,7 +17,7 @@ from chrona.presentation.model.closure import ClosureError
 from chrona.core.ports import SnapshotReadError
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshot_paths import snapshot_directory
-from tests.support.deck_contexts import context_document
+from tests.support.deck_contexts import context_document, snapshot_resource_document
 
 
 def _write(root, token, address, value):
@@ -231,7 +231,7 @@ def _real_ingress_with_package_stores(tmp_path, primary_extensions, snapshot_ext
     for key, kind in (("view", "view"), ("theme", "theme"),
                       ("colorScheme", "color-scheme"), ("layout", "layout-profile")):
         original = body[key]
-        value = yaml.safe_load((example_root / original["address"]).read_text(encoding="utf-8"))
+        value = snapshot_resource_document(example_root, original)
         references[key] = write_local("primary", original["address"], value, kind)
     snapshot_ref = write_local("primary", "snapshot-ref.yaml", {
         "version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "snapshot",
@@ -349,8 +349,7 @@ def test_snapshot_stale_special_profile_versions_keep_version_diagnostic_after_i
     refs = {}
     for key in ("project", "view", "theme", "colorScheme", "layout"):
         original = context["body"][key]
-        resource_path = example_root / original["address"]
-        value = yaml.safe_load(resource_path.read_text(encoding="utf-8"))
+        value = snapshot_resource_document(example_root, original)
         kind = original["kind"]
         for extension in value.get("extensions", ()) if key == "project" else ():
             # The Project's pinned profile packages move into the test store byte for byte.

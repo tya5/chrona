@@ -1,0 +1,117 @@
+version: chrona/layout-profile/v0.10
+id: programme-board-sidebar
+# Slide 02 only: a framed left sidebar (heading, key figures, numbered notes) beside a
+# table-less timeline whose rows carry their own names, with an inline legend below it.
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
+requiredThemeTokens: [legend-block, legend-gap, legend-item-min, panel.side, spacing.l, spacing.m, spacing.none]
+reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: timeline, groupBand: timeline, groupHeaderBand: timeline, calendarClosed: timeline}, annotationRouting: {maxBends: 6, maxDetourRatio: 20}}
+relationRouting: {maxBends: 6, maxDetourRatio: 8, entry: side, unroutable: relax}
+root:
+  id: page
+  kind: row
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.none}
+  padding: {token: spacing.none}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: sidebar
+      kind: column
+      inlineSize: {fixed: {token: panel.side}}
+      blockSize: fill
+      gap: {token: spacing.l}
+      padding: {token: spacing.l}
+      alignItems: start
+      justifyContent: start
+      frame: {paint: sidebar}
+      children:
+        - id: title
+          kind: slot
+          source: title
+          inlineSize: fill
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: required
+          overflow: visible-overflow
+        - id: summary
+          kind: slot
+          source: summary
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
+        - id: notes
+          kind: slot
+          source: notes
+          heading: {text: {wording: slot.notes}, align: start}
+          inlineSize: fill
+          blockSize: fill
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: visible-overflow
+    - id: board
+      kind: column
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.m}
+      padding: {token: spacing.l}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: review
+          kind: row
+          inlineSize: fill
+          blockSize: fill
+          gap: {token: spacing.none}
+          padding: {token: spacing.none}
+          alignItems: stretch
+          justifyContent: start
+          children:
+            # No tableColumns: the table slot is measured empty and collapses (Spec 24, #1683).
+            - id: table
+              kind: slot
+              source: table
+              inlineSize: {minmax: {min: content, max: {fr: 1}}}
+              blockSize: fill
+              place: {inline: stretch, block: stretch, safety: strict}
+              priority: required
+              overflow: visible-overflow
+            - id: timeline-stack
+              kind: column
+              inlineSize: {fr: 9}
+              blockSize: fill
+              gap: {token: spacing.none}
+              padding: {token: spacing.none}
+              alignItems: stretch
+              justifyContent: start
+              children:
+                - id: timeline-axis
+                  kind: slot
+                  source: timeline-axis
+                  inlineSize: fill
+                  blockSize: content
+                  place: {inline: stretch, block: start, safety: strict}
+                  priority: required
+                  overflow: visible-overflow
+                - id: timeline
+                  kind: slot
+                  source: timeline
+                  inlineSize: fill
+                  blockSize: fill
+                  place: {inline: stretch, block: stretch, safety: strict}
+                  priority: required
+                  overflow: visible-overflow
+        - id: legend
+          kind: slot
+          source: legend
+          inlineSize: fill
+          blockSize: {fixed: {token: legend-block}}
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
+          direction: inline
+          itemMinInlineSize: {token: legend-item-min}
+          gap: {token: legend-gap}
