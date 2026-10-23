@@ -1,0 +1,12 @@
+02-programme-board 218bc2b96^1 {"dependency_paths": 24, "edge_receipts": 0, "label_suppressed": 11, "member_names": 15, "overlapping_name_pairs": 0, "stages": {}, "stub_pairs": 0}
+02-programme-board WORK {"dependency_paths": 25, "edge_receipts": 0, "label_suppressed": 0, "member_names": 26, "overlapping_name_pairs": 0, "stages": {"label-visuals": 3}, "stub_pairs": 0}
+  names lost: []  names added: ["Avionics integration +3d", "Detector calibration +2d", "EMC and RF compatibility", "Flight readiness review", "Imager optics alignment +1d", "LEOP and commissioning", "Launch campaign", "Payload thermal-vacuum +10d", "Power system qualification -3d", "Primary structure fabrication +0d", "System thermal-vacuum"]
+11-overlay-briefing 218bc2b96^1 {"dependency_paths": 24, "edge_receipts": 0, "label_suppressed": 10, "member_names": 16, "overlapping_name_pairs": 0, "stages": {}, "stub_pairs": 0}
+11-overlay-briefing WORK {"dependency_paths": 24, "edge_receipts": 6, "label_suppressed": 6, "member_names": 20, "overlapping_name_pairs": 0, "stages": {"edge": 6, "marks": 4}, "stub_pairs": 0}
+  names lost: ["Launch window opens"]  names added: ["Avionics integration +3d", "Imager optics alignment +1d", "LEOP and commissioning", "Payload thermal-vacuum +10d", "Power system qualification -3d"]
+16-gallery-editorial-lanes 218bc2b96^1 {"dependency_paths": 25, "edge_receipts": 0, "label_suppressed": 0, "member_names": 26, "overlapping_name_pairs": 0, "stages": {}, "stub_pairs": 0}
+16-gallery-editorial-lanes WORK {"dependency_paths": 25, "edge_receipts": 1, "label_suppressed": 0, "member_names": 26, "overlapping_name_pairs": 0, "stages": {"edge": 1, "label-visuals": 6, "marks": 4}, "stub_pairs": 0}
+  names lost: []  names added: []
+19-gallery-text-compression 218bc2b96^1 {"dependency_paths": 24, "edge_receipts": 0, "label_suppressed": 11, "member_names": 15, "overlapping_name_pairs": 0, "stages": {}, "stub_pairs": 0}
+19-gallery-text-compression WORK {"dependency_paths": 24, "edge_receipts": 6, "label_suppressed": 7, "member_names": 19, "overlapping_name_pairs": 0, "stages": {"edge": 6, "marks": 4}, "stub_pairs": 0}
+  names lost: []  names added: ["Avionics integration +3\u65e5", "Imager optics alignment +1\u65e5", "Payload thermal-vacuum +10\u65e5", "Power system qualification -3\u65e5"]

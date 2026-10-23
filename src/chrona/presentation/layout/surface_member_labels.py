@@ -86,6 +86,9 @@ class SurfaceMemberLabelContext:
     rows_bottom: float = 0.0
     as_of_chip_measurement: MeasuredLabelChip | None = None
     intrinsic_endpoint_footprints: tuple[SurfaceObstacle, ...] = ()
+    # The same endpoint ink led from where each connector leaves its whole host: names look first for a
+    # candidate that keeps the label gap from it (the route's own first turn).
+    exposed_endpoint_footprints: tuple[SurfaceObstacle, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -830,17 +833,30 @@ def _allocate_member_labels(context: SurfaceMemberLabelContext,
                     candidate is None or not candidate.side.startswith("plot-below")):
                 diagnostics.append(f"{BELOW_PLOT_FALLBACK}:{label_request.placement_id}")
         elif associated_member:
-            search = start_member_name_search(anchor_with_delta, label_size, label_request.candidates,
-                bounds=placement_bounds, obstacles=placement_obstacles, gap=label_gap, maximum_end_gap=reach,
-                text_inline_inset=geometry.text_inline_inset, inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                classes=label_classes,
-                full_band=full_band,
-                association=association,
-                maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
-                overflow=effective_overflow, visible_fallback_side=effective_visible_fallback,
-                own_mark_right=own_mark_right, final_association=final_association,
-                candidate_geometries=candidate_geometries)
+            def start_search(search_obstacles):
+                return start_member_name_search(anchor_with_delta, label_size, label_request.candidates,
+                    bounds=placement_bounds, obstacles=search_obstacles, gap=label_gap, maximum_end_gap=reach,
+                    text_inline_inset=geometry.text_inline_inset,
+                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                    classes=label_classes,
+                    full_band=full_band,
+                    association=association,
+                    maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
+                    overflow=effective_overflow, visible_fallback_side=effective_visible_fallback,
+                    own_mark_right=own_mark_right, final_association=final_association,
+                    candidate_geometries=candidate_geometries)
+            # A name first looks for a clear candidate that also keeps its label gap from the completed
+            # ink of the relation endpoints (arrowhead and lead) it sits beside; with none it takes the
+            # unchanged ladder, so the gap never costs a name.
+            spaced_endpoints = placement_obstacles.copy(clearance_overrides={
+                item.placement_id: label_gap for item in context.intrinsic_endpoint_footprints})
+            spaced_endpoints.extend(replace(item, clearance=label_gap)
+                                    for item in context.exposed_endpoint_footprints)
+            search = start_search(spaced_endpoints)
             normal = search.next_clear()
+            if normal is None:
+                search = start_search(placement_obstacles)
+                normal = search.next_clear()
             candidate = normal.placement if normal is not None else None
         else:
             candidate = (place_label(label_request.anchor, label_size, label_request.candidates,

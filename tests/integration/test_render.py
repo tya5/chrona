@@ -157,9 +157,14 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
 
     root = _root()
     example = root / "examples/halcyon-1"
+    # Slide 12 declares lane keys in this View (#1848); this trial measures the generated lanes.
+    view = yaml.safe_load((example / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    view["body"]["rows"].pop("laneKeys")
+    view_path = tmp_path / "generated-lanes-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     request = _draft_request(
         project_path=example / "project.yaml",
-        view_path=example / "views/02-programme-board.yaml",
+        view_path=view_path,
         theme_path=example / "themes/wallboard.yaml",
         scheme_path=example / "schemes/control-room-dark.yaml",
         layout_path=example / "layouts/wallboard.yaml",

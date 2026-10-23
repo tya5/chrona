@@ -404,8 +404,9 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     relations = project["relations"]
     identity = next(identity for relation, identity in zip(relations, relation_identities(relations))
                     if relation["id"] == "bustest-integration")
-    route_id = (f'relation:{identity}:review-lane:["generated","bus","pdr"]:'
-                'bus-test:review-lane:["generated","ait","integration"]:integration')
+    # Slides 11 and 12 declare explicit lane keys (#1848), so read the lane ids from the Scene.
+    lane_of = {member["memberId"]: member["rowId"] for member in scene["surfaces"][0]["laneMembers"]}
+    route_id = f'relation:{identity}:{lane_of["bus-test"]}:bus-test:{lane_of["integration"]}:integration'
     fragment_ids = (f"{route_id}:stub-source", f"{route_id}:stub-target")
     halo_ids = tuple(f"{fragment_id}:halo" for fragment_id in fragment_ids)
     assert lane_labels and all(label.strip() and not label.startswith("Lane ") for label in lane_labels)

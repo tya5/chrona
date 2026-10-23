@@ -99,6 +99,25 @@ def test_own_row_restores_a_row_per_point(tmp_path, monkeypatch):
 
 
 def test_attached_gates_share_host_lane_and_reports_exact_last_resort_omission(tmp_path, monkeypatch):
+    """The attached "Range safety review" name is a measured, dispositioned infeasibility (#1908 row 1).
+
+    Measured on the first layout pass (probe in docs/reviews/current/assets-1908/probe-1908-range-safety.py.txt):
+    the name is 196.6 x 21 px in a one-band lane (30 px block, stagger limit 24.75 px) with a 30 px
+    end reach from its mark at x 1262.3 to 1272.3 inside the host bar (1229.0 to 1294.1). The normal
+    domain is 63 poses (26 `end`, 35 `start` neighborhood charges against a 512 ledger, so the stop is
+    geometric, not a budget hit) plus 1 visible-overflow fallback pose, 64 evaluations in all; every one is
+    blocked. `end` poses start at x 1276.1 to 1302.3 and meet the host name "Launch campaign" (1298.1 to
+    1422.9), the host bar and the shipment-campaign endpoint footprints. `start` poses end at x 1062.0 at
+    the latest and meet "Campaign readiness review, 24 Sep, +1d" (928.4 to 1217.6), which must sit left
+    of its own mark. A clear pose needs one of: a second text band in the lane, an end reach of at least
+    about 160 px (past "Launch campaign"), or the host or readiness name moved off its own mark. Each is a
+    declared-resource or View change (lane height or band count, name reach, or packing), not a core rule:
+    moving a sibling name is the whole-group exchange that #1908 does not approve, and a longer reach
+    waives the association with the mark. The declared alternatives restore the name but cost more names
+    (packing `explicit`: 23 names, 5 suppressed; `points: own-row`: 21 names, 7 suppressed, against 27 names
+    and this single suppression here; docs/reviews/current/assets-1908/probe-1908-range-safety-alternatives-output.txt).
+    The omission is therefore the smallest and the only one, and it stays diagnosed.
+    """
     surface, svg = _render(tmp_path, monkeypatch, lanes=True, with_delta=True)
     host = next(item for item in surface["primitives"]
                 if item["sourceRef"] == "campaign" and item["id"].startswith("planned:"))

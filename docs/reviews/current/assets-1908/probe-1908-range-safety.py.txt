@@ -1,0 +1,36 @@
+import sys, collections, tempfile, pathlib
+import pytest
+from tests.integration import test_attached_milestones as t
+import chrona.presentation.layout.surface_member_labels as sml
+cursors = {}
+orig = sml.start_member_name_search
+def wrap(*a, **k):
+    c = orig(*a, **k); cursors[len(cursors)] = (sys._getframe(1).f_locals['label_request'].placement_id, c); return c
+sml.start_member_name_search = wrap
+mp = pytest.MonkeyPatch()
+tmp = pathlib.Path(tempfile.mkdtemp())
+surface, svg = t._render(tmp, mp, lanes=True, with_delta=True)
+print('RESULT cursors', len(cursors))
+alloc_total = 0
+for i,(size,c) in cursors.items():
+    alloc_total += c.total_actual_evaluations
+    hist = c.evaluated_normal_candidates
+    blockers = collections.Counter(b for h in hist if h.occupied for b in h.blocker_placement_ids)
+    if 'range-safety' in size or c.total_actual_evaluations>300:
+        print("RESULT",i, "size", size, "evals", c.total_actual_evaluations, "hist", c.evaluated_count, "occupied", sum(h.occupied for h in hist),
+              "spend", dict(c.neighborhood_domain_spend))
+        print('RESULT  top blockers', blockers.most_common(10)); print('RESULT blockedcount', sum(1 for h in hist if h.occupied), 'unique', len({h.placement.bounds for h in hist}), 'sides', collections.Counter(h.placement.side for h in hist))
+print("RESULT total actual evals", alloc_total)
+c = cursors[17][1]
+hist = c.evaluated_normal_candidates
+for h in hist:
+    b = h.placement.bounds
+    if not h.occupied:
+        print("RESULT CLEAR", h.placement.side, b, h.provenance)
+print("RESULT first3", [(h.placement.side, round(h.placement.bounds.x,1), round(h.placement.bounds.y,1), len(h.blocker_placement_ids)) for h in hist[:6]])
+lane = [p for p in surface["primitives"] if p.get("laneRowId")==next(i for i in surface["primitives"] if i["sourceRef"]=="range-safety" and i["id"].startswith("planned:"))["laneRowId"]]
+for p in lane:
+    b=p["bounds"]; print("RESULT LANE", p["id"][:60], p["sourceRef"], round(b["inline"],1), round(b["block"],1), round(b["inlineSize"],1), round(b["blockSize"],1), p.get("text",""))
+print("RESULT attrs", {k:(v if not isinstance(v,(dict,list,tuple,set)) or len(str(v))<200 else '...') for k,v in vars(c).items() if k in ('size','gap','maximum_end_gap','association','bounds','maximum_stagger','anchor','final_association','own_mark_right','full_band','overflow','text_inline_inset','classes','candidates')})
+b=hist[0].placement.bounds; print("RESULT size", b.width, b.height)
+print("RESULT hist end x range", min(h.placement.bounds.x for h in hist if h.placement.side=='end'), max(h.placement.bounds.x for h in hist if h.placement.side=='end'),"start", min(h.placement.bounds.x for h in hist if h.placement.side=='start'), max(h.placement.bounds.x for h in hist if h.placement.side=='start'))

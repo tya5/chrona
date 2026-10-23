@@ -14,7 +14,7 @@ from chrona.presentation.layout.surface_member_labels import (
     prepare_member_labels,
 )
 from chrona.presentation.layout.surface_routes import (
-    SurfaceRoutesContext, intrinsic_relation_endpoint_footprints,
+    SurfaceRoutesContext, endpoint_footprint_fields,
 )
 from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
@@ -242,8 +242,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         request, projection, review_rows, tuple(rows), tuple(groups), tuple(marks),
         timeline_bounds, layout_manifest, metric_values, tuple(text), surface_obstacles,
         _bounds(base.plot), temporal_endpoints=mark_batch.temporal_endpoints)
-    member_label_context = replace(member_label_context,
-        intrinsic_endpoint_footprints=intrinsic_relation_endpoint_footprints(route_context))
+    member_label_context = replace(member_label_context, **endpoint_footprint_fields(route_context))
 
     timeline_rect = LabelRect(*timeline_bounds)
 

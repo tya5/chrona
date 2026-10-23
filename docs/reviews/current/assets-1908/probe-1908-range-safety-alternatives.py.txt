@@ -1,0 +1,8 @@
+import tempfile, pathlib, pytest
+from xml.etree import ElementTree
+from tests.integration import test_attached_milestones as t
+for kw in ({"lanes":True,"packing":["explicit"],"with_delta":True},{"points":"own-row","with_delta":True},{"lanes":True,"with_delta":True}):
+    mp=pytest.MonkeyPatch(); tmp=pathlib.Path(tempfile.mkdtemp())
+    s,svg=t._render(tmp,mp,**kw); txt="".join(ElementTree.fromstring(svg).itertext())
+    sup=[d for d in s["sceneDiagnostics"] if d.startswith("W_LAYOUT_LABEL_SUPPRESSED")]
+    print("RESULT",kw,"RangeName",("Range safety review" in txt),"suppressed",len(sup),"names",sum(1 for p in s["primitives"] if p["id"].startswith("member-label:")))

@@ -1,0 +1,26 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_routed_tail_is_drawn_for_a_leader_style_and_named_for_a_highlight[highlight-True] _
+
+tmp_path = PosixPath('/private/var/folders/mh/898cvp_j4n91_km1rvvl2qgr0000gn/T/pytest-of-yasudatetsuya/pytest-14189/test_routed_tail_is_drawn_for_1')
+purpose = 'highlight', named = True
+
+    @pytest.mark.parametrize("purpose,named", [("note", False), ("highlight", True)])
+    def test_routed_tail_is_drawn_for_a_leader_style_and_named_for_a_highlight(tmp_path, purpose, named):
+        rendered = _render(tmp_path, purpose)
+        ids = {item.scene_id for item in rendered.surface.primitives}
+        # The as-of rule forces the opposite-side routed-tail pass for this fixture.
+        assert "W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:note-0:only:other-side-of-as-of" in rendered.scene.diagnostics
+        assert "annotation-box:note-0" in ids and "annotation-text:note-0" in ids
+        warned = [item for item in rendered.scene.diagnostics if item.startswith(CODE)]
+        if named:
+>           assert warned == [f"{CODE}:note-0:highlight:tail"]
+E           AssertionError: assert [] == ['W_LAYOUT_AN...ghlight:tail']
+E             
+E             Right contains one more item: 'W_LAYOUT_ANNOTATION_CONNECTOR_UNSUPPORTED_FOR_PURPOSE:note-0:highlight:tail'
+E             Use -v to get more diff
+
+tests/integration/test_annotation_connector_purpose_tail_1935.py:39: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_annotation_connector_purpose_tail_1935.py::test_routed_tail_is_drawn_for_a_leader_style_and_named_for_a_highlight[highlight-True]
+1 failed, 1 passed in 3.51s
