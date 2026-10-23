@@ -18,6 +18,12 @@ body:
     legend-block: {type: number, value: 24}
     legend-gap: {type: number, value: 28}
     legend-item-min: {type: number, value: 90}
+    mark-label-gap: {type: number, value: 8}
+    dash.ghost: {type: dashPattern, value: [4, 3]}
+    mark-height-framed: {type: number, value: 0.7}
+    mark-offset-framed: {type: number, value: 0.15}
+    mark-height-framed-content: {type: number, value: 0.34}
+    mark-offset-framed-content: {type: number, value: 0.33}
   roles:
     kicker:
       fontFamily: editorial
@@ -37,14 +43,48 @@ body:
       numericSpacing: numeric-spacing
     heading:
       fontWeight: weight.regular
+    # Baseline ghosts: a dashed full-track outline behind a current-plan bar inset within it,
+    # so an unchanged baseline frames the bar and a moved one shows its own dates.
+    planned:
+      strokeWidth: stroke-width
+      markHeight: mark-height-framed
+      markOffset: mark-offset-framed
+      symbolHeight: mark-height-container
+      symbolOffset: mark-offset-start
+      markPaintOrder: mark-paint-middle
+      markCornerRadius: mark-radius-square
+    actual:
+      strokeWidth: stroke-width
+      markHeight: mark-height-framed-content
+      markOffset: mark-offset-framed-content
+      markPaintOrder: mark-paint-front
+      markCornerRadius: mark-radius-rounded
+    missing-actual:
+      strokeWidth: stroke-width
+      pattern: hatch
+      markHeight: mark-height-framed-content
+      markOffset: mark-offset-framed-content
+      markPaintOrder: mark-paint-front
+      markCornerRadius: mark-radius-rounded
+    snapshot:
+      strokeWidth: stroke-width
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-back
+      markCornerRadius: mark-radius-square
+      dash: dash.ghost
     groupHeader:
       fontWeight: weight.regular
       fontSize: size.group
       letterSpacing: spacing.caps
       textTransform: upper
+  metrics:
+    timeline.mark.labelGap: mark-label-gap
   colorBindings:
     region-frame-sidebar.fill: surfaceRaised
     kicker.fill: accent
     group-header.fill: textMuted
     slot-heading.fill: textMuted
     group-header-band.fill: surface
+    snapshot.fill: surface
+    snapshot.stroke: accent

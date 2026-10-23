@@ -2,8 +2,9 @@ version: chrona/view/v0.28
 kind: view
 id: halcyon-02-programme-board-sidebar
 # Slide 02 only (slides 11 and 12 keep views/02-programme-board.yaml): one row per work package
-# under owner group-header bands, names and finish deltas beside their marks, and the Project
-# notes listed in the sidebar's notes slot.
+# under owner group headers drawn inside the plot, names and nonzero finish deltas beside their
+# marks, unlabelled dashed baseline ghosts, and numbered notes (index at the anchor, entry in the
+# sidebar's annotations slot).
 body:
   surface: table-timeline
   heading:
@@ -27,6 +28,7 @@ body:
     missing: ungrouped
     order: [bus, payload, ait, ground, launch, ops]
     presentation: header
+    headerPlacement: timeline
   ordering:
     by: source
     direction: ascending
@@ -41,7 +43,9 @@ body:
   figures:
   - {id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}
   comparison:
-    baseline: primary
+    baseline: snapshot
+    baselineMarks: ghost
+    baselineLabels: none
     missingActualScope: in-progress
     actual: required
     observationSelection: latest
@@ -53,12 +57,36 @@ body:
       content: [title, finishDelta]
       side: auto
       overflow: suppress
+      omitZeroDelta: true
     relations:
       mode: semantic
       overflow: suppress
     annotations:
-      mode: semantic
-      marker: none
+      mode: presentation
+      marker: numbered
+  # Numbered notes: an index at each anchor and the numbered entry in the sidebar's annotations
+  # slot, no leader. Declaration order is the list order.
+  annotations:
+  - id: tvac-note
+    purpose: note
+    anchor: {kind: object, id: payload-tvac, facet: actual, endpoint: finish}
+    projectAnnotation: tvac
+    candidates: &notes-list
+    - id: list
+      region: {kind: slot, source: annotations}
+      search: {kind: row-aligned}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
+  - id: station-note
+    purpose: note
+    anchor: {kind: object, id: station, facet: planned, endpoint: finish}
+    projectAnnotation: station
+    candidates: *notes-list
+  - id: window-note
+    purpose: note
+    anchor: {kind: object, id: launch, facet: planned, endpoint: at}
+    projectAnnotation: window
+    candidates: *notes-list
   axis:
     tiers:
     - unit: month
