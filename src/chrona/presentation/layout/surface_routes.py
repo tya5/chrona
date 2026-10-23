@@ -574,8 +574,20 @@ def prepare_normal_relation_routes(context: SurfaceRoutesContext) -> PreparedNor
     return _prepare_normal_relation_routes(context, include_port_candidates=True)
 
 
-def intrinsic_relation_endpoint_footprints(context: SurfaceRoutesContext) -> tuple[SurfaceObstacle, ...]:
-    """Complete mandatory ink for admitted temporal span endpoints used by relations."""
+def endpoint_footprint_fields(context: SurfaceRoutesContext) -> dict[str, tuple[SurfaceObstacle, ...]]:
+    """Both endpoint-ink inventories a member-name context carries (intrinsic, and led from the exposed port)."""
+    return {"intrinsic_endpoint_footprints": intrinsic_relation_endpoint_footprints(context),
+            "exposed_endpoint_footprints": intrinsic_relation_endpoint_footprints(context, exposed=True)}
+
+
+def intrinsic_relation_endpoint_footprints(context: SurfaceRoutesContext, *,
+                                           exposed: bool = False) -> tuple[SurfaceObstacle, ...]:
+    """Complete mandatory ink for admitted temporal span endpoints used by relations.
+
+    ``exposed`` starts each lead at the port where the connector leaves its whole physical host (the
+    comparison cluster and its physical neighbours), the first column a route may turn on, instead
+    of at the endpoint's own nominal port.
+    """
     prepared = _prepare_normal_relation_routes(context, include_port_candidates=False)
     footprints: dict[str, SurfaceObstacle] = {}
     theme = context.request.theme_tokens
@@ -599,9 +611,20 @@ def intrinsic_relation_endpoint_footprints(context: SurfaceRoutesContext) -> tup
                 port = (occurrence.source_nominal if role == "source" else occurrence.target_nominal)
                 if port is None:
                     continue
+                if exposed:
+                    other = occurrence.target_nominal if role == "source" else occurrence.source_nominal
+                    natural = "start" if endpoint == "start" else "end"
+                    egress = next((item for item in connector_egress_candidates(
+                        mark, endpoint, other if other is not None else port,
+                        prepared.comparison_clusters.get((mark.source_ref, prepared.instance_rows[
+                            occurrence.source_id if role == "source" else occurrence.target_id]), ()),
+                        explicit_neighbors=physical_host_neighbors(mark, context.marks, endpoint))
+                        if item.side == natural), None)
+                    if egress is not None:
+                        port = egress.exposed_port
                 for part, geometry in enumerate(intrinsic_span_endpoint_ink(
                         port, endpoint, width, marker, terminal_side=role)):
-                    identifier = (f"intrinsic-endpoint:{relation.relation_id}:"
+                    identifier = (f"{'exposed' if exposed else 'intrinsic'}-endpoint:{relation.relation_id}:"
                                   f"{occurrence.source_id}:{occurrence.target_id}:{role}:{part}")
                     footprints[identifier] = SurfaceObstacle(identifier, "mark", "timeline", geometry)
     return tuple(footprints.values())
@@ -1070,6 +1093,19 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                        for host in (*egress.host_ids, *egress.corridor_host_ids))
 
             def attempt_route(domain: RelationObstacleDomain) -> RelationRouteAttemptOutcome:
+                named = {item.placement_id: item.label_gap for item in domain.obstacles.all() if item.label_gap}
+                if domain.stage is RelationResolutionStage.NORMAL and named:
+                    # Relation ink keeps the shared label gap from every placed member name: the NORMAL
+                    # search is first made against the names' spaced boxes. A relation with no such
+                    # route continues unchanged, so no name or connected route is given up for the gap.
+                    spaced = RelationObstacleDomain.normal(domain.obstacles.copy(clearance_overrides=named))
+                    spaced_outcome = search_route(spaced, spaced_view=True)
+                    if spaced_outcome.selected_pair is not None:
+                        return spaced_outcome
+                return search_route(domain)
+
+            def search_route(domain: RelationObstacleDomain, *, spaced_view: bool = False
+                             ) -> RelationRouteAttemptOutcome:
                 attempted_domains[domain.stage] = domain
                 back_route_reason[0] = ""
                 pairs = port_pairs

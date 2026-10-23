@@ -1,0 +1,11 @@
+import sys, tempfile
+from pathlib import Path
+from tests.integration.test_annotation_card_fallthrough_1906 import _fixture
+from tests.support import annotation_kinds as ak
+source, parts = _fixture()
+parts["view"]["body"]["annotations"][0]["purpose"] = "highlight"
+r = ak.render(Path(tempfile.mkdtemp()), source, parts)
+ids = {i.scene_id for i in r.surface.primitives}
+for k in ("annotation-box:view-n0","annotation-text:view-n0","annotation-leader:view-n0"):
+    print(k, "present" if k in ids else "ABSENT")
+print("annotation/route diagnostics:", [d for d in r.scene.diagnostics if "ANNOTATION" in d or "ROUTE" in d])

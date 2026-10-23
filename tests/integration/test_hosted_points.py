@@ -62,16 +62,17 @@ def test_dependency_can_enter_span_endpoint_covered_by_its_hosted_point(tmp_path
                   "from": {"object": "earlier", "endpoint": "end"},
                   "to": {"object": "host", "endpoint": "start"}}]
     rendered = _render(tmp_path, objects, relations=relations)
-    # The legal completion is paired stubs: select the target fragment rather
-    # than assuming the source fragment's terminal enters the target glyph.
+    # The legal completions are paired stubs and, once the names keep their label gap from the relation ink
+    # (#1848), the fixed overlap route that a name abutting the lead used to prevent: either way a connected
+    # fragment enters the glyph, so select the fragment with the head rather than assuming which one it is.
     fragments = [item for item in rendered.surface.primitives
                  if item.purpose == "dependency" and item.source_ref == "relation:id:enter-host"]
     receipt, = [item for item in rendered.info_diagnostics
                 if isinstance(item, RelationResolutionInfo)
-                and item.fragment_ids is not None
-                and set(item.fragment_ids) == {fragment.scene_id for fragment in fragments}]
-    assert receipt.stage.value == "stub"
-    assert len(receipt.fragment_ids) == len(fragments) == 2
+                and (set(item.fragment_ids or ()) == {fragment.scene_id for fragment in fragments}
+                     or item.relation_id in {fragment.scene_id for fragment in fragments})]
+    assert receipt.stage.value in {"stub", "overlap"}
+    assert len(fragments) == (2 if receipt.stage.value == "stub" else 1)
     route, = [item for item in fragments if item.marker_end is not None]
     gate = _mark(rendered, "planned", "gate")
     x, y = route.points[-1]

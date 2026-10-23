@@ -584,8 +584,39 @@ the same footprint of another. A candidate that touches or lies within the gap o
 another placed name group is not clear and the ladder continues; it applies in normal
 admission, the local exchange, the connected-route yield (under Declared unroutable
 resolution) and any name placed after a yield. It is
-a constraint between names only: it adds no clearance for routes, relation labels, marks
-or other content, and it creates no new candidate side or pose.
+a constraint between names only: it adds no clearance for relation labels, marks
+or other content, and it creates no new candidate side or pose. Completed relation ink
+and note indices keep the same gap from a name by the preference below.
+
+**Relation ink and note indices keep the label gap (#1848).** A completed relation stroke
+segment or arrowhead, and a note index, keep the resolved label gap of Specification 07 from
+every placed member-name group, on whichever side of its mark it lies. The one rule has
+three owners, each a first tier that falls back unchanged when it has no result; none adds a
+quota, scheduler, reorder, search budget, recovery stage or waiver of an existing validator.
+
+1. *Name placement.* A member name first takes the first clear declared candidate that also
+   keeps the gap from the ink its relations must draw at the mark it sits beside: the existing
+   intrinsic endpoint footprint, and the same footprint led from the port where the connector
+   leaves its whole physical host (the first column a route may turn on). With none it takes
+   the unchanged candidate ladder, so the gap never costs a name.
+2. *Route search.* The relation's NORMAL stage is first searched against the names' groups
+   widened by the gap, using the existing completed-ink validators (`route_candidate_ink`,
+   terminals and strokes) unchanged. A relation with no such route continues through the
+   unchanged stages, the connected-route name yield and paired stubs, so the gap itself never
+   sends a relation to a recovery stage, a name yield or a stub. Relation labels and other
+   labels still see the unwidened names.
+3. *Note index.* An index the unchanged side order places first looks for a clear candidate on
+   its declared sides, sliding along a side no further than two em, that also keeps the gap from
+   completed relation strokes and terminals; with none it keeps the unchanged placement. An index
+   the unchanged order suppresses stays suppressed, except one that only the completed relation
+   ink beside its anchor blocks (the order succeeds without that ink): it takes the same slide,
+   so keeping the gap in a route never costs an index.
+
+Where a relation, name or index cannot keep the gap without moving another name (for example
+row pitch smaller than twice the gap plus the stroke), the existing result stands and is
+unchanged. The synthetic tests in `tests/integration/test_label_clearance_arrowheads_1848.py`
+state the rule on arrowheads left of a name, routes leaving the start side of a name, and an
+index beside a bar end or stub, for every endpoint pairing and for the default and a declared gap.
 
 Completed name text and label-visual footprints are hard content in every
 normal and recovery domain, except for the member-name yield for a connected route (under

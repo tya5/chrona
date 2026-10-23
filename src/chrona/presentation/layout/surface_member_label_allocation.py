@@ -65,7 +65,9 @@ def member_group_obstacles(allocation: MemberLabelAllocation, *,
     """Explicit full-group ownership, without emitting Scene primitives.
 
     ``spaced`` is for name-against-name placement: a member-name group repels another name by the
-    declared label gap. Routes, relation labels and other label kinds see the unspaced group.
+    declared label gap. Relation labels and other label kinds see the unspaced group; routes see it
+    unspaced too, except that their NORMAL stage is first searched with the group widened by its
+    ``label_gap`` (#1848).
     """
     candidate = allocation.candidate
     if candidate is None:
@@ -77,14 +79,16 @@ def member_group_obstacles(allocation: MemberLabelAllocation, *,
         baseline_block=text_candidate.bounds.y + float(prepared.measurement.treatment.font_size), overflow="fit")
     inline, block, width, height = bounds_from_rect(measured_text.bounds)
     placement_id, slot = allocation.request.placement_id, allocation.request.collision_domain.slot
-    clearance = (prepared.geometry.gap if spaced and allocation.request.semantic_id == "memberLabel"
-                 else 0.0)
+    member = allocation.request.semantic_id == "memberLabel"
+    clearance = prepared.geometry.gap if spaced and member else 0.0
+    label_gap = prepared.geometry.gap if member else 0.0
     text = ((SurfaceObstacle(placement_id, "text", slot,
-                ObstacleRect(inline, block, inline + width, block + height), clearance=clearance),)
+                ObstacleRect(inline, block, inline + width, block + height), clearance=clearance,
+                label_gap=label_gap),)
             if width > 0 and height > 0 else ())
     box = candidate.bounds
     return (*text, SurfaceObstacle(f"label-footprint:{placement_id}", "label-visual", slot,
-        ObstacleRect(box.x, box.y, box.right, box.bottom), clearance=clearance))
+        ObstacleRect(box.x, box.y, box.right, box.bottom), clearance=clearance, label_gap=label_gap))
 
 
 def exchange_member_name(later: MemberLabelAllocation, earlier: tuple[MemberLabelAllocation, ...],

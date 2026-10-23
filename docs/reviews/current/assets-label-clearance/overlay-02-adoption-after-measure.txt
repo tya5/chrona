@@ -1,0 +1,54 @@
+VIOL   0.01 (gap 8) segment         member-label 'EMC and RF compatibility'  relation:id:emc-psr
+VIOL   1.50 (gap 8) segment         member-label 'Bus functional test +15d'  relation:id:eps-bustest
+VIOL   1.50 (gap 8) segment         member-label 'Power system qualification -3d'  relation:id:avionics-bustest
+VIOL   1.59 (gap 8) segment         member-label 'Launch campaign'  relation:id:campaign-frr
+VIOL   2.04 (gap 8) arrowhead-end   note-index   '3'  relation:id:rehearsals-launch
+VIOL   2.51 (gap 8) arrowhead-end   member-label 'EMC and RF compatibility'  relation:id:emc-psr
+VIOL   3.27 (gap 8) segment         member-label 'Bus functional test +15d'  relation:id:avionics-cdr
+VIOL   4.09 (gap 8) arrowhead-end   member-label 'Launch campaign'  relation:id:campaign-frr
+VIOL   4.50 (gap 8) segment         note-index   '3'  relation:id:rehearsals-launch
+VIOL   5.41 (gap 8) segment         member-label 'Flight readiness review'  relation:id:campaign-frr
+VIOL   5.50 (gap 8) segment         member-label 'Power system qualification -3d'  relation:id:eps-bustest
+VIOL   5.50 (gap 8) segment         member-label 'Bus functional test +15d'  relation:id:avionics-bustest
+VIOL   6.99 (gap 8) segment         member-label 'Pre-ship review'  relation:id:emc-psr
+VIOL   7.50 (gap 8) arrowhead-start note-index   '3'  relation:id:launch-leop
+ok     8.00 (gap 8) segment         member-label 'Primary structure fabrication'  relation:id:structure-avionics
+ok     8.00 (gap 8) segment         member-label 'Payload thermal-vacuum +10d'  relation:id:detector-tvac
+ok     8.00 (gap 8) segment         note-index   '1'  relation:id:tvac-delivery
+ok     8.00 (gap 8) segment         member-label 'Spacecraft integration'  relation:id:bustest-integration
+ok     8.00 (gap 8) segment         member-label 'Spacecraft integration'  relation:id:delivery-integration
+ok     8.00 (gap 8) segment         member-label 'Vibration and shock'  relation:id:vibration-tvac
+ok     8.00 (gap 8) segment         member-label 'System thermal-vacuum'  relation:id:tvac-emc
+ok     8.00 (gap 8) segment         note-index   '2'  relation:id:station-comms
+ok     8.00 (gap 8) segment         member-label 'End-to-end link test -11d'  relation:id:comms-rehearsals
+ok     8.00 (gap 8) segment         member-label 'Operations rehearsals'  relation:id:comms-rehearsals
+ok     8.00 (gap 8) segment         member-label 'Ship to range'  relation:id:psr-shipment
+ok     8.00 (gap 8) segment         member-label 'LEOP and commissioning'  relation:id:launch-leop
+ok     8.84 (gap 8) arrowhead-end   member-label 'Launch window opens'  relation:id:rehearsals-launch
+ok     9.00 (gap 8) arrowhead-end   note-index   '3'  relation:id:frr-launch
+ok     9.25 (gap 8) arrowhead-end   member-label 'Payload delivered'  relation:id:tvac-delivery
+ok     9.25 (gap 8) arrowhead-end   member-label 'First light'  relation:id:leop-firstlight
+ok     9.50 (gap 8) arrowhead-start member-label 'Primary structure fabrication'  relation:id:structure-avionics
+ok     9.50 (gap 8) arrowhead-start member-label 'Power system qualification -3d'  relation:id:eps-bustest
+ok     9.50 (gap 8) segment         member-label 'Critical design review'  relation:id:bustest-integration
+ok     9.50 (gap 8) arrowhead-start member-label 'Vibration and shock'  relation:id:vibration-tvac
+ok     9.50 (gap 8) arrowhead-start member-label 'System thermal-vacuum'  relation:id:tvac-emc
+ok     9.50 (gap 8) arrowhead-start member-label 'EMC and RF compatibility'  relation:id:emc-psr
+ok     9.50 (gap 8) segment         note-index   '2'  relation:id:mcs-comms
+ok     9.50 (gap 8) arrowhead-start note-index   '2'  relation:id:station-comms
+ok     9.50 (gap 8) arrowhead-start member-label 'End-to-end link test -11d'  relation:id:comms-rehearsals
+ok     9.50 (gap 8) arrowhead-start member-label 'Launch campaign'  relation:id:campaign-frr
+ok     9.50 (gap 8) segment         note-index   '3'  relation:id:frr-launch
+ok     9.55 (gap 8) arrowhead-end   member-label 'Flight readiness review'  relation:id:campaign-frr
+ok    10.24 (gap 8) arrowhead-end   member-label 'Pre-ship review'  relation:id:emc-psr
+ok    10.50 (gap 8) arrowhead-end   member-label 'Payload thermal-vacuum +10d'  relation:id:detector-tvac
+ok    10.50 (gap 8) arrowhead-end   member-label 'Spacecraft integration'  relation:id:bustest-integration
+ok    10.50 (gap 8) arrowhead-end   member-label 'Operations rehearsals'  relation:id:comms-rehearsals
+ok    10.50 (gap 8) arrowhead-end   member-label 'Ship to range'  relation:id:psr-shipment
+ok    10.50 (gap 8) arrowhead-end   member-label 'LEOP and commissioning'  relation:id:launch-leop
+ok    10.72 (gap 8) arrowhead-end   member-label 'Power system qualification -3d'  relation:id:eps-bustest
+ok    11.50 (gap 8) segment         member-label 'Avionics integration +3d'  relation:id:avionics-bustest
+ok    11.50 (gap 8) segment         member-label 'Imager optics alignment +1d'  relation:id:optics-detector
+ok    11.50 (gap 8) segment         member-label 'Detector calibration +2d'  relation:id:detector-tvac
+ok    11.50 (gap 8) segment         member-label 'Mission control software +3d'  relation:id:mcs-comms
+ok    11.53 (gap 8) arrowhead-end   member-label 'Bus functional test +15d'  relation:id:eps-bustest

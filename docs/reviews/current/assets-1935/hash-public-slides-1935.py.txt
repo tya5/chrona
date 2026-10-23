@@ -1,0 +1,16 @@
+import sys, hashlib, json
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+from chrona.resources import safe_load
+from tools.materialize_example import materialize
+root=Path(sys.argv[1]); out=Path(sys.argv[2]); out.mkdir(parents=True,exist_ok=True)
+targets=[(m,str(s["id"])) for m in sorted((root/"examples").glob("*/manifest.yaml")) for s in safe_load(m.read_bytes())["slides"]]
+def run(t):
+    m,s=t; d=out/m.parent.name/s; materialize(m,s,d,write=True)
+with ThreadPoolExecutor(4) as ex: list(ex.map(run,targets))
+lines=[]
+for f in sorted(out.rglob("*")):
+    if f.is_file() and f.suffix in (".svg",".json"):
+        lines.append(f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(out)}")
+Path(sys.argv[3]).write_text("\n".join(lines)+"\n",encoding="utf-8")
+print(len(targets),"slides",len(lines),"files")
