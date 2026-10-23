@@ -5,7 +5,7 @@ import yaml
 
 from chrona.presentation.layout import surface_routes
 from chrona.presentation.layout import surface_count_closure
-from chrona.presentation.model.render_progress import RenderProgress
+from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent, RenderWorkPhaseEvent
 from chrona.usecases.draft_render import DraftRenderRequest, render_draft
 
 
@@ -69,9 +69,11 @@ def test_scheduler_critical_relations_route_first_but_emit_in_declaration_order(
                 (0, "start", "short", False, "dependency"), (2, "short", "finish", False, "dependency"))
     assert batches and all(batch == expected for batch in batches)
     assert attempts_by_trial
+    assert any(isinstance(event, RenderWorkPhaseEvent) and event.phase == "routing"
+               for event in progress_events)
     passes = []
     for event in progress_events:
-        if event.phase != "routing" or event.completed is None:
+        if not isinstance(event, RenderProgressEvent) or event.phase != "routing" or event.completed is None:
             continue
         assert event.total == len(names)
         if event.completed == 0:
