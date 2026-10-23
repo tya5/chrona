@@ -306,10 +306,10 @@ slides:
       id: halcyon-1-11-overlay-briefing
       body:
         view:
-          id: halcyon-02-programme-board
+          id: halcyon-11-overlay-briefing
           kind: view
           store: {provider: local, identity: halcyon-1-example}
-          address: views/02-programme-board.yaml
+          address: views/11-overlay-briefing.yaml
           revision: {token: example-v1}
         theme:
           id: wallboard

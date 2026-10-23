@@ -6,6 +6,26 @@ body:
   rows:
     mode: lanes
     packing: [explicit, attached, chain, dates]
+    # Slide 12 only (slide 11 has views/11-overlay-briefing.yaml): Avionics integration, Imager optics alignment and the launch window milestone
+    # take their own lanes so the member names the painted-geometry correction (#1941) suppressed
+    # have a clear pose; the other keys restate the generated lane assignment (#1848).
+    laneKeys:
+      byObject:
+        pdr: bus-main
+        structure: bus-main
+        bus-test: bus-main
+        eps: bus-power
+        cdr: bus-power
+        avionics: bus-avionics
+        optics: payload-optics
+        detector: payload-main
+        payload-tvac: payload-main
+        payload-delivery: payload-main
+        launch-contract: launch-main
+        shipment: launch-main
+        campaign: launch-main
+        frr: launch-main
+        launch: launch-window
     laneTable: {label: lane, count: true}
   selection:
     include:
