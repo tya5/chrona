@@ -392,8 +392,22 @@ placement consume the same resolved value across automatic, explicit and
 lane rows; Scene and adapters do not add offsets.
 Where Specification 50 applies measured member-name group separation, it
 uses this same resolved gap between complete text/chip/icon groups. It is
-not a second independent spacing policy. That name-only admission clearance
-does not expand the obstacles seen by relation routes or unrelated labels.
+not a second independent spacing policy. The name-to-name clearance does not
+expand the obstacles seen by relation labels or unrelated labels.
+
+**Relation ink and note indices (#1848).** The same resolved gap is the
+clearance that completed relation ink keeps from a placed member name and from
+a note index: every painted stroke segment and every arrowhead or other
+terminal of a relation, whichever side of its mark the name or index lies on.
+It is measured between the painted ink (half the stroke width, the terminal's
+own outline) and the complete name group's text/chip/icon box or the note
+index's text/visual box. The rule is project independent: it reads no object
+identity, slide or corpus value, and an authored `timeline.mark.labelGap`
+replaces, rather than adds to, the fallback here as above. It is a preference
+that never removes content: where no placement or route keeps the gap, the
+unchanged Specification 50 ladder applies, so the gap never omits a member
+name, drops a connected route to a stub or a recovery stage, or suppresses a
+note index that the ladder would place. Scene and adapters add no offset.
 
 **Completed mark ink (#1936).** Layout's shared mark facets resolve effective
 paint through the neutral Theme paint model, including a built-in symbol's

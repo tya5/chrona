@@ -115,13 +115,19 @@ def test_content_first_names_are_hard_route_obstacles_for_safe_at_arrival(monkey
     assert not context.clean_obstacles.select(classes=("dependency-route",))
     routes = completed.routes.relations
     assert len(routes) == 3 and not any(item.suppressed for item in routes)
-    # An `at` endpoint enters at the left vertex. Positive-length travel along
-    # its closed face is forbidden; the final segment only touches the vertex.
+    # An `at` endpoint enters at a vertex. Positive-length travel along its closed face is forbidden; the
+    # final segment only touches the vertex. The left vertex is preferred; one whose arrowhead would lie
+    # within the label gap of a name (#1848) yields to the top vertex, entered from above.
+    vertices = {"start": (x, mark_y + mark_height / 2), "above": (x + mark_width / 2, mark_y)}
     for route in routes:
-        assert route.points[-1] == (x, mark_y + mark_height / 2)
-        assert route.points[-1][0] < x + mark_width
-        assert route.points[-2][1] == route.points[-1][1]
-        assert route.points[-2][0] < route.points[-1][0]
+        side = route.target_port_id.rsplit(":", 1)[-1]
+        assert side in vertices and route.points[-1] == vertices[side]
+        if side == "start":
+            assert route.points[-2][1] == route.points[-1][1]
+            assert route.points[-2][0] < route.points[-1][0]
+        else:
+            assert route.points[-2][0] == route.points[-1][0]
+            assert route.points[-2][1] < route.points[-1][1]
     for text in completed_content.text:
         box = ObstacleRect(float(text.bounds.inline), float(text.bounds.block),
             float(text.bounds.inline + text.bounds.inline_size),
