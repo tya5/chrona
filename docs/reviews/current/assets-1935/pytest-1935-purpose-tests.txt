@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.7, pytest-9.1.1, pluggy-1.6.0 -- /private/tmp/claude-501/venv1682/bin/python
+cachedir: .pytest_cache
+rootdir: /private/tmp/claude-501/rv1935
+configfile: pyproject.toml
+plugins: cov-7.1.0, xdist-3.8.0, split-0.11.0, timeout-2.4.0, asyncio-1.4.0, httpx-0.36.2, anyio-4.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 18 items
+
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[callout-leader-rail] PASSED [  5%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[callout-leader-plot] PASSED [ 11%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[callout-none-rail] PASSED [ 16%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[callout-none-plot] PASSED [ 22%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[highlight-leader-rail] PASSED [ 27%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[highlight-leader-plot] PASSED [ 33%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[highlight-none-rail] PASSED [ 38%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[highlight-none-plot] PASSED [ 44%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[note-leader-rail] PASSED [ 50%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[note-leader-plot] PASSED [ 55%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[note-none-rail] PASSED [ 61%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[note-none-plot] PASSED [ 66%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[explanatory-arrow-leader-rail] PASSED [ 72%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[explanatory-arrow-leader-plot] PASSED [ 77%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[explanatory-arrow-none-rail] PASSED [ 83%]
+tests/integration/test_annotation_connector_purpose_1935.py::test_every_purpose_connector_combination_draws_or_names_its_connector[explanatory-arrow-none-plot] PASSED [ 88%]
+tests/integration/test_annotation_connector_purpose_tail_1935.py::test_routed_tail_is_drawn_for_a_leader_style_and_named_for_a_highlight[note-False] PASSED [ 94%]
+tests/integration/test_annotation_connector_purpose_tail_1935.py::test_routed_tail_is_drawn_for_a_leader_style_and_named_for_a_highlight[highlight-True] PASSED [100%]
+
+============================= 18 passed in 22.12s ==============================

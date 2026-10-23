@@ -1,0 +1,12 @@
+........................................................................ [ 21%]
+........................................................................ [ 43%]
+........................................................................ [ 65%]
+........................................................................ [ 87%]
+...........................................                              [100%]
+=============================== warnings summary ===============================
+tests/unit/chrona/presentation/layout/test_relation_terminals.py: 10 warnings
+  /private/tmp/claude-501/rv1935/tests/unit/chrona/presentation/layout/test_relation_terminals.py:252: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    assert min(image.getdata()) < 128  # PNG (resvg of this SVG) shows ink
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+331 passed, 3370 deselected, 10 warnings in 246.07s (0:04:06)

@@ -94,6 +94,9 @@ def test_budget_hit_facts_survive_all_real_passes_and_project_to_scene_cli(tmp_p
                                            "search": policy, "searchBudget": 1}
     # Negative control: force the actual fallback iterator rather than a shape.
     monkeypatch.setattr(routing, "relation_shape_candidates", lambda *args, **kwargs: iter(()))
+    # Outward shapes are shapes too: with names keeping their label gap from the relation ink (#1848) a lane's
+    # first-fit route may be settled by one, which this negative control must not allow.
+    monkeypatch.setattr(routing, "outward_relation_shape_candidates", lambda *args, **kwargs: iter(()))
     original_routes = surface_routes.compose_surface_routes
     seen = []
     compose_passes = []
