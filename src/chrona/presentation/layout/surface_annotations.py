@@ -1222,6 +1222,17 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             and selected_rung != candidates[0].candidate_id):
                         add_diagnostic(
                             f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}", annotation)
+                    if box is not None and presentation.leader_semantic_id is None:
+                        # #1935: a purpose without a leader semantic cannot draw a leader. The box and text stay;
+                        # the declared connector is named instead of vanishing. `none` is intentional and silent.
+                        placed_candidate = next((item for item in annotation.candidates
+                                                 if item.candidate_id == selected_rung), None)
+                        if placed_candidate is not None and (placed_candidate.connector.kind == "leader"
+                                                             or tail_topology == "routed-tail"):
+                            unsupported_kind = "leader" if placed_candidate.connector.kind == "leader" else "tail"
+                            add_diagnostic(
+                                "W_LAYOUT_ANNOTATION_CONNECTOR_UNSUPPORTED_FOR_PURPOSE:"
+                                f"{annotation_id}:{presentation.purpose}:{unsupported_kind}", annotation)
                     if other_side_of_as_of:
                         add_diagnostic(
                             f"W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:{annotation_id}:{selected_rung}:other-side-of-as-of",
