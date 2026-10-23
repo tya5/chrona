@@ -18,7 +18,7 @@ from chrona.core.relation_identity import relation_identities
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, SurfaceLegendEntry, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, initials, table_value,
 )
-from chrona.presentation.table_presentation import affix_state
+from chrona.presentation.table_presentation import SIGNED_FORMATS, affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.review.profile_connections import validate_period_legend_sources
 from chrona.presentation.review.view_legend_witnesses import bind_view_legend_witnesses
@@ -135,6 +135,11 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                  day_unit=getattr(item, "delta_affix", "d"))
             if column.transform == "initials" and isinstance(value, str) and not initials(value):
                 value = None  # no letter or digit: the cell reads as absent, so the `missing` affix applies (#1373)
+        if (column.zero == "omit" and column.format in SIGNED_FORMATS
+                and type(value) is int and value == 0):
+            # Omit the complete display component before applying state affixes,
+            # row suffixes or forecast markers; the source fact stays available.
+            return "", "", ""
         if column.suffix is not None:
             core += column.suffix  # a literal after the row number, measured with it (#1545)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
@@ -638,6 +643,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     label_content: tuple[str, ...] = ("title",) if labels is True else ()
     label_side = "auto"
     label_text_role: str | None = None
+    omit_zero_delta = False
     label_fallback: tuple[str, ...] = ()
     annotation_fallback: tuple[str, ...] = ()
     link_mode = visible.links
@@ -657,6 +663,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             label_side = str(labels.get("side", "auto"))
             label_overflow = str(labels.get("overflow", "suppress" if lane_mode else "visible-overflow"))
             label_text_role = str(labels["textRole"]) if "textRole" in labels else None
+            omit_zero_delta = bool(labels.get("omitZeroDelta", False))
     # Layout keeps the existing name component's admission and Style identity.
     label_content = tuple("title" if component == "path" else component for component in label_content)
     member_names = table.member_names or close_member_names(projection, view)
@@ -810,6 +817,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
                                relation_overflow_declared=isinstance(relation_value, Mapping) and "overflow" in relation_value,
                                group_presentation=group_presentation,
+                               group_header_placement=(view.grouping.header_placement
+                                                       if view.grouping is not None
+                                                       and group_presentation == "header" else "table"),
+                               omit_zero_delta=omit_zero_delta,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
                                as_of=as_of, as_of_label=_as_of_label(
                                    as_of_marker, as_of, locale, resolver,
@@ -825,7 +836,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    observation_rows=detail_content.observation_rows,
                                label_fallback=label_fallback, label_text_role=label_text_role, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
-                               attached_labels=_attached_labels(projection, locale, member_names),
+                               attached_labels=_attached_labels(
+                                   projection, locale, member_names, omit_zero_delta=omit_zero_delta),
                                member_names=member_names,
                                table_cell_objects=table_cell_objects,
                                scale_legend_paints=scale_legend_paints,
@@ -971,7 +983,8 @@ def _group_header_runs(projection: ReviewProjection, project: Mapping[str, Any],
 
 
 def _attached_labels(projection: ReviewProjection, locale: str,
-                     member_names: Mapping | None = None) -> tuple[tuple[str, str], ...]:
+                     member_names: Mapping | None = None, *,
+                     omit_zero_delta: bool = False) -> tuple[tuple[str, str], ...]:
     """Title, planned date and point delta of each attached point, in its View locale (#486)."""
     labels = []
     active_rows = projection.lane_rows if projection.lane_membership is not None else projection.rows
@@ -983,7 +996,8 @@ def _attached_labels(projection: ReviewProjection, locale: str,
             container = row.lane_id if projection.lane_membership is not None else row.row_id
             name = (member_names or {}).get(member_name_key(item, container), item.title)
             parts = [name, _format_compact_date(at, include_year=False, locale=locale)]
-            if item.at_delta is not None:
+            if item.at_delta is not None and not (
+                    omit_zero_delta and type(item.at_delta) is int and item.at_delta == 0):
                 parts.append(signed_delta_text(item.at_delta, item))
             labels.append((member_name_key(item, container), " · ".join(parts)))
     return tuple(labels)

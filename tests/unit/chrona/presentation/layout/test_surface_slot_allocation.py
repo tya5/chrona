@@ -122,7 +122,8 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
         temporal_capacity=candidate.temporal_capacity,
         metric_values=candidate.measured_sources.metric_values,
         icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
-        font_metrics=candidate.font_metrics, mark_visibility_index=passed_index,
+        font_metrics=candidate.font_metrics, paint_capabilities=candidate.paint_capabilities,
+        mark_visibility_index=passed_index,
         row_admission=passed_admission,
         scene_precision=precision)]
     assert candidate.fixed_lane_preflight is stale

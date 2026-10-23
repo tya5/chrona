@@ -382,6 +382,8 @@ class SurfaceContentInput:
     legend_mark_occurrences: tuple[StyleOccurrence, ...] = ()
     legend_progress_possible: bool = False
     member_names: Mapping[NameKey, str] = field(default_factory=lambda: MappingProxyType({}))
+    group_header_placement: str = "table"  # table or timeline content region (#1936)
+    omit_zero_delta: bool = False  # omit only exact-zero finish-delta label components (#1936)
 
     def member_name(self, item: ReviewItem, container_id: str = "") -> str:
         """A normalized occurrence name, not a replacement for source title."""

@@ -113,6 +113,12 @@ def is_estimated_finish_delta(item: Any) -> bool:
             and not forecast.schedule.completed)
 
 
+def omit_zero_finish_delta(item: Any, enabled: bool) -> bool:
+    """Whether the View removes this item's numeric-zero finish-delta label component (#1936)."""
+    value = display_finish_delta(item)
+    return bool(enabled and type(value) is int and value == 0)
+
+
 NEW_MARKER = "new"  # the en-US default of ``marker.baselineNew``; localized text rides on ``ReviewItem.new_marker`` (#1781)
 
 
@@ -982,7 +988,9 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                  if scenario_ghost(item) else None),
                 (replace(snapshots[item.object_id], item_id=f"snapshot:{item.object_id}",
                          source_kind="snapshot", track="shared", temporal_paint=item.temporal_paint,
-                         collapsed_row_id=item.collapsed_row_id)
+                         collapsed_row_id=item.collapsed_row_id,
+                         member_label_eligible=(snapshots[item.object_id].member_label_eligible
+                                                and view.comparison.baseline_labels != "none"))
                  if snapshot_ghost(item) else None),
             ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,

@@ -1,6 +1,7 @@
 """A finish-delta label is a member of its title's label packing, in key rows and ordinary rows (#1681)."""
 from __future__ import annotations
 
+from dataclasses import replace
 from itertools import combinations
 from pathlib import Path
 
@@ -21,8 +22,8 @@ def _compact_mark_theme(path):
     return _write(path, theme)
 
 
-def _key_row_request(tmp_path):
-    request = _request(tmp_path, placement="plot", folded=True, folded_count=3, viewport="900xauto",
+def _key_row_request(tmp_path, *, folded_count=3):
+    request = _request(tmp_path, placement="plot", folded=True, folded_count=folded_count, viewport="900xauto",
                        theme_path=_compact_mark_theme(tmp_path / "theme.yaml"))
     view = yaml.safe_load(Path(request.view).read_text(encoding="utf-8"))
     body = view["body"]
@@ -61,6 +62,57 @@ def test_key_row_forecast_deltas_on_adjacent_milestones_never_meet_a_title(tmp_p
     placed = {**titles, **deltas}
     for (left_id, left), (right_id, right) in combinations(placed.items(), 2):
         assert _overlap(left.bounds, right.bounds) <= 1.0, (left_id, right_id)
+
+
+def test_key_row_zero_delta_omission_matches_title_only_packing_and_keeps_nonzero(tmp_path):
+    def render_case(name, *, zero_actual, content, omit):
+        case_dir = tmp_path / name
+        case_dir.mkdir()
+        # A single key-row subject also permits a title-only control under the
+        # existing forecast-occurrence coverage contract.
+        request = _key_row_request(case_dir, folded_count=1)
+        view_path = Path(request.view)
+        view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+        labels = view["body"]["visibility"]["labels"]
+        labels["content"] = list(content)
+        labels["omitZeroDelta"] = omit
+        _write(view_path, view)
+        if zero_actual:
+            actual_path = Path(request.actual)
+            actual = yaml.safe_load(actual_path.read_text(encoding="utf-8"))
+            for observation in actual["body"]["observations"]:
+                observation["actual"]["start"] = "2026-01-05"
+            _write(actual_path, actual)
+        # Make a visible delta chip substantially taller than the mark/title lane. This makes
+        # accidental measurement of an omitted +0d observable in the completed row geometry.
+        theme_path = Path(request.theme) if request.theme else _compact_mark_theme(case_dir / "theme.yaml")
+        theme = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
+        theme["body"]["values"]["delta-chip-min"] = {"type": "number", "value": 56.0}
+        theme["body"]["roles"]["finish-delta-chip"] = {
+            "backgroundTreatment": "fill", "chipPadding": "chip-padding",
+            "chipMinBlockSize": "delta-chip-min",
+        }
+        theme["body"]["colorBindings"]["finish-delta-chip.fill"] = "text"
+        _write(theme_path, theme)
+        request = replace(request, theme=theme_path)
+        return render_draft(request).rendered
+
+    zero_omitted = render_case("zero-omitted", zero_actual=True,
+                               content=("title", "finishDelta"), omit=True)
+    zero_title_only = render_case("zero-title-only", zero_actual=True,
+                                  content=("title",), omit=False)
+    nonzero_omitted = render_case("nonzero-omitted", zero_actual=False,
+                                  content=("title", "finishDelta"), omit=True)
+
+    def geometry(rendered):
+        return {item.scene_id: item.bounds for item in rendered.surface.primitives
+                if item.scene_id.startswith(("planned:key-row:", "member-label:key-row:", "row-band:key-row"))}
+
+    assert geometry(zero_omitted) == geometry(zero_title_only)
+    assert not _texts(zero_omitted, "variance:key-row:")
+    visible_nonzero = _texts(nonzero_omitted, "variance:key-row:")
+    assert set(visible_nonzero) == {"variance:key-row:gate"}
+    assert next(iter(visible_nonzero.values())).text == "+3d*"
 
 
 def test_ordinary_row_delta_and_title_keep_the_label_gap(tmp_path):

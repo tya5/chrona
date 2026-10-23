@@ -244,10 +244,18 @@ def test_the_view_table_width_unions_explain_as_their_inlined_twin_did():
         registry = schema_registry().with_resource(schema["$id"], Resource.from_contents(schema))
         reference = f"{schema['$id']}#{pointer}"
         if schema is adopted and pointer != base:
-            # The width grammar moved as a whole; nested parity still exercises
-            # its real adopted target rather than an obsolete inline path.
-            width = schema["allOf"][1]["properties"]["body"]["properties"]["tableColumns"]["items"]["properties"]["width"]
-            reference = width["$ref"] + pointer[len(base):]
+            # View reaches common-v0.2's shared member, whose width forwards
+            # to the frozen common-v0.1 grammar. Resolve both declared hops
+            # before appending a nested owner pointer; appending to the first
+            # reference would point inside the common-v0.2 forwarding node.
+            view_width = schema["allOf"][1]["properties"]["body"]["properties"][
+                "tableColumns"]["items"]["properties"]["width"]
+            assert view_width["$ref"] == (
+                "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/width")
+            width_v2 = schema_document("common-v0.2.schema.yaml")["$defs"][
+                "tableColumnPresentation"]["properties"]["width"]
+            assert width_v2["$ref"].startswith("urn:chrona:common-v0.1#/")
+            reference = width_v2["$ref"] + pointer[len(base):]
         return Draft202012Validator({"$ref": reference}, registry=registry)
 
     adopted, twin = schema_document("view-v0.28.schema.yaml"), dereferenced_schema("view-v0.28.schema.yaml")

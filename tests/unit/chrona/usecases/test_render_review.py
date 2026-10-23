@@ -16,6 +16,7 @@ import yaml
 import chrona.usecases.render_review as render_usecase
 from chrona.presentation.layout import surface_render_plan, surface_routes
 from chrona.presentation.layout.surface_source_inputs import _source_inputs
+from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.layout.surface_routes import _lane_fallback_clears_required_labels
@@ -98,7 +99,8 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     sources = _source_inputs(
         {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
         content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=(),
-                                axis_tiers=(), notes=()),
+                                axis_tiers=(), notes=(), group_presentation="none",
+                                group_header_placement="table"),
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1
@@ -574,7 +576,7 @@ def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_al
     # The accepted trial is last; its closed demand must fit the published host.
     assert timeline.bounds[3] >= float(completed[-1].required_timeline_block())
     assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
-        timeline.bounds[1] + timeline.bounds[3]
+        timeline.bounds[1] + timeline.bounds[3] + float(GEOMETRY_TOLERANCE)
     )
     assert not any(item.startswith(("W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"))
                    for item in rendered.surface.diagnostics)

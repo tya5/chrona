@@ -28,7 +28,8 @@ def _source_map(*, surface="table-timeline", legacy_heading=None, view_heading=N
     projection = SimpleNamespace(lane_rows=(), rows=(SimpleNamespace(label="Row"),), items=(),
                                  window=(date(2026, 1, 1), date(2026, 1, 2)), network=None)
     content = SimpleNamespace(axis_tiers=(), group_details=(), milestones=(),
-                               observation_rows=(), observation_columns=(), notes=())
+                               observation_rows=(), observation_columns=(), notes=(),
+                               group_presentation="none", group_header_placement="table")
     return _source_inputs(
         {"project": {"title": "Project title"}, "annotations": {}}, view, projection,
         SummaryContent(()), content=content,
@@ -81,7 +82,8 @@ def test_network_container_titles_use_group_header_typography():
                                  window=(date(2026, 1, 1), date(2026, 1, 2)),
                                  network=SimpleNamespace(nodes=nodes, edges=()))
     content = SimpleNamespace(axis_tiers=(), group_details=(), milestones=(),
-                              observation_rows=(), observation_columns=(), notes=())
+                              observation_rows=(), observation_columns=(), notes=(),
+                              group_presentation="none", group_header_placement="table")
     sources = _source_inputs(
         {"project": {"title": "Project title"}}, view, projection,
         SummaryContent(()), content=content)

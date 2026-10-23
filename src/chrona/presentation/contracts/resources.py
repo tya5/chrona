@@ -362,6 +362,7 @@ class ViewGrouping:
     tint: ViewGroupTint | None = None
     field_role: str | None = None
     fallback: str | None = None
+    header_placement: str = "table"  # table or timeline content region (#1936)
 
 
 @dataclass(frozen=True)
@@ -399,6 +400,7 @@ class ViewComparison:
     scenario_id: str | None = None
     baseline_marks: str | None = None
     missing_actual_scope: str | None = None
+    baseline_labels: str = "auto"  # generated paired Snapshot ghost name policy (#1936)
 
 
 @dataclass(frozen=True)
@@ -1105,7 +1107,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
                              _group_header(raw_grouping), _group_tint(raw_grouping),
                              str(field_role) if field_role is not None else None,
-                             str(raw_grouping["fallback"]) if "fallback" in raw_grouping else None)
+                             str(raw_grouping["fallback"]) if "fallback" in raw_grouping else None,
+                             str(raw_grouping.get("headerPlacement", "table")))
                 if raw_grouping else None)
     raw_ordering = body.get("ordering")
     ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
@@ -1125,7 +1128,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                 tuple(str(item) for item in raw_comparison.get("facets", ())),
                                 str(raw_comparison["scenario"]) if "scenario" in raw_comparison else None,
                                 str(raw_comparison["baselineMarks"]) if "baselineMarks" in raw_comparison else None,
-                                str(raw_comparison["missingActualScope"]) if "missingActualScope" in raw_comparison else None)
+                                str(raw_comparison["missingActualScope"]) if "missingActualScope" in raw_comparison else None,
+                                str(raw_comparison.get("baselineLabels", "auto")))
     raw_visibility = body["visibility"]
     _validate_view_fallback(raw_visibility.get("fallback"))
     visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"],

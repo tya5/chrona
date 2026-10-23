@@ -7,6 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
 from chrona.presentation.layout.label_footprint_measurement import (
     LabelFootprintMeasurement,
+    member_label_gap,
     measure_label_footprint,
 )
 from chrona.presentation.layout.labels import (
@@ -92,7 +93,10 @@ def prepare_member_label_candidate(
         label_request.semantic_id, request, wrap=label_request.wrap,
         available_inline=timeline_rect.width * 0.4, lane_measure=measured_lane_label,
         chip_measurement_override=(as_of_chip_measurement
-            if label_request.semantic_id == "asOfLabel" else None))
+            if label_request.semantic_id == "asOfLabel" else None),
+        gap=(None if label_request.semantic_id == "asOfLabel" else member_label_gap(
+            float(request.theme_tokens.text_treatment(role).font_size),
+            getattr(getattr(request, "measured_sources", None), "metric_values", None))))
     size, padding, chip_measure = measured.size, measured.chip_padding, measured.chip_measurement
     font_size = float(measured.treatment.font_size)
     provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
@@ -126,5 +130,5 @@ def prepare_member_label_candidate(
         text_inline_inset=measured.leading + measured.text_insets[0], maximum_end_gap=reach,
         association=association, final_association=final_association,
         maximum_stagger=size[1] + measured.gap if label_request.lane_row_id is not None else None,
-        bounds=bounds)
+        bounds=bounds, side_anchor=label_request.painted_anchor)
     return PreparedMemberLabelCandidate(measured, provisional, geometry, slot_bounds)

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from chrona.presentation.layout import surface_completion
 from chrona.presentation.layout.model import LayoutDecision, Rect, RegionFrame
 from chrona.presentation.layout.surface_quality import SlotPlacement
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 
 D = Decimal
 
@@ -51,7 +52,8 @@ def _context(decisions, tokens):
     manifest = SimpleNamespace(decisions=tuple(decisions), fit_warnings=(), viewport=viewport)
     request = SimpleNamespace(theme_tokens=tokens, font_metrics=None, layout_manifest=manifest,
                               fixed_lane_preflight=None,
-                              declared_viewport=None, auto_block_limit=None, page_size=None)
+                              declared_viewport=None, auto_block_limit=None, page_size=None,
+                              paint_capabilities=PaintWitnessCapabilities())
     slot = SlotPlacement("timeline", "timeline", Rect(D(0), D(0), D(50), D(50)))
     return surface_completion.SurfaceCompletionContext(
         request=request, projection=SimpleNamespace(lane_membership=None), layout_manifest=manifest,

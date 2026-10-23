@@ -6,11 +6,12 @@ from typing import Any
 
 from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, measure_label_chip
+from chrona.presentation.layout.label_footprint_measurement import member_label_gap
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, wrap_text
 from chrona.presentation.model.semantic_registry import label_chip_semantic
-from chrona.presentation.model.projection import WindowMode, signed_delta_text
+from chrona.presentation.model.projection import WindowMode, omit_zero_finish_delta, signed_delta_text
 from chrona.presentation.layout.surface_mark_visibility import (
     MarkOccurrence, MarkOccurrenceKind, ensure_item_mark_visibility_index,
 )
@@ -73,7 +74,8 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                                font_metrics: Any, visual_requests: tuple[Any, ...],
                                icon_assets: dict[str, Any],
                                mark_visibility_index: Any = None,
-                               scene_precision: int = 3) -> tuple[MeasuredLaneMemberLabel, ...]:
+                               scene_precision: int = 3,
+                               metric_values: Any = None) -> tuple[MeasuredLaneMemberLabel, ...]:
     """Normalize lane member text once and measure the exact placement box.
 
     The wrap allowance, Theme text treatment, selected icon advances, chip
@@ -105,7 +107,8 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
             if attached is None and "title" in surface_content.label_content:
                 components.append(("title", surface_content.member_name(item, lane_row.lane_id)))
             if (attached is None and getattr(item, "forecast", None) is None and "finishDelta" in surface_content.label_content
-                    and item.finish_delta is not None):
+                    and item.finish_delta is not None
+                    and not omit_zero_finish_delta(item, surface_content.omit_zero_delta)):
                 components.append(("finishDelta", signed_delta_text(item.finish_delta, item)))
             parts = tuple(value for _, value in components)
             if explicit:
@@ -171,7 +174,7 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                     placement_id, item.object_id, lane_row.lane_id, member_id,
                     item.source_kind, content, candidates, wrap, lines,
                     width, height, text_inset + leading,
-                    max(1.0, float(treatment.font_size) * 0.25),
+                    member_label_gap(float(treatment.font_size), metric_values),
                     visuals, chip_pad, leading, trailing, text_width,
                     treatment.family, int(treatment.weight), float(treatment.font_size),
                     float(treatment.line_height), float(treatment.letter_spacing),

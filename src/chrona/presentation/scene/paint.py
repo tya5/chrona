@@ -14,6 +14,7 @@ from chrona.presentation.model.theme_paint import (
     ThemePaintError,
     ThemePaintWitness,
     resolve_legend_shape_ink,
+    resolve_stroke_finish_inputs,
     resolve_theme_paint_witness,
     ThemePaintInputs, restrict_shape_paint_inputs,
 )
@@ -40,6 +41,7 @@ from chrona.presentation.scene.visual_capabilities import (
     WOBBLE,
     VisualProfile,
     first_supporting_visual_profile,
+    paint_witness_capabilities,
 )
 
 
@@ -439,14 +441,12 @@ def _wobble(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) ->
 
 
 def _stroke_finish(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeFinish | None, bool]:
-    cap = tokens.optional_token(role, "strokeLineCap", "lineCap")
-    join = tokens.optional_token(role, "strokeLineJoin", "lineJoin")
-    if cap is None and join is None: return None, False
-    if cap not in {"butt", "round", "square"} or join not in {"miter", "round", "bevel"}:
-        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/strokeLineCap",
-                              f"strokeLineCap {cap!r} and strokeLineJoin {join!r} must be declared values")
-    fidelity = _fidelity(tokens, role, "strokeFinishFidelity")
-    if not _admit(profile, frozenset((LINE_CAP, LINE_JOIN)), fidelity,
-                  f"/body/roles/{role}/strokeLineCap"):
+    try:
+        resolved = resolve_stroke_finish_inputs(tokens, role, paint_witness_capabilities(profile))
+    except ThemePaintError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path, error.detail) from error
+    if resolved.omitted:
         return None, True
-    return StrokeFinish(str(cap), str(join), fidelity), False
+    if resolved.line_cap is None:
+        return None, False
+    return StrokeFinish(resolved.line_cap, resolved.line_join, resolved.fidelity), False

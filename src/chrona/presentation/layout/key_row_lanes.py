@@ -11,15 +11,20 @@ from typing import Any
 
 from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
-from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
+from chrona.presentation.layout.label_footprint_measurement import member_label_gap, measure_label_footprint
 from chrona.presentation.layout.mark_geometry import compose_item_marks
+from chrona.presentation.layout.lane_mark_facets import mark_visible_envelope
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
+from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.surface_marks import pack_extent_lanes
 from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
 from chrona.presentation.layout.style_occurrences import StyleSourceOccurrences
 from chrona.presentation.layout.style_text import resolve_label_candidate_styles
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
-from chrona.presentation.model.projection import finish_delta_semantic, finish_delta_text
+from chrona.presentation.model.projection import (
+    finish_delta_semantic, finish_delta_text, omit_zero_finish_delta,
+)
 from chrona.presentation.model.semantic_registry import label_chip_semantic
 
 
@@ -37,7 +42,8 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
     theme, projection = request.theme_tokens, request.projection
     role = request.surface_content.label_text_role or "text"
     treatment = theme.text_treatment(role)
-    gap = max(1.0, float(treatment.font_size) * 0.25)
+    metric_values = getattr(getattr(request, "measured_sources", None), "metric_values", None)
+    gap = member_label_gap(float(treatment.font_size), metric_values)
     pad = chip_padding(theme, label_chip_semantic("memberLabel"), float(treatment.font_size),
                        float(treatment.font_size) * float(treatment.line_height))[0]
     label_at_start = request.presentation_contract.labels.side == "start"
@@ -66,8 +72,17 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                                              item.source_kind).style_intents(request.surface_content.style_intents)
                                if getattr(request.surface_content, "style_intents", None) is not None else None))
             for mark in composition.marks:
-                lefts.append(float(mark.bounds.inline))
-                rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
+                if "timeline.mark.labelGap" in (metric_values or {}):
+                    instance = LaneProjectionInstance(row.row_id, item.item_id or item.object_id,
+                                                      item.object_id, item.source_kind)
+                    left, _, right, _ = obstacle_envelope(
+                        mark_visible_envelope(item, instance, mark, theme,
+                                              paint_capabilities=request.paint_capabilities))
+                else:
+                    left, right = (float(mark.bounds.inline),
+                                   float(mark.bounds.inline) + float(mark.bounds.inline_size))
+                lefts.append(left)
+                rights.append(right)
         if not lefts:
             return (0.0, 0.0)
         width = measure_text_width(request.surface_content.member_name(point_items[0], row.row_id), font_size=float(treatment.font_size), font_metrics=metrics,
@@ -108,13 +123,16 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
                 span = max(span, *(candidate_width + candidate_gap
                                    for candidate_width, candidate_gap in candidate_widths))
         forecast_items = [item for item in point_items if getattr(item, "forecast", None) is not None
-                          and finish_delta_text(item) is not None]
+                          and finish_delta_text(item) is not None
+                          and not omit_zero_finish_delta(
+                              item, getattr(request.surface_content, "omit_zero_delta", False))]
         if forecast_items and getattr(request.presentation_contract.labels, "enabled", True) \
                 and "finishDelta" in request.presentation_contract.labels.content:
             # A forecast delta is a member of the title's label packing (#1681): the point's extent holds the
             # delta and its gap on either side the delta may take, as a folded group-header point does.
             delta = measure_label_footprint(f"variance:{row.row_id}:{forecast_items[0].item_id or forecast_items[0].object_id}",
-                finish_delta_text(forecast_items[0]), role, finish_delta_semantic(forecast_items[0]), request)
+                finish_delta_text(forecast_items[0]), role, finish_delta_semantic(forecast_items[0]), request,
+                gap=member_label_gap(float(treatment.font_size), metric_values))
             reach = span + delta.size[0] + delta.gap
             return (min(lefts) - reach, max(rights) + reach)
         return (min(lefts) - span, max(rights)) if label_at_start else (min(lefts), max(rights) + span)
@@ -124,8 +142,25 @@ def assign_key_row_lanes(review_rows: tuple[Any, ...], *, request: Any, scale: A
     base_pitch = float(allocation.outer_extent if allocation is not None else mark_block_size)
     label_block = float(measure_label_footprint("key-row-probe", "M", role, "memberLabel", request).size[1])
     if finish_delta_labelled:
-        label_block = max(label_block, float(measure_label_footprint(
-            "key-row-probe", "+0d", role, "finishDelta", request).size[1]))
+        if not getattr(request.surface_content, "omit_zero_delta", False):
+            # Preserve the pre-1936 default probe exactly, independent of the data present.
+            label_block = max(label_block, float(measure_label_footprint(
+                "key-row-probe", "+0d", role, "finishDelta", request).size[1]))
+        else:
+            visible_forecast_deltas = [
+                (row.row_id, item)
+                for row in review_rows if getattr(row, "key_row", False)
+                if getattr(request.presentation_contract.labels, "enabled", True)
+                for item in row.items
+                if getattr(item, "forecast", None) is not None
+                and finish_delta_text(item) is not None
+                and not omit_zero_finish_delta(item, True)
+            ]
+            if visible_forecast_deltas:
+                label_block = max(label_block, *(float(measure_label_footprint(
+                    f"variance:{row_id}:{item.item_id or item.object_id}",
+                    finish_delta_text(item), role, finish_delta_semantic(item), request).size[1])
+                    for row_id, item in visible_forecast_deltas))
     lane_pitch = label_block if label_block > base_pitch else None
 
     result = []

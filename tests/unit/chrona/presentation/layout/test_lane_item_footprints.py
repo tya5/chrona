@@ -26,8 +26,22 @@ from chrona.presentation.review.lane_membership import (
 
 
 class _Theme:
+    _body = {"roles": {}}
+
     def __init__(self, stroke_width=2):
         self.stroke_width = stroke_width
+
+    def optional_pattern(self, _role):
+        return None
+
+    def optional_color(self, _role, name="fill"):
+        return "#112233" if name in {"fill", "stroke"} else None
+
+    def optional_token(self, _role, _name, _type):
+        return None
+
+    def dash(self, _role):
+        return ()
 
     def optional_number(self, _role, name):
         return self.stroke_width if name == "strokeWidth" else None

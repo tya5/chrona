@@ -62,9 +62,9 @@ def test_lane_footprint_joins_each_intent_to_original_source_occurrence(monkeypa
     captured_marks = []
     mark_facets = owner._mark_facets
 
-    def capture_mark_facets(source_item, instance, mark, theme):
+    def capture_mark_facets(source_item, instance, mark, theme, **kwargs):
         captured_marks.append(mark)
-        return mark_facets(source_item, instance, mark, theme)
+        return mark_facets(source_item, instance, mark, theme, **kwargs)
 
     monkeypatch.setattr(owner, "_mark_facets", capture_mark_facets)
     footprints = compose_lane_item_footprints(

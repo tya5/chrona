@@ -121,6 +121,9 @@ allOf:
                   - {enum: [all]}
               rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
               header: {$ref: "urn:chrona:common-v0.1#/$defs/groupHeaderPresentation"}
+              headerPlacement:
+                description: "Content region for a grouping header (#1936). Omitted, the existing table-owned placement is retained."
+                $ref: "urn:chrona:common-v0.2#/$defs/groupHeaderPlacement"
               tint: {$ref: "urn:chrona:common-v0.1#/$defs/groupTintPresentation"}
             allOf:
               - description: "Field grouping requires its field name and missing-value label."
@@ -193,6 +196,7 @@ allOf:
               baseline: {description: "Comparison baseline source.", enum: [primary, snapshot, scenario]}
               scenario: {description: "Scenario identifier when scenario is the baseline.", type: string, minLength: 1}
               baselineMarks: {description: "With a snapshot baseline in automatic or lane rows, `ghost` draws the baseline snapshot of each selected item as a ghost mark beside the current one, also under field grouping; `ghost-when-changed` draws it only for an item whose baseline placement differs from its current one. `ghost-when-changed` without a snapshot baseline draws none. Omitted, no ghost is drawn; explicit rows name their snapshot items themselves.", enum: [ghost, ghost-when-changed], examples: [ghost]}
+              baselineLabels: {description: "Whether a generated paired Snapshot ghost requests its own member name. `auto` retains existing eligibility; `none` suppresses only that paired ghost label. Omitted, auto.", enum: [auto, none]}
               missingActualScope: {description: "Which work the missing-actual mark covers. `due-unobserved` (the default) marks a planned finish that has passed with no observation. `in-progress` marks a span that has an actual start and no finish up to the as-of date, drawn as a span in place of its open actual, and marks nothing else (a gate or a span with no observation gets no mark).", enum: [due-unobserved, in-progress], examples: [in-progress]}
               actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
               observationSelection: {description: "Only the latest observation is selected.", const: latest}
@@ -233,6 +237,9 @@ allOf:
                             - {contains: {const: path}}
                       side: {enum: [auto, above, below, start, end, inside]}
                       overflow: {enum: [suppress, visible-overflow]}
+                      omitZeroDelta:
+                        description: "Whether a numeric-zero finish-delta component is omitted from member labels. This does not suppress the member name or alter the delta fact; omitted means false (#1936)."
+                        type: boolean
                       textRole: {description: "Named Theme text role in which the plot member labels (the bar labels, outside or inside the bar) are measured and set (#1141): size, weight, letter spacing and transform, `viewerFit` and, when the Theme binds `<role>.fill`, the colour of an outside label. Absent, the labels keep `text`, shared with table cells. A role the Theme does not declare is `E_THEME_ROLE_REQUIRED` at `/body/visibility/labels/textRole`.", examples: [bar-label], type: string, minLength: 1}
               relations:
                 oneOf:
@@ -494,7 +501,7 @@ allOf:
                     properties: {format: {const: dateRange}}
               properties:
                 id: {type: string, minLength: 1}
-                endDisplay: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/endDisplay"}
+                endDisplay: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/endDisplay"}
                 style: {description: "Named Layout column style resolved at ingress; explicit presentation fields win.", type: string, minLength: 1}
                 header:
                   description: "Optional header text: a literal shown exactly, or a `{wording: <key>}` reference resolved per Render Context locale from the built-in wording table. Absent, the header is the column `id` (rows and `hierarchyColumn` keep referring to `id`)."
@@ -504,21 +511,21 @@ allOf:
                     - {$ref: "urn:chrona:common-v0.1#/$defs/wordingRef"}
                 source:
                   $ref: "urn:chrona:common-v0.2#/$defs/tableColumnSource"
-                format: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"}
-                missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
-                missingBy: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missingBy"}
-                zero: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/zero"}
-                text: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/text"}
-                affixes: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/affixes"}
+                format: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/format"}
+                missing: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/missing"}
+                missingBy: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/missingBy"}
+                zero: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/zero"}
+                text: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/text"}
+                affixes: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/affixes"}
                 transform:
                   description: "A closed cell transform applied to the column's text before it is measured (#1373): `initials` abbreviates a text value of two or more words to the upper-cased first letter or digit of each (words split on whitespace and hyphens; `Ana Maria Lopez` reads `AML`) and shows a one-word value whole (`Raj`; an unspaced CJK name is one word). Valid only on a `field` or `title` source with the `text` format (`E_VIEW_COLUMN_TRANSFORM`). A value with no letter or digit reads as absent, so `missing` applies. Absent, the cell is the formatted text."
                   examples: [initials]
                   enum: [initials]
                 suffix: {description: "A literal appended to the 1-based row number of a `rowIndex` column (#1545), e.g. `.` reads `1.`; Layout measures the full text. No format language. Valid only on a `rowIndex` source (`E_VIEW_COLUMN_SUFFIX`). Absent, the cell is the bare number.", examples: ["."], type: string, minLength: 1, maxLength: 8}
-                textRole: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/textRole"}
-                align: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/align"}
-                headerOrientation: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/headerOrientation"}
-                width: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/width"}
+                textRole: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/textRole"}
+                align: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/align"}
+                headerOrientation: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/headerOrientation"}
+                width: {$ref: "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/width"}
                 priority: {description: "Whether a comparison column (finishDelta, startDelta, atDelta, progress, missingActual, actual, scenario) whose data source is unbound (no Actual Set, no bound scenario) stays (#1869). Absent or `optional`: the column is omitted, as before. `preferred` or `required`: it keeps its header and blank cells at its declared width, so the time scale does not change when the data arrives.", examples: [preferred], enum: [optional, preferred, required]}
           annotationBindings:
             description: "Ordered finite Project-kind/temporal-shape bindings to ordinary annotation intent (#1343)."

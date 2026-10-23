@@ -3,6 +3,27 @@ $id: "urn:chrona:common-v0.2"
 title: "Chrona Common Definitions v0.2"
 description: "Shared source additions; predecessor definitions remain frozen and registered."
 $defs:
+  groupHeaderPlacement:
+    description: "Content region used for a grouping header (#1936)."
+    enum: [table, timeline]
+  tableColumnPresentation:
+    description: "Project-independent optional column presentation; common-v0.1 members retain their frozen meanings, with zero: omit added for #1936."
+    type: object
+    additionalProperties: false
+    properties:
+      format: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/format"}
+      missing: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missing"}
+      missingBy: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/missingBy"}
+      affixes: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/affixes"}
+      zero:
+        description: "How signed zero is shown: signed or plain preserves the existing numeric value; omit removes the complete displayed zero cell, including affixes and estimated suffix, without changing its fact or semantic classification (#1936)."
+        enum: [signed, plain, omit]
+      textRole: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/textRole"}
+      align: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/align"}
+      headerOrientation: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/headerOrientation"}
+      width: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/width"}
+      endDisplay: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/endDisplay"}
+      text: {$ref: "urn:chrona:common-v0.1#/$defs/tableColumnPresentation/properties/text"}
   tableColumnSource:
     description: "A projected table source, including an explicit current-plan versus Snapshot finish delta."
     examples: [title, {comparisonFacet: snapshotFinishDelta}]

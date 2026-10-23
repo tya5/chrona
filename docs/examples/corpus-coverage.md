@@ -162,6 +162,6 @@ Distinct members in `laneMembers` are packed; a member is shown only when its co
 | --- | --- | ---: | ---: | ---: |
 | halcyon-1 | launch-campaign | 11 | 12 | 11/12 |
 | halcyon-1 | overlay-briefing | 20 | 26 | 20/26 |
-| halcyon-1 | glyph-gates | 22 | 26 | 22/26 |
+| halcyon-1 | glyph-gates | 19 | 26 | 19/26 |
 | halcyon-1 | gallery-editorial-lanes | 26 | 26 | 26/26 |
 | halcyon-1 | gallery-text-compression | 19 | 26 | 19/26 |

@@ -34,6 +34,20 @@ construction: `blank` becomes the empty string, `em-dash` becomes `—`, and `un
 becomes the literal `unknown`. Scene emits that normalized text verbatim. Neither
 Scene nor SVG receives the enum as a display string or selects an alternative default.
 
+**Declared zero omission (#1936).** A `signedDays` or `signedNumber` column
+may declare `zero: omit`; the existing omitted/default `signed` and explicit
+`plain` behaviors are unchanged. When the selected raw value is exactly
+numeric zero, normalize the entire displayed cell to empty before text
+measurement, including its `onTime` affixes and estimated-forecast suffix.
+Keep the raw fact and its on-track semantic classification; do not turn it
+into missing data or apply `missing`/`missingBy`. Nonzero, new-baseline and
+missing-value behavior is unchanged. Other formats retain the existing
+`E_VIEW_COLUMN_ZERO` rejection for a nondefault zero policy. The policy is
+also available through `viewDefaults.columnStyles`. Its shared authority is
+the added `common-v0.2.$defs.tableColumnPresentation`; the published
+`common-v0.1` definition remains frozen. Plot labels have an independent
+consumer policy in Specification 06.
+
 For View v0.2 explicit Review rows, the table has one record per Review row rather than
 per semantic Project object. The row label supplies its title cell and `tableSubject`
 supplies object-derived cells. Timeline marks remain one per ordered Review Item and
@@ -191,6 +205,12 @@ and no group headers assigned to the table has nothing for the `table` slot to h
 so that slot is measured empty and collapses to zero width: an `fr` share of the free space is never reserved for a blank
 table, and the plot takes the room. Declare `tableColumns` to show columns;
 table-owned group headers remain visible content even without columns (Spec33).
+The declared-slot output check exempts a collapsed table only under this
+same no-column/no-table-header rule and with a completed zero-width table
+slot as evidence (#1936). A positive-width empty slot is not exempt; neither
+is a table containing header text. The internal table slot may remain in a
+table-timeline Layout as a collapsed structural source; authors need not
+invent a column or keep a known-failure entry to satisfy the output check.
 
 **Declared comparison columns and `priority` (#1869).** A comparison column (`facet` or `comparisonFacet` of
 `finishDelta`, `startDelta`, `atDelta`, `progress`, `missingActual`, `actual`, or a `scenario` source) is omitted

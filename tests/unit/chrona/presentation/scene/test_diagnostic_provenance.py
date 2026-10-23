@@ -12,6 +12,7 @@ from chrona.presentation.layout.surface_quality import TextPlacement, VisualRequ
 from chrona.presentation.layout.surface_visuals import place_text_visuals
 from chrona.presentation.layout import surface_annotations
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.surface_pipeline import build_surface_input, compose_review_surface
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
@@ -142,7 +143,8 @@ def test_row_density_fit_warning_carries_project_subject_without_changing_geomet
     request = SimpleNamespace(theme_tokens=Tokens(), font_metrics=None, layout_manifest=manifest,
                               page_size=None,
                               fixed_lane_preflight=None,
-                              declared_viewport=None, auto_block_limit=None)
+                              declared_viewport=None, auto_block_limit=None,
+                              paint_capabilities=PaintWitnessCapabilities())
 
     monkeypatch.setattr(surface_completion, "place_axis_band_visuals", lambda *_args, **_kwargs: SimpleNamespace(icons=()))
     monkeypatch.setattr(surface_completion, "validate_background_shapes", lambda *_args, **_kwargs: None)

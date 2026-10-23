@@ -31,8 +31,12 @@ from chrona.presentation.layout.filled_contour import (
     ContourUnionError, intersect_visible_host_contour, union_filled_contours,
 )
 from chrona.presentation.layout.rounded_outline import rounded_rect_commands
-from chrona.presentation.model.projection import WindowMode, shared_track_member_key, active_placement, finish_delta_text, finish_delta_semantic
-from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint
+from chrona.presentation.model.projection import (WindowMode, shared_track_member_key, active_placement,
+    finish_delta_text, finish_delta_semantic, omit_zero_finish_delta)
+from chrona.presentation.layout.label_footprint_measurement import measure_label_footprint, member_label_gap
+from chrona.presentation.layout.lane_mark_facets import mark_visible_envelope
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
+from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.surface_deadlines import complete_deadline_host, deadline_boundary_in_window
 from chrona.presentation.layout.text import metric_for_role, measure_text_width
@@ -334,7 +338,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     if host_plan.relations:
         previous_marks = {mark.placement_id: mark for mark in marks}
         marks = list(complete_hosted_point_geometry(host_plan, tuple(marks)))
-        validate_hosted_point_collisions(host_plan, tuple(marks), request.theme_tokens)
+        validate_hosted_point_collisions(host_plan, tuple(marks), request.theme_tokens,
+                                         paint_capabilities=request.paint_capabilities)
         final_marks = {mark.placement_id: mark for mark in marks}
         moved_records = []
         for record in window_marks:
@@ -369,10 +374,16 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         selected = (resolve_label_candidate_styles(key, candidates, style_index, request.theme_tokens)
                     if key is not None else {})
         base_role = "groupHeader"
-        return tuple((side, measure_label_footprint(
-            f"member-label:{instance_id}", request.surface_content.member_name(folded.item, folded.group_id),
-            (selected.get(side).role if selected.get(side) and selected[side].role else base_role),
-            "memberLabel", request)) for side in candidates)
+        metric_values = getattr(getattr(request, "measured_sources", None), "metric_values", None)
+        result = []
+        for side in candidates:
+            role = selected[side].role if selected.get(side) and selected[side].role else base_role
+            treatment = request.theme_tokens.text_treatment(role)
+            result.append((side, measure_label_footprint(
+                f"member-label:{instance_id}", request.surface_content.member_name(folded.item, folded.group_id),
+                role, "memberLabel", request,
+                gap=member_label_gap(float(treatment.font_size), metric_values))))
+        return tuple(result)
 
     def forecast_label_measures(folded):
         instance_id = folded_instance_id(folded, folded.item)
@@ -387,14 +398,17 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             delta_intent = resolve_text_style_intent(delta_key, style_index, request.theme_tokens)
             if delta_intent is not None and delta_intent.role:
                 delta_role = delta_intent.role
+        metric_values = getattr(getattr(request, "measured_sources", None), "metric_values", None)
         delta = measure_label_footprint(f"variance:{instance_id}", finish_delta_text(folded.item),
-            delta_role, finish_delta_semantic(folded.item), request)
+            delta_role, finish_delta_semantic(folded.item), request,
+            gap=member_label_gap(float(request.theme_tokens.text_treatment(delta_role).font_size), metric_values))
         return title, delta
 
     def folded_extent(folded: Any) -> tuple[float, float, float, float]:
         """Full inline/block footprint of a folded occurrence and its displayed deadlines."""
         label_treatment = request.theme_tokens.text_treatment("groupHeader")
-        label_gap = max(1.0, float(label_treatment.font_size) * 0.25)
+        metric_values = getattr(getattr(request, "measured_sources", None), "metric_values", None)
+        label_gap = member_label_gap(float(label_treatment.font_size), metric_values)
         label_side = contract.labels.side
         lefts, rights, deadline_lefts, deadline_rights = [], [], [], []
         track_top = float(allocation.outer_bounds[0]) if allocation is not None else 0.0
@@ -414,8 +428,17 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 style_intents=prepared_style(item, kind=MarkOccurrenceKind.FOLDED,
                                              container_id=folded.group_id, source_kind=item.source_kind))
             for mark in composition.marks:
-                lefts.append(float(mark.bounds.inline))
-                rights.append(float(mark.bounds.inline) + float(mark.bounds.inline_size))
+                if "timeline.mark.labelGap" in (metric_values or {}):
+                    instance = LaneProjectionInstance(folded.group_id,
+                        item.item_id or item.object_id, item.object_id, item.source_kind)
+                    left, _, right, _ = obstacle_envelope(
+                        mark_visible_envelope(item, instance, mark, request.theme_tokens,
+                                              paint_capabilities=request.paint_capabilities))
+                else:
+                    left, right = (float(mark.bounds.inline),
+                                   float(mark.bounds.inline) + float(mark.bounds.inline_size))
+                lefts.append(left)
+                rights.append(right)
                 if mark.semantic_id not in {"planned", "forecast"}:
                     continue
                 for deadline in shown_deadlines:
@@ -433,7 +456,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     track_bottom = max(track_bottom, float(bounds.block + bounds.block_size))
         if not lefts:
             return (0.0, 0.0, track_top, track_bottom)
-        if folded.item.forecast is not None:
+        if folded.item.forecast is not None and not omit_zero_finish_delta(
+                folded.item, request.surface_content.omit_zero_delta):
             title, delta = forecast_label_measures(folded)
             reach = geometry_sum((title.size[0], title.gap, delta.size[0], delta.gap))
             left, right = min(lefts) - reach, max(rights) + reach
