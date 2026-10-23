@@ -70,10 +70,14 @@ class SurfaceObstacle:
     clearance: float = 0.0
     host_id: str | None = None
     route_owner_id: str | None = None
+    # The shared member-name label gap (Spec 07) that completed relation ink keeps from this name group.
+    # Queries ignore it; relation routing widens the obstacle by it in its own snapshot (#1848).
+    label_gap: float = 0.0
 
     def __post_init__(self) -> None:
         if (not self.placement_id or not self.obstacle_class or not self.region_id
                 or not isfinite(self.clearance) or self.clearance < 0
+                or not isfinite(self.label_gap) or self.label_gap < 0
                 or (self.route_owner_id is not None
                     and (not isinstance(self.route_owner_id, str) or not self.route_owner_id))):
             raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "SurfaceObstacle",
@@ -391,7 +395,8 @@ class SurfaceObstacleIndex:
             for key, prepared in self._prepared.items()}
 
     def copy(self, *, geometry_overrides: Mapping[str, ObstacleGeometry] | None = None,
-             excluded_ids: Iterable[str] = ()) -> "SurfaceObstacleIndex":
+             excluded_ids: Iterable[str] = (),
+             clearance_overrides: Mapping[str, float] | None = None) -> "SurfaceObstacleIndex":
         """An independent query snapshot, optionally using completed paint footprints.
 
         Accepted placements remain in the original inventory. Memoization reads
@@ -405,10 +410,19 @@ class SurfaceObstacleIndex:
                                                               if key not in self._by_id))
         clone = SurfaceObstacleIndex()
         excluded = frozenset(excluded_ids).intersection(self._by_id)
-        changed = excluded.union(geometry_overrides or ())
+        # Clearance overrides name only identities this index holds; others are harmless. A value that
+        # already matches is not a change, so a relaxed copy of an unchanged index stays shared.
+        clearances = {key: float(value) for key, value in (clearance_overrides or {}).items()
+                      if key in self._by_id and self._by_id[key].clearance != float(value)}
+        changed = excluded.union(geometry_overrides or (), clearances)
+
+        def overridden(key: str, item: SurfaceObstacle) -> SurfaceObstacle:
+            if geometry_overrides and key in geometry_overrides:
+                item = replace(item, geometry=geometry_overrides[key])
+            return replace(item, clearance=clearances[key]) if key in clearances else item
+
         clone._by_id = (dict(self._by_id) if not changed else
-                        {key: replace(item, geometry=geometry_overrides[key])
-                         if geometry_overrides and key in geometry_overrides else item
+                        {key: overridden(key, item)
                          for key, item in self._by_id.items() if key not in excluded})
         clone._ordered = self._ordered if not changed else None
         # Query preparation is shared even when a filter is first read after
