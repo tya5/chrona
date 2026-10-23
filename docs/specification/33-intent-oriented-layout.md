@@ -845,6 +845,20 @@ Anchor/View-tie stacking, full-card containment/obstacle checks, explicit list
 exhaustion when no body fits, and plot/tail safety remain unchanged. An authored
 `connector: none` remains intentional; only a declared rail leader is mandatory.
 
+**Connector support by purpose (#1935).** Every declared connector is drawn or
+named; none vanishes silently. Connector intent is never reinterpreted and no
+geometry is synthesized. The `callout`, `note` and `explanatory-arrow` purposes
+carry a leader style and draw a declared `leader` (mandatory for a rail card,
+as above). The `highlight` purpose has no leader style (Theme owns paint, so
+Layout cannot invent one). When a placed annotation of such a purpose declares
+`connector: leader`, or places a routed tail, Layout keeps the box and text, as
+for any placed annotation, draws no connector and emits
+`W_LAYOUT_ANNOTATION_CONNECTOR_UNSUPPORTED_FOR_PURPOSE:<annotation-id>:<purpose>:<leader|tail>`
+once, at placement, in Layout. The render is not refused. `connector: none` is
+intentional and emits nothing, and a direct tail is box geometry that is drawn.
+The diagnostic does not relax the mandatory rail leader of the purposes that
+have a leader style.
+
 ### 8.2 Annotation connector topology after the shared inventory
 
 The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)
