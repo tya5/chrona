@@ -186,9 +186,11 @@ otherwise Layout reports `E_LAYOUT_TABLE_OVERFLOW`. The shared schema authority
 is `common-v0.1.$defs.tableColumnPresentation.properties.width`.
 
 **Empty table slot (#1683).** Only `rows.mode: lanes` draws its own columns (from `rows.laneTable`); every other row mode
-takes its columns from the View's `tableColumns`. A View with no column source has nothing for the `table` slot to hold,
+takes its columns from the View's `tableColumns`. A View with no column source
+and no group headers assigned to the table has nothing for the `table` slot to hold,
 so that slot is measured empty and collapses to zero width: an `fr` share of the free space is never reserved for a blank
-table, and the plot takes the room. Declare `tableColumns` to show a table.
+table, and the plot takes the room. Declare `tableColumns` to show columns;
+table-owned group headers remain visible content even without columns (Spec33).
 
 **Declared comparison columns and `priority` (#1869).** A comparison column (`facet` or `comparisonFacet` of
 `finishDelta`, `startDelta`, `atDelta`, `progress`, `missingActual`, `actual`, or a `scenario` source) is omitted

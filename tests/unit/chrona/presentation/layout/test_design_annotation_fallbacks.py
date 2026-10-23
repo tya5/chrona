@@ -27,7 +27,7 @@ def _assert_list_candidate(candidate):
 
 @pytest.mark.parametrize("design", ["marquee", "sunday", "target-b", "titlecard", "yuya"])
 def test_design_declares_terminal_list_and_corresponding_slot(design):
-    profile = yaml.safe_load((ROOT / "src/chrona/resources/designs" / design / "layout.yaml").read_text())
+    profile = yaml.safe_load((ROOT / "src/chrona/resources/designs" / design / "layout.yaml").read_text(encoding="utf-8"))
     assert not list(schema_validator("layout-profile-v0.10.schema.yaml").iter_errors(profile))
     candidates = profile["viewDefaults"]["annotationPlacement"]["note"]["candidates"]
     _assert_list_candidate(candidates[-1])
@@ -44,7 +44,7 @@ def test_design_declares_terminal_list_and_corresponding_slot(design):
 
 
 def test_authored_roadmap_view_explicitly_migrates_its_placement_policies():
-    view = yaml.safe_load((ROOT / "examples/chrona-roadmap/views/roadmap.yaml").read_text())
+    view = yaml.safe_load((ROOT / "examples/chrona-roadmap/views/roadmap.yaml").read_text(encoding="utf-8"))
     assert not list(schema_validator("view-v0.28.schema.yaml").iter_errors(view))
     for annotation in view["body"]["annotations"]:
         _assert_list_candidate(annotation["candidates"][-1])
@@ -52,7 +52,7 @@ def test_authored_roadmap_view_explicitly_migrates_its_placement_policies():
 
 
 def test_yuya_full_name_header_ground_is_below_row_rules():
-    theme = yaml.safe_load((ROOT / "src/chrona/resources/designs/yuya/theme.yaml").read_text())
+    theme = yaml.safe_load((ROOT / "src/chrona/resources/designs/yuya/theme.yaml").read_text(encoding="utf-8"))
     role = theme["body"]["roles"]["group-header-band"]
     assert role["backgroundTreatment"] == "fill"
     assert role["backgroundPaintOrder"] < 10

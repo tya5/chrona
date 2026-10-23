@@ -13,6 +13,8 @@ from typing import Any
 import yaml
 
 from chrona.usecases.deck_context import SelectedDeckContext, resolve_deck_context
+from chrona.presentation.model.theme_inheritance import resolve_draft_theme
+from tests.support.context_references import reference_path
 
 
 def slide_context(example: Path, slide_id: str) -> SelectedDeckContext:
@@ -23,6 +25,18 @@ def slide_context(example: Path, slide_id: str) -> SelectedDeckContext:
 def context_document(example: Path, slide_id: str) -> dict[str, Any]:
     """A mutable copy of the completed Context document of ``slide_id``."""
     return copy.deepcopy(dict(slide_context(example, slide_id).document))
+
+
+def snapshot_resource_document(example: Path, reference: dict[str, Any]) -> dict[str, Any]:
+    """Close draft Theme inheritance before pinning a standalone snapshot fixture.
+
+    Relative draft base paths are not resources in the isolated snapshot store.
+    Other resource kinds are already standalone declarations in these fixtures.
+    """
+    path = reference_path(example, reference)
+    if reference["kind"] == "theme":
+        return resolve_draft_theme(path)
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
 def write_explicit_context(example: Path, slide_id: str, relative: str) -> Path:

@@ -49,7 +49,7 @@ slides:
   halcyon-1/marquee: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/mission-brief: {axisLabels: 13}
   halcyon-1/overlay-briefing: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
-  halcyon-1/programme-board: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
+  halcyon-1/programme-board: {axisLabels: 9, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/replan-baseline: {axisLabels: 7, chips: ['chip:as-of-label']}
   halcyon-1/sunday: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/target-b: {axisLabels: 13, chips: ['chip:as-of-label']}

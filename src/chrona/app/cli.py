@@ -21,7 +21,7 @@ from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
-from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress, RenderProgressEvent
+from chrona.presentation.model.render_progress import RenderAdvisoryEvent, RenderProgress, RenderProgressEvent, RenderWorkPhaseEvent
 from chrona.usecases.diagnostic_messages import describe_warning, warning_message
 from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, render_draft, typesetter_identity, warning_payloads
 from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
@@ -772,7 +772,7 @@ def _draft_render_progress(enabled: bool) -> RenderProgress | None:
         except (OSError, ValueError):
             return None
 
-    def report(event: RenderProgressEvent | RenderAdvisoryEvent) -> None:
+    def report(event: RenderProgressEvent | RenderAdvisoryEvent | RenderWorkPhaseEvent) -> None:
         if isinstance(event, RenderAdvisoryEvent):
             advisory = event.advisory
             message = warning_message(describe_warning({
@@ -781,6 +781,9 @@ def _draft_render_progress(enabled: bool) -> RenderProgress | None:
             print(f"chrona: {advisory.code}: {message}", file=stream, flush=True)
             return
         if not show_phases:
+            return
+        if isinstance(event, RenderWorkPhaseEvent):
+            print(f"chrona: {event.phase} [{event.pass_name}] starting (attempt)", file=stream, flush=True)
             return
         detail = (f" [{event.pass_name}] {event.completed}/{event.total}"
                   if event.phase == "routing" else "")

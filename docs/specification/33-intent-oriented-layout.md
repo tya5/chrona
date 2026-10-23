@@ -1281,7 +1281,13 @@ each annotation; its total counts annotation declarations, not semantic
 relations, connector trials or physical fragments (#1906). Reflows name
 their attempts separately rather than pretending repeated work is monotonic.
 The same best-effort observer contract applies; no observer may change
-placement or suppress a note. Annotation searches query the shared surface
+placement or suppress a note. Before a nonempty routing pass starts, emit a
+distinct uncounted work-phase observation carrying its existing phase/pass name.
+Source/count trial buffers forward it immediately, including from rejected
+trials; they retain completion counts until acceptance. CLI labels this as
+attempted work, not completed or accepted routes. Empty passes perform no search
+and need no work-start observation. No timers, search budgets or artifact inputs
+are added. Annotation searches query the shared surface
 obstacle inventory. A provisional balloon body uses an ephemeral read-only
 query overlay, not a rebuilt index containing every surface obstacle for
 each candidate. Its exact body geometry participates in collision, port,

@@ -8,7 +8,7 @@ import pytest
 from chrona.presentation.layout import surface_annotations, surface_composer, surface_route_label_plan
 from chrona.presentation.layout.surface_member_labels import MemberLabelAllocationSession
 from chrona.presentation.layout.obstacles import ObstacleRect, obstacles_intersect
-from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent
+from chrona.presentation.model.render_progress import RenderProgress, RenderProgressEvent, RenderWorkPhaseEvent
 from tests.support import synthetic_review as sr
 
 
@@ -169,12 +169,20 @@ def test_annotation_leader_progress_counts_declarations_without_changing_artifac
                 for event in (RenderProgressEvent("routing", 0, 1, pass_name),
                               RenderProgressEvent("routing", 1, 1, pass_name))]
     assert len(attempt_events) in {1, 2}
-    assert attempt_events == [expected] * len(attempt_events)
+    expected_attempt = [event for pass_name in ("annotation-leaders", "annotation-leaders-reflow-1")
+                        for event in (RenderWorkPhaseEvent("routing", pass_name),
+                                      RenderProgressEvent("routing", 0, 1, pass_name),
+                                      RenderProgressEvent("routing", 1, 1, pass_name))]
+    assert attempt_events == [expected_attempt] * len(attempt_events)
     # Rejected candidate progress is observed above per attempt but is not
     # forwarded as accepted UI progress; the final candidate is published once.
     accepted_annotation_progress = [event for event in accepted_events
                                     if isinstance(event, RenderProgressEvent)
                                     and event.pass_name and event.pass_name.startswith("annotation-leaders")]
     assert accepted_annotation_progress == expected
+    assert [event for event in accepted_events if isinstance(event, RenderWorkPhaseEvent)
+            and event.pass_name.startswith("annotation-leaders")] == [
+        RenderWorkPhaseEvent("routing", pass_name)
+        for _ in attempt_events for pass_name in ("annotation-leaders", "annotation-leaders-reflow-1")]
     assert rendered.artifact.content == plain.artifact.content
     assert rendered.surface.primitives == plain.surface.primitives

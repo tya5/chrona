@@ -283,8 +283,9 @@ def test_controller_elevated_public_evidence_uses_only_portable_completed_treatm
     assert 'data-source-ref="firmware"' in artifact and '>FW Feature Complete</text>' in artifact
 
 
-def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
-    materialize(ROOT / "examples/halcyon-1/manifest.yaml", "programme-board", tmp_path / "board", write=False)
+def test_halcyon_text_compression_derives_owner_scale_paint_and_legend(tmp_path):
+    # Slide 02 now follows the single-colour target mock; slide 19 keeps the owner colour scale.
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", "gallery-text-compression", tmp_path / "board", write=False)
     svg = (tmp_path / "board/review.svg").read_text(encoding="utf-8")
     svg_elements = list(ET.fromstring(svg))
     assert any(item.get("data-purpose") == "planned" and item.get("data-source-ref") == "payload-tvac"
