@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 import json
+import shutil
 from pathlib import Path
 import yaml
 import xml.etree.ElementTree as ET
@@ -25,7 +26,16 @@ SVG_NS = "{http://www.w3.org/2000/svg}"
 
 
 def test_controller_baseline_ghosts_retains_label_on_required_shared_comparison_corridor(tmp_path):
-    fixture = ROOT / "tests/fixtures/controller-z"
+    # Since #1908 a connected recovery precedes a paired stub, so this fixture's relations no longer
+    # stub under the default policy. The shared-corridor stub geometry is still a contract of the
+    # explicit `stub` policy, which this copy of the fixture declares.
+    fixture = tmp_path / "controller-z"
+    shutil.copytree(ROOT / "tests/fixtures/controller-z", fixture)
+    layout = fixture / "layouts/executive-review.yaml"
+    layout.write_text(layout.read_text(encoding="utf-8").replace(
+        "dependencyNetworkFlowDirection: horizontal\n",
+        "dependencyNetworkFlowDirection: horizontal\nrelationRouting: {maxBends: 4, maxDetourRatio: 2, unroutable: stub}\n", 1),
+        encoding="utf-8")
     snapshot = tmp_path / "snapshot"
     reference, _ = copy_context_closure(
         fixture, fixture / "contexts/baseline-ghosts.yaml", snapshot,

@@ -478,7 +478,7 @@ def _recovered_crossing_scene(stage="marks"):
     return document
 
 
-@pytest.mark.parametrize("stage", ["marks", "overlap"])
+@pytest.mark.parametrize("stage", ["marks", "edge", "overlap"])
 def test_matching_declared_mark_or_overlap_recovery_is_informational(stage):
     findings = [item for item in evaluate_scene_perceptibility(_recovered_crossing_scene(stage))
                 if item.code in {"E_SCENE_RELATION_THROUGH_MARK",
@@ -521,7 +521,7 @@ def test_native_compact_composite_endpoint_ids_authorize_only_nonendpoint_recove
         ("relation:r:source:target", "planned:foreign"))
 
 
-@pytest.mark.parametrize("stage", ["marks", "overlap"])
+@pytest.mark.parametrize("stage", ["marks", "edge", "overlap"])
 def test_composite_endpoint_crossing_is_not_excused_by_a_valid_recovery_receipt(stage):
     document = _composite_endpoint_scene(source_bounds=_bounds(0, 2, 8, 6))
     document["diagnostics"][0] = document["diagnostics"][0].replace('"marks"', json.dumps(stage))

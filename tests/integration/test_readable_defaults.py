@@ -453,7 +453,13 @@ def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
     primitives = _primitives(scene)
     assert any(item.get("id") == "annotation-text:station-note" for item in primitives)
     assert any(item.get("id") == "annotation-box:station-note" for item in primitives)
-    assert "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:station-note:plot-no-tail" in scene["diagnostics"]
+    # Since #1908 the station note may take a tail; any note that cannot is the diagnosed tail-less
+    # fallback, never a dropped note.
+    notes = {"window-note", "tvac-note", "station-note"}
+    fallbacks = {item.split(":")[1] for item in scene["diagnostics"]
+                 if item.startswith("W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:") and item.endswith(":plot-no-tail")}
+    assert fallbacks <= notes
+    assert all(any(item.get("id") == f"annotation-box:{note}" for item in primitives) for note in notes)
 
 
 @pytest.mark.parametrize("slide", ("11-overlay-briefing", "12-glyph-gates"))

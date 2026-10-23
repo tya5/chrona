@@ -18,6 +18,7 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
     trial_requests = {}
     pre_member_ids: dict[int, list[str]] = {}
     session_trials = {}
+    placed_member_ids: dict[int, set[str]] = {}
     route_inputs: dict[int, set[str]] = {}
     route_results = []
     plan_facts: dict[int, dict[str, object]] = {}
@@ -45,7 +46,12 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
         result = prepare_pre(context, requests, obstacles)
         prepared_sessions.append(result)
         session_trials[id(result)] = identity
-        assert {f"label-footprint:{name}" for name in names} <= {
+        # every placed name owns a footprint; a name the declared label gap leaves no pose for
+        # (suppressed) owns none
+        placed = {item.placement_id for item in result.text
+                  if item.semantic_id == "memberLabel" and item.overflow != "suppressed"}
+        placed_member_ids.setdefault(identity, set()).update(placed)
+        assert {f"label-footprint:{name}" for name in names if name in placed} <= {
             item.placement_id for item in result.obstacles.all()}
         assert intrinsic_ids.isdisjoint({item.placement_id for item in result.obstacles.all()})
         return result
@@ -128,6 +134,7 @@ def test_member_names_are_placed_once_before_routes_from_the_actual_inventory(tm
         assert not facts["post_member_names"]
         assert facts["selected_index_id"] in route_inputs
         assert facts["pre_index_ids"] <= route_inputs[facts["selected_index_id"]]
-        assert {f"label-footprint:{name}" for name in names} <= route_inputs[
+        assert placed_member_ids[trial] and {
+            f"label-footprint:{name}" for name in placed_member_ids[trial]} <= route_inputs[
             facts["selected_index_id"]]
     assert len(route_results) == len(phases_by_trial)

@@ -494,7 +494,7 @@ def _relation_recovery_stage(relation: Mapping[str, Any], surface_id: Any,
             or not isinstance(receipt.get("critical"), bool)):
         return None
     stage = receipt.get("stage")
-    return stage if isinstance(stage, str) and stage in {"marks", "overlap"} else None
+    return stage if isinstance(stage, str) and stage in {"marks", "edge", "overlap"} else None
 
 
 def _known_endpoint_marks(relation: Mapping[str, Any], marks: list[Mapping[str, Any]]) -> frozenset[str] | None:

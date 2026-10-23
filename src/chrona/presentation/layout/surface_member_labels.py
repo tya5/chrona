@@ -134,6 +134,14 @@ class MemberLabelAllocationSession:
         self._plan = plan
         self._finished = False
 
+    @property
+    def yieldable_obstacle_ids(self) -> frozenset[str]:
+        """Obstacle IDs of the whole text/footprint groups that may move or be omitted for a route."""
+        return frozenset(obstacle.placement_id for allocation in self._allocations
+            if allocation.request.semantic_id == "memberLabel" and allocation.candidate is not None
+            and not allocation.request.is_required_before_routes
+            for obstacle in self._groups[id(allocation)])
+
     def adopt_obstacles(self, obstacles: SurfaceObstacleIndex) -> None:
         """Share the route plan's mutable inventory so later completed routes persist."""
         if self._finished:
@@ -146,45 +154,87 @@ class MemberLabelAllocationSession:
 
     def yield_for_endpoint(self, request: MemberNameYieldRequest,
                             index: SurfaceObstacleIndex) -> MemberNameYieldResult | None:
+        """Move or omit the exact name groups whose ink blocks a candidate; never recurse.
+
+        Each affected name takes its next clear declared candidate against the current inventory
+        and the candidate's protected ink. A name with none may take an earlier declared candidate
+        that exactly one other ordinary name solely blocks; that name then moves or is omitted.
+        Every name keeps the declared label gap from the others.
+        """
         if self._finished or not request.blocker_ids:
             return None
-        affected_ids = {id(self._owners.get(identity)) for identity in request.blocker_ids}
-        if None in (self._owners.get(identity) for identity in request.blocker_ids):
+        owners = [self._owners.get(identity) for identity in request.blocker_ids]
+        if any(owner is None for owner in owners):
             return None
-        affected = [allocation for allocation in self._allocations if id(allocation) in affected_ids]
+        affected = [allocation for allocation in self._allocations
+                    if any(allocation is owner for owner in owners)]
         if any(allocation.request.semantic_id != "memberLabel" or allocation.candidate is None
-                for allocation in affected):
+               for allocation in affected):
             return None
-        old_groups = {id(allocation): self._groups[id(allocation)] for allocation in affected}
-        old_ids = tuple(item.placement_id for group in old_groups.values() for item in group)
-        if not old_ids or any(not index.has(identity) for identity in old_ids):
+        group_ids = tuple(item.placement_id for allocation in self._allocations
+                          for item in self._groups[id(allocation)])
+        if any(not index.has(item.placement_id) for allocation in affected
+               for item in self._groups[id(allocation)]):
             return None
-        probe = index.copy(geometry_overrides=self._paint_footprints, excluded_ids=(*old_ids, "as-of"))
+        probe = index.copy(geometry_overrides=self._paint_footprints, excluded_ids=(*group_ids, "as-of"))
+        for allocation in self._allocations:
+            if not any(allocation is item for item in affected):
+                probe.extend(member_group_obstacles(allocation, spaced=True))
         for obstacle in (*request.protected_ink, *self._context.intrinsic_endpoint_footprints):
             if not probe.has(obstacle.placement_id):
                 probe.add(obstacle)
-        proposed = {}
+        proposed: dict[int, tuple[LabelPlacement | None, bool]] = {}
+        changed = list(affected)
+
+        def settle(allocation: MemberLabelAllocation, found: Any) -> None:
+            candidate = found.placement if found is not None else None
+            proposed[id(allocation)] = (candidate, found is None)
+            probe.extend(member_group_obstacles(replace(
+                allocation, candidate=candidate, forced_suppression=found is None), spaced=True))
+
         for allocation in affected:
-            next_candidate = (allocation.search.next_clear(probe)
-                              if allocation.search is not None else None)
-            candidate = next_candidate.placement if next_candidate is not None else None
-            proposed[id(allocation)] = (candidate, next_candidate is None)
-            proposal = replace(allocation, candidate=candidate,
-                               forced_suppression=next_candidate is None)
-            group = member_group_obstacles(proposal)
-            probe.extend(group)
-        for allocation in affected:
+            found = allocation.search.next_clear(probe) if allocation.search is not None else None
+            displaced = None
+            if found is None and request.displace:
+                displaced = self._displace(allocation, probe, changed)
+            if displaced is not None:
+                found, other, probe = displaced
+                settle(allocation, found)
+                changed.append(other)
+                settle(other, other.search.next_clear(probe) if other.search is not None else None)
+            else:
+                settle(allocation, found)
+        for allocation in changed:
             allocation.candidate, allocation.forced_suppression = proposed[id(allocation)]
+        old_ids = tuple(item.placement_id for allocation in changed for item in self._groups[id(allocation)])
         for identity in old_ids:
             self._owners.pop(identity, None)
         updated = index.copy(excluded_ids=old_ids)
-        for allocation in affected:
+        for allocation in changed:
             new_group = member_group_obstacles(allocation)
             self._groups[id(allocation)] = new_group
             self._owners.update((obstacle.placement_id, allocation) for obstacle in new_group)
             updated.extend(new_group)
         self.obstacles = updated
         return MemberNameYieldResult(updated, self.text, self.required_obstacle_ids)
+
+    def _displace(self, allocation: MemberLabelAllocation, probe: SurfaceObstacleIndex,
+                  taken: list[MemberLabelAllocation]):
+        """Revalidate this name's recorded poses; one solely blocked by one other movable name wins."""
+        if allocation.search is None:
+            return None
+        for evidence in allocation.search.evaluated_normal_candidates:
+            current = allocation.search.revalidate(evidence, probe)
+            if current is None or not current.occupied or not current.blocker_placement_ids:
+                continue
+            blockers = [self._owners.get(identity) for identity in current.blocker_placement_ids]
+            other = blockers[0]
+            if (other is None or any(item is not other for item in blockers)
+                    or any(other is item for item in taken) or not other.movable):
+                continue
+            return current, other, probe.copy(excluded_ids=tuple(
+                item.placement_id for item in self._groups[id(other)]))
+        return None
 
     def finish(self) -> SurfaceMemberLabelsBatch:
         if self._finished:
@@ -774,7 +824,7 @@ def _allocate_member_labels(context: SurfaceMemberLabelContext,
         if allocation.candidate is not None or not ordinary_member:
             _validate_member_allocation(allocation)
         allocations.append(allocation)
-        allocation_index.extend(member_group_obstacles(allocation))
+        allocation_index.extend(member_group_obstacles(allocation, spaced=True))
 
     repair_index = allocation_index.copy(geometry_overrides=paint_footprints, excluded_ids=("as-of",))
     repair_index.extend(context.intrinsic_endpoint_footprints)
@@ -784,7 +834,7 @@ def _allocate_member_labels(context: SurfaceMemberLabelContext,
             fallback = allocation.search.next_fallback(repair_index)
             allocation.candidate = fallback.placement if fallback is not None else None
             _validate_member_allocation(allocation)
-            repair_index.extend(member_group_obstacles(allocation))
+            repair_index.extend(member_group_obstacles(allocation, spaced=True))
 
     required_ids = frozenset(identity for item in requests for identity in
         (item.placement_id, f"label-footprint:{item.placement_id}"))
