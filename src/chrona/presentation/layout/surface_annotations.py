@@ -54,6 +54,8 @@ from chrona.presentation.layout.labels import (
     LabelRect,
     place_label,
 )
+from chrona.presentation.layout.label_footprint_measurement import member_label_gap
+from chrona.presentation.layout.relation_ink_clearance import completed_relation_ink, refine_note_index
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.model.placement_candidates import PlacementCandidate
@@ -309,6 +311,8 @@ class SurfaceAnnotationContext:
     surface_obstacles: SurfaceObstacleIndex
     register_rect: Callable[[str, str, str, Rect], None]
     register_port: Callable[[str, tuple[float, float], str], None]
+    # Completed relation stroke and terminal ink; a note index keeps the label gap from it.
+    relation_ink: tuple[SurfaceObstacle, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -443,7 +447,7 @@ def complete_route_annotations(plan: "RouteLabelPlan", context: SurfaceAnnotatio
         context.review_rows, context.rows, context.by_source, context.scale,
         context.start, context.end, context.timeline, context.timeline_bounds, context.mark_by_id,
         routes.comparison_clusters, routes.instance_rows, context.metric_for, index,
-        register_rect, register_port))
+        register_rect, register_port, completed_relation_ink(context.request, routes.relations)))
 
 
 def _place_annotations_once(context: SurfaceAnnotationContext,
@@ -803,11 +807,18 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     text_transform=annotation_treatment.transform)
                 note_index_size = (note_index_leading + note_index_width + note_index_trailing,
                                    size * line_height)
-                note_index = (None if annotation_id in suppressed_index_ids else place_label(
-                    anchor_bounds, note_index_size, ("end", "start", "above", "below"),
-                    bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
-                    gap=max(1.0, size * 0.25), required=False, overflow="suppress",
-                ))
+                note_index = None
+                if annotation_id not in suppressed_index_ids:
+                    ink_gap = member_label_gap(float(size), getattr(
+                        getattr(request, "measured_sources", None), "metric_values", None))
+                    note_index = refine_note_index(
+                        place_label(anchor_bounds, note_index_size, ("end", "start", "above", "below"),
+                                    bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
+                                    gap=max(1.0, size * 0.25), required=False, overflow="suppress"),
+                        anchor=anchor_bounds, size=note_index_size, sides=("end", "start", "above", "below"),
+                        bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
+                        relation_ink=context.relation_ink, label_gap=ink_gap,
+                        anchor_gap=max(1.0, size * 0.25), reach=2.0 * size)
                 if note_index is None:
                     add_diagnostic(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}", annotation)
                     discovered_index_suppressions.add(annotation_id)
