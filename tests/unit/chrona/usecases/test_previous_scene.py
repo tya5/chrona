@@ -19,7 +19,9 @@ from chrona.storage.revision_store import LocalSnapshotReader, snapshot_director
 from chrona.usecases.materialize import _OverlayBuilder
 from chrona.usecases.failure_report import report_failure
 from chrona.resources import default_preset_resource, default_preset_root
-from chrona.presentation.model.info_diagnostics import RelationHintReceipt, RelationHintSummary
+from chrona.presentation.model.info_diagnostics import (
+    RelationHintReceipt, RelationHintSummary, RelationResolutionInfo, RelationResolutionStage,
+)
 
 
 @pytest.fixture(scope="module")
@@ -293,19 +295,27 @@ def test_draft_captures_prior_bytes_without_modifying_file(tmp_path, previous_by
     summary = next(item for item in result.info_diagnostics if isinstance(item, RelationHintSummary))
     payload = summary.payload()
     assert payload["relationInstances"] == 10, payload
-    assert payload["accepted"] == 8, payload
-    assert payload["invalidated"] == 2, payload
+    assert payload["accepted"] == 7, payload
+    assert payload["invalidated"] == 3, payload
     assert payload["accepted"] + payload["invalidated"] == payload["relationInstances"], payload
-    assert payload["actualSearch"] == 2, payload
+    assert payload["actualSearch"] == 3, payload
     invalidated = {item.relation_id: item for item in summary.receipts
                    if item.disposition == "invalidated"}
     assert set(invalidated) == {
         "relation:relation:id:spec-pricing:spec:spec:pricing:pricing",
         "relation:relation:id:pos-press:positioning:positioning:press:press",
+        "relation:relation:id:rc-launch:release-build:release-build:launch:launch",
     }
     # These prior paths leave the NORMAL endpoint temporal hull; prepare rejects
     # them before the obstacle-collision check, retaining the routing failure code.
-    assert {item.reason for item in invalidated.values()} == {"E_CONNECTOR_UNROUTABLE"}
+    recovered = "relation:relation:id:rc-launch:release-build:release-build:launch:launch"
+    assert {item.reason for key, item in invalidated.items() if key != recovered} == {"E_CONNECTOR_UNROUTABLE"}
+    # Completed painted-mark bounds require MARKS recovery here (#1936).
+    # Reusing hints is NORMAL-only: the recovered path must be searched again.
+    assert invalidated[recovered].reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
+    assert any(isinstance(item, RelationResolutionInfo)
+               and item.relation_id == recovered and item.stage is RelationResolutionStage.MARKS
+               for item in result.info_diagnostics)
     assert all(item.searched for item in invalidated.values())
 
 
