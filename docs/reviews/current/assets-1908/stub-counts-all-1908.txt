@@ -1,0 +1,12 @@
+examples/controller-z-ja/generated/axis-secondary.scene.json: stubs 2 -> 0; names 8 -> 8
+examples/controller-z-ja/generated/executive.scene.json: stubs 2 -> 0; names 8 -> 8
+examples/controller-z/generated/annotation-rounded.scene.json: stubs 1 -> 0; names 8 -> 8
+examples/controller-z/generated/baseline-ghosts.scene.json: stubs 4 -> 0; names 14 -> 14
+examples/controller-z/generated/slot-heading.scene.json: stubs 1 -> 0; names 8 -> 8
+examples/halcyon-1/generated/03-launch-campaign.scene.json: stubs 1 -> 0; names 11 -> 11
+examples/halcyon-1/generated/11-overlay-briefing.scene.json: stubs 3 -> 0; names 22 -> 20
+examples/halcyon-1/generated/12-glyph-gates.scene.json: stubs 4 -> 0; names 24 -> 22
+examples/halcyon-1/generated/15-gallery-image-notes.scene.json: stubs 2 -> 0; names 0 -> 0
+examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json: stubs 1 -> 0; names 26 -> 26
+examples/halcyon-1/generated/19-gallery-text-compression.scene.json: stubs 4 -> 0; names 22 -> 19
+slides 50; stub pairs 25 -> 0; member names 371 -> 364; slides whose stub count grew: 0

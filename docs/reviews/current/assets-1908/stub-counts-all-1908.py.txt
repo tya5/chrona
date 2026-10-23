@@ -1,0 +1,33 @@
+"""Stub-pair receipts (I_LAYOUT_RELATION_RESOLUTION stage=stub) and member-label counts in
+every committed examples/*/generated/*.scene.json, at two git revisions (#1908 review).
+usage: python stub-counts-all-1908.py BEFORE_REV AFTER_REV"""
+import json, subprocess, sys
+
+def git(*a):
+    return subprocess.run(["git", *a], capture_output=True, text=True, check=True).stdout
+
+def counts(rev, path):
+    d = json.loads(git("show", f"{rev}:{path}"))
+    stubs = sum(1 for x in d["diagnostics"] if x.startswith("I_LAYOUT_RELATION_RESOLUTION:")
+                and json.loads(x.split(":", 1)[1]).get("stage") == "stub")
+    names = sum(1 for s in d["surfaces"] for p in s["primitives"]
+                if p["kind"] == "Text" and p.get("purpose") == "member-label")
+    return stubs, names
+
+before, after = sys.argv[1:3]
+paths = sorted(p for p in git("ls-tree", "-r", "--name-only", after, "examples").split()
+               if p.endswith(".scene.json") and "/generated/" in p)
+tot = [0, 0, 0, 0]; grew = []
+for p in paths:
+    try:
+        sb, nb = counts(before, p)
+    except subprocess.CalledProcessError:
+        sb, nb = None, None
+    sa, na = counts(after, p)
+    if sb is None:
+        print("NEW", p, sa, na); continue
+    if (sb, nb) != (sa, na):
+        print(f"{p}: stubs {sb} -> {sa}; names {nb} -> {na}")
+    if sa > sb: grew.append(p)
+    tot[0] += sb; tot[1] += sa; tot[2] += nb; tot[3] += na
+print(f"slides {len(paths)}; stub pairs {tot[0]} -> {tot[1]}; member names {tot[2]} -> {tot[3]}; slides whose stub count grew: {len(grew)}")
