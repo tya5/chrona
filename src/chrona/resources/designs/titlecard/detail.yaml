@@ -7,5 +7,6 @@ body:
     - {role: actual, label: {wording: legend.actual}}
     - {role: missing-actual, label: {wording: legend.missing-actual}}
     - {role: milestone, label: {wording: legend.gate}}
-    - {role: calendar-closed, label: {wording: legend.holiday}}
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}
+    - {role: calendar-exception, label: {wording: legend.holiday}}
     - {role: dependency, label: {wording: legend.dependency}}
