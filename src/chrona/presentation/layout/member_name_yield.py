@@ -8,7 +8,7 @@ from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.relation_terminals import marker_ink_bounds
-from chrona.presentation.layout.surface_quality import MarkerGeometry, TextPlacement
+from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand, TextPlacement
 
 
 @dataclass(frozen=True)
@@ -71,6 +71,8 @@ def route_candidate_ink(
     source_marker: MarkerGeometry | None,
     target_marker: MarkerGeometry | None,
     stroke_width: float,
+    *,
+    path_commands: tuple[PathCommand, ...] = (),
 ) -> tuple[SurfaceObstacle, ...]:
     """Protect a connected candidate's completed stroke and both terminals."""
     result = [SurfaceObstacle(f"route-candidate:{relation_id}:segment:{index}", "dependency-route",
@@ -80,7 +82,7 @@ def route_candidate_ink(
         if marker is not None:
             result.append(SurfaceObstacle(f"route-candidate:{relation_id}:{endpoint}:terminal",
                 "dependency-route", "timeline", ObstacleRect(*marker_ink_bounds(
-                    marker, side=side, points=points, path_commands=(), stroke_width=stroke_width)),
+                    marker, side=side, points=points, path_commands=path_commands, stroke_width=stroke_width)),
                 route_owner_id=relation_id))
     return tuple(result)
 
