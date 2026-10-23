@@ -587,6 +587,10 @@ def _symbol_part_footprint(part: Any, mark: MarkPlacement, theme: Any,
     line_join = (part.line_join if part.paint_mode == "stroke" and part.line_join is not None
                  else finish.line_join or "miter")
     width = float(channels.stroke_width)
+    if (mark.paint_clip is None and line_cap == "round" and len(part.commands) == 2
+            and part.commands[0].kind == "move" and part.commands[1].kind == "line"
+            and part.commands[0].points[0] != part.commands[1].points[0]):
+        return ObstacleSegment(part.commands[0].points[0], part.commands[1].points[0], width)
     return ObstacleRect(*stroked_path_bounds(part.commands, width,
                                              line_cap=line_cap, line_join=line_join))
 
