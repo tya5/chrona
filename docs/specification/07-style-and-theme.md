@@ -401,7 +401,15 @@ inherited outline when its part has no explicit paint mode. A missing part
 override is not absence of stroke. Preserve explicit part overrides and
 completed clips; bound the visible stroke with the shared path/terminal
 envelope arithmetic and its cap/join treatment, not an arbitrary multiple
-of the stroke width. Scene projects that same paint contract and does not
+of the stroke width. The existing neutral paint-capability input also carries
+line-cap/line-join admission and optional-omission policy from the selected
+output profile. A shared neutral resolver completes role-bound stroke finish
+for both Layout bounds and Scene paint; intrinsic glyph-part overrides retain
+their precedence. An unsupported decorative-optional finish uses the same
+default cap/join in both layers, while required unsupported finish keeps the
+existing capability diagnostic. Do not pass Scene objects or a renderer into
+Layout, and do not infer admission from the target name.
+Scene projects that same paint contract and does not
 repair Layout bounds. Correcting previously understated inherited-outline
 facets may change existing lane allocation even without the new gap token;
 this is a geometry correction, not a new default spacing policy or a reason
