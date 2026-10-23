@@ -390,6 +390,10 @@ change the association/reach maximum, reserve a second label allocator, or
 waive completed relation-arrowhead ink clearance. Layout measurement and
 placement consume the same resolved value across automatic, explicit and
 lane rows; Scene and adapters do not add offsets.
+Where Specification 50 applies measured member-name group separation, it
+uses this same resolved gap between complete text/chip/icon groups. It is
+not a second independent spacing policy. That name-only admission clearance
+does not expand the obstacles seen by relation routes or unrelated labels.
 
 ### 5.2 Tokens
 
