@@ -54,6 +54,7 @@ def _forecast_context():
     context.projection.rows = (row,)
     context.projection.lane_membership = None
     context.request.presentation_contract.labels.content = ("title", "finishDelta")
+    context.request.surface_content.omit_zero_delta = False
     return context
 
 
@@ -152,6 +153,7 @@ def _placement_context(*, slot_width=200):
         table_columns=(), table_cells=(), relations=(), annotations=(), show_member_labels=False,
         label_placement="none", label_content=(), label_side="auto", label_overflow="visible-overflow",
         relation_overflow="visible-overflow", group_presentation="band", axis_tiers=(),
+        omit_zero_delta=False,
         axis_fiscal_start_month=1, as_of=None, as_of_label="As of", annotation_numbered=False,
         calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="",
         summary=SummaryContent(()), template_values=(), group_details=(), milestones=(),

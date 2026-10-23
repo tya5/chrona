@@ -165,13 +165,14 @@ REQUIRED_METRICS = (
 DERIVED_METRICS = ("timeline.mark.blockSize", "timeline.axis.blockSize", "table.header.blockSize")
 
 OPTIONAL_METRICS = (
-    "timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth",
+    "timeline.groupHeader.blockSize", "timeline.mark.labelGap", "timeline.calendarClosed.minimumDayWidth",
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
     "network.node.paddingInline", "network.node.paddingBlock",
     "network.member.gap",
 )
 
 _NON_NEGATIVE_METRICS = frozenset((
+    "timeline.mark.labelGap",
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
     "network.node.paddingInline", "network.node.paddingBlock",
     "network.member.gap",

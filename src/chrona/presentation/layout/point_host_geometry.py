@@ -9,6 +9,7 @@ from chrona.presentation.layout.point_hosting import PointHostPlan
 from chrona.presentation.layout.surface_quality import MarkPlacement, PhysicalMarkHost
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.layout.obstacles import obstacles_intersect
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 
 
 def translate_point_block(mark: MarkPlacement, offset: float) -> MarkPlacement:
@@ -63,13 +64,15 @@ def complete_hosted_point_geometry(plan: PointHostPlan, marks: tuple[MarkPlaceme
     return tuple(completed.get(mark.placement_id, mark) for mark in marks)
 
 
-def validate_hosted_point_collisions(plan: PointHostPlan, marks: tuple[MarkPlacement, ...], theme) -> None:
+def validate_hosted_point_collisions(plan: PointHostPlan, marks: tuple[MarkPlacement, ...], theme, *,
+                                     paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities()) -> None:
     """Reject conflicting fixed glyphs in lane and non-lane compositions alike."""
     by_id = {mark.placement_id: mark for mark in marks}
     glyphs = []
     for relation in plan.relations:
         mark = by_id[relation.point.final_mark_id(relation.facet)]
-        facets = _mark_facets(relation.point.item, relation.point.instance, mark, theme)
+        facets = _mark_facets(relation.point.item, relation.point.instance, mark, theme,
+                              paint_capabilities=paint_capabilities)
         glyphs.append((relation, mark, facets))
     for index, (left, left_mark, left_facets) in enumerate(glyphs):
         for right, right_mark, right_facets in glyphs[index + 1:]:

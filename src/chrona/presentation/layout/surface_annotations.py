@@ -785,6 +785,70 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         "annotation", annotation_id, f"annotation-list:{annotation_id}", "summary"))
                 completed_as_list = True
 
+            def place_note_index() -> None:
+                """Place the optional plot index independently of its list/card destination."""
+                if annotation.number is None:
+                    return
+                note_index_visuals = measure_candidate_visuals(
+                    f"note-index:{annotation_id}", "annotation", request).visuals
+                handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
+                note_index_leading = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
+                                                  if visual.side == "leading")
+                note_index_trailing = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
+                                                   if visual.side == "trailing")
+                note_index_content = str(annotation.number)
+                note_index_width = measure_text_width(
+                    note_index_content, font_size=size, font_metrics=annotation_metrics,
+                    letter_spacing=float(annotation_treatment.letter_spacing),
+                    text_transform=annotation_treatment.transform)
+                note_index_size = (note_index_leading + note_index_width + note_index_trailing,
+                                   size * line_height)
+                note_index = (None if annotation_id in suppressed_index_ids else place_label(
+                    anchor_bounds, note_index_size, ("end", "start", "above", "below"),
+                    bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
+                    gap=max(1.0, size * 0.25), required=False, overflow="suppress",
+                ))
+                if note_index is None:
+                    add_diagnostic(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}", annotation)
+                    discovered_index_suppressions.add(annotation_id)
+                    return
+
+                note_index_text = place_text(
+                    placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
+                    content=note_index_content,
+                    inline=note_index.bounds.x + note_index_leading,
+                    baseline_block=note_index.bounds.y + size,
+                    typography_role="annotation", theme_tokens=request.theme_tokens,
+                    font_metrics=request.font_metrics, collision_region="annotations",
+                    collision_domain=CollisionDomain("timeline", "overlay"), semantic_id="noteIndex")
+                if anchor_host is not None:
+                    note_index_text = replace(
+                        note_index_text, host_placement_id=anchor_host.placement_id,
+                        paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
+                text.append(note_index_text)
+                register_rect(note_index_text.placement_id, "text", "timeline", note_index_text.bounds)
+                if note_index_visuals:
+                    if not hasattr(annotation_metrics, "cap_height_at"):
+                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT",
+                                          next(visual.source_ref for visual, _, _, _ in note_index_visuals))
+                    cap_height = float(annotation_metrics.cap_height_at(size))
+                    for visual, icon, icon_width, gap in note_index_visuals:
+                        inline = (note_index.bounds.x if visual.side == "leading"
+                                  else note_index.bounds.x + note_index_leading + note_index_width
+                                  + note_index_trailing - gap - icon_width)
+                        icon_bounds = Rect(
+                            Decimal(str(inline)),
+                            Decimal(str(note_index_text.baseline[1] - cap_height
+                                        + (cap_height - size) / 2)),
+                            Decimal(str(icon_width)), Decimal(str(size)))
+                        candidate_icons.append(IconPlacement(
+                            f"visual:note-index:{annotation_id}:{visual.side}", annotation_id,
+                            visual.source_ref, icon.icon_id, icon.kind, icon.content_identity,
+                            icon.viewport, icon.payload, icon.alternative, visual.decorative,
+                            icon_bounds, "labelVisual", icon_width / icon.viewport[0],
+                            annotation_slot_id, paint_order=note_index_text.paint_order,
+                            subjects=_annotation_icon_subjects(annotation)))
+
             def trial_leader(candidate_box: Any, rung: str, declared_candidate: Any | None = None
                              ) -> tuple[ConnectorEgress, AnnotationRouteTrial,
                                         tuple[tuple[float, float], ...],
@@ -1067,9 +1131,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     if not (leader_required and presentation.leader_semantic_id is not None and leader_trial is None):
                                         box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                         else:
+                            placement_side = (candidate.search.side
+                                              if candidate.search.kind == "adjacent"
+                                              else rung)
                             candidate_box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
-                                candidate_sides=(rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
+                                candidate_sides=(placement_side,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
                                 obstacles=surface_obstacles, overflow="clip-optional", required=False)
                             candidate_boxes = (candidate_box,) if candidate_box is not None else ()
                             for candidate_box in candidate_boxes:
@@ -1160,6 +1227,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             f"W_LAYOUT_ANNOTATION_AS_OF_OTHER_SIDE:{annotation_id}:{selected_rung}:other-side-of-as-of",
                             annotation)
                     if completed_as_list:
+                        place_note_index()
                         continue
                     if box is None:
                         if annotation_id in suppressed_callout_ids:
@@ -1432,81 +1500,30 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                          icon_width / icon.viewport[0], annotation_slot_id,
                                                          paint_order=placed_annotation.paint_order,
                                                          subjects=_annotation_icon_subjects(annotation)))
-            if annotation.number is not None:
-                note_index_visuals = measure_candidate_visuals(
-                    f"note-index:{annotation_id}", "annotation", request).visuals
-                handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
-                note_index_leading = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
-                                                  if visual.side == "leading")
-                note_index_trailing = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
-                                                   if visual.side == "trailing")
-                note_index_content = str(annotation.number)
-                note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=annotation_metrics,
-                                                      letter_spacing=float(annotation_treatment.letter_spacing),
-                                                      text_transform=annotation_treatment.transform)
-                note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
-                note_index = (None if annotation_id in suppressed_index_ids else place_label(
-                    anchor_bounds, note_index_size, ("end", "start", "above", "below"),
-                    bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
-                    gap=max(1.0, size * 0.25), required=False, overflow="suppress",
-                ))
-                if note_index is None:
-                    add_diagnostic(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}", annotation)
-                    discovered_index_suppressions.add(annotation_id)
-                else:
-                    note_index_inline = note_index.bounds.x
-                    note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
-                                                 content=note_index_content, inline=note_index_inline + note_index_leading,
-                                                 baseline_block=note_index.bounds.y + size, typography_role="annotation",
-                                                 theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                                 collision_region="annotations",
-                                                 collision_domain=CollisionDomain("timeline", "overlay"),
-                                                 semantic_id="noteIndex")
-                    if anchor_host is not None:
-                        note_index_text = replace(note_index_text, host_placement_id=anchor_host.placement_id,
-                                                  paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
-                    text.append(note_index_text)
-                    register_rect(note_index_text.placement_id, "text", "timeline", note_index_text.bounds)
-                    if note_index_visuals:
-                        if not hasattr(annotation_metrics, "cap_height_at"):
-                            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
-                        cap_height = float(annotation_metrics.cap_height_at(size))
-                        for visual, icon, icon_width, gap in note_index_visuals:
-                            inline = (note_index.bounds.x if visual.side == "leading"
-                                      else note_index.bounds.x + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
-                            icon_bounds = Rect(Decimal(str(inline)), Decimal(str(note_index_text.baseline[1] - cap_height
-                                                                                  + (cap_height - size) / 2)),
-                                               Decimal(str(icon_width)), Decimal(str(size)))
-                            candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",
-                                                                 annotation_id, visual.source_ref, icon.icon_id, icon.kind,
-                                                                 icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                                                 visual.decorative, icon_bounds, "labelVisual",
-                                                                 icon_width / icon.viewport[0], annotation_slot_id,
-                                                                 paint_order=note_index_text.paint_order,
-                                                                 subjects=_annotation_icon_subjects(annotation)))
-                if (has_index_suppression and annotation_slot is not None and annotation.number is not None
-                        and not status_in_list):
-                    status_content = f"{annotation.number}. index not shown on plot"
-                    rail = LabelRect(*_bounds(annotation_slot.bounds))
-                    status_lines = wrap_text(
-                        status_content, available_inline=max(1.0, rail.width), font_size=size,
-                        font_metrics=annotation_metrics,
-                        letter_spacing=float(annotation_treatment.letter_spacing),
-                        text_transform=annotation_treatment.transform)
-                    status_width = max(measure_text_width(
-                        line, font_size=size, font_metrics=annotation_metrics,
-                        letter_spacing=float(annotation_treatment.letter_spacing),
-                        text_transform=annotation_treatment.transform) for line in status_lines)
-                    status_height = size * line_height * len(status_lines)
-                    complete_list_record(
-                        annotation=annotation, resolved=resolved,
-                        placement_id=f"annotation-status:{annotation_id}",
-                        content=status_content, lines=status_lines,
-                        text_size=(status_width, status_height), font_size=size,
-                        typography_role=annotation_text_role,
-                        presentation=presentation,
-                        anchor_y=prepared.anchor_y,
-                        available_inline=max(1.0, rail.width - annotation_leading - annotation_trailing))
+            place_note_index()
+            if (has_index_suppression and annotation_slot is not None and annotation.number is not None
+                    and not status_in_list):
+                status_content = f"{annotation.number}. index not shown on plot"
+                rail = LabelRect(*_bounds(annotation_slot.bounds))
+                status_lines = wrap_text(
+                    status_content, available_inline=max(1.0, rail.width), font_size=size,
+                    font_metrics=annotation_metrics,
+                    letter_spacing=float(annotation_treatment.letter_spacing),
+                    text_transform=annotation_treatment.transform)
+                status_width = max(measure_text_width(
+                    line, font_size=size, font_metrics=annotation_metrics,
+                    letter_spacing=float(annotation_treatment.letter_spacing),
+                    text_transform=annotation_treatment.transform) for line in status_lines)
+                status_height = size * line_height * len(status_lines)
+                complete_list_record(
+                    annotation=annotation, resolved=resolved,
+                    placement_id=f"annotation-status:{annotation_id}",
+                    content=status_content, lines=status_lines,
+                    text_size=(status_width, status_height), font_size=size,
+                    typography_role=annotation_text_role,
+                    presentation=presentation,
+                    anchor_y=prepared.anchor_y,
+                    available_inline=max(1.0, rail.width - annotation_leading - annotation_trailing))
             if (box.leader_required or routed_tail_tip is not None) and presentation.leader_semantic_id is not None:
                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                  anchor_bounds.y + anchor_bounds.height / 2)

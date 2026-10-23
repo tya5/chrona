@@ -785,16 +785,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if route_self_overlaps(path) or not clear(path):
                 return False
             drawn, start, end = complete_centred_terminals(path, marker_start, marker_end, width)
-            if not route_clears_retained_label_ink(drawn, retained, width):
+            first = orient_terminal(start, drawn, source_side, source=True)
+            last = orient_terminal(end, drawn, target_side, source=False)
+            ink = route_candidate_ink(scene_id, drawn, first, last, width)
+            if endpoint_candidate_blocker_ids(ink, retained):
                 return False
-            if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
+            if protect_label_ink and endpoint_candidate_blocker_ids(ink, index):
                 return False
             if any(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 < width
                    for a, b in zip(drawn, drawn[1:])):
                 return False
             return not any(marker is not None and marker.centred and marker.angle_degrees is not None
-                for marker in (orient_terminal(start, drawn, source_side, source=True),
-                               orient_terminal(end, drawn, target_side, source=False)))
+                for marker in (first, last))
 
         # Retain declared corridors and enough free stroke beyond round-head
         # setbacks, not the arbitrary length of the search's original legs.
@@ -833,9 +835,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 or not clears_primary_marks(drawn, width, required_ids, source_egress, target_egress,
                                             edge_contact)):
             return None
-        if not route_clears_retained_label_ink(drawn, retained, width):
+        ink = route_candidate_ink(scene_id, drawn, first, last, width)
+        if endpoint_candidate_blocker_ids(ink, retained):
             return None
-        if protect_label_ink and not route_clears_retained_label_ink(drawn, index, width):
+        if protect_label_ink and endpoint_candidate_blocker_ids(ink, index):
             return None
         if (not allow_temporal_excursion and domain is not None
                 and domain.stage is RelationResolutionStage.NORMAL
@@ -1477,6 +1480,22 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 marker_start=completed_start, marker_end=completed_end,
                 label_content=relation_label_content(relation), source_ref=relation_id,
                 from_instance_id=source_id, to_instance_id=target_id, paint_clip=plot_clip)
+            # Raw visible fallbacks bypass preparation; orthogonal/recovery
+            # styles also bypass style rejection. They still own complete ink.
+            completed_ink = route_candidate_ink(scene_id, placed.points,
+                placed.marker_start, placed.marker_end, dependency_stroke,
+                path_commands=placed.path_commands)
+            if (endpoint_candidate_blocker_ids(completed_ink, hard_content)
+                    or (domain.stage not in {RelationResolutionStage.OVERLAP, RelationResolutionStage.STUB}
+                        and endpoint_candidate_blocker_ids(completed_ink, domain.obstacles))):
+                relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
+                    suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
+                    semantic_id=relation.semantic_id, source_ref=relation_id,
+                    from_instance_id=source_id, to_instance_id=target_id))
+                diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                if lane_selection is not None:
+                    diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
+                continue
             def reject_style(candidate, cover):
                 if domain.stage is RelationResolutionStage.NORMAL and not fallback and not protected_selected:
                     candidate_points = (path_extrema(candidate.path_commands, axes=(0,))
@@ -1491,6 +1510,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         marker_start=candidate.marker_start, marker_end=candidate.marker_end,
                         stroke_width=dependency_stroke):
                     return "bounds"
+                ink = route_candidate_ink(scene_id, candidate.points,
+                    candidate.marker_start, candidate.marker_end, dependency_stroke,
+                    path_commands=candidate.path_commands)
+                if endpoint_candidate_blocker_ids(ink, hard_content):
+                    return "clearance"
+                if (domain.stage not in {RelationResolutionStage.OVERLAP, RelationResolutionStage.STUB}
+                        and endpoint_candidate_blocker_ids(ink, domain.obstacles)):
+                    return "clearance"
                 # Only retained axis-aligned intervals are admitted subsets.
                 # Arcs and metro diagonals have no whole-host exemption here.
                 classes = tuple(dict.fromkeys((*route_classes, *LABEL_INK_OBSTACLE_CLASSES)))

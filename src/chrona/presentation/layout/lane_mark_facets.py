@@ -13,10 +13,18 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import (
     ObstacleGeometry, ObstacleRect, ObstacleSegment, obstacle_envelope,
 )
+from chrona.presentation.layout.path_ink import stroked_path_bounds
+from chrona.presentation.layout.path_geometry import path_extrema
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, VisualRequest
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 from chrona.presentation.model.primitive_identity import completed_symbol_primitive_ids
 from chrona.presentation.model.semantic_registry import mark_style_role
 from chrona.presentation.model.style_rules import StyleOccurrenceKey
+from chrona.presentation.model.theme_paint import (
+    ThemePaintError, mark_paint_family, resolve_stroke_finish_inputs,
+    resolve_theme_paint_witness,
+)
+from chrona.presentation.model.theme_tokens import ThemeTokenError
 
 
 def _candidate_input_error(owner: str, **operands: object) -> ValueError:
@@ -312,13 +320,10 @@ class LaneMarkFacet:
                                          source_ref=self.source_ref,
                                          primitive_id=self.primitive_id,
                                          primitive_type=self.primitive_type)
-        left, top, right, bottom = obstacle_envelope(self.visible_footprint)
+        # primitive_bounds is the completed command/control hull consumed by
+        # projection. A quadratic control point may lie outside actual ink;
+        # visible_footprint is separately the painted (and clipped) envelope.
         bounds_left, bounds_top, bounds_right, bounds_bottom = self.primitive_bounds
-        if not (left - 1e-9 <= bounds_left <= bounds_right <= right + 1e-9
-                and top - 1e-9 <= bounds_top <= bounds_bottom <= bottom + 1e-9):
-            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
-                                         primitive_bounds=self.primitive_bounds,
-                                         visible_footprint=self.visible_footprint)
         points = (point for _, command_points in self.completed_geometry for point in command_points)
         tolerance = 1e-9
         if any(not (bounds_left - tolerance <= point[0] <= bounds_right + tolerance
@@ -488,7 +493,9 @@ def _clip_rect_footprint(footprint: ObstacleRect, clip: Any) -> ObstacleRect:
 
 
 def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,
-                 theme: Any) -> tuple[LaneMarkFacet, ...]:
+                 theme: Any, *,
+                 paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities()
+                 ) -> tuple[LaneMarkFacet, ...]:
     if mark.mark_shape == "span" and not mark.symbol_parts:
         bounds = _bounds(mark.bounds)
         footprint = span_mark_footprint(mark, theme)
@@ -517,7 +524,7 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
         if part.paint_mode == "stroke" and (stroke_width is None or stroke_width <= 0):
             raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id,
                               detail="stroke glyph has no finite positive Theme width")
-        footprint = _path_footprint(points, stroke_width, mark.placement_id)
+        footprint = _symbol_part_footprint(part, mark, theme, paint_capabilities)
         if isinstance(footprint, ObstacleRect):
             footprint = _clip_rect_footprint(footprint, mark.paint_clip)
         part_payload = LaneGlyphPartProjection(
@@ -532,6 +539,60 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
                              bounds, footprint, mark if index == 0 else None,
                              glyph=part_payload))
     return tuple(result)
+
+
+def mark_visible_envelope(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,
+                          theme: Any, *,
+                          paint_capabilities: PaintWitnessCapabilities = PaintWitnessCapabilities()
+                          ) -> ObstacleRect:
+    """Return the shared completed ink envelope for one visible mark occurrence."""
+    envelopes = tuple(obstacle_envelope(facet.visible_footprint)
+                      for facet in _mark_facets(item, instance, mark, theme,
+                                                paint_capabilities=paint_capabilities))
+    if not envelopes:
+        raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id)
+    return ObstacleRect(min(value[0] for value in envelopes), min(value[1] for value in envelopes),
+                        max(value[2] for value in envelopes), max(value[3] for value in envelopes))
+
+
+def _symbol_part_footprint(part: Any, mark: MarkPlacement, theme: Any,
+                           capabilities: PaintWitnessCapabilities) -> ObstacleGeometry:
+    """Complete one glyph's actual role/part stroke without changing its payload."""
+    role = getattr(mark, "theme_role", None) or mark_style_role(mark.semantic_id)
+    try:
+        family = mark_paint_family(theme, role, glyph_paint_mode=part.paint_mode)
+        intrinsic_width = (part.stroke_width if part.paint_mode == "stroke"
+                           and part.line_cap is not None and part.line_join is not None else None)
+        channels = resolve_theme_paint_witness(
+            theme, role, family, part_mode=part.paint_mode, part_color=part.paint_color,
+            catalog_glyph_stroke_width=intrinsic_width,
+            gradient_supported=capabilities.gradient_supported,
+            optional_gradient_omission=capabilities.optional_gradient_omission).effective_channels
+        visible_stroke = channels.stroke is not None and channels.stroke_width is not None
+        if not visible_stroke:
+            extrema = path_extrema(tuple(part.commands))
+            return ObstacleRect(min(point[0] for point in extrema),
+                                min(point[1] for point in extrema),
+                                max(point[0] for point in extrema),
+                                max(point[1] for point in extrema))
+        finish = resolve_stroke_finish_inputs(theme, role, capabilities)
+    except ThemePaintError as error:
+        raise LayoutError(error.diagnostic_id, error.path, mark.placement_id,
+                          error.detail or str(error)) from error
+    except ThemeTokenError as error:
+        raise LayoutError(error.diagnostic_id, error.path, mark.placement_id,
+                          error.detail or str(error)) from error
+    line_cap = (part.line_cap if part.paint_mode == "stroke" and part.line_cap is not None
+                else finish.line_cap or "butt")
+    line_join = (part.line_join if part.paint_mode == "stroke" and part.line_join is not None
+                 else finish.line_join or "miter")
+    width = float(channels.stroke_width)
+    if (mark.paint_clip is None and line_cap == "round" and len(part.commands) == 2
+            and part.commands[0].kind == "move" and part.commands[1].kind == "line"
+            and part.commands[0].points[0] != part.commands[1].points[0]):
+        return ObstacleSegment(part.commands[0].points[0], part.commands[1].points[0], width)
+    return ObstacleRect(*stroked_path_bounds(part.commands, width,
+                                             line_cap=line_cap, line_join=line_join))
 
 
 def _with_mark_visuals(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,

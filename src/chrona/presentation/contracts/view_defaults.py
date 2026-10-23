@@ -31,10 +31,10 @@ NETWORK_INAPPLICABLE_MEMBERS = frozenset({
     "timePresentation", "annotations", "annotationPresentation", "annotationBindings", "annotationPlacement",
 })
 SPLIT_MEMBERS: Mapping[str, tuple[str, ...]] = {
-    "comparison": ("baselineMarks", "missingActualScope", "deltaUnit", "facets"),
+    "comparison": ("baselineMarks", "baselineLabels", "missingActualScope", "deltaUnit", "facets"),
     "rows": ("mode", "trackAllocation", "packing", "laneTable", "points", "items"),
     "window": ("marginDays",),
-    "grouping": ("presentation", "header", "tint"),
+    "grouping": ("presentation", "header", "headerPlacement", "tint"),
     "colorEncoding": ("scale", "target"),
 }
 COLUMN_PRESENTATION_MEMBERS = (

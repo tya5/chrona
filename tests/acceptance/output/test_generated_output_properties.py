@@ -39,7 +39,7 @@ SLOT_PURPOSES = {
     "notes": {"project-note"},
     "legend": {"legend-label", "legend-swatch"},
     "summary": {"summary-header", "summary-metric", "summary-figure-value", "summary-figure-caption"},
-    "annotations": {"annotation-box", "annotation-text", "annotation-leader"},
+    "annotations": {"annotation-box", "annotation-text", "annotation-list-text", "annotation-leader"},
 }
 
 
@@ -302,6 +302,38 @@ def _table_has_drawn_group_header(tree, scene):
     return False
 
 
+def _collapsed_table_is_intentionally_empty(scene: dict) -> bool:
+    """Only a truly collapsed, columnless table with no owned heading is exempt."""
+    if not isinstance(scene, dict):
+        return False
+    surface = next((item for item in scene.get("surfaces", ())
+                    if item.get("id") == "table-timeline"), None)
+    if surface is None or surface.get("columns"):
+        return False
+    table_slots = [item for item in surface.get("slots", ()) if item.get("source") == "table"]
+    if len(table_slots) != 1:
+        return False
+    bounds = table_slots[0].get("bounds", {})
+    try:
+        width = float(bounds["inlineSize"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if width != 0.0:
+        return False
+    table_id = table_slots[0].get("id")
+    table_header_purposes = {
+        "group-header", "table-column-label", "slot-heading", "title-text", "subtitle-text",
+    }
+    return not any(item.get("slotId") == table_id
+                   and item.get("purpose") in table_header_purposes
+                   for item in surface.get("primitives", ()))
+
+
+def _unproduced_declared_slots(declared: set[str], produced: set[str]) -> list[str]:
+    return sorted(slot for slot in declared & set(SLOT_PURPOSES)
+                  if not SLOT_PURPOSES[slot] & produced)
+
+
 @pytest.mark.parametrize(("slot_id", "text", "expected"), (
     ("table-track", "Group name", True),
     ("timeline", "Group name", False),
@@ -323,7 +355,7 @@ def test_every_declared_slot_produces_a_primitive(slide, context_source, svg_pat
     body = context_source.document["body"]
     declared = _declared_slots(_bound(context_source, body, "layout"))
     produced = {node.get("data-purpose") for node in tree.iter()}
-    empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)
+    empty = _unproduced_declared_slots(declared, produced)
     if "table" in empty:
         manifest = safe_load(context_source.manifest_path.read_bytes())
         selected = next(item for item in manifest["slides"] if item["id"] == context_source.slide_id)
@@ -332,4 +364,30 @@ def test_every_declared_slot_produces_a_primitive(slide, context_source, svg_pat
             scene = json.loads((context_source.manifest_path.parent / scene_path).read_bytes())
             if _table_has_drawn_group_header(tree, scene):
                 empty.remove("table")
+            elif _collapsed_table_is_intentionally_empty(scene):
+                empty.remove("table")
     check(slide, request, empty, f"slots declared in the Layout Profile that drew nothing: {empty}")
+
+
+def test_collapsed_table_exemption_requires_zero_width_and_no_column_or_table_header():
+    def scene(*, width=0, columns=(), headers=()):
+        return {"surfaces": [{
+            "id": "table-timeline",
+            "slots": [{"id": "table-slot", "source": "table",
+                      "bounds": {"inlineSize": width}}],
+            "columns": list(columns),
+            "primitives": list(headers),
+        }]}
+
+    assert _collapsed_table_is_intentionally_empty(scene())
+    assert not _collapsed_table_is_intentionally_empty(scene(width=0.1))
+    assert not _collapsed_table_is_intentionally_empty(scene(columns=({"id": "title"},)))
+    assert not _collapsed_table_is_intentionally_empty(scene(headers=(
+        {"id": "group-header:g", "purpose": "group-header", "slotId": "table-slot"},)))
+    assert _collapsed_table_is_intentionally_empty(scene(headers=(
+        {"id": "group-header:g", "purpose": "group-header", "slotId": "timeline"},)))
+
+
+def test_terminal_annotation_list_text_counts_as_annotation_slot_content():
+    assert _unproduced_declared_slots({"annotations"}, {"annotation-list-text"}) == []
+    assert _unproduced_declared_slots({"annotations"}, {"note-index"}) == ["annotations"]

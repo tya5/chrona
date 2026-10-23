@@ -6,3 +6,5 @@ from dataclasses import dataclass
 class PaintWitnessCapabilities:
     gradient_supported: bool = True
     optional_gradient_omission: bool = False
+    line_finish_supported: bool = True
+    optional_line_finish_omission: bool = False

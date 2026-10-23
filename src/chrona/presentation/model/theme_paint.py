@@ -9,6 +9,7 @@ from enum import StrEnum
 from typing import Literal
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.model.paint_capabilities import PaintWitnessCapabilities
 
 
 class PaintFamily(StrEnum):
@@ -40,6 +41,45 @@ class ThemePaintInputs:
     dash: tuple[float, ...]
     opacity: Decimal | None
     solid_override: bool
+
+
+@dataclass(frozen=True)
+class StrokeFinishInputs:
+    """Profile-admitted Theme stroke finish, shared by Layout bounds and Scene paint."""
+
+    line_cap: str | None
+    line_join: str | None
+    omitted: bool = False
+    fidelity: str = "required"
+
+
+def resolve_stroke_finish_inputs(tokens: ThemeTokenView, role: str,
+                                 capabilities: PaintWitnessCapabilities
+                                 ) -> StrokeFinishInputs:
+    """Resolve role-bound cap/join with the same admission and fidelity rules in every layer."""
+    cap = tokens.optional_token(role, "strokeLineCap", "lineCap")
+    join = tokens.optional_token(role, "strokeLineJoin", "lineJoin")
+    if cap is None and join is None:
+        return StrokeFinishInputs(None, None)
+    path = f"/body/roles/{role}/strokeLineCap"
+    if cap not in {"butt", "round", "square"} or join not in {"miter", "round", "bevel"}:
+        raise ThemePaintError("E_VISUAL_CAPABILITY_VALUE", path,
+                              f"strokeLineCap {cap!r} and strokeLineJoin {join!r} must be declared values")
+    try:
+        fidelity = tokens.optional_token(role, "strokeFinishFidelity", "fidelity")
+    except ThemeTokenError as error:
+        raise ThemePaintError("E_VISUAL_CAPABILITY_FIDELITY", error.path) from error
+    if fidelity is None:
+        fidelity = "required"
+    if fidelity not in {"required", "decorative-optional"}:
+        raise ThemePaintError("E_VISUAL_CAPABILITY_FIDELITY",
+                              f"/body/roles/{role}/strokeFinishFidelity",
+                              f"strokeFinishFidelity {fidelity!r} must be required or decorative-optional")
+    if not capabilities.line_finish_supported:
+        if fidelity == "decorative-optional" and capabilities.optional_line_finish_omission:
+            return StrokeFinishInputs(None, None, omitted=True, fidelity=str(fidelity))
+        raise ThemePaintError("E_VISUAL_CAPABILITY_UNSUPPORTED", path)
+    return StrokeFinishInputs(str(cap), str(join), fidelity=str(fidelity))
 
 
 def restrict_shape_paint_inputs(paint: ThemePaintInputs, channels: str | None,

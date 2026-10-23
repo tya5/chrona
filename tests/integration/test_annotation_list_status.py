@@ -14,11 +14,11 @@ from tests.support import synthetic_review as sr
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
-# Completed source closure prunes the unused annotations slot. Twelve note
-# primitives consequently resolve their slot identity to timeline; all their
-# paint/geometry and the characterized SVG bytes remain unchanged.
-NO_SUPPRESSION_SCENE_SHA256 = "4f7ce9489cf9c52a250a94fc56fad4eee66d27e70fea64113e47b862935504c7"
-NO_SUPPRESSION_SVG_SHA256 = "044f9be48cbe2cd79dc5b58434e519b21957a84462893a8ac494257cb898e388"
+# #1936 completes painted-mark bounds, changing scale/anchor geometry only:
+# all 61 primitive IDs, text, paint, note indexes and leaders remain present.
+# The unused annotations slot stays pruned; note primitives belong to timeline.
+NO_SUPPRESSION_SCENE_SHA256 = "a6df76419154ffee418870ed9f0976d2a84e07feeb1c350d0c7292ca9f9f39d9"
+NO_SUPPRESSION_SVG_SHA256 = "af9c567ae7db6104df042895cb5f51b8630980082c2453e183f54ca8d59dada4"
 
 
 def _fixture():

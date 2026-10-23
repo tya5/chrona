@@ -791,6 +791,17 @@ a resource/layout configuration error. Never infer a panel from a project
 name or silently fabricate a slot. First-party placement policies and their
 Layout slots migrate together with this rule.
 
+A successful terminal-list destination retains the annotation's separately
+declared optional numbered plot index (#1936). Measure and place the index
+at its resolved anchor under the existing index collision/suppression rule;
+the list entry retains its original View-order ordinal and whole prose.
+No callout box or leader is created. If only the index cannot fit, retain
+the list entry and its visible index-not-shown status. This is successful
+list placement, not whole-callout suppression: an explicitly suppressed
+callout still never fabricates an index under the rule below. Candidate IDs
+remain opaque provenance; geometric side selection uses `search.side`,
+never a candidate ID that happens to spell a legacy side.
+
 For effective rail-first card policies, Layout prepares the complete Theme
 frame heights before committing the ordered stack. When the admitted primary
 rail cards' measured heights fit the rail, constrain each card's latest

@@ -57,6 +57,7 @@ def _inputs(items, member_ids=None, *, attached=(), fallback=("start", "end"), n
     )
     content = SimpleNamespace(show_member_labels=True, label_content=("title", "finishDelta"),
                               label_side="auto", label_fallback=fallback, label_text_role=None,
+                              omit_zero_delta=False,
                               attached_labels=tuple((member_name_key(item, "lane-a"), text)
                                                    for object_id, text in attached for item in items
                                                    if item.object_id == object_id),
@@ -151,6 +152,7 @@ def test_attached_composites_are_selected_by_source_occurrence_not_object_id():
             lane_id, "", (primary, snapshot), (primary.item_id, snapshot.item_id)),))
     content = SimpleNamespace(show_member_labels=True, label_content=("title",),
         label_side="auto", label_fallback=("start", "end"), label_text_role=None,
+        omit_zero_delta=False,
         attached_labels=(
             (member_name_key(primary, lane_id), "Primary program / Primary approval · 02 Jan · +1d"),
             (member_name_key(snapshot, lane_id), "Archived program / Snapshot approval · 04 Feb · +3d"),

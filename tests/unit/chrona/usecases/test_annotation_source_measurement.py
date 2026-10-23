@@ -44,7 +44,8 @@ def test_notes_measurement_excludes_consumed_project_narrative():
     projection = SimpleNamespace(lane_rows=(), rows=(), items=(),
                                  window=(date(2027, 1, 1), date(2027, 2, 1)), network=None)
     content = SimpleNamespace(notes=(("remaining", "Unconsumed narrative"),), axis_tiers=(),
-                              group_details=(), milestones=(), observation_columns=(), observation_rows=())
+                              group_details=(), milestones=(), observation_columns=(), observation_rows=(),
+                              group_presentation="none", group_header_placement="table")
     sources = _source_inputs({"project": {"title": "Project"},
                              "annotations": {"consumed": {"text": "Consumed narrative"}}},
                             view, projection, SummaryContent(()), content=content)

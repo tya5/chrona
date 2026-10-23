@@ -492,7 +492,19 @@ ADOPTERS = frozenset({
 # dereferenced diagnostics retain the same named union branch as other registered-part references.
 PARTS_REFERENCING_COMMON: dict[str, set[str]] = {
     "common-v0.1.schema.yaml": {"fractionalTrack", "projectFieldReference"},
-    "common-v0.2.schema.yaml": {"tableColumnSource"},
+    "common-v0.2.schema.yaml": {
+        "tableColumnSource",
+        "tableColumnPresentation/properties/format",
+        "tableColumnPresentation/properties/missing",
+        "tableColumnPresentation/properties/missingBy",
+        "tableColumnPresentation/properties/affixes",
+        "tableColumnPresentation/properties/textRole",
+        "tableColumnPresentation/properties/align",
+        "tableColumnPresentation/properties/headerOrientation",
+        "tableColumnPresentation/properties/width",
+        "tableColumnPresentation/properties/endDisplay",
+        "tableColumnPresentation/properties/text",
+    },
     "revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"},
 }
 
@@ -597,7 +609,19 @@ def test_every_adopted_site_accepts_and_rejects_like_its_definition(name):
 
 def test_nested_site_probes_cover_every_common_presentation_pointer():
     nested = {definition for name in ADOPTERS for _, definition in _adopted_sites(name) if "/" in definition}
-    assert nested == set(SUBDEFINITION_PROBES) - {"storeAddress"}
+    nested.update(definition for _, definition in _adopted_sites("common-v0.2.schema.yaml") if "/" in definition)
+    assert nested == set(SUBDEFINITION_PROBES) - {"storeAddress", "tableColumnPresentation/properties/zero"}
+
+
+def test_common_v02_column_zero_adds_omit_without_changing_frozen_v01():
+    new_zero = validator_for_schema({
+        "$ref": "urn:chrona:common-v0.2#/$defs/tableColumnPresentation/properties/zero"
+    })
+    old_zero = _def_validator("tableColumnPresentation")
+    assert all(new_zero.is_valid(value) for value in ("signed", "plain", "omit"))
+    assert not new_zero.is_valid("none")
+    assert all(old_zero.is_valid({"zero": value}) for value in ("signed", "plain"))
+    assert not old_zero.is_valid({"zero": "omit"})
 
 
 def test_visual_presentation_kind_keys_match_the_live_view_target_grammar():

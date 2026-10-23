@@ -146,6 +146,15 @@ differs from its current one (any planned date), so an item whose baseline equal
 no dashed frame. Without a Snapshot baseline or a Snapshot in the Render Context it draws no ghost and
 raises no diagnostic (#429), so a Layout profile's `viewDefaults` can offer it to Views that have no baseline.
 
+`comparison.baselineLabels: auto|none` (#1936) controls only the names of
+generated paired Snapshot ghosts. Omission means `auto`, retaining existing
+label eligibility; `none` removes that ghost's member-label request, not its
+mark, dates, identity, or the current item's label. Removed-only Snapshot
+rows retain their sole identity label, explicit rows retain their authored
+members, and the forecast rule that assigns a paired ghost's name to its
+primary remains authoritative. This presentation-only member may also be
+offered through `viewDefaults.comparison`.
+
 Draft's explicit `--snapshot <project.yaml>` supplies the same Snapshot Project
 role without an immutable SnapshotRef (Spec08 §3.2, #1533). It does not select or
 override a View baseline; the rules above apply to either ingress.
@@ -245,6 +254,40 @@ group header (literal text, an ordinal in a declared form, the entity title and 
 field as a secondary title; a first-group variant). The text is View content; its
 grammar, ordinal forms and diagnostics are owned by
 [Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
+
+`grouping.headerPlacement: table|timeline` (#1936) selects the header's
+content region when `presentation: header` is selected. Omission means
+`table`, preserving the existing table-origin header geometry and Theme
+treatment. `timeline` places the header in a reserved group-header band
+within the completed timeline inline bounds, without creating a table
+column or contributing a table-source width demand. Layout measures its
+complete runs and reserves its band before marks and routes; Theme owns
+typography and band paint. Existing full-name fitting and finite source
+demand closure apply to the selected region, never by growing an unrelated
+table. `backgroundExtents.groupHeaderBand` still selects background extent
+independently; contrast uses the actual completed text location and ground.
+The presentation member may be supplied by
+`viewDefaults.grouping`; group identity, ordering and selection are unchanged.
+The timeline option is a horizontal band, not the existing table-side
+vertical-tag column. Combining it with `groupHeader.writingMode: vertical`
+is `E_LAYOUT_GROUP_HEADER_PLACEMENT` at `/body/grouping/headerPlacement`,
+with the incompatible Theme treatment named; do not silently force
+horizontal writing or move the header back to the table. A larger measured
+timeline minimum uses the existing common-layout-owner demand, preserving
+the owner-to-header offsets and remeasuring normal flow, rather than a
+table-source minimum or a new retry loop.
+
+`visibility.labels.omitZeroDelta: true` (#1936; default `false`) omits only
+the exact numeric zero delta component from a member label before
+measurement. A title/path component remains; a delta-only label then has no
+text request. This includes an estimated zero's display suffix, but does
+not change its numeric fact, on-track semantics, or the independent table
+consumer. Missing values are not zero; nonzero deltas and their forecast
+markers retain their existing display. Ordinary members consume their
+selected finish delta; attached points consume their selected at-delta.
+Required attached-point names and date content remain required; only their
+zero-delta component is omitted. Table zero display is specified in
+Specification 24.
 
 ### 6.0 Hierarchy name preservation (#1701)
 
@@ -1069,7 +1112,7 @@ validated, not silently removed to make a different surface render.
 
 Slice 1 moves these members: `visibility`, `axis`, `deadlines`, `shading`, `timePresentation`, `annotationPresentation`,
 `backgroundDecoration`, `progressFill` (whole members), and the design halves of `comparison` (`baselineMarks`,
-`missingActualScope`, `deltaUnit`, `facets`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
+`missingActualScope`, `deltaUnit`, `facets`, `baselineLabels`), `rows` (`mode`, `trackAllocation`, `packing`, `laneTable`, `points`, `items`) and
 `window` (`marginDays`). The rule is whole-member replacement: a member the View declares replaces the design's whole member, a
 member it omits takes the design's. The three split members merge one level
 down: an omitted member is created from the profile's design sub-members,
@@ -1083,7 +1126,7 @@ merge happens at ingress, before validation, so the merged View is validated as 
 ordinary heading grammar, including default wording templates and `dateForm`.
 An explicitly declared View heading replaces it as a whole. The split members
 `grouping` and `colorEncoding` follow the same one-level rule as the existing
-splits: only `grouping.presentation`, `header`, `tint`, and
+splits: only `grouping.presentation`, `header`, `headerPlacement`, `tint`, and
 `colorEncoding.scale`, `target` may be supplied. A declared header or tint
 replaces that nested object whole; grouping keys and color source/domain never
 come from those defaults. Project-specific wording and field selections remain

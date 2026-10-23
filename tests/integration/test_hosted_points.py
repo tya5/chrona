@@ -19,7 +19,7 @@ def test_final_host_frame_gate_rejects_geometry_or_partition_drift(tmp_path, mon
     from chrona.presentation.layout.point_host_geometry import translate_point_block
     original = surface_completion.validate_point_host_frames
 
-    def corrupt(preflight, marks, icons, shapes, tracks, theme):
+    def corrupt(preflight, marks, icons, shapes, tracks, theme, *, paint_capabilities):
         if corruption == "glyph-shift":
             marks = tuple(translate_point_block(mark, 1.0) if mark.physical_host is not None else mark
                           for mark in marks)
@@ -31,7 +31,8 @@ def test_final_host_frame_gate_rejects_geometry_or_partition_drift(tmp_path, mon
                            if frame.semantic_instance != frame.allocation_instance else frame
                            for frame in allocation.frames)
             preflight = replace(preflight, point_host_allocation=replace(allocation, frames=frames))
-        return original(preflight, marks, icons, shapes, tracks, theme)
+        return original(preflight, marks, icons, shapes, tracks, theme,
+                        paint_capabilities=paint_capabilities)
 
     monkeypatch.setattr(surface_completion, "validate_point_host_frames", corrupt)
     objects = {"host": sr.span("host", date(2026, 1, 1), 20),
