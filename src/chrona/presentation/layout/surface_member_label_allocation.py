@@ -60,8 +60,13 @@ def member_text_candidate(prepared: PreparedMemberLabelCandidate,
     return replace(candidate, bounds=bounds)
 
 
-def member_group_obstacles(allocation: MemberLabelAllocation) -> tuple[SurfaceObstacle, ...]:
-    """Explicit full-group ownership, without emitting Scene primitives."""
+def member_group_obstacles(allocation: MemberLabelAllocation, *,
+                           spaced: bool = False) -> tuple[SurfaceObstacle, ...]:
+    """Explicit full-group ownership, without emitting Scene primitives.
+
+    ``spaced`` is for name-against-name placement: a member-name group repels another name by the
+    declared label gap. Routes, relation labels and other label kinds see the unspaced group.
+    """
     candidate = allocation.candidate
     if candidate is None:
         return ()
@@ -72,12 +77,14 @@ def member_group_obstacles(allocation: MemberLabelAllocation) -> tuple[SurfaceOb
         baseline_block=text_candidate.bounds.y + float(prepared.measurement.treatment.font_size), overflow="fit")
     inline, block, width, height = bounds_from_rect(measured_text.bounds)
     placement_id, slot = allocation.request.placement_id, allocation.request.collision_domain.slot
+    clearance = (prepared.geometry.gap if spaced and allocation.request.semantic_id == "memberLabel"
+                 else 0.0)
     text = ((SurfaceObstacle(placement_id, "text", slot,
-                ObstacleRect(inline, block, inline + width, block + height)),)
+                ObstacleRect(inline, block, inline + width, block + height), clearance=clearance),)
             if width > 0 and height > 0 else ())
     box = candidate.bounds
     return (*text, SurfaceObstacle(f"label-footprint:{placement_id}", "label-visual", slot,
-        ObstacleRect(box.x, box.y, box.right, box.bottom)))
+        ObstacleRect(box.x, box.y, box.right, box.bottom), clearance=clearance))
 
 
 def exchange_member_name(later: MemberLabelAllocation, earlier: tuple[MemberLabelAllocation, ...],
@@ -108,7 +115,7 @@ def exchange_member_name(later: MemberLabelAllocation, earlier: tuple[MemberLabe
         old_ids = tuple(obstacle.placement_id for obstacle in member_group_obstacles(first))
         held_later = replace(later, candidate=current.placement)
         probe = obstacles.copy(excluded_ids=old_ids)
-        probe.extend(member_group_obstacles(held_later))
+        probe.extend(member_group_obstacles(held_later, spaced=True))
         assert first.search is not None
         alternative = first.search.next_clear(probe)
         if alternative is None:
@@ -138,6 +145,6 @@ def repair_member_names(allocations: tuple[MemberLabelAllocation, ...],
             continue
         earlier, old_ids = exchanged
         current = current.copy(excluded_ids=old_ids)
-        current.extend(member_group_obstacles(earlier))
-        current.extend(member_group_obstacles(allocation))
+        current.extend(member_group_obstacles(earlier, spaced=True))
+        current.extend(member_group_obstacles(allocation, spaced=True))
     return current

@@ -331,6 +331,7 @@ class RelationResolutionStage(str, Enum):
     LABEL_VISUALS = "label-visuals"
     TEXT = "text"
     MARKS = "marks"
+    EDGE = "edge"
     OVERLAP = "overlap"
     STUB = "stub"
 

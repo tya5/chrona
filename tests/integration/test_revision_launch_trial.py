@@ -122,7 +122,9 @@ def test_launch_trial_revision_keeps_spec_build_drawn(tmp_path):
             # The old interior bend now crosses the current build mark. A
             # hint is a proposal, never permission to bypass closed contact.
             assert receipt.disposition == "invalidated", receipt
-            assert receipt.reason == "E_LAYOUT_ROUTE_THROUGH_MARK"
+            # The reason is the rejection of the last proposed port pair: closed contact, or (since
+            # #1908 changed the first render's recovered geometry) an egress corridor collision.
+            assert receipt.reason in {"E_LAYOUT_ROUTE_THROUGH_MARK", "egress-collision"}
             assert receipt.searched
             assert receipt.relation_id in current_routes
             points = hinted_routes[0].points

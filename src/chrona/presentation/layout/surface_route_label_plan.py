@@ -55,7 +55,8 @@ def compose_routes_and_member_labels(context: RouteLabelPlanContext) -> RouteLab
 
         route_context = replace(route_context,
             member_name_yield=yield_member_names,
-            required_label_obstacle_ids=context.pre_route_members.required_obstacle_ids)
+            required_label_obstacle_ids=context.pre_route_members.required_obstacle_ids,
+            yieldable_name_ids=context.pre_route_members.yieldable_obstacle_ids)
     route_context = replace(route_context, progress_pass="route-content-baseline")
     routes = compose_surface_routes(route_context)
     if context.pre_route_members is not None:
