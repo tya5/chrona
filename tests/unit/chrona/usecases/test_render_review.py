@@ -512,7 +512,8 @@ def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
 
     standard, glyph = outputs
     assert standard[0].project.identity == glyph[0].project.identity
-    assert standard[0].view.identity == glyph[0].view.identity
+    # Slides 11 and 12 declare their own View files (#1848), so the View identities differ; the lane
+    # body parsed above is the same synthesized contract for both, so only the Theme differs.
     assert standard[0].resource("theme").id != glyph[0].resource("theme").id
     assert standard[2] == standard[3] == glyph[2] == glyph[3]
     standard_glyphs = tuple(item.symbol.outline for item in standard[1].surface.primitives if item.symbol is not None)
