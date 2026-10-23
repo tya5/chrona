@@ -1,0 +1,70 @@
+"""Probe for the #1908 literal acceptance review (reads committed scene JSON only).
+
+usage: python probe-1908.py <ref-or-'WORK'> [slide ...]
+  ref  a git revision whose examples/halcyon-1/generated/<slide>.scene.json is read
+  WORK read the file from the working tree
+Counts per slide: member-label texts, paired-stub receipts (I_LAYOUT_RELATION_RESOLUTION
+stage=stub), edge-stage receipts, W_LAYOUT_LABEL_SUPPRESSED, dependency paths, and
+member-name pairs closer than 0 px (overlapping text bounds).
+"""
+import json, subprocess, sys
+
+SLIDES = ["02-programme-board", "11-overlay-briefing", "16-gallery-editorial-lanes",
+          "19-gallery-text-compression"]
+
+
+def load(ref, slide):
+    path = f"examples/halcyon-1/generated/{slide}.scene.json"
+    if ref == "WORK":
+        return json.load(open(path, encoding="utf-8"))
+    out = subprocess.run(["git", "show", f"{ref}:{path}"], capture_output=True, text=True, check=True)
+    return json.loads(out.stdout)
+
+
+def measure(d):
+    surf = d["surfaces"][0]
+    prim = surf["primitives"]
+    names = [p for p in prim if p["kind"] == "Text" and p.get("purpose") == "member-label"]
+    stages, stubs, edge, supp = {}, 0, 0, 0
+    for diag in d["diagnostics"]:
+        if diag.startswith("W_LAYOUT_LABEL_SUPPRESSED"):
+            supp += 1
+        if diag.startswith("I_LAYOUT_RELATION_RESOLUTION:"):
+            payload = json.loads(diag.split(":", 1)[1])
+            st = payload.get("stage")
+            stages[st] = stages.get(st, 0) + 1
+            if st == "stub":
+                stubs += 1
+            if st == "edge":
+                edge += 1
+    deps = [p for p in prim if p.get("visualRole") == "dependency"]
+    overlap = 0
+    boxes = [(p["bounds"]["inline"], p["bounds"]["block"], p["bounds"]["inline"] + p["bounds"]["inlineSize"],
+              p["bounds"]["block"] + p["bounds"]["blockSize"]) for p in names]
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            a, b = boxes[i], boxes[j]
+            if a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]:
+                overlap += 1
+    return {"member_names": len(names), "name_texts": sorted(p["text"] for p in names),
+            "stub_pairs": stubs, "edge_receipts": edge, "stages": stages,
+            "label_suppressed": supp, "dependency_paths": len(deps), "overlapping_name_pairs": overlap}
+
+
+if __name__ == "__main__":
+    # usage: probe-1908.py REF [AFTER_REF] [slide ...]; with AFTER_REF also prints lost/added names
+    from collections import Counter
+    ref = sys.argv[1]
+    after = sys.argv[2] if len(sys.argv) > 2 else None
+    slides = sys.argv[3:] or SLIDES
+    for slide in slides:
+        m = measure(load(ref, slide))
+        names = m.pop("name_texts")
+        print(slide, ref, json.dumps(m, sort_keys=True))
+        if after:
+            n = measure(load(after, slide))
+            nn = n.pop("name_texts")
+            print(slide, after, json.dumps(n, sort_keys=True))
+            lost, added = Counter(names) - Counter(nn), Counter(nn) - Counter(names)
+            print("  names lost:", json.dumps(sorted(lost.elements())),
+                  " names added:", json.dumps(sorted(added.elements())))
