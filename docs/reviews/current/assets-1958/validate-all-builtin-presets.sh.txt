@@ -1,0 +1,6 @@
+W=/private/tmp/claude-501/wt1958; export PYTHONPATH=$W/src:$W:$W/packages/chrona-fonts-noto-cjk/src; PY=/private/tmp/claude-501/venv1682/bin/python
+cd /private/tmp/claude-501/t1958; rm -rf all
+for id in $($PY -m chrona preset list | $PY -c "import json,sys;print(' '.join(p['id'] for p in json.load(sys.stdin)['presets']))"); do
+ $PY -m chrona preset copy $id --id x-$id --output all/$id >/dev/null 2>&1 || echo COPYFAIL $id
+ a=$($PY -m chrona validate all/$id/preset.yaml 2>&1|head -c 300); b=$($PY -m chrona validate all/$id/view.yaml 2>&1|head -c 300)
+ echo "$id | $(echo $a|cut -c1-80) | $(echo $b|cut -c1-110)"; done
