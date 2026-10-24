@@ -1,0 +1,7 @@
+target-b render: {"diagnostics": [], "status": "ok", "warnings": [{"code": "W_LAYOUT_ANNOTATION_LEADER_FALLBACK", "diagnostic": "W_LAYOUT
+yuya render: {"diagnostics": [], "status": "ok", "warnings": [{"code": "W_SCENE_STATE_TEXT_CONTRAST", "diagnostic": "W_SCENE_STATE_TE
+marquee render: {"diagnostics": [], "status": "ok", "warnings": [{"code": "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK", "diagnostic": "W_LAY
+wallboard-dark render: {"diagnostics": [], "status": "ok", "warnings": [{"code": "W_LEGEND_SWATCH_COLLISION", "diagnostic": "W_LEGEND_SWATCH_CO
+-- broken view marker kind: render vs validate
+render: {"status": "rejected", "diagnostics": [{"code": "E_VIEW_SCHEMA", "severity": "error", "component": "closure", "sourceRef": "/body/markers/0/kind", "revisionRefs": [], "message": "expected exactly 'asOf'"}]}
+validate preset: {"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "view.yaml#/body/markers/0/kind", "revisionRefs": [], "message": "view.yaml: expected

@@ -1,0 +1,8 @@
+W=/private/tmp/claude-501/wt1958; export PYTHONPATH=$W/src:$W:$W/packages/chrona-fonts-noto-cjk/src; PY=/private/tmp/claude-501/venv1682/bin/python
+cd /private/tmp/claude-501/t1958; P=$W/examples/chrona-roadmap/project.yaml
+for id in target-b yuya marquee wallboard-dark; do
+ echo "$id render: $($PY -m chrona render $P --preset all/$id/preset.yaml --output out-$id.svg 2>&1 | head -c 120)"; done
+echo "-- broken view marker kind: render vs validate"
+rm -rf neg; cp -r all/target-b neg; sed -i.bak 's/  - kind: asOf/  - kind: nonsense/' neg/view.yaml
+echo "render: $($PY -m chrona render $P --preset neg/preset.yaml --output o.svg 2>&1 | head -c 260)"
+echo "validate preset: $($PY -m chrona validate neg/preset.yaml | head -c 200)"

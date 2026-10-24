@@ -1,0 +1,19 @@
+W=/private/tmp/claude-501/wt1958; export PYTHONPATH=$W/src:$W:$W/packages/chrona-fonts-noto-cjk/src; PY=/private/tmp/claude-501/venv1682/bin/python
+cd /private/tmp/claude-501/t1958; rm -rf neg; 
+for f in view theme scheme layout detail; do
+ rm -rf neg; cp -r all/yuya neg
+ $PY - "$f" <<'P'
+import sys,re
+p=f"neg/{sys.argv[1]}.yaml"; s=open(p).read(); s=s.replace("\nversion:","\nbogus: 1\nversion:",1) if "\nversion:" in s else s+"\nbogus: 1\n"; open(p,"w").write(s)
+P
+ echo "== broken $f"; $PY -m chrona validate neg/preset.yaml 2>&1 | head -c 420; echo
+done
+echo "== view deep error (post-merge) : remove tableColumns id"
+rm -rf neg; cp -r all/yuya neg; $PY - <<'P'
+p="neg/view.yaml"; s=open(p).read(); s=s.replace("  - kind: asOf","  - kind: nonsense",1); open(p,"w").write(s)
+P
+$PY -m chrona validate neg/preset.yaml | head -c 400; echo; $PY -m chrona validate neg/view.yaml | head -c 400; echo
+echo "== missing member file"; rm -rf neg; cp -r all/yuya neg; rm neg/theme.yaml; $PY -m chrona validate neg/preset.yaml | head -c 400; echo
+echo "== broken catalog"; rm -rf neg; cp -r all/yuya neg; echo "junk: [" >> neg/catalogs/chrona-target-parts-v2026-10-09.yaml; $PY -m chrona validate neg/preset.yaml | head -c 300; echo
+echo "== view in other dir with --layout and without"; rm -rf neg; cp -r all/yuya neg; mkdir neg2; rm -rf neg2; mkdir neg2; cp neg/view.yaml neg2/; $PY -m chrona validate neg2/view.yaml | head -c 250; echo; $PY -m chrona validate neg2/view.yaml --layout neg/layout.yaml | head -c 250; echo
+echo "== preset schema-in-project/ project dir"; $PY -m chrona --help | grep -i -c validate
