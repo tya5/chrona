@@ -1,0 +1,5 @@
+version: chrona/review-detail-profile/v0.1
+id: halcyon-scenario-legend
+body:
+  legend:
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}

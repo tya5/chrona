@@ -5,3 +5,4 @@ body:
     - {role: planned, label: Baseline}
     - {role: dependency, label: Dependency}
     - {role: asOf, label: As of}
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}
