@@ -124,7 +124,7 @@ objects:
     type: task
     title: 'AI design procedure'
     fields: {owner: m4, lane: reviewer}
-    schedule: {mode: fixed-span, start: '2026-10-21', end: '2026-10-23'}
+    schedule: {mode: fixed-span, start: '2026-10-20', end: '2026-10-22'}
   io:
     type: task
     title: 'CSV import, Typst/TikZ (#982)'
@@ -134,17 +134,17 @@ objects:
     type: gate
     title: 'New design built in YAML only'
     fields: {owner: m4, lane: reviewer}
-    schedule: {mode: fixed-point, at: '2026-10-23'}
+    schedule: {mode: fixed-point, at: '2026-10-21'}
   rerun:
     type: task
     title: 'Re-run the 10-09 trial, fix findings'
     fields: {owner: rc, lane: all}
-    schedule: {mode: fixed-span, start: '2026-10-18', end: '2026-10-27'}
+    schedule: {mode: fixed-span, start: '2026-10-18', end: '2026-10-24'}
   rc-gate:
     type: gate
     title: 'Release candidate'
     fields: {owner: rc, lane: owner}
-    schedule: {mode: fixed-point, at: '2026-10-27'}
+    schedule: {mode: fixed-point, at: '2026-10-24'}
 periods:
   rc-window:
     title: Release-candidate window
@@ -163,9 +163,9 @@ relations:
 annotations:
   signoff:
     kind: note
-    text: 'Re-runs on 10-18 and 10-20 left #1781–#1792 and #1807 open.'
+    text: 'RC criterion met on the public slides and a standard plan (#1956).'
     anchor: {object: rerun}
   route:
     kind: risk
-    text: 'Not started; no issue yet.'
+    text: 'Built in YAML only in trials 11 and 14; not yet a skill reference.'
     anchor: {object: ai-design}

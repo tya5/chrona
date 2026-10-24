@@ -7,7 +7,7 @@ contextDefaults:
     kind: project
     store: {provider: local, identity: chrona-roadmap-example}
     address: project.yaml
-    revision: {token: example-v7}
+    revision: {token: example-v8}
   inputs:
     snapshot:
       id: chrona-roadmap-plan-2026-10-10
@@ -20,7 +20,7 @@ contextDefaults:
       kind: actual-set
       store: {provider: local, identity: chrona-roadmap-example}
       address: actual.yaml
-      revision: {token: example-v2}
+      revision: {token: example-v3}
     iconCatalogs:
     - id: chrona-target-parts-v2026-10-09
       kind: icon-catalog
