@@ -179,6 +179,9 @@ body:
     text-transform:
       type: textTransform
       value: none
+    kind-upper:
+      type: textTransform
+      value: uppercase
     small-caps:
       type: textTransform
       value: small-caps
@@ -669,7 +672,7 @@ body:
       fontSize: size.kind-label
       lineHeight: leading.tight
       letterSpacing: kind-label-spacing
-      textTransform: text-transform
+      textTransform: kind-upper
       numericSpacing: numeric-spacing
     table-cell-secondary:
       fontFamily: editorial
@@ -953,14 +956,14 @@ body:
     timeline.relation.cornerRadius: timeline-relation-radius
   annotationKinds:
     risk:
-      label: RISK
+      label: {wording: annotation.risk}
       title: '{label}'
       heading: '{subject}'
       color: category:red
       colorAlso:
       - header
     note:
-      label: NOTE
+      label: {wording: annotation.note}
       title: '{label}'
       heading: '{subject}'
       color: category:ink
