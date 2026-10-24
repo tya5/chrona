@@ -154,7 +154,7 @@ chrona render examples/launch.yaml --preset looks/executive-light/preset.yaml --
 ```
 
 [Theme role reference](references/theme-role-reference.md) explains what roles paint and which
-properties consume tokens.
+properties consume tokens; for a new design from a user's brief, follow [references/design-from-a-brief.md](references/design-from-a-brief.md).
 `--viewport WIDTHxHEIGHT` sets a finite minimum size (the default is `1600xauto`); a narrower one can clip or drop labels. Use explicit `--view`, `--theme`, `--scheme` or `--layout` files only to override one member of a preset. Contexts and Stores are the pinned-evidence path below; do not use them unless the user asks for pinned evidence.
 
 ## Pinned evidence from a Store (only when the user asks)
