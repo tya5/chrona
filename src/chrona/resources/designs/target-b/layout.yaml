@@ -43,10 +43,10 @@ viewDefaults:
         label: {form: quarter-year, align: center, overflow: visible-overflow, orientation: horizontal}
         typographyRole: axisQuarter
       - {unit: month, every: 1, role: band, typographyRole: axisMonth}
-      - unit: month
+      - unit: auto
         every: 1
         role: labels
-        label: {form: short-month, align: center, overflow: visible-overflow, orientation: horizontal}
+        label: {forms: {day: localized-date, week: start-day-month, month: short-month, half: half-year, year: year}, align: center, overflow: thin-with-record, orientation: horizontal}
         typographyRole: axisMonth
       - {unit: month, every: 1, role: grid-minor}
   markerPresentation: {kind: asOf, label: {wording: marker.asOf}, placement: below-plot, date: {form: day-month}}
