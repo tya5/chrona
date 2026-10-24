@@ -305,9 +305,9 @@ Layout profile's `viewDefaults` under it, as a render does. Without `--layout`, 
 declares it as its View supplies that preset's Layout `viewDefaults`, and an `ok` result adds
 `"validatedThrough": "preset.yaml"`; a View with no such preset is checked alone. A `presentation-preset` document
 (`chrona validate preset.yaml`, CLI only) validates the whole closure: the preset, then each declared member file
-(View, Style, Theme, Color Scheme, Layout profile, Review Detail and Summary profiles, compatible Color Schemes),
+(View, Style, Theme, Color Scheme, Layout profile, Review Detail and Summary profiles, compatible Color Schemes, each `resources.iconCatalogs` file),
 the View after the Layout `viewDefaults` merge (Spec 06, whole-member replacement) through the same ingress merge a
-render uses. Each member finding names its file in the message and the pointer (`view.yaml#/body/markers/0`). A
+render uses. Each member finding names its file in the message and the pointer (`view.yaml#/body/markers/0`). A declared member that is missing or unreadable is an `E_SCHEMA` finding at `<declared path>#/`, not a raw I/O failure. A
 render of a preset never rejects what this check accepts for these members. This adds no schema member and changes
 no Project check (Spec 56 section 3.2).
 
