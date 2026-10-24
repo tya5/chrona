@@ -27,7 +27,10 @@ from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, ren
 from chrona.usecases.guided_render import WorkspaceRenderRequest, render_workspace
 from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
-from chrona.usecases.resource_checks import document_kind, unknown_kind, validate_resource_mapping
+from chrona.usecases.resource_checks import (
+    document_kind, sibling_preset_defaults, unknown_kind, validate_preset_closure,
+    validate_resource_mapping,
+)
 from chrona.usecases.render_review import RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.loader import load_project
@@ -312,7 +315,7 @@ def _parser() -> JsonArgumentParser:
     parser.add_argument("--version", action="version", version=_version_text())
     sub = parser.add_subparsers(dest="command", required=True, parser_class=JsonArgumentParser, metavar="COMMAND")
     commands = {
-        "validate": "check a Project, or a Theme, Layout Profile, View or other resource file by its kind, and list its mistakes",
+        "validate": "check a Project, or a Theme, Layout Profile, View, presentation preset (with all its member files) or other resource file by its kind, and list its mistakes",
         "schedule": "compute the dates of a Project from its dependencies and working calendars",
     }
     for name, help_text in commands.items():
@@ -320,7 +323,8 @@ def _parser() -> JsonArgumentParser:
         _add_snapshot_arguments(command)
     sub.choices["validate"].add_argument(
         "--layout", help="Layout Profile YAML path whose viewDefaults complete a View being validated "
-                         "(a View that relies on its design's defaults is incomplete without it)")
+                         "(a View that relies on its design's defaults is incomplete without it; a View declared by a preset.yaml "
+                         "beside it is checked through that preset when this is omitted)")
     command = sub.add_parser("render", help="draw a slide from a Project file, with its optional Actual and look files",
                               description="draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix, from the files you pass")
     command.add_argument("project", help="Draft Project YAML path, or a terse .chrona plan")
@@ -1047,8 +1051,11 @@ def _run(args: argparse.Namespace) -> None:
         print(json.dumps(output, indent=2, default=_json_default))
         return
     project = _load_primary_project(args)
+    if args.command == "validate" and isinstance(project, dict) and project.get("kind") == "presentation-preset":
+        _validate_preset(Path(args.project), project)
+        return
     if args.command == "validate" and (kind := _resource_kind(project)) is not None:
-        _validate_resource(kind, project, getattr(args, "layout", None))
+        _validate_resource(kind, project, getattr(args, "layout", None), Path(args.project) if args.project else None)
         return
     if args.command == "validate":
         validation = validate_project_mapping(project, base_dir=_project_directory(args))
@@ -1071,13 +1078,32 @@ def _resource_kind(value: Any) -> str | None:
     return kind
 
 
-def _validate_resource(kind: str, value: dict[str, Any], layout_path: str | None = None) -> None:
-    """`chrona validate <resource>.yaml`: that kind's schema and contract checks, not a Project's (a render checks ids)."""
-    defaults = load_yaml(layout_path).get("viewDefaults") if kind == "view" and layout_path else None
+def _validate_resource(kind: str, value: dict[str, Any], layout_path: str | None = None, path: Path | None = None) -> None:
+    """`chrona validate <resource>.yaml`: that kind's schema and contract checks, not a Project's (a render checks ids).
+
+    A View takes the Layout's `viewDefaults` from `--layout`, else from the `preset.yaml` beside it that declares it,
+    so a split View is checked as a render of its preset sees it (#1958).
+    """
+    defaults, via = None, None
+    if kind == "view" and layout_path:
+        defaults = load_yaml(layout_path).get("viewDefaults")
+    elif kind == "view" and path is not None and (sibling := sibling_preset_defaults(path)) is not None:
+        via, defaults = sibling[0].name, sibling[1]
     found = validate_resource_mapping(kind, value, defaults)
     if found:
         _reject(list(found))
-    print(json.dumps({"status": "ok", "diagnostics": [], "resource": kind}))
+    report: dict[str, Any] = {"status": "ok", "diagnostics": [], "resource": kind}
+    if via is not None:
+        report["validatedThrough"] = via
+    print(json.dumps(report))
+
+
+def _validate_preset(path: Path, preset: dict[str, Any]) -> None:
+    """`chrona validate preset.yaml`: the preset and every member file, the View after its Layout's `viewDefaults`."""
+    found = validate_preset_closure(path, preset)
+    if found:
+        _reject(list(found))
+    print(json.dumps({"status": "ok", "diagnostics": [], "resource": "presentation-preset"}))
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:

@@ -126,3 +126,41 @@ def test_validate_names_the_accepted_kinds_for_an_unknown_kind(tmp_path, monkeyp
 def test_validate_still_reads_a_project_as_a_project(monkeypatch, capsys):
     code, payload = _validate(monkeypatch, capsys, SKILL_EXAMPLES / "launch.yaml")
     assert (code, payload) == (0, {"status": "ok", "diagnostics": []})
+
+
+# --- `chrona validate preset.yaml` and a split View through its preset (#1958) -------------------------------------
+
+
+def _copied_preset(tmp_path, monkeypatch, capsys):
+    target = tmp_path / "brief-look"
+    assert _run(monkeypatch, "preset", "copy", "target-b", "--id", "brief-look", "--output", str(target)) == 0
+    capsys.readouterr()
+    return target
+
+
+def test_a_copied_preset_validates_clean_through_preset_yaml_and_its_split_view(tmp_path, monkeypatch, capsys):
+    target = _copied_preset(tmp_path, monkeypatch, capsys)
+    code, payload = _validate(monkeypatch, capsys, target / "preset.yaml")
+    assert (code, payload) == (0, {"status": "ok", "diagnostics": [], "resource": "presentation-preset"})
+    code, payload = _validate(monkeypatch, capsys, target / "view.yaml")
+    assert code == 0 and payload["validatedThrough"] == "preset.yaml"
+
+
+def test_validate_preset_names_the_member_file_and_pointer_of_each_error(tmp_path, monkeypatch, capsys):
+    target = _copied_preset(tmp_path, monkeypatch, capsys)
+    view = target / "view.yaml"
+    view.write_bytes(view.read_bytes().replace(b"version:", b"bogus: 1\nversion:", 1))
+    code, payload = _validate(monkeypatch, capsys, target / "preset.yaml")
+    assert code == 1
+    row = payload["diagnostics"][0]
+    assert row["sourceRef"] == "view.yaml#/" and row["message"].startswith("view.yaml: ")
+
+
+def test_validate_view_alone_without_a_preset_still_needs_its_layout(tmp_path, monkeypatch, capsys):
+    target = _copied_preset(tmp_path, monkeypatch, capsys)
+    lone = tmp_path / "lone"
+    lone.mkdir()
+    (lone / "view.yaml").write_bytes((target / "view.yaml").read_bytes())
+    code, payload = _validate(monkeypatch, capsys, lone / "view.yaml")
+    assert code == 1 and payload["diagnostics"][0]["code"] == "E_SCHEMA"
+    assert _run(monkeypatch, "validate", str(lone / "view.yaml"), "--layout", str(target / "layout.yaml")) == 0

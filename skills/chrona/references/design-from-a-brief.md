@@ -118,10 +118,14 @@ chrona validate looks/brief-look/theme.yaml
 chrona validate looks/brief-look/scheme.yaml
 chrona validate looks/brief-look/layout.yaml
 chrona validate looks/brief-look/detail.yaml
+chrona validate looks/brief-look/view.yaml
+chrona validate looks/brief-look/preset.yaml
 ```
 
 `validate` checks one Theme, Scheme, Layout or legend file by its `kind`. The copied `view.yaml` is
-only the plan half of a View, so check it by rendering instead.
+only the plan half of a View; `validate view.yaml` finds the `preset.yaml` beside it and checks the View
+with that preset's Layout defaults. `validate preset.yaml` checks the whole closure, every member file,
+and names the file and pointer of each error.
 
 Stop when all of these hold:
 
