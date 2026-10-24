@@ -4,6 +4,7 @@ body:
   legend:
     - {role: planned, label: Planned}
     - {role: actual, label: Actual}
+    - {role: calendar-closed, label: {wording: legend.calendar-closed}}
   groupDetails:
     - groupId: bus
       label: Spacecraft bus
