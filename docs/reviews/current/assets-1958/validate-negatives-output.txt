@@ -19,11 +19,10 @@
 {"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/markers/0/kind", "revisionRefs": [], "message": "expected exactly 'asOf'"}]}
 
 == missing member file
-{"status": "failed", "diagnostics": [{"code": "E_INPUT_IO", "severity": "error", "component": "cli", "sourceRef": "/", "revisionRefs": [], "message": "[Errno 2] No such file or directory: '<scratch>/neg/theme.yaml'"}]}
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "theme.yaml#/", "revisionRefs": [], "message": "theme.yaml: the member file declared by the preset does not exist"}]}
 
 == broken catalog
-{"status": "ok", "diagnostics": [], "resource": "presentation-preset"}
-
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "catalogs/chrona-target-parts-v2026-10-09.yaml#/", "revisionRefs": [], "message": "catalogs/chrona-target-parts-v2026-10-09.yaml: cannot be read: did not find expected <document start>\
 == view in other dir with --layout and without
 mkdir: neg2: File exists
 {"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/comparison", "revisionRefs": [], "message": "missing required property 'deltaUnit'"}, {"code": "E_SCHEMA", "severity": "error", 
