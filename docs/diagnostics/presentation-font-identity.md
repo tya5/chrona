@@ -9,9 +9,9 @@ Generated from committed public Scene evidence by tools/presentation_font_identi
 | Noto Sans JP, sans-serif | 400 | — | 3 | 168 | 0 |
 | Noto Sans JP, sans-serif | 700 | — | 1 | 25 | 0 |
 | Noto Sans Mono, monospace | 400 | — | 4 | 56 | 0 |
-| Noto Sans, sans-serif | 400 | — | 43 | 2602 | 0 |
+| Noto Sans, sans-serif | 400 | — | 43 | 2603 | 0 |
 | Noto Sans, sans-serif | 700 | — | 23 | 472 | 0 |
 
 Weight-700 placements: 753.
 Weight-700 placements measured with a weight-400 identity: 0.
-Findings: 3849; errors: 0.
+Findings: 3850; errors: 0.
