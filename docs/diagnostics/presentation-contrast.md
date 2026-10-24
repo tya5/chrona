@@ -8,25 +8,25 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 48 | 419 | 1.000 | 7.607 | 0 | 20 |
+| actual | `actual` | required | 3.000 | 48 | 434 | 1.000 | 7.583 | 0 | 28 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 5 | 25 | 1.493 | 5.241 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 2 | 20 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 2 | 3 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-end | `annotation-border-end` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-start | `annotation-border-start` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-top | `annotation-border-top` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
-| annotation-box | `annotation-note-box` | enabled | 1.100 | 18 | 39 | 1.000 | 1.435 | 0 | 2 |
-| annotation-heading | `annotation-heading` | required | 4.500 | 6 | 13 | 4.747 | 15.382 | 0 | 0 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 17 | 38 | 1.000 | 1.435 | 0 | 2 |
+| annotation-heading | `annotation-heading` | required | 4.500 | 5 | 12 | 4.747 | 15.382 | 0 | 0 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 7 | 29 | 4.837 | 6.720 | 0 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 5 | 11 | 5.258 | 6.833 | 0 | 0 |
-| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 13 | 29 | 4.747 | 7.583 | 0 | 0 |
+| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 12 | 28 | 4.747 | 7.583 | 0 | 0 |
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 3 | 6 | 7.583 | 7.583 | 0 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 7 | 129 | 5.675 | 6.833 | 0 | 0 |
-| annotation-list-text | `text` | required | 4.500 | 6 | 11 | 11.935 | 13.973 | 0 | 0 |
+| annotation-list-text | `text` | required | 4.500 | 6 | 12 | 11.935 | 13.973 | 0 | 0 |
 | annotation-text | `annotation-arrow-text` | required | 4.500 | 1 | 2 | 14.191 | 14.191 | 0 | 0 |
 | annotation-text | `annotation-callout-text` | required | 4.500 | 5 | 6 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 1 | 1 | 17.128 | 17.128 | 0 | 0 |
-| annotation-text | `annotation-note-text` | required | 4.500 | 18 | 39 | 5.859 | 13.973 | 0 | 0 |
+| annotation-text | `annotation-note-text` | required | 4.500 | 17 | 38 | 5.859 | 13.973 | 0 | 0 |
 | as-of-label | `as-of-label` | required | 4.500 | 10 | 10 | 3.717 | 5.112 | 0 | 2 |
 | as-of-label | `text` | required | 4.500 | 35 | 35 | 9.223 | 14.573 | 0 | 0 |
 | axis-band | `axis-band-decoration` | enabled | 1.100 | 48 | 120 | 1.053 | 1.579 | 0 | 5 |
@@ -76,8 +76,8 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | observation-source | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 13 | 23 | 1.000 | 1.337 | 0 | 4 |
 | period-label | `period-label` | required | 4.500 | 13 | 13 | 1.692 | 6.629 | 0 | 5 |
-| planned | `gate` | required | 3.000 | 10 | 70 | 1.000 | 9.106 | 0 | 4 |
-| planned | `planned` | required | 3.000 | 49 | 755 | 1.000 | 10.019 | 0 | 39 |
+| planned | `gate` | required | 3.000 | 10 | 70 | 1.000 | 9.106 | 0 | 5 |
+| planned | `planned` | required | 3.000 | 49 | 755 | 1.000 | 10.019 | 0 | 41 |
 | progress-fill | `progress-fill` | required | 3.000 | 31 | 31 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 28 | 64 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 17 | 112 | 11.934 | 14.573 | 0 | 0 |
@@ -85,7 +85,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | row-decoration | `row-band` | enabled | 1.100 | 14 | 56 | 1.000 | 1.116 | 0 | 4 |
 | row-rule | `row-rule` | enabled | 1.100 | 7 | 182 | 1.067 | 1.222 | 0 | 1 |
 | slot-heading | `slot-heading` | required | 4.500 | 12 | 12 | 5.448 | 7.886 | 0 | 0 |
-| snapshot | `snapshot` | required | 3.000 | 15 | 210 | 1.210 | 5.817 | 0 | 35 |
+| snapshot | `snapshot` | required | 3.000 | 15 | 210 | 1.210 | 5.817 | 0 | 39 |
 | subtitle-text | `subtitle` | required | 4.500 | 11 | 11 | 4.747 | 6.667 | 0 | 0 |
 | subtitle-text | `text` | required | 4.500 | 1 | 1 | 16.268 | 16.268 | 0 | 0 |
 | summary-caption | `summary-caption` | required | 4.500 | 2 | 2 | 15.382 | 15.382 | 0 | 0 |
@@ -96,10 +96,10 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | summary-unit | `summary-unit` | required | 4.500 | 2 | 2 | 6.720 | 6.720 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 1 | 1 | 5.448 | 5.448 | 0 | 0 |
 | table-cell | `table-cell-secondary` | required | 4.500 | 11 | 268 | 5.184 | 7.149 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 48 | 1028 | 8.683 | 16.268 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 48 | 1018 | 8.683 | 16.268 | 0 | 0 |
 | table-cell | `variance-ahead` | deemphasized | 3.000 | 7 | 19 | 3.397 | 6.357 | 0 | 0 |
 | table-cell | `variance-behind` | required | 4.500 | 11 | 54 | 5.022 | 5.669 | 0 | 0 |
-| table-cell | `variance-on-track` | required | 4.500 | 14 | 115 | 5.184 | 7.149 | 0 | 0 |
+| table-cell | `variance-on-track` | required | 4.500 | 14 | 125 | 5.184 | 7.149 | 0 | 0 |
 | table-column-label | `tableColumnLabel` | required | 4.500 | 10 | 30 | 5.184 | 6.667 | 0 | 0 |
 | table-column-label | `text` | required | 4.500 | 38 | 67 | 10.019 | 16.268 | 0 | 0 |
 | title-text | `heading` | required | 4.500 | 8 | 8 | 7.959 | 14.219 | 0 | 0 |
@@ -241,21 +241,24 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/aster-ssd/generated/overview.scene.json` | `cell:security-exit:Work package / gate` | `text` | 77.186, 256.800 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `column:Work package / gate` | `text` | 91.655, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | — | 16.268 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:ai-design:ai-design` | `actual` | 673.315, 715.562 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:canvas-fit:canvas-fit` | `actual` | 561.616, 367.935 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:defaults:defaults` | `actual` | 556.297, 618.461 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:docs-ci:docs-ci` | `actual` | 556.297, 599.686 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:errors:errors` | `actual` | 556.297, 637.236 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:flow-bugs:flow-bugs` | `actual` | 572.254, 386.710 | `planned:flow-bugs:snapshot:flow-bugs` | flat | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:io:io` | `actual` | 588.211, 734.337 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:io:io` | `actual` | 556.297, 734.337 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:japanese:japanese` | `actual` | 556.297, 540.136 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:legend-warning:legend-warning` | `actual` | 556.297, 405.485 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:m0-gate:m0-gate:part0` | `actual` | 609.487, 323.259 | `planned:m0-gate:m0-gate:part0` | flat | `#D9A93D` | fill | — | 1.599 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:m1-gate:m1-gate:part0` | `actual` | 609.487, 457.910 | `planned:m1-gate:m1-gate:part0` | flat | `#D9A93D` | fill | — | 1.599 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:m2-gate:m2-gate:part0` | `actual` | 598.849, 555.011 | `planned:m2-gate:m2-gate:part0` | flat | `#D9A93D` | fill | — | 1.599 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:m3-gate:m3-gate:part0` | `actual` | 588.211, 652.112 | `planned:m3-gate:m3-gate:part0` | flat | `#D9A93D` | fill | — | 1.599 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:m4-gate:m4-gate:part0` | `actual` | 683.953, 749.212 | `planned:m4-gate:m4-gate:part0` | flat | `#D9A93D` | fill | — | 1.599 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:marquee:marquee` | `actual` | 556.297, 289.609 | `planned:marquee:snapshot:marquee` | flat | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:presets:presets` | `actual` | 620.125, 696.787 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:rerun:rerun` | `actual` | 662.677, 793.887 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:rc-gate:rc-gate:part0` | `actual` | 715.867, 808.762 | `planned:rc-gate:rc-gate:part0` | flat | `#D9A93D` | fill | — | 1.599 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:rerun:rerun` | `actual` | 652.039, 793.887 | `calendar-closed:2026-10-18` | flat | `#16120F` | stroke | — | 13.744 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:route-bound:route-bound` | `actual` | 556.297, 502.585 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:rows-headers:rows-headers` | `actual` | 556.297, 424.260 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 588.211, 443.035 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
@@ -264,14 +267,14 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:target-b:target-b` | `actual` | 481.832, 233.284 | `canvas` | canvas | `#0D0A09` | stroke | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:titlecard:titlecard` | `actual` | 545.659, 270.834 | `planned:titlecard:snapshot:titlecard` | flat | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `actual:yuya:yuya` | `actual` | 513.746, 252.059 | `planned:yuya:snapshot:yuya` | flat | `#0D0A09` | fill | — | 14.558 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-artwork:route-note:layer0:part0` | `annotation-artwork` | 1431.000, 690.157 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 1.493 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-artwork:route-note:layer1:part0` | `annotation-artwork` | 1431.000, 690.157 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 1.493 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 1431.000, 690.157 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-heading:route-note` | `annotation-heading` | 1384.255, 688.273 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 5.540 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 1352.788, 674.375 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 5.540 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-list:signoff-note` | `text` | 1427.850, 788.117 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 1381.316, 706.038 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 13.298 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `as-of-label` | `as-of-label` | 673.315, 830.513 | `chip:as-of-label` | flat | `#D9A93D` | fill | — | 8.317 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-artwork:route-note:layer0:part0` | `annotation-artwork` | 1431.000, 681.102 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 1.493 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-artwork:route-note:layer1:part0` | `annotation-artwork` | 1431.000, 681.102 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 1.493 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 1431.000, 681.102 | `canvas` | canvas | `#0D0A09` | fill | — | 14.558 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-heading:route-note` | `annotation-heading` | 1384.255, 670.154 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 5.540 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 1352.788, 656.256 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 5.540 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-list:signoff-note` | `text` | 1423.638, 788.117 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 1425.418, 695.906 | `annotation-box:route-note` | flat | `#EADCC0` | fill | — | 13.298 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `as-of-label` | `as-of-label` | 715.867, 830.513 | `chip:as-of-label` | flat | `#D9A93D` | fill | — | 8.317 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 875.436, 163.996 | `canvas` | canvas | `#0D0A09` | fill | — | 1.053 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `axis-label:2:0` | `axis-label2` | 875.436, 163.996 | `axis-band-rect:0:0` | flat | `#16110F` | fill | — | 8.645 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `axis-label:4:0` | `axis-label3` | 636.082, 186.996 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
@@ -343,15 +346,15 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:milestone:a86f55376e512867:part0` | `gate` | 337.403, 862.337 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:planned` | `planned` | 148.440, 862.337 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `legend-swatch:snapshot` | `snapshot` | 38.000, 862.338 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `period-band:rc-window` | `period-band` | 731.824, 508.073 | `calendar-closed:2026-10-25` | flat | `#16120F` | fill | — | 1.222 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `period-label:rc-window` | `period-label` | 731.824, 207.746 | `period-band:rc-window` | translucent-over-flat | `#4D231A` | fill | — | 10.661 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `period-band:rc-window` | `period-band` | 721.186, 508.073 | `calendar-closed:2026-10-24` | flat | `#16120F` | fill | — | 1.222 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `period-label:rc-window` | `period-label` | 721.186, 207.746 | `as-of-cone` | cone-blend | `#825C42` | fill | — | 4.706 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:m0-gate:m0-gate:part0` | `gate` | 609.487, 323.259 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:m1-gate:m1-gate:part0` | `gate` | 609.487, 457.910 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:m2-gate:m2-gate:part0` | `gate` | 598.849, 555.011 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:m3-gate:m3-gate:part0` | `gate` | 588.211, 652.112 | `canvas` | canvas | `#0D0A09` | fill | — | 9.106 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 705.229, 749.212 | `period-band:rc-window` | translucent-over-canvas | `#251D0F` | fill | — | 7.685 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:rc-gate:rc-gate:part0` | `gate` | 747.781, 808.762 | `period-band:rc-window` | translucent-over-canvas | `#251D0F` | fill | — | 7.685 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:ai-design:ai-design` | `planned` | 683.953, 709.792 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 683.953, 749.212 | `period-band:rc-window` | translucent-over-canvas | `#251D0F` | fill | — | 7.685 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:rc-gate:rc-gate:part0` | `gate` | 715.867, 808.762 | `period-band:rc-window` | translucent-over-flat | `#2D2415` | fill | — | 7.051 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:ai-design:ai-design` | `planned` | 673.315, 709.792 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 556.297, 362.164 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:defaults:defaults` | `planned` | 556.297, 612.691 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 556.297, 593.916 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
@@ -416,9 +419,9 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:presets:snapshot:presets` | `snapshot` | 896.712, 692.887 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:rc-gate:snapshot:rc-gate:part0` | `snapshot` | 1252.715, 808.762 | `calendar-closed:2026-12-13` | flat | `#16120F` | stroke | — | 8.597 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:rerun:snapshot:rerun` | `snapshot` | 1194.575, 789.987 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 683.953, 498.685 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 683.953, 498.685 | `period-band:rc-window` | translucent-over-canvas | `#251D0F` | stroke | — | 7.685 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:rows-headers:snapshot:rows-headers` | `snapshot` | 598.849, 420.360 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 683.953, 439.135 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 683.953, 439.135 | `period-band:rc-window` | translucent-over-canvas | `#251D0F` | stroke | — | 7.685 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:sunday:snapshot:sunday` | `snapshot` | 556.297, 304.484 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 747.781, 517.461 | `period-band:rc-window` | translucent-over-canvas | `#251D0F` | stroke | — | 7.685 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 524.384, 266.934 | `canvas` | canvas | `#0D0A09` | stroke | — | 9.106 | 3.000 | info |
@@ -451,7 +454,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:titlecard:Cast` | `table-cell-secondary` | 317.512, 266.934 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:yuya:Cast` | `table-cell-secondary` | 317.512, 248.159 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:ai-design:The work` | `text` | 109.245, 711.662 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:ai-design:Δ finish` | `text` | 438.372, 711.662 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:canvas-fit:The work` | `text` | 128.144, 364.034 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:defaults:The work` | `text` | 132.885, 614.561 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:docs-ci:The work` | `text` | 135.239, 595.786 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
@@ -475,7 +477,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rc-gate:The work` | `text` | 103.714, 808.762 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rc-gate:Δ finish` | `text` | 438.372, 808.762 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rerun:The work` | `text` | 141.624, 789.987 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rerun:Δ finish` | `text` | 438.372, 789.987 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:route-bound:The work` | `text` | 134.024, 498.685 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rows-headers:The work` | `text` | 160.695, 420.360 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:scene-checks:The work` | `text` | 132.245, 439.135 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
@@ -484,6 +485,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:target-b:The work` | `text` | 96.474, 229.384 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:titlecard:The work` | `text` | 101.054, 266.934 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:yuya:The work` | `text` | 88.401, 248.159 | `canvas` | canvas | `#0D0A09` | fill | — | 15.659 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:ai-design:Δ finish` | `variance-on-track` | 427.272, 711.662 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:canvas-fit:Δ finish` | `variance-on-track` | 427.272, 364.034 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:defaults:Δ finish` | `variance-on-track` | 427.272, 614.561 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:docs-ci:Δ finish` | `variance-on-track` | 427.272, 595.786 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
@@ -494,6 +496,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:legend-warning:Δ finish` | `variance-on-track` | 427.272, 401.585 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:marquee:Δ finish` | `variance-on-track` | 427.272, 285.709 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:presets:Δ finish` | `variance-on-track` | 427.272, 692.887 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rerun:Δ finish` | `variance-on-track` | 427.272, 789.987 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:route-bound:Δ finish` | `variance-on-track` | 427.272, 498.685 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:rows-headers:Δ finish` | `variance-on-track` | 427.272, 420.360 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `cell:scene-checks:Δ finish` | `variance-on-track` | 427.272, 439.135 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
@@ -506,92 +509,92 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `column:The work` | `tableColumnLabel` | 76.060, 159.971 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `column:Δ finish` | `tableColumnLabel` | 405.004, 159.971 | `canvas` | canvas | `#0D0A09` | fill | — | 7.149 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-marquee.scene.json` | `title` | `heading` | 123.941, 90.446 | `region-frame:sign` | flat | `#3A1115` | fill | — | 13.177 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:canvas-fit:canvas-fit` | `actual` | 582.753, 371.588 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:defaults:defaults` | `actual` | 575.575, 619.659 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:docs-ci:docs-ci` | `actual` | 575.575, 601.107 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:errors:errors` | `actual` | 575.575, 638.211 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:flow-bugs:flow-bugs` | `actual` | 597.110, 390.140 | `planned:flow-bugs:snapshot:flow-bugs` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:io:io` | `actual` | 618.644, 734.419 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:japanese:japanese` | `actual` | 575.575, 542.003 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:legend-warning:legend-warning` | `actual` | 575.575, 408.692 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m0-gate:m0-gate:part0` | `actual` | 647.358, 326.636 | `planned:m0-gate:m0-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m1-gate:m1-gate:part0` | `actual` | 647.358, 459.947 | `planned:m1-gate:m1-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m2-gate:m2-gate:part0` | `actual` | 633.001, 556.155 | `planned:m2-gate:m2-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m3-gate:m3-gate:part0` | `actual` | 618.644, 652.363 | `planned:m3-gate:m3-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:marquee:marquee` | `actual` | 575.575, 293.932 | `planned:marquee:snapshot:marquee` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:presets:presets` | `actual` | 661.714, 697.315 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:rerun:rerun` | `actual` | 719.140, 793.523 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:route-bound:route-bound` | `actual` | 575.575, 504.899 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:rows-headers:rows-headers` | `actual` | 575.575, 427.244 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 618.644, 445.795 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:sunday:sunday` | `actual` | 611.466, 312.484 | `planned:sunday:snapshot:sunday` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:tall-canvas:tall-canvas` | `actual` | 575.575, 523.451 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:target-b:target-b` | `actual` | 475.079, 238.276 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:titlecard:titlecard` | `actual` | 561.218, 275.380 | `planned:titlecard:snapshot:titlecard` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:yuya:yuya` | `actual` | 518.148, 256.828 | `planned:yuya:snapshot:yuya` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 806.956, 704.537 | `period-band:rc-window` | flat | `#E4F0D6` | stroke | — | 14.697 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-heading:route-note` | `annotation-heading` | 885.996, 702.662 | `annotation-box:route-note` | flat | `#FFFDF5` | fill | — | 4.747 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 833.950, 687.425 | `annotation-box:route-note` | flat | `#FFFDF5` | fill | — | 4.747 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-list:signoff-note` | `text` | 210.570, 888.225 | `canvas` | canvas | `#F6EFDC` | fill | — | 15.165 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 895.559, 719.775 | `annotation-box:route-note` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `as-of-label` | `as-of-label` | 733.497, 836.950 | `chip:as-of-label` | flat | `#D13A26` | fill | — | 4.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:ai-design:ai-design` | `actual` | 733.497, 716.239 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:canvas-fit:canvas-fit` | `actual` | 582.753, 371.700 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:defaults:defaults` | `actual` | 575.575, 619.962 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:docs-ci:docs-ci` | `actual` | 575.575, 601.393 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:errors:errors` | `actual` | 575.575, 638.531 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:flow-bugs:flow-bugs` | `actual` | 597.110, 390.269 | `planned:flow-bugs:snapshot:flow-bugs` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:io:io` | `actual` | 618.644, 734.808 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:japanese:japanese` | `actual` | 575.575, 542.254 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:legend-warning:legend-warning` | `actual` | 575.575, 408.839 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m0-gate:m0-gate:part0` | `actual` | 647.358, 326.731 | `planned:m0-gate:m0-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m1-gate:m1-gate:part0` | `actual` | 647.358, 460.146 | `planned:m1-gate:m1-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m2-gate:m2-gate:part0` | `actual` | 633.001, 556.423 | `planned:m2-gate:m2-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m3-gate:m3-gate:part0` | `actual` | 618.644, 652.701 | `planned:m3-gate:m3-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:m4-gate:m4-gate:part0` | `actual` | 747.854, 748.978 | `planned:m4-gate:m4-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:marquee:marquee` | `actual` | 575.575, 293.992 | `planned:marquee:snapshot:marquee` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:presets:presets` | `actual` | 661.714, 697.670 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:rc-gate:rc-gate:part0` | `actual` | 790.923, 808.116 | `planned:rc-gate:rc-gate:part0` | flat | `#F7C948` | fill | — | 3.085 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:rerun:rerun` | `actual` | 704.784, 793.947 | `calendar-closed:2026-10-18` | translucent-over-flat | `#F4F2EA` | stroke | — | 4.313 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:route-bound:route-bound` | `actual` | 575.575, 505.116 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:rows-headers:rows-headers` | `actual` | 575.575, 427.408 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 618.644, 445.977 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:sunday:sunday` | `actual` | 611.466, 312.562 | `planned:sunday:snapshot:sunday` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:tall-canvas:tall-canvas` | `actual` | 575.575, 523.685 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:target-b:target-b` | `actual` | 475.079, 238.285 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:titlecard:titlecard` | `actual` | 561.218, 275.423 | `planned:titlecard:snapshot:titlecard` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `actual:yuya:yuya` | `actual` | 518.148, 256.854 | `planned:yuya:snapshot:yuya` | flat | `#FFFDF5` | fill | — | 4.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-list:route-note` | `text` | 209.794, 888.675 | `canvas` | canvas | `#F6EFDC` | fill | — | 15.165 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `annotation-list:signoff-note` | `text` | 223.633, 906.225 | `canvas` | canvas | `#F6EFDC` | fill | — | 15.165 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `as-of-label` | `as-of-label` | 790.923, 837.400 | `chip:as-of-label` | flat | `#D13A26` | fill | — | 4.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 452.543, 168.600 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `axis-label:2:0` | `axis-label2` | 1006.272, 168.600 | `axis-band-rect:0:0` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `axis-label:4:0` | `axis-label3` | 488.913, 191.600 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `axis-label:4:1` | `axis-label3` | 938.267, 191.600 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `axis-label:4:2` | `axis-label3` | 1367.861, 191.600 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-03` | `calendar-closed` | 496.614, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 510.970, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-10` | `calendar-closed` | 597.110, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-11` | `calendar-closed` | 611.466, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-17` | `calendar-closed` | 697.606, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-18` | `calendar-closed` | 711.962, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-24` | `calendar-closed` | 798.101, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-25` | `calendar-closed` | 812.458, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-31` | `calendar-closed` | 898.597, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-01` | `calendar-closed` | 912.954, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-07` | `calendar-closed` | 999.093, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-08` | `calendar-closed` | 1013.450, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-14` | `calendar-closed` | 1099.589, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-15` | `calendar-closed` | 1113.946, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-21` | `calendar-closed` | 1200.085, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-22` | `calendar-closed` | 1214.442, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-28` | `calendar-closed` | 1300.581, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-29` | `calendar-closed` | 1314.938, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-05` | `calendar-closed` | 1401.077, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-06` | `calendar-closed` | 1415.434, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-12` | `calendar-closed` | 1501.573, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-13` | `calendar-closed` | 1515.930, 509.775 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-03` | `calendar-closed` | 496.614, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 510.970, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-10` | `calendar-closed` | 597.110, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-11` | `calendar-closed` | 611.466, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-17` | `calendar-closed` | 697.606, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-18` | `calendar-closed` | 711.962, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-24` | `calendar-closed` | 798.101, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-25` | `calendar-closed` | 812.458, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-10-31` | `calendar-closed` | 898.597, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-01` | `calendar-closed` | 912.954, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-07` | `calendar-closed` | 999.093, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-08` | `calendar-closed` | 1013.450, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-14` | `calendar-closed` | 1099.589, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-15` | `calendar-closed` | 1113.946, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-21` | `calendar-closed` | 1200.085, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-22` | `calendar-closed` | 1214.442, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-28` | `calendar-closed` | 1300.581, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-11-29` | `calendar-closed` | 1314.938, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-05` | `calendar-closed` | 1401.077, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-06` | `calendar-closed` | 1415.434, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-12` | `calendar-closed` | 1501.573, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `calendar-closed:2026-12-13` | `calendar-closed` | 1515.930, 510.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.104 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m0` | `text` | 157.722, 213.600 | `group-header-band:m0` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m1` | `text` | 211.131, 346.912 | `group-header-band:m1` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m2` | `text` | 176.718, 480.223 | `group-header-band:m2` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m3` | `text` | 177.828, 576.431 | `group-header-band:m3` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m4` | `text` | 160.830, 672.639 | `group-header-band:m4` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:rc` | `text` | 170.009, 768.847 | `group-header-band:rc` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m1` | `text` | 211.131, 347.016 | `group-header-band:m1` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m2` | `text` | 176.718, 480.431 | `group-header-band:m2` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m3` | `text` | 177.828, 576.708 | `group-header-band:m3` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:m4` | `text` | 160.830, 672.985 | `group-header-band:m4` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header:rc` | `text` | 170.009, 769.262 | `group-header-band:rc` | flat | `#F7C948` | fill | — | 11.108 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m0` | `group-header-band` | 40.000, 213.600 | `group-header-strip:m0` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m1` | `group-header-band` | 40.000, 346.912 | `group-header-strip:m1` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m2` | `group-header-band` | 40.000, 480.223 | `group-header-strip:m2` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m3` | `group-header-band` | 40.000, 576.431 | `group-header-strip:m3` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m4` | `group-header-band` | 40.000, 672.639 | `group-header-strip:m4` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:rc` | `group-header-band` | 40.000, 768.847 | `group-header-strip:rc` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m1` | `group-header-band` | 40.000, 347.016 | `group-header-strip:m1` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m2` | `group-header-band` | 40.000, 480.431 | `group-header-strip:m2` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m3` | `group-header-band` | 40.000, 576.708 | `group-header-strip:m3` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:m4` | `group-header-band` | 40.000, 672.985 | `group-header-strip:m4` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-band:rc` | `group-header-band` | 40.000, 769.262 | `group-header-strip:rc` | flat | `#FFFDF5` | stroke | — | 17.090 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m0` | `group-header-strip` | 800.000, 213.600 | `group-header-strip:m0` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m0` | `group-header-strip` | 800.000, 213.600 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m0` | `group-header-strip` | 800.000, 213.600 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m1` | `group-header-strip` | 800.000, 346.912 | `group-header-strip:m1` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m1` | `group-header-strip` | 800.000, 346.912 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m1` | `group-header-strip` | 800.000, 346.912 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m2` | `group-header-strip` | 800.000, 480.223 | `group-header-strip:m2` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m2` | `group-header-strip` | 800.000, 480.223 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m2` | `group-header-strip` | 800.000, 480.223 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m3` | `group-header-strip` | 800.000, 576.431 | `group-header-strip:m3` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m3` | `group-header-strip` | 800.000, 576.431 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m3` | `group-header-strip` | 800.000, 576.431 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m4` | `group-header-strip` | 800.000, 672.639 | `group-header-strip:m4` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m4` | `group-header-strip` | 800.000, 672.639 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m4` | `group-header-strip` | 800.000, 672.639 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:rc` | `group-header-strip` | 800.000, 768.847 | `group-header-strip:rc` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:rc` | `group-header-strip` | 800.000, 768.847 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:rc` | `group-header-strip` | 800.000, 768.847 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m1` | `group-header-strip` | 800.000, 347.016 | `group-header-strip:m1` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m1` | `group-header-strip` | 800.000, 347.016 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m1` | `group-header-strip` | 800.000, 347.016 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m2` | `group-header-strip` | 800.000, 480.431 | `group-header-strip:m2` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m2` | `group-header-strip` | 800.000, 480.431 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m2` | `group-header-strip` | 800.000, 480.431 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m3` | `group-header-strip` | 800.000, 576.708 | `group-header-strip:m3` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m3` | `group-header-strip` | 800.000, 576.708 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m3` | `group-header-strip` | 800.000, 576.708 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m4` | `group-header-strip` | 800.000, 672.985 | `group-header-strip:m4` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m4` | `group-header-strip` | 800.000, 672.985 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:m4` | `group-header-strip` | 800.000, 672.985 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:rc` | `group-header-strip` | 800.000, 769.262 | `group-header-strip:rc` | pattern-substrate | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:rc` | `group-header-strip` | 800.000, 769.262 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 1.350 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `group-header-strip:rc` | `group-header-strip` | 800.000, 769.262 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 1.000 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `kicker` | `kicker` | 555.127, 66.251 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend:actual:f9eb1c4db74f5d41` | `legend` | 1391.412, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend:calendar-closed` | `legend` | 1425.320, 79.300 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
@@ -610,143 +613,144 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 884.598, 113.500 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | — | 2.578 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:planned` | `planned` | 1109.065, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `legend-swatch:snapshot` | `snapshot` | 873.598, 45.100 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `period-band:rc-window` | `period-band` | — | `calendar-closed:2026-10-25` | unsupported | `—` | fill | — | — | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `period-label:rc-window` | `period-label` | 812.458, 212.050 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | fill | — | 6.629 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m0-gate:m0-gate:part1` | `gate` | 640.358, 326.636 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m1-gate:m1-gate:part1` | `gate` | 640.358, 459.947 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m2-gate:m2-gate:part1` | `gate` | 626.001, 556.155 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m3-gate:m3-gate:part1` | `gate` | 611.644, 652.363 | `calendar-closed:2026-10-11` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m4-gate:m4-gate:part1` | `gate` | 769.567, 748.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rc-gate:rc-gate:part1` | `gate` | 826.993, 807.675 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 6.629 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:ai-design:ai-design` | `planned` | 747.854, 709.707 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 575.575, 365.428 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:defaults:defaults` | `planned` | 575.575, 613.499 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 575.575, 594.947 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:errors:errors` | `planned` | 575.575, 632.051 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:flow-bugs:flow-bugs` | `planned` | 546.862, 383.980 | `planned:flow-bugs:snapshot:flow-bugs` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:io:io` | `planned` | 575.575, 728.259 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:japanese:japanese` | `planned` | 575.575, 535.843 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:legend-warning:legend-warning` | `planned` | 575.575, 402.532 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:marquee:marquee` | `planned` | 561.218, 287.772 | `planned:marquee:snapshot:marquee` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:presets:presets` | `planned` | 647.358, 691.155 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rerun:rerun` | `planned` | 704.784, 787.363 | `calendar-closed:2026-10-18` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:route-bound:route-bound` | `planned` | 575.575, 498.739 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rows-headers:rows-headers` | `planned` | 575.575, 421.084 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 589.931, 439.635 | `calendar-closed:2026-10-10` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:sunday:sunday` | `planned` | 575.575, 306.324 | `planned:sunday:snapshot:sunday` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:tall-canvas:tall-canvas` | `planned` | 575.575, 517.291 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:target-b:target-b` | `planned` | 475.079, 232.116 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:titlecard:titlecard` | `planned` | 532.505, 269.220 | `planned:titlecard:snapshot:titlecard` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:yuya:yuya` | `planned` | 489.435, 250.668 | `calendar-closed:2026-10-03` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `period-band:rc-window` | `period-band` | — | `calendar-closed:2026-10-24` | unsupported | `—` | fill | — | — | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `period-label:rc-window` | `period-label` | 798.101, 212.050 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | fill | — | 6.629 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m0-gate:m0-gate:part1` | `gate` | 640.358, 326.731 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m1-gate:m1-gate:part1` | `gate` | 640.358, 460.146 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m2-gate:m2-gate:part1` | `gate` | 626.001, 556.423 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m3-gate:m3-gate:part1` | `gate` | 611.644, 652.701 | `calendar-closed:2026-10-11` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m4-gate:m4-gate:part1` | `gate` | 740.854, 748.978 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rc-gate:rc-gate:part1` | `gate` | 783.923, 808.116 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 6.629 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:ai-design:ai-design` | `planned` | 733.497, 710.079 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 575.575, 365.540 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:defaults:defaults` | `planned` | 575.575, 613.802 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 575.575, 595.233 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:errors:errors` | `planned` | 575.575, 632.371 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:flow-bugs:flow-bugs` | `planned` | 546.862, 384.109 | `planned:flow-bugs:snapshot:flow-bugs` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:io:io` | `planned` | 575.575, 728.648 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:japanese:japanese` | `planned` | 575.575, 536.094 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:legend-warning:legend-warning` | `planned` | 575.575, 402.679 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:marquee:marquee` | `planned` | 561.218, 287.832 | `planned:marquee:snapshot:marquee` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:presets:presets` | `planned` | 647.358, 691.510 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rerun:rerun` | `planned` | 704.784, 787.787 | `calendar-closed:2026-10-18` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:route-bound:route-bound` | `planned` | 575.575, 498.956 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rows-headers:rows-headers` | `planned` | 575.575, 421.248 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 589.931, 439.817 | `calendar-closed:2026-10-10` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:sunday:sunday` | `planned` | 575.575, 306.402 | `planned:sunday:snapshot:sunday` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:tall-canvas:tall-canvas` | `planned` | 575.575, 517.525 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:target-b:target-b` | `planned` | 475.079, 232.125 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:titlecard:titlecard` | `planned` | 532.505, 269.263 | `planned:titlecard:snapshot:titlecard` | flat | `#FFFDF5` | stroke | — | 17.090 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:yuya:yuya` | `planned` | 489.435, 250.694 | `calendar-closed:2026-10-03` | translucent-over-flat | `#F4F2EA` | stroke | — | 15.528 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `slot-heading:legend` | `slot-heading` | 784.799, 47.050 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:ai-design:snapshot:ai-design` | `snapshot` | 1135.481, 711.467 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:canvas-fit:snapshot:canvas-fit` | `snapshot` | 575.575, 367.188 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:defaults:snapshot:defaults` | `snapshot` | 977.559, 615.259 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:docs-ci:snapshot:docs-ci` | `snapshot` | 848.349, 596.707 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:errors:snapshot:errors` | `snapshot` | 1034.985, 633.811 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:flow-bugs:snapshot:flow-bugs` | `snapshot` | 546.862, 385.740 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:io:snapshot:io` | `snapshot` | 1149.837, 730.019 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:japanese:snapshot:japanese` | `snapshot` | 948.845, 537.603 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:legend-warning:snapshot:legend-warning` | `snapshot` | 676.071, 404.292 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m0-gate:snapshot:m0-gate:part0` | `snapshot` | 726.997, 326.636 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m1-gate:snapshot:m1-gate:part0` | `snapshot` | 827.493, 459.947 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 1.340 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m2-gate:snapshot:m2-gate:part0` | `snapshot` | 1028.485, 556.155 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m3-gate:snapshot:m3-gate:part0` | `snapshot` | 1128.981, 652.363 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m4-gate:snapshot:m4-gate:part0` | `snapshot` | 1430.469, 748.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:marquee:snapshot:marquee` | `snapshot` | 561.218, 289.532 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:presets:snapshot:presets` | `snapshot` | 1034.985, 692.915 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rc-gate:snapshot:rc-gate:part0` | `snapshot` | 1516.608, 807.675 | `calendar-closed:2026-12-13` | translucent-over-flat | `#F4F2EA` | stroke | — | 3.138 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rerun:snapshot:rerun` | `snapshot` | 1436.969, 789.123 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 747.854, 500.499 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rows-headers:snapshot:rows-headers` | `snapshot` | 633.001, 422.844 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 747.854, 441.395 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:sunday:snapshot:sunday` | `snapshot` | 575.575, 308.084 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 833.993, 519.051 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 1.340 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 532.505, 270.980 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:yuya:snapshot:yuya` | `snapshot` | 518.148, 252.428 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:ai-design:snapshot:ai-design` | `snapshot` | 1135.481, 711.839 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:canvas-fit:snapshot:canvas-fit` | `snapshot` | 575.575, 367.300 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:defaults:snapshot:defaults` | `snapshot` | 977.559, 615.562 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:docs-ci:snapshot:docs-ci` | `snapshot` | 848.349, 596.993 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:errors:snapshot:errors` | `snapshot` | 1034.985, 634.131 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:flow-bugs:snapshot:flow-bugs` | `snapshot` | 546.862, 385.869 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:io:snapshot:io` | `snapshot` | 1149.837, 730.408 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:japanese:snapshot:japanese` | `snapshot` | 948.845, 537.854 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:legend-warning:snapshot:legend-warning` | `snapshot` | 676.071, 404.439 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m0-gate:snapshot:m0-gate:part0` | `snapshot` | 726.997, 326.731 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m1-gate:snapshot:m1-gate:part0` | `snapshot` | 827.493, 460.146 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 1.340 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m2-gate:snapshot:m2-gate:part0` | `snapshot` | 1028.485, 556.423 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m3-gate:snapshot:m3-gate:part0` | `snapshot` | 1128.981, 652.701 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:m4-gate:snapshot:m4-gate:part0` | `snapshot` | 1430.469, 748.978 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:marquee:snapshot:marquee` | `snapshot` | 561.218, 289.592 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:presets:snapshot:presets` | `snapshot` | 1034.985, 693.270 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rc-gate:snapshot:rc-gate:part0` | `snapshot` | 1516.608, 808.116 | `calendar-closed:2026-12-13` | translucent-over-flat | `#F4F2EA` | stroke | — | 3.138 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rerun:snapshot:rerun` | `snapshot` | 1436.969, 789.547 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 747.854, 500.716 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 1.340 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:rows-headers:snapshot:rows-headers` | `snapshot` | 633.001, 423.008 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 747.854, 441.577 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 1.340 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:sunday:snapshot:sunday` | `snapshot` | 575.575, 308.162 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 833.993, 519.285 | `period-band:rc-window` | pattern-host-ink | `#6FB04F` | stroke | — | 1.340 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 532.505, 271.023 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `planned:yuya:snapshot:yuya` | `snapshot` | 518.148, 252.454 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | — | 3.454 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `subtitle` | `subtitle` | 479.790, 99.067 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | — | 4.747 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:ai-design:Who` | `table-cell-secondary` | 343.667, 711.467 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:canvas-fit:Who` | `table-cell-secondary` | 343.667, 367.188 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:defaults:Who` | `table-cell-secondary` | 334.503, 615.259 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:docs-ci:Who` | `table-cell-secondary` | 334.503, 596.707 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:errors:Who` | `table-cell-secondary` | 334.571, 633.811 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:flow-bugs:Who` | `table-cell-secondary` | 334.571, 385.740 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:io:Who` | `table-cell-secondary` | 334.571, 730.019 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:japanese:Who` | `table-cell-secondary` | 334.571, 537.603 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:legend-warning:Who` | `table-cell-secondary` | 334.571, 404.292 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m0-gate:Who` | `table-cell-secondary` | 336.973, 326.636 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m1-gate:Who` | `table-cell-secondary` | 343.667, 459.947 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m2-gate:Who` | `table-cell-secondary` | 343.667, 556.155 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m3-gate:Who` | `table-cell-secondary` | 343.667, 652.363 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m4-gate:Who` | `table-cell-secondary` | 343.667, 748.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:marquee:Who` | `table-cell-secondary` | 343.667, 289.532 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:presets:Who` | `table-cell-secondary` | 334.503, 692.915 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rc-gate:Who` | `table-cell-secondary` | 336.973, 807.675 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rerun:Who` | `table-cell-secondary` | 325.185, 789.123 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:route-bound:Who` | `table-cell-secondary` | 334.503, 500.499 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rows-headers:Who` | `table-cell-secondary` | 334.503, 422.844 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:scene-checks:Who` | `table-cell-secondary` | 334.503, 441.395 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:sunday:Who` | `table-cell-secondary` | 343.667, 308.084 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:tall-canvas:Who` | `table-cell-secondary` | 334.503, 519.051 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:target-b:Who` | `table-cell-secondary` | 343.667, 233.876 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:titlecard:Who` | `table-cell-secondary` | 343.667, 270.980 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:yuya:Who` | `table-cell-secondary` | 343.667, 252.428 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:ai-design:Late?` | `text` | 427.043, 711.467 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:ai-design:What` | `text` | 109.137, 711.467 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:canvas-fit:What` | `text` | 131.683, 367.188 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:defaults:What` | `text` | 137.339, 615.259 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:docs-ci:What` | `text` | 140.148, 596.707 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:errors:What` | `text` | 144.226, 633.811 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:flow-bugs:What` | `text` | 159.680, 385.740 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:io:What` | `text` | 136.435, 730.019 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:japanese:What` | `text` | 144.284, 537.603 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:legend-warning:What` | `text` | 136.512, 404.292 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m0-gate:Late?` | `text` | 427.043, 326.636 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m0-gate:What` | `text` | 102.577, 326.636 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m1-gate:Late?` | `text` | 427.043, 459.947 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m1-gate:What` | `text` | 111.234, 459.947 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m2-gate:Late?` | `text` | 427.043, 556.155 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m2-gate:What` | `text` | 124.033, 556.155 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m3-gate:Late?` | `text` | 427.043, 652.363 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m3-gate:What` | `text` | 151.895, 652.363 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m4-gate:Late?` | `text` | 427.043, 748.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m4-gate:What` | `text` | 138.878, 748.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:marquee:What` | `text` | 98.582, 289.532 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:presets:What` | `text` | 133.312, 692.915 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rc-gate:Late?` | `text` | 427.043, 807.675 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rc-gate:What` | `text` | 102.538, 807.675 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rerun:Late?` | `text` | 427.043, 789.123 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rerun:What` | `text` | 147.766, 789.123 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:route-bound:What` | `text` | 138.698, 500.499 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rows-headers:What` | `text` | 170.517, 422.844 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:scene-checks:What` | `text` | 136.576, 441.395 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:sunday:What` | `text` | 109.387, 308.084 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:tall-canvas:What` | `text` | 140.821, 519.051 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:target-b:What` | `text` | 93.901, 233.876 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:titlecard:What` | `text` | 99.364, 270.980 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:yuya:What` | `text` | 84.269, 252.428 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:canvas-fit:Late?` | `variance-on-track` | 419.323, 367.188 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:defaults:Late?` | `variance-on-track` | 419.323, 615.259 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:docs-ci:Late?` | `variance-on-track` | 419.323, 596.707 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:errors:Late?` | `variance-on-track` | 419.323, 633.811 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:flow-bugs:Late?` | `variance-on-track` | 419.323, 385.740 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:io:Late?` | `variance-on-track` | 419.323, 730.019 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:japanese:Late?` | `variance-on-track` | 419.323, 537.603 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:legend-warning:Late?` | `variance-on-track` | 419.323, 404.292 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:marquee:Late?` | `variance-on-track` | 419.323, 289.532 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:presets:Late?` | `variance-on-track` | 419.323, 692.915 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:route-bound:Late?` | `variance-on-track` | 419.323, 500.499 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rows-headers:Late?` | `variance-on-track` | 419.323, 422.844 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:scene-checks:Late?` | `variance-on-track` | 419.323, 441.395 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:sunday:Late?` | `variance-on-track` | 419.323, 308.084 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:tall-canvas:Late?` | `variance-on-track` | 419.323, 519.051 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:target-b:Late?` | `variance-on-track` | 419.323, 233.876 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:titlecard:Late?` | `variance-on-track` | 419.323, 270.980 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:yuya:Late?` | `variance-on-track` | 419.323, 252.428 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:ai-design:Who` | `table-cell-secondary` | 343.667, 711.839 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:canvas-fit:Who` | `table-cell-secondary` | 343.667, 367.300 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:defaults:Who` | `table-cell-secondary` | 334.503, 615.562 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:docs-ci:Who` | `table-cell-secondary` | 334.503, 596.993 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:errors:Who` | `table-cell-secondary` | 334.571, 634.131 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:flow-bugs:Who` | `table-cell-secondary` | 334.571, 385.869 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:io:Who` | `table-cell-secondary` | 334.571, 730.408 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:japanese:Who` | `table-cell-secondary` | 334.571, 537.854 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:legend-warning:Who` | `table-cell-secondary` | 334.571, 404.439 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m0-gate:Who` | `table-cell-secondary` | 336.973, 326.731 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m1-gate:Who` | `table-cell-secondary` | 343.667, 460.146 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m2-gate:Who` | `table-cell-secondary` | 343.667, 556.423 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m3-gate:Who` | `table-cell-secondary` | 343.667, 652.701 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m4-gate:Who` | `table-cell-secondary` | 343.667, 748.978 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:marquee:Who` | `table-cell-secondary` | 343.667, 289.592 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:presets:Who` | `table-cell-secondary` | 334.503, 693.270 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rc-gate:Who` | `table-cell-secondary` | 336.973, 808.116 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rerun:Who` | `table-cell-secondary` | 325.185, 789.547 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:route-bound:Who` | `table-cell-secondary` | 334.503, 500.716 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rows-headers:Who` | `table-cell-secondary` | 334.503, 423.008 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:scene-checks:Who` | `table-cell-secondary` | 334.503, 441.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:sunday:Who` | `table-cell-secondary` | 343.667, 308.162 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:tall-canvas:Who` | `table-cell-secondary` | 334.503, 519.285 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:target-b:Who` | `table-cell-secondary` | 343.667, 233.885 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:titlecard:Who` | `table-cell-secondary` | 343.667, 271.023 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:yuya:Who` | `table-cell-secondary` | 343.667, 252.454 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:ai-design:What` | `text` | 109.137, 711.839 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:canvas-fit:What` | `text` | 131.683, 367.300 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:defaults:What` | `text` | 137.339, 615.562 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:docs-ci:What` | `text` | 140.148, 596.993 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:errors:What` | `text` | 144.226, 634.131 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:flow-bugs:What` | `text` | 159.680, 385.869 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:io:What` | `text` | 136.435, 730.408 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:japanese:What` | `text` | 144.284, 537.854 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:legend-warning:What` | `text` | 136.512, 404.439 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m0-gate:Late?` | `text` | 427.043, 326.731 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m0-gate:What` | `text` | 102.577, 326.731 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m1-gate:Late?` | `text` | 427.043, 460.146 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m1-gate:What` | `text` | 111.234, 460.146 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m2-gate:Late?` | `text` | 427.043, 556.423 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m2-gate:What` | `text` | 124.033, 556.423 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m3-gate:Late?` | `text` | 427.043, 652.701 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m3-gate:What` | `text` | 151.895, 652.701 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m4-gate:Late?` | `text` | 427.043, 748.978 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:m4-gate:What` | `text` | 138.878, 748.978 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:marquee:What` | `text` | 98.582, 289.592 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:presets:What` | `text` | 133.312, 693.270 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rc-gate:Late?` | `text` | 427.043, 808.116 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rc-gate:What` | `text` | 102.538, 808.116 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rerun:What` | `text` | 147.766, 789.547 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:route-bound:What` | `text` | 138.698, 500.716 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rows-headers:What` | `text` | 170.517, 423.008 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:scene-checks:What` | `text` | 136.576, 441.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:sunday:What` | `text` | 109.387, 308.162 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:tall-canvas:What` | `text` | 140.821, 519.285 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:target-b:What` | `text` | 93.901, 233.885 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:titlecard:What` | `text` | 99.364, 271.023 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:yuya:What` | `text` | 84.269, 252.454 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:ai-design:Late?` | `variance-on-track` | 419.323, 711.839 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:canvas-fit:Late?` | `variance-on-track` | 419.323, 367.300 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:defaults:Late?` | `variance-on-track` | 419.323, 615.562 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:docs-ci:Late?` | `variance-on-track` | 419.323, 596.993 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:errors:Late?` | `variance-on-track` | 419.323, 634.131 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:flow-bugs:Late?` | `variance-on-track` | 419.323, 385.869 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:io:Late?` | `variance-on-track` | 419.323, 730.408 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:japanese:Late?` | `variance-on-track` | 419.323, 537.854 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:legend-warning:Late?` | `variance-on-track` | 419.323, 404.439 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:marquee:Late?` | `variance-on-track` | 419.323, 289.592 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:presets:Late?` | `variance-on-track` | 419.323, 693.270 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rerun:Late?` | `variance-on-track` | 419.323, 789.547 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:route-bound:Late?` | `variance-on-track` | 419.323, 500.716 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:rows-headers:Late?` | `variance-on-track` | 419.323, 423.008 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:scene-checks:Late?` | `variance-on-track` | 419.323, 441.577 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:sunday:Late?` | `variance-on-track` | 419.323, 308.162 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:tall-canvas:Late?` | `variance-on-track` | 419.323, 519.285 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:target-b:Late?` | `variance-on-track` | 419.323, 233.885 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:titlecard:Late?` | `variance-on-track` | 419.323, 271.023 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `cell:yuya:Late?` | `variance-on-track` | 419.323, 252.454 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `column:Late?` | `tableColumnLabel` | 410.671, 165.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `column:What` | `tableColumnLabel` | 56.892, 165.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `column:Who` | `tableColumnLabel` | 333.014, 165.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | — | 7.265 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-sunday.scene.json` | `title` | `heading` | 114.058, 83.188 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | — | 17.090 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:ai-design:ai-design` | `actual` | 668.497, 723.219 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 10.142 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:canvas-fit:canvas-fit` | `actual` | 555.666, 383.599 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#050505` | fill | — | 11.887 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:defaults:defaults` | `actual` | 566.412, 628.654 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:docs-ci:docs-ci` | `actual` | 566.412, 610.012 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
@@ -759,41 +763,43 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:m1-gate:m1-gate:part0` | `actual` | 604.022, 471.925 | `planned:m1-gate:m1-gate:part0` | flat | `#FF7A1A` | fill | — | 1.521 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:m2-gate:m2-gate:part0` | `actual` | 593.277, 566.491 | `planned:m2-gate:m2-gate:part0` | flat | `#FF7A1A` | fill | — | 1.521 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:m3-gate:m3-gate:part0` | `actual` | 582.531, 661.056 | `planned:m3-gate:m3-gate:part0` | flat | `#FF7A1A` | fill | — | 1.521 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:m4-gate:m4-gate:part0` | `actual` | 679.243, 755.622 | `planned:m4-gate:m4-gate:part0` | flat | `#FF7A1A` | fill | — | 1.521 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:marquee:marquee` | `actual` | 550.293, 307.675 | `planned:marquee:snapshot:marquee` | flat | `#050505` | fill | — | 11.887 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:presets:presets` | `actual` | 614.768, 704.578 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 10.142 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:rc-gate:rc-gate:part0` | `actual` | 711.480, 812.904 | `planned:rc-gate:rc-gate:part0` | flat | `#FF7A1A` | fill | — | 1.521 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:rerun:rerun` | `actual` | 647.005, 799.143 | `calendar-closed:2026-10-18` | flat | `#16132F` | stroke | — | 10.483 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:route-bound:route-bound` | `actual` | 577.158, 515.447 | `calendar-closed:2026-10-11` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:rows-headers:rows-headers` | `actual` | 561.039, 439.523 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 582.531, 458.164 | `calendar-closed:2026-10-11` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 561.039, 458.164 | `calendar-closed:2026-10-10` | flat | `#16132F` | stroke | — | 10.483 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:sunday:sunday` | `actual` | 577.158, 326.316 | `planned:sunday:snapshot:sunday` | flat | `#050505` | fill | — | 11.887 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:tall-canvas:tall-canvas` | `actual` | 566.412, 534.088 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:target-b:target-b` | `actual` | 496.565, 251.751 | `calendar-closed:2026-10-04` | flat | `#16132F` | fill | — | 10.483 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:titlecard:titlecard` | `actual` | 539.548, 289.033 | `planned:titlecard:snapshot:titlecard` | flat | `#050505` | fill | — | 11.887 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `actual:yuya:yuya` | `actual` | 507.310, 270.392 | `planned:yuya:snapshot:yuya` | flat | `#050505` | fill | — | 11.887 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 1437.000, 672.788 | `canvas-texture` | flat | `#050505` | fill | — | 1.163 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 1437.000, 663.725 | `canvas-texture` | flat | `#050505` | fill | — | 1.163 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-box:signoff-note` | `annotation-note-box` | 1437.000, 777.425 | `canvas-texture` | flat | `#050505` | fill | — | 1.163 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-heading:route-note` | `annotation-heading` | 1418.061, 673.975 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 15.382 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-heading:route-note` | `annotation-heading` | 1418.061, 655.850 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 15.382 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-heading:signoff-note` | `annotation-heading` | 1428.984, 769.550 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 15.382 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:bottom` | `annotation-kind-accent` | 1437.000, 713.250 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:end` | `annotation-kind-accent` | 1571.000, 672.788 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:start` | `annotation-kind-accent` | 1303.000, 672.788 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:top` | `annotation-kind-accent` | 1437.000, 632.325 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:end` | `annotation-kind-accent` | 1571.000, 663.725 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:start` | `annotation-kind-accent` | 1303.000, 663.725 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:route-note:top` | `annotation-kind-accent` | 1437.000, 614.200 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:signoff-note:bottom` | `annotation-kind-accent` | 1437.000, 839.600 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 6.720 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:signoff-note:end` | `annotation-kind-accent` | 1571.000, 777.425 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 6.720 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:signoff-note:start` | `annotation-kind-accent` | 1303.000, 777.425 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 6.720 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-border:signoff-note:top` | `annotation-kind-accent` | 1437.000, 715.250 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 6.720 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-bar:route-note` | `annotation-kind-bar` | 1437.000, 647.325 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-bar:route-note` | `annotation-kind-bar` | 1437.000, 629.200 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 5.258 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-bar:signoff-note` | `annotation-kind-bar` | 1437.000, 730.250 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 6.720 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 1361.268, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 1361.268, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-text:signoff-note:0` | `annotation-kind-label` | 1356.222, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | fill | — | 7.814 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part0` | `annotation-kind-stamp` | 1526.250, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | stroke | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part1` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part2` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part3` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part4` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part5` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part6` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part7` | `annotation-kind-stamp` | 1548.125, 647.325 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part0` | `annotation-kind-stamp` | 1526.250, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | stroke | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part1` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part2` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part3` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part4` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part5` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part6` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:route-note:part7` | `annotation-kind-stamp` | 1548.125, 629.200 | `annotation-kind-bar:route-note` | flat | `#FF4A3D` | fill | — | 6.113 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:signoff-note:part0` | `annotation-kind-stamp` | 1526.250, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | stroke | — | 7.814 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:signoff-note:part1` | `annotation-kind-stamp` | 1548.125, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | fill | — | 7.814 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:signoff-note:part2` | `annotation-kind-stamp` | 1548.125, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | fill | — | 7.814 | 1.100 | info |
@@ -802,9 +808,9 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:signoff-note:part5` | `annotation-kind-stamp` | 1548.125, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | fill | — | 7.814 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:signoff-note:part6` | `annotation-kind-stamp` | 1548.125, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | fill | — | 7.814 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-kind-stamp:signoff-note:part7` | `annotation-kind-stamp` | 1548.125, 730.250 | `annotation-kind-bar:signoff-note` | flat | `#FF7A1A` | fill | — | 7.814 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 1372.304, 695.688 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 8.957 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-text:signoff-note` | `annotation-note-text` | 1432.472, 812.975 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 8.957 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `as-of-label` | `as-of-label` | 668.497, 832.725 | `chip:as-of-label` | flat | `#C81914` | fill | — | 5.112 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 1435.434, 686.625 | `annotation-box:route-note` | flat | `#1B1917` | fill | — | 8.957 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `annotation-text:signoff-note` | `annotation-note-text` | 1415.589, 812.975 | `annotation-box:signoff-note` | flat | `#1B1917` | fill | — | 8.957 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `as-of-label` | `as-of-label` | 711.480, 832.725 | `chip:as-of-label` | flat | `#C81914` | fill | — | 5.112 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 872.667, 184.550 | `canvas-texture` | flat | `#050505` | fill | — | 7.814 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `axis-label:2:0` | `axis-label2` | 496.370, 184.550 | `axis-band-rect:0:0` | flat | `#FF7A1A` | fill | — | 7.814 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `axis-label-secondary:4:0` | `axis-label3` | 501.244, 207.512 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
@@ -885,17 +891,17 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:milestone:fec615ee58d683ee:part0` | `gate` | 267.520, 863.300 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:planned` | `planned` | 131.432, 863.300 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `legend-swatch:snapshot` | `snapshot` | 28.000, 863.300 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 727.599, 519.887 | `period-band:rc-window` | pattern-substrate | `#1B1917` | stroke | — | 6.720 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 727.599, 519.887 | `calendar-closed:2026-10-25` | flat | `#16132F` | stroke | — | 6.891 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 727.599, 519.887 | `calendar-closed:2026-10-25` | flat | `#16132F` | fill | — | 1.025 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-label:rc-window` | `period-label` | 727.599, 227.788 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | fill | — | 2.289 | 4.500 | warning |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 716.853, 519.887 | `period-band:rc-window` | pattern-substrate | `#1B1917` | stroke | — | 6.720 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 716.853, 519.887 | `calendar-closed:2026-10-24` | flat | `#16132F` | stroke | — | 6.891 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-band:rc-window` | `period-band` | 716.853, 519.887 | `calendar-closed:2026-10-24` | flat | `#16132F` | fill | — | 1.025 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `period-label:rc-window` | `period-label` | 716.853, 227.788 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | fill | — | 2.289 | 4.500 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:m0-gate:m0-gate:part0` | `gate` | 604.022, 340.077 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:m1-gate:m1-gate:part0` | `gate` | 604.022, 471.925 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:m2-gate:m2-gate:part0` | `gate` | 593.277, 566.491 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:m3-gate:m3-gate:part0` | `gate` | 582.531, 661.056 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 700.734, 755.622 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | fill | — | 1.000 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rc-gate:rc-gate:part1` | `gate` | 736.717, 812.904 | `period-band:rc-window` | pattern-host-substrate | `#1B1917` | stroke | — | 1.163 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:ai-design:ai-design` | `planned` | 689.989, 716.739 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 679.243, 755.622 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | fill | — | 1.000 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rc-gate:rc-gate:part1` | `gate` | 704.480, 812.904 | `period-band:rc-window` | pattern-host-substrate | `#1B1917` | stroke | — | 1.163 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:ai-design:ai-design` | `planned` | 679.243, 716.739 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | fill | — | 1.000 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 555.666, 377.119 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#050505` | fill | — | 7.814 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:defaults:defaults` | `planned` | 566.412, 622.174 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 566.412, 603.532 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
@@ -906,10 +912,10 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:legend-warning:legend-warning` | `planned` | 561.039, 414.401 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:marquee:marquee` | `planned` | 550.293, 301.195 | `planned:marquee:snapshot:marquee` | flat | `#050505` | fill | — | 7.814 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:presets:presets` | `planned` | 614.768, 698.098 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rerun:rerun` | `planned` | 695.361, 792.663 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rerun:rerun` | `planned` | 647.005, 792.663 | `calendar-closed:2026-10-18` | flat | `#16132F` | stroke | — | 1.134 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:route-bound:route-bound` | `planned` | 577.158, 508.967 | `calendar-closed:2026-10-11` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rows-headers:rows-headers` | `planned` | 561.039, 433.043 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 582.531, 451.684 | `calendar-closed:2026-10-11` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 582.531, 451.684 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:sunday:sunday` | `planned` | 577.158, 319.836 | `planned:sunday:snapshot:sunday` | flat | `#050505` | fill | — | 7.814 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:tall-canvas:tall-canvas` | `planned` | 566.412, 527.608 | `calendar-closed:2026-10-10` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:target-b:target-b` | `planned` | 496.565, 245.271 | `calendar-closed:2026-10-04` | flat | `#16132F` | fill | — | 6.891 | 3.000 | info |
@@ -960,9 +966,9 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:presets:snapshot:presets` | `snapshot` | 894.158, 699.698 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rc-gate:snapshot:rc-gate:part0` | `snapshot` | 1253.014, 812.904 | `calendar-closed:2026-12-13` | flat | `#16132F` | stroke | — | 5.693 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rerun:snapshot:rerun` | `snapshot` | 1195.040, 794.263 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 679.243, 510.567 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 679.243, 510.567 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | stroke | — | 1.210 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:rows-headers:snapshot:rows-headers` | `snapshot` | 593.277, 434.643 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 679.243, 453.284 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 679.243, 453.284 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | stroke | — | 1.210 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:sunday:snapshot:sunday` | `snapshot` | 550.293, 321.436 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 743.717, 529.208 | `period-band:rc-window` | pattern-host-ink | `#FF7A1A` | stroke | — | 1.210 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 518.056, 284.153 | `canvas-texture` | texture-ink | `#1B1A18` | stroke | — | 5.508 | 3.000 | info |
@@ -998,7 +1004,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:titlecard:Lane` | `table-cell-secondary` | 319.419, 284.153 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:yuya:Lane` | `table-cell-secondary` | 319.419, 265.512 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:ai-design:Work item` | `text` | 105.921, 718.339 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:ai-design:Δ finish` | `text` | 431.333, 718.339 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:canvas-fit:Work item` | `text` | 125.059, 378.719 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:defaults:Work item` | `text` | 128.914, 623.774 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:docs-ci:Work item` | `text` | 130.833, 605.132 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
@@ -1022,7 +1027,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rc-gate:Work item` | `text` | 102.004, 812.904 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rc-gate:Δ finish` | `text` | 431.333, 812.904 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rerun:Work item` | `text` | 137.340, 794.263 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rerun:Δ finish` | `text` | 431.333, 794.263 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:route-bound:Work item` | `text` | 130.338, 510.567 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rows-headers:Work item` | `text` | 156.773, 434.643 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:scene-checks:Work item` | `text` | 128.831, 453.284 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
@@ -1031,6 +1035,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:target-b:Work item` | `text` | 94.357, 246.871 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:titlecard:Work item` | `text` | 100.297, 284.153 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:yuya:Work item` | `text` | 88.429, 265.512 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:ai-design:Δ finish` | `variance-on-track` | 409.765, 718.339 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:canvas-fit:Δ finish` | `variance-on-track` | 409.765, 378.719 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:defaults:Δ finish` | `variance-on-track` | 409.765, 623.774 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:docs-ci:Δ finish` | `variance-on-track` | 409.765, 605.132 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
@@ -1041,6 +1046,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:legend-warning:Δ finish` | `variance-on-track` | 409.765, 416.001 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:marquee:Δ finish` | `variance-on-track` | 409.765, 302.795 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:presets:Δ finish` | `variance-on-track` | 409.765, 699.698 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rerun:Δ finish` | `variance-on-track` | 409.765, 794.263 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:route-bound:Δ finish` | `variance-on-track` | 409.765, 510.567 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:rows-headers:Δ finish` | `variance-on-track` | 409.765, 434.643 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `cell:scene-checks:Δ finish` | `variance-on-track` | 409.765, 453.284 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 8.886 | 4.500 | info |
@@ -1053,6 +1059,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `column:Work item` | `tableColumnLabel` | 65.976, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `column:Δ finish` | `tableColumnLabel` | 401.631, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 6.667 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-titlecard.scene.json` | `title` | `heading` | 189.179, 106.200 | `canvas-texture` | texture-ink | `#1B1A18` | fill | — | 15.260 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:ai-design:ai-design` | `actual` | 677.591, 704.369 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:canvas-fit:canvas-fit` | `actual` | 564.996, 357.249 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:defaults:defaults` | `actual` | 559.634, 611.804 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:docs-ci:docs-ci` | `actual` | 559.634, 588.662 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
@@ -1065,64 +1072,66 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:m1-gate:m1-gate:part0` | `actual` | 613.251, 468.075 | `planned:m1-gate:m1-gate:part1` | flat | `#E0512F` | fill | — | 1.640 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:m2-gate:m2-gate:part0` | `actual` | 602.528, 560.641 | `planned:m2-gate:m2-gate:part1` | flat | `#E0512F` | fill | — | 1.640 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:m3-gate:m3-gate:part0` | `actual` | 591.804, 653.206 | `planned:m3-gate:m3-gate:part1` | flat | `#E0512F` | fill | — | 1.640 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:m4-gate:m4-gate:part0` | `actual` | 688.314, 745.772 | `planned:m4-gate:m4-gate:part1` | flat | `#E0512F` | fill | — | 1.640 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:marquee:marquee` | `actual` | 559.634, 287.825 | `planned:marquee:snapshot:marquee` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:presets:presets` | `actual` | 623.974, 681.228 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:rerun:rerun` | `actual` | 666.867, 773.793 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:rc-gate:rc-gate:part0` | `actual` | 720.484, 792.054 | `planned:rc-gate:rc-gate:part1` | flat | `#E0512F` | fill | — | 1.640 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:rerun:rerun` | `actual` | 656.144, 773.793 | `calendar-closed:2026-10-18` | flat | `#E9DEC3` | stroke | — | 4.781 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:route-bound:route-bound` | `actual` | 559.634, 496.097 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:rows-headers:rows-headers` | `actual` | 559.634, 426.673 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 591.804, 449.814 | `calendar-closed:2026-10-11` | flat | `#E9DEC3` | fill | — | 4.781 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 591.804, 449.814 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:sunday:sunday` | `actual` | 586.443, 310.966 | `planned:sunday:snapshot:sunday` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:tall-canvas:tall-canvas` | `actual` | 559.634, 519.238 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:target-b:target-b` | `actual` | 484.571, 218.401 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 5.022 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:titlecard:titlecard` | `actual` | 548.911, 264.683 | `planned:titlecard:snapshot:titlecard` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:yuya:yuya` | `actual` | 516.741, 241.542 | `calendar-closed:2026-10-04` | flat | `#E9DEC3` | fill | — | 4.781 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer0:part0` | `annotation-artwork` | 1308.000, 663.188 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.241 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer0:part1` | `annotation-artwork` | 1433.000, 663.188 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 5.241 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer0:part0` | `annotation-artwork` | 1308.000, 762.975 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 5.241 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer0:part1` | `annotation-artwork` | 1433.000, 762.975 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 5.241 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part0` | `annotation-artwork-rods` | 1433.000, 663.188 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part1` | `annotation-artwork-rods` | 1433.000, 663.188 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part2` | `annotation-artwork-rods` | 1433.000, 663.188 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part3` | `annotation-artwork-rods` | 1433.000, 663.188 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part0` | `annotation-artwork-rods` | 1433.000, 762.975 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part1` | `annotation-artwork-rods` | 1433.000, 762.975 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part2` | `annotation-artwork-rods` | 1433.000, 762.975 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part3` | `annotation-artwork-rods` | 1433.000, 762.975 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 1433.000, 663.188 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.130 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-box:signoff-note` | `annotation-note-box` | 1433.000, 762.975 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.130 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 1401.408, 656.625 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 15.162 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-text:signoff-note:0` | `annotation-kind-label` | 1409.352, 747.350 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 15.162 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part0` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part1` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part2` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part3` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part4` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part5` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part6` | `annotation-kind-stamp` | 1521.750, 658.050 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part0` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part1` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part2` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part3` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part4` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part5` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part6` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part7` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part8` | `annotation-kind-stamp` | 1521.750, 739.575 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 1395.156, 674.887 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 5.859 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-text:signoff-note` | `annotation-note-text` | 1413.075, 783.875 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 5.859 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `as-of-label` | `as-of-label` | 677.591, 814.125 | `chip:as-of-label` | flat | `#203A6B` | fill | — | 9.920 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `actual:yuya:yuya` | `actual` | 516.741, 241.542 | `planned:yuya:snapshot:yuya` | flat | `#EFE3C8` | fill | — | 5.022 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer0:part0` | `annotation-artwork` | 1308.000, 636.000 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.241 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer0:part1` | `annotation-artwork` | 1433.000, 636.000 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 5.241 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer0:part0` | `annotation-artwork` | 1308.000, 753.913 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 5.241 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer0:part1` | `annotation-artwork` | 1433.000, 753.913 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 5.241 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part0` | `annotation-artwork-rods` | 1433.000, 636.000 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part1` | `annotation-artwork-rods` | 1433.000, 636.000 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part2` | `annotation-artwork-rods` | 1433.000, 636.000 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:route-note:layer1:part3` | `annotation-artwork-rods` | 1433.000, 636.000 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part0` | `annotation-artwork-rods` | 1433.000, 753.913 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part1` | `annotation-artwork-rods` | 1433.000, 753.913 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part2` | `annotation-artwork-rods` | 1433.000, 753.913 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-artwork:signoff-note:layer1:part3` | `annotation-artwork-rods` | 1433.000, 753.913 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 2.262 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-box:route-note` | `annotation-note-box` | 1433.000, 636.000 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.130 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-box:signoff-note` | `annotation-note-box` | 1433.000, 753.913 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.130 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-text:route-note:0` | `annotation-kind-label` | 1401.408, 620.375 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 15.162 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-text:signoff-note:0` | `annotation-kind-label` | 1409.352, 729.225 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 15.162 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part0` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part1` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part2` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part3` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part4` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part5` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:route-note:part6` | `annotation-kind-stamp` | 1521.750, 621.800 | `annotation-box:route-note` | flat | `#F8F1DF` | stroke | — | 5.675 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part0` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part1` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part2` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part3` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part4` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part5` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part6` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part7` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-kind-stamp:signoff-note:part8` | `annotation-kind-stamp` | 1521.750, 721.450 | `annotation-box:signoff-note` | flat | `#F8F1DF` | stroke | — | 9.920 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-text:route-note` | `annotation-note-text` | 1418.694, 647.700 | `annotation-box:route-note` | flat | `#F8F1DF` | fill | — | 5.859 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `annotation-text:signoff-note` | `annotation-note-text` | 1409.881, 774.812 | `annotation-box:signoff-note` | flat | `#F8F1DF` | fill | — | 5.859 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `as-of-label` | `as-of-label` | 720.484, 814.125 | `chip:as-of-label` | flat | `#203A6B` | fill | — | 9.920 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 881.333, 168.950 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 14.185 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `axis-label:2:0` | `axis-label2` | 881.333, 168.950 | `axis-band-rect:0:0` | flat | `#1B1512` | fill | — | 7.959 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `axis-label:4:0` | `axis-label3` | 640.059, 190.950 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `axis-label:4:1` | `axis-label3` | 967.120, 190.950 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `axis-label:4:2` | `axis-label3` | 1208.394, 190.950 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-03` | `calendar-closed` | 500.656, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 511.379, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 511.380, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-10` | `calendar-closed` | 575.719, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-11` | `calendar-closed` | 586.443, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-17` | `calendar-closed` | 650.782, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-18` | `calendar-closed` | 661.506, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-24` | `calendar-closed` | 725.845, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-24` | `calendar-closed` | 725.846, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-25` | `calendar-closed` | 736.569, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-10-31` | `calendar-closed` | 800.909, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `calendar-closed:2026-11-01` | `calendar-closed` | 811.632, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 1.050 | 1.100 | warning |
@@ -1175,17 +1184,17 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:milestone:62d9a9a23bc592c0:part6` | `gate` | 288.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 6.836 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:planned` | `planned` | 143.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `legend-swatch:snapshot` | `snapshot` | 42.000, 844.700 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 736.569, 502.787 | `period-band:rc-window` | pattern-substrate | `#EFE3C8` | stroke | — | 3.597 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 736.569, 502.787 | `calendar-closed:2026-10-25` | flat | `#E9DEC3` | stroke | — | 3.425 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 736.569, 502.787 | `calendar-closed:2026-10-25` | flat | `#E9DEC3` | fill | — | 1.050 | 1.100 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-label:rc-window` | `period-label` | 736.569, 212.188 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | fill | — | 1.692 | 4.500 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 725.846, 502.787 | `period-band:rc-window` | pattern-substrate | `#EFE3C8` | stroke | — | 3.597 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 725.846, 502.787 | `calendar-closed:2026-10-24` | flat | `#E9DEC3` | stroke | — | 3.425 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-band:rc-window` | `period-band` | 725.846, 502.787 | `calendar-closed:2026-10-24` | flat | `#E9DEC3` | fill | — | 1.050 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `period-label:rc-window` | `period-label` | 725.846, 212.188 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | fill | — | 1.692 | 4.500 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:m0-gate:m0-gate:part0` | `gate` | 613.251, 329.227 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 3.061 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:m1-gate:m1-gate:part0` | `gate` | 613.251, 468.075 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 3.061 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:m2-gate:m2-gate:part0` | `gate` | 602.528, 560.641 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 3.061 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:m3-gate:m3-gate:part0` | `gate` | 591.804, 653.206 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 3.061 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:m4-gate:m4-gate:part6` | `gate` | 702.761, 745.772 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 6.836 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rc-gate:rc-gate:part6` | `gate` | 745.654, 792.054 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | stroke | — | 1.900 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:ai-design:ai-design` | `planned` | 699.037, 697.889 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:m4-gate:m4-gate:part2` | `gate` | 688.314, 745.772 | `actual:m4-gate:m4-gate:part0` | flat | `#B22D1B` | fill | — | 1.640 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rc-gate:rc-gate:part2` | `gate` | 720.484, 792.054 | `actual:rc-gate:rc-gate:part0` | flat | `#B22D1B` | fill | — | 1.640 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:ai-design:ai-design` | `planned` | 677.591, 697.889 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 564.996, 350.769 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:defaults:defaults` | `planned` | 559.634, 605.324 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 559.634, 582.182 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
@@ -1196,15 +1205,15 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:legend-warning:legend-warning` | `planned` | 559.634, 397.051 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:marquee:marquee` | `planned` | 559.634, 281.345 | `planned:marquee:snapshot:marquee` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:presets:presets` | `planned` | 623.974, 674.748 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rerun:rerun` | `planned` | 704.399, 767.313 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rerun:rerun` | `planned` | 656.144, 767.313 | `calendar-closed:2026-10-18` | flat | `#E9DEC3` | stroke | — | 4.415 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:route-bound:route-bound` | `planned` | 559.634, 489.617 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rows-headers:rows-headers` | `planned` | 559.634, 420.193 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 591.804, 443.334 | `calendar-closed:2026-10-11` | flat | `#E9DEC3` | fill | — | 4.415 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 591.804, 443.334 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:sunday:sunday` | `planned` | 586.443, 304.486 | `planned:sunday:snapshot:sunday` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:tall-canvas:tall-canvas` | `planned` | 559.634, 512.758 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:target-b:target-b` | `planned` | 484.571, 211.921 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:titlecard:titlecard` | `planned` | 548.911, 258.203 | `planned:titlecard:snapshot:titlecard` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:yuya:yuya` | `planned` | 516.741, 235.062 | `calendar-closed:2026-10-04` | flat | `#E9DEC3` | fill | — | 4.415 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:yuya:yuya` | `planned` | 516.741, 235.062 | `planned:yuya:snapshot:yuya` | flat | `#EFE3C8` | fill | — | 4.637 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `row-rule:ai-design` | `row-rule` | 668.000, 711.060 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `row-rule:canvas-fit` | `row-rule` | 668.000, 363.939 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `row-rule:defaults` | `row-rule` | 668.000, 618.494 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 1.264 | 1.100 | info |
@@ -1250,12 +1259,12 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:presets:snapshot:presets` | `snapshot` | 902.780, 676.348 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rc-gate:snapshot:rc-gate:part0` | `snapshot` | 1260.872, 792.054 | `calendar-closed:2026-12-13` | flat | `#E9DEC3` | stroke | — | 2.469 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rerun:snapshot:rerun` | `snapshot` | 1203.032, 768.913 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 688.314, 491.217 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:route-bound:snapshot:route-bound` | `snapshot` | 688.314, 491.217 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | stroke | — | 1.387 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:rows-headers:snapshot:rows-headers` | `snapshot` | 602.528, 421.793 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 688.314, 444.934 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:scene-checks:snapshot:scene-checks` | `snapshot` | 688.314, 444.934 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | stroke | — | 1.387 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:sunday:snapshot:sunday` | `snapshot` | 559.634, 306.086 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 752.654, 514.358 | `period-band:rc-window` | pattern-host-ink | `#3E7F86` | stroke | — | 1.387 | 3.000 | warning |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 527.464, 259.803 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 527.465, 259.803 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `planned:yuya:snapshot:yuya` | `snapshot` | 516.741, 236.662 | `region-frame:board` | flat | `#EFE3C8` | stroke | — | 2.594 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `subtitle` | `subtitle` | 251.825, 106.515 | `region-frame:plaque` | flat | `#1B1512` | fill | — | 7.959 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:ai-design:Lane` | `table-cell-secondary` | 352.207, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
@@ -1285,7 +1294,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:titlecard:Lane` | `table-cell-secondary` | 352.207, 259.803 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:yuya:Lane` | `table-cell-secondary` | 352.207, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:ai-design:Work item` | `text` | 121.269, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:ai-design:Δ finish` | `text` | 452.074, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:canvas-fit:Work item` | `text` | 144.450, 352.369 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:defaults:Work item` | `text` | 149.119, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:docs-ci:Work item` | `text` | 151.444, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
@@ -1309,7 +1317,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rc-gate:Work item` | `text` | 116.525, 792.054 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rc-gate:Δ finish` | `text` | 452.074, 792.054 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rerun:Work item` | `text` | 159.325, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rerun:Δ finish` | `text` | 452.074, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:route-bound:Work item` | `text` | 150.844, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rows-headers:Work item` | `text` | 182.863, 421.793 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:scene-checks:Work item` | `text` | 149.019, 444.934 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
@@ -1318,6 +1325,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:target-b:Work item` | `text` | 107.263, 213.521 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:titlecard:Work item` | `text` | 114.456, 259.803 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:yuya:Work item` | `text` | 100.081, 236.662 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 13.415 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:ai-design:Δ finish` | `variance-on-track` | 426.994, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:canvas-fit:Δ finish` | `variance-on-track` | 426.994, 352.369 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:defaults:Δ finish` | `variance-on-track` | 426.994, 606.924 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:docs-ci:Δ finish` | `variance-on-track` | 426.994, 583.782 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
@@ -1328,6 +1336,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:legend-warning:Δ finish` | `variance-on-track` | 426.994, 398.651 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:marquee:Δ finish` | `variance-on-track` | 426.994, 282.945 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:presets:Δ finish` | `variance-on-track` | 426.994, 676.348 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rerun:Δ finish` | `variance-on-track` | 426.994, 768.913 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:route-bound:Δ finish` | `variance-on-track` | 426.994, 491.217 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:rows-headers:Δ finish` | `variance-on-track` | 426.994, 421.793 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `cell:scene-checks:Δ finish` | `variance-on-track` | 426.994, 444.934 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
@@ -1340,6 +1349,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `column:Work item` | `tableColumnLabel` | 93.035, 165.925 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `column:Δ finish` | `tableColumnLabel` | 430.074, 165.925 | `region-frame:board` | flat | `#EFE3C8` | fill | — | 5.184 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap-yuya.scene.json` | `title` | `heading` | 176.854, 77.540 | `region-frame:plaque` | flat | `#1B1512` | fill | — | 7.959 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:ai-design:ai-design` | `actual` | 689.756, 703.683 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:canvas-fit:canvas-fit` | `actual` | 564.378, 315.875 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:defaults:defaults` | `actual` | 558.927, 596.267 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:docs-ci:docs-ci` | `actual` | 558.927, 574.413 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
@@ -1352,12 +1362,14 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:m1-gate:m1-gate:part0` | `actual` | 613.439, 420.744 | `planned:m1-gate:m1-gate:part0` | flat | `#101828` | fill | — | 1.000 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:m2-gate:m2-gate:part0` | `actual` | 602.536, 528.160 | `planned:m2-gate:m2-gate:part0` | flat | `#101828` | fill | — | 1.000 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:m3-gate:m3-gate:part0` | `actual` | 591.634, 635.575 | `planned:m3-gate:m3-gate:part0` | flat | `#101828` | fill | — | 1.000 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:m4-gate:m4-gate:part0` | `actual` | 689.756, 742.990 | `planned:m4-gate:m4-gate:part0` | flat | `#101828` | fill | — | 1.000 | 3.000 | warning |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:marquee:marquee` | `actual` | 558.927, 230.313 | `planned:marquee:snapshot:marquee` | flat | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:presets:presets` | `actual` | 624.341, 681.829 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:rerun:rerun` | `actual` | 667.951, 789.244 | `calendar-closed:2026-10-18` | flat | `#F4F6F9` | fill | — | 16.392 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:rc-gate:rc-gate:part0` | `actual` | 722.463, 806.698 | `planned:rc-gate:rc-gate:part0` | flat | `#101828` | fill | — | 1.000 | 3.000 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:rerun:rerun` | `actual` | 689.756, 789.244 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:route-bound:route-bound` | `actual` | 558.927, 466.998 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:rows-headers:rows-headers` | `actual` | 558.927, 381.437 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 591.634, 403.290 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:scene-checks:scene-checks` | `actual` | 591.634, 403.290 | `calendar-closed:2026-10-11` | flat | `#F4F6F9` | fill | — | 16.392 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:sunday:sunday` | `actual` | 586.183, 252.167 | `planned:sunday:snapshot:sunday` | flat | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:tall-canvas:tall-canvas` | `actual` | 558.927, 488.852 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:target-b:target-b` | `actual` | 482.610, 164.752 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
@@ -1367,11 +1379,11 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1447.000, 782.764 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.124 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:tvac-note:start` | `annotation-kind-accent` | 1323.500, 697.203 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | — | 4.837 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:window-note:start` | `annotation-kind-accent` | 1323.500, 782.764 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | — | 5.175 | 1.100 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 1379.203, 688.865 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | — | 4.837 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 1379.203, 680.528 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | — | 4.837 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:window-note:0` | `annotation-kind-label` | 1370.918, 766.089 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | — | 5.175 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1400.394, 703.503 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | — | 15.785 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1415.522, 789.064 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | — | 15.785 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `as-of-label` | `as-of-label` | 678.854, 828.125 | `chip:as-of-label` | flat | `#B8761F` | fill | — | 3.717 | 4.500 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1440.776, 703.503 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | — | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1446.796, 789.064 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | — | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `as-of-label` | `as-of-label` | 722.463, 828.125 | `chip:as-of-label` | flat | `#B8761F` | fill | — | 3.717 | 4.500 | warning |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 636.591, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.124 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 973.220, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.124 | 1.100 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1222.628, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | — | 1.124 | 1.100 | info |
@@ -1438,9 +1450,9 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m1-gate:m1-gate:part0` | `gate` | 613.439, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m2-gate:m2-gate:part0` | `gate` | 602.536, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m3-gate:m3-gate:part0` | `gate` | 591.634, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 711.561, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rc-gate:rc-gate:part0` | `gate` | 755.171, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:ai-design:ai-design` | `planned` | 689.756, 697.203 | `canvas` | canvas | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 689.756, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rc-gate:rc-gate:part1` | `gate` | 715.463, 806.698 | `canvas` | canvas | `#FFFFFF` | stroke | — | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:ai-design:ai-design` | `planned` | 678.854, 697.203 | `canvas` | canvas | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 558.927, 309.395 | `planned:canvas-fit:snapshot:canvas-fit` | flat | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:defaults:defaults` | `planned` | 558.927, 589.787 | `canvas` | canvas | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 558.927, 567.933 | `canvas` | canvas | `#FFFFFF` | stroke | — | 4.777 | 3.000 | info |
@@ -1486,7 +1498,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:tall-canvas:snapshot:tall-canvas` | `snapshot` | 755.171, 484.452 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:titlecard:snapshot:titlecard` | `snapshot` | 526.219, 204.060 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:yuya:snapshot:yuya` | `snapshot` | 515.317, 182.206 | `canvas` | canvas | `#FFFFFF` | stroke | — | 5.817 | 3.000 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `subtitle` | `subtitle` | 356.337, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `subtitle` | `subtitle` | 356.262, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Lane` | `table-cell-secondary` | 343.224, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Lane` | `table-cell-secondary` | 343.224, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Lane` | `table-cell-secondary` | 334.691, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
@@ -1514,7 +1526,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Lane` | `table-cell-secondary` | 343.224, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Lane` | `table-cell-secondary` | 343.224, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Work item` | `text` | 95.588, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Δ finish` | `text` | 437.500, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Work item` | `text` | 117.562, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Work item` | `text` | 123.075, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Work item` | `text` | 125.812, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
@@ -1538,7 +1549,6 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Work item` | `text` | 89.156, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Δ finish` | `text` | 437.500, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Work item` | `text` | 133.238, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
-| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Δ finish` | `text` | 431.500, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Work item` | `text` | 124.400, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Work item` | `text` | 155.413, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Work item` | `text` | 122.331, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
@@ -1547,6 +1557,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Work item` | `text` | 80.738, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Work item` | `text` | 86.062, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Work item` | `text` | 71.350, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | — | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Δ finish` | `variance-on-track` | 426.844, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Δ finish` | `variance-on-track` | 426.844, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Δ finish` | `variance-on-track` | 426.844, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Δ finish` | `variance-on-track` | 426.844, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
@@ -1557,6 +1568,7 @@ A grouped encoded-fill warning may contribute to multiple purpose/role summary r
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Δ finish` | `variance-on-track` | 426.844, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Δ finish` | `variance-on-track` | 426.844, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Δ finish` | `variance-on-track` | 426.844, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Δ finish` | `variance-on-track` | 426.844, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Δ finish` | `variance-on-track` | 426.844, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Δ finish` | `variance-on-track` | 426.844, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
 | `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Δ finish` | `variance-on-track` | 426.844, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | — | 5.448 | 4.500 | info |
@@ -8579,14 +8591,14 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | Theme | Scenes | Warnings | Errors |
 | --- | ---: | ---: | ---: |
 | `axis-color-scales` | 2 | 0 | 0 |
-| `chrona-roadmap` | 1 | 28 | 0 |
+| `chrona-roadmap` | 1 | 30 | 0 |
 | `group-header-runs` | 1 | 0 | 0 |
-| `marquee` | 2 | 112 | 0 |
-| `sunday` | 2 | 17 | 0 |
+| `marquee` | 2 | 114 | 0 |
+| `sunday` | 2 | 19 | 0 |
 | `target-b` | 1 | 83 | 0 |
-| `titlecard` | 2 | 14 | 0 |
+| `titlecard` | 2 | 20 | 0 |
 | `wallboard-programme-board` | 1 | 6 | 0 |
-| `yuya` | 2 | 147 | 0 |
+| `yuya` | 2 | 150 | 0 |
 
 ## Decoration corpus witness
 
@@ -8594,4 +8606,4 @@ Every independently required decoration role has committed Scene or explicit syn
 
 - Synthetic `tableColumnRule` (no public use): `tests/integration/test_table_details_1545.py`, `tests/integration/test_technical_print_columns.py`
 
-Findings: 8511; observations: 8596; errors: 0; warnings: 449.
+Findings: 8523; observations: 8608; errors: 0; warnings: 464.
