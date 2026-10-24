@@ -920,7 +920,7 @@ body:
     as-of.stroke: category:red
     as-of-label-chip.fill: category:red
     as-of-label.fill: category:paper
-    progress-fill.fill: warning
+    progress-fill.fill: category:progressTint
     progress-fill.stroke: surface
     icon-mark.fill: surface
     period-band.fill: category:grass

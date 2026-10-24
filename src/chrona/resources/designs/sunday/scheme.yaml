@@ -33,6 +33,7 @@ body:
     bar: '#7EC8E3'
     barEdge: '#1A1A1A'
     actualInk: '#D13A26'
+    progressTint: '#EE8A74'
     asofChip: '#D13A26'
     asofInk: '#FFFDF5'
     relationInk: '#8F887A'
