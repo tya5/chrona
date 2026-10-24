@@ -45,7 +45,7 @@ root:
           overflow: ellipsize-with-source
         - id: notes
           kind: slot
-          source: notes
+          source: annotations
           heading: {text: {wording: slot.notes}, align: start}
           inlineSize: fill
           blockSize: fill
@@ -70,7 +70,7 @@ root:
           alignItems: stretch
           justifyContent: start
           children:
-            # No tableColumns: the table slot is measured empty and collapses (Spec 24, #1683).
+            # No tableColumns and timeline-placed headers: the table slot collapses (Spec 24, #1683, #1936).
             - id: table
               kind: slot
               source: table

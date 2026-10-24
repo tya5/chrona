@@ -93,6 +93,12 @@ slides:
             store: {provider: local, identity: halcyon-1-example}
             address: profiles/programme-board-legend.yaml
             revision: {token: example-v1}
+          snapshot:
+            id: halcyon-1-baseline-2027-06
+            kind: snapshot-ref
+            store: {provider: local, identity: halcyon-1-example}
+            address: snapshots/baseline-2027-06.yaml
+            revision: {token: example-v1}
         environment:
           viewport: {inlineSize: 1920, blockSize: 1080}
     expectedSvg: generated/02-programme-board.svg

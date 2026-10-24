@@ -527,7 +527,7 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
     }
     sidebar_layout = yaml.safe_load((layouts / "programme-board-sidebar.yaml").read_text(encoding="utf-8"))
     sidebar, board = sidebar_layout["root"]["children"]
-    assert [child.get("source") for child in sidebar["children"]] == ["title", "summary", "notes"]
+    assert [child.get("source") for child in sidebar["children"]] == ["title", "summary", "annotations"]
     assert [child["id"] for child in board["children"]] == ["review", "legend"]
     review = board["children"][0]
     assert [child["id"] for child in review["children"]] == ["table", "timeline-stack"]
