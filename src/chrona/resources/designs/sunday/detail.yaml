@@ -8,6 +8,8 @@ body:
     label: {wording: legend.plan}
   - role: actual
     label: {wording: legend.actual}
+  - role: progressFill
+    label: {wording: legend.progressFill}
   - role: missing-actual
     label: {wording: legend.missing-actual}
   - role: milestone

@@ -70,5 +70,5 @@ def test_every_drawn_band_has_one_matching_key(tmp_path, monkeypatch, capsys, de
     assert drawn["calendar-closed"] != drawn["calendar-exception"]
     assert "holiday" not in labels["calendar-closed"][0].lower()
     unkeyed = [item["diagnostic"] for item in result["warnings"] if item["code"] == CODE]
-    # sunday draws its progress fill in its actual ink, so the legend keeps no separate Progress key (#1848 report).
-    assert unkeyed == ([] if design != "sunday" else [CODE + ':{"drawnAs":"progress-fill","role":"progressFill"}'])
+    # sunday's progress fill has its own tint and its own Progress key, so no band is left unkeyed.
+    assert unkeyed == []
