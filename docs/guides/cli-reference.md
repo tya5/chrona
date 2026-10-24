@@ -354,7 +354,7 @@ copy the agent skill into an empty directory
 
 ## chrona validate
 
-check a Project, or a Theme, Layout Profile, View or other resource file by its kind, and list its mistakes
+check a Project, or a Theme, Layout Profile, View, presentation preset (with all its member files) or other resource file by its kind, and list its mistakes
 
 `chrona validate --allow-missing-content-identity --layout --snapshot-reference --snapshot-root --store-identity`
 
@@ -363,7 +363,7 @@ check a Project, or a Theme, Layout Profile, View or other resource file by its 
 - `--snapshot-root`: local snapshot adapter root
 - `--store-identity`: expected local snapshot store identity
 - `--allow-missing-content-identity`: accept references without an exact content identity (explicit opt-out)
-- `--layout`: Layout Profile YAML path whose viewDefaults complete a View being validated (a View that relies on its design's defaults is incomplete without it)
+- `--layout`: Layout Profile YAML path whose viewDefaults complete a View being validated (a View that relies on its design's defaults is incomplete without it; a View declared by a preset.yaml beside it is checked through that preset when this is omitted)
 
 ## chrona workspace
 

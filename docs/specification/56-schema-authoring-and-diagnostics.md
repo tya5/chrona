@@ -301,8 +301,15 @@ the `kind` member decides (`theme`, `color-scheme`, `layout-profile`, `view`, `s
 version. It reports every schema error as `E_SCHEMA` with its pointer, then the contract checks of that kind, and
 prints `"resource": "<kind>"` on success. A `kind` outside that list is `E_CLOSURE_KIND` at `/kind` and names the
 accepted kinds. A View that relies on its design's defaults is incomplete alone; `--layout <layout.yaml>` lays that
-Layout profile's `viewDefaults` under it, as a render does. This adds no schema member and changes no Project
-check (Spec 56 section 3.2).
+Layout profile's `viewDefaults` under it, as a render does. Without `--layout`, a `preset.yaml` beside the View that
+declares it as its View supplies that preset's Layout `viewDefaults`, and an `ok` result adds
+`"validatedThrough": "preset.yaml"`; a View with no such preset is checked alone. A `presentation-preset` document
+(`chrona validate preset.yaml`, CLI only) validates the whole closure: the preset, then each declared member file
+(View, Style, Theme, Color Scheme, Layout profile, Review Detail and Summary profiles, compatible Color Schemes),
+the View after the Layout `viewDefaults` merge (Spec 06, whole-member replacement) through the same ingress merge a
+render uses. Each member finding names its file in the message and the pointer (`view.yaml#/body/markers/0`). A
+render of a preset never rejects what this check accepts for these members. This adds no schema member and changes
+no Project check (Spec 56 section 3.2).
 
 ## 4. Union policy and Project v0.6
 
