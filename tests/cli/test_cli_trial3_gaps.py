@@ -164,3 +164,48 @@ def test_validate_view_alone_without_a_preset_still_needs_its_layout(tmp_path, m
     code, payload = _validate(monkeypatch, capsys, lone / "view.yaml")
     assert code == 1 and payload["diagnostics"][0]["code"] == "E_SCHEMA"
     assert _run(monkeypatch, "validate", str(lone / "view.yaml"), "--layout", str(target / "layout.yaml")) == 0
+
+
+# --- the icon catalogs and missing members of a preset (#1958) -----------------------------------------------------
+
+
+def _builtin_ids(monkeypatch, capsys):
+    assert _run(monkeypatch, "preset", "list") == 0
+    return [item["id"] for item in json.loads(capsys.readouterr().out)["presets"]]
+
+
+def test_every_unedited_builtin_copy_validates_clean_through_both_routes(tmp_path, monkeypatch, capsys):
+    ids = _builtin_ids(monkeypatch, capsys)
+    assert len(ids) >= 15
+    for preset_id in ids:
+        target = tmp_path / preset_id
+        assert _run(monkeypatch, "preset", "copy", preset_id, "--id", f"x-{preset_id}", "--output", str(target)) == 0
+        capsys.readouterr()
+        code, payload = _validate(monkeypatch, capsys, target / "preset.yaml")
+        assert (preset_id, code, payload["status"]) == (preset_id, 0, "ok")
+        code, payload = _validate(monkeypatch, capsys, target / "view.yaml")
+        assert (preset_id, code, payload["status"]) == (preset_id, 0, "ok")
+
+
+def test_validate_preset_rejects_an_invalid_icon_catalog_with_its_file_and_pointer(tmp_path, monkeypatch, capsys):
+    assert _run(monkeypatch, "preset", "copy", "yuya", "--id", "brief-look", "--output", str(tmp_path / "p")) == 0
+    capsys.readouterr()
+    catalog = next((tmp_path / "p" / "catalogs").glob("chrona-target-parts-*.yaml"))
+    document = json.loads(catalog.read_text(encoding="utf-8"))
+    document["bogus"] = 1
+    catalog.write_text(json.dumps(document), encoding="utf-8")
+    code, payload = _validate(monkeypatch, capsys, tmp_path / "p" / "preset.yaml")
+    assert code == 1
+    row = payload["diagnostics"][0]
+    assert row["sourceRef"].startswith(f"catalogs/{catalog.name}#/")
+    assert row["message"].startswith(f"catalogs/{catalog.name}: ")
+
+
+def test_validate_preset_rejects_a_missing_member_naming_the_declared_path(tmp_path, monkeypatch, capsys):
+    target = _copied_preset(tmp_path, monkeypatch, capsys)
+    (target / "theme.yaml").unlink()
+    code, payload = _validate(monkeypatch, capsys, target / "preset.yaml")
+    assert code == 1 and payload["status"] == "rejected"
+    row = payload["diagnostics"][0]
+    assert row["sourceRef"] == "theme.yaml#/" and row["message"].startswith("theme.yaml: ")
+    assert str(tmp_path) not in json.dumps(payload)

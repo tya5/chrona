@@ -69,7 +69,7 @@ def validate_resource_mapping(kind: str, value: dict[str, Any], layout_defaults:
     return ()
 
 
-# A preset's declared members, in the order their findings are reported: (resources key, kind).
+# A preset's declared members (icon catalogs last), in the order their findings are reported: (resources key, kind).
 _PRESET_MEMBERS = (("view", "view"), ("style", "style"), ("theme", "theme"), ("colorScheme", "color-scheme"),
                    ("layout", "layout-profile"), ("detailProfile", "review-detail-profile"),
                    ("summaryProfile", "summary-profile"))
@@ -92,6 +92,8 @@ def preset_members(preset_path: Path, preset: Any) -> list[tuple[str, Path, str]
     resources = body.get("resources") if isinstance(body.get("resources"), dict) else {}
     declarations = [(resources.get(key), kind) for key, kind in _PRESET_MEMBERS]
     declarations += [(item, "color-scheme") for item in body.get("compatibleColorSchemes") or () if isinstance(item, dict)]
+    catalogs = resources.get("iconCatalogs")
+    declarations += [(item, "icon-catalog") for item in catalogs if isinstance(item, dict)] if isinstance(catalogs, list) else []
     for declaration, kind in declarations:
         path = _member_path(preset_path.parent, declaration)
         if path is not None and all(path != item[1] for item in found):
@@ -103,7 +105,10 @@ def preset_layout_defaults(preset_path: Path, preset: Any) -> Any:
     """The ``viewDefaults`` of the Layout profile a preset declares (None without one)."""
     for _, path, kind in preset_members(preset_path, preset):
         if kind == "layout-profile":
-            layout = read_document(path)
+            try:
+                layout = read_document(path)
+            except Exception:  # reported against the Layout member by the closure check, not here
+                return None
             return layout.get("viewDefaults") if isinstance(layout, dict) else None
     return None
 
@@ -133,7 +138,14 @@ def validate_preset_closure(preset_path: Path, preset: Any) -> tuple[Diagnostic,
         return tuple(found)
     defaults = preset_layout_defaults(preset_path, preset)
     for declared, path, kind in preset_members(preset_path, preset):
-        document = read_document(path)
+        try:
+            document = read_document(path)
+        except FileNotFoundError:
+            found.append(Diagnostic("E_SCHEMA", f"{declared}: the member file declared by the preset does not exist", f"{declared}#/"))
+            continue
+        except Exception as error:  # an unreadable or unparsable member is a finding against that member
+            found.append(Diagnostic("E_SCHEMA", f"{declared}: cannot be read: {error}", f"{declared}#/"))
+            continue
         if not isinstance(document, dict):
             found.append(Diagnostic("E_SCHEMA", f"{declared}: expected a mapping document", f"{declared}#/"))
             continue
