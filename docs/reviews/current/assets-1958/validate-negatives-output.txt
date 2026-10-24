@@ -1,0 +1,32 @@
+== broken view
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "view.yaml#/", "revisionRefs": [], "message": "view.yaml: unexpected property 'bogus'"}]}
+
+== broken theme
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "theme.yaml#/", "revisionRefs": [], "message": "theme.yaml: unexpected property 'bogus'"}]}
+
+== broken scheme
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "scheme.yaml#/", "revisionRefs": [], "message": "scheme.yaml: unexpected property 'bogus'"}]}
+
+== broken layout
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "layout.yaml#/", "revisionRefs": [], "message": "layout.yaml: unexpected property 'bogus'"}]}
+
+== broken detail
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "detail.yaml#/", "revisionRefs": [], "message": "detail.yaml: unexpected property 'bogus'"}]}
+
+== view deep error (post-merge) : remove tableColumns id
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "view.yaml#/body/markers/0/kind", "revisionRefs": [], "message": "view.yaml: expected exactly 'asOf'"}]}
+
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/markers/0/kind", "revisionRefs": [], "message": "expected exactly 'asOf'"}]}
+
+== missing member file
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "theme.yaml#/", "revisionRefs": [], "message": "theme.yaml: the member file declared by the preset does not exist"}]}
+
+== broken catalog
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "catalogs/chrona-target-parts-v2026-10-09.yaml#/", "revisionRefs": [], "message": "catalogs/chrona-target-parts-v2026-10-09.yaml: cannot be read: did not find expected <document start>\
+== view in other dir with --layout and without
+mkdir: neg2: File exists
+{"status": "rejected", "diagnostics": [{"code": "E_SCHEMA", "severity": "error", "component": "core", "sourceRef": "/body/comparison", "revisionRefs": [], "message": "missing required property 'deltaUnit'"}, {"code": "E_SCHEMA", "severity": "error", 
+{"status": "ok", "diagnostics": [], "resource": "view"}
+
+== preset schema-in-project/ project dir
+1

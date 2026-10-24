@@ -1,0 +1,15 @@
+mission-light | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+control-room-dark | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+print-mono | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+executive-light | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+elevated-light | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+editorial | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+technical-print | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+chrona-default-draft | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+marquee | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+sunday | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+target-b | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+titlecard | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+yuya | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+muted-executive | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
+wallboard-dark | {"status": "ok", "diagnostics": [], "resource": "presentation-preset"} | {"status": "ok", "diagnostics": [], "resource": "view", "validatedThrough": "preset.yaml"}
