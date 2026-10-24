@@ -88,7 +88,7 @@ def test_the_doc_check_tool_discovers_and_will_run_every_skill_command():
     commands = [command for command in discover(ROOT) if command.path.parts[0] == "skills"]
 
     assert {command.path.name for command in commands} == {  # a page that shows a file runs its own (#1683, #1854)
-        "SKILL.md", "typed-fields.md", "notes-risks-and-lanes.md"}
+        "SKILL.md", "typed-fields.md", "notes-risks-and-lanes.md", "design-from-a-brief.md"}
     assert any(command.tokens[:2] == ("chrona", "init") for command in commands)
     assert any("launch.yaml" in token for command in commands for token in command.tokens)
     assert all(command.skip_reason is None for command in commands), "a skill command must be run, not skipped"
